@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { EventSelection } from '@/components/auth/EventSelection';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -10,12 +10,12 @@ import { differenceInYears } from 'date-fns';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 import { CreateEventDialog } from '@/components/events/CreateEventDialog';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { LogOut, Plus } from 'lucide-react';
 import { DEBUG_MODE } from '@/constants/routes';
 
 export default function EventSelectionPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { canCreateEvents, isLoading: permissionLoading } = useCanCreateEvents();
   const [createEventDialogOpen, setCreateEventDialogOpen] = useState(false);
 
@@ -47,7 +47,10 @@ export default function EventSelectionPage() {
 
       if (error) {
         console.error('Error fetching user birth date:', error);
-        toast.error('Erro ao buscar informações do usuário');
+        toast({
+          title: "Erro ao buscar informações do usuário",
+          variant: "destructive",
+        });
         return null;
       }
 
@@ -65,14 +68,35 @@ export default function EventSelectionPage() {
 
   const handleEventSelect = (eventId: string) => {
     localStorage.setItem('currentEventId', eventId);
-    toast.success('Evento selecionado com sucesso!');
+    toast({
+      title: "Evento selecionado com sucesso!",
+      variant: "default",
+    });
     navigate('/athlete-profile');
   };
 
   const handleEventCreated = () => {
     // Refresh the event list
     refetch();
-    toast.success('Evento criado com sucesso!');
+    toast({
+      title: "Evento criado com sucesso!",
+      variant: "default",
+    });
+  };
+
+  const handleLogout = async () => {
+    try {
+      console.log('Handling logout from EventSelectionPage');
+      localStorage.removeItem('currentEventId');
+      await signOut();
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error('Error during logout:', error);
+      toast({
+        title: "Erro ao fazer logout",
+        variant: "destructive",
+      });
+    }
   };
 
   // If there's no user, redirect to landing page
@@ -98,16 +122,27 @@ export default function EventSelectionPage() {
             Selecione um Evento
           </h1>
           
-          {/* Mostrar o botão independentemente do estado de carregamento durante o desenvolvimento */}
-          {(!permissionLoading && canCreateEvents) || (DEBUG_MODE && !permissionLoading) && (
-            <Button 
-              onClick={() => setCreateEventDialogOpen(true)}
-              className="bg-olimpics-green-primary hover:bg-olimpics-green-primary/90"
+          <div className="flex gap-2">
+            {/* Mostrar o botão independentemente do estado de carregamento durante o desenvolvimento */}
+            {(!permissionLoading && canCreateEvents) || (DEBUG_MODE && !permissionLoading) ? (
+              <Button 
+                onClick={() => setCreateEventDialogOpen(true)}
+                className="bg-olimpics-green-primary hover:bg-olimpics-green-primary/90"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Criar Evento
+              </Button>
+            ) : null}
+            
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="flex items-center gap-2"
             >
-              <Plus className="mr-2 h-4 w-4" />
-              Criar Evento
+              <LogOut className="w-4 h-4" />
+              Sair
             </Button>
-          )}
+          </div>
         </div>
         
         <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6">

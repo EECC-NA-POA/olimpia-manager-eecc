@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Loader2, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { PerfilTipo } from "@/lib/types/database";
@@ -43,9 +43,15 @@ export const EventSelection = ({
 
       // Show appropriate message before redirecting
       if (result.isExisting) {
-        toast.success('Bem-vindo de volta ao evento!');
+        toast({
+          title: "Bem-vindo de volta ao evento!",
+          variant: "default",
+        });
       } else {
-        toast.success('Inscrição realizada com sucesso!');
+        toast({
+          title: "Inscrição realizada com sucesso!",
+          variant: "default",
+        });
       }
       
       // Redirect after a short delay to ensure toast is seen and localStorage is updated
@@ -54,7 +60,10 @@ export const EventSelection = ({
       }, 300);
     } catch (error) {
       console.error('Error in handleEventRegistration:', error);
-      toast.error('Erro ao processar inscrição. Tente novamente.');
+      toast({
+        title: "Erro ao processar inscrição. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -63,7 +72,10 @@ export const EventSelection = ({
     localStorage.setItem('currentEventId', eventId);
     
     if (isRegistered) {
-      toast.success('Evento selecionado com sucesso!');
+      toast({
+        title: "Evento selecionado com sucesso!",
+        variant: "default",
+      });
       // Short delay to ensure toast is visible
       setTimeout(() => {
         navigate('/athlete-profile');
@@ -73,12 +85,16 @@ export const EventSelection = ({
 
   const handleExit = async () => {
     try {
-      await signOut();
+      console.log('Logging out from EventSelection component');
       localStorage.removeItem('currentEventId');
-      navigate('/');
+      await signOut();
+      navigate('/', { replace: true });
     } catch (error) {
       console.error('Error logging out:', error);
-      toast.error('Erro ao fazer logout. Tente novamente.');
+      toast({
+        title: "Erro ao fazer logout. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 

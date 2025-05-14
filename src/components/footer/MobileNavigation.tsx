@@ -1,4 +1,3 @@
-
 import { ArrowLeftRight, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { NavigationItem } from "./navigation-items";
@@ -92,6 +91,22 @@ export const MobileNavigationLink = () => {
     return null;
   }
   
+  // Handle logout reliably
+  const handleLogout = async () => {
+    try {
+      console.log('Handling logout from MobileNavigation');
+      localStorage.removeItem('currentEventId');
+      await signOut();
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error('Error during logout:', error);
+      toast({
+        title: "Erro ao fazer logout",
+        variant: "destructive", 
+      });
+    }
+  };
+
   // Define navigation items to match desktop menu order
   const navigationItems = [];
   
@@ -167,14 +182,7 @@ export const MobileNavigationLink = () => {
       localStorage.setItem('currentEventId', eventId);
       window.location.reload();
     },
-    onLogout: async () => {
-      try {
-        await signOut();
-        navigate('/');
-      } catch (error) {
-        console.error('Error during logout:', error);
-      }
-    }
+    onLogout: handleLogout // Use our consistent logout handler
   };
   
   return <MobileNavigation {...defaultProps} />;
