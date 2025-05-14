@@ -8,16 +8,17 @@ import { UseFormReturn } from 'react-hook-form';
 import InputMask from 'react-input-mask';
 
 const countries = [
-  { name: 'Brasil', code: 'BR', ddi: '+55' },
   { name: 'Argentina', code: 'AR', ddi: '+54' },
+  { name: 'Bolívia', code: 'BO', ddi: '+591' },
+  { name: 'Brasil', code: 'BR', ddi: '+55' },
   { name: 'Chile', code: 'CL', ddi: '+56' },
-  { name: 'Uruguai', code: 'UY', ddi: '+598' },
+  { name: 'Colômbia', code: 'CO', ddi: '+57' },
+  { name: 'Equador', code: 'EC', ddi: '+593' },
+  { name: 'Espanha', code: 'ES', ddi: '+34' },
   { name: 'Paraguai', code: 'PY', ddi: '+595' },
   { name: 'Peru', code: 'PE', ddi: '+51' },
-  { name: 'Colômbia', code: 'CO', ddi: '+57' },
+  { name: 'Uruguai', code: 'UY', ddi: '+598' },
   { name: 'Venezuela', code: 'VE', ddi: '+58' },
-  { name: 'Equador', code: 'EC', ddi: '+593' },
-  { name: 'Bolívia', code: 'BO', ddi: '+591' },
 ].sort((a, b) => a.name.localeCompare(b.name));
 
 interface PhoneInputProps {
@@ -27,8 +28,8 @@ interface PhoneInputProps {
 export const PhoneInput = ({ form }: PhoneInputProps) => {
   return (
     <div className="space-y-4">
-      <div className="flex flex-col space-y-4">
-        <div className="flex items-end gap-2">
+      <div className="flex flex-col">
+        <div className="flex items-center gap-2">
           <FormField
             control={form.control}
             name="ddi"
@@ -54,7 +55,6 @@ export const PhoneInput = ({ form }: PhoneInputProps) => {
                         <div className="flex items-center gap-2">
                           <Flag className="h-4 w-4" />
                           <span>{country.name}</span>
-                          <span className="text-muted-foreground">({country.ddi})</span>
                         </div>
                       </SelectItem>
                     ))}
