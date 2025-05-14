@@ -3,11 +3,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import AthleteProfilePage from '@/components/AthleteProfilePage';
 import OrganizerDashboard from '@/components/OrganizerDashboard';
 import DelegationDashboard from '@/components/DelegationDashboard';
+import { NoEventSelected } from '@/components/dashboard/components/NoEventSelected';
 import { Navigate } from 'react-router-dom';
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, currentEventId } = useAuth();
   console.log("Usuário carregado no dashboard:", user);
+  console.log("Event ID no dashboard:", currentEventId);
+
+  // If no event is selected, show the NoEventSelected component
+  if (!currentEventId) {
+    console.log("No event selected in Dashboard, showing NoEventSelected component");
+    return <NoEventSelected />;
+  }
 
   const isAthlete = user?.papeis?.some(role => role.codigo === 'ATL');
   const isOrganizer = user?.papeis?.some(role => role.codigo === 'ORE');

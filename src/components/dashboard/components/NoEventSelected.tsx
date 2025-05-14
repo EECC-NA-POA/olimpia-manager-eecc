@@ -1,9 +1,15 @@
 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export function NoEventSelected() {
   const navigate = useNavigate();
+  
+  const handleEventSelection = () => {
+    toast.info("Redirecionando para a seleção de eventos");
+    navigate('/event-selection');
+  };
   
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -19,7 +25,7 @@ export function NoEventSelected() {
         </p>
         <Button
           size="lg"
-          onClick={() => navigate('/event-selection')}
+          onClick={handleEventSelection}
           className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary text-white"
         >
           Selecionar Evento

@@ -4,14 +4,22 @@ import { useAuth } from '@/contexts/AuthContext';
 import LandingPage from './LandingPage';
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, currentEventId } = useAuth();
   
   console.log('Index component - User auth state:', user ? 'Authenticated' : 'Not authenticated');
+  console.log('Index component - Current event ID:', currentEventId);
   
-  // If user is authenticated, navigate to their dashboard
+  // If user is authenticated
   if (user) {
-    console.log('User is authenticated, redirecting to /home');
-    return <Navigate to="/home" replace />;
+    // If they have an event selected, go to home
+    if (currentEventId) {
+      console.log('User is authenticated with event selected, redirecting to /home');
+      return <Navigate to="/home" replace />;
+    }
+    
+    // If user is authenticated but no event selected, go to event selection
+    console.log('User is authenticated but no event selected, redirecting to /event-selection');
+    return <Navigate to="/event-selection" replace />;
   }
   
   // If user is not authenticated, show the landing page
