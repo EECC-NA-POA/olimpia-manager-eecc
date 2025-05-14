@@ -5,7 +5,7 @@ type ToastProps = {
   title?: string;
   description?: string;
   action?: React.ReactNode;
-  variant?: "default" | "destructive" | "success" | "warning" | "info";
+  variant?: "default" | "destructive" | "success" | "warning" | "info" | "error";
 };
 
 // Create a custom toast function with variants support
