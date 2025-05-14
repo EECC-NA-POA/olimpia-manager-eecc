@@ -1,12 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from 'react-hook-form';
 import { PhoneInput } from './phone/PhoneInput';
 import { useQuery } from '@tanstack/react-query';
-import { fetchBranches } from '@/lib/api';
+import { fetchBranchesByState } from '@/lib/api';
 
 interface ContactSectionProps {
   form: UseFormReturn<any>;
@@ -21,17 +21,29 @@ export const ContactSection = ({
   branches: propBranches,
   isLoadingBranches: propIsLoadingBranches
 }: ContactSectionProps) => {
-  const { data: fetchedBranches = [], isLoading: isFetchingBranches } = useQuery({
-    queryKey: ['branches'],
-    queryFn: fetchBranches,
-    select: (data) => {
-      return data ? [...data].sort((a, b) => a.nome.localeCompare(b.nome)) : [];
-    },
+  const [selectedState, setSelectedState] = useState<string | null>(null);
+
+  const { data: branchesByState = [], isLoading: isLoadingBranchData } = useQuery({
+    queryKey: ['branches-by-state'],
+    queryFn: fetchBranchesByState,
     enabled: !propBranches // Only fetch if branches were not provided as props
   });
 
-  const branches = propBranches || fetchedBranches;
-  const isLoadingBranches = propIsLoadingBranches || isFetchingBranches;
+  const isLoadingBranches = propIsLoadingBranches || isLoadingBranchData;
+  
+  // Get unique states from branches data
+  const states = branchesByState.map(group => group.estado);
+
+  // Get branches for the selected state
+  const branchesForSelectedState = selectedState 
+    ? branchesByState.find(group => group.estado === selectedState)?.branches || []
+    : [];
+
+  // Clear branch selection when state changes
+  const handleStateChange = (state: string) => {
+    setSelectedState(state);
+    form.setValue('branchId', undefined);
+  };
 
   return (
     <div className="space-y-4">
@@ -60,6 +72,37 @@ export const ContactSection = ({
 
       <FormField
         control={form.control}
+        name="state"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Estado</FormLabel>
+            <Select
+              onValueChange={(value) => {
+                field.onChange(value);
+                handleStateChange(value);
+              }}
+              value={field.value || selectedState || ''}
+            >
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um Estado" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {states.map((state) => (
+                  <SelectItem key={state} value={state}>
+                    {state}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
         name="branchId"
         render={({ field }) => (
           <FormItem>
@@ -67,14 +110,15 @@ export const ContactSection = ({
             <Select
               onValueChange={field.onChange}
               value={field.value}
+              disabled={!selectedState}
             >
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione sua Sede" />
+                  <SelectValue placeholder={selectedState ? "Selecione sua Sede" : "Selecione um Estado primeiro"} />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {branches.map((branch) => (
+                {branchesForSelectedState.map((branch) => (
                   <SelectItem key={branch.id} value={branch.id}>
                     {branch.nome}
                   </SelectItem>
