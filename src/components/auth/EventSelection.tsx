@@ -37,25 +37,37 @@ export const EventSelection = ({
         selectedRole 
       });
 
-      // Store the current event ID and redirect regardless of whether it's a new or existing registration
+      // Store the current event ID
+      console.log('Setting current event ID in localStorage:', eventId);
       localStorage.setItem('currentEventId', eventId);
-      navigate('/athlete-profile');
 
-      // Show appropriate message
+      // Show appropriate message before redirecting
       if (result.isExisting) {
         toast.success('Bem-vindo de volta ao evento!');
       } else {
         toast.success('Inscrição realizada com sucesso!');
       }
+      
+      // Redirect after a short delay to ensure toast is seen and localStorage is updated
+      setTimeout(() => {
+        navigate('/athlete-profile');
+      }, 300);
     } catch (error) {
       console.error('Error in handleEventRegistration:', error);
+      toast.error('Erro ao processar inscrição. Tente novamente.');
     }
   };
 
   const handleEventSelect = (eventId: string, isRegistered: boolean) => {
+    console.log('Event selected, setting in localStorage:', eventId);
     localStorage.setItem('currentEventId', eventId);
+    
     if (isRegistered) {
-      navigate('/athlete-profile');
+      toast.success('Evento selecionado com sucesso!');
+      // Short delay to ensure toast is visible
+      setTimeout(() => {
+        navigate('/athlete-profile');
+      }, 300);
     }
   };
 

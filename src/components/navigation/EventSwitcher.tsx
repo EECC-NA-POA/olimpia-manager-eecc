@@ -9,6 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuItem, SidebarMenuButton } from '../ui/sidebar';
+import { useNavigate } from 'react-router-dom';
+import { toast } from "sonner";
 
 interface EventSwitcherProps {
   userId: string;
@@ -16,6 +18,8 @@ interface EventSwitcherProps {
 }
 
 export function EventSwitcher({ userId, collapsed = false }: EventSwitcherProps) {
+  const navigate = useNavigate();
+  
   const { data: userEvents } = useQuery({
     queryKey: ['user-events', userId],
     queryFn: async () => {
@@ -44,8 +48,12 @@ export function EventSwitcher({ userId, collapsed = false }: EventSwitcherProps)
   });
 
   const handleEventSwitch = (eventId: string) => {
+    console.log('Setting current event ID:', eventId);
     localStorage.setItem('currentEventId', eventId);
-    window.location.reload(); // Reload to refresh all queries with new event
+    
+    // Force context update by reloading the page
+    toast.success('Evento selecionado com sucesso!');
+    navigate(0); // This is equivalent to window.location.reload()
   };
 
   if (!userEvents || userEvents.length <= 1) return null;

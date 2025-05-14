@@ -19,6 +19,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { signIn, signOut, signUp, resendVerificationEmail } = useAuthOperations({ setUser, navigate, location });
 
+  // Watch for changes to currentEventId in localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const storedEventId = localStorage.getItem('currentEventId');
+      console.log('Storage event detected, event ID:', storedEventId);
+      if (storedEventId !== currentEventId) {
+        setCurrentEventId(storedEventId);
+      }
+    };
+
+    // Add event listener for storage events
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also check periodically
+    const intervalId = setInterval(() => {
+      const storedEventId = localStorage.getItem('currentEventId');
+      if (storedEventId !== currentEventId) {
+        console.log('Event ID changed in localStorage:', storedEventId);
+        setCurrentEventId(storedEventId);
+      }
+    }, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(intervalId);
+    };
+  }, [currentEventId]);
+
+  useEffect(() => {
+    console.log('Current Event ID in AuthContext:', currentEventId);
+  }, [currentEventId]);
+
   useEffect(() => {
     console.log('Setting up authentication state...');
     console.log('Current location:', location.pathname);
@@ -39,6 +71,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (session?.user) {
           console.log('User session found, fetching profile for user ID:', session.user.id);
+          const storedEventId = localStorage.getItem('currentEventId');
+          if (storedEventId && storedEventId !== currentEventId) {
+            setCurrentEventId(storedEventId);
+          }
+          
           const userProfile = await fetchUserProfile(session.user.id);
           if (mounted) {
             console.log('Setting user with profile data:', userProfile);
@@ -55,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 console.log('User signed out, clearing state');
                 setUser(null);
                 localStorage.removeItem('currentEventId');
+                setCurrentEventId(null);
                 navigate('/', { replace: true });
               }
               return;
