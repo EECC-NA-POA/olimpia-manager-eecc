@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -20,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { TeamFormation } from '@/components/judge/TeamFormation';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 interface TeamsTabProps {
   userId: string;
@@ -43,7 +42,6 @@ interface Athlete {
 }
 
 export function TeamsTab({ userId, eventId }: TeamsTabProps) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedModalityId, setSelectedModalityId] = useState<number | null>(null);
   const [teamName, setTeamName] = useState('');
@@ -65,8 +63,7 @@ export function TeamsTab({ userId, eventId }: TeamsTabProps) {
       
       if (error) {
         console.error('Error fetching modalities:', error);
-        toast({
-          title: 'Erro',
+        toast("Erro", {
           description: 'Não foi possível carregar as modalidades',
           variant: 'destructive'
         });
@@ -204,14 +201,12 @@ export function TeamsTab({ userId, eventId }: TeamsTabProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams', eventId, selectedModalityId] });
       setTeamName('');
-      toast({
-        title: 'Equipe criada',
+      toast("Equipe criada", {
         description: 'A equipe foi criada com sucesso'
       });
     },
     onError: (error) => {
-      toast({
-        title: 'Erro',
+      toast("Erro", {
         description: 'Não foi possível criar a equipe',
         variant: 'destructive'
       });
@@ -226,8 +221,7 @@ export function TeamsTab({ userId, eventId }: TeamsTabProps) {
   // Handle team creation
   const handleCreateTeam = () => {
     if (!teamName.trim()) {
-      toast({
-        title: 'Nome obrigatório',
+      toast("Nome obrigatório", {
         description: 'Por favor, informe um nome para a equipe',
         variant: 'destructive'
       });

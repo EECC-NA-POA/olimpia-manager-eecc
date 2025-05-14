@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -12,7 +11,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/lib/supabase';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 interface ModalityAthletesListProps {
   modalityId: number;
@@ -37,8 +36,6 @@ export function ModalityAthletesList({
   onAthleteSelect,
   selectedAthleteId
 }: ModalityAthletesListProps) {
-  const { toast } = useToast();
-
   // Fetch athletes for the selected modality
   const { data: athletes, isLoading } = useQuery({
     queryKey: ['athletes', modalityId, eventId],
@@ -60,8 +57,7 @@ export function ModalityAthletesList({
       
       if (error) {
         console.error('Error fetching athletes:', error);
-        toast({
-          title: 'Erro',
+        toast("Erro", {
           description: 'Não foi possível carregar os atletas',
           variant: 'destructive'
         });

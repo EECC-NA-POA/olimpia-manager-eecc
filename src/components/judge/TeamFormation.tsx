@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -26,7 +25,7 @@ import {
 } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 interface TeamFormationProps {
   teams: any[];
@@ -41,7 +40,6 @@ export function TeamFormation({
   eventId, 
   modalityId 
 }: TeamFormationProps) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   
   // Update team athlete mutation
@@ -111,14 +109,12 @@ export function TeamFormation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams', eventId, modalityId] });
       queryClient.invalidateQueries({ queryKey: ['athletes', eventId, modalityId] });
-      toast({
-        title: 'Equipe atualizada',
+      toast("Equipe atualizada", {
         description: 'A composição da equipe foi atualizada com sucesso'
       });
     },
     onError: (error: any) => {
-      toast({
-        title: 'Erro',
+      toast("Erro", {
         description: error.message || 'Não foi possível atualizar a equipe',
         variant: 'destructive'
       });
@@ -150,14 +146,12 @@ export function TeamFormation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams', eventId, modalityId] });
       queryClient.invalidateQueries({ queryKey: ['athletes', eventId, modalityId] });
-      toast({
-        title: 'Atleta removido',
+      toast("Atleta removido", {
         description: 'O atleta foi removido da equipe com sucesso'
       });
     },
     onError: (error: any) => {
-      toast({
-        title: 'Erro',
+      toast("Erro", {
         description: error.message || 'Não foi possível remover o atleta da equipe',
         variant: 'destructive'
       });

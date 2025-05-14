@@ -1,10 +1,9 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 export const useModalityMutations = (userId: string | undefined, eventId: string | null) => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const withdrawMutation = useMutation({
@@ -23,17 +22,15 @@ export const useModalityMutations = (userId: string | undefined, eventId: string
       queryClient.invalidateQueries({ queryKey: ['athlete-modalities'] });
       queryClient.invalidateQueries({ queryKey: ['modalities'] });
       queryClient.invalidateQueries({ queryKey: ['personal-schedule-activities'] });
-      toast({
-        title: "Desistência confirmada",
-        description: "Você desistiu da modalidade com sucesso.",
+      toast("Desistência confirmada", {
+        description: "Você desistiu da modalidade com sucesso."
       });
     },
     onError: (error) => {
       console.error('Error withdrawing from modality:', error);
-      toast({
-        title: "Erro ao desistir",
+      toast("Erro ao desistir", {
         description: "Não foi possível processar sua desistência. Tente novamente.",
-        variant: "destructive",
+        variant: "destructive"
       });
     },
   });
@@ -59,17 +56,15 @@ export const useModalityMutations = (userId: string | undefined, eventId: string
       queryClient.invalidateQueries({ queryKey: ['athlete-modalities'] });
       queryClient.invalidateQueries({ queryKey: ['modalities'] });
       queryClient.invalidateQueries({ queryKey: ['personal-schedule-activities'] });
-      toast({
-        title: "Inscrição realizada",
-        description: "Você se inscreveu na modalidade com sucesso.",
+      toast("Inscrição realizada", {
+        description: "Você se inscreveu na modalidade com sucesso."
       });
     },
     onError: (error) => {
       console.error('Error registering for modality:', error);
-      toast({
-        title: "Erro na inscrição",
+      toast("Erro na inscrição", {
         description: "Não foi possível processar sua inscrição. Tente novamente.",
-        variant: "destructive",
+        variant: "destructive"
       });
     },
   });

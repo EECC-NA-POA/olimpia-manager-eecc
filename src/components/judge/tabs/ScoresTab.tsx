@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -29,7 +28,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { ModalityAthletesList } from '@/components/judge/ModalityAthletesList';
 import { AthleteScoreForm } from '@/components/judge/AthleteScoreForm';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 interface ScoresTabProps {
   userId: string;
@@ -37,7 +36,6 @@ interface ScoresTabProps {
 }
 
 export function ScoresTab({ userId, eventId }: ScoresTabProps) {
-  const { toast } = useToast();
   const [selectedModalityId, setSelectedModalityId] = useState<number | null>(null);
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
 
@@ -57,8 +55,7 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
       
       if (error) {
         console.error('Error fetching modalities:', error);
-        toast({
-          title: 'Erro',
+        toast("Erro", {
           description: 'Não foi possível carregar as modalidades',
           variant: 'destructive'
         });

@@ -49,15 +49,13 @@ export function EventForm() {
 
       if (error) throw error;
 
-      toast({
-        title: "Sucesso",
-        description: `Evento "${data.nome}" cadastrado com sucesso!`,
+      toast("Sucesso", {
+        description: `Evento "${data.nome}" cadastrado com sucesso!`
       });
       form.reset();
     } catch (error: any) {
       console.error('Error creating event:', error);
-      toast({
-        title: "Erro",
+      toast("Erro", {
         description: `Erro ao cadastrar evento: ${error.message || 'Tente novamente mais tarde'}`,
         variant: "destructive"
       });
