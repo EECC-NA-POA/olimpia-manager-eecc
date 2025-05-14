@@ -15,6 +15,7 @@ export const eventSchema = z.object({
   status_evento: z.enum(['ativo', 'encerrado', 'suspenso']),
   visibilidade_publica: z.boolean().default(true),
   foto_evento: z.string().optional(),
+  selectedBranches: z.array(z.string().uuid()).optional(),
 }).refine(data => data.data_fim_inscricao >= data.data_inicio_inscricao, {
   message: 'A data de fim das inscrições deve ser posterior à data de início',
   path: ['data_fim_inscricao'],

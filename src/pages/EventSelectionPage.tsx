@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { EventSelection } from '@/components/auth/EventSelection';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -7,10 +7,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { differenceInYears } from 'date-fns';
+import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
+import { CreateEventDialog } from '@/components/events/CreateEventDialog';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 export default function EventSelectionPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { canCreateEvents } = useCanCreateEvents();
+  const [createEventDialogOpen, setCreateEventDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -18,7 +24,7 @@ export default function EventSelectionPage() {
     }
   }, [user, navigate]);
 
-  const { data: userAge } = useQuery({
+  const { data: userAge, refetch } = useQuery({
     queryKey: ['user-age', user?.id],
     queryFn: async () => {
       if (!user?.id) {
@@ -57,6 +63,11 @@ export default function EventSelectionPage() {
     navigate('/athlete-profile');
   };
 
+  const handleEventCreated = () => {
+    // Refresh the event list
+    refetch();
+  };
+
   // If there's no user, redirect to landing page
   if (!user) {
     return null;
@@ -75,9 +86,22 @@ export default function EventSelectionPage() {
       }}
     >
       <div className="container mx-auto py-8">
-        <h1 className="text-3xl font-bold text-center mb-8 bg-olimpics-green-primary text-white py-2 px-4 rounded-lg inline-block mx-auto">
-          Selecione um Evento
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-center bg-olimpics-green-primary text-white py-2 px-4 rounded-lg inline-block">
+            Selecione um Evento
+          </h1>
+          
+          {canCreateEvents && (
+            <Button 
+              onClick={() => setCreateEventDialogOpen(true)}
+              className="bg-olimpics-green-primary hover:bg-olimpics-green-primary/90"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Criar Evento
+            </Button>
+          )}
+        </div>
+        
         <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6">
           <EventSelection
             selectedEvents={[]}
@@ -87,6 +111,12 @@ export default function EventSelectionPage() {
           />
         </div>
       </div>
+
+      <CreateEventDialog 
+        open={createEventDialogOpen}
+        onOpenChange={setCreateEventDialogOpen}
+        onEventCreated={handleEventCreated}
+      />
     </div>
   );
 }

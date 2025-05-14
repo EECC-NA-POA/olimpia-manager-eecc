@@ -20,7 +20,6 @@ import Scores from './pages/Scores';
 import Cronograma from './pages/Cronograma';
 import Administration from './pages/Administration';
 import AthleteRegistrations from './components/AthleteRegistrations';
-import EventsManagement from './pages/EventsManagement'; // Import the new page
 
 // Import providers and components
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -66,7 +65,7 @@ function App() {
                   <Route path="/cronograma" element={<Cronograma />} />
                   <Route path="/administration" element={<Administration />} />
                   <Route path="/judge-dashboard" element={<JudgeDashboard />} />
-                  <Route path="/events-management" element={<EventsManagement />} /> {/* Add new route */}
+                  {/* Removed the EventsManagement route */}
                 </Route>
               </Routes>
             </div>

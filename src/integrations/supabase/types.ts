@@ -1453,6 +1453,7 @@ export type Database = {
       }
       usuarios: {
         Row: {
+          cadastra_eventos: boolean | null
           confirmado: boolean | null
           data_criacao: string | null
           data_nascimento: string
@@ -1468,6 +1469,7 @@ export type Database = {
           usuario_registrador_id: string | null
         }
         Insert: {
+          cadastra_eventos?: boolean | null
           confirmado?: boolean | null
           data_criacao?: string | null
           data_nascimento: string
@@ -1483,6 +1485,7 @@ export type Database = {
           usuario_registrador_id?: string | null
         }
         Update: {
+          cadastra_eventos?: boolean | null
           confirmado?: boolean | null
           data_criacao?: string | null
           data_nascimento?: string
