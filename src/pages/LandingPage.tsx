@@ -42,21 +42,13 @@ const socialLinks = [
 
 const LandingPage = () => {
   const handleLocationClick = () => {
-    const address = "Av. Ipiranga, 6690 - Partenon, Porto Alegre, RS - Brasil";
-    const mapsUrl = `https://www.google.com.br/maps/place/Parque+Esportivo+PUCRS/@-30.055444,-51.174819,17z/data=!3m1!4b1!4m5!3m4!1s0x951977fb8c202e69:0xb8d86f72e1ffeea!8m2!3d-30.055444!4d-51.172625`;
+    const address = "São Paulo";
+    const mapsUrl = `https://www.google.com.br/maps/search/${encodeURIComponent(address)}`;
     window.open(mapsUrl, '_blank');
   };
 
-  const handleCalendarSync = () => {
-    const startDate = '2025-04-12';
-    const endDate = '2025-04-13';
-    const title = 'Olimpíadas Estaduais da Escola do Esporte com Coração - 2025 - Porto Alegre';
-  
-    const latitude = -30.0553489;
-    const longitude = -51.1723835;
-    const location = `${latitude},${longitude}`;
-  
-    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startDate.replace(/-/g, '')}/${endDate.replace(/-/g, '')}&location=${encodeURIComponent(location)}`;
+  const handleCalendarSync = (startDate: string, endDate: string, title: string) => {
+    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startDate.replace(/-/g, '')}/${endDate.replace(/-/g, '')}`;
   
     if (window.confirm('Deseja adicionar este evento ao seu calendário?')) {
       window.open(googleCalendarUrl, '_blank');
@@ -102,9 +94,7 @@ const LandingPage = () => {
 
               <div className="text-white">
                 <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center lg:text-left animate-fade-in">
-                  <span>Olimpíadas Estaduais da Escola do Esporte com Coração - 2025</span> <br /> 
-                  <span className="text-3xl md:text-5xl">Edição:</span> <br /> 
-                  <span className="text-3xl md:text-5xl">Porto Alegre/RS</span>
+                  <span>Olimpíadas Nacionais da Escola do Esporte com Coração - 2025</span>
                 </h1>
                 <p className="text-xl md:text-2xl italic mb-12 text-center lg:text-left animate-fade-in">
                 "Mais rápido, mais alto, mais forte. Estamos unidos!"
@@ -122,7 +112,7 @@ const LandingPage = () => {
                   </div>
                   <div className="relative z-10 space-y-4">
                     <h3 className="text-2xl font-bold text-white drop-shadow-md">
-                      Bem-vindo/a(s) à maior Olimpíada de Esporte com Filosofia do Rio Grande do Sul!
+                      Bem-vindo/a(s) à maior Olimpíada de Esporte com Filosofia!
                     </h3>
                     <p className="text-lg leading-relaxed text-white drop-shadow">
                       Mais que medalhas, a Olimpíada é um caminho de autoconhecimento e superação. Uma verdadeira celebração da Humanidade.
@@ -131,13 +121,13 @@ const LandingPage = () => {
                       Venha desafiar seus limites e buscar a excelência. O maior adversário é você mesmo.
                     </p>
                     <p className="text-xl font-semibold text-white drop-shadow">
-                      Onde o Espírito Olímpico encontra a Filosofia. Inscreva-se nas Olimpíadas Estaduais da Escola do Esporte com Coração!
+                      Onde o Espírito Olímpico encontra a Filosofia. Inscreva-se nas Olimpíadas Nacioanis da Escola do Esporte com Coração!
                     </p>
                   </div>
                 </Card>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <Card 
                   className="p-6 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 bg-white/95 backdrop-blur cursor-pointer animate-fade-in"
                   onClick={handleLocationClick}
@@ -149,7 +139,7 @@ const LandingPage = () => {
                     <div>
                       <h3 className="text-xl font-bold text-olimpics-green-primary mb-2">Local</h3>
                       <p className="text-olimpics-text text-lg mb-2">
-                        Parque Esportivo PUCRS
+                        São Paulo
                       </p>
                       <p className="text-sm text-gray-600 italic">
                         Clique para ver no mapa
@@ -160,15 +150,33 @@ const LandingPage = () => {
 
                 <Card 
                   className="p-6 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 bg-white/95 backdrop-blur cursor-pointer animate-fade-in"
-                  onClick={handleCalendarSync}
+                  onClick={() => handleCalendarSync('2025-07-10', '2025-07-11', 'Pré-temporada - Olimpíadas Nacionais EECC 2025')}
                 >
                   <div className="flex flex-col items-center text-center gap-4">
                     <div className="p-4 rounded-full bg-olimpics-green-primary/10">
                       <Calendar className="w-8 h-8 text-olimpics-green-primary" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-olimpics-green-primary mb-2">Data</h3>
-                      <p className="text-olimpics-text text-lg mb-2">12 e 13 de Abril</p>
+                      <h3 className="text-xl font-bold text-olimpics-green-primary mb-2">Pré-temporada</h3>
+                      <p className="text-olimpics-text text-lg mb-2">10 e 11 de Julho</p>
+                      <p className="text-sm text-gray-600 italic">
+                        Clique para adicionar ao calendário
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card 
+                  className="p-6 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 bg-white/95 backdrop-blur cursor-pointer animate-fade-in"
+                  onClick={() => handleCalendarSync('2025-07-12', '2025-07-13', 'Olimpíadas Nacionais EECC 2025')}
+                >
+                  <div className="flex flex-col items-center text-center gap-4">
+                    <div className="p-4 rounded-full bg-olimpics-green-primary/10">
+                      <Calendar className="w-8 h-8 text-olimpics-green-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-olimpics-green-primary mb-2">Olimpíadas</h3>
+                      <p className="text-olimpics-text text-lg mb-2">12 e 13 de Julho</p>
                       <p className="text-sm text-gray-600 italic">
                         Clique para adicionar ao calendário
                       </p>
