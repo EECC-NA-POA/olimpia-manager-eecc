@@ -92,14 +92,6 @@ export const MenuItems = ({ collapsed = false }) => {
       icon: <Settings2 className="h-7 w-7" />,
       tooltip: "Administração"
     });
-    
-    // Add Events Management page for admin users
-    menuItems.push({
-      path: "/events-management",
-      label: "Gerenciar Eventos",
-      icon: <CalendarIcon className="h-7 w-7" />,
-      tooltip: "Gerenciar Eventos"
-    });
   }
 
   return (

@@ -65,7 +65,6 @@ function App() {
                   <Route path="/cronograma" element={<Cronograma />} />
                   <Route path="/administration" element={<Administration />} />
                   <Route path="/judge-dashboard" element={<JudgeDashboard />} />
-                  {/* Removed the EventsManagement route */}
                 </Route>
               </Routes>
             </div>
