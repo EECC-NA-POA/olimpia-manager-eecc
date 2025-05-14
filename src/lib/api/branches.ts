@@ -30,7 +30,7 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
   }
 
   // Group branches by state
-  const groupedBranches = (data || []).reduce((acc: { [key: string]: Branch[] }, branch) => {
+  const groupedBranches = (data || []).reduce((acc: { [key: string]: Branch[] }, branch: Branch) => {
     if (!acc[branch.estado]) {
       acc[branch.estado] = [];
     }
@@ -38,9 +38,9 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
     return acc;
   }, {});
 
-  // Convert to array format for easier consumption
+  // Convert to array format for easier consumption with proper typing
   return Object.entries(groupedBranches).map(([estado, branches]) => ({
     estado,
-    branches
+    branches: branches as Branch[]
   }));
 };

@@ -21,3 +21,21 @@ export const registerSchema = z.object({
 });
 
 export type RegisterFormData = z.infer<typeof registerSchema>;
+
+// Add the dependent registration schema
+export const dependentRegisterSchema = z.object({
+  nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
+  tipo_documento: z.string(),
+  numero_documento: z.string(),
+  genero: z.string(),
+  data_nascimento: z.date().refine(date => {
+    if (!date) return false;
+    const age = new Date().getFullYear() - date.getFullYear();
+    return age < 13; // Must be under 13 years old
+  }, {
+    message: 'Dependente deve ter menos de 13 anos',
+  }),
+  modalidades: z.array(z.string()).min(1, 'Selecione pelo menos uma modalidade'),
+});
+
+export type DependentRegisterFormData = z.infer<typeof dependentRegisterSchema>;
