@@ -15,8 +15,10 @@ import { Plus } from 'lucide-react';
 export default function EventSelectionPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { canCreateEvents } = useCanCreateEvents();
+  const { canCreateEvents, isLoading: permissionLoading } = useCanCreateEvents();
   const [createEventDialogOpen, setCreateEventDialogOpen] = useState(false);
+
+  console.log('Can create events permission:', canCreateEvents);
 
   useEffect(() => {
     if (!user) {
@@ -91,7 +93,7 @@ export default function EventSelectionPage() {
             Selecione um Evento
           </h1>
           
-          {canCreateEvents && (
+          {!permissionLoading && canCreateEvents && (
             <Button 
               onClick={() => setCreateEventDialogOpen(true)}
               className="bg-olimpics-green-primary hover:bg-olimpics-green-primary/90"

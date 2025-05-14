@@ -28,7 +28,14 @@ export function useCanCreateEvents() {
           setCanCreateEvents(false);
         } else {
           console.log('User permission data:', data);
-          setCanCreateEvents(data?.cadastra_eventos || false);
+          // Handle both boolean and string representations of true
+          const hasPermission = 
+            data?.cadastra_eventos === true || 
+            data?.cadastra_eventos === 'true' || 
+            data?.cadastra_eventos === 'TRUE';
+          
+          console.log('Calculated permission value:', hasPermission);
+          setCanCreateEvents(hasPermission);
         }
       } catch (error) {
         console.error('Error in useCanCreateEvents hook:', error);
