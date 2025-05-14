@@ -22,13 +22,16 @@ export const useModalityMutations = (userId: string | undefined, eventId: string
       queryClient.invalidateQueries({ queryKey: ['athlete-modalities'] });
       queryClient.invalidateQueries({ queryKey: ['modalities'] });
       queryClient.invalidateQueries({ queryKey: ['personal-schedule-activities'] });
-      toast("Desistência confirmada", {
-        description: "Você desistiu da modalidade com sucesso."
+      toast({
+        title: "Desistência confirmada",
+        description: "Você desistiu da modalidade com sucesso.",
+        variant: "success"
       });
     },
     onError: (error) => {
       console.error('Error withdrawing from modality:', error);
-      toast("Erro ao desistir", {
+      toast({
+        title: "Erro ao desistir",
         description: "Não foi possível processar sua desistência. Tente novamente.",
         variant: "destructive"
       });
@@ -56,13 +59,16 @@ export const useModalityMutations = (userId: string | undefined, eventId: string
       queryClient.invalidateQueries({ queryKey: ['athlete-modalities'] });
       queryClient.invalidateQueries({ queryKey: ['modalities'] });
       queryClient.invalidateQueries({ queryKey: ['personal-schedule-activities'] });
-      toast("Inscrição realizada", {
-        description: "Você se inscreveu na modalidade com sucesso."
+      toast({
+        title: "Inscrição realizada",
+        description: "Você se inscreveu na modalidade com sucesso.",
+        variant: "success"
       });
     },
     onError: (error) => {
       console.error('Error registering for modality:', error);
-      toast("Erro na inscrição", {
+      toast({
+        title: "Erro na inscrição",
         description: "Não foi possível processar sua inscrição. Tente novamente.",
         variant: "destructive"
       });

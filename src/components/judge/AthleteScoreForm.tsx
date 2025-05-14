@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -160,7 +159,8 @@ export function AthleteScoreForm({
       queryClient.invalidateQueries({ queryKey: ['scores', modalityId, eventId] });
       queryClient.invalidateQueries({ queryKey: ['athletes', modalityId, eventId] });
       toast({
-        description: "A pontuação foi registrada com sucesso"
+        description: "A pontuação foi registrada com sucesso",
+        variant: "success"
       });
     },
     onError: (error) => {

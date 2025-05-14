@@ -5,24 +5,30 @@ import type { ToastProps } from "@/components/ui/toast";
 type ToastOptions = {
   description?: React.ReactNode;
   variant?: "default" | "destructive" | "success";
+  title?: string;
 };
 
-export function toast(options: ToastOptions | string) {
+function toast(options: ToastOptions | string) {
   if (typeof options === "string") {
     return sonnerToast(options);
   }
 
-  const { description, variant } = options;
+  const { description, variant, title } = options;
 
   if (variant === "destructive") {
-    return sonnerToast.error(description);
+    return sonnerToast.error(title || description);
   }
 
   if (variant === "success") {
-    return sonnerToast.success(description);
+    return sonnerToast.success(title || description);
   }
 
-  return sonnerToast(description || "");
+  return sonnerToast(title || description || "");
 }
 
-export { toast };
+// Export a hook for convenience
+function useToast() {
+  return { toast };
+}
+
+export { toast, useToast };

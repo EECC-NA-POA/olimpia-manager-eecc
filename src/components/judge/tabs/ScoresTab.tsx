@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -56,7 +55,8 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
       
       if (error) {
         console.error('Error fetching modalities:', error);
-        toast("Erro", {
+        toast({
+          title: "Erro",
           description: 'Não foi possível carregar as modalidades',
           variant: "destructive"
         });

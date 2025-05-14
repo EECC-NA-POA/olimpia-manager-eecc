@@ -15,7 +15,8 @@ export function useAdminAccess() {
     const checkAdminRole = async () => {
       if (!user) {
         navigate('/');
-        toast("Acesso negado", {
+        toast({
+          title: "Acesso negado",
           description: "Você precisa estar logado para acessar esta página",
           variant: "destructive"
         });
@@ -45,7 +46,8 @@ export function useAdminAccess() {
         );
 
         if (!hasAdminRole) {
-          toast("Acesso restrito", {
+          toast({
+            title: "Acesso restrito",
             description: "Acesso restrito a administradores",
             variant: "destructive"
           });
@@ -56,7 +58,8 @@ export function useAdminAccess() {
         setIsAdmin(true);
       } catch (error) {
         console.error('Error checking admin role:', error);
-        toast("Erro", {
+        toast({
+          title: "Erro",
           description: "Erro ao verificar permissões de acesso",
           variant: "destructive"
         });

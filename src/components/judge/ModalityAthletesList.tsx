@@ -58,7 +58,8 @@ export function ModalityAthletesList({
       
       if (error) {
         console.error('Error fetching athletes:', error);
-        toast("Erro", {
+        toast({
+          title: "Erro",
           description: 'Não foi possível carregar os atletas',
           variant: "destructive"
         });

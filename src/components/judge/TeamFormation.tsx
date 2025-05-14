@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -110,12 +109,15 @@ export function TeamFormation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams', eventId, modalityId] });
       queryClient.invalidateQueries({ queryKey: ['athletes', eventId, modalityId] });
-      toast("Equipe atualizada", {
-        description: 'A composição da equipe foi atualizada com sucesso'
+      toast({
+        title: "Equipe atualizada",
+        description: 'A composição da equipe foi atualizada com sucesso',
+        variant: "success"
       });
     },
     onError: (error: any) => {
-      toast("Erro", {
+      toast({
+        title: "Erro",
         description: error.message || 'Não foi possível atualizar a equipe',
         variant: "destructive"
       });
@@ -147,12 +149,15 @@ export function TeamFormation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams', eventId, modalityId] });
       queryClient.invalidateQueries({ queryKey: ['athletes', eventId, modalityId] });
-      toast("Atleta removido", {
-        description: 'O atleta foi removido da equipe com sucesso'
+      toast({
+        title: "Atleta removido",
+        description: 'O atleta foi removido da equipe com sucesso',
+        variant: "success"
       });
     },
     onError: (error: any) => {
-      toast("Erro", {
+      toast({
+        title: "Erro",
         description: error.message || 'Não foi possível remover o atleta da equipe',
         variant: "destructive"
       });
