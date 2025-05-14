@@ -10,9 +10,11 @@ import { eventSchema, EventFormValues } from './EventFormSchema';
 import { BasicInfoSection } from './BasicInfoSection';
 import { DateSelectionSection } from './DateSelectionSection';
 import { EventDetailsSection } from './EventDetailsSection';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function EventForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
 
   // Setup form
   const form = useForm<EventFormValues>({
@@ -48,6 +50,64 @@ export function EventForm() {
         .single();
 
       if (error) throw error;
+
+      // Find or create the Administrator profile for this event
+      const { data: adminProfile, error: profileError } = await supabase
+        .from('perfis')
+        .select('id')
+        .eq('evento_id', newEvent.id)
+        .eq('nome', 'Administração')
+        .single();
+
+      let adminProfileId;
+
+      if (profileError || !adminProfile) {
+        // Create the profile if it doesn't exist
+        const { data: newAdminProfile, error: createProfileError } = await supabase
+          .from('perfis')
+          .insert({
+            nome: 'Administração',
+            descricao: 'Acesso administrativo ao evento',
+            evento_id: newEvent.id,
+            perfil_tipo_id: '22f7db2c-879a-4697-964c-4445b035c6cd' // Admin profile type ID
+          })
+          .select('id')
+          .single();
+
+        if (createProfileError) {
+          console.error('Error creating admin profile:', createProfileError);
+          toast({
+            title: "Aviso",
+            description: 'Evento criado, mas houve um erro ao criar perfil de administração',
+            variant: "warning"
+          });
+          adminProfileId = null;
+        } else {
+          adminProfileId = newAdminProfile.id;
+        }
+      } else {
+        adminProfileId = adminProfile.id;
+      }
+
+      // Assign the current user the Administrator profile for this event
+      if (adminProfileId && user?.id) {
+        const { error: assignRoleError } = await supabase
+          .from('papeis_usuarios')
+          .insert({
+            usuario_id: user.id,
+            perfil_id: adminProfileId,
+            evento_id: newEvent.id
+          });
+
+        if (assignRoleError) {
+          console.error('Error assigning admin role to creator:', assignRoleError);
+          toast({
+            title: "Aviso",
+            description: 'Evento criado, mas houve um erro ao atribuir papel de administrador',
+            variant: "warning"
+          });
+        }
+      }
 
       toast({
         title: "Sucesso",
