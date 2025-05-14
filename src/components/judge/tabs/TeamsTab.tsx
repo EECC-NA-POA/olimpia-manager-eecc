@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -65,7 +66,7 @@ export function TeamsTab({ userId, eventId }: TeamsTabProps) {
         console.error('Error fetching modalities:', error);
         toast("Erro", {
           description: 'Não foi possível carregar as modalidades',
-          variant: 'destructive'
+          variant: "destructive"
         });
         return [];
       }
@@ -208,7 +209,7 @@ export function TeamsTab({ userId, eventId }: TeamsTabProps) {
     onError: (error) => {
       toast("Erro", {
         description: 'Não foi possível criar a equipe',
-        variant: 'destructive'
+        variant: "destructive"
       });
     }
   });
@@ -223,7 +224,7 @@ export function TeamsTab({ userId, eventId }: TeamsTabProps) {
     if (!teamName.trim()) {
       toast("Nome obrigatório", {
         description: 'Por favor, informe um nome para a equipe',
-        variant: 'destructive'
+        variant: "destructive"
       });
       return;
     }

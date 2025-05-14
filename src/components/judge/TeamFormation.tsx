@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -116,7 +117,7 @@ export function TeamFormation({
     onError: (error: any) => {
       toast("Erro", {
         description: error.message || 'Não foi possível atualizar a equipe',
-        variant: 'destructive'
+        variant: "destructive"
       });
     }
   });
@@ -153,7 +154,7 @@ export function TeamFormation({
     onError: (error: any) => {
       toast("Erro", {
         description: error.message || 'Não foi possível remover o atleta da equipe',
-        variant: 'destructive'
+        variant: "destructive"
       });
     }
   });

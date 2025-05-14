@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -59,7 +60,7 @@ export function ModalityAthletesList({
         console.error('Error fetching athletes:', error);
         toast("Erro", {
           description: 'Não foi possível carregar os atletas',
-          variant: 'destructive'
+          variant: "destructive"
         });
         return [];
       }

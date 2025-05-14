@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -29,7 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 const scoreSchema = z.object({
   score: z.number({ required_error: 'A pontuação é obrigatória' }),
@@ -53,7 +54,6 @@ export function AthleteScoreForm({
   eventId, 
   judgeId 
 }: AthleteScoreFormProps) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   
   const form = useForm<ScoreFormValues>({
@@ -87,16 +87,18 @@ export function AthleteScoreForm({
       
       return data;
     },
-    onSuccess: (data) => {
-      if (data) {
-        form.setValue('score', data.valor_pontuacao);
-        form.setValue('position', data.posicao_final || undefined);
-        form.setValue('medal', data.medalha || undefined);
-        form.setValue('notes', data.observacoes || undefined);
-      }
-    },
     enabled: !!eventId && !!athleteId && !!modalityId,
   });
+
+  // Set form values when existing score is loaded
+  React.useEffect(() => {
+    if (existingScore) {
+      form.setValue('score', existingScore.valor_pontuacao);
+      form.setValue('position', existingScore.posicao_final || undefined);
+      form.setValue('medal', existingScore.medalha || undefined);
+      form.setValue('notes', existingScore.observacoes || undefined);
+    }
+  }, [existingScore, form]);
 
   // Submit score mutation
   const submitScoreMutation = useMutation({
@@ -126,7 +128,7 @@ export function AthleteScoreForm({
             posicao_final: data.position || null,
             medalha: data.medal || null,
             observacoes: data.notes || null,
-            avaliado_por: judgeId,
+            juiz_id: judgeId,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingScore.id);
@@ -144,7 +146,7 @@ export function AthleteScoreForm({
             posicao_final: data.position || null,
             medalha: data.medal || null,
             observacoes: data.notes || null,
-            avaliado_por: judgeId,
+            juiz_id: judgeId,
             created_at: new Date().toISOString()
           });
         
