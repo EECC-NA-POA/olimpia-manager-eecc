@@ -121,7 +121,7 @@ const LandingPage = () => {
                       Venha desafiar seus limites e buscar a excelência. O maior adversário é você mesmo.
                     </p>
                     <p className="text-xl font-semibold text-white drop-shadow">
-                      Onde o Espírito Olímpico encontra a Filosofia. Inscreva-se nas Olimpíadas Nacioanis da Escola do Esporte com Coração!
+                      Onde o Espírito Olímpico encontra a Filosofia. Inscreva-se nas Olimpíadas Nacionais da Escola do Esporte com Coração!
                     </p>
                   </div>
                 </Card>
