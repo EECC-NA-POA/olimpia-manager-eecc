@@ -11,6 +11,7 @@ import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 import { CreateEventDialog } from '@/components/events/CreateEventDialog';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { DEBUG_MODE } from '@/constants/routes';
 
 export default function EventSelectionPage() {
   const navigate = useNavigate();
