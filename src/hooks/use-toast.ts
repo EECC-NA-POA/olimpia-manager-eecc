@@ -1,38 +1,28 @@
 
-import * as React from "react";
-import { toast as sonnerToast, type ToastT } from "sonner";
+import { toast as sonnerToast } from "sonner";
+import type { ToastProps } from "@/components/ui/toast";
 
-// Define a custom toast options type that includes variant
-export interface ToastOptions {
+type ToastOptions = {
   description?: React.ReactNode;
-  variant?: 'default' | 'destructive';
-  duration?: number;
-}
-
-// Helper to adapt our custom options to sonner format
-const adaptToastOptions = (options?: ToastOptions) => {
-  if (!options) return undefined;
-  
-  const { variant, ...restOptions } = options;
-  
-  // Map our variant to sonner's style
-  if (variant === 'destructive') {
-    return { ...restOptions, className: 'bg-destructive text-destructive-foreground' };
-  }
-  
-  return restOptions;
+  variant?: "default" | "destructive" | "success";
 };
 
-// Main toast function with our custom interface
-export function toast(title: React.ReactNode, options?: ToastOptions) {
-  return sonnerToast(title, adaptToastOptions(options));
+export function toast(options: ToastOptions | string) {
+  if (typeof options === "string") {
+    return sonnerToast(options);
+  }
+
+  const { description, variant } = options;
+
+  if (variant === "destructive") {
+    return sonnerToast.error(description);
+  }
+
+  if (variant === "success") {
+    return sonnerToast.success(description);
+  }
+
+  return sonnerToast(description || "");
 }
 
-// Re-export the original toast for additional methods
-export const originalToast = sonnerToast;
-
-export function useToast() {
-  return {
-    toast
-  };
-}
+export { toast };

@@ -129,7 +129,7 @@ export function AthleteScoreForm({
             medalha: data.medal || null,
             observacoes: data.notes || null,
             juiz_id: judgeId,
-            updated_at: new Date().toISOString()
+            data_registro: new Date().toISOString()
           })
           .eq('id', existingScore.id);
         
@@ -147,7 +147,8 @@ export function AthleteScoreForm({
             medalha: data.medal || null,
             observacoes: data.notes || null,
             juiz_id: judgeId,
-            created_at: new Date().toISOString()
+            unidade: 'pontos', // Default unit for scores
+            data_registro: new Date().toISOString()
           });
         
         if (error) throw error;
@@ -158,13 +159,13 @@ export function AthleteScoreForm({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scores', modalityId, eventId] });
       queryClient.invalidateQueries({ queryKey: ['athletes', modalityId, eventId] });
-      toast("Pontuação registrada", {
+      toast({
         description: "A pontuação foi registrada com sucesso"
       });
     },
     onError: (error) => {
       console.error('Error submitting score:', error);
-      toast("Erro", {
+      toast({
         description: "Não foi possível registrar a pontuação",
         variant: "destructive"
       });
