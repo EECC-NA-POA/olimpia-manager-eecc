@@ -149,16 +149,17 @@ export const PersonalInfoSection = ({ form, hideContactInfo }: PersonalInfoSecti
               <FormLabel>Tipo de Documento</FormLabel>
               <Select
                 onValueChange={field.onChange}
-                defaultValue={field.value}
+                defaultValue="CPF"
+                value="CPF"
+                disabled={true}
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo de documento" />
+                    <SelectValue placeholder="CPF" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="CPF">CPF</SelectItem>
-                  <SelectItem value="RG">RG</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -174,7 +175,7 @@ export const PersonalInfoSection = ({ form, hideContactInfo }: PersonalInfoSecti
               <FormLabel>Número do Documento</FormLabel>
               <FormControl>
                 <InputMask
-                  mask={form.getValues('tipo_documento') === 'CPF' ? "999.999.999-99" : "9999999999"}
+                  mask="999.999.999-99"
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
@@ -182,7 +183,7 @@ export const PersonalInfoSection = ({ form, hideContactInfo }: PersonalInfoSecti
                   {(inputProps: any) => (
                     <Input
                       {...inputProps}
-                      placeholder={form.getValues('tipo_documento') === 'CPF' ? "000.000.000-00" : "0000000000"}
+                      placeholder="000.000.000-00"
                       className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary"
                     />
                   )}

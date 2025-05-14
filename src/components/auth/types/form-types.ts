@@ -10,7 +10,7 @@ export const registerSchema = z.object({
   confirmPassword: z.string(),
   state: z.string().optional(),
   branchId: z.string().uuid('Selecione uma sede').optional(),
-  tipo_documento: z.string(),
+  tipo_documento: z.literal('CPF'),
   numero_documento: z.string(),
   genero: z.string(),
   data_nascimento: z.date().optional(),
@@ -25,7 +25,7 @@ export type RegisterFormData = z.infer<typeof registerSchema>;
 // Add the dependent registration schema
 export const dependentRegisterSchema = z.object({
   nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
-  tipo_documento: z.string(),
+  tipo_documento: z.literal('CPF'),
   numero_documento: z.string(),
   genero: z.string(),
   data_nascimento: z.date().refine(date => {
