@@ -27,6 +27,7 @@ export function useCanCreateEvents() {
           console.error('Error checking event creation permission:', error);
           setCanCreateEvents(false);
         } else {
+          console.log('User permission data:', data);
           setCanCreateEvents(data?.cadastra_eventos || false);
         }
       } catch (error) {
