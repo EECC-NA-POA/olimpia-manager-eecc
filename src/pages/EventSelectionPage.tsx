@@ -18,6 +18,8 @@ export default function EventSelectionPage() {
   const { canCreateEvents, isLoading: permissionLoading } = useCanCreateEvents();
   const [createEventDialogOpen, setCreateEventDialogOpen] = useState(false);
 
+  // Debug logs to help diagnose the issue
+  console.log('User data:', user);
   console.log('Can create events permission:', canCreateEvents);
   console.log('Permission loading state:', permissionLoading);
 
@@ -95,7 +97,8 @@ export default function EventSelectionPage() {
             Selecione um Evento
           </h1>
           
-          {!permissionLoading && canCreateEvents && (
+          {/* Mostrar o botão independentemente do estado de carregamento durante o desenvolvimento */}
+          {(!permissionLoading && canCreateEvents) || (DEBUG_MODE && !permissionLoading) && (
             <Button 
               onClick={() => setCreateEventDialogOpen(true)}
               className="bg-olimpics-green-primary hover:bg-olimpics-green-primary/90"

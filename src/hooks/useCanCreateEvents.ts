@@ -31,17 +31,14 @@ export function useCanCreateEvents() {
           console.log('User permission data:', data);
           
           // Boolean values in Supabase can come in different formats
-          // This handles true (boolean), 'true' (string), or 'TRUE' (uppercase string)
-          // Explicitly compare without using type conversion
-          const hasPermission = data?.cadastra_eventos === true || 
-                               data?.cadastra_eventos === 'true' || 
-                               data?.cadastra_eventos === 'TRUE';
+          // Handle both boolean and string representations
+          const hasPermission = 
+            data?.cadastra_eventos === true || 
+            data?.cadastra_eventos === 'true' || 
+            data?.cadastra_eventos === 'TRUE';
           
-          console.log('Raw permission value:', data?.cadastra_eventos);
-          console.log('Data type of permission:', typeof data?.cadastra_eventos);
-          console.log('Calculated permission value:', hasPermission);
-          
-          setCanCreateEvents(hasPermission);
+          console.log('Permission value:', hasPermission);
+          setCanCreateEvents(hasPermission || false);
         }
       } catch (error) {
         console.error('Error in useCanCreateEvents hook:', error);
