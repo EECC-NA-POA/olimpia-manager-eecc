@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
-import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList } from 'lucide-react';
+import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 
 export const MenuItems = ({ collapsed = false }) => {
@@ -91,6 +91,14 @@ export const MenuItems = ({ collapsed = false }) => {
       label: "Administração",
       icon: <Settings2 className="h-7 w-7" />,
       tooltip: "Administração"
+    });
+    
+    // Add Events Management page for admin users
+    menuItems.push({
+      path: "/events-management",
+      label: "Gerenciar Eventos",
+      icon: <CalendarIcon className="h-7 w-7" />,
+      tooltip: "Gerenciar Eventos"
     });
   }
 
