@@ -11,6 +11,7 @@ import { format, parse, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import InputMask from 'react-input-mask';
 import { UseFormReturn } from 'react-hook-form';
+import { formRow, formColumn } from '@/lib/utils/form-layout';
 
 interface PersonalInfoSectionProps {
   form: UseFormReturn<any>;
@@ -138,57 +139,60 @@ export const PersonalInfoSection = ({ form, hideContactInfo }: PersonalInfoSecti
         )}
       />
 
-      <FormField
-        control={form.control}
-        name="tipo_documento"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Tipo de Documento</FormLabel>
-            <Select
-              onValueChange={field.onChange}
-              defaultValue={field.value}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo de documento" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="CPF">CPF</SelectItem>
-                <SelectItem value="RG">RG</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="numero_documento"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Número do Documento</FormLabel>
-            <FormControl>
-              <InputMask
-                mask={form.getValues('tipo_documento') === 'CPF' ? "999.999.999-99" : "9999999999"}
-                value={field.value}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
+      {/* Document type and number in the same row */}
+      <div className={formRow}>
+        <FormField
+          control={form.control}
+          name="tipo_documento"
+          render={({ field }) => (
+            <FormItem className={formColumn}>
+              <FormLabel>Tipo de Documento</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
               >
-                {(inputProps: any) => (
-                  <Input
-                    {...inputProps}
-                    placeholder={form.getValues('tipo_documento') === 'CPF' ? "000.000.000-00" : "0000000000"}
-                    className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary"
-                  />
-                )}
-              </InputMask>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo de documento" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="CPF">CPF</SelectItem>
+                  <SelectItem value="RG">RG</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="numero_documento"
+          render={({ field }) => (
+            <FormItem className={formColumn}>
+              <FormLabel>Número do Documento</FormLabel>
+              <FormControl>
+                <InputMask
+                  mask={form.getValues('tipo_documento') === 'CPF' ? "999.999.999-99" : "9999999999"}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                >
+                  {(inputProps: any) => (
+                    <Input
+                      {...inputProps}
+                      placeholder={form.getValues('tipo_documento') === 'CPF' ? "000.000.000-00" : "0000000000"}
+                      className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary"
+                    />
+                  )}
+                </InputMask>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
 
       <FormField
         control={form.control}

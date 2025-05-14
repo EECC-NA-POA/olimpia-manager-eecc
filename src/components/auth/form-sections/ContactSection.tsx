@@ -7,6 +7,7 @@ import { UseFormReturn } from 'react-hook-form';
 import { PhoneInput } from './phone/PhoneInput';
 import { useQuery } from '@tanstack/react-query';
 import { fetchBranchesByState } from '@/lib/api';
+import { formRow, formColumn } from '@/lib/utils/form-layout';
 
 interface ContactSectionProps {
   form: UseFormReturn<any>;
@@ -70,65 +71,68 @@ export const ContactSection = ({
 
       <PhoneInput form={form} />
 
-      <FormField
-        control={form.control}
-        name="state"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Estado</FormLabel>
-            <Select
-              onValueChange={(value) => {
-                field.onChange(value);
-                handleStateChange(value);
-              }}
-              value={field.value || selectedState || ''}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um Estado" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {states.map((state) => (
-                  <SelectItem key={state} value={state}>
-                    {state}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {/* State and Branch on the same row */}
+      <div className={formRow}>
+        <FormField
+          control={form.control}
+          name="state"
+          render={({ field }) => (
+            <FormItem className={formColumn}>
+              <FormLabel>Estado</FormLabel>
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  handleStateChange(value);
+                }}
+                value={field.value || selectedState || ''}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um Estado" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {states.map((state) => (
+                    <SelectItem key={state} value={state}>
+                      {state}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <FormField
-        control={form.control}
-        name="branchId"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Sede</FormLabel>
-            <Select
-              onValueChange={field.onChange}
-              value={field.value}
-              disabled={!selectedState}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder={selectedState ? "Selecione sua Sede" : "Selecione um Estado primeiro"} />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {branchesForSelectedState.map((branch) => (
-                  <SelectItem key={branch.id} value={branch.id}>
-                    {branch.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+        <FormField
+          control={form.control}
+          name="branchId"
+          render={({ field }) => (
+            <FormItem className={formColumn}>
+              <FormLabel>Sede</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                value={field.value}
+                disabled={!selectedState}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder={selectedState ? "Selecione sua Sede" : "Selecione um Estado primeiro"} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {branchesForSelectedState.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
     </div>
   );
 };

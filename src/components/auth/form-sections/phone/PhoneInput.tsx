@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { UseFormReturn } from 'react-hook-form';
 import InputMask from 'react-input-mask';
+import { formRow, formColumn } from '@/lib/utils/form-layout';
 
 const countries = [
   { name: 'Argentina', code: 'AR', ddi: '+54' },
@@ -27,24 +28,22 @@ interface PhoneInputProps {
 
 export const PhoneInput = ({ form }: PhoneInputProps) => {
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col">
-        <div className="flex items-center gap-2">
-          <FormField
-            control={form.control}
-            name="ddi"
-            render={({ field }) => (
-              <FormItem className="flex-shrink-0 w-32">
-                <FormLabel>País</FormLabel>
+    <div className="space-y-1">
+      <div className={formRow}>
+        <FormField
+          control={form.control}
+          name="ddi"
+          render={({ field }) => (
+            <FormItem className="w-28">
+              <FormLabel>País</FormLabel>
+              <FormControl>
                 <Select 
                   onValueChange={field.onChange} 
                   defaultValue={field.value || '+55'}
                 >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="País" />
-                    </SelectTrigger>
-                  </FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="País" />
+                  </SelectTrigger>
                   <SelectContent className="bg-background">
                     {countries.map((country) => (
                       <SelectItem 
@@ -60,43 +59,46 @@ export const PhoneInput = ({ form }: PhoneInputProps) => {
                     ))}
                   </SelectContent>
                 </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-          <div className="flex-shrink-0 w-20 text-muted-foreground flex items-center h-10 px-3 border rounded-md">
+        <div className="flex-shrink-0 w-20">
+          <FormLabel className="block mb-2">Código</FormLabel>
+          <div className="text-muted-foreground flex items-center h-10 px-3 border rounded-md">
             {form.watch('ddi') || '+55'}
           </div>
-
-          <FormField
-            control={form.control}
-            name="telefone"
-            render={({ field }) => (
-              <FormItem className="flex-grow">
-                <FormLabel className="text-left w-full">Telefone</FormLabel>
-                <FormControl>
-                  <InputMask
-                    mask="(99) 99999-9999"
-                    value={field.value}
-                    onChange={field.onChange}
-                    onBlur={field.onBlur}
-                  >
-                    {(inputProps: any) => (
-                      <Input
-                        {...inputProps}
-                        type="tel"
-                        placeholder="(XX) XXXXX-XXXX"
-                        className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary"
-                      />
-                    )}
-                  </InputMask>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
+
+        <FormField
+          control={form.control}
+          name="telefone"
+          render={({ field }) => (
+            <FormItem className="flex-grow">
+              <FormLabel className="text-left w-full">Telefone</FormLabel>
+              <FormControl>
+                <InputMask
+                  mask="(99) 99999-9999"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                >
+                  {(inputProps: any) => (
+                    <Input
+                      {...inputProps}
+                      type="tel"
+                      placeholder="(XX) XXXXX-XXXX"
+                      className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary"
+                    />
+                  )}
+                </InputMask>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
     </div>
   );
