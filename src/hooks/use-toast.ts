@@ -18,16 +18,16 @@ export const toast = (props: ToastProps | string) => {
   
   switch (variant) {
     case 'success':
-      return sonnerToast.success(title, { description, action });
+      return sonnerToast.success(title || '', { description, action });
     case 'destructive':
     case 'error':
-      return sonnerToast.error(title, { description, action });
+      return sonnerToast.error(title || '', { description, action });
     case 'warning':
-      return sonnerToast.warning(title, { description, action });
+      return sonnerToast.warning(title || '', { description, action });
     case 'info':
-      return sonnerToast.info(title, { description, action });
+      return sonnerToast.info(title || '', { description, action });
     default:
-      return sonnerToast(title, { description, action });
+      return sonnerToast(title || '', { description, action });
   }
 };
 

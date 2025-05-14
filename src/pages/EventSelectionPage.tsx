@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { EventSelection } from '@/components/auth/EventSelection';
 import { useNavigate } from 'react-router-dom';
-import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -12,6 +11,7 @@ import { CreateEventDialog } from '@/components/events/CreateEventDialog';
 import { Button } from '@/components/ui/button';
 import { LogOut, Plus } from 'lucide-react';
 import { DEBUG_MODE } from '@/constants/routes';
+import { toast } from "sonner";
 
 export default function EventSelectionPage() {
   const navigate = useNavigate();
@@ -47,10 +47,7 @@ export default function EventSelectionPage() {
 
       if (error) {
         console.error('Error fetching user birth date:', error);
-        toast({
-          title: "Erro ao buscar informações do usuário",
-          variant: "destructive",
-        });
+        toast.error("Erro ao buscar informações do usuário");
         return null;
       }
 
@@ -68,20 +65,14 @@ export default function EventSelectionPage() {
 
   const handleEventSelect = (eventId: string) => {
     localStorage.setItem('currentEventId', eventId);
-    toast({
-      title: "Evento selecionado com sucesso!",
-      variant: "default",
-    });
+    toast("Evento selecionado com sucesso!");
     navigate('/athlete-profile');
   };
 
   const handleEventCreated = () => {
     // Refresh the event list
     refetch();
-    toast({
-      title: "Evento criado com sucesso!",
-      variant: "default",
-    });
+    toast("Evento criado com sucesso!");
   };
 
   const handleLogout = async () => {
@@ -92,10 +83,7 @@ export default function EventSelectionPage() {
       navigate('/', { replace: true });
     } catch (error) {
       console.error('Error during logout:', error);
-      toast({
-        title: "Erro ao fazer logout",
-        variant: "destructive",
-      });
+      toast.error("Erro ao fazer logout");
     }
   };
 

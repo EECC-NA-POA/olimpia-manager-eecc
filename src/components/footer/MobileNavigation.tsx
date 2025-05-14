@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigation } from "@/hooks/useNavigation";
+import { toast } from "sonner";
 
 interface MobileNavigationProps {
   navigationItems: NavigationItem[];
@@ -100,10 +101,7 @@ export const MobileNavigationLink = () => {
       navigate('/', { replace: true });
     } catch (error) {
       console.error('Error during logout:', error);
-      toast({
-        title: "Erro ao fazer logout",
-        variant: "destructive", 
-      });
+      toast.error("Erro ao fazer logout");
     }
   };
 
