@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { MapPin, Calendar, Instagram, Globe, Youtube } from 'lucide-react';
 import { toast } from "sonner";
 import Login from "./Login";
+import { formatToGoogleCalendarDate } from "@/utils/formatters";
 
 const modalities = [
   { name: 'Corrida', icon: "🏃" },
@@ -48,7 +49,13 @@ const LandingPage = () => {
   };
 
   const handleCalendarSync = (startDate: string, endDate: string, title: string) => {
-    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startDate.replace(/-/g, '')}/${endDate.replace(/-/g, '')}`;
+    // Format dates for Google Calendar (ensuring end date is the day after the last day of the event)
+    const formattedStartDate = formatToGoogleCalendarDate(new Date(startDate));
+    const lastDay = new Date(endDate);
+    const formattedEndDate = formatToGoogleCalendarDate(lastDay);
+    
+    // Build Google Calendar URL with properly formatted dates
+    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formattedStartDate}/${formattedEndDate}`;
   
     if (window.confirm('Deseja adicionar este evento ao seu calendário?')) {
       window.open(googleCalendarUrl, '_blank');
