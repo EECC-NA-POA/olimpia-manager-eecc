@@ -1,10 +1,9 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -76,7 +75,11 @@ export default function EventsManagement() {
     const checkAdminRole = async () => {
       if (!user) {
         navigate('/');
-        toast.error('Você precisa estar logado para acessar esta página');
+        toast({
+          title: "Acesso negado",
+          description: "Você precisa estar logado para acessar esta página",
+          variant: "destructive"
+        });
         return;
       }
 
@@ -103,7 +106,11 @@ export default function EventsManagement() {
         );
 
         if (!hasAdminRole) {
-          toast.error('Acesso restrito a administradores');
+          toast({
+            title: "Acesso restrito",
+            description: "Acesso restrito a administradores",
+            variant: "destructive"
+          });
           navigate('/');
           return;
         }
@@ -111,7 +118,11 @@ export default function EventsManagement() {
         setIsAdmin(true);
       } catch (error) {
         console.error('Error checking admin role:', error);
-        toast.error('Erro ao verificar permissões de acesso');
+        toast({
+          title: "Erro",
+          description: "Erro ao verificar permissões de acesso",
+          variant: "destructive"
+        });
         navigate('/');
       }
     };
@@ -126,9 +137,14 @@ export default function EventsManagement() {
     try {
       // Format dates to ISO strings
       const eventData = {
-        ...data,
+        nome: data.nome,              // Ensure nome is explicitly included
+        descricao: data.descricao,    // Ensure descricao is explicitly included
+        tipo: data.tipo,              // Ensure tipo is explicitly included
         data_inicio_inscricao: data.data_inicio_inscricao.toISOString().split('T')[0],
         data_fim_inscricao: data.data_fim_inscricao.toISOString().split('T')[0],
+        status_evento: data.status_evento,
+        visibilidade_publica: data.visibilidade_publica,
+        foto_evento: data.foto_evento
       };
 
       const { error, data: newEvent } = await supabase
@@ -139,11 +155,18 @@ export default function EventsManagement() {
 
       if (error) throw error;
 
-      toast.success(`Evento "${data.nome}" cadastrado com sucesso!`);
+      toast({
+        title: "Sucesso",
+        description: `Evento "${data.nome}" cadastrado com sucesso!`,
+      });
       form.reset();
     } catch (error: any) {
       console.error('Error creating event:', error);
-      toast.error(`Erro ao cadastrar evento: ${error.message || 'Tente novamente mais tarde'}`);
+      toast({
+        title: "Erro",
+        description: `Erro ao cadastrar evento: ${error.message || 'Tente novamente mais tarde'}`,
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
