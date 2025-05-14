@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 export function useCanCreateEvents() {
   const { user } = useAuth();
@@ -28,17 +29,23 @@ export function useCanCreateEvents() {
           setCanCreateEvents(false);
         } else {
           console.log('User permission data:', data);
-          // Handle both boolean and string representations of true
-          const hasPermission = 
-            data?.cadastra_eventos === true || 
-            data?.cadastra_eventos === 'true' || 
-            data?.cadastra_eventos === 'TRUE';
           
+          // Boolean values in Supabase can come in different formats
+          // This handles true (boolean), 'true' (string), or 'TRUE' (uppercase string)
+          // Explicitly compare without using type conversion
+          const hasPermission = data?.cadastra_eventos === true || 
+                               data?.cadastra_eventos === 'true' || 
+                               data?.cadastra_eventos === 'TRUE';
+          
+          console.log('Raw permission value:', data?.cadastra_eventos);
+          console.log('Data type of permission:', typeof data?.cadastra_eventos);
           console.log('Calculated permission value:', hasPermission);
+          
           setCanCreateEvents(hasPermission);
         }
       } catch (error) {
         console.error('Error in useCanCreateEvents hook:', error);
+        toast.error('Erro ao verificar permissões');
         setCanCreateEvents(false);
       } finally {
         setIsLoading(false);

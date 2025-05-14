@@ -19,6 +19,7 @@ export default function EventSelectionPage() {
   const [createEventDialogOpen, setCreateEventDialogOpen] = useState(false);
 
   console.log('Can create events permission:', canCreateEvents);
+  console.log('Permission loading state:', permissionLoading);
 
   useEffect(() => {
     if (!user) {
@@ -68,6 +69,7 @@ export default function EventSelectionPage() {
   const handleEventCreated = () => {
     // Refresh the event list
     refetch();
+    toast.success('Evento criado com sucesso!');
   };
 
   // If there's no user, redirect to landing page
