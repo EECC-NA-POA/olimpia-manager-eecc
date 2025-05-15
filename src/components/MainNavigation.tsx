@@ -1,4 +1,3 @@
-
 import { Outlet } from 'react-router-dom';
 import { 
   Sidebar, 
@@ -77,18 +76,19 @@ export function MainNavigation() {
           <SidebarContent>
             <MenuItems collapsed={sidebarCollapsed} />
           </SidebarContent>
-          <SidebarFooter className="mt-auto border-t border-olimpics-green-secondary p-4">
-            <div className="flex flex-col gap-2 w-full">
-              {/* Moved EventSwitcher outside of SidebarMenu */}
+          <SidebarFooter className="mt-auto border-t border-olimpics-green-secondary p-4" style={{ zIndex: 50 }}>
+            <div className="flex flex-col gap-2 w-full" style={{ position: 'relative', zIndex: 51 }}>
+              {/* Event Switcher with improved z-index */}
               <EventSwitcher userId={user.id} collapsed={sidebarCollapsed} />
               
-              {/* Moved logout button outside of SidebarMenu */}
+              {/* Logout button with improved z-index */}
               <button
                 onClick={handleLogout}
                 className="w-full rounded-lg p-4 flex items-center gap-3 
                   text-red-300 hover:text-red-100 hover:bg-red-500/20 
                   transition-all duration-200 text-lg font-medium"
                 title={sidebarCollapsed ? "Sair" : undefined}
+                style={{ zIndex: 51 }}
               >
                 <LogOut className="h-7 w-7 flex-shrink-0" />
                 <span className={sidebarCollapsed ? 'hidden' : 'block'}>Sair</span>
