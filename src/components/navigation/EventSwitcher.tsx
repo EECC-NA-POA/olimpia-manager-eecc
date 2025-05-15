@@ -1,3 +1,4 @@
+
 import { ArrowLeftRight } from 'lucide-react';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -64,13 +65,24 @@ export function EventSwitcher({ userId, collapsed = false }: EventSwitcherProps)
             text-white hover:bg-olimpics-green-secondary/20 
             transition-all duration-200 text-lg font-medium"
           title={collapsed ? "Trocar Evento" : undefined}
-          style={{ zIndex: 51 }} /* Inline style to ensure proper stacking */
+          style={{ 
+            zIndex: 101,
+            position: 'relative'
+          }}
         >
           <ArrowLeftRight className="h-7 w-7 flex-shrink-0" />
           <span className={collapsed ? 'hidden' : 'block'}>Trocar Evento</span>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 z-[100]">
+      <DropdownMenuContent 
+        align="end" 
+        className="w-56"
+        style={{
+          zIndex: 200,
+          position: 'relative',
+          backgroundColor: 'white'
+        }}
+      >
         {userEvents.map((event: any) => (
           <DropdownMenuItem
             key={event.id}

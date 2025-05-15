@@ -1,3 +1,4 @@
+
 #root {
   margin: 0 auto;
   text-align: center;
@@ -96,7 +97,7 @@ main {
 [data-sidebar="content"] {
   overflow-y: auto !important;
   flex-grow: 1 !important;
-  max-height: calc(100vh - 180px) !important; /* Adjust based on header and footer height */
+  max-height: calc(100vh - 240px) !important; /* Reduced to make more room for footer items */
 }
 
 /* Footer styling to ensure it stays at the bottom and buttons are visible */
@@ -115,14 +116,16 @@ footer {
   overflow: hidden;
 }
 
-/* Ensure the sidebar footer is always visible */
+/* Ensure the sidebar footer is always visible and positioned correctly */
 [data-sidebar="footer"] {
   display: flex !important;
   width: 100% !important;
-  z-index: 50 !important; /* Increased z-index for footer buttons */
+  z-index: 100 !important; /* Significantly increased z-index for footer */
   background-color: var(--olimpics-green-primary, #009B40) !important;
   padding: 1rem !important;
   position: relative !important; /* Ensure proper stacking context */
+  bottom: 0 !important; /* Ensure it stays at the bottom */
+  margin-top: auto !important; /* Push to the bottom of the container */
 }
 
 /* Make sure buttons in sidebar footer are visible */
@@ -131,12 +134,12 @@ footer {
   display: flex !important;
   align-items: center !important;
   margin-bottom: 0.5rem;
-  z-index: 51 !important; /* Ensure buttons are above the footer */
+  z-index: 101 !important; /* Ensure buttons are above the footer with higher value */
 }
 
 /* Style dropdown content to be visible */
 .dropdown-content {
-  z-index: 60 !important; /* Ensure dropdown menus appear above everything */
+  z-index: 200 !important; /* Ensure dropdown menus appear above everything */
 }
 
 /* Fix for mobile view */

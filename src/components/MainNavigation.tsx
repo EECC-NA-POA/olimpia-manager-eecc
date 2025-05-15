@@ -1,3 +1,4 @@
+
 import { Outlet } from 'react-router-dom';
 import { 
   Sidebar, 
@@ -76,8 +77,22 @@ export function MainNavigation() {
           <SidebarContent>
             <MenuItems collapsed={sidebarCollapsed} />
           </SidebarContent>
-          <SidebarFooter className="mt-auto border-t border-olimpics-green-secondary p-4" style={{ zIndex: 50 }}>
-            <div className="flex flex-col gap-2 w-full" style={{ position: 'relative', zIndex: 51 }}>
+          <SidebarFooter 
+            className="mt-auto border-t border-olimpics-green-secondary p-4" 
+            style={{ 
+              zIndex: 100,
+              position: 'sticky',
+              bottom: 0,
+              backgroundColor: 'var(--olimpics-green-primary, #009B40)'
+            }}
+          >
+            <div 
+              className="flex flex-col gap-2 w-full" 
+              style={{ 
+                position: 'relative', 
+                zIndex: 101
+              }}
+            >
               {/* Event Switcher with improved z-index */}
               <EventSwitcher userId={user.id} collapsed={sidebarCollapsed} />
               
@@ -88,7 +103,7 @@ export function MainNavigation() {
                   text-red-300 hover:text-red-100 hover:bg-red-500/20 
                   transition-all duration-200 text-lg font-medium"
                 title={sidebarCollapsed ? "Sair" : undefined}
-                style={{ zIndex: 51 }}
+                style={{ zIndex: 101 }}
               >
                 <LogOut className="h-7 w-7 flex-shrink-0" />
                 <span className={sidebarCollapsed ? 'hidden' : 'block'}>Sair</span>
