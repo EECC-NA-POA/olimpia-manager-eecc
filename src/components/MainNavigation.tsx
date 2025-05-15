@@ -78,23 +78,22 @@ export function MainNavigation() {
             <MenuItems collapsed={sidebarCollapsed} />
           </SidebarContent>
           <SidebarFooter className="mt-auto border-t border-olimpics-green-secondary p-4">
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <EventSwitcher userId={user.id} collapsed={sidebarCollapsed} />
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={handleLogout}
-                  className="w-full rounded-lg p-4 flex items-center gap-3 
-                    text-red-300 hover:text-red-100 hover:bg-red-500/20 
-                    transition-all duration-200 text-lg font-medium"
-                  tooltip="Sair"
-                >
-                  <LogOut className="h-7 w-7 flex-shrink-0" />
-                  <span className={sidebarCollapsed ? 'hidden' : 'block'}>Sair</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
+            <div className="flex flex-col gap-2 w-full">
+              {/* Moved EventSwitcher outside of SidebarMenu */}
+              <EventSwitcher userId={user.id} collapsed={sidebarCollapsed} />
+              
+              {/* Moved logout button outside of SidebarMenu */}
+              <button
+                onClick={handleLogout}
+                className="w-full rounded-lg p-4 flex items-center gap-3 
+                  text-red-300 hover:text-red-100 hover:bg-red-500/20 
+                  transition-all duration-200 text-lg font-medium"
+                title={sidebarCollapsed ? "Sair" : undefined}
+              >
+                <LogOut className="h-7 w-7 flex-shrink-0" />
+                <span className={sidebarCollapsed ? 'hidden' : 'block'}>Sair</span>
+              </button>
+            </div>
           </SidebarFooter>
         </Sidebar>
         <main className="flex-1 overflow-auto p-6 bg-olimpics-background transition-all duration-200">

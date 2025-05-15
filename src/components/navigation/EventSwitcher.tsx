@@ -8,7 +8,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SidebarMenuButton } from '../ui/sidebar';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 
@@ -61,15 +60,15 @@ export function EventSwitcher({ userId, collapsed = false }: EventSwitcherProps)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <SidebarMenuButton
+        <button
           className="w-full rounded-lg p-4 flex items-center gap-3 
             text-white hover:bg-olimpics-green-secondary/20 
-            transition-all duration-200 text-lg font-medium mb-2"
-          tooltip={collapsed ? "Trocar Evento" : undefined}
+            transition-all duration-200 text-lg font-medium"
+          title={collapsed ? "Trocar Evento" : undefined}
         >
           <ArrowLeftRight className="h-7 w-7 flex-shrink-0" />
           <span className={collapsed ? 'hidden' : 'block'}>Trocar Evento</span>
-        </SidebarMenuButton>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         {userEvents.map((event: any) => (
