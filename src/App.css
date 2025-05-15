@@ -3,6 +3,7 @@
   margin: 0 auto;
   text-align: center;
   width: 100%;
+  max-width: 100%;
 }
 
 /* Add padding to body content to account for fixed header */
@@ -13,26 +14,27 @@ body {
 /* Content container that adapts to screen size */
 .content-container {
   width: 100%;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0;
 }
 
-/* Responsive padding for different screen sizes */
+/* Responsive container width for different screen sizes */
 @media (min-width: 640px) {
   .content-container {
-    padding: 0 1.5rem;
+    padding: 0 0.5rem;
   }
 }
 
 @media (min-width: 1024px) {
   .content-container {
-    padding: 0 2rem;
+    padding: 0 1rem;
   }
 }
 
-@media (min-width: 1536px) {
-  .content-container {
-    padding: 0 4rem;
+@media (min-width: 1280px) {
+  .container {
+    max-width: 100%;
   }
 }
 
@@ -77,25 +79,25 @@ main {
   transition: all 0.3s ease-in-out !important;
 }
 
-/* Responsive card layouts */
+/* Responsive card layouts with improved spacing */
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
   width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
 }
 
 @media (min-width: 1280px) {
   .card-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 2rem;
-  }
-}
-
-@media (min-width: 1536px) {
-  .card-grid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2.5rem;
   }
 }
 

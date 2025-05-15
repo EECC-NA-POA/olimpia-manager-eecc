@@ -16,3 +16,10 @@ export function getWindowDimensions() {
   const { innerWidth: width, innerHeight: height } = window
   return { width, height }
 }
+
+// Calculate content width based on sidebar state and screen size
+export function calculateContentWidth(sidebarExpanded: boolean, isMobile: boolean) {
+  if (isMobile) return '100%'
+  
+  return sidebarExpanded ? `calc(100% - 240px)` : `calc(100% - 70px)`
+}
