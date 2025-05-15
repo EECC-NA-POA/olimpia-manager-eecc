@@ -42,9 +42,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <div className="flex flex-col min-h-screen">
+          <div className="flex flex-col h-screen overflow-hidden">
             <GlobalHeader />
-            <div className="flex-grow">
+            <div className="flex-grow overflow-hidden">
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />

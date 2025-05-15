@@ -1,11 +1,12 @@
+
 #root {
   margin: 0 auto;
   text-align: center;
 }
 
-/* Add padding to body content to account for fixed header */
+/* Remove body padding to fix scrollbar issues */
 body {
-  padding-top: 64px; /* 4rem / 16px = 64px, matches the header height */
+  overflow: hidden; /* Prevent body scrolling */
 }
 
 /* Add responsive padding for content */
@@ -26,7 +27,7 @@ body {
 .group\/sidebar-wrapper {
   margin-top: 0 !important;
   height: calc(100vh - 64px) !important; /* Subtract header height */
-  overflow: hidden !important;
+  overflow: hidden !important; /* Hide overflow in sidebar wrapper */
 }
 
 /* Ensure sidebar takes full height and is fixed in position */
@@ -43,16 +44,20 @@ body {
 [data-collapsible="icon"] {
   width: var(--sidebar-width-icon) !important;
   min-width: var(--sidebar-width-icon) !important;
+  background-color: transparent !important; /* Ensure transparent background when collapsed */
 }
 
 /* Expand collapsed sidebar width */
 .group-data-\[collapsible=icon\]:w-\[--sidebar-width-icon\] {
   width: var(--sidebar-width-icon) !important;
+  background-color: transparent !important; /* Ensure transparent background */
 }
 
 /* Content positioning and transition */
 main {
   transition: margin-left 0.2s ease-in-out !important;
+  height: calc(100vh - 64px) !important; /* Set main content height */
+  overflow-y: auto !important; /* Allow scrolling in main content only */
 }
 
 /* Remove extra space above the sidebar */
@@ -63,6 +68,7 @@ main {
 /* Adjust icon display in collapsed state */
 .group-data-\[collapsible=icon\]:p-0 {
   padding: 0.5rem !important;
+  background-color: transparent !important; /* Ensure transparent background */
 }
 
 /* Proper transition for sidebar and main content */
@@ -75,6 +81,7 @@ main {
 /* Fix for sidebar width transition */
 .sidebar-transition {
   transition: width 0.2s ease-in-out !important;
+  background-color: transparent !important; /* Ensure transparent background */
 }
 
 /* Ensure the main content area expands properly */
@@ -90,10 +97,28 @@ main {
 [data-sidebar="content"] {
   overflow-y: auto !important;
   flex-grow: 1 !important;
+  max-height: calc(100vh - 180px) !important; /* Adjust based on header and footer height */
 }
 
 /* Footer styling to ensure it stays at the bottom */
 footer {
   margin-top: auto;
   z-index: 10;
+}
+
+/* Ensure all sidebar components maintain green background */
+[data-sidebar="sidebar"] {
+  background-color: var(--olimpics-green-primary, #009B40) !important;
+}
+
+/* Fix for double scrollbars */
+.flex.min-h-screen.w-full {
+  overflow: hidden;
+}
+
+/* Fix for mobile view */
+@media (max-width: 768px) {
+  main {
+    height: calc(100vh - 104px) !important; /* Adjust for mobile header + footer */
+  }
 }
