@@ -54,12 +54,14 @@ body {
 [data-collapsible="icon"] {
   width: var(--sidebar-width-icon) !important;
   min-width: var(--sidebar-width-icon) !important;
+  background-color: transparent !important;
 }
 
 /* Mobile sidebar adjustments */
 @media (max-width: 768px) {
   [data-sidebar="sidebar"] {
     position: fixed !important;
+    background-color: transparent !important;
   }
 }
 

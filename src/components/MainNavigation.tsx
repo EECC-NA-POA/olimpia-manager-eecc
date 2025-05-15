@@ -9,7 +9,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarTrigger,
 } from './ui/sidebar';
 import { ChevronLeft, ChevronRight, LogOut, Menu } from 'lucide-react';
 import { toast } from 'sonner';
@@ -19,7 +18,6 @@ import { EventSwitcher } from './navigation/EventSwitcher';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { cn } from '@/lib/utils';
 
 export function MainNavigation() {
   const navigate = useNavigate();
@@ -67,9 +65,9 @@ export function MainNavigation() {
   return (
     <SidebarProvider defaultOpen={!sidebarCollapsed}>
       <div className="flex min-h-screen w-full">
-        {/* Fixed sidebar background */}
+        {/* Fixed sidebar background - now with transparent background when collapsed */}
         <div className={`fixed top-[64px] left-0 h-[calc(100vh-64px)] bg-[#1e293b] transition-all duration-300 z-30 
-          ${isMobile ? (mobileMenuOpen ? 'w-[240px]' : 'w-0') : (sidebarCollapsed ? 'w-[70px]' : 'w-[240px]')}`} 
+          ${isMobile ? (mobileMenuOpen ? 'w-[240px]' : 'w-0') : (sidebarCollapsed ? 'w-0' : 'w-[240px]')}`} 
         />
 
         {/* Mobile overlay */}
