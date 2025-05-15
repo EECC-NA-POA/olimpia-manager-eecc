@@ -1,8 +1,8 @@
-
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import './App.css';
 import { GlobalHeader } from './components/GlobalHeader';
+import { PUBLIC_ROUTES } from './constants/routes';
 
 // Import pages
 import Index from './pages/Index';
@@ -37,6 +37,14 @@ const queryClient = new QueryClient({
   },
 });
 
+// Conditional Footer component that only appears on public routes
+const ConditionalFooter = () => {
+  const location = useLocation();
+  const isPublicRoute = PUBLIC_ROUTES.includes(location.pathname as any);
+  
+  return isPublicRoute ? <Footer /> : null;
+};
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -68,10 +76,7 @@ function App() {
                 </Route>
               </Routes>
             </div>
-            <Footer />
-            <div className="md:hidden">
-              <MobileNavigationLink />
-            </div>
+            <ConditionalFooter />
             <Toaster />
           </div>
         </AuthProvider>

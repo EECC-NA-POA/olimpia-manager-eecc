@@ -9,7 +9,7 @@ import { getNavigationItems } from "./footer/navigation-items";
 import SocialLinks from "./footer/SocialLinks";
 import MobileNavigation from "./footer/MobileNavigation";
 
-const Footer = () => {
+export const Footer = () => {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -85,7 +85,7 @@ const Footer = () => {
           onLogout={handleLogout}
         />
       )}
-      {/* Always render the standard footer, even on the index page */}
+      {/* Always render the standard footer */}
       <footer className="w-full bg-white/80 backdrop-blur-sm border-t py-4 px-4 mt-auto">
         <div className="container mx-auto flex justify-between items-center">
           <span className="text-xs text-gray-500">

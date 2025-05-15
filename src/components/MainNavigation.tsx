@@ -74,13 +74,13 @@ export function MainNavigation() {
               <Menu className="h-6 w-6" />
             </SidebarTrigger>
           </SidebarHeader>
-          <SidebarContent>
+          <SidebarContent className="overflow-y-auto flex-grow">
             <MenuItems collapsed={sidebarCollapsed} />
           </SidebarContent>
           <SidebarFooter 
-            className="mt-auto border-t border-olimpics-green-secondary p-4" 
+            className="border-t border-olimpics-green-secondary p-4" 
             style={{ 
-              zIndex: 100,
+              zIndex: 1000,
               position: 'sticky',
               bottom: 0,
               backgroundColor: 'var(--olimpics-green-primary, #009B40)'
@@ -90,20 +90,23 @@ export function MainNavigation() {
               className="flex flex-col gap-2 w-full" 
               style={{ 
                 position: 'relative', 
-                zIndex: 101
+                zIndex: 1001
               }}
             >
-              {/* Event Switcher with improved z-index */}
+              {/* Event Switcher */}
               <EventSwitcher userId={user.id} collapsed={sidebarCollapsed} />
               
-              {/* Logout button with improved z-index */}
+              {/* Logout button */}
               <button
                 onClick={handleLogout}
                 className="w-full rounded-lg p-4 flex items-center gap-3 
                   text-red-300 hover:text-red-100 hover:bg-red-500/20 
                   transition-all duration-200 text-lg font-medium"
                 title={sidebarCollapsed ? "Sair" : undefined}
-                style={{ zIndex: 101 }}
+                style={{ 
+                  zIndex: 1001,
+                  position: 'relative'
+                }}
               >
                 <LogOut className="h-7 w-7 flex-shrink-0" />
                 <span className={sidebarCollapsed ? 'hidden' : 'block'}>Sair</span>
