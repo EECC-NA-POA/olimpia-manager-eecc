@@ -1,3 +1,4 @@
+
 #root {
   margin: 0 auto;
   text-align: center;
@@ -52,7 +53,8 @@ body {
 
 /* Content positioning and transition */
 main {
-  transition: margin-left 0.2s ease-in-out !important;
+  transition: all 0.3s ease-in-out !important;
+  width: 100% !important;
 }
 
 /* Remove extra space above the sidebar */
@@ -69,21 +71,31 @@ main {
 .transition-all {
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 200ms;
+  transition-duration: 300ms;
 }
 
 /* Fix for sidebar width transition */
 .sidebar-transition {
-  transition: width 0.2s ease-in-out !important;
+  transition: width 0.3s ease-in-out !important;
 }
 
 /* Ensure the main content area expands properly */
-.group-data-\[state=collapsed\] + div {
-  margin-left: var(--sidebar-width-icon) !important;
+.group-data-\[state=collapsed\]:relative {
+  width: var(--sidebar-width-icon) !important;
 }
 
-.group-data-\[state=expanded\] + div {
-  margin-left: var(--sidebar-width) !important;
+.group-data-\[state=expanded\]:relative {
+  width: var(--sidebar-width) !important;
+}
+
+/* No margin for main content when sidebar is collapsed */
+.group-data-\[state=collapsed\] + main {
+  width: calc(100% - var(--sidebar-width-icon)) !important;
+}
+
+/* Main content margin when sidebar is expanded */
+.group-data-\[state=expanded\] + main {
+  width: calc(100% - var(--sidebar-width)) !important;
 }
 
 /* Fix scrolling behavior of sidebar contents */
