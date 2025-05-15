@@ -77,9 +77,22 @@ export function MainNavigation() {
           <SidebarContent className="overflow-y-auto flex-grow">
             <MenuItems collapsed={sidebarCollapsed} />
           </SidebarContent>
-          
-          <SidebarFooter className="sticky bottom-0 w-full bg-olimpics-green-primary border-t border-olimpics-green-secondary p-4">
-            <div className="flex flex-col gap-4">
+          <SidebarFooter 
+            className="border-t border-olimpics-green-secondary p-4" 
+            style={{ 
+              zIndex: 1000,
+              position: 'sticky',
+              bottom: 0,
+              backgroundColor: 'var(--olimpics-green-primary, #009B40)'
+            }}
+          >
+            <div 
+              className="flex flex-col gap-2 w-full" 
+              style={{ 
+                position: 'relative', 
+                zIndex: 1001
+              }}
+            >
               {/* Event Switcher */}
               <EventSwitcher userId={user.id} collapsed={sidebarCollapsed} />
               
@@ -90,6 +103,10 @@ export function MainNavigation() {
                   text-red-300 hover:text-red-100 hover:bg-red-500/20 
                   transition-all duration-200 text-lg font-medium"
                 title={sidebarCollapsed ? "Sair" : undefined}
+                style={{ 
+                  zIndex: 1001,
+                  position: 'relative'
+                }}
               >
                 <LogOut className="h-7 w-7 flex-shrink-0" />
                 <span className={sidebarCollapsed ? 'hidden' : 'block'}>Sair</span>

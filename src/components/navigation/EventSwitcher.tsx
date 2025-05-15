@@ -66,7 +66,7 @@ export function EventSwitcher({ userId, collapsed = false }: EventSwitcherProps)
             transition-all duration-200 text-lg font-medium"
           title={collapsed ? "Trocar Evento" : undefined}
           style={{ 
-            zIndex: 10000,
+            zIndex: 1001,
             position: 'relative'
           }}
         >
@@ -78,7 +78,7 @@ export function EventSwitcher({ userId, collapsed = false }: EventSwitcherProps)
         align="end" 
         className="w-56"
         style={{
-          zIndex: 10001,
+          zIndex: 2000,
           position: 'relative',
           backgroundColor: 'white'
         }}
