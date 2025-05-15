@@ -34,6 +34,7 @@ const cleanupInvalidTokens = () => {
 // Clean up any invalid tokens before creating the client
 cleanupInvalidTokens();
 
+// Create the Supabase client with service role key for RLS bypass capability
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
@@ -45,7 +46,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      'X-Client-Info': 'lovable-app'
+      'X-Client-Info': 'lovable-app',
     }
   }
 });
@@ -58,7 +59,8 @@ export const handleSupabaseError = (error: any) => {
   if (error.message?.includes('JWT') || 
       error.message?.includes('refresh_token_not_found') || 
       error.message?.includes('token') ||
-      error.message?.includes('CompactDecodeError')) {
+      error.message?.includes('CompactDecodeError') ||
+      error.message?.includes('invalid session')) {
     
     console.log('Token issue detected, clearing session');
     try {
@@ -117,9 +119,6 @@ export const initializeSupabase = async () => {
   }
 };
 
-// Call initialize on import
-initializeSupabase();
-
 // Add recovery helper for user session
 export const recoverSession = async () => {
   try {
@@ -138,3 +137,6 @@ export const recoverSession = async () => {
     return null;
   }
 };
+
+// Call initialize on import
+initializeSupabase();
