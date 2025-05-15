@@ -44,7 +44,7 @@ function App() {
         <AuthProvider>
           <div className="flex flex-col h-screen overflow-hidden">
             <GlobalHeader />
-            <div className="flex-grow overflow-hidden">
+            <div className="flex-grow overflow-hidden pt-16"> {/* Added pt-16 for header height */}
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
