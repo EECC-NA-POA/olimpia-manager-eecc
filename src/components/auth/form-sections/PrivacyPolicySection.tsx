@@ -5,10 +5,9 @@ import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/f
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import ReactMarkdown from 'react-markdown';
 import { Loader2 } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
+import { supabase } from '@/lib/supabase';
 import remarkGfm from 'remark-gfm';
 import { toast } from "sonner";
 
@@ -26,8 +25,16 @@ export const PrivacyPolicySection = ({ form }: PrivacyPolicySectionProps) => {
   const fetchPrivacyPolicy = React.useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    setPolicyText(null); // Reset policy text when loading new content
+    
     try {
-      console.log('Fetching privacy policy directly...');
+      console.log('Fetching privacy policy...');
+      
+      // Before fetching, ensure we have a valid session or use anonymous access
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        console.log('No active session, using anonymous access');
+      }
       
       // Direct query to get the active privacy policy
       const { data, error: fetchError } = await supabase
@@ -41,19 +48,22 @@ export const PrivacyPolicySection = ({ form }: PrivacyPolicySectionProps) => {
       if (fetchError) {
         console.error('Error fetching privacy policy:', fetchError);
         setError(new Error(fetchError.message));
+        toast.error('Erro ao carregar política de privacidade. Tente novamente.');
         return;
       }
 
       if (!data) {
+        console.log('No active privacy policy found');
         setError(new Error('Nenhuma política de privacidade ativa encontrada.'));
         return;
       }
 
-      console.log('Privacy policy fetched successfully:', data);
+      console.log('Privacy policy fetched successfully');
       setPolicyText(data.termo_texto);
     } catch (err) {
       console.error('Unexpected error fetching privacy policy:', err);
       setError(err instanceof Error ? err : new Error('Erro desconhecido ao buscar política de privacidade'));
+      toast.error('Erro ao carregar política de privacidade. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
@@ -62,6 +72,11 @@ export const PrivacyPolicySection = ({ form }: PrivacyPolicySectionProps) => {
   // Open dialog and fetch policy
   const handleOpenDialog = () => {
     setDialogOpen(true);
+    fetchPrivacyPolicy();
+  };
+
+  // Retry fetching if there was an error
+  const handleRetry = () => {
     fetchPrivacyPolicy();
   };
 
@@ -106,8 +121,16 @@ export const PrivacyPolicySection = ({ form }: PrivacyPolicySectionProps) => {
                 <Loader2 className="h-6 w-6 animate-spin" />
               </div>
             ) : error ? (
-              <div className="text-center py-8 text-red-500">
-                {error.message || 'Erro ao carregar política de privacidade. Por favor, tente novamente.'}
+              <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                <p className="text-center text-red-500">
+                  {error.message || 'Erro ao carregar política de privacidade.'}
+                </p>
+                <button
+                  onClick={handleRetry}
+                  className="px-4 py-2 bg-olimpics-green-primary text-white rounded-md hover:bg-olimpics-green-secondary"
+                >
+                  Tentar Novamente
+                </button>
               </div>
             ) : policyText ? (
               <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-a:text-olimpics-green-primary prose-a:no-underline hover:prose-a:underline prose-p:text-muted-foreground prose-li:text-muted-foreground prose-headings:mb-4 prose-p:mb-4 prose-ul:my-4 prose-li:my-1">

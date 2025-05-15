@@ -24,9 +24,17 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 export const handleSupabaseError = (error: any) => {
   console.error('Supabase error:', error);
   
-  if (error.message?.includes('refresh_token_not_found')) {
-    console.log('Refresh token not found, clearing session');
-    supabase.auth.signOut();
+  if (error.message?.includes('refresh_token_not_found') || error.message?.includes('JWT')) {
+    console.log('Token issue detected, clearing session');
+    try {
+      // Try to clear the session properly
+      supabase.auth.signOut();
+    } catch (e) {
+      console.error('Error during signout:', e);
+    }
+    
+    // Remove the token from localStorage directly as a fallback
+    localStorage.removeItem('olimpics_auth_token');
     return 'Sua sessão expirou. Por favor, faça login novamente.';
   }
   
@@ -38,10 +46,6 @@ export const handleSupabaseError = (error: any) => {
     return 'Por favor, confirme seu email antes de fazer login.';
   }
   
-  if (error.message?.includes('JWT')) {
-    return 'Sessão expirada. Por favor, faça login novamente.';
-  }
-  
   if (error.message?.includes('network')) {
     return 'Erro de conexão. Verifique sua internet.';
   }
@@ -49,22 +53,27 @@ export const handleSupabaseError = (error: any) => {
   return error.message || 'Ocorreu um erro inesperado.';
 };
 
-// Initialize Supabase auth state
+// Initialize Supabase auth state with better error handling
 export const initializeSupabase = async () => {
   try {
-    // Clear any potentially corrupted session data on initialization
-    const item = localStorage.getItem('olimpics_auth_token');
-    if (item) {
-      try {
-        const parsed = JSON.parse(item);
-        if (!parsed || !parsed.access_token || typeof parsed.access_token !== 'string') {
-          console.log('Invalid auth token format found, clearing session');
+    // Check for and clean up any potentially corrupted tokens
+    try {
+      const item = localStorage.getItem('olimpics_auth_token');
+      if (item) {
+        try {
+          const parsed = JSON.parse(item);
+          if (!parsed || !parsed.access_token || typeof parsed.access_token !== 'string') {
+            console.log('Invalid auth token format found, clearing session');
+            localStorage.removeItem('olimpics_auth_token');
+          }
+        } catch (e) {
+          // If we can't parse the token, it's invalid
+          console.error('Error parsing auth token, clearing session', e);
           localStorage.removeItem('olimpics_auth_token');
         }
-      } catch (e) {
-        console.error('Error parsing auth token, clearing session', e);
-        localStorage.removeItem('olimpics_auth_token');
       }
+    } catch (e) {
+      console.error('Error checking local storage:', e);
     }
     
     // Try to get the session
@@ -72,6 +81,7 @@ export const initializeSupabase = async () => {
     if (error) {
       console.error('Error getting session:', error);
       await supabase.auth.signOut();
+      localStorage.removeItem('olimpics_auth_token');
     }
   } catch (error) {
     console.error('Error initializing Supabase:', error);
