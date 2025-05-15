@@ -51,7 +51,7 @@ export default function AthleteProfile({ profile, isPublicUser }: AthleteProfile
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full">
       {!isPublicUser && (
         <Alert className="bg-olimpics-orange-primary/10 border-olimpics-orange-primary text-olimpics-text">
           <Info className="h-5 w-5 text-olimpics-orange-primary" />
@@ -61,9 +61,9 @@ export default function AthleteProfile({ profile, isPublicUser }: AthleteProfile
         </Alert>
       )}
 
-      <Card>
+      <Card className="w-full">
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="card-grid">
             <div>
               <ProfileImage 
                 gender={profile.genero}
@@ -107,7 +107,7 @@ export default function AthleteProfile({ profile, isPublicUser }: AthleteProfile
         <DependentsTable userId={profile.id} eventId={currentEventId} />
       )}
 
-      <div className="mt-6">
+      <div className="mt-6 w-full">
         <RegistrationFees 
           eventId={currentEventId}
           userProfileId={profile.papeis?.[0]?.id}

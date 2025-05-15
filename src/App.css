@@ -1,8 +1,8 @@
 
-
 #root {
   margin: 0 auto;
   text-align: center;
+  width: 100%;
 }
 
 /* Add padding to body content to account for fixed header */
@@ -10,17 +10,29 @@ body {
   padding-top: 64px; /* 4rem / 16px = 64px, matches the header height */
 }
 
-/* Add responsive padding for content */
-@media (max-width: 768px) {
-  .content-padding {
-    padding-top: 4rem; /* Adjust for smaller screens */
+/* Content container that adapts to screen size */
+.content-container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Responsive padding for different screen sizes */
+@media (min-width: 640px) {
+  .content-container {
+    padding: 0 1.5rem;
   }
 }
 
-/* Ensure content doesn't overlap with the mobile navigation */
-@media (max-width: 768px) {
-  .pb-16 {
-    padding-bottom: 4rem;
+@media (min-width: 1024px) {
+  .content-container {
+    padding: 0 2rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .content-container {
+    padding: 0 4rem;
   }
 }
 
@@ -31,80 +43,60 @@ body {
   overflow: hidden !important;
 }
 
-/* Ensure sidebar takes full height and is fixed in position */
-[data-sidebar="sidebar"] {
-  height: calc(100vh - 64px) !important; /* Subtract header height */
-  margin-top: 0 !important;
-  position: sticky !important;
-  top: 64px !important; /* Offset by header height */
-  left: 0 !important;
-  overflow-y: auto !important;
-  transition: width 0.3s ease-in-out !important;
-}
-
 /* Fix sidebar rail and content positioning */
 [data-collapsible="icon"] {
   width: var(--sidebar-width-icon) !important;
   min-width: var(--sidebar-width-icon) !important;
 }
 
-/* Expand collapsed sidebar width */
-.group-data-\[collapsible=icon\]:w-\[--sidebar-width-icon\] {
-  width: var(--sidebar-width-icon) !important;
-}
-
-/* Content positioning and transition */
+/* Main content transition and positioning */
 main {
   transition: all 0.3s ease-in-out !important;
   width: 100% !important;
+  max-width: 100% !important;
 }
 
-/* Remove extra space above the sidebar */
-.fixed.inset-y-0 {
-  top: 64px !important; /* Adjust for header height */
-}
-
-/* Adjust icon display in collapsed state */
-.group-data-\[collapsible=icon\]:p-0 {
-  padding: 0.5rem !important;
-}
-
-/* Proper transition for sidebar and main content */
-.transition-all {
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 300ms;
-}
-
-/* Fix for sidebar width transition */
-.sidebar-transition {
-  transition: width 0.3s ease-in-out !important;
+/* Mobile sidebar adjustments */
+@media (max-width: 768px) {
+  [data-sidebar="sidebar"] {
+    position: fixed !important;
+    z-index: 40 !important;
+  }
 }
 
 /* Ensure the main content area expands properly */
-.group-data-\[state=collapsed\]:relative {
-  width: var(--sidebar-width-icon) !important;
+.sidebar-collapsed main {
+  margin-left: 70px !important;
+  width: calc(100% - 70px) !important;
+  transition: all 0.3s ease-in-out !important;
 }
 
-.group-data-\[state=expanded\]:relative {
-  width: var(--sidebar-width) !important;
+.sidebar-expanded main {
+  margin-left: 240px !important;
+  width: calc(100% - 240px) !important;
+  transition: all 0.3s ease-in-out !important;
 }
 
-/* Main content adjustments when sidebar is collapsed/expanded */
-.group-data-\[state=collapsed\] + main {
-  width: calc(100% - var(--sidebar-width-icon)) !important;
-  margin-left: var(--sidebar-width-icon) !important;
+/* Responsive card layouts */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
 }
 
-.group-data-\[state=expanded\] + main {
-  width: calc(100% - var(--sidebar-width)) !important;
-  margin-left: var(--sidebar-width) !important;
+@media (min-width: 1280px) {
+  .card-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+  }
 }
 
-/* Fix scrolling behavior of sidebar contents */
-[data-sidebar="content"] {
-  overflow-y: auto !important;
-  flex-grow: 1 !important;
+@media (min-width: 1536px) {
+  .card-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2.5rem;
+  }
 }
 
 /* Footer styling to ensure it stays at the bottom */
@@ -113,30 +105,51 @@ footer {
   z-index: 10;
 }
 
-/* Mobile sidebar adjustments */
-@media (max-width: 768px) {
-  .mobile-sidebar-collapsed {
-    width: var(--sidebar-width-icon) !important;
-  }
-  
-  .mobile-sidebar-expanded {
-    width: var(--sidebar-width) !important;
-  }
-  
-  [data-sidebar="sidebar"] {
-    position: fixed !important;
-  }
-}
-
-/* Fix for collapsed sidebar background in mobile */
-[data-mobile="true"] {
-  width: var(--sidebar-width) !important;
-}
-
 /* Ensure sidebar background stretches properly */
-.bg-sidebar-container {
-  height: 100%;
-  width: 100%;
+.sidebar-container {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  height: calc(100vh - 64px);
+  background-color: #009B40;
+  z-index: 40;
   transition: width 0.3s ease-in-out;
 }
 
+.sidebar-collapsed .sidebar-container {
+  width: 70px;
+}
+
+.sidebar-expanded .sidebar-container {
+  width: 240px;
+}
+
+/* Mobile sidebar */
+@media (max-width: 768px) {
+  .sidebar-container.mobile {
+    width: 0;
+    overflow: hidden;
+  }
+  
+  .sidebar-container.mobile.open {
+    width: 240px;
+  }
+  
+  .mobile-overlay {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 30;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease-in-out;
+  }
+  
+  .mobile-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+}

@@ -19,16 +19,18 @@ import { EventSwitcher } from './navigation/EventSwitcher';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 export function MainNavigation() {
   const navigate = useNavigate();
   const { user, roles, signOut } = useNavigation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
 
   // Handle window resize
   useEffect(() => {
-    if (isMobile && !sidebarCollapsed) {
+    if (isMobile && !mobileMenuOpen) {
       setSidebarCollapsed(true);
     }
   }, [isMobile]);
@@ -47,7 +49,11 @@ export function MainNavigation() {
   };
 
   const toggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
+    if (isMobile) {
+      setMobileMenuOpen(!mobileMenuOpen);
+    } else {
+      setSidebarCollapsed(!sidebarCollapsed);
+    }
   };
 
   if (!user) {
@@ -58,23 +64,44 @@ export function MainNavigation() {
     );
   }
 
+  const sidebarClass = isMobile
+    ? ""
+    : sidebarCollapsed
+    ? "sidebar-collapsed"
+    : "sidebar-expanded";
+
   return (
     <SidebarProvider defaultOpen={!sidebarCollapsed}>
-      <div className="flex min-h-screen w-full">
+      <div className={`flex min-h-screen w-full ${sidebarClass}`}>
+        {/* Fixed sidebar background container */}
+        <div 
+          className={cn(
+            "sidebar-container", 
+            isMobile ? "mobile" : "", 
+            isMobile && mobileMenuOpen ? "open" : ""
+          )}
+        />
+
+        {/* Mobile overlay */}
+        {isMobile && (
+          <div 
+            className={`mobile-overlay ${mobileMenuOpen ? 'active' : ''}`}
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+
         <Sidebar 
-          className={`bg-olimpics-green-primary text-white z-40 sidebar-transition ${
-            isMobile ? (sidebarCollapsed ? 'mobile-sidebar-collapsed' : 'mobile-sidebar-expanded') : ''
-          }`}
+          className="bg-transparent text-white z-50"
           collapsible={sidebarCollapsed ? "icon" : "none"}
           style={{
             "--sidebar-width": "240px",
             "--sidebar-width-icon": "70px",
           } as React.CSSProperties}
         >
-          <div className="bg-sidebar-container">
-            <SidebarHeader className="relative p-6 border-b border-olimpics-green-secondary">
-              <div className="flex items-center justify-between">
-                <h2 className={`text-xl font-bold ${sidebarCollapsed ? 'hidden' : 'block'}`}>Menu</h2>
+          <SidebarHeader className="relative p-6 border-b border-olimpics-green-secondary">
+            <div className="flex items-center justify-between">
+              <h2 className={`text-xl font-bold ${sidebarCollapsed ? 'hidden' : 'block'}`}>Menu</h2>
+              {!isMobile && (
                 <button 
                   onClick={toggleSidebar}
                   className="p-2 rounded-full hover:bg-olimpics-green-secondary/20 transition-colors text-white"
@@ -82,35 +109,40 @@ export function MainNavigation() {
                 >
                   {sidebarCollapsed ? <ChevronRight className="h-6 w-6" /> : <ChevronLeft className="h-6 w-6" />}
                 </button>
-              </div>
-              <SidebarTrigger className="absolute right-4 top-1/2 -translate-y-1/2 md:hidden text-white hover:text-olimpics-green-secondary">
-                <Menu className="h-6 w-6" />
-              </SidebarTrigger>
-            </SidebarHeader>
-            <SidebarContent>
-              <MenuItems collapsed={sidebarCollapsed} />
-            </SidebarContent>
-            <SidebarFooter className="mt-auto border-t border-olimpics-green-secondary p-4">
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <EventSwitcher userId={user.id} collapsed={sidebarCollapsed} />
-                  <SidebarMenuButton
-                    onClick={handleLogout}
-                    className="w-full rounded-lg p-4 flex items-center gap-3 
-                      text-red-300 hover:text-red-100 hover:bg-red-500/20 
-                      transition-all duration-200 text-lg font-medium"
-                    tooltip="Sair"
-                  >
-                    <LogOut className="h-7 w-7 flex-shrink-0" />
-                    <span className={`whitespace-nowrap ${sidebarCollapsed ? 'hidden' : 'block'}`}>Sair</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarFooter>
-          </div>
+              )}
+            </div>
+            <SidebarTrigger 
+              className="absolute right-4 top-1/2 -translate-y-1/2 md:hidden text-white hover:text-olimpics-green-secondary"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              <Menu className="h-6 w-6" />
+            </SidebarTrigger>
+          </SidebarHeader>
+          <SidebarContent>
+            <MenuItems collapsed={sidebarCollapsed} />
+          </SidebarContent>
+          <SidebarFooter className="mt-auto border-t border-olimpics-green-secondary p-4">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <EventSwitcher userId={user.id} collapsed={sidebarCollapsed} />
+                <SidebarMenuButton
+                  onClick={handleLogout}
+                  className="w-full rounded-lg p-4 flex items-center gap-3 
+                    text-red-300 hover:text-red-100 hover:bg-red-500/20 
+                    transition-all duration-200 text-lg font-medium"
+                  tooltip="Sair"
+                >
+                  <LogOut className="h-7 w-7 flex-shrink-0" />
+                  <span className={`whitespace-nowrap ${sidebarCollapsed ? 'hidden' : 'block'}`}>Sair</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
         </Sidebar>
         <main className="flex-1 overflow-auto p-6 bg-olimpics-background transition-all duration-300">
-          <Outlet />
+          <div className="content-container">
+            <Outlet />
+          </div>
         </main>
       </div>
     </SidebarProvider>
