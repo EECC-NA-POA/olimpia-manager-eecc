@@ -1,9 +1,6 @@
-
 #root {
   margin: 0 auto;
   text-align: center;
-  width: 100%;
-  max-width: 100%;
 }
 
 /* Add padding to body content to account for fixed header */
@@ -11,99 +8,92 @@ body {
   padding-top: 64px; /* 4rem / 16px = 64px, matches the header height */
 }
 
-/* Content container that adapts to screen size */
-.content-container {
-  width: 100%;
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 0;
-}
-
-/* Responsive container width for different screen sizes */
-@media (min-width: 640px) {
-  .content-container {
-    padding: 0 0.5rem;
+/* Add responsive padding for content */
+@media (max-width: 768px) {
+  .content-padding {
+    padding-top: 4rem; /* Adjust for smaller screens */
   }
 }
 
-@media (min-width: 1024px) {
-  .content-container {
-    padding: 0 1rem;
+/* Ensure content doesn't overlap with the mobile navigation */
+@media (max-width: 768px) {
+  .pb-16 {
+    padding-bottom: 4rem;
   }
 }
 
-@media (min-width: 1280px) {
-  .container {
-    max-width: 100%;
-  }
-}
-
-/* Fix for sidebar positioning */
+/* Fix for sidebar positioning and height */
 .group\/sidebar-wrapper {
   margin-top: 0 !important;
   height: calc(100vh - 64px) !important; /* Subtract header height */
   overflow: hidden !important;
 }
 
-/* Fix sidebar rail and content positioning */
+/* Ensure sidebar takes full height and is fixed in position */
 [data-sidebar="sidebar"] {
-  z-index: 40 !important;
-  background-color: transparent !important;
+  height: calc(100vh - 64px) !important; /* Subtract header height */
+  margin-top: 0 !important;
+  position: sticky !important;
+  top: 64px !important; /* Offset by header height */
+  left: 0 !important;
+  overflow-y: auto !important;
 }
 
+/* Fix sidebar rail and content positioning */
 [data-collapsible="icon"] {
   width: var(--sidebar-width-icon) !important;
   min-width: var(--sidebar-width-icon) !important;
-  background-color: transparent !important;
 }
 
-/* Mobile sidebar adjustments */
-@media (max-width: 768px) {
-  [data-sidebar="sidebar"] {
-    position: fixed !important;
-    background-color: transparent !important;
-  }
+/* Expand collapsed sidebar width */
+.group-data-\[collapsible=icon\]:w-\[--sidebar-width-icon\] {
+  width: var(--sidebar-width-icon) !important;
+}
+
+/* Content positioning and transition */
+main {
+  transition: margin-left 0.2s ease-in-out !important;
+}
+
+/* Remove extra space above the sidebar */
+.fixed.inset-y-0 {
+  top: 64px !important; /* Adjust for header height */
+}
+
+/* Adjust icon display in collapsed state */
+.group-data-\[collapsible=icon\]:p-0 {
+  padding: 0.5rem !important;
+}
+
+/* Proper transition for sidebar and main content */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* Fix for sidebar width transition */
+.sidebar-transition {
+  transition: width 0.2s ease-in-out !important;
+}
+
+/* Ensure the main content area expands properly */
+.group-data-\[state=collapsed\] + div {
+  margin-left: var(--sidebar-width-icon) !important;
+}
+
+.group-data-\[state=expanded\] + div {
+  margin-left: var(--sidebar-width) !important;
+}
+
+/* Fix scrolling behavior of sidebar contents */
+[data-sidebar="content"] {
+  overflow-y: auto !important;
+  flex-grow: 1 !important;
 }
 
 /* Footer styling to ensure it stays at the bottom */
 footer {
   margin-top: auto;
   z-index: 10;
-}
-
-/* Responsive card layouts with improved spacing */
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1rem;
-  width: 100%;
-}
-
-@media (min-width: 1024px) {
-  .card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.5rem;
-  }
-}
-
-@media (min-width: 1280px) {
-  .card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 2rem;
-  }
-}
-
-/* Make sure the sidebar menu buttons style correctly */
-[data-sidebar="menu-button"] {
-  transition: all 0.2s ease-in-out !important;
-}
-
-[data-sidebar="menu-button"][data-active="true"] {
-  background-color: rgba(255, 255, 255, 0.2) !important;
-  font-weight: 500 !important;
-}
-
-/* Fix for tooltip positioning */
-[data-radix-popper-content-wrapper] {
-  z-index: 50 !important;
 }

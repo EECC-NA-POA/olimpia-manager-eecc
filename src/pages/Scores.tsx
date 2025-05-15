@@ -15,7 +15,7 @@ export default function Scores() {
   }
 
   return (
-    <div className="w-full space-y-8">
+    <div className="container mx-auto py-6 space-y-8">
       <h1 className="text-2xl font-bold text-olimpics-green-primary">
         Minhas Pontuações
       </h1>
