@@ -81,6 +81,8 @@ export function MainNavigation() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <EventSwitcher userId={user.id} collapsed={sidebarCollapsed} />
+              </SidebarMenuItem>
+              <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={handleLogout}
                   className="w-full rounded-lg p-4 flex items-center gap-3 
@@ -89,7 +91,7 @@ export function MainNavigation() {
                   tooltip="Sair"
                 >
                   <LogOut className="h-7 w-7 flex-shrink-0" />
-                  <span className={`whitespace-nowrap ${sidebarCollapsed ? 'hidden' : 'block'}`}>Sair</span>
+                  <span className={sidebarCollapsed ? 'hidden' : 'block'}>Sair</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

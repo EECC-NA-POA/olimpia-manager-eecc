@@ -100,7 +100,7 @@ main {
   max-height: calc(100vh - 180px) !important; /* Adjust based on header and footer height */
 }
 
-/* Footer styling to ensure it stays at the bottom */
+/* Footer styling to ensure it stays at the bottom and buttons are visible */
 footer {
   margin-top: auto;
   z-index: 10;
@@ -114,6 +114,14 @@ footer {
 /* Fix for double scrollbars */
 .flex.min-h-screen.w-full {
   overflow: hidden;
+}
+
+/* Ensure the sidebar footer is always visible */
+[data-sidebar="footer"] {
+  display: flex !important;
+  width: 100% !important;
+  z-index: 5;
+  background-color: var(--olimpics-green-primary, #009B40) !important;
 }
 
 /* Fix for mobile view */

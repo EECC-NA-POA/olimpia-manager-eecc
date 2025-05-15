@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SidebarMenuItem, SidebarMenuButton } from '../ui/sidebar';
+import { SidebarMenuButton } from '../ui/sidebar';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 
@@ -68,7 +68,7 @@ export function EventSwitcher({ userId, collapsed = false }: EventSwitcherProps)
           tooltip={collapsed ? "Trocar Evento" : undefined}
         >
           <ArrowLeftRight className="h-7 w-7 flex-shrink-0" />
-          <span className={`whitespace-nowrap ${collapsed ? 'hidden' : 'block'}`}>Trocar Evento</span>
+          <span className={collapsed ? 'hidden' : 'block'}>Trocar Evento</span>
         </SidebarMenuButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
