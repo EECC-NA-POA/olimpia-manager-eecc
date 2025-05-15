@@ -78,35 +78,24 @@ export function MainNavigation() {
             <MenuItems collapsed={sidebarCollapsed} />
           </SidebarContent>
           
-          {/* Adjusted footer with improved positioning and z-index */}
-          <div 
-            className="sticky bottom-0 w-full bg-olimpics-green-primary border-t border-olimpics-green-secondary"
-            style={{
-              zIndex: 9999,
-              paddingBottom: '12px'
-            }}
-          >
-            <div className="flex flex-col gap-4 p-4">
+          <SidebarFooter className="sticky bottom-0 w-full bg-olimpics-green-primary border-t border-olimpics-green-secondary p-4">
+            <div className="flex flex-col gap-4">
               {/* Event Switcher */}
               <EventSwitcher userId={user.id} collapsed={sidebarCollapsed} />
               
-              {/* Logout button with extra padding and margin at bottom for visibility */}
+              {/* Logout button */}
               <button
                 onClick={handleLogout}
-                className="w-full rounded-lg p-4 mb-2 flex items-center gap-3 
+                className="w-full rounded-lg p-4 flex items-center gap-3 
                   text-red-300 hover:text-red-100 hover:bg-red-500/20 
                   transition-all duration-200 text-lg font-medium"
                 title={sidebarCollapsed ? "Sair" : undefined}
-                style={{ 
-                  zIndex: 10000,
-                  position: 'relative'
-                }}
               >
                 <LogOut className="h-7 w-7 flex-shrink-0" />
                 <span className={sidebarCollapsed ? 'hidden' : 'block'}>Sair</span>
               </button>
             </div>
-          </div>
+          </SidebarFooter>
         </Sidebar>
         <main className="flex-1 overflow-auto p-6 bg-olimpics-background transition-all duration-200">
           <Outlet />

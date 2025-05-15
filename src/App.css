@@ -101,41 +101,16 @@ main {
 }
 
 /* Footer styling to ensure it stays at the bottom and buttons are visible */
-footer {
-  margin-top: auto;
-  z-index: 10;
-}
-
-/* Ensure all sidebar components maintain green background */
-[data-sidebar="sidebar"] {
-  background-color: var(--olimpics-green-primary, #009B40) !important;
-}
-
-/* Fix for double scrollbars */
-.flex.min-h-screen.w-full {
-  overflow: hidden;
-}
-
-/* Custom styles for the sidebar footer to ensure buttons are visible */
-.sidebar-footer-container {
+[data-sidebar="footer"] {
   position: sticky !important;
   bottom: 0 !important;
   width: 100% !important;
   padding: 1rem !important;
-  z-index: 10000 !important;
+  z-index: 9999 !important;
   background-color: var(--olimpics-green-primary, #009B40) !important;
   margin-top: auto !important;
-}
-
-/* Ensure the sidebar footer is always visible and positioned correctly */
-[data-sidebar="footer"] {
   display: flex !important;
-  width: 100% !important;
-  z-index: 10000 !important;
-  background-color: var(--olimpics-green-primary, #009B40) !important;
-  padding: 1rem !important;
-  position: sticky !important;
-  bottom: 0 !important;
+  flex-direction: column !important;
 }
 
 /* Make sure buttons in sidebar footer are visible */
@@ -143,8 +118,8 @@ footer {
   width: 100% !important;
   display: flex !important;
   align-items: center !important;
-  margin-bottom: 0.5rem;
-  z-index: 10001 !important;
+  margin-bottom: 0.5rem !important;
+  z-index: 10000 !important;
 }
 
 /* Style dropdown content to be visible */
@@ -156,5 +131,10 @@ footer {
 @media (max-width: 768px) {
   main {
     height: calc(100vh - 104px) !important; /* Adjust for mobile header + footer */
+  }
+  
+  /* Ensure proper navigation in mobile view */
+  [data-sidebar="sidebar"] {
+    z-index: 50 !important;
   }
 }
