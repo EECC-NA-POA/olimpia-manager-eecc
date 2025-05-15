@@ -38,7 +38,7 @@ body {
   }
 }
 
-/* Fix for sidebar positioning and height */
+/* Fix for sidebar positioning */
 .group\/sidebar-wrapper {
   margin-top: 0 !important;
   height: calc(100vh - 64px) !important; /* Subtract header height */
@@ -46,37 +46,27 @@ body {
 }
 
 /* Fix sidebar rail and content positioning */
+[data-sidebar="sidebar"] {
+  z-index: 40 !important;
+  background-color: transparent !important;
+}
+
 [data-collapsible="icon"] {
   width: var(--sidebar-width-icon) !important;
   min-width: var(--sidebar-width-icon) !important;
-}
-
-/* Main content transition and positioning */
-main {
-  transition: all 0.3s ease-in-out !important;
-  width: 100% !important;
-  max-width: 100% !important;
 }
 
 /* Mobile sidebar adjustments */
 @media (max-width: 768px) {
   [data-sidebar="sidebar"] {
     position: fixed !important;
-    z-index: 40 !important;
   }
 }
 
-/* Ensure the main content area expands properly */
-.sidebar-collapsed main {
-  margin-left: 70px !important;
-  width: calc(100% - 70px) !important;
-  transition: all 0.3s ease-in-out !important;
-}
-
-.sidebar-expanded main {
-  margin-left: 240px !important;
-  width: calc(100% - 240px) !important;
-  transition: all 0.3s ease-in-out !important;
+/* Footer styling to ensure it stays at the bottom */
+footer {
+  margin-top: auto;
+  z-index: 10;
 }
 
 /* Responsive card layouts with improved spacing */
@@ -101,57 +91,17 @@ main {
   }
 }
 
-/* Footer styling to ensure it stays at the bottom */
-footer {
-  margin-top: auto;
-  z-index: 10;
+/* Make sure the sidebar menu buttons style correctly */
+[data-sidebar="menu-button"] {
+  transition: all 0.2s ease-in-out !important;
 }
 
-/* Ensure sidebar background stretches properly */
-.sidebar-container {
-  position: fixed;
-  top: 64px;
-  left: 0;
-  height: calc(100vh - 64px);
-  background-color: #009B40;
-  z-index: 40;
-  transition: width 0.3s ease-in-out;
+[data-sidebar="menu-button"][data-active="true"] {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  font-weight: 500 !important;
 }
 
-.sidebar-collapsed .sidebar-container {
-  width: 70px;
-}
-
-.sidebar-expanded .sidebar-container {
-  width: 240px;
-}
-
-/* Mobile sidebar */
-@media (max-width: 768px) {
-  .sidebar-container.mobile {
-    width: 0;
-    overflow: hidden;
-  }
-  
-  .sidebar-container.mobile.open {
-    width: 240px;
-  }
-  
-  .mobile-overlay {
-    position: fixed;
-    top: 64px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 30;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease-in-out;
-  }
-  
-  .mobile-overlay.active {
-    opacity: 1;
-    pointer-events: all;
-  }
+/* Fix for tooltip positioning */
+[data-radix-popper-content-wrapper] {
+  z-index: 50 !important;
 }

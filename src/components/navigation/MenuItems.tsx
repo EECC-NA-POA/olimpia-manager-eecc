@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
-import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon } from 'lucide-react';
+import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 
 export const MenuItems = ({ collapsed = false }) => {
@@ -25,7 +25,7 @@ export const MenuItems = ({ collapsed = false }) => {
     menuItems.push({
       path: "/athlete-profile",
       label: "Perfil",
-      icon: <User className="h-7 w-7" />,
+      icon: <User className="h-5 w-5" />,
       tooltip: "Perfil do Atleta"
     });
   }
@@ -34,7 +34,7 @@ export const MenuItems = ({ collapsed = false }) => {
   menuItems.push({
     path: "/cronograma",
     label: "Cronograma",
-    icon: <Calendar className="h-7 w-7" />,
+    icon: <Calendar className="h-5 w-5" />,
     tooltip: "Cronograma"
   });
   
@@ -42,7 +42,7 @@ export const MenuItems = ({ collapsed = false }) => {
   menuItems.push({
     path: "/athlete-registrations",
     label: "Minhas Inscrições",
-    icon: <ClipboardList className="h-7 w-7" />,
+    icon: <ClipboardList className="h-5 w-5" />,
     tooltip: "Minhas Inscrições"
   });
   
@@ -50,7 +50,7 @@ export const MenuItems = ({ collapsed = false }) => {
   menuItems.push({
     path: "/scores",
     label: "Pontuações",
-    icon: <Medal className="h-7 w-7" />,
+    icon: <Medal className="h-5 w-5" />,
     tooltip: "Pontuações"
   });
   
@@ -59,7 +59,7 @@ export const MenuItems = ({ collapsed = false }) => {
     menuItems.push({
       path: "/organizer-dashboard",
       label: "Organizador",
-      icon: <Users className="h-7 w-7" />,
+      icon: <Users className="h-5 w-5" />,
       tooltip: "Organizador"
     });
   }
@@ -69,7 +69,7 @@ export const MenuItems = ({ collapsed = false }) => {
     menuItems.push({
       path: "/delegation-dashboard",
       label: "Delegação",
-      icon: <Users className="h-7 w-7" />,
+      icon: <Users className="h-5 w-5" />,
       tooltip: "Delegação"
     });
   }
@@ -79,7 +79,7 @@ export const MenuItems = ({ collapsed = false }) => {
     menuItems.push({
       path: "/judge-dashboard",
       label: "Juiz",
-      icon: <Gavel className="h-7 w-7" />,
+      icon: <Gavel className="h-5 w-5" />,
       tooltip: "Juiz"
     });
   }
@@ -89,24 +89,26 @@ export const MenuItems = ({ collapsed = false }) => {
     menuItems.push({
       path: "/administration",
       label: "Administração",
-      icon: <Settings2 className="h-7 w-7" />,
+      icon: <Settings2 className="h-5 w-5" />,
       tooltip: "Administração"
     });
   }
 
   return (
-    <SidebarMenu className="flex flex-col gap-1 md:gap-2 items-start w-full px-2 py-2">
+    <SidebarMenu className="flex flex-col gap-1 w-full pt-2">
       {menuItems.map((item) => (
         <SidebarMenuItem key={item.path}>
           <SidebarMenuButton 
             asChild 
             isActive={location.pathname === item.path}
             tooltip={collapsed ? item.tooltip : undefined}
-            className="p-3 text-base hover:bg-olimpics-green-secondary/20"
+            className={`p-3 hover:bg-white/10 ${location.pathname === item.path ? 'bg-white/20' : ''}`}
           >
-            <Link to={item.path} className="w-full flex items-center text-base">
-              {React.cloneElement(item.icon, { className: "h-7 w-7 mr-3 flex-shrink-0" })}
-              <span className={collapsed ? 'hidden' : 'block text-lg'}>{item.label}</span>
+            <Link to={item.path} className="w-full flex items-center text-sm font-medium">
+              <span className="w-5 h-5 flex items-center justify-center mr-3">
+                {item.icon}
+              </span>
+              <span className={collapsed ? 'hidden' : 'block'}>{item.label}</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
