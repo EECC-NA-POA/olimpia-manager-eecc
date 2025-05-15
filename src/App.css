@@ -1,4 +1,5 @@
 
+
 #root {
   margin: 0 auto;
   text-align: center;
@@ -38,6 +39,7 @@ body {
   top: 64px !important; /* Offset by header height */
   left: 0 !important;
   overflow-y: auto !important;
+  transition: width 0.3s ease-in-out !important;
 }
 
 /* Fix sidebar rail and content positioning */
@@ -88,14 +90,15 @@ main {
   width: var(--sidebar-width) !important;
 }
 
-/* No margin for main content when sidebar is collapsed */
+/* Main content adjustments when sidebar is collapsed/expanded */
 .group-data-\[state=collapsed\] + main {
   width: calc(100% - var(--sidebar-width-icon)) !important;
+  margin-left: var(--sidebar-width-icon) !important;
 }
 
-/* Main content margin when sidebar is expanded */
 .group-data-\[state=expanded\] + main {
   width: calc(100% - var(--sidebar-width)) !important;
+  margin-left: var(--sidebar-width) !important;
 }
 
 /* Fix scrolling behavior of sidebar contents */
@@ -109,3 +112,31 @@ footer {
   margin-top: auto;
   z-index: 10;
 }
+
+/* Mobile sidebar adjustments */
+@media (max-width: 768px) {
+  .mobile-sidebar-collapsed {
+    width: var(--sidebar-width-icon) !important;
+  }
+  
+  .mobile-sidebar-expanded {
+    width: var(--sidebar-width) !important;
+  }
+  
+  [data-sidebar="sidebar"] {
+    position: fixed !important;
+  }
+}
+
+/* Fix for collapsed sidebar background in mobile */
+[data-mobile="true"] {
+  width: var(--sidebar-width) !important;
+}
+
+/* Ensure sidebar background stretches properly */
+.bg-sidebar-container {
+  height: 100%;
+  width: 100%;
+  transition: width 0.3s ease-in-out;
+}
+
