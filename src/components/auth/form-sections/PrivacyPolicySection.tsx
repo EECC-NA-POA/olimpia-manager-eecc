@@ -7,9 +7,39 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
-import { supabase } from '@/lib/supabase';
 import remarkGfm from 'remark-gfm';
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+
+// Use anonymous fetch instead of the Supabase client directly
+// to avoid JWT authentication issues
+const fetchPrivacyPolicyAnonymous = async (): Promise<string | null> => {
+  try {
+    // Use direct fetch to the API endpoint without authentication
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/termos_privacidade?ativo=eq.true&order=data_criacao.desc&limit=1`, {
+      method: 'GET',
+      headers: {
+        'apikey': import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || '',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API returned status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data || data.length === 0) {
+      return null;
+    }
+    
+    return data[0].termo_texto;
+  } catch (error) {
+    console.error('Error fetching privacy policy anonymously:', error);
+    throw error;
+  }
+};
 
 interface PrivacyPolicySectionProps {
   form: UseFormReturn<any>;
@@ -21,7 +51,7 @@ export const PrivacyPolicySection = ({ form }: PrivacyPolicySectionProps) => {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<Error | null>(null);
 
-  // Function to fetch the privacy policy directly when dialog opens
+  // Function to fetch the privacy policy safely
   const fetchPrivacyPolicy = React.useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -30,38 +60,19 @@ export const PrivacyPolicySection = ({ form }: PrivacyPolicySectionProps) => {
     try {
       console.log('Fetching privacy policy...');
       
-      // Before fetching, ensure we have a valid session or use anonymous access
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        console.log('No active session, using anonymous access');
-      }
+      // First try the anonymous fetch method
+      const policyText = await fetchPrivacyPolicyAnonymous();
       
-      // Direct query to get the active privacy policy
-      const { data, error: fetchError } = await supabase
-        .from('termos_privacidade')
-        .select('termo_texto')
-        .eq('ativo', true)
-        .order('data_criacao', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (fetchError) {
-        console.error('Error fetching privacy policy:', fetchError);
-        setError(new Error(fetchError.message));
-        toast.error('Erro ao carregar política de privacidade. Tente novamente.');
-        return;
-      }
-
-      if (!data) {
+      if (!policyText) {
         console.log('No active privacy policy found');
         setError(new Error('Nenhuma política de privacidade ativa encontrada.'));
         return;
       }
 
       console.log('Privacy policy fetched successfully');
-      setPolicyText(data.termo_texto);
+      setPolicyText(policyText);
     } catch (err) {
-      console.error('Unexpected error fetching privacy policy:', err);
+      console.error('Error fetching privacy policy:', err);
       setError(err instanceof Error ? err : new Error('Erro desconhecido ao buscar política de privacidade'));
       toast.error('Erro ao carregar política de privacidade. Tente novamente.');
     } finally {
@@ -125,12 +136,12 @@ export const PrivacyPolicySection = ({ form }: PrivacyPolicySectionProps) => {
                 <p className="text-center text-red-500">
                   {error.message || 'Erro ao carregar política de privacidade.'}
                 </p>
-                <button
+                <Button
                   onClick={handleRetry}
                   className="px-4 py-2 bg-olimpics-green-primary text-white rounded-md hover:bg-olimpics-green-secondary"
                 >
                   Tentar Novamente
-                </button>
+                </Button>
               </div>
             ) : policyText ? (
               <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-a:text-olimpics-green-primary prose-a:no-underline hover:prose-a:underline prose-p:text-muted-foreground prose-li:text-muted-foreground prose-headings:mb-4 prose-p:mb-4 prose-ul:my-4 prose-li:my-1">
