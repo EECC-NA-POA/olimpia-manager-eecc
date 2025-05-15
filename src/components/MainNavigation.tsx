@@ -102,12 +102,13 @@ export function MainNavigation() {
                 </button>
               )}
             </div>
-            <SidebarTrigger 
+            {/* Use Menu icon directly instead of SidebarTrigger */}
+            <button 
               className="absolute right-4 top-1/2 -translate-y-1/2 md:hidden text-white hover:text-white/80"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               <Menu className="h-6 w-6" />
-            </SidebarTrigger>
+            </button>
           </SidebarHeader>
           <SidebarContent>
             <MenuItems collapsed={sidebarCollapsed} />
