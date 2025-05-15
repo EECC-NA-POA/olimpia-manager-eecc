@@ -65,8 +65,8 @@ export function MainNavigation() {
   return (
     <SidebarProvider defaultOpen={!sidebarCollapsed}>
       <div className="flex min-h-screen w-full">
-        {/* Fixed sidebar background - now with transparent background when collapsed */}
-        <div className={`fixed top-[64px] left-0 h-[calc(100vh-64px)] bg-[#1e293b] transition-all duration-300 z-30 
+        {/* Fixed sidebar background - using the green color */}
+        <div className={`fixed top-[64px] left-0 h-[calc(100vh-64px)] bg-olimpics-green-primary transition-all duration-300 z-30 
           ${isMobile ? (mobileMenuOpen ? 'w-[240px]' : 'w-0') : (sidebarCollapsed ? 'w-0' : 'w-[240px]')}`} 
         />
 
