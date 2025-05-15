@@ -9,6 +9,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarTrigger,
 } from './ui/sidebar';
 import { ChevronLeft, ChevronRight, LogOut, Menu } from 'lucide-react';
 import { toast } from 'sonner';
