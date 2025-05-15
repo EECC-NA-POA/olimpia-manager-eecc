@@ -17,17 +17,31 @@ export const useRegisterForm = () => {
       console.log('Starting registration process...');
       setIsSubmitting(true);
 
-      // Get the latest privacy policy version
-      const { data: privacyPolicy, error: policyError } = await supabase
-        .from('termos_privacidade')
-        .select('*')
-        .eq('ativo', true)
-        .order('data_criacao', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (policyError || !privacyPolicy) {
-        console.error('Error fetching privacy policy:', policyError);
+      // Get the latest privacy policy version - with improved error handling
+      let privacyPolicy;
+      try {
+        const { data, error } = await supabase
+          .from('termos_privacidade')
+          .select('*')
+          .eq('ativo', true)
+          .order('data_criacao', { ascending: false })
+          .limit(1)
+          .single();
+          
+        if (error) {
+          console.error('Error fetching privacy policy:', error);
+          toast.error('Erro ao verificar política de privacidade. Tente novamente.');
+          return;
+        }
+        
+        if (!data) {
+          toast.error('Política de privacidade não encontrada. Por favor, contate o suporte.');
+          return;
+        }
+        
+        privacyPolicy = data;
+      } catch (err) {
+        console.error('Unexpected error fetching privacy policy:', err);
         toast.error('Erro ao verificar política de privacidade');
         return;
       }
@@ -65,7 +79,7 @@ export const useRegisterForm = () => {
       });
 
       if (signUpResult.error) {
-        console.error('Registration error occurred');
+        console.error('Registration error occurred:', signUpResult.error);
         toast.error('Erro ao realizar cadastro. Por favor, tente novamente.');
         return;
       }
@@ -98,7 +112,7 @@ export const useRegisterForm = () => {
       navigate('/event-selection');
 
     } catch (error: any) {
-      console.error('Registration process error occurred');
+      console.error('Registration process error occurred:', error);
       toast.error('Erro ao realizar cadastro. Por favor, tente novamente.');
     } finally {
       setIsSubmitting(false);

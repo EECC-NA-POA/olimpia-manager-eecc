@@ -49,17 +49,55 @@ export const handleSupabaseError = (error: any) => {
   return error.message || 'Ocorreu um erro inesperado.';
 };
 
-// Add session recovery helper
+// Initialize Supabase auth state
+export const initializeSupabase = async () => {
+  try {
+    // Clear any potentially corrupted session data on initialization
+    const item = localStorage.getItem('olimpics_auth_token');
+    if (item) {
+      try {
+        const parsed = JSON.parse(item);
+        if (!parsed || !parsed.access_token || typeof parsed.access_token !== 'string') {
+          console.log('Invalid auth token format found, clearing session');
+          localStorage.removeItem('olimpics_auth_token');
+        }
+      } catch (e) {
+        console.error('Error parsing auth token, clearing session', e);
+        localStorage.removeItem('olimpics_auth_token');
+      }
+    }
+    
+    // Try to get the session
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error('Error getting session:', error);
+      await supabase.auth.signOut();
+    }
+  } catch (error) {
+    console.error('Error initializing Supabase:', error);
+    // Safe cleanup
+    try {
+      await supabase.auth.signOut();
+      localStorage.removeItem('olimpics_auth_token');
+    } catch (e) {
+      console.error('Error during cleanup:', e);
+    }
+  }
+};
+
+// Call initialize on import
+initializeSupabase();
+
+// Add recovery helper for user session
 export const recoverSession = async () => {
   try {
     console.log('Attempting to recover session...');
+    await initializeSupabase(); // Make sure we're starting clean
+    
     const { data: { session }, error } = await supabase.auth.getSession();
     
     if (error) {
       console.error('Error recovering session:', error);
-      // Clear any existing invalid session data
-      await supabase.auth.signOut();
-      localStorage.removeItem('olimpics_auth_token');
       throw error;
     }
     
@@ -72,29 +110,6 @@ export const recoverSession = async () => {
     return null;
   } catch (error) {
     console.error('Error in session recovery:', error);
-    // Clear any existing invalid session data
-    await supabase.auth.signOut();
-    localStorage.removeItem('olimpics_auth_token');
     return null;
   }
 };
-
-// Add initialization check
-export const initializeSupabase = async () => {
-  try {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error || !session) {
-      // Clear any potentially corrupted session data
-      await supabase.auth.signOut();
-      localStorage.removeItem('olimpics_auth_token');
-    }
-  } catch (error) {
-    console.error('Error initializing Supabase:', error);
-    await supabase.auth.signOut();
-    localStorage.removeItem('olimpics_auth_token');
-  }
-};
-
-// Initialize on import
-initializeSupabase();
-
