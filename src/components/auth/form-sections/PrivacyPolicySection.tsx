@@ -10,20 +10,14 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 import { useQuery } from '@tanstack/react-query';
 import { fetchActivePrivacyPolicy } from "@/lib/api/privacyPolicy";
+import { FormField, FormItem } from "@/components/ui/form";
+import { useFormContext } from "react-hook-form";
 
-interface PrivacyPolicySectionProps {
-  value: boolean;
-  onChange: (value: boolean) => void;
-}
-
-export const PrivacyPolicySection = ({
-  value,
-  onChange,
-}: PrivacyPolicySectionProps) => {
+export const PrivacyPolicySection = () => {
   const [open, setOpen] = useState(false);
+  const form = useFormContext();
   
   const { data: privacyPolicy, isLoading, isError, error } = useQuery({
     queryKey: ['privacy-policy'],
@@ -43,33 +37,39 @@ export const PrivacyPolicySection = ({
 
   return (
     <div className="flex flex-col space-y-2">
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="terms"
-          checked={value}
-          onCheckedChange={(checked) => {
-            onChange(checked === true);
-          }}
-        />
-        <div className="grid gap-1.5 leading-none">
-          <div className="flex items-center">
-            <Label
-              htmlFor="terms"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Li e aceito a{" "}
-              <Button
-                variant="link"
-                className="h-auto p-0 text-sm font-medium text-primary"
-                onClick={handleOpenDialog}
-                type="button"
-              >
-                Política de Privacidade
-              </Button>
-            </Label>
-          </div>
-        </div>
-      </div>
+      <FormField
+        control={form.control}
+        name="acceptPrivacyPolicy"
+        render={({ field }) => (
+          <FormItem className="flex flex-row items-start space-x-2 space-y-0">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="terms"
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <div className="flex items-center">
+                  <Label
+                    htmlFor="terms"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Li e aceito a{" "}
+                    <Button
+                      variant="link"
+                      className="h-auto p-0 text-sm font-medium text-primary"
+                      onClick={handleOpenDialog}
+                      type="button"
+                    >
+                      Política de Privacidade
+                    </Button>
+                  </Label>
+                </div>
+              </div>
+            </div>
+          </FormItem>
+        )}
+      />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[80vh] overflow-y-auto">

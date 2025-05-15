@@ -41,7 +41,7 @@ export const SignUpForm = () => {
           <PersonalInfoSection form={form} />
           <ContactSection form={form} />
           <AuthSection form={form} />
-          <PrivacyPolicySection form={form} />
+          <PrivacyPolicySection />
         </div>
 
         <div className="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg">
