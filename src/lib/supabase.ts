@@ -1,8 +1,8 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = "https://sb.nova-acropole.org.br/";
-const supabaseAnonKey = 'x9Ll0f6bKmCBQWXGrBHtH4zPxEht0Of7XShBxUV8IkJPF8GKjXK4VKeTTt0bAMvbWcF7zUOZA02pdbLahz9Z4eFzhk6EVPwflciK5HasI7Cm7zokA4y3Sg8EG34qseUQZGTUiTjTAf9idr6mcdEEPdKSUvju6PwLJxLRjSF3oRRF6KTHrPyWpyY5rJs7m7QCFd1uMOSBQ7gY4RtTMydqWAgIHJJhxTPxC49A2rMuB0Z;
+const supabaseUrl = 'https://usppufmcuywelqzzedjs.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzcHB1Zm1jdXl3ZWxxenplZGpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc1MTQyMDIsImV4cCI6MjA1MzA5MDIwMn0.8xQOvTELWYf3XcKeaql-GPJl9eKn-KSg4VnWZ8Bg02Q';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

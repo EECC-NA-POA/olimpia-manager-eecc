@@ -26,8 +26,8 @@ serve(async (req) => {
 
     // Initialize Supabase client with service role key for admin access
     const supabaseAdmin = createClient(
-      import.meta.env.VITE_SUPABASE_URL,
-      import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
     console.log('Starting dependent registration process for:', { dependentId, eventId, birthDate });
