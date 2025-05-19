@@ -37,7 +37,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="home-page">
+    <div className="home-page w-full h-screen overflow-y-auto pb-16">
       <div className="container mx-auto p-4">
         {/* Use nome_completo instead of nome to match the AuthUser type */}
         <h1 className="text-2xl font-semibold mb-4">Bem-vindo(a), {user?.nome_completo || user?.email}!</h1>
