@@ -1,40 +1,57 @@
-
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import AthleteProfilePage from '@/components/AthleteProfilePage';
-import OrganizerDashboard from '@/components/OrganizerDashboard';
-import DelegationDashboard from '@/components/DelegationDashboard';
-import { NoEventSelected } from '@/components/dashboard/components/NoEventSelected';
-import { Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
-export default function Dashboard() {
+const Dashboard = () => {
   const { user, currentEventId } = useAuth();
-  console.log("Usuário carregado no dashboard:", user);
-  console.log("Event ID no dashboard:", currentEventId);
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
 
-  // If no event is selected, show the NoEventSelected component
-  if (!currentEventId) {
-    console.log("No event selected in Dashboard, showing NoEventSelected component");
-    return <NoEventSelected />;
-  }
+  useEffect(() => {
+    if (!user) {
+      console.log('Dashboard - User not authenticated, redirecting to /login');
+      navigate('/login');
+      toast.error('Você precisa estar logado para acessar essa página.');
+      return;
+    }
 
-  const isAthlete = user?.papeis?.some(role => role.codigo === 'ATL');
-  const isOrganizer = user?.papeis?.some(role => role.codigo === 'ORE');
-  const isDelegationRep = user?.papeis?.some(role => role.codigo === 'RDD');
+    if (!currentEventId) {
+      console.log('Dashboard - No event selected, redirecting to /event-selection');
+      navigate('/event-selection');
+      toast.warn('Por favor, selecione um evento para continuar.');
+      return;
+    }
 
-  if (isAthlete) {
-    return <AthleteProfilePage />;
-  } else if (isOrganizer) {
-    return <Navigate to="/organizer-dashboard" replace />;
-  } else if (isDelegationRep) {
-    return <Navigate to="/delegation-dashboard" replace />;
-  } else {
+    setIsLoading(false);
+  }, [user, currentEventId, navigate]);
+
+  if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <h1 className="text-2xl font-bold text-olimpics-green-primary">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Bem-vindo, {user?.nome_completo}!
-        </p>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-olimpics-green-primary" />
       </div>
     );
   }
-}
+
+  return (
+    <div className="home-page">
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-semibold mb-4">Bem-vindo(a), {user?.nome}!</h1>
+        <p>Você está logado e pronto para começar.</p>
+        {user?.papeis && user.papeis.length > 0 && (
+          <div>
+            <p>Seus papéis:</p>
+            <ul>
+              {user.papeis.map((role) => (
+                <li key={role.id}>{role.nome}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
