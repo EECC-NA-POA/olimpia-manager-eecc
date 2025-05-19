@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import './App.css';
@@ -50,9 +51,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <div className="flex flex-col h-screen overflow-hidden">
+          <div className="flex flex-col min-h-screen">
             <GlobalHeader />
-            <div className="flex-grow overflow-hidden pt-16"> {/* Added pt-16 for header height */}
+            <div className="flex-grow overflow-auto pt-16"> {/* Changed from overflow-hidden to overflow-auto */}
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />

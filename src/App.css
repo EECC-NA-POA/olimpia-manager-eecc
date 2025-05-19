@@ -65,6 +65,7 @@ main {
   height: auto !important;
   overflow-y: auto !important;
   min-height: 100vh !important;
+  padding-bottom: 5rem !important; /* Add extra padding at the bottom */
 }
 
 /* Remove extra space above the sidebar */
@@ -156,3 +157,21 @@ footer {
   }
 }
 
+/* Ensure root and app div allow scrolling */
+#root,
+#root > div {
+  min-height: 100vh;
+  overflow-y: auto !important;
+}
+
+/* Ensure App container doesn't interfere with scrolling */
+#root > div > .flex-col.h-screen.overflow-hidden {
+  overflow: auto !important;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Global correction for content area to always be scrollable */
+.flex-grow.overflow-hidden {
+  overflow: auto !important;
+}
