@@ -1,5 +1,5 @@
 
-import { ReactMarkdown } from "react-markdown";
+import ReactMarkdown from "react-markdown";
 import { RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
