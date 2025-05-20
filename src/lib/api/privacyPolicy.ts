@@ -72,7 +72,8 @@ export const createPrivacyAcceptanceRPC = async () => {
       return;
     }
     
-    if (functionExists && functionExists.exists) {
+    // Fix: Add proper type checking for functionExists
+    if (functionExists && typeof functionExists === 'object' && 'exists' in functionExists && functionExists.exists) {
       console.log('Privacy acceptance RPC already exists');
       return;
     }
