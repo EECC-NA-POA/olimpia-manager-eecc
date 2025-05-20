@@ -38,7 +38,7 @@ export const PrivacyPolicyAcceptanceModal = ({
   } = usePrivacyPolicyAcceptance({
     userId: user?.id,
     userMetadata: {
-      nome_completo: user?.nome_completo || user?.user_metadata?.nome_completo,
+      nome_completo: user?.nome_completo || user?.user_metadata?.nome_completo || 'Usuário',
       tipo_documento: user?.tipo_documento || user?.user_metadata?.tipo_documento,
       numero_documento: user?.numero_documento || user?.user_metadata?.numero_documento,
     },

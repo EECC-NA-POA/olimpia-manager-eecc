@@ -47,6 +47,10 @@ export const usePrivacyPolicyAcceptance = ({
           throw new Error('Usuário não identificado');
         }
         
+        // Verificar se o nome do usuário está disponível - isso é crítico porque a tabela exige este campo
+        const nomeUsuario = userMetadata?.nome_completo || 'Usuário';
+        console.log('Nome do usuário para registro:', nomeUsuario);
+        
         // Step 1: Get the latest privacy policy
         console.log('Fetching latest privacy policy...');
         const { data: latestPolicy, error: policyError } = await supabase
@@ -69,69 +73,33 @@ export const usePrivacyPolicyAcceptance = ({
         
         console.log('Latest policy found:', latestPolicy);
         
-        // Step 2: Try direct insert with minimal fields first (most likely to work)
-        console.log('Attempting insert with minimal fields...');
-        const minimalData = {
+        // Abordagem primária: inserir com campos obrigatórios
+        console.log('Attempting insert with required fields...');
+        const requiredData = {
           usuario_id: userId,
-          versao_termo: latestPolicy.versao_termo
+          versao_termo: latestPolicy.versao_termo,
+          nome_completo: nomeUsuario // Campo obrigatório que estava faltando
         };
         
-        const { error: minimalInsertError } = await supabase
+        const { error: requiredInsertError } = await supabase
           .from('logs_aceite_privacidade')
-          .insert(minimalData);
+          .insert(requiredData);
         
-        if (!minimalInsertError) {
-          console.log('Success: Acceptance registered with minimal fields');
+        if (!requiredInsertError) {
+          console.log('Success: Acceptance registered with required fields');
           return true;
         }
         
-        console.warn('Minimal insert failed:', minimalInsertError);
-        console.log('Trying alternative approaches...');
+        console.warn('Required fields insert failed:', requiredInsertError);
         
-        // Step 3: Try with term ID field(s)
-        const insertWithTermId = async () => {
-          const attempts = [
-            { field: 'termos_privacidade_id', value: latestPolicy.id },
-            { field: 'termos_id', value: latestPolicy.id },
-            { field: 'termo_id', value: latestPolicy.id }
-          ];
-          
-          for (const attempt of attempts) {
-            const termData = {
-              usuario_id: userId,
-              versao_termo: latestPolicy.versao_termo,
-              [attempt.field]: attempt.value
-            };
-            
-            console.log(`Trying with ${attempt.field}:`, termData);
-            
-            const { error: termInsertError } = await supabase
-              .from('logs_aceite_privacidade')
-              .insert(termData);
-              
-            if (!termInsertError) {
-              console.log(`Success with ${attempt.field}`);
-              return true;
-            }
-            
-            console.warn(`Failed with ${attempt.field}:`, termInsertError);
-          }
-          
-          return false;
-        };
-        
-        const termIdSuccess = await insertWithTermId();
-        if (termIdSuccess) return true;
-        
-        // Step 4: Try with user metadata
-        console.log('Trying with user metadata...');
+        // Tentar com todos os metadados disponíveis
+        console.log('Trying with full user metadata...');
         const fullData = {
           usuario_id: userId,
           versao_termo: latestPolicy.versao_termo,
-          termos_id: latestPolicy.id,
-          nome_completo: userMetadata?.nome_completo,
-          tipo_documento: userMetadata?.tipo_documento,
-          numero_documento: userMetadata?.numero_documento
+          nome_completo: nomeUsuario,
+          tipo_documento: userMetadata?.tipo_documento || null,
+          numero_documento: userMetadata?.numero_documento || null
         };
         
         const { error: fullInsertError } = await supabase
@@ -144,20 +112,6 @@ export const usePrivacyPolicyAcceptance = ({
         }
         
         console.error('All insert attempts failed. Last error:', fullInsertError);
-        
-        // Step 5: Last resort - direct SQL insert
-        console.log('Attempting direct SQL insert as last resort...');
-        const { error: sqlError } = await supabase.rpc('insert_privacy_acceptance', { 
-          p_user_id: userId,
-          p_version: latestPolicy.versao_termo
-        });
-        
-        if (!sqlError) {
-          console.log('Success with direct SQL insert');
-          return true;
-        }
-        
-        console.error('Direct SQL insert failed:', sqlError);
         throw new Error('Não foi possível registrar o aceite do termo de privacidade após múltiplas tentativas');
       } catch (error) {
         console.error('Final error in registerAcceptanceMutation:', error);
