@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { Event } from "@/types/athlete";
+import { Event } from "@/lib/types/database";
 
 export const useEventData = (currentEventId: string | null) => {
   return useQuery({

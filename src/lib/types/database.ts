@@ -5,6 +5,11 @@ export interface Event {
   descricao: string | null;
   data_inicio_inscricao: string;
   data_fim_inscricao: string;
+  data_inicio_evento: string | null;
+  data_fim_evento: string | null;
+  pais: string | null;
+  estado: string | null;
+  cidade: string | null;
   foto_evento: string | null;
   tipo: 'estadual' | 'nacional' | 'internacional' | 'regional';
   created_at: string | null;

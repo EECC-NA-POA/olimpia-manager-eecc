@@ -20,15 +20,20 @@ interface EventBasicInfoProps {
 export function EventBasicInfo({ eventId, eventData, onUpdate }: EventBasicInfoProps) {
   const [isLoading, setIsLoading] = useState(false);
   
-  // Initialize form with event data
+  // Initialize form with event data, including new fields
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm({
     defaultValues: {
       nome: eventData.nome || '',
       descricao: eventData.descricao || '',
       local: eventData.local || '',
+      pais: eventData.pais || 'Brasil',
+      estado: eventData.estado || '',
+      cidade: eventData.cidade || '',
       tipo: eventData.tipo || 'estadual',
       data_inicio: eventData.data_inicio ? new Date(eventData.data_inicio).toISOString().split('T')[0] : '',
       data_fim: eventData.data_fim ? new Date(eventData.data_fim).toISOString().split('T')[0] : '',
+      data_inicio_evento: eventData.data_inicio_evento ? new Date(eventData.data_inicio_evento).toISOString().split('T')[0] : '',
+      data_fim_evento: eventData.data_fim_evento ? new Date(eventData.data_fim_evento).toISOString().split('T')[0] : '',
       data_inicio_inscricao: eventData.data_inicio_inscricao ? new Date(eventData.data_inicio_inscricao).toISOString().split('T')[0] : '',
       data_fim_inscricao: eventData.data_fim_inscricao ? new Date(eventData.data_fim_inscricao).toISOString().split('T')[0] : '',
       status_evento: eventData.status_evento || 'ativo',
@@ -60,9 +65,14 @@ export function EventBasicInfo({ eventId, eventData, onUpdate }: EventBasicInfoP
           nome: data.nome,
           descricao: data.descricao,
           local: data.local,
+          pais: data.pais,
+          estado: data.estado,
+          cidade: data.cidade,
           tipo: data.tipo,
           data_inicio: data.data_inicio,
           data_fim: data.data_fim,
+          data_inicio_evento: data.data_inicio_evento,
+          data_fim_evento: data.data_fim_evento,
           data_inicio_inscricao: data.data_inicio_inscricao,
           data_fim_inscricao: data.data_fim_inscricao,
           status_evento: data.status_evento,
@@ -140,25 +150,56 @@ export function EventBasicInfo({ eventId, eventData, onUpdate }: EventBasicInfoP
                 placeholder="Local do evento" 
               />
             </div>
-                        
+            
+            {/* New location fields */}
             <div className="space-y-2">
-              <Label htmlFor="data_inicio">Data de Início</Label>
+              <Label htmlFor="pais">País</Label>
               <Input 
-                id="data_inicio" 
-                type="date" 
-                {...register('data_inicio')} 
+                id="pais" 
+                {...register('pais')} 
+                placeholder="País do evento" 
+                defaultValue="Brasil"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="data_fim">Data de Fim</Label>
+              <Label htmlFor="estado">Estado</Label>
               <Input 
-                id="data_fim" 
-                type="date" 
-                {...register('data_fim')} 
+                id="estado" 
+                {...register('estado')} 
+                placeholder="Estado do evento" 
               />
             </div>
             
+            <div className="space-y-2">
+              <Label htmlFor="cidade">Cidade</Label>
+              <Input 
+                id="cidade" 
+                {...register('cidade')} 
+                placeholder="Cidade do evento" 
+              />
+            </div>
+            
+            {/* Event dates section */}
+            <div className="space-y-2">
+              <Label htmlFor="data_inicio_evento">Data de Início do Evento</Label>
+              <Input 
+                id="data_inicio_evento" 
+                type="date" 
+                {...register('data_inicio_evento')} 
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="data_fim_evento">Data de Fim do Evento</Label>
+              <Input 
+                id="data_fim_evento" 
+                type="date" 
+                {...register('data_fim_evento')} 
+              />
+            </div>
+            
+            {/* Registration dates section */}
             <div className="space-y-2">
               <Label htmlFor="data_inicio_inscricao">Início das Inscrições</Label>
               <Input 
