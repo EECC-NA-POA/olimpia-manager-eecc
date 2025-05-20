@@ -1,15 +1,6 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle
-} from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -27,6 +18,7 @@ export function TopNavigation({ user, roles }: TopNavigationProps) {
   const { signOut } = useNavigation();
   const location = useLocation();
   
+  // Check for specific roles
   const isJudge = user?.papeis?.some(role => role.codigo === 'JUZ') || false;
   const isAdmin = roles.isAdmin;
   const isOrganizer = roles.isOrganizer;

@@ -182,3 +182,24 @@ footer {
   top: 64px; /* Same as header height */
   z-index: 40;
 }
+
+/* Ensure content doesn't overlap with top navigation */
+.content-padding-top {
+  padding-top: 48px; /* Height of top navigation */
+}
+
+/* Fix for mobile screens */
+@media (max-width: 768px) {
+  .sticky.top-16 {
+    overflow-x: auto;
+  }
+  
+  .sticky.top-16::-webkit-scrollbar {
+    height: 3px;
+  }
+  
+  .sticky.top-16::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+}
