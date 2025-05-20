@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,6 +9,8 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchBranchesByState } from '@/lib/api';
 import { formRow, formColumn } from '@/lib/utils/form-layout';
 import { toast } from "sonner";
+import { ErrorState } from '@/components/ErrorState';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ContactSectionProps {
   form: UseFormReturn<any>;
@@ -40,28 +42,10 @@ export const ContactSection = ({
     staleTime: 60000, // Cache for 1 minute
   });
 
-  // Show error toast if there's a problem fetching branches
-  useEffect(() => {
-    if (branchesError) {
-      console.error('Error fetching branches:', branchesError);
-      toast.error('Não foi possível carregar os estados e sedes. Tente novamente mais tarde.');
-    }
-  }, [branchesError]);
-
-  // Retry loading branches if there was an error
-  useEffect(() => {
-    if (branchesError) {
-      const timer = setTimeout(() => {
-        console.log('Retrying branch fetch after error...');
-        refetchBranches();
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [branchesError, refetchBranches]);
-
+  // Process branch data and set states list and branches map
   useEffect(() => {
     if (branchesByState && branchesByState.length > 0) {
-      console.log('Setting states from data:', branchesByState);
+      console.log('Setting states from data:', branchesByState.length, 'state groups');
       // Extract states list
       const states = branchesByState.map(group => group.estado);
       setStatesList(states);
@@ -72,11 +56,10 @@ export const ContactSection = ({
         branchMap[group.estado] = group.branches;
       });
       setBranchesMap(branchMap);
-      
-      console.log('States list:', states);
-      console.log('Branches map:', branchMap);
     } else {
       console.log('No branches by state data available');
+      setStatesList([]);
+      setBranchesMap({});
     }
   }, [branchesByState]);
 
@@ -91,6 +74,50 @@ export const ContactSection = ({
     form.setValue('branchId', undefined);
     form.setValue('state', state);
   };
+
+  // Handle retry when error occurs
+  const handleRetry = useCallback(() => {
+    console.log('Manually retrying branch fetch...');
+    refetchBranches();
+  }, [refetchBranches]);
+
+  if (branchesError && !isLoadingBranchData) {
+    return (
+      <div className="space-y-4">
+        {!hideEmail && (
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-left w-full">Email</FormLabel>
+                <FormControl>
+                  <Input
+                    type="email"
+                    placeholder="seu@email.com"
+                    className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        <PhoneInput form={form} />
+
+        {/* Error state for branches data */}
+        <div className="mt-6 p-4 border border-red-200 rounded-md bg-red-50">
+          <ErrorState 
+            onRetry={handleRetry}
+            message="Não foi possível carregar os estados e sedes."
+            error={branchesError}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -125,32 +152,35 @@ export const ContactSection = ({
           render={({ field }) => (
             <FormItem className={formColumn}>
               <FormLabel>Estado</FormLabel>
-              <Select
-                onValueChange={(value) => {
-                  handleStateChange(value);
-                }}
-                value={field.value || ''}
-                disabled={isLoadingBranches}
-              >
-                <FormControl>
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder={isLoadingBranches ? "Carregando estados..." : "Selecione um Estado"} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent className="bg-white max-h-[300px]">
-                  {statesList.length > 0 ? (
-                    statesList.map((state) => (
-                      <SelectItem key={state} value={state}>
-                        {state}
+              {isLoadingBranches ? (
+                <Skeleton className="h-10 w-full rounded-md" />
+              ) : (
+                <Select
+                  onValueChange={(value) => {
+                    handleStateChange(value);
+                  }}
+                  value={field.value || ''}
+                >
+                  <FormControl>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Selecione um Estado" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="bg-white max-h-[300px]">
+                    {statesList.length > 0 ? (
+                      statesList.map((state) => (
+                        <SelectItem key={state} value={state}>
+                          {state}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-states" disabled>
+                        Nenhum estado encontrado
                       </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="no-states" disabled>
-                      {isLoadingBranches ? "Carregando..." : "Nenhum estado encontrado"}
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
+                    )}
+                  </SelectContent>
+                </Select>
+              )}
               <FormMessage />
             </FormItem>
           )}
@@ -162,33 +192,37 @@ export const ContactSection = ({
           render={({ field }) => (
             <FormItem className={formColumn}>
               <FormLabel>Sede</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                value={field.value}
-                disabled={!selectedState || isLoadingBranches}
-              >
-                <FormControl>
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder={selectedState 
-                      ? (branchesForSelectedState.length > 0 ? "Selecione sua Sede" : "Nenhuma sede encontrada") 
-                      : "Selecione um Estado primeiro"} 
-                    />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent className="bg-white max-h-[300px]">
-                  {branchesForSelectedState.length > 0 ? (
-                    branchesForSelectedState.map((branch) => (
-                      <SelectItem key={branch.id} value={branch.id}>
-                        {branch.nome}
+              {isLoadingBranches ? (
+                <Skeleton className="h-10 w-full rounded-md" />
+              ) : (
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  disabled={!selectedState}
+                >
+                  <FormControl>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder={selectedState 
+                        ? (branchesForSelectedState.length > 0 ? "Selecione sua Sede" : "Nenhuma sede encontrada") 
+                        : "Selecione um Estado primeiro"} 
+                      />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="bg-white max-h-[300px]">
+                    {branchesForSelectedState.length > 0 ? (
+                      branchesForSelectedState.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.id}>
+                          {branch.nome}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-branches" disabled>
+                        {selectedState ? "Nenhuma sede encontrada" : "Selecione um Estado primeiro"}
                       </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="no-branches" disabled>
-                      {selectedState && isLoadingBranches ? "Carregando..." : "Nenhuma sede encontrada"}
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
+                    )}
+                  </SelectContent>
+                </Select>
+              )}
               <FormMessage />
             </FormItem>
           )}

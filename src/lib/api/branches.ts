@@ -5,6 +5,7 @@ import type { Branch, BranchAnalytics } from '../../types/api';
 export const fetchBranches = async (): Promise<Branch[]> => {
   console.log('Fetching branches...');
   try {
+    // Use the anon key to access public data
     const { data, error } = await supabase
       .from('filiais')
       .select('*')
@@ -19,7 +20,7 @@ export const fetchBranches = async (): Promise<Branch[]> => {
     return data || [];
   } catch (error) {
     console.error('Error in fetchBranches:', error);
-    throw error; // Throw the error to handle it in the UI
+    throw error;
   }
 };
 
@@ -27,7 +28,7 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
   console.log('Fetching branches grouped by state...');
   
   try {
-    // First, get all branches
+    // First, get all branches using anon key for public data
     const { data: branchesData, error: branchesError } = await supabase
       .from('filiais')
       .select('*')
@@ -35,7 +36,7 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
     
     if (branchesError) {
       console.error('Error fetching branches by state:', branchesError);
-      throw branchesError; // Throw error to be handled in the component
+      throw branchesError;
     }
 
     if (!branchesData || branchesData.length === 0) {
@@ -63,6 +64,6 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
     return result;
   } catch (error) {
     console.error('Error in fetchBranchesByState:', error);
-    throw error; // Throw the error to handle it in the UI
+    throw error;
   }
 };
