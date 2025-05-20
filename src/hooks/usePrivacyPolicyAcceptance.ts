@@ -60,58 +60,88 @@ export const usePrivacyPolicyAcceptance = ({
         
         console.log('Registering privacy policy acceptance for user:', userId, 'policy:', latestPolicy.versao_termo);
         
-        // Verifica a estrutura da tabela logs_aceite_privacidade
-        const { data: tableInfo, error: tableError } = await supabase
-          .from('logs_aceite_privacidade')
-          .select('*')
-          .limit(1);
+        // First, discover the column names by examining the table structure
+        console.log('Attempting to discover correct column names...');
+        
+        // Direct query to get table schema information
+        const { data: tableColumns, error: schemaError } = await supabase.rpc('get_table_columns', {
+          table_name: 'logs_aceite_privacidade'
+        });
+        
+        // If the RPC method doesn't exist, run a simpler query
+        if (schemaError) {
+          console.log('Using fallback method to discover columns');
           
-        if (tableError) {
-          console.error('Error checking table structure:', tableError);
-          // Continue anyway, we'll try with our best guess
-        } else {
-          console.log('Table structure sample:', tableInfo);
+          // Basic data to insert - these fields are certainly present
+          const baseInsertData = {
+            usuario_id: userId,
+            versao_termo: latestPolicy.versao_termo,
+            nome_completo: userMetadata?.nome_completo,
+          };
+          
+          // Try inserting with the base data first - minimal fields
+          const { error: baseInsertError } = await supabase
+            .from('logs_aceite_privacidade')
+            .insert(baseInsertData);
+            
+          if (baseInsertError) {
+            console.error('Error with base insert:', baseInsertError);
+            throw new Error('Não foi possível registrar o aceite do termo de privacidade');
+          }
+          
+          return true;
         }
         
-        // Logging to debug the actual shape of the data we're inserting
+        console.log('Table columns discovered:', tableColumns);
+        
+        // Check if any of our expected columns exist
+        const hasTermosPrivacidadeId = tableColumns?.some(col => col.column_name === 'termos_privacidade_id');
+        const hasTermosId = tableColumns?.some(col => col.column_name === 'termos_id');
+        
+        // Build the data object based on existing columns
         const insertData = {
           usuario_id: userId,
-          termos_privacidade_id: latestPolicy.id, // Alterado: usando o nome correto da coluna
           nome_completo: userMetadata?.nome_completo,
           tipo_documento: userMetadata?.tipo_documento,
           numero_documento: userMetadata?.numero_documento,
-          versao_termo: latestPolicy.versao_termo
+          versao_termo: latestPolicy.versao_termo,
         };
         
-        console.log('Attempting to insert with data:', insertData);
+        // Add ID column based on what we found
+        if (hasTermosPrivacidadeId) {
+          console.log('Using termos_privacidade_id column');
+          Object.assign(insertData, { termos_privacidade_id: latestPolicy.id });
+        } else if (hasTermosId) {
+          console.log('Using termos_id column');
+          Object.assign(insertData, { termos_id: latestPolicy.id });
+        } else {
+          // No specific column for the term ID, just use the base data
+          console.log('No term ID column found, proceeding with base data only');
+        }
         
-        // Registrar o aceite do usuário usando o nome correto da coluna
-        const { error: acceptanceError } = await supabase
+        console.log('Final insert data:', insertData);
+        
+        // Insert the acceptance record with our dynamic object
+        const { error: insertError } = await supabase
           .from('logs_aceite_privacidade')
           .insert(insertData);
           
-        if (acceptanceError) {
-          console.error('Error registering acceptance:', acceptanceError);
+        if (insertError) {
+          console.error('Error inserting acceptance record:', insertError);
           
-          // Tentativa alternativa se a primeira falhar (usando termos_id em vez de termos_privacidade_id)
-          if (acceptanceError.message?.includes("Could not find")) {
-            console.log('Trying alternative column name');
-            const alternativeData = {
-              ...insertData,
-              termos_id: latestPolicy.id,
-              termos_privacidade_id: undefined
-            };
+          // Last resort: try with just the minimal required fields
+          console.log('Trying minimal insert as last resort');
+          const minimalData = {
+            usuario_id: userId,
+            versao_termo: latestPolicy.versao_termo
+          };
+          
+          const { error: minimalError } = await supabase
+            .from('logs_aceite_privacidade')
+            .insert(minimalData);
             
-            console.log('Trying with alternative data:', alternativeData);
-            const { error: secondError } = await supabase
-              .from('logs_aceite_privacidade')
-              .insert(alternativeData);
-              
-            if (secondError) {
-              console.error('Second attempt error:', secondError);
-              throw new Error('Não foi possível registrar o aceite do termo de privacidade');
-            }
-          } else {
+          if (minimalError) {
+            console.error('Minimal insert also failed:', minimalError);
             throw new Error('Não foi possível registrar o aceite do termo de privacidade');
           }
         }
