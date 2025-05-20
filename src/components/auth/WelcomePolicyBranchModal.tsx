@@ -9,8 +9,6 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Check, Info, MapPin } from "lucide-react";
 import { LocationSelector } from "./form-sections/location/LocationSelector";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,6 +18,9 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { PrivacyPolicyAcceptanceModal } from "./PrivacyPolicyAcceptanceModal";
 import { usePrivacyPolicyAcceptance } from "@/hooks/usePrivacyPolicyAcceptance";
+import { BranchDisplaySection } from "./modal-sections/BranchDisplaySection";
+import { PrivacyPolicySectionModal } from "./modal-sections/PrivacyPolicySectionModal";
+import { SubmitButton } from "./modal-sections/SubmitButton";
 
 interface WelcomePolicyBranchModalProps {
   isOpen: boolean;
@@ -158,57 +159,19 @@ export const WelcomePolicyBranchModal = ({
                 <LocationSelector form={form} disabled={!needsLocationSelection} />
               </div>
             ) : existingState && existingBranchId ? (
-              <div className="p-4 bg-muted/50 rounded-md">
-                <div className="flex items-center gap-2 mb-3">
-                  <MapPin className="h-5 w-5 text-olimpics-green-primary" />
-                  <h3 className="font-medium">Sua sede</h3>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium mb-1">Estado</p>
-                    <p className="px-3 py-2 border rounded-md bg-gray-50">{existingState}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium mb-1">Sede</p>
-                    <p className="px-3 py-2 border rounded-md bg-gray-50">{existingBranchName}</p>
-                  </div>
-                </div>
-              </div>
+              <BranchDisplaySection 
+                state={existingState} 
+                branchName={existingBranchName} 
+              />
             ) : null}
             
-            <div className="p-4 bg-muted/50 rounded-md">
-              <div className="flex items-center gap-2">
-                <Info className="h-5 w-5 text-olimpics-green-primary" />
-                <h3 className="font-medium">Termos de Privacidade</h3>
-              </div>
-              <p className="text-sm mt-2 text-muted-foreground">
-                Para utilizar nosso sistema, você precisa aceitar nossa política de privacidade.
-                {" "}
-                <button 
-                  type="button"
-                  onClick={handleViewPrivacyPolicy}
-                  className="text-olimpics-green-primary hover:underline font-medium"
-                >
-                  Clique aqui para ler os termos
-                </button>
-              </p>
-            </div>
+            <PrivacyPolicySectionModal onViewPrivacyPolicy={handleViewPrivacyPolicy} />
             
             <DialogFooter className="gap-2 sm:gap-0">
-              <Button 
-                type="submit"
-                className="w-full bg-olimpics-green-primary hover:bg-olimpics-green-secondary"
-                disabled={isSubmitting || isPrivacyPolicySubmitting}
-              >
-                {isSubmitting || isPrivacyPolicySubmitting ? (
-                  <>Processando...</>
-                ) : (
-                  <>
-                    <Check className="mr-2 h-4 w-4" />
-                    Aceitar e Continuar
-                  </>
-                )}
-              </Button>
+              <SubmitButton 
+                isSubmitting={isSubmitting} 
+                isPolicySubmitting={isPrivacyPolicySubmitting} 
+              />
             </DialogFooter>
           </form>
         </Form>
