@@ -5,12 +5,14 @@ export const fetchActivePrivacyPolicy = async (): Promise<string> => {
   console.log('Fetching active privacy policy...');
   
   try {
-    // Using service role key via the supabase client configured in lib/supabase.ts
+    // Create a specific query for the public privacy policy that doesn't rely on authentication
     const { data, error } = await supabase
       .from('termos_privacidade')
       .select('conteudo')
       .eq('ativo', true)
-      .maybeSingle();
+      .order('created_at', { ascending: false }) // Get the most recent
+      .limit(1)
+      .single();
     
     if (error) {
       console.error('Error fetching privacy policy:', error);
@@ -22,6 +24,7 @@ export const fetchActivePrivacyPolicy = async (): Promise<string> => {
       return 'Política de privacidade não disponível no momento.';
     }
     
+    console.log('Privacy policy fetched successfully');
     return data.conteudo;
   } catch (error) {
     console.error('Exception in fetchActivePrivacyPolicy:', error);

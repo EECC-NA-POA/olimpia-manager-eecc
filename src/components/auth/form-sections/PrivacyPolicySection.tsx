@@ -14,12 +14,19 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchActivePrivacyPolicy } from "@/lib/api/privacyPolicy";
 import { FormField, FormItem } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
+import { toast } from "sonner";
 
 export const PrivacyPolicySection = () => {
   const [open, setOpen] = useState(false);
   const form = useFormContext();
   
-  const { data: privacyPolicy, isLoading, isError, error } = useQuery({
+  const { 
+    data: privacyPolicy, 
+    isLoading, 
+    isError, 
+    error,
+    refetch 
+  } = useQuery({
     queryKey: ['privacy-policy'],
     queryFn: fetchActivePrivacyPolicy,
     retry: 2,
@@ -28,11 +35,20 @@ export const PrivacyPolicySection = () => {
   });
   
   const handleOpenDialog = () => {
+    // If there was an error, try refetching when the dialog is opened
+    if (isError) {
+      refetch();
+    }
     setOpen(true);
   };
 
   const handleCloseDialog = () => {
     setOpen(false);
+  };
+
+  const handleRetry = () => {
+    toast.info("Tentando buscar a política de privacidade novamente...");
+    refetch();
   };
 
   return (
@@ -86,12 +102,17 @@ export const PrivacyPolicySection = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-olimpics-green-primary" />
               </div>
             ) : isError ? (
-              <div className="text-red-500">
-                Erro ao carregar política de privacidade. Tente novamente.
-                {error instanceof Error && <p className="text-xs">{error.message}</p>}
+              <div className="text-center py-8">
+                <div className="text-red-500 mb-4">
+                  Erro ao carregar política de privacidade.
+                  {error instanceof Error && <p className="text-xs mt-2">{error.message}</p>}
+                </div>
+                <Button onClick={handleRetry} variant="outline" className="mx-auto">
+                  Tentar novamente
+                </Button>
               </div>
             ) : (
-              <div dangerouslySetInnerHTML={{ __html: privacyPolicy || '' }} />
+              <div dangerouslySetInnerHTML={{ __html: privacyPolicy || 'Política de privacidade não disponível no momento.' }} />
             )}
           </div>
           
