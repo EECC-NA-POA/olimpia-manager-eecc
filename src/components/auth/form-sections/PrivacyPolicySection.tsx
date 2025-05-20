@@ -112,7 +112,12 @@ export const PrivacyPolicySection = () => {
                 error={error}
               />
             ) : (
-              <div dangerouslySetInnerHTML={{ __html: privacyPolicy || 'Política de privacidade não disponível no momento.' }} />
+              <div 
+                dangerouslySetInnerHTML={{ 
+                  __html: privacyPolicy || 'Política de privacidade não disponível no momento.' 
+                }} 
+                className="policy-content p-4 border rounded"
+              />
             )}
           </div>
           
