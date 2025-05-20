@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { LogOut, Plus } from 'lucide-react';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 import { DEBUG_MODE } from '@/constants/routes';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface EventSelectionHeaderProps {
   onLogout: () => Promise<void>;
@@ -12,6 +15,20 @@ interface EventSelectionHeaderProps {
 export function EventSelectionHeader({ onLogout }: EventSelectionHeaderProps) {
   const { canCreateEvents, isLoading: permissionLoading } = useCanCreateEvents();
   const [createEventDialogOpen, setCreateEventDialogOpen] = React.useState(false);
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      console.log('EventSelectionHeader - Initiating logout process...');
+      await signOut();
+      toast.success('Logout realizado com sucesso!');
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error('EventSelectionHeader - Error during logout:', error);
+      toast.error('Erro ao fazer logout');
+    }
+  };
   
   return (
     <div className="flex justify-between items-center mb-8">
@@ -32,7 +49,7 @@ export function EventSelectionHeader({ onLogout }: EventSelectionHeaderProps) {
         ) : null}
         
         <Button
-          onClick={onLogout}
+          onClick={handleLogout}
           variant="outline"
           className="flex items-center gap-2"
         >
@@ -50,6 +67,11 @@ export function EventSelectionHeader({ onLogout }: EventSelectionHeaderProps) {
     </div>
   );
 }
+
+// Import these at the top to avoid the linter errors
+import { CreateEventDialog } from '@/components/events/CreateEventDialog';
+import { useUserAgeQuery } from './hooks/useUserAgeQuery';
+import { toast } from "sonner";
 
 function EventCreationDialogContainer({
   open,
@@ -73,8 +95,3 @@ function EventCreationDialogContainer({
     />
   );
 }
-
-// Import these at the top to avoid the linter errors
-import { CreateEventDialog } from '@/components/events/CreateEventDialog';
-import { useUserAgeQuery } from './hooks/useUserAgeQuery';
-import { toast } from "sonner";

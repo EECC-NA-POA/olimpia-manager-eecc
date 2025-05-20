@@ -1,4 +1,3 @@
-
 import { ArrowLeftRight, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { NavigationItem } from "./navigation-items";
@@ -96,12 +95,13 @@ export const MobileNavigationLink = () => {
   // Handle logout reliably
   const handleLogout = async () => {
     try {
-      console.log('Handling logout from MobileNavigation');
+      console.log('MobileNavigation - Handling logout');
       localStorage.removeItem('currentEventId');
       await signOut();
+      toast.success('Logout realizado com sucesso!');
       navigate('/', { replace: true });
     } catch (error) {
-      console.error('Error during logout:', error);
+      console.error('MobileNavigation - Error during logout:', error);
       toast.error("Erro ao fazer logout");
     }
   };

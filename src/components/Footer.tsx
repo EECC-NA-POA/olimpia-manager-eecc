@@ -52,13 +52,13 @@ export const Footer = () => {
 
   const handleLogout = async () => {
     try {
-      console.log('Initiating logout process...');
+      console.log('Footer - Initiating logout process...');
       await signOut();
-      console.log('User signed out successfully');
+      console.log('Footer - User signed out successfully');
       toast.success('Logout realizado com sucesso!');
-      navigate('/');
+      navigate('/', { replace: true });
     } catch (error) {
-      console.error('Error during logout:', error);
+      console.error('Footer - Error during logout:', error);
       toast.error('Erro ao fazer logout');
     }
   };

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { NavigateFunction } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -53,10 +52,10 @@ export function useAuthOperations({ setUser, navigate, location }: UseAuthOperat
     try {
       console.log('AuthContext - Starting logout process...');
       
-      // Primeiro limpar os dados de evento do localStorage
+      // First clear event data from localStorage
       localStorage.removeItem('currentEventId');
       
-      // Depois fazer logout da API Supabase
+      // Then sign out from Supabase API
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -68,27 +67,29 @@ export function useAuthOperations({ setUser, navigate, location }: UseAuthOperat
         }
       }
 
-      // Sempre limpar os dados do usuário, mesmo com erro
+      // Always clear user data, even with errors
       setUser(null);
       
       console.log('AuthContext - Logout successful, navigating to landing page');
       
-      // Navegue para a página inicial e use replace para evitar navegação de volta
+      // Navigate to homepage and use replace to prevent back navigation
       navigate('/', { replace: true });
       
       toast.success('Logout realizado com sucesso!');
+      return;
       
     } catch (error: any) {
       console.error('AuthContext - Unexpected error during signOut:', error);
       
-      // Mesmo com erro, limpe os dados locais
+      // Even with errors, clear local data
       setUser(null);
       localStorage.removeItem('currentEventId');
       
-      // Navegue para a página inicial
+      // Navigate to homepage
       navigate('/', { replace: true });
       
       toast.error('Erro ao fazer logout, mas sua sessão foi encerrada localmente.');
+      throw error;
     }
   };
 

@@ -1,14 +1,13 @@
 
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, LogOut, Calendar as CalendarIcon, BookOpen } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { useNavigation } from '@/hooks/useNavigation';
 import { EventSwitcher } from './EventSwitcher';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TabbedNavigationProps {
   user: any;
@@ -17,10 +16,10 @@ interface TabbedNavigationProps {
 
 export function TabbedNavigation({ user, roles }: TabbedNavigationProps) {
   const navigate = useNavigate();
-  const { signOut } = useNavigation();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("main");
   const { canCreateEvents } = useCanCreateEvents();
+  const { signOut } = useAuth();
   
   // Check for specific roles
   const isJudge = user?.papeis?.some(role => role.codigo === 'JUZ') || false;
@@ -34,11 +33,13 @@ export function TabbedNavigation({ user, roles }: TabbedNavigationProps) {
 
   const handleLogout = async () => {
     try {
+      console.log('TabbedNavigation - Initiating logout process...');
       await signOut();
+      console.log('TabbedNavigation - User signed out successfully');
       toast.success('Logout realizado com sucesso!');
-      navigate('/');
+      navigate('/', { replace: true });
     } catch (error) {
-      console.error('Error during logout:', error);
+      console.error('TabbedNavigation - Error during logout:', error);
       toast.error('Erro ao fazer logout');
     }
   };
@@ -46,7 +47,7 @@ export function TabbedNavigation({ user, roles }: TabbedNavigationProps) {
   // Determine which tab should be active based on current route
   React.useEffect(() => {
     if (location.pathname.includes('athlete') || location.pathname === '/cronograma' || 
-        location.pathname === '/scores') {
+        location.pathname === '/scores' || location.pathname === '/regulamento') {
       setActiveTab('main');
     } else if (location.pathname.includes('organizer') || location.pathname.includes('delegation') || 
               location.pathname.includes('judge')) {
