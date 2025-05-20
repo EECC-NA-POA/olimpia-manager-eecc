@@ -30,7 +30,8 @@ export const ContactSection = ({
   const { 
     data: branchesByState = [], 
     isLoading: isLoadingBranchData,
-    error: branchesError
+    error: branchesError,
+    refetch: refetchBranches
   } = useQuery({
     queryKey: ['branches-by-state'],
     queryFn: fetchBranchesByState,
@@ -46,6 +47,17 @@ export const ContactSection = ({
       toast.error('Não foi possível carregar os estados e sedes. Tente novamente mais tarde.');
     }
   }, [branchesError]);
+
+  // Retry loading branches if there was an error
+  useEffect(() => {
+    if (branchesError) {
+      const timer = setTimeout(() => {
+        console.log('Retrying branch fetch after error...');
+        refetchBranches();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [branchesError, refetchBranches]);
 
   useEffect(() => {
     if (branchesByState && branchesByState.length > 0) {
@@ -118,7 +130,7 @@ export const ContactSection = ({
                   handleStateChange(value);
                 }}
                 value={field.value || ''}
-                disabled={isLoadingBranches || statesList.length === 0}
+                disabled={isLoadingBranches}
               >
                 <FormControl>
                   <SelectTrigger className="bg-white">
@@ -153,7 +165,7 @@ export const ContactSection = ({
               <Select
                 onValueChange={field.onChange}
                 value={field.value}
-                disabled={!selectedState || isLoadingBranches || branchesForSelectedState.length === 0}
+                disabled={!selectedState || isLoadingBranches}
               >
                 <FormControl>
                   <SelectTrigger className="bg-white">

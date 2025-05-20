@@ -7,17 +7,19 @@ export const fetchBranches = async (): Promise<Branch[]> => {
   try {
     const { data, error } = await supabase
       .from('filiais')
-      .select('*');
+      .select('*')
+      .order('nome', { ascending: true });
 
     if (error) {
       console.error('Error fetching branches:', error);
       throw error;
     }
 
+    console.log('Branches fetched successfully:', data?.length || 0, 'records');
     return data || [];
   } catch (error) {
     console.error('Error in fetchBranches:', error);
-    return []; // Return empty array instead of throwing to prevent UI crashes
+    throw error; // Throw the error to handle it in the UI
   }
 };
 
@@ -33,7 +35,7 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
     
     if (branchesError) {
       console.error('Error fetching branches by state:', branchesError);
-      return []; // Return empty array instead of throwing
+      throw branchesError; // Throw error to be handled in the component
     }
 
     if (!branchesData || branchesData.length === 0) {
@@ -58,10 +60,9 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
     });
     
     console.log('States found:', uniqueStates.length, 'states');
-    console.log('Branches by state result:', result);
     return result;
   } catch (error) {
     console.error('Error in fetchBranchesByState:', error);
-    return []; // Return empty array instead of throwing
+    throw error; // Throw the error to handle it in the UI
   }
 };
