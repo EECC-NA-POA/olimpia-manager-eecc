@@ -8,7 +8,6 @@ import { Loader2 } from "lucide-react";
 import { PersonalInfoSection } from './form-sections/PersonalInfoSection';
 import { ContactSection } from './form-sections/ContactSection';
 import { AuthSection } from './form-sections/AuthSection';
-import { PrivacyPolicySection } from './form-sections/PrivacyPolicySection';
 import { registerSchema, RegisterFormData } from './types/form-types';
 import { useRegisterForm } from './hooks/useRegisterForm';
 
@@ -41,7 +40,6 @@ export const SignUpForm = () => {
           <PersonalInfoSection form={form} />
           <ContactSection form={form} />
           <AuthSection form={form} />
-          <PrivacyPolicySection />
         </div>
 
         <div className="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg">
