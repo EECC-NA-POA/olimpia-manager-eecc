@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { LoadingState } from '@/components/dashboard/components/LoadingState';
+import { LoadingImage } from '@/components/ui/loading-image';
 import {
   Dialog,
   DialogContent,
@@ -74,31 +74,33 @@ export function EventScheduleSection({ eventId }: { eventId: string | null }) {
 
   // Fetch schedule items
   useEffect(() => {
-    const fetchSchedule = async () => {
-      if (!eventId) return;
-      
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('cronograma')
-          .select('*')
-          .eq('evento_id', eventId)
-          .order('data', { ascending: true })
-          .order('hora_inicio', { ascending: true });
-        
-        if (error) throw error;
-        
-        setScheduleItems(data || []);
-      } catch (error) {
-        console.error('Error fetching schedule:', error);
-        toast.error('Erro ao carregar itens de cronograma');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     fetchSchedule();
   }, [eventId]);
+
+  const fetchSchedule = async () => {
+    if (!eventId) return;
+    
+    setIsLoading(true);
+    try {
+      console.log('Fetching schedule for event:', eventId);
+      const { data, error } = await supabase
+        .from('cronograma')
+        .select('*')
+        .eq('evento_id', eventId)
+        .order('data', { ascending: true })
+        .order('hora_inicio', { ascending: true });
+      
+      if (error) throw error;
+      
+      console.log('Retrieved schedule items:', data);
+      setScheduleItems(data || []);
+    } catch (error) {
+      console.error('Error fetching schedule:', error);
+      toast.error('Erro ao carregar itens de cronograma');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const openAddDialog = () => {
     setEditingId(null);
@@ -165,13 +167,6 @@ export function EventScheduleSection({ eventId }: { eventId: string | null }) {
         
         if (error) throw error;
         
-        // Update local state
-        setScheduleItems(scheduleItems.map(item => 
-          item.id === editingId 
-            ? { ...item, ...currentItem } 
-            : item
-        ));
-        
         toast.success('Item de cronograma atualizado com sucesso!');
       } else {
         // Create new item
@@ -191,13 +186,11 @@ export function EventScheduleSection({ eventId }: { eventId: string | null }) {
         
         if (error) throw error;
         
-        // Update local state
-        if (data && data.length > 0) {
-          setScheduleItems([...scheduleItems, data[0]]);
-        }
-        
         toast.success('Item de cronograma adicionado com sucesso!');
       }
+      
+      // Refresh the list
+      fetchSchedule();
       
       // Close dialog and reset form
       setIsDialogOpen(false);
@@ -224,10 +217,10 @@ export function EventScheduleSection({ eventId }: { eventId: string | null }) {
       
       if (error) throw error;
       
-      // Update local state
-      setScheduleItems(scheduleItems.filter(item => item.id !== id));
-      
       toast.success('Item de cronograma excluído com sucesso!');
+      
+      // Refresh the list
+      fetchSchedule();
     } catch (error) {
       console.error('Error deleting schedule item:', error);
       toast.error('Erro ao excluir item de cronograma');
@@ -244,7 +237,7 @@ export function EventScheduleSection({ eventId }: { eventId: string | null }) {
   };
 
   if (isLoading) {
-    return <LoadingState />;
+    return <LoadingImage text="Carregando cronograma..." />;
   }
 
   return (
