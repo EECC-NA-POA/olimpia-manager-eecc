@@ -1,127 +1,113 @@
 
-import React, { useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
-import { EventRegulation } from '@/lib/types/database';
-import { Card, CardContent } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
-import { LoadingState } from '@/components/dashboard/components/LoadingState';
+import { Plus } from 'lucide-react';
+import { RegulationsList } from './regulation/RegulationsList';
+import { RegulationForm } from './regulation/RegulationForm';
+import { EventRegulation } from '@/lib/types/database';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 import { EmptyState } from '@/components/dashboard/components/EmptyState';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RegulationForm } from '@/components/event-management/regulation/RegulationForm';
-import { RegulationsList } from '@/components/event-management/regulation/RegulationsList';
+import { LoadingState } from '@/components/dashboard/components/LoadingState';
 
 interface EventRegulationsSectionProps {
-  eventId: string | null;
+  eventId: string;
 }
 
 export function EventRegulationsSection({ eventId }: EventRegulationsSectionProps) {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = React.useState<string>('list');
-  const [selectedRegulation, setSelectedRegulation] = React.useState<EventRegulation | null>(null);
-  
-  const {
-    data: regulations,
-    isLoading,
-    error,
-    refetch
-  } = useQuery({
-    queryKey: ['event-regulations', eventId],
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentRegulation, setCurrentRegulation] = useState<EventRegulation | null>(null);
+
+  const { data: hasRegulations, isLoading } = useQuery({
+    queryKey: ['hasRegulations', eventId],
     queryFn: async () => {
-      if (!eventId) return [];
-      
-      const { data, error } = await supabase
+      const { count, error } = await supabase
         .from('eventos_regulamentos')
-        .select('*')
-        .eq('evento_id', eventId)
-        .order('versao', { ascending: false });
+        .select('*', { count: 'exact', head: true })
+        .eq('evento_id', eventId);
       
       if (error) throw error;
-      
-      return data as EventRegulation[];
-    },
-    enabled: !!eventId
+      return (count || 0) > 0;
+    }
   });
 
-  useEffect(() => {
-    // Reset the form when changing events
-    setSelectedRegulation(null);
-    setActiveTab('list');
-  }, [eventId]);
-
-  const handleCreateNew = () => {
-    setSelectedRegulation(null);
-    setActiveTab('form');
+  const handleEdit = (regulation: EventRegulation) => {
+    setCurrentRegulation(regulation);
+    setIsEditing(true);
   };
 
-  const handleEditRegulation = (regulation: EventRegulation) => {
-    setSelectedRegulation(regulation);
-    setActiveTab('form');
+  const handleAddNew = () => {
+    setCurrentRegulation({
+      id: '',
+      evento_id: eventId,
+      versao: '1.0',
+      titulo: '',
+      regulamento_texto: '',
+      regulamento_link: null,
+      is_ativo: true,
+      criado_por: '',
+      criado_em: '',
+      atualizado_por: null,
+      atualizado_em: null
+    });
+    setIsEditing(true);
   };
 
-  const handleFormComplete = () => {
-    refetch();
-    setActiveTab('list');
-    setSelectedRegulation(null);
+  const handleBack = () => {
+    setIsEditing(false);
+    setCurrentRegulation(null);
   };
 
-  if (isLoading) return <LoadingState />;
-
-  if (error) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <EmptyState 
-            title="Erro ao carregar regulamentos"
-            description="Não foi possível carregar os regulamentos do evento."
-            action={<Button onClick={() => refetch()}>Tentar novamente</Button>}
-          />
-        </CardContent>
-      </Card>
-    );
+  if (isLoading) {
+    return <LoadingState />;
   }
 
   return (
     <Card>
-      <CardContent className="pt-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Regulamentos do Evento</h2>
-          {activeTab === 'list' && (
-            <Button onClick={handleCreateNew} className="flex items-center gap-2">
-              <PlusCircle className="w-4 h-4" />
-              Novo Regulamento
-            </Button>
-          )}
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Regulamentos do Evento</CardTitle>
+          <CardDescription>
+            Gerencie os regulamentos aplicáveis ao evento
+          </CardDescription>
         </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="list">Lista de Regulamentos</TabsTrigger>
-            <TabsTrigger value="form" disabled={activeTab !== 'form'}>
-              {selectedRegulation ? 'Editar Regulamento' : 'Novo Regulamento'}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="list">
-            <RegulationsList 
-              regulations={regulations || []} 
-              onEdit={handleEditRegulation}
-              onRefresh={refetch}
-            />
-          </TabsContent>
-
-          <TabsContent value="form">
-            <RegulationForm 
-              eventId={eventId || ''} 
-              regulation={selectedRegulation}
-              userId={user?.id || ''}
-              onComplete={handleFormComplete}
-              onCancel={() => setActiveTab('list')}
-            />
-          </TabsContent>
-        </Tabs>
+        {!isEditing && (
+          <Button onClick={handleAddNew} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Adicionar Regulamento
+          </Button>
+        )}
+        {isEditing && (
+          <Button variant="outline" onClick={handleBack}>
+            Voltar para Lista
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent>
+        {isEditing ? (
+          <RegulationForm 
+            eventId={eventId} 
+            regulation={currentRegulation} 
+            onSuccess={handleBack} 
+          />
+        ) : hasRegulations ? (
+          <RegulationsList 
+            eventId={eventId}
+            onEdit={handleEdit}
+          />
+        ) : (
+          <EmptyState
+            title="Nenhum regulamento cadastrado"
+            description="Adicione um novo regulamento para o evento."
+            action={
+              <Button onClick={handleAddNew}>
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Regulamento
+              </Button>
+            }
+          />
+        )}
       </CardContent>
     </Card>
   );

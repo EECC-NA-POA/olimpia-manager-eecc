@@ -1,21 +1,9 @@
 
-import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { EventRegulation } from '@/lib/types/database';
-import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
+import React, { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash, ExternalLink, Check, X } from 'lucide-react';
+import { Edit, Trash, Toggle, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { EmptyState } from '@/components/dashboard/components/EmptyState';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,171 +14,159 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { format } from 'date-fns';
+import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
+import { EventRegulation } from '@/lib/types/database';
+import { useQuery } from '@tanstack/react-query';
+import { EmptyState } from '@/components/dashboard/components/EmptyState';
+import { LoadingState } from '@/components/dashboard/components/LoadingState';
 
 interface RegulationsListProps {
-  regulations: EventRegulation[];
+  eventId: string;
   onEdit: (regulation: EventRegulation) => void;
-  onRefresh: () => void;
 }
 
-export function RegulationsList({ regulations, onEdit, onRefresh }: RegulationsListProps) {
-  const { user } = useAuth();
-  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
-  const [regulationToDelete, setRegulationToDelete] = React.useState<EventRegulation | null>(null);
-  
-  const handleDeleteClick = (regulation: EventRegulation) => {
-    setRegulationToDelete(regulation);
-    setDeleteDialogOpen(true);
-  };
+export function RegulationsList({ eventId, onEdit }: RegulationsListProps) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [regulationToDelete, setRegulationToDelete] = useState<string | null>(null);
+
+  const { data: regulations, isLoading, refetch } = useQuery({
+    queryKey: ['regulations', eventId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('eventos_regulamentos')
+        .select('*')
+        .eq('evento_id', eventId)
+        .order('criado_em', { ascending: false });
+
+      if (error) {
+        toast.error('Erro ao carregar regulamentos');
+        throw error;
+      }
+
+      return data as EventRegulation[];
+    },
+  });
 
   const handleDelete = async () => {
     if (!regulationToDelete) return;
-    
-    try {
-      const { error } = await supabase
-        .from('eventos_regulamentos')
-        .delete()
-        .eq('id', regulationToDelete.id);
-      
-      if (error) throw error;
-      
-      toast.success('Regulamento excluído com sucesso');
-      onRefresh();
-    } catch (error) {
-      console.error('Error deleting regulation:', error);
+
+    const { error } = await supabase
+      .from('eventos_regulamentos')
+      .delete()
+      .eq('id', regulationToDelete);
+
+    if (error) {
       toast.error('Erro ao excluir regulamento');
-    } finally {
-      setDeleteDialogOpen(false);
-      setRegulationToDelete(null);
+      return;
     }
+
+    toast.success('Regulamento excluído com sucesso');
+    refetch();
+    setDeleteDialogOpen(false);
+    setRegulationToDelete(null);
   };
 
   const handleToggleStatus = async (regulation: EventRegulation) => {
-    try {
-      const { error } = await supabase
-        .from('eventos_regulamentos')
-        .update({ 
-          is_ativo: !regulation.is_ativo,
-          atualizado_por: user?.id,
-          atualizado_em: new Date().toISOString()
-        })
-        .eq('id', regulation.id);
-      
-      if (error) throw error;
-      
-      toast.success(`Regulamento ${regulation.is_ativo ? 'desativado' : 'ativado'} com sucesso`);
-      onRefresh();
-    } catch (error) {
-      console.error('Error updating regulation status:', error);
+    const { error } = await supabase
+      .from('eventos_regulamentos')
+      .update({ is_ativo: !regulation.is_ativo })
+      .eq('id', regulation.id);
+
+    if (error) {
       toast.error('Erro ao atualizar status do regulamento');
+      return;
     }
+
+    toast.success(
+      `Regulamento ${regulation.is_ativo ? 'desativado' : 'ativado'} com sucesso`
+    );
+    refetch();
   };
 
-  if (regulations.length === 0) {
+  if (isLoading) return <LoadingState />;
+
+  if (!regulations || regulations.length === 0) {
     return (
-      <EmptyState
-        title="Nenhum regulamento cadastrado"
-        description="Adicione o primeiro regulamento para este evento."
+      <EmptyState 
+        title="Nenhum regulamento cadastrado" 
+        description="Adicione um novo regulamento para o evento." 
+        action={<Button variant="outline" onClick={() => onEdit({ id: '', evento_id: eventId, versao: '1.0', titulo: '', regulamento_texto: '', regulamento_link: null, is_ativo: true, criado_por: '', criado_em: '', atualizado_por: null, atualizado_em: null })}>Adicionar Regulamento</Button>}
       />
     );
   }
 
   return (
-    <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Título</TableHead>
-            <TableHead>Versão</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Criado em</TableHead>
-            <TableHead>Atualizado em</TableHead>
-            <TableHead className="w-[150px]">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {regulations.map((regulation) => (
-            <TableRow key={regulation.id}>
-              <TableCell className="font-medium">{regulation.titulo}</TableCell>
-              <TableCell>{regulation.versao}</TableCell>
-              <TableCell>
-                <Badge variant={regulation.is_ativo ? "success" : "secondary"}>
-                  {regulation.is_ativo ? 'Ativo' : 'Inativo'}
-                </Badge>
-              </TableCell>
-              <TableCell>{format(new Date(regulation.criado_em), 'dd/MM/yyyy')}</TableCell>
-              <TableCell>
-                {regulation.atualizado_em 
-                  ? format(new Date(regulation.atualizado_em), 'dd/MM/yyyy')
-                  : '-'
-                }
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => onEdit(regulation)} 
-                    title="Editar"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleToggleStatus(regulation)}
-                    title={regulation.is_ativo ? "Desativar" : "Ativar"}
-                  >
-                    {regulation.is_ativo ? (
-                      <X className="h-4 w-4" />
-                    ) : (
-                      <Check className="h-4 w-4" />
-                    )}
-                  </Button>
-                  {regulation.regulamento_link && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      asChild
-                      title="Abrir link"
-                    >
-                      <a href={regulation.regulamento_link} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    </Button>
-                  )}
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => handleDeleteClick(regulation)}
-                    title="Excluir"
-                  >
-                    <Trash className="h-4 w-4 text-red-500" />
-                  </Button>
+    <div className="space-y-4">
+      {regulations.map((regulation) => (
+        <Card key={regulation.id} className="overflow-hidden">
+          <CardContent className="p-0">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h3 className="font-semibold text-lg">{regulation.titulo}</h3>
+                  <div className="text-sm text-muted-foreground">
+                    Versão: {regulation.versao}
+                  </div>
                 </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                <div className="flex space-x-2">
+                  <Badge variant={regulation.is_ativo ? 'success' : 'warning'}>
+                    {regulation.is_ativo ? 'Ativo' : 'Inativo'}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="mt-4 flex space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(regulation)}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setRegulationToDelete(regulation.id);
+                    setDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash className="h-4 w-4 mr-2" />
+                  Excluir
+                </Button>
+                <Button
+                  variant={regulation.is_ativo ? 'warning' : 'success'}
+                  size="sm"
+                  onClick={() => handleToggleStatus(regulation)}
+                >
+                  <Toggle className="h-4 w-4 mr-2" />
+                  {regulation.is_ativo ? 'Desativar' : 'Ativar'}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir Regulamento</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir este regulamento? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir este regulamento? Esta ação não pode
+              ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-white hover:bg-destructive/90">
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }

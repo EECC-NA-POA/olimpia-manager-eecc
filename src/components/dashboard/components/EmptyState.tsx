@@ -1,33 +1,28 @@
 
-import { Button } from "@/components/ui/button";
-import { FileX } from "lucide-react";
+import React from 'react';
+import { Button } from '@/components/ui/button';
 
-interface EmptyStateProps {
-  message?: string;
+export interface EmptyStateProps {
+  title?: string;
   description?: string;
-  onAction?: () => void;
-  actionLabel?: string;
+  action?: React.ReactNode;
 }
 
-export function EmptyState({ 
-  message = "Nenhum dado disponível no momento",
-  description = "Verifique se existem inscrições registradas no sistema",
-  onAction = () => window.location.reload(),
-  actionLabel = "Atualizar Dados"
-}: EmptyStateProps) {
+export const EmptyState = ({ title, description, action }: EmptyStateProps) => {
   return (
-    <div className="flex flex-col items-center justify-center h-96 text-center p-8">
-      <FileX className="h-12 w-12 text-muted-foreground mb-4" />
-      <p className="text-muted-foreground text-lg font-medium mb-2">{message}</p>
-      <p className="text-sm text-muted-foreground mb-6 max-w-md">
-        {description}
-      </p>
-      <Button
-        variant="outline"
-        onClick={onAction}
-      >
-        {actionLabel}
-      </Button>
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="rounded-full bg-muted p-3 mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-muted-foreground">
+          <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+          <path d="M13 2v7h7"></path>
+        </svg>
+      </div>
+      
+      {title && <h3 className="mt-2 text-lg font-semibold text-foreground">{title}</h3>}
+      
+      {description && <p className="mt-1 text-sm text-muted-foreground max-w-md mx-auto">{description}</p>}
+      
+      {action && <div className="mt-6">{action}</div>}
     </div>
   );
-}
+};
