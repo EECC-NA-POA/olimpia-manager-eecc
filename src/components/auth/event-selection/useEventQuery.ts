@@ -17,7 +17,7 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
         const { data: events, error } = await supabase
           .from('eventos')
           .select('*')
-          .order('data_inicio', { ascending: false });
+          .order('data_inicio_inscricao', { ascending: false });
 
         if (error) {
           throw error;

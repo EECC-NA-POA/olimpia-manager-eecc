@@ -10,7 +10,7 @@ export const getAvailableEvents = async (userId: string): Promise<Event[]> => {
     const { data, error } = await supabase
       .from('eventos')
       .select('*')
-      .order('data_inicio', { ascending: false });
+      .order('data_inicio_inscricao', { ascending: false });
     
     if (error) {
       console.error('Error fetching events:', error);
