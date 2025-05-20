@@ -7,6 +7,8 @@ import { DEBUG_MODE } from '@/constants/routes';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { CreateEventDialog } from '@/components/events/CreateEventDialog';
+import { useUserAgeQuery } from './hooks/useUserAgeQuery';
 
 interface EventSelectionHeaderProps {
   onLogout: () => Promise<void>;
@@ -67,11 +69,6 @@ export function EventSelectionHeader({ onLogout }: EventSelectionHeaderProps) {
     </div>
   );
 }
-
-// Import these at the top to avoid the linter errors
-import { CreateEventDialog } from '@/components/events/CreateEventDialog';
-import { useUserAgeQuery } from './hooks/useUserAgeQuery';
-import { toast } from "sonner";
 
 function EventCreationDialogContainer({
   open,
