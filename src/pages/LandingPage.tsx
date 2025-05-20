@@ -49,7 +49,6 @@ const LandingPage = () => {
                 handleLocationClick={handleLocationClick} 
                 handleCalendarSync={handleCalendarSync} 
               />
-              <ModalitiesSection />
               <SocialLinksSection />
             </div>
 
@@ -57,8 +56,13 @@ const LandingPage = () => {
               <Login />
             </div>
           </div>
+          
+          {/* Moved ModalitiesSection below the two columns */}
+          <div className="mt-8 animate-fade-in">
+            <ModalitiesSection />
+          </div>
 
-          <div className="col-span-full mt-8">
+          <div className="mt-8">
             <VideoSection />
           </div>
         </div>
