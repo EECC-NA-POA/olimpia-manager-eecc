@@ -1,5 +1,5 @@
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from "@/contexts/AuthContext";
 import { TopNavigation } from './navigation/TopNavigation';
@@ -9,6 +9,10 @@ export function GlobalHeader() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { roles } = useNavigation();
+  const location = useLocation();
+  
+  // Don't show top navigation on event selection page
+  const showTopNav = user && location.pathname !== '/event-selection';
   
   const handleClick = () => {
     // Only navigate to home page if not logged in
@@ -35,7 +39,7 @@ export function GlobalHeader() {
           </div>
         </header>
         
-        {user && <TopNavigation user={user} roles={roles} />}
+        {showTopNav && <TopNavigation user={user} roles={roles} />}
       </div>
     </div>
   );

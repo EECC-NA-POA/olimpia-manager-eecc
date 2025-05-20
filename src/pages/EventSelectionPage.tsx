@@ -96,7 +96,7 @@ export default function EventSelectionPage() {
 
   return (
     <div 
-      className="min-h-screen bg-cover bg-center bg-no-repeat"
+      className="min-h-screen pt-20 bg-cover bg-center bg-no-repeat"
       style={{ 
         backgroundImage: 'url(/lovable-uploads/7f5d4c54-bc15-4310-ac7a-ecd055bda99b.png)',
         backgroundColor: 'rgba(0, 155, 64, 0.05)',

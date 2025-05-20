@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import './styles/index.css'; // Updated import path
@@ -28,6 +29,20 @@ import { MobileNavigationLink } from './components/footer/MobileNavigation';
 import Footer from './components/Footer';
 import { MainNavigation } from './components/MainNavigation';
 
+// Create a component to set the current route as a data-attribute on the body
+const RouteObserver = () => {
+  const location = useLocation();
+  
+  React.useEffect(() => {
+    document.body.setAttribute('data-current-route', location.pathname);
+    return () => {
+      document.body.removeAttribute('data-current-route');
+    };
+  }, [location.pathname]);
+  
+  return null;
+};
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -50,6 +65,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
+          <RouteObserver />
           <div className="flex flex-col min-h-screen">
             <GlobalHeader />
             <div className="flex-grow"> {/* Removed fixed padding since navigation is in header now */}
@@ -76,6 +92,7 @@ function App() {
                 </Route>
               </Routes>
             </div>
+            <MobileNavigationLink />
             <ConditionalFooter />
             <Toaster />
           </div>

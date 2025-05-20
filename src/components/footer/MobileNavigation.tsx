@@ -1,3 +1,4 @@
+
 import { ArrowLeftRight, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { NavigationItem } from "./navigation-items";
@@ -87,8 +88,8 @@ export const MobileNavigationLink = () => {
   const location = useLocation();
   const { roles } = useNavigation();
   
-  // If user is not logged in, don't render navigation
-  if (!user) {
+  // Don't show mobile navigation on event selection page
+  if (!user || location.pathname === '/event-selection') {
     return null;
   }
   

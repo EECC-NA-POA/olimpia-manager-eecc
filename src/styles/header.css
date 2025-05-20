@@ -16,3 +16,9 @@
 .public-route-content {
   padding-top: 64px; /* Account for header only */
 }
+
+/* Special style for event selection page */
+body[data-current-route="/event-selection"] .container {
+  padding-top: 0;
+}
+
