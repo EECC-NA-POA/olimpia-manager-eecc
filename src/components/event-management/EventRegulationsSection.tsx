@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { EmptyState } from '@/components/dashboard/components/EmptyState';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface EventRegulationsSectionProps {
   eventId: string;
@@ -18,6 +19,7 @@ interface EventRegulationsSectionProps {
 export function EventRegulationsSection({ eventId }: EventRegulationsSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [currentRegulation, setCurrentRegulation] = useState<EventRegulation | null>(null);
+  const { user } = useAuth();
 
   const { data: hasRegulations, isLoading } = useQuery({
     queryKey: ['hasRegulations', eventId],
@@ -89,7 +91,9 @@ export function EventRegulationsSection({ eventId }: EventRegulationsSectionProp
           <RegulationForm 
             eventId={eventId} 
             regulation={currentRegulation} 
-            onSuccess={handleBack} 
+            userId={user?.id || ''}
+            onComplete={handleBack}
+            onCancel={handleBack}
           />
         ) : hasRegulations ? (
           <RegulationsList 

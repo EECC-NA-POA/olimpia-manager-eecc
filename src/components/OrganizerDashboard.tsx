@@ -48,8 +48,10 @@ export default function OrganizerDashboard() {
           return <ErrorState onRetry={handleRefresh} />;
         }
         if (!branchAnalytics || branchAnalytics.length === 0) {
-          return <EmptyState message="Não há dados estatísticos disponíveis" 
-                            description="Não encontramos dados de análise para exibir neste momento" />;
+          return <EmptyState 
+                    title="Não há dados estatísticos disponíveis" 
+                    description="Não encontramos dados de análise para exibir neste momento" 
+                 />;
         }
         return <StatisticsTab data={branchAnalytics} />;
       
@@ -61,8 +63,10 @@ export default function OrganizerDashboard() {
           return <ErrorState onRetry={handleRefresh} />;
         }
         if (!athletes || athletes.length === 0) {
-          return <EmptyState message="Nenhum atleta encontrado"
-                            description="Não há atletas cadastrados para este evento" />;
+          return <EmptyState 
+                    title="Nenhum atleta encontrado"
+                    description="Não há atletas cadastrados para este evento" 
+                 />;
         }
         return (
           <AthletesTab
@@ -91,8 +95,10 @@ export default function OrganizerDashboard() {
           return <ErrorState onRetry={handleRefresh} />;
         }
         if (!confirmedEnrollments || confirmedEnrollments.length === 0) {
-          return <EmptyState message="Nenhuma inscrição confirmada"
-                            description="Não há inscrições confirmadas para este evento" />;
+          return <EmptyState 
+                    title="Nenhuma inscrição confirmada"
+                    description="Não há inscrições confirmadas para este evento" 
+                 />;
         }
         return <EnrollmentsTab enrollments={confirmedEnrollments} />;
 

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash, Toggle, AlertTriangle } from 'lucide-react';
+import { Edit, Trash, Switch, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
@@ -137,11 +137,11 @@ export function RegulationsList({ eventId, onEdit }: RegulationsListProps) {
                   Excluir
                 </Button>
                 <Button
-                  variant={regulation.is_ativo ? 'warning' : 'success'}
+                  variant={regulation.is_ativo ? "outline" : "default"}
                   size="sm"
                   onClick={() => handleToggleStatus(regulation)}
                 >
-                  <Toggle className="h-4 w-4 mr-2" />
+                  <Switch className="h-4 w-4 mr-2" />
                   {regulation.is_ativo ? 'Desativar' : 'Ativar'}
                 </Button>
               </div>

@@ -5,10 +5,14 @@ import { Button } from '@/components/ui/button';
 export interface EmptyStateProps {
   title?: string;
   description?: string;
+  message?: string; // Added for backward compatibility
   action?: React.ReactNode;
 }
 
-export const EmptyState = ({ title, description, action }: EmptyStateProps) => {
+export const EmptyState = ({ title, description, message, action }: EmptyStateProps) => {
+  // Use message as a fallback for title for backward compatibility
+  const displayTitle = title || message;
+  
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
       <div className="rounded-full bg-muted p-3 mb-4">
@@ -18,7 +22,7 @@ export const EmptyState = ({ title, description, action }: EmptyStateProps) => {
         </svg>
       </div>
       
-      {title && <h3 className="mt-2 text-lg font-semibold text-foreground">{title}</h3>}
+      {displayTitle && <h3 className="mt-2 text-lg font-semibold text-foreground">{displayTitle}</h3>}
       
       {description && <p className="mt-1 text-sm text-muted-foreground max-w-md mx-auto">{description}</p>}
       
