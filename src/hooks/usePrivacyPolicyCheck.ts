@@ -30,7 +30,7 @@ export const usePrivacyPolicyCheck = (): UsePrivacyPolicyCheckResult => {
       // Get the latest active privacy policy
       const { data: latestPolicy, error: policyError } = await supabase
         .from('termos_privacidade')
-        .select('id, versao_termo, data_criacao')
+        .select('id, versao_termo')
         .eq('ativo', true)
         .order('data_criacao', { ascending: false })
         .limit(1)
@@ -38,6 +38,13 @@ export const usePrivacyPolicyCheck = (): UsePrivacyPolicyCheckResult => {
 
       if (policyError) {
         console.error('Error fetching latest policy:', policyError);
+        
+        // Se não houver política ativa, não exigimos aceitação
+        if (policyError.code === 'PGRST116') {
+          console.log('No active privacy policy found');
+          return { needsAcceptance: false };
+        }
+        
         throw new Error('Não foi possível verificar os termos de privacidade');
       }
 
@@ -76,6 +83,7 @@ export const usePrivacyPolicyCheck = (): UsePrivacyPolicyCheckResult => {
     enabled: !!user?.id,
     retry: 1,
     staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
     meta: {
       skipThrow: true
     }
@@ -90,13 +98,16 @@ export const usePrivacyPolicyCheck = (): UsePrivacyPolicyCheckResult => {
 
   const refetchCheck = async () => {
     try {
+      setCheckCompleted(false);
       const result = await refetch();
       if (result.data) {
         setNeedsAcceptance(result.data.needsAcceptance);
       }
+      setCheckCompleted(true);
     } catch (err: any) {
       console.error('Error refetching privacy policy check:', err);
       setError(err);
+      setCheckCompleted(true);
     }
   };
 

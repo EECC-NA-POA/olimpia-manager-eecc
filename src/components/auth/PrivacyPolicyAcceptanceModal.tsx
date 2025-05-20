@@ -1,15 +1,16 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchActivePrivacyPolicy } from "@/lib/api/privacyPolicy";
 import { supabase } from "@/lib/supabase";
-import { LogOut, X } from "lucide-react";
+import { LogOut, X, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 
 import {
   AlertDialog,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -25,10 +26,11 @@ interface PrivacyPolicyAcceptanceModalProps {
 export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPolicyAcceptanceModalProps) => {
   const { user } = useAuth();
   const [accepted, setAccepted] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   
   // Fetch the latest privacy policy with shorter timeout
-  const { data: policyContent, isLoading, error } = useQuery({
-    queryKey: ['latest-privacy-policy'],
+  const { data: policyContent, isLoading, error, refetch } = useQuery({
+    queryKey: ['latest-privacy-policy', retryCount],
     queryFn: fetchActivePrivacyPolicy,
     retry: 1,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -98,6 +100,11 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
     registerAcceptanceMutation.mutate();
   };
 
+  const handleRetryLoad = () => {
+    setRetryCount(prev => prev + 1);
+    refetch();
+  };
+
   return (
     <AlertDialog open={true}>
       <AlertDialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -105,6 +112,9 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
           <AlertDialogTitle className="text-xl font-semibold">
             Política de Privacidade
           </AlertDialogTitle>
+          <AlertDialogDescription className="mt-2">
+            Para continuar utilizando nosso sistema, você precisa aceitar nossa política de privacidade.
+          </AlertDialogDescription>
           <Button 
             variant="ghost" 
             size="icon" 
@@ -117,10 +127,6 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
         </AlertDialogHeader>
 
         <div className="py-4">
-          <p className="mb-4 text-sm text-muted-foreground">
-            Para continuar utilizando nosso sistema, você precisa aceitar nossa política de privacidade.
-          </p>
-          
           <div className="border rounded-md p-4 max-h-[50vh] overflow-y-auto bg-muted/30">
             {isLoading ? (
               <div className="space-y-2">
@@ -129,13 +135,23 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
                 <Skeleton className="h-4 w-5/6" />
                 <Skeleton className="h-4 w-full" />
               </div>
-            ) : error ? (
-              <div className="text-center text-red-500">
-                Erro ao carregar a política de privacidade. Por favor, tente novamente mais tarde.
+            ) : error || !policyContent || policyContent.includes('Não foi possível carregar') ? (
+              <div className="text-center space-y-4">
+                <p className="text-red-500">
+                  Não foi possível carregar a política de privacidade. Por favor, tente novamente.
+                </p>
+                <Button 
+                  onClick={handleRetryLoad}
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCcw className="h-4 w-4" />
+                  Tentar novamente
+                </Button>
               </div>
             ) : (
               <div 
-                dangerouslySetInnerHTML={{ __html: policyContent || 'Política de privacidade não disponível no momento.' }} 
+                dangerouslySetInnerHTML={{ __html: policyContent }} 
                 className="policy-content prose prose-sm max-w-none dark:prose-invert"
               />
             )}
@@ -155,7 +171,7 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
           <Button
             className="w-full sm:w-auto"
             onClick={handleAccept}
-            disabled={isLoading || registerAcceptanceMutation.isPending || accepted}
+            disabled={isLoading || registerAcceptanceMutation.isPending || accepted || error || !policyContent || policyContent.includes('Não foi possível carregar')}
           >
             {registerAcceptanceMutation.isPending ? (
               <>

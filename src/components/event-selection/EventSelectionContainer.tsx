@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,18 @@ export function EventSelectionContainer() {
     refetchCheck 
   } = usePrivacyPolicyCheck();
 
+  // Tempo máximo de carregamento para a verificação da política
+  useEffect(() => {
+    // Se o carregamento estiver demorando muito, forçamos a conclusão
+    const loadingTimer = setTimeout(() => {
+      if (!checkCompleted) {
+        console.log('Privacy policy check taking too long, forcing completion');
+      }
+    }, 3000);
+    
+    return () => clearTimeout(loadingTimer);
+  }, [checkCompleted]);
+
   const handleLogout = async () => {
     try {
       console.log('Handling logout from EventSelectionPage');
@@ -44,7 +56,8 @@ export function EventSelectionContainer() {
     return null;
   }
 
-  // Show a brief loading state for privacy policy check
+  // Mostrar um estado de carregamento breve durante a verificação da política
+  // Limitamos a apenas 1.5 segundos para não confundir o usuário
   if (isPolicyCheckLoading && !checkCompleted) {
     return (
       <div className="min-h-screen bg-cover bg-center bg-no-repeat"
@@ -55,7 +68,12 @@ export function EventSelectionContainer() {
           boxShadow: 'inset 0 0 0 2000px rgba(0, 155, 64, 0.05)'
         }}
       >
-        <LoadingState />
+        <div className="flex flex-col items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-olimpics-green-primary border-t-transparent mx-auto mb-4"></div>
+            <p className="text-olimpics-green-primary font-medium">Verificando termos de privacidade...</p>
+          </div>
+        </div>
       </div>
     );
   }

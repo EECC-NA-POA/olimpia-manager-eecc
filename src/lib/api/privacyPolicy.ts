@@ -9,7 +9,7 @@ export const fetchActivePrivacyPolicy = async (): Promise<string> => {
     // Tentativa com o cliente padrão do Supabase para acessar dados públicos
     const { data, error } = await supabase
       .from('termos_privacidade')
-      .select('conteudo')
+      .select('termo_texto, conteudo')
       .eq('ativo', true)
       .order('data_criacao', { ascending: false })
       .limit(1)
@@ -23,7 +23,7 @@ export const fetchActivePrivacyPolicy = async (): Promise<string> => {
         console.log('Permission error, trying alternative approach...');
         
         // Tentativa usando acesso anônimo através da API pública
-        const publicResponse = await fetch(`${SUPABASE_URL}/rest/v1/termos_privacidade?select=conteudo&ativo=eq.true&order=data_criacao.desc&limit=1`, {
+        const publicResponse = await fetch(`${SUPABASE_URL}/rest/v1/termos_privacidade?select=termo_texto,conteudo&ativo=eq.true&order=data_criacao.desc&limit=1`, {
           headers: {
             'apikey': SUPABASE_PUBLISHABLE_KEY,
             'Content-Type': 'application/json'
@@ -34,7 +34,8 @@ export const fetchActivePrivacyPolicy = async (): Promise<string> => {
           const publicData = await publicResponse.json();
           if (publicData && publicData.length > 0) {
             console.log('Successfully fetched privacy policy through public API');
-            return publicData[0].conteudo || 'Política de privacidade carregada com sucesso.';
+            // Priorize termo_texto, mas use conteudo como fallback
+            return publicData[0].termo_texto || publicData[0].conteudo || 'Política de privacidade carregada com sucesso.';
           }
         }
         
@@ -49,8 +50,9 @@ export const fetchActivePrivacyPolicy = async (): Promise<string> => {
       return 'Política de privacidade não disponível no momento.';
     }
     
-    console.log('Privacy policy fetched successfully');
-    return data.conteudo || 'Conteúdo da política de privacidade não disponível.';
+    console.log('Privacy policy fetched successfully:', data);
+    // Priorize termo_texto, mas use conteudo como fallback
+    return data.termo_texto || data.conteudo || 'Conteúdo da política de privacidade não disponível.';
   } catch (error: any) {
     console.error('Exception in fetchActivePrivacyPolicy:', error);
     return 'Não foi possível carregar a política de privacidade. Por favor, tente novamente mais tarde.';
