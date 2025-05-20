@@ -98,7 +98,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     enabled: !!userId && !isOrganizer,
   });
 
-  // Fetch modalities
+  // Fetch modalities - Fix the type instantiation issue
   const { data: modalities, isLoading: isLoadingModalities } = useQuery({
     queryKey: ['modalities', eventId],
     queryFn: async () => {
@@ -122,15 +122,24 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
         return [];
       }
       
-      // Remove duplicates (since the view joins with athletes)
-      const uniqueModalities = (data as Modality[]).reduce((acc: Modality[], current: Modality) => {
-        const x = acc.find(item => item.modalidade_id === current.modalidade_id);
-        if (!x) {
-          return acc.concat([current]);
-        } else {
-          return acc;
+      // Use type assertion with a simpler approach to avoid deep type instantiation
+      const rawData = data as any[];
+      
+      // Handle duplicate removal manually without complex type inference
+      const uniqueIds = new Set<number>();
+      const uniqueModalities: Modality[] = [];
+      
+      rawData.forEach(item => {
+        if (!uniqueIds.has(item.modalidade_id)) {
+          uniqueIds.add(item.modalidade_id);
+          uniqueModalities.push({
+            modalidade_id: item.modalidade_id,
+            modalidade_nome: item.modalidade_nome,
+            categoria: item.categoria,
+            tipo_modalidade: item.tipo_modalidade
+          });
         }
-      }, []);
+      });
       
       return uniqueModalities;
     },
@@ -163,7 +172,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
       
       // For each team, fetch its athletes
       const teamsWithAthletes = await Promise.all(
-        teamsData.map(async (team) => {
+        (teamsData || []).map(async (team) => {
           const { data: athletesData, error: athletesError } = await supabase
             .from('atletas_equipes')
             .select(`
@@ -178,7 +187,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
           
           if (athletesError) {
             console.error(`Error fetching athletes for team ${team.id}:`, athletesError);
-            return { ...team, athletes: [] };
+            return { ...team, athletes: [] } as Team;
           }
           
           return { ...team, athletes: athletesData || [] } as Team;
@@ -190,7 +199,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     enabled: !!eventId && !!selectedModalityId,
   });
 
-  // Fetch athletes available for team formation
+  // Fetch athletes available for team formation - Fix the type instantiation issue
   const { data: availableAthletes } = useQuery({
     queryKey: ['athletes', eventId, selectedModalityId, isOrganizer, userInfo?.filial_id],
     queryFn: async () => {
@@ -224,21 +233,23 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
         return [];
       }
       
-      // Filter out athletes who are already in teams
+      // Simplify the filtering logic to avoid deep type instantiation
       if (existingTeams && existingTeams.length > 0) {
         const athletesInTeams = new Set<string>();
-        existingTeams.forEach((team: Team) => {
-          team.athletes.forEach((athlete: TeamAthlete) => {
+        
+        // Add all athlete IDs from teams to the Set for quick lookups
+        existingTeams.forEach((team) => {
+          team.athletes.forEach((athlete) => {
             athletesInTeams.add(athlete.atleta_id);
           });
         });
         
-        return (data as unknown as AvailableAthlete[]).filter((athlete) => 
-          !athletesInTeams.has(athlete.atleta_id)
-        );
+        // Filter the data without complex typings
+        const rawData = data as any[];
+        return rawData.filter((athlete) => !athletesInTeams.has(athlete.atleta_id)) as AvailableAthlete[];
       }
       
-      return data as unknown as AvailableAthlete[];
+      return data as AvailableAthlete[];
     },
     enabled: !!eventId && !!selectedModalityId && !!existingTeams,
   });
