@@ -11,12 +11,12 @@
 
 /* Add extra space between navigation and content */
 .main-navigation-content {
-  padding-top: 120px !important; /* Increased padding for better separation */
+  padding-top: 140px !important; /* Increased padding for better separation */
 }
 
 /* Event selection page specific spacing */
 .event-selection-container {
-  padding-top: 120px !important; /* Match other pages */
+  padding-top: 140px !important; /* Match other pages */
 }
 
 /* Tabs styling overrides for the nav */

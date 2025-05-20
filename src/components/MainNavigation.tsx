@@ -50,7 +50,7 @@ export function MainNavigation() {
 
   return (
     <div className="flex flex-col w-full">
-      <div className="flex min-h-screen w-full"> {/* Removed padding-top - now handled in main */}
+      <div className="flex min-h-screen w-full mt-8"> {/* Added margin-top for better spacing */}
         <main className="flex-1 overflow-auto bg-olimpics-background transition-all duration-200">
           <Outlet />
         </main>

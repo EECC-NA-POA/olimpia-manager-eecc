@@ -107,7 +107,7 @@ export function EventSelectionContainer() {
         boxShadow: 'inset 0 0 0 2000px rgba(0, 155, 64, 0.05)'
       }}
     >
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto py-8 mt-8"> {/* Added margin-top for better spacing */}
         <EventSelectionHeader onLogout={handleLogout} />
         <EventSelectionContent />
       </div>

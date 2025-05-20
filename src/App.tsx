@@ -69,7 +69,7 @@ function App() {
           <RouteObserver />
           <div className="flex flex-col min-h-screen">
             <GlobalHeader />
-            <div className="flex-grow"> {/* Removed fixed padding since navigation is in header now */}
+            <div className="flex-grow mt-8"> {/* Added margin-top for better spacing */}
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
