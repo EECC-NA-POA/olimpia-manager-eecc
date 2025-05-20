@@ -29,15 +29,19 @@ export const EventSelection = ({
   const { user, signOut } = useAuth();
   const [selectedRole, setSelectedRole] = useState<PerfilTipo>('ATL');
   
-  const { data: events, isLoading } = useEventQuery(user?.id);
-  const registerEventMutation = useEventRegistration(user?.id);
-  
   // Check if the user needs to accept the privacy policy
   const { 
     needsAcceptance, 
     isLoading: isPolicyCheckLoading, 
+    checkCompleted,
     refetchCheck 
   } = usePrivacyPolicyCheck();
+
+  // Only fetch events if privacy policy check is complete and accepted
+  const shouldFetchEvents = checkCompleted && !needsAcceptance;
+  
+  const { data: events, isLoading } = useEventQuery(user?.id, shouldFetchEvents);
+  const registerEventMutation = useEventRegistration(user?.id);
   
   const handleEventRegistration = async (eventId: string) => {
     try {
@@ -96,6 +100,7 @@ export const EventSelection = ({
     await refetchCheck();
   };
   
+  // Always check for privacy policy acceptance first
   if (isPolicyCheckLoading) {
     return (
       <div className="flex items-center justify-center p-8">

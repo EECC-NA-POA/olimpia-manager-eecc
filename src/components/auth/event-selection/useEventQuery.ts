@@ -1,46 +1,57 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
-export const useEventQuery = (userId: string | undefined) => {
+export const useEventQuery = (userId: string | undefined, enabled: boolean = true) => {
+  // Only fetch events if userId is provided and privacy policy is accepted (enabled)
   return useQuery({
-    queryKey: ['active-events', userId],
+    queryKey: ['events', userId],
     queryFn: async () => {
-      // First get all active events
-      const { data: events, error: eventsError } = await supabase
-        .from('eventos')
-        .select(`
-          *,
-          modalidades (
-            id,
-            nome,
-            categoria,
-            tipo_modalidade,
-            faixa_etaria,
-            limite_vagas,
-            vagas_ocupadas
-          )
-        `)
-        .eq('status_evento', 'ativo');
+      if (!userId) {
+        return [];
+      }
 
-      if (eventsError) throw eventsError;
+      try {
+        // Get all events
+        const { data: events, error } = await supabase
+          .from('eventos')
+          .select('*')
+          .order('data_inicio', { ascending: false });
 
-      if (!userId) return events || [];
+        if (error) {
+          throw error;
+        }
 
-      // Then get user's registered events
-      const { data: registeredEvents, error: registeredError } = await supabase
-        .from('inscricoes_eventos')
-        .select('evento_id')
-        .eq('usuario_id', userId);
+        if (!events || events.length === 0) {
+          return [];
+        }
 
-      if (registeredError) throw registeredError;
+        // Get user's event registrations
+        const { data: registrations, error: regError } = await supabase
+          .from('registros_usuarios_eventos')
+          .select('evento_id')
+          .eq('usuario_id', userId);
 
-      // Mark events as registered or not
-      return events?.map(event => ({
-        ...event,
-        isRegistered: registeredEvents?.some(reg => reg.evento_id === event.id) || false
-      })) || [];
+        if (regError) {
+          throw regError;
+        }
+
+        const registeredEventIds = (registrations || []).map(reg => reg.evento_id);
+
+        // Add isRegistered flag to each event
+        return events.map(event => ({
+          ...event,
+          isRegistered: registeredEventIds.includes(event.id)
+        }));
+      } catch (error: any) {
+        console.error('Error fetching events:', error);
+        toast.error('Erro ao carregar eventos');
+        return [];
+      }
     },
-    enabled: true
+    enabled: !!userId && enabled,
+    retry: 1,
+    refetchOnWindowFocus: false
   });
 };

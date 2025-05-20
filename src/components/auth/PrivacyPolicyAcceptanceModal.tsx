@@ -22,7 +22,7 @@ interface PrivacyPolicyAcceptanceModalProps {
 }
 
 export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPolicyAcceptanceModalProps) => {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [accepted, setAccepted] = useState(false);
   
   // Fetch the latest privacy policy
@@ -36,6 +36,10 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
   const registerAcceptanceMutation = useMutation({
     mutationFn: async () => {
       try {
+        if (!user?.id) {
+          throw new Error('Usuário não identificado');
+        }
+        
         // Get the latest privacy policy version
         const { data: latestPolicy, error: policyError } = await supabase
           .from('termos_privacidade')
@@ -50,15 +54,17 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
           throw new Error('Não foi possível obter a versão do termo de privacidade');
         }
         
+        console.log('Registering privacy policy acceptance for user:', user.id, 'policy:', latestPolicy.versao_termo);
+        
         // Register user acceptance
         const { error: acceptanceError } = await supabase
           .from('logs_aceite_privacidade')
           .insert({
-            usuario_id: user?.id,
+            usuario_id: user.id,
             termo_id: latestPolicy.id,
-            nome_completo: user?.nome_completo || user?.user_metadata?.nome_completo,
-            tipo_documento: user?.tipo_documento || user?.user_metadata?.tipo_documento,
-            numero_documento: user?.numero_documento || user?.user_metadata?.numero_documento,
+            nome_completo: user.nome_completo || user.user_metadata?.nome_completo,
+            tipo_documento: user.tipo_documento || user.user_metadata?.tipo_documento,
+            numero_documento: user.numero_documento || user.user_metadata?.numero_documento,
             versao_termo: latestPolicy.versao_termo,
             termo_texto: latestPolicy.termo_texto
           });
@@ -75,6 +81,7 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
       }
     },
     onSuccess: () => {
+      console.log('Privacy policy acceptance registered successfully');
       toast.success("Termo de privacidade aceito com sucesso!");
       onAccept();
     },
@@ -89,29 +96,18 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
     registerAcceptanceMutation.mutate();
   };
 
-  const handleExit = async () => {
-    try {
-      localStorage.removeItem('currentEventId');
-      await signOut();
-      onCancel();
-    } catch (error) {
-      console.error('Error during logout:', error);
-      toast.error("Erro ao fazer logout. Tente novamente.");
-    }
-  };
-
   return (
     <AlertDialog open={true}>
       <AlertDialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-xl font-semibold">
-            Política de Privacidade Atualizada
+            Política de Privacidade
           </AlertDialogTitle>
           <Button 
             variant="ghost" 
             size="icon" 
             className="absolute right-4 top-4" 
-            onClick={handleExit}
+            onClick={onCancel}
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Fechar</span>
@@ -120,7 +116,7 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
 
         <div className="py-4">
           <p className="mb-4 text-sm text-muted-foreground">
-            Para continuar utilizando nosso sistema, você precisa aceitar nossa política de privacidade atualizada.
+            Para continuar utilizando nosso sistema, você precisa aceitar nossa política de privacidade.
           </p>
           
           <div className="border rounded-md p-4 max-h-[50vh] overflow-y-auto bg-muted/30">
@@ -145,7 +141,7 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
           <Button 
             variant="outline" 
             className="w-full sm:w-auto flex items-center gap-2"
-            onClick={handleExit}
+            onClick={onCancel}
           >
             <LogOut className="w-4 h-4" />
             Sair

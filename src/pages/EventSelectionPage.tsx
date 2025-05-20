@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { LogOut, Plus } from 'lucide-react';
 import { DEBUG_MODE } from '@/constants/routes';
 import { toast } from "sonner";
+import { usePrivacyPolicyCheck } from '@/hooks/usePrivacyPolicyCheck';
+import { PrivacyPolicyAcceptanceModal } from '@/components/auth/PrivacyPolicyAcceptanceModal';
 
 export default function EventSelectionPage() {
   const navigate = useNavigate();
@@ -19,10 +21,20 @@ export default function EventSelectionPage() {
   const { canCreateEvents, isLoading: permissionLoading } = useCanCreateEvents();
   const [createEventDialogOpen, setCreateEventDialogOpen] = useState(false);
 
+  // Check if the user needs to accept the privacy policy
+  const { 
+    needsAcceptance, 
+    isLoading: isPolicyCheckLoading,
+    checkCompleted,
+    refetchCheck 
+  } = usePrivacyPolicyCheck();
+
   // Debug logs to help diagnose the issue
   console.log('User data:', user);
   console.log('Can create events permission:', canCreateEvents);
   console.log('Permission loading state:', permissionLoading);
+  console.log('Privacy policy check completed:', checkCompleted);
+  console.log('Needs privacy policy acceptance:', needsAcceptance);
 
   useEffect(() => {
     if (!user) {
@@ -87,9 +99,44 @@ export default function EventSelectionPage() {
     }
   };
 
+  const handlePrivacyPolicyAccept = async () => {
+    await refetchCheck();
+  };
+
   // If there's no user, redirect to landing page
   if (!user) {
     return null;
+  }
+
+  // Show loading state while checking privacy policy
+  if (isPolicyCheckLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-olimpics-green-primary border-t-transparent"></div>
+          <span className="text-olimpics-green-primary font-medium">Verificando termos de privacidade...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show the privacy policy acceptance modal if needed
+  if (needsAcceptance) {
+    return (
+      <div className="min-h-screen bg-cover bg-center bg-no-repeat"
+        style={{ 
+          backgroundImage: 'url(/lovable-uploads/7f5d4c54-bc15-4310-ac7a-ecd055bda99b.png)',
+          backgroundColor: 'rgba(0, 155, 64, 0.05)',
+          backgroundBlendMode: 'overlay',
+          boxShadow: 'inset 0 0 0 2000px rgba(0, 155, 64, 0.05)'
+        }}
+      >
+        <PrivacyPolicyAcceptanceModal
+          onAccept={handlePrivacyPolicyAccept}
+          onCancel={handleLogout}
+        />
+      </div>
+    );
   }
 
   const isUnder13 = userAge !== null && userAge < 13;

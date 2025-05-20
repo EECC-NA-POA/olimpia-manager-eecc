@@ -46,12 +46,14 @@ export const usePrivacyPolicyCheck = (): UsePrivacyPolicyCheckResult => {
         return { needsAcceptance: false };
       }
 
+      console.log('Latest policy found:', latestPolicy);
+
       // Check if the user has accepted this specific version
       const { data: acceptances, error: acceptancesError } = await supabase
         .from('logs_aceite_privacidade')
         .select('*')
         .eq('usuario_id', user.id)
-        .eq('termo_id', latestPolicy.id);
+        .eq('versao_termo', latestPolicy.versao_termo);
 
       if (acceptancesError) {
         console.error('Error checking user acceptances:', acceptancesError);
@@ -72,8 +74,8 @@ export const usePrivacyPolicyCheck = (): UsePrivacyPolicyCheckResult => {
     queryKey: ['privacy-policy-acceptance', user?.id],
     queryFn: checkLatestAcceptance,
     enabled: !!user?.id,
-    retry: 3,
-    refetchOnWindowFocus: false,
+    retry: 2,
+    staleTime: 1000 * 60 * 5, // 5 minutes
     meta: {
       skipThrow: true
     }
