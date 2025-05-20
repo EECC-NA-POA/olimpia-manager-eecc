@@ -32,8 +32,10 @@ export const PrivacyPolicySection = () => {
     retry: 3,  // Aumentamos o número de tentativas
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 60, // 1 hora
-    // Desabilitamos o lance de erro para tratarmos manualmente
-    useErrorBoundary: false
+    // Em vez de useErrorBoundary, usamos meta.skipThrow na versão atual do TanStack Query
+    meta: {
+      skipThrow: true
+    }
   });
   
   const handleOpenDialog = () => {
