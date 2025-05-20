@@ -11,6 +11,7 @@ import { EventCard } from "./EventCard";
 
 interface EventWithStatus extends Event {
   isRegistered: boolean;
+  hasBranchPermission?: boolean;
   roles?: Array<{ nome: string; codigo: string }>;
   isOpen?: boolean;
   isAdmin?: boolean;
@@ -58,7 +59,8 @@ export const EventCarousel = ({
                   ...event,
                   roles: event.roles || [],
                   isOpen: event.isOpen !== false,
-                  isAdmin: event.isAdmin || false
+                  isAdmin: event.isAdmin || false,
+                  hasBranchPermission: event.hasBranchPermission
                 }}
                 selectedRole={selectedRole}
                 onRoleChange={onRoleChange}

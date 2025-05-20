@@ -33,21 +33,50 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
 
         console.log('Events found:', events.length);
         
-        // Check for user registrations by querying the inscricoes table
-        // This approach is more reliable as it directly uses the main inscricoes table
+        // First, get user registrations from inscricoes_eventos table
         const { data: registrations, error: regError } = await supabase
-          .from('inscricoes')
+          .from('inscricoes_eventos')
           .select('evento_id')
           .eq('usuario_id', userId);
         
         if (regError) {
-          console.error('Error fetching user registrations from inscricoes table:', regError);
+          console.error('Error fetching user registrations from inscricoes_eventos table:', regError);
           // Continue with events but mark them as not registered
           return events.map(event => ({
             ...event,
             isRegistered: false
           }));
-        } 
+        }
+        
+        // Get user branch ID to check for branch permissions
+        const { data: userData, error: userError } = await supabase
+          .from('usuarios')
+          .select('filial_id')
+          .eq('id', userId)
+          .single();
+          
+        if (userError) {
+          console.error('Error fetching user branch:', userError);
+        }
+        
+        const userBranchId = userData?.filial_id;
+        console.log('User branch ID:', userBranchId);
+        
+        // Get branch permissions for events if we have a branch ID
+        let branchPermissions = [];
+        if (userBranchId) {
+          const { data: permissions, error: permError } = await supabase
+            .from('eventos_filiais')
+            .select('evento_id')
+            .eq('filial_id', userBranchId);
+            
+          if (permError) {
+            console.error('Error fetching branch permissions:', permError);
+          } else {
+            branchPermissions = permissions || [];
+            console.log('Branch permissions:', branchPermissions);
+          }
+        }
         
         // If we have registrations, mark events as registered
         if (registrations && registrations.length > 0) {
@@ -55,18 +84,35 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
           const registeredEventIds = registrations.map(reg => reg.evento_id);
           console.log('User registered in events:', registeredEventIds);
           
-          // Add isRegistered flag to each event
-          return events.map(event => ({
-            ...event,
-            isRegistered: registeredEventIds.includes(event.id)
-          }));
+          // Add isRegistered flag to each event and check branch permission
+          return events.map(event => {
+            // Check if user is registered in this event
+            const isRegistered = registeredEventIds.includes(event.id);
+            
+            // Check if user's branch has permission for this event
+            const hasBranchPermission = !userBranchId || 
+              branchPermissions.some(perm => perm.evento_id === event.id);
+            
+            return {
+              ...event,
+              isRegistered,
+              hasBranchPermission
+            };
+          });
         }
         
         // If no registrations found, return events with isRegistered = false
-        return events.map(event => ({
-          ...event,
-          isRegistered: false
-        }));
+        // But still include branch permission info
+        return events.map(event => {
+          const hasBranchPermission = !userBranchId || 
+            branchPermissions.some(perm => perm.evento_id === event.id);
+            
+          return {
+            ...event,
+            isRegistered: false,
+            hasBranchPermission
+          };
+        });
       } catch (error: any) {
         console.error('Error in useEventQuery:', error);
         toast.error('Erro ao carregar eventos');

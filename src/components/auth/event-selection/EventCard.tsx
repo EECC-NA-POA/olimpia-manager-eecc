@@ -12,9 +12,10 @@ import { cn } from "@/lib/utils";
 interface EventCardProps {
   event: Event & {
     isRegistered: boolean;
-    roles: Array<{ nome: string; codigo: string }>;
-    isOpen: boolean;
-    isAdmin: boolean;
+    hasBranchPermission?: boolean;
+    roles?: Array<{ nome: string; codigo: string }>;
+    isOpen?: boolean;
+    isAdmin?: boolean;
   };
   selectedRole: 'ATL' | 'PGR';
   onRoleChange: (value: 'ATL' | 'PGR') => void;
@@ -29,9 +30,9 @@ export const EventCard = ({
   onEventAction,
   isUnderAge = false
 }: EventCardProps) => {
-  const isDisabled = (event.status_evento === 'encerrado' || event.status_evento === 'suspenso') 
+  const isDisabled = ((event.status_evento === 'encerrado' || event.status_evento === 'suspenso') 
     && !event.isRegistered 
-    && !event.isAdmin;
+    && !event.isAdmin) || (event.hasBranchPermission === false);
 
   const getStatusStripeColor = (status: string) => {
     switch (status) {
@@ -48,6 +49,7 @@ export const EventCard = ({
 
   const getButtonLabel = () => {
     if (event.isRegistered) return 'Acessar evento';
+    if (event.hasBranchPermission === false) return 'Filial não autorizada';
     if (isDisabled) return event.status_evento === 'encerrado' ? 'Inscrições encerradas' : 'Evento suspenso';
     return 'Quero me cadastrar';
   };
@@ -80,6 +82,15 @@ export const EventCard = ({
               {event.status_evento === 'encerrado' 
                 ? 'Este evento está encerrado para novas inscrições.' 
                 : 'Este evento está temporariamente suspenso.'}
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {event.hasBranchPermission === false && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Sua filial não está autorizada a participar deste evento.
             </AlertDescription>
           </Alert>
         )}
