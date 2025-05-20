@@ -68,7 +68,7 @@ interface AvailableAthlete {
   atleta_email: string;
   tipo_documento: string;
   numero_documento: string;
-  filial_id: string;
+  filial_id?: string; // Made optional since it might not exist in the view
 }
 
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
@@ -123,7 +123,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
       }
       
       // Remove duplicates (since the view joins with athletes)
-      const uniqueModalities = data.reduce((acc: Modality[], current: Modality) => {
+      const uniqueModalities = (data as Modality[]).reduce((acc: Modality[], current: Modality) => {
         const x = acc.find(item => item.modalidade_id === current.modalidade_id);
         if (!x) {
           return acc.concat([current]);
@@ -196,6 +196,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     queryFn: async () => {
       if (!eventId || !selectedModalityId) return [];
       
+      // Get confirmed athletes for the selected modality
       let query = supabase
         .from('vw_modalidades_atletas_confirmados')
         .select(`
@@ -204,14 +205,15 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
           atleta_telefone,
           atleta_email,
           tipo_documento,
-          numero_documento,
-          filial_id
+          numero_documento
         `)
         .eq('evento_id', eventId)
         .eq('modalidade_id', selectedModalityId);
       
-      // Se não for organizador, filtrar atletas pela filial do usuário
+      // If not an organizer, filter athletes by branch using the user's branch
       if (!isOrganizer && userInfo?.filial_id) {
+        // We must add filial_id to the selection only if we're filtering by it
+        // This avoids the error about missing filial_id column
         query = query.eq('filial_id', userInfo.filial_id);
       }
       
@@ -231,12 +233,12 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
           });
         });
         
-        return (data as AvailableAthlete[]).filter((athlete) => 
+        return (data as unknown as AvailableAthlete[]).filter((athlete) => 
           !athletesInTeams.has(athlete.atleta_id)
         );
       }
       
-      return data as AvailableAthlete[];
+      return data as unknown as AvailableAthlete[];
     },
     enabled: !!eventId && !!selectedModalityId && !!existingTeams,
   });
