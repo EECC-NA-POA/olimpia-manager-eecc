@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from "@/contexts/AuthContext";
 import { TopNavigation } from './navigation/TopNavigation';
+import { useNavigation } from '@/hooks/useNavigation';
 
 export function GlobalHeader() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { roles } = useNavigation();
   
   const handleClick = () => {
     // Only navigate to home page if not logged in
@@ -32,7 +34,7 @@ export function GlobalHeader() {
         </div>
       </header>
       
-      {user && <TopNavigation user={user} roles={useAuth().roles} />}
+      {user && <TopNavigation user={user} roles={roles} />}
     </div>
   );
 }
