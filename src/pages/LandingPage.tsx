@@ -64,7 +64,7 @@ const LandingPage = () => {
   };  
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-olimpics-background to-white">
+    <div className="min-h-screen bg-gradient-to-b from-olimpics-background to-white home-page">
       <div className="relative min-h-screen bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary">
         <div className="absolute inset-0 bg-black/40" />
         <div className="container relative z-10 mx-auto px-4 py-8">
