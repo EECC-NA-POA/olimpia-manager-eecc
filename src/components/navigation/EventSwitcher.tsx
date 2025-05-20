@@ -1,98 +1,70 @@
 
-import { ArrowLeftRight } from 'lucide-react';
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useNavigate } from 'react-router-dom';
-import { toast } from "sonner";
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
+import { getAvailableEvents } from '@/lib/api';
+import { Event } from '@/types/api';
 
 interface EventSwitcherProps {
   userId: string;
-  collapsed?: boolean;
+  collapsed?: boolean; 
 }
 
 export function EventSwitcher({ userId, collapsed = false }: EventSwitcherProps) {
-  const navigate = useNavigate();
-  
-  const { data: userEvents } = useQuery({
-    queryKey: ['user-events', userId],
-    queryFn: async () => {
-      if (!userId) return [];
-      
-      const { data, error } = await supabase
-        .from('inscricoes_eventos')
-        .select(`
-          evento_id,
-          eventos (
-            id,
-            nome,
-            status_evento
-          )
-        `)
-        .eq('usuario_id', userId);
+  const { currentEventId, setCurrentEventId } = useAuth();
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
-      if (error) {
-        console.error('Error fetching user events:', error);
-        throw error;
-      }
-
-      return data.map(item => item.eventos);
-    },
-    enabled: !!userId
+  // Fetch available events
+  const { data: availableEvents, isLoading } = useQuery({
+    queryKey: ['available-events', userId],
+    queryFn: () => getAvailableEvents(userId),
   });
 
-  const handleEventSwitch = (eventId: string) => {
-    console.log('Setting current event ID:', eventId);
-    localStorage.setItem('currentEventId', eventId);
+  // Set selected event when events are loaded or currentEventId changes
+  useEffect(() => {
+    if (availableEvents && currentEventId) {
+      const event = availableEvents.find(event => event.id === currentEventId);
+      if (event) setSelectedEvent(event);
+    }
+  }, [availableEvents, currentEventId]);
+
+  const handleEventChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const eventId = e.target.value;
+    setCurrentEventId(eventId);
     
-    // Force context update by reloading the page
-    toast.success('Evento selecionado com sucesso!');
-    navigate(0); // This is equivalent to window.location.reload()
+    // Update selected event
+    if (availableEvents) {
+      const event = availableEvents.find(event => event.id === eventId);
+      if (event) setSelectedEvent(event);
+    }
   };
 
-  if (!userEvents || userEvents.length <= 1) return null;
+  if (isLoading) {
+    return (
+      <div className={`${collapsed ? 'w-8 h-8' : 'w-auto'} flex items-center justify-center`}>
+        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white"></div>
+      </div>
+    );
+  }
+
+  if (!availableEvents || availableEvents.length === 0) {
+    return null;
+  }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          className="w-full rounded-lg p-4 flex items-center gap-3 
-            text-white hover:bg-olimpics-green-secondary/20 
-            transition-all duration-200 text-lg font-medium"
-          title={collapsed ? "Trocar Evento" : undefined}
-          style={{ 
-            zIndex: 1001,
-            position: 'relative'
-          }}
-        >
-          <ArrowLeftRight className="h-7 w-7 flex-shrink-0" />
-          <span className={collapsed ? 'hidden' : 'block'}>Trocar Evento</span>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="end" 
-        className="w-56"
-        style={{
-          zIndex: 2000,
-          position: 'relative',
-          backgroundColor: 'white'
-        }}
+    <div className={`${collapsed ? 'hidden' : 'flex'} items-center min-w-[150px] text-sm`}>
+      <select
+        value={currentEventId || ''}
+        onChange={handleEventChange}
+        className="bg-olimpics-green-secondary/30 text-white rounded-md py-1 px-2 w-full border-none focus:ring-1 focus:ring-olimpics-green-secondary"
+        style={{ maxWidth: collapsed ? '40px' : '200px' }}
       >
-        {userEvents.map((event: any) => (
-          <DropdownMenuItem
-            key={event.id}
-            onClick={() => handleEventSwitch(event.id)}
-            className="cursor-pointer"
-          >
+        {availableEvents.map(event => (
+          <option key={event.id} value={event.id}>
             {event.nome}
-          </DropdownMenuItem>
+          </option>
         ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </select>
+    </div>
   );
 }

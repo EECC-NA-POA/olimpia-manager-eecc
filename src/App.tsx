@@ -53,7 +53,7 @@ function App() {
         <AuthProvider>
           <div className="flex flex-col min-h-screen">
             <GlobalHeader />
-            <div className="flex-grow pt-16"> {/* Removed overflow property to fix menu visibility */}
+            <div className="flex-grow"> {/* Removed pt-16 to account for the top navigation */}
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
@@ -64,7 +64,7 @@ function App() {
                 <Route path="/home" element={<Dashboard />} />
                 <Route path="/event-selection" element={<EventSelectionPage />} />
                 
-                {/* Authenticated routes with sidebar */}
+                {/* Authenticated routes with top navigation */}
                 <Route element={<MainNavigation />}>
                   <Route path="/athlete-profile" element={<Dashboard />} />
                   <Route path="/athlete-registrations" element={<AthleteRegistrations />} />
