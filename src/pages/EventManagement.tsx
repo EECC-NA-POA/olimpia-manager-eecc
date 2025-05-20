@@ -10,13 +10,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, FileText, Users, Edit, Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar, FileText, Users, Edit, Calendar as CalendarIcon, BookOpen } from 'lucide-react';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { useEventData } from '@/hooks/useEventData';
 import { EventBasicInfo } from '@/components/event-management/EventBasicInfo';
 import { EventBranchesSection } from '@/components/event-management/EventBranchesSection';
 import { EventScheduleSection } from '@/components/event-management/EventScheduleSection';
 import { EventModalitiesSection } from '@/components/event-management/EventModalitiesSection';
+import { EventRegulationsSection } from '@/components/event-management/EventRegulationsSection';
 
 export default function EventManagement() {
   const navigate = useNavigate();
@@ -118,6 +119,13 @@ export default function EventManagement() {
                 <Calendar className="h-5 w-5" />
                 Modalidades
               </TabsTrigger>
+              <TabsTrigger 
+                value="regulations"
+                className="flex items-center gap-2 px-6 py-3 text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
+              >
+                <BookOpen className="h-5 w-5" />
+                Regulamento
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="basic-info" className="mt-6">
@@ -134,6 +142,10 @@ export default function EventManagement() {
 
             <TabsContent value="modalities" className="mt-6">
               <EventModalitiesSection eventId={currentEventId} />
+            </TabsContent>
+
+            <TabsContent value="regulations" className="mt-6">
+              <EventRegulationsSection eventId={currentEventId} />
             </TabsContent>
           </Tabs>
         </CardContent>

@@ -1,4 +1,3 @@
-
 export interface Event {
   id: string;
   nome: string;
@@ -23,6 +22,20 @@ export interface Event {
 export interface EventBranch {
   evento_id: string;
   filial_id: string;
+}
+
+export interface EventRegulation {
+  id: string;
+  evento_id: string;
+  versao: string;
+  titulo: string;
+  regulamento_texto: string;
+  regulamento_link: string | null;
+  is_ativo: boolean;
+  criado_por: string;
+  criado_em: string;
+  atualizado_por: string | null;
+  atualizado_em: string | null;
 }
 
 export interface ProfileType {
