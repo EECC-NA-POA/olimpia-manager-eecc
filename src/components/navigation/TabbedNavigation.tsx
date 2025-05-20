@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, LogOut, Calendar as CalendarIcon, BookOpen, UsersRound } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { EventSwitcher } from './EventSwitcher';
 import { toast } from 'sonner';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 import { useAuth } from '@/contexts/AuthContext';
+import { NavigationTabs } from './NavigationTabs';
 
 interface TabbedNavigationProps {
   user: any;
@@ -44,7 +45,7 @@ export function TabbedNavigation({ user, roles }: TabbedNavigationProps) {
   };
 
   // Determine which tab should be active based on current route
-  React.useEffect(() => {
+  useEffect(() => {
     if (location.pathname.includes('athlete') || location.pathname === '/cronograma' || 
         location.pathname === '/scores' || location.pathname === '/regulamento') {
       setActiveTab('main');
@@ -60,125 +61,16 @@ export function TabbedNavigation({ user, roles }: TabbedNavigationProps) {
     <div className="w-full bg-olimpics-green-primary text-white z-40 shadow-md">
       <div className="container px-4 py-1">
         <div className="flex justify-between items-center">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="bg-olimpics-green-secondary/30 p-0.5 h-auto">
-              <TabsTrigger 
-                value="main" 
-                className="data-[state=active]:bg-olimpics-green-secondary h-9 px-4 text-white data-[state=active]:text-white"
-              >
-                Principal
-              </TabsTrigger>
-              
-              {(isOrganizer || isDelegationRep || isJudge) && (
-                <TabsTrigger 
-                  value="roles" 
-                  className="data-[state=active]:bg-olimpics-green-secondary h-9 px-4 text-white data-[state=active]:text-white"
-                >
-                  Funções
-                </TabsTrigger>
-              )}
-              
-              {isAdmin && (
-                <TabsTrigger 
-                  value="admin" 
-                  className="data-[state=active]:bg-olimpics-green-secondary h-9 px-4 text-white data-[state=active]:text-white"
-                >
-                  Admin
-                </TabsTrigger>
-              )}
-            </TabsList>
-
-            <div className="mt-2 mx-1">
-              <TabsContent value="main" className="flex flex-wrap gap-1 mt-0">
-                {isAthlete && (
-                  <NavLink 
-                    to="/athlete-profile"
-                    icon={<User className="h-4 w-4" />}
-                    label="Perfil"
-                    isActive={location.pathname === '/athlete-profile'}
-                  />
-                )}
-                
-                <NavLink 
-                  to="/cronograma"
-                  icon={<Calendar className="h-4 w-4" />}
-                  label="Cronograma"
-                  isActive={location.pathname === '/cronograma'}
-                />
-                
-                <NavLink 
-                  to="/regulamento"
-                  icon={<BookOpen className="h-4 w-4" />}
-                  label="Regulamento"
-                  isActive={location.pathname === '/regulamento'}
-                />
-                
-                <NavLink 
-                  to="/athlete-registrations"
-                  icon={<ClipboardList className="h-4 w-4" />}
-                  label="Inscrições"
-                  isActive={location.pathname === '/athlete-registrations'}
-                />
-                
-                <NavLink 
-                  to="/scores"
-                  icon={<Medal className="h-4 w-4" />}
-                  label="Pontuações"
-                  isActive={location.pathname === '/scores'}
-                />
-              </TabsContent>
-
-              <TabsContent value="roles" className="flex flex-wrap gap-1 mt-0">
-                {isOrganizer && (
-                  <NavLink 
-                    to="/organizer-dashboard"
-                    icon={<Users className="h-4 w-4" />}
-                    label="Organizador"
-                    isActive={location.pathname === '/organizer-dashboard'}
-                  />
-                )}
-                
-                {isDelegationRep && (
-                  <NavLink 
-                    to="/delegation-dashboard"
-                    icon={<Users className="h-4 w-4" />}
-                    label="Delegação"
-                    isActive={location.pathname === '/delegation-dashboard'}
-                  />
-                )}
-                
-                {isJudge && (
-                  <NavLink 
-                    to="/judge-dashboard"
-                    icon={<Gavel className="h-4 w-4" />}
-                    label="Juiz"
-                    isActive={location.pathname === '/judge-dashboard'}
-                  />
-                )}
-              </TabsContent>
-
-              <TabsContent value="admin" className="flex flex-wrap gap-1 mt-0">
-                {isAdmin && (
-                  <>
-                    <NavLink 
-                      to="/administration"
-                      icon={<Settings2 className="h-4 w-4" />}
-                      label="Administração"
-                      isActive={location.pathname === '/administration'}
-                    />
-                    {canManageEvents && (
-                      <NavLink 
-                        to="/event-management"
-                        icon={<CalendarIcon className="h-4 w-4" />}
-                        label="Gerenciar Evento"
-                        isActive={location.pathname === '/event-management'}
-                      />
-                    )}
-                  </>
-                )}
-              </TabsContent>
-            </div>
-          </Tabs>
+          <NavigationTabs 
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            isAdmin={isAdmin}
+            isOrganizer={isOrganizer}
+            isDelegationRep={isDelegationRep}
+            isJudge={isJudge}
+            isAthlete={isAthlete}
+            canManageEvents={canManageEvents}
+          />
 
           <div className="flex items-center gap-2 ml-2 shrink-0">
             <EventSwitcher userId={user.id} collapsed={false} />
@@ -196,22 +88,5 @@ export function TabbedNavigation({ user, roles }: TabbedNavigationProps) {
         </div>
       </div>
     </div>
-  );
-}
-
-// Helper component for navigation links
-function NavLink({ to, icon, label, isActive }: { to: string; icon: React.ReactNode; label: string; isActive: boolean }) {
-  return (
-    <Link 
-      to={to}
-      className={`${
-        isActive 
-          ? 'bg-olimpics-green-secondary text-white' 
-          : 'text-white/80 hover:bg-olimpics-green-secondary/40 hover:text-white'
-      } flex items-center gap-1 px-3 py-1.5 rounded-md transition-colors whitespace-nowrap text-sm`}
-    >
-      {icon}
-      <span>{label}</span>
-    </Link>
   );
 }
