@@ -1,31 +1,9 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { TeamCard } from './team-formation/TeamCard';
 
 interface TeamFormationProps {
   teams: any[];
@@ -193,88 +171,16 @@ export function TeamFormation({
   return (
     <div className="space-y-6">
       {teams.map((team) => (
-        <Card key={team.id}>
-          <CardHeader>
-            <CardTitle className="text-lg">{team.nome}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {team.athletes.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Posição</TableHead>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Raia</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {team.athletes.map((athlete: any) => (
-                      <TableRow key={athlete.id}>
-                        <TableCell>{athlete.posicao}</TableCell>
-                        <TableCell>{athlete.usuarios.nome_completo}</TableCell>
-                        <TableCell>
-                          <Input 
-                            type="number" 
-                            min="1"
-                            value={athlete.raia || ''}
-                            onChange={(e) => 
-                              handleUpdateLane(
-                                team.id, 
-                                athlete.atleta_id, 
-                                Number(e.target.value), 
-                                athlete.posicao
-                              )
-                            }
-                            className="w-20"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleRemoveAthleteFromTeam(team.id, athlete.atleta_id)}
-                            disabled={removeAthleteFromTeamMutation.isPending}
-                          >
-                            Remover
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-muted-foreground">Nenhum atleta nesta equipe</p>
-                </div>
-              )}
-              
-              {availableAthletes.length > 0 && (
-                <div className="mt-4">
-                  <h4 className="font-medium mb-2">Adicionar Atleta</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {availableAthletes.map((athlete) => (
-                      <div
-                        key={athlete.atleta_id}
-                        className="border rounded-md p-2 flex justify-between items-center"
-                      >
-                        <span className="truncate">{athlete.atleta_nome}</span>
-                        <Button
-                          size="sm"
-                          onClick={() => handleAddAthleteToTeam(team.id, athlete.atleta_id)}
-                          disabled={updateTeamAthleteMutation.isPending}
-                        >
-                          Adicionar
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <TeamCard
+          key={team.id}
+          team={team}
+          availableAthletes={availableAthletes}
+          onAddAthlete={handleAddAthleteToTeam}
+          onRemoveAthlete={handleRemoveAthleteFromTeam}
+          onUpdateLane={handleUpdateLane}
+          isUpdatePending={updateTeamAthleteMutation.isPending}
+          isRemovePending={removeAthleteFromTeamMutation.isPending}
+        />
       ))}
     </div>
   );
