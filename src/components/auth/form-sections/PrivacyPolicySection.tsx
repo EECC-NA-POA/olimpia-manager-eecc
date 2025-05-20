@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,6 +19,7 @@ import { ErrorState } from "@/components/ErrorState";
 
 export const PrivacyPolicySection = () => {
   const [open, setOpen] = useState(false);
+  const [shouldFetch, setShouldFetch] = useState(false);
   const form = useFormContext();
   
   const { 
@@ -31,12 +32,22 @@ export const PrivacyPolicySection = () => {
     queryKey: ['privacy-policy'],
     queryFn: fetchActivePrivacyPolicy,
     retry: 3,
+    enabled: shouldFetch || open,
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 60, // 1 hora
     meta: {
       skipThrow: true
     }
   });
+  
+  useEffect(() => {
+    // Iniciar busca quando o componente montar
+    setShouldFetch(true);
+    
+    return () => {
+      setShouldFetch(false);
+    };
+  }, []);
   
   const handleOpenDialog = () => {
     // Se houve um erro, tentamos buscar novamente quando o diálogo for aberto

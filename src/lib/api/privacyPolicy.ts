@@ -5,7 +5,7 @@ export const fetchActivePrivacyPolicy = async (): Promise<string> => {
   console.log('Fetching active privacy policy...');
   
   try {
-    // Usa o cliente Supabase sem autenticação para acessar dados públicos
+    // Tentativa com o cliente padrão do Supabase para acessar dados públicos
     const { data, error } = await supabase
       .from('termos_privacidade')
       .select('conteudo')
@@ -16,11 +16,30 @@ export const fetchActivePrivacyPolicy = async (): Promise<string> => {
     
     if (error) {
       console.error('Error fetching privacy policy:', error);
-      // Verificar se o erro é relacionado a permissões
+      
+      // Se houver erro de permissão, vamos tentar uma abordagem alternativa
       if (error.code === 'PGRST301' || error.code === 'PGRST116') {
-        console.log('Permission error, trying to fetch with public schema...');
+        console.log('Permission error, trying alternative approach...');
+        
+        // Tentativa usando acesso anônimo através da API pública
+        const publicResponse = await fetch(`${supabase.supabaseUrl}/rest/v1/termos_privacidade?select=conteudo&ativo=eq.true&order=created_at.desc&limit=1`, {
+          headers: {
+            'apikey': supabase.supabaseKey,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (publicResponse.ok) {
+          const publicData = await publicResponse.json();
+          if (publicData && publicData.length > 0) {
+            console.log('Successfully fetched privacy policy through public API');
+            return publicData[0].conteudo || 'Política de privacidade carregada com sucesso.';
+          }
+        }
+        
         return 'Para visualizar nossa política de privacidade completa, por favor entre em contato com o suporte.';
       }
+      
       throw new Error(`Erro ao buscar política de privacidade: ${error.message}`);
     }
     
@@ -33,7 +52,6 @@ export const fetchActivePrivacyPolicy = async (): Promise<string> => {
     return data.conteudo || 'Conteúdo da política de privacidade não disponível.';
   } catch (error: any) {
     console.error('Exception in fetchActivePrivacyPolicy:', error);
-    // Retornar uma mensagem de erro mais amigável para o usuário
     return 'Não foi possível carregar a política de privacidade. Por favor, tente novamente mais tarde.';
   }
 };
