@@ -33,7 +33,7 @@ export function GlobalHeader() {
                 onClick={handleClick}
                 className="text-olimpics-green-primary hover:text-olimpics-green-secondary"
               >
-                Olimpíadas Estaduais - Escola do Esporte com Coração - EECC
+                Olimpíadas Nacionais - Escola do Esporte com Coração - EECC
               </Button>
             </div>
           </div>
