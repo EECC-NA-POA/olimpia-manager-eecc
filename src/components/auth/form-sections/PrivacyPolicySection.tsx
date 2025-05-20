@@ -15,6 +15,7 @@ import { fetchActivePrivacyPolicy } from "@/lib/api/privacyPolicy";
 import { FormField, FormItem } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
+import { ErrorState } from "@/components/ErrorState";
 
 export const PrivacyPolicySection = () => {
   const [open, setOpen] = useState(false);
@@ -29,10 +30,9 @@ export const PrivacyPolicySection = () => {
   } = useQuery({
     queryKey: ['privacy-policy'],
     queryFn: fetchActivePrivacyPolicy,
-    retry: 3,  // Aumentamos o número de tentativas
+    retry: 3,
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 60, // 1 hora
-    // Em vez de useErrorBoundary, usamos meta.skipThrow na versão atual do TanStack Query
     meta: {
       skipThrow: true
     }
@@ -106,15 +106,11 @@ export const PrivacyPolicySection = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-olimpics-green-primary" />
               </div>
             ) : isError ? (
-              <div className="text-center py-8">
-                <div className="text-red-500 mb-4">
-                  Erro ao carregar política de privacidade.
-                  {error instanceof Error && <p className="text-xs mt-2">{error.message}</p>}
-                </div>
-                <Button onClick={handleRetry} variant="outline" className="mx-auto">
-                  Tentar novamente
-                </Button>
-              </div>
+              <ErrorState 
+                onRetry={handleRetry}
+                message="Erro ao carregar política de privacidade."
+                error={error}
+              />
             ) : (
               <div dangerouslySetInnerHTML={{ __html: privacyPolicy || 'Política de privacidade não disponível no momento.' }} />
             )}
