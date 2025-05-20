@@ -53,7 +53,7 @@ function App() {
         <AuthProvider>
           <div className="flex flex-col min-h-screen">
             <GlobalHeader />
-            <div className="flex-grow"> {/* Removed pt-16 to account for the top navigation */}
+            <div className="flex-grow pt-16"> {/* Added pt-16 to account for the fixed header height */}
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />

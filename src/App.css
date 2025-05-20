@@ -56,7 +56,7 @@ body {
 /* Content positioning and transition */
 main {
   transition: margin-left 0.2s ease-in-out !important;
-  height: calc(100vh - 64px) !important; /* Set main content height */
+  height: calc(100vh - 64px - 48px) !important; /* Set main content height accounting for header and top nav */
   overflow-y: auto !important; /* Allow scrolling in main content only */
 }
 
@@ -174,4 +174,11 @@ footer {
 /* Global correction for content area to always be scrollable */
 .flex-grow.overflow-hidden {
   overflow: auto !important;
+}
+
+/* Top navigation specific styles */
+.sticky.top-16 {
+  position: sticky;
+  top: 64px; /* Same as header height */
+  z-index: 40;
 }

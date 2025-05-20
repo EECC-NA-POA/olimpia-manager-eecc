@@ -66,7 +66,7 @@ export function MainNavigation() {
       <TopNavigation user={user} roles={roles} />
       
       <div className="flex min-h-screen w-full">
-        <main className="flex-1 overflow-auto bg-olimpics-background transition-all duration-200 pt-14">
+        <main className="flex-1 overflow-auto bg-olimpics-background transition-all duration-200">
           <Outlet />
         </main>
       </div>
