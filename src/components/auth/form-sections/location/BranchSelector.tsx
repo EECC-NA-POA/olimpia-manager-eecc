@@ -11,6 +11,7 @@ interface BranchSelectorProps {
   isLoading: boolean;
   hasError: boolean;
   selectedState: string | null;
+  disabled?: boolean;
 }
 
 export const BranchSelector = ({
@@ -18,7 +19,8 @@ export const BranchSelector = ({
   branches,
   isLoading,
   hasError,
-  selectedState
+  selectedState,
+  disabled = false
 }: BranchSelectorProps) => {
   return (
     <FormField
@@ -49,7 +51,7 @@ export const BranchSelector = ({
             <Select
               onValueChange={field.onChange}
               value={field.value}
-              disabled={!selectedState}
+              disabled={disabled || !selectedState}
             >
               <FormControl>
                 <SelectTrigger className="bg-white">

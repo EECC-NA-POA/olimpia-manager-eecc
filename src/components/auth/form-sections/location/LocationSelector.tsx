@@ -9,9 +9,10 @@ import { useBranchSelection } from './useBranchSelection';
 
 interface LocationSelectorProps {
   form: UseFormReturn<any>;
+  disabled?: boolean;
 }
 
-export const LocationSelector = ({ form }: LocationSelectorProps) => {
+export const LocationSelector = ({ form, disabled = false }: LocationSelectorProps) => {
   const {
     statesList,
     branchesForSelectedState,
@@ -42,6 +43,7 @@ export const LocationSelector = ({ form }: LocationSelectorProps) => {
           isLoading={isLoading}
           hasError={!!error}
           onStateChange={handleStateSelectorChange}
+          disabled={disabled}
         />
 
         <BranchSelector
@@ -50,6 +52,7 @@ export const LocationSelector = ({ form }: LocationSelectorProps) => {
           isLoading={isLoading}
           hasError={!!error}
           selectedState={selectedState}
+          disabled={disabled}
         />
       </div>
 

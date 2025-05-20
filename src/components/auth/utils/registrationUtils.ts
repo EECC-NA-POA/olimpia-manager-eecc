@@ -48,7 +48,6 @@ export const prepareUserMetadata = (values: RegisterFormData, formattedBirthDate
   return {
     nome_completo: safeData.nome,
     telefone: formatPhoneNumber(safeData.ddi, safeData.telefone),
-    filial_id: safeData.branchId || null,
     tipo_documento: safeData.tipo_documento,
     numero_documento: safeData.numero_documento ? safeData.numero_documento.replace(/\D/g, '') : '',
     genero: safeData.genero,

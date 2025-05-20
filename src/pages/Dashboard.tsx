@@ -5,13 +5,15 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AthleteProfilePage from '@/components/AthleteProfilePage';
 import { usePrivacyPolicyCheck } from '@/hooks/usePrivacyPolicyCheck';
-import { PrivacyPolicyAcceptanceModal } from '@/components/auth/PrivacyPolicyAcceptanceModal';
+import { WelcomePolicyBranchModal } from '@/components/auth/WelcomePolicyBranchModal';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
+import { supabase } from '@/lib/supabase';
 
 const Dashboard = () => {
   const { user, currentEventId, signOut } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [needsBranchSelection, setNeedsBranchSelection] = useState(false);
   
   // Check if the user needs to accept the privacy policy
   const { 
@@ -19,6 +21,34 @@ const Dashboard = () => {
     checkCompleted,
     refetchCheck 
   } = usePrivacyPolicyCheck();
+
+  // Check if user has a branch associated
+  useEffect(() => {
+    const checkUserBranch = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('usuarios')
+          .select('filial_id')
+          .eq('id', user.id)
+          .single();
+          
+        if (error) {
+          console.error('Error checking user branch:', error);
+          return;
+        }
+        
+        setNeedsBranchSelection(!data.filial_id);
+      } catch (err) {
+        console.error('Error in checkUserBranch:', err);
+      }
+    };
+    
+    if (user?.id) {
+      checkUserBranch();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -41,8 +71,10 @@ const Dashboard = () => {
     }
   }, [user, currentEventId, navigate, checkCompleted]);
 
-  const handlePrivacyPolicyAccept = async () => {
+  const handlePreferencesComplete = async () => {
     await refetchCheck();
+    // Force reload of user to get updated branch info
+    window.location.reload();
   };
   
   const handleCancel = async () => {
@@ -59,12 +91,18 @@ const Dashboard = () => {
     return <LoadingState />;
   }
   
-  // Show the privacy policy modal if needed
-  if (needsAcceptance) {
+  // Show the welcome modal if needed
+  const showWelcomeModal = needsAcceptance || needsBranchSelection;
+  
+  if (showWelcomeModal) {
     return (
-      <PrivacyPolicyAcceptanceModal
-        onAccept={handlePrivacyPolicyAccept}
-        onCancel={handleCancel}
+      <WelcomePolicyBranchModal
+        isOpen={true}
+        onClose={handleCancel}
+        needsLocationSelection={needsBranchSelection}
+        existingBranchId={user?.filial_id}
+        existingState={undefined} // We need to fetch this if needed
+        onComplete={handlePreferencesComplete}
       />
     );
   }

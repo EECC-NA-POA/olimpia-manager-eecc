@@ -66,7 +66,7 @@ export const useRegisterForm = () => {
         return;
       }
 
-      // Prepare user metadata
+      // Prepare user metadata - no longer includes branch ID
       const userMetadata = prepareUserMetadata(values, formattedBirthDate);
 
       // Sign up user
@@ -90,25 +90,7 @@ export const useRegisterForm = () => {
         return;
       }
 
-      // Log privacy policy acceptance - only if explicitly accepted
-      if (values.acceptPrivacyPolicy) {
-        const { error: acceptanceError } = await supabase
-          .from('logs_aceite_privacidade')
-          .insert({
-            usuario_id: signUpResult.user.id,
-            nome_completo: values.nome,
-            tipo_documento: values.tipo_documento,
-            numero_documento: values.numero_documento,
-            versao_termo: privacyPolicy.versao_termo,
-            termo_texto: privacyPolicy.termo_texto
-          });
-  
-        if (acceptanceError) {
-          console.error('Error logging privacy policy acceptance:', acceptanceError);
-          // Don't block registration if logging fails
-          // but log the error for monitoring
-        }
-      }
+      // We no longer log privacy policy acceptance here - it will be done in the welcome modal
 
       toast.success('Cadastro realizado com sucesso! Por favor, selecione um evento para continuar.');
       navigate('/event-selection');

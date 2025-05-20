@@ -11,6 +11,7 @@ interface StateSelectorProps {
   isLoading: boolean;
   hasError: boolean;
   onStateChange: (state: string) => void;
+  disabled?: boolean;
 }
 
 export const StateSelector = ({ 
@@ -18,7 +19,8 @@ export const StateSelector = ({
   statesList,
   isLoading,
   hasError,
-  onStateChange
+  onStateChange,
+  disabled = false
 }: StateSelectorProps) => {
   return (
     <FormField
@@ -56,6 +58,7 @@ export const StateSelector = ({
                 field.onChange(value);
               }}
               value={field.value || ''}
+              disabled={disabled}
             >
               <FormControl>
                 <SelectTrigger className="bg-white">

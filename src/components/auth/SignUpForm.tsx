@@ -23,8 +23,6 @@ export const SignUpForm = () => {
       telefone: '',
       password: '',
       confirmPassword: '',
-      state: undefined,
-      branchId: undefined,
       tipo_documento: 'CPF',
       numero_documento: '',
       genero: 'Masculino',

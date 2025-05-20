@@ -1,19 +1,20 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
 import { usePrivacyPolicyCheck } from '@/hooks/usePrivacyPolicyCheck';
-import { PrivacyPolicyAcceptanceModal } from '@/components/auth/PrivacyPolicyAcceptanceModal';
+import { WelcomePolicyBranchModal } from '@/components/auth/WelcomePolicyBranchModal';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { EventSelectionHeader } from './EventSelectionHeader';
 import { EventSelectionContent } from './EventSelectionContent';
 import { toast } from "sonner";
+import { supabase } from '@/lib/supabase';
 
 export function EventSelectionContainer() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const [needsBranchSelection, setNeedsBranchSelection] = useState(false);
+  const [existingState, setExistingState] = useState<string | undefined>(undefined);
   
   // Check if the user needs to accept the privacy policy
   const { 
@@ -22,6 +23,40 @@ export function EventSelectionContainer() {
     checkCompleted,
     refetchCheck 
   } = usePrivacyPolicyCheck();
+
+  // Check if user has a branch associated and get state if they do
+  useEffect(() => {
+    const checkUserBranchAndState = async () => {
+      if (!user?.id) return;
+      
+      try {
+        // Join with filiais table to get the state
+        const { data, error } = await supabase
+          .from('usuarios')
+          .select('filial_id, filiais:filial_id(estado)')
+          .eq('id', user.id)
+          .single();
+          
+        if (error) {
+          console.error('Error checking user branch:', error);
+          return;
+        }
+        
+        const needsSelection = !data.filial_id;
+        setNeedsBranchSelection(needsSelection);
+        
+        if (!needsSelection && data.filiais) {
+          setExistingState(data.filiais.estado);
+        }
+      } catch (err) {
+        console.error('Error in checkUserBranch:', err);
+      }
+    };
+    
+    if (user?.id) {
+      checkUserBranchAndState();
+    }
+  }, [user]);
 
   // Tempo máximo de carregamento para a verificação da política
   useEffect(() => {
@@ -47,8 +82,10 @@ export function EventSelectionContainer() {
     }
   };
 
-  const handlePrivacyPolicyAccept = async () => {
+  const handlePreferencesComplete = async () => {
     await refetchCheck();
+    // Reload to get updated user info
+    window.location.reload();
   };
 
   // If there's no user, redirect to landing page
@@ -78,8 +115,9 @@ export function EventSelectionContainer() {
     );
   }
 
-  // Show the privacy policy acceptance modal if needed
-  if (needsAcceptance) {
+  // Show the welcome modal if needed
+  const showWelcomeModal = needsAcceptance || needsBranchSelection;
+  if (showWelcomeModal) {
     return (
       <div className="min-h-screen bg-cover bg-center bg-no-repeat"
         style={{ 
@@ -89,9 +127,13 @@ export function EventSelectionContainer() {
           boxShadow: 'inset 0 0 0 2000px rgba(0, 155, 64, 0.05)'
         }}
       >
-        <PrivacyPolicyAcceptanceModal
-          onAccept={handlePrivacyPolicyAccept}
-          onCancel={handleLogout}
+        <WelcomePolicyBranchModal
+          isOpen={true}
+          onClose={handleLogout}
+          needsLocationSelection={needsBranchSelection}
+          existingBranchId={user?.filial_id}
+          existingState={existingState}
+          onComplete={handlePreferencesComplete}
         />
       </div>
     );
@@ -107,7 +149,7 @@ export function EventSelectionContainer() {
         boxShadow: 'inset 0 0 0 2000px rgba(0, 155, 64, 0.05)'
       }}
     >
-      <div className="container mx-auto py-8 mt-8"> {/* Added margin-top for better spacing */}
+      <div className="container mx-auto py-8 mt-8">
         <EventSelectionHeader onLogout={handleLogout} />
         <EventSelectionContent />
       </div>

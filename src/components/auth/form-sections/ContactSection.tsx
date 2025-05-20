@@ -4,13 +4,10 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from 'react-hook-form';
 import { PhoneInput } from './phone/PhoneInput';
-import { LocationSelector } from './location/LocationSelector';
 
 interface ContactSectionProps {
   form: UseFormReturn<any>;
   hideEmail?: boolean;
-  branches?: any[];
-  isLoadingBranches?: boolean;
 }
 
 export const ContactSection = ({ 
@@ -41,8 +38,6 @@ export const ContactSection = ({
       )}
 
       <PhoneInput form={form} />
-      
-      <LocationSelector form={form} />
     </div>
   );
 };
