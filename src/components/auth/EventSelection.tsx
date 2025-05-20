@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { PerfilTipo } from "@/lib/types/database";
 import { EventCarousel } from "./event-selection/EventCarousel";
 import { useEventQuery } from "./event-selection/useEventQuery";
@@ -26,7 +26,7 @@ export const EventSelection = ({
   isUnderAge = false
 }: EventSelectionProps) => {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, setCurrentEventId } = useAuth();
   const [selectedRole, setSelectedRole] = useState<PerfilTipo>('ATL');
   
   // Check if the user needs to accept the privacy policy
@@ -52,6 +52,7 @@ export const EventSelection = ({
       // Store the current event ID
       console.log('Setting current event ID in localStorage:', eventId);
       localStorage.setItem('currentEventId', eventId);
+      setCurrentEventId(eventId); // Add this line to update context state
 
       // Show appropriate message before redirecting
       if (result.isExisting) {
@@ -74,9 +75,10 @@ export const EventSelection = ({
     console.log('Event action called with:', { eventId, isRegistered });
     
     if (isRegistered) {
-      // If already registered, just select the event and navigate
-      console.log('User is already registered, setting event in localStorage:', eventId);
+      // If already registered, update both localStorage and context state
+      console.log('User is already registered, setting event in context and localStorage:', eventId);
       localStorage.setItem('currentEventId', eventId);
+      setCurrentEventId(eventId); // Update context state
       toast("Evento selecionado com sucesso!");
       
       // Short delay to ensure toast is visible

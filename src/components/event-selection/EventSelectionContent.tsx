@@ -10,11 +10,12 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export function EventSelectionContent() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, setCurrentEventId } = useAuth();
   const { data: userAge, isLoading: isAgeLoading, error: ageError } = useUserAgeQuery();
 
   const handleEventSelect = (eventId: string) => {
     localStorage.setItem('currentEventId', eventId);
+    setCurrentEventId(eventId); // Add this line to update context state
     toast.success("Evento selecionado com sucesso!");
     navigate('/athlete-profile');
   };

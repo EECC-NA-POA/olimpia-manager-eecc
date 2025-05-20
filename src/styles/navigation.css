@@ -14,6 +14,11 @@
   padding-top: 120px !important; /* Increased padding for better separation */
 }
 
+/* Event selection page specific spacing */
+.event-selection-container {
+  padding-top: 120px !important; /* Match other pages */
+}
+
 /* Tabs styling overrides for the nav */
 .tabs-nav .tabs-trigger {
   background-color: transparent;

@@ -6,14 +6,18 @@ import { EventSelectionContainer } from '@/components/event-selection/EventSelec
 
 export default function EventSelectionPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, currentEventId } = useAuth();
 
   // Debug logs to help diagnose issues
   useEffect(() => {
     if (user) {
       console.log('User data:', user);
     }
-  }, [user]);
+    
+    if (currentEventId) {
+      console.log('Current event ID in EventSelectionPage:', currentEventId);
+    }
+  }, [user, currentEventId]);
 
   useEffect(() => {
     if (!user) {
