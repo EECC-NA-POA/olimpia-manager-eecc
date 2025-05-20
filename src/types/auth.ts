@@ -26,4 +26,5 @@ export interface AuthContextType {
   signUp: (userData: any) => Promise<{ user: AuthUser | null; error: Error | null; }>;
   resendVerificationEmail: (email: string) => Promise<void>;
   currentEventId: string | null;
+  setCurrentEventId: (eventId: string | null) => void;
 }

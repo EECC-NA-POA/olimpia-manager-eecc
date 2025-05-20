@@ -19,6 +19,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { signIn, signOut, signUp, resendVerificationEmail } = useAuthOperations({ setUser, navigate, location });
 
+  // Update localStorage when currentEventId changes
+  useEffect(() => {
+    if (currentEventId) {
+      localStorage.setItem('currentEventId', currentEventId);
+    } else {
+      localStorage.removeItem('currentEventId');
+    }
+  }, [currentEventId]);
+
   // Watch for changes to currentEventId in localStorage
   useEffect(() => {
     const handleStorageChange = () => {
@@ -172,7 +181,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signOut, 
       signUp,
       resendVerificationEmail,
-      currentEventId
+      currentEventId,
+      setCurrentEventId
     }}>
       {children}
     </AuthContext.Provider>
