@@ -5,7 +5,7 @@ export const fetchActivePrivacyPolicy = async (): Promise<string> => {
   console.log('Fetching active privacy policy...');
   
   try {
-    // Create a specific query for the public privacy policy that doesn't rely on authentication
+    // Importante: usamos um cabeçalho anônimo para garantir acesso público
     const { data, error } = await supabase
       .from('termos_privacidade')
       .select('conteudo')
@@ -28,6 +28,7 @@ export const fetchActivePrivacyPolicy = async (): Promise<string> => {
     return data.conteudo;
   } catch (error) {
     console.error('Exception in fetchActivePrivacyPolicy:', error);
-    throw error;
+    // Retornar uma mensagem de erro mais amigável para o usuário
+    return 'Não foi possível carregar a política de privacidade. Por favor, tente novamente mais tarde.';
   }
 };

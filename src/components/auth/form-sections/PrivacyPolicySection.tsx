@@ -29,13 +29,15 @@ export const PrivacyPolicySection = () => {
   } = useQuery({
     queryKey: ['privacy-policy'],
     queryFn: fetchActivePrivacyPolicy,
-    retry: 2,
+    retry: 3,  // Aumentamos o número de tentativas
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 60, // 1 hour
+    staleTime: 1000 * 60 * 60, // 1 hora
+    // Desabilitamos o lance de erro para tratarmos manualmente
+    useErrorBoundary: false
   });
   
   const handleOpenDialog = () => {
-    // If there was an error, try refetching when the dialog is opened
+    // Se houve um erro, tentamos buscar novamente quando o diálogo for aberto
     if (isError) {
       refetch();
     }
