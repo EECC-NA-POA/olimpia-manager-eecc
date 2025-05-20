@@ -9,7 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchBranchesByState } from '@/lib/api';
 import { formRow, formColumn } from '@/lib/utils/form-layout';
 import { toast } from "sonner";
-import { ErrorState } from '@/components/ErrorState';
+import { ErrorState } from '@/components/dashboard/components/ErrorState';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ContactSectionProps {
@@ -40,6 +40,7 @@ export const ContactSection = ({
     retry: 3,
     retryDelay: 1000,
     staleTime: 60000, // Cache for 1 minute
+    refetchOnWindowFocus: false
   });
 
   // Process branch data and set states list and branches map
@@ -81,44 +82,6 @@ export const ContactSection = ({
     refetchBranches();
   }, [refetchBranches]);
 
-  if (branchesError && !isLoadingBranchData) {
-    return (
-      <div className="space-y-4">
-        {!hideEmail && (
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-left w-full">Email</FormLabel>
-                <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="seu@email.com"
-                    className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
-        <PhoneInput form={form} />
-
-        {/* Error state for branches data */}
-        <div className="mt-6 p-4 border border-red-200 rounded-md bg-red-50">
-          <ErrorState 
-            onRetry={handleRetry}
-            message="Não foi possível carregar os estados e sedes."
-            error={branchesError}
-          />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
       {!hideEmail && (
@@ -154,6 +117,25 @@ export const ContactSection = ({
               <FormLabel>Estado</FormLabel>
               {isLoadingBranches ? (
                 <Skeleton className="h-10 w-full rounded-md" />
+              ) : branchesError ? (
+                <Select
+                  onValueChange={(value) => {
+                    handleStateChange(value);
+                  }}
+                  value={field.value || ''}
+                  disabled={true}
+                >
+                  <FormControl>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Erro ao carregar estados" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="bg-white max-h-[300px]">
+                    <SelectItem value="error" disabled>
+                      Erro ao carregar estados
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               ) : (
                 <Select
                   onValueChange={(value) => {
@@ -194,6 +176,22 @@ export const ContactSection = ({
               <FormLabel>Sede</FormLabel>
               {isLoadingBranches ? (
                 <Skeleton className="h-10 w-full rounded-md" />
+              ) : branchesError ? (
+                <Select
+                  disabled={true}
+                  value={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Erro ao carregar sedes" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="error" disabled>
+                      Erro ao carregar sedes
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               ) : (
                 <Select
                   onValueChange={field.onChange}
@@ -228,6 +226,15 @@ export const ContactSection = ({
           )}
         />
       </div>
+
+      {branchesError && (
+        <div className="mt-2 p-4 border border-red-200 rounded-md bg-red-50">
+          <ErrorState 
+            onRetry={handleRetry}
+            message="Não foi possível carregar os estados e sedes."
+          />
+        </div>
+      )}
     </div>
   );
 };

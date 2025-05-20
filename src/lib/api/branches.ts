@@ -28,7 +28,7 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
   console.log('Fetching branches grouped by state...');
   
   try {
-    // First, get all branches using anon key for public data
+    // Fetch all branches without authentication requirement
     const { data: branchesData, error: branchesError } = await supabase
       .from('filiais')
       .select('*')

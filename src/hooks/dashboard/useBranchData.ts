@@ -12,7 +12,7 @@ export const useBranchData = () => {
   } = useQuery({
     queryKey: ['branches'],
     queryFn: fetchBranches,
-    retry: 2,
+    retry: 3,
     retryDelay: 1000,
     staleTime: 300000, // Cache for 5 minutes
     meta: {
