@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Table,
@@ -15,7 +15,6 @@ import { Badge } from '@/components/ui/badge';
 import { Trophy } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatScoreValue } from './utils/scoreFormatters';
-import { ScoreRecord } from '@/lib/types/database';
 
 interface ModalityRankingsProps {
   modalityId: number;
@@ -42,22 +41,25 @@ export function ModalityRankings({ modalityId, eventId, scoreType }: ModalityRan
     queryFn: async () => {
       if (!modalityId || !eventId) return [];
       
+      // Check if we need to add the time fields to the selection
+      const selectFields = `
+        id,
+        atleta_id,
+        valor_pontuacao,
+        posicao_final,
+        medalha,
+        unidade,
+        tempo_minutos,
+        tempo_segundos,
+        tempo_milissegundos,
+        usuarios:atleta_id(
+          nome_completo
+        )
+      `;
+      
       const { data, error } = await supabase
         .from('pontuacoes')
-        .select(`
-          id,
-          atleta_id,
-          valor_pontuacao,
-          posicao_final,
-          medalha,
-          unidade,
-          tempo_minutos,
-          tempo_segundos,
-          tempo_milissegundos,
-          usuarios:atleta_id(
-            nome_completo
-          )
-        `)
+        .select(selectFields)
         .eq('evento_id', eventId)
         .eq('modalidade_id', modalityId)
         .order(scoreType === 'time' ? 'valor_pontuacao' : 'valor_pontuacao', { 

@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { 
   Form,
   FormControl,
@@ -39,28 +39,25 @@ import { ModalityRankings } from './ModalityRankings';
 import { Badge } from '@/components/ui/badge';
 import { ScoreRecord, Modality } from '@/lib/types/database';
 
-// Create dynamic schema based on score type
-const createScoreSchema = (scoreType: 'time' | 'distance' | 'points') => {
-  const baseSchema = {
-    notes: z.string().optional(),
-  };
+// Define separate schemas for different score types
+const timeScoreSchema = z.object({
+  time: z.object({
+    minutes: z.number().min(0, 'Minutos devem ser positivos'),
+    seconds: z.number().min(0, 'Segundos devem ser positivos').max(59, 'Segundos devem ser entre 0 e 59'),
+    milliseconds: z.number().min(0, 'Milissegundos devem ser positivos').max(999, 'Milissegundos devem ser entre 0 e 999'),
+  }),
+  notes: z.string().optional(),
+});
 
-  if (scoreType === 'time') {
-    return z.object({
-      ...baseSchema,
-      time: z.object({
-        minutes: z.number().min(0, 'Minutos devem ser positivos'),
-        seconds: z.number().min(0, 'Segundos devem ser positivos').max(59, 'Segundos devem ser entre 0 e 59'),
-        milliseconds: z.number().min(0, 'Milissegundos devem ser positivos').max(999, 'Milissegundos devem ser entre 0 e 999'),
-      }),
-    });
-  }
+const pointsScoreSchema = z.object({
+  score: z.number().min(0, 'A pontuação deve ser positiva'),
+  notes: z.string().optional(),
+});
 
-  return z.object({
-    ...baseSchema,
-    score: z.number().min(0, 'A pontuação deve ser positiva'),
-  });
-};
+// Type for form data based on score type
+type ScoreFormValues = 
+  | z.infer<typeof timeScoreSchema> 
+  | z.infer<typeof pointsScoreSchema>;
 
 interface AthleteScoreFormProps {
   athleteId: string;
@@ -118,40 +115,45 @@ export function AthleteScoreForm({
         return [];
       }
       
-      // First get the team ID for this athlete in this modality
-      const { data: enrollment, error: enrollmentError } = await supabase
-        .from('inscricoes_modalidades')
-        .select('equipe_id')
-        .eq('modalidade_id', modalityId)
-        .eq('atleta_id', athleteId)
-        .eq('evento_id', eventId)
-        .maybeSingle();
-      
-      if (enrollmentError || !enrollment?.equipe_id) {
-        console.error('Error fetching team:', enrollmentError);
+      try {
+        // First get the team ID for this athlete in this modality
+        const { data: enrollment, error: enrollmentError } = await supabase
+          .from('inscricoes_modalidades')
+          .select('equipe_id')
+          .eq('modalidade_id', modalityId)
+          .eq('atleta_id', athleteId)
+          .eq('evento_id', eventId)
+          .maybeSingle();
+        
+        if (enrollmentError || !enrollment?.equipe_id) {
+          console.error('Error fetching team:', enrollmentError);
+          return [];
+        }
+        
+        // Then get all athletes in that team
+        const { data: members, error: membersError } = await supabase
+          .from('inscricoes_modalidades')
+          .select(`
+            atleta_id,
+            usuarios:atleta_id(nome_completo)
+          `)
+          .eq('modalidade_id', modalityId)
+          .eq('evento_id', eventId)
+          .eq('equipe_id', enrollment.equipe_id);
+        
+        if (membersError) {
+          console.error('Error fetching team members:', membersError);
+          return [];
+        }
+        
+        return members.map(member => ({
+          id: member.atleta_id,
+          name: member.usuarios?.nome_completo || 'Atleta',
+        })) as TeamMember[];
+      } catch (error) {
+        console.error('Error in team members query:', error);
         return [];
       }
-      
-      // Then get all athletes in that team
-      const { data: members, error: membersError } = await supabase
-        .from('inscricoes_modalidades')
-        .select(`
-          atleta_id,
-          usuarios:atleta_id(nome_completo)
-        `)
-        .eq('modalidade_id', modalityId)
-        .eq('evento_id', eventId)
-        .eq('equipe_id', enrollment.equipe_id);
-      
-      if (membersError) {
-        console.error('Error fetching team members:', membersError);
-        return [];
-      }
-      
-      return members.map(member => ({
-        id: member.atleta_id,
-        name: member.usuarios?.nome_completo || 'Atleta',
-      })) as TeamMember[];
     },
     enabled: !!modalityId && !!athleteId && !!eventId && !!modality?.tipo_modalidade?.includes('COLETIVA'),
   });
@@ -160,13 +162,13 @@ export function AthleteScoreForm({
   const scoreType = modality?.tipo_pontuacao as 'time' | 'distance' | 'points' || 'points';
   
   // Create a schema based on the score type
-  const schema = createScoreSchema(scoreType);
+  const schema = scoreType === 'time' ? timeScoreSchema : pointsScoreSchema;
   
-  const form = useForm<z.infer<typeof schema>>({
+  const form = useForm<ScoreFormValues>({
     resolver: zodResolver(schema),
     defaultValues: scoreType === 'time' 
-      ? { time: { minutes: 0, seconds: 0, milliseconds: 0 }, notes: '' }
-      : { score: 0, notes: '' },
+      ? { time: { minutes: 0, seconds: 0, milliseconds: 0 }, notes: '' } as any
+      : { score: 0, notes: '' } as any,
   });
 
   // Fetch existing score if it exists
@@ -181,7 +183,7 @@ export function AthleteScoreForm({
         .eq('evento_id', eventId)
         .eq('modalidade_id', modalityId)
         .eq('atleta_id', athleteId)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error fetching existing score:', error);
@@ -201,8 +203,8 @@ export function AthleteScoreForm({
           minutes: existingScore.tempo_minutos || 0,
           seconds: existingScore.tempo_segundos || 0,
           milliseconds: existingScore.tempo_milissegundos || 0
-        });
-      } else {
+        } as any);
+      } else if (scoreType !== 'time' && existingScore.valor_pontuacao !== null) {
         form.setValue('score', existingScore.valor_pontuacao || 0);
       }
       
@@ -269,30 +271,36 @@ export function AthleteScoreForm({
 
   // Submit score mutation
   const submitScoreMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof schema>) => {
+    mutationFn: async (data: ScoreFormValues) => {
       if (!eventId) throw new Error('Event ID is missing');
       
       // Convert data based on score type
-      const scoreData = scoreType === 'time'
-        ? {
-            tempo_minutos: data.time?.minutes || 0,
-            tempo_segundos: data.time?.seconds || 0,
-            tempo_milissegundos: data.time?.milliseconds || 0,
-            // Calculate total milliseconds for easier sorting
-            valor_pontuacao: parseTimeToMilliseconds(
-              data.time?.minutes || 0,
-              data.time?.seconds || 0,
-              data.time?.milliseconds || 0
-            ),
-            unidade: 'ms'
-          }
-        : {
-            valor_pontuacao: data.score,
-            tempo_minutos: null,
-            tempo_segundos: null,
-            tempo_milissegundos: null,
-            unidade: scoreType === 'distance' ? 'm' : 'pontos'
-          };
+      let scoreData;
+      
+      if (scoreType === 'time' && 'time' in data) {
+        scoreData = {
+          tempo_minutos: data.time.minutes || 0,
+          tempo_segundos: data.time.seconds || 0,
+          tempo_milissegundos: data.time.milliseconds || 0,
+          // Calculate total milliseconds for easier sorting
+          valor_pontuacao: parseTimeToMilliseconds(
+            data.time.minutes || 0,
+            data.time.seconds || 0,
+            data.time.milliseconds || 0
+          ),
+          unidade: 'ms'
+        };
+      } else if ('score' in data) {
+        scoreData = {
+          valor_pontuacao: data.score,
+          tempo_minutos: null,
+          tempo_segundos: null,
+          tempo_milissegundos: null,
+          unidade: scoreType === 'distance' ? 'm' : 'pontos'
+        };
+      } else {
+        throw new Error('Invalid form data format');
+      }
       
       const commonFields = {
         observacoes: data.notes || null,
@@ -362,7 +370,7 @@ export function AthleteScoreForm({
     }
   });
 
-  const onSubmit = (data: z.infer<typeof schema>) => {
+  const onSubmit = (data: ScoreFormValues) => {
     submitScoreMutation.mutate(data);
   };
 

@@ -67,7 +67,7 @@ export interface ScoreRecord {
   evento_id: string;
   modalidade_id: number;
   atleta_id: string;
-  equipe_id?: number;
+  equipe_id?: number | null;
   juiz_id: string;
   valor_pontuacao?: number | null;
   tempo_minutos?: number | null;
