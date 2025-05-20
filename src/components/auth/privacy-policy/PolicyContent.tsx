@@ -1,8 +1,8 @@
 
-import ReactMarkdown from "react-markdown";
 import { RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import ReactMarkdown from "react-markdown";
 
 interface PolicyContentProps {
   isLoading: boolean;
@@ -66,10 +66,14 @@ export const PolicyContent = ({
             tbody: ({ node, ...props }) => <tbody className="divide-y divide-gray-200 dark:divide-gray-700" {...props} />,
             th: ({ node, ...props }) => <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300" {...props} />,
             td: ({ node, ...props }) => <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300" {...props} />,
-            code: ({ node, inline, ...props }) => 
-              inline 
-                ? <code className="bg-gray-100 dark:bg-gray-800 rounded px-1 py-0.5 font-mono text-sm" {...props} />
-                : <code className="block bg-gray-100 dark:bg-gray-800 p-2 rounded font-mono text-sm overflow-x-auto my-4" {...props} />,
+            code: ({ className, children, node, ...props }: any) => {
+              // Check if this code block is inline or a block based on className
+              const isInline = !className;
+              
+              return isInline 
+                ? <code className="bg-gray-100 dark:bg-gray-800 rounded px-1 py-0.5 font-mono text-sm" {...props}>{children}</code>
+                : <code className="block bg-gray-100 dark:bg-gray-800 p-2 rounded font-mono text-sm overflow-x-auto my-4" {...props}>{children}</code>;
+            },
             strong: ({ node, ...props }) => <strong className="font-semibold" {...props} />,
             em: ({ node, ...props }) => <em className="italic" {...props} />,
           }}
