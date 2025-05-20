@@ -106,7 +106,7 @@ export function TopNavigation({ user, roles }: TopNavigationProps) {
   }
 
   return (
-    <div className="w-full bg-olimpics-green-primary text-white sticky top-16 z-40 shadow-md">
+    <div className="w-full bg-olimpics-green-primary text-white z-40 shadow-md mt-16">
       <div className="container flex justify-between items-center p-2">
         <div className="flex items-center gap-4 overflow-x-auto flex-grow">
           {menuItems.map((item) => (

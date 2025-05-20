@@ -7,7 +7,6 @@ import { MenuItems } from './navigation/MenuItems';
 import { EventSwitcher } from './navigation/EventSwitcher';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useState, useEffect } from 'react';
-import { TopNavigation } from './navigation/TopNavigation';
 
 export function MainNavigation() {
   const navigate = useNavigate();
@@ -51,10 +50,7 @@ export function MainNavigation() {
 
   return (
     <div className="flex flex-col w-full">
-      {/* Top Navigation Bar - Make sure it's visible */}
-      <TopNavigation user={user} roles={roles} />
-      
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full pt-28"> {/* Add padding-top to account for header + top nav */}
         <main className="flex-1 overflow-auto bg-olimpics-background transition-all duration-200">
           <Outlet />
         </main>
