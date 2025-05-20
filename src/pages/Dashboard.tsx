@@ -21,7 +21,6 @@ const Dashboard = () => {
     if (!currentEventId) {
       console.log('Dashboard - No event selected, redirecting to /event-selection');
       navigate('/event-selection');
-      // Change toast.warn to toast.warning as per the available methods
       toast.warning('Por favor, selecione um evento para continuar.');
       return;
     }
@@ -38,7 +37,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="w-full p-4">
+    <div className="w-full">
       <AthleteProfilePage />
     </div>
   );

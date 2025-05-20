@@ -61,7 +61,7 @@ export function MainNavigation() {
 
   return (
     <SidebarProvider defaultOpen={!sidebarCollapsed}>
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full overflow-hidden">
         <Sidebar 
           className="bg-olimpics-green-primary text-white z-40"
           collapsible={sidebarCollapsed ? "icon" : "none"}

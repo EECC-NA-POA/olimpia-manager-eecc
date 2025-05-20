@@ -53,7 +53,7 @@ function App() {
         <AuthProvider>
           <div className="flex flex-col min-h-screen">
             <GlobalHeader />
-            <div className="flex-grow pt-16"> {/* Removed overflow property completely to let children control overflow */}
+            <div className="flex-grow pt-16"> {/* Removed overflow property to fix menu visibility */}
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />

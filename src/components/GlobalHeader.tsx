@@ -12,7 +12,7 @@ export function GlobalHeader() {
     if (!user) {
       navigate('/');
     }
-    // If user is logged in, don't navigate away and disrupt the sidebar
+    // If user is logged in, don't navigate away to prevent sidebar from disappearing
   };
 
   return (
@@ -31,4 +31,3 @@ export function GlobalHeader() {
     </header>
   );
 }
-
