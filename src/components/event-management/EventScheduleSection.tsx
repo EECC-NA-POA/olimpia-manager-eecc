@@ -27,13 +27,17 @@ export function EventScheduleSection({ eventId }: { eventId: string | null }) {
   } = useScheduleData(eventId);
 
   if (isLoading) {
-    return <LoadingImage text="Carregando cronograma..." />;
+    return (
+      <div className="flex justify-center items-center py-12">
+        <LoadingImage text="Carregando cronograma..." />
+      </div>
+    );
   }
 
   return (
     <>
       <Card>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium">Cronograma do Evento</h3>

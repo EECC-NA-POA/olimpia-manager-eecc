@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { ScheduleItem, ScheduleForm } from './types';
+import { createCronogramaTableIfNotExists } from './utils';
 
 export const defaultFormValues: ScheduleForm = {
   titulo: '',
@@ -32,6 +33,11 @@ export const useScheduleData = (eventId: string | null) => {
     setIsLoading(true);
     try {
       console.log('Fetching schedule for event:', eventId);
+      
+      // Try to create table if it doesn't exist
+      await createCronogramaTableIfNotExists(supabase);
+      
+      // Then attempt to fetch data
       const { data, error } = await supabase
         .from('cronograma')
         .select('*')
@@ -39,13 +45,19 @@ export const useScheduleData = (eventId: string | null) => {
         .order('data', { ascending: true })
         .order('hora_inicio', { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching schedule:', error);
+        toast.error('Erro ao carregar itens de cronograma');
+        setScheduleItems([]);
+        return;
+      }
       
       console.log('Retrieved schedule items:', data);
       setScheduleItems(data || []);
     } catch (error) {
       console.error('Error fetching schedule:', error);
       toast.error('Erro ao carregar itens de cronograma');
+      setScheduleItems([]);
     } finally {
       setIsLoading(false);
     }
@@ -99,6 +111,9 @@ export const useScheduleData = (eventId: string | null) => {
     
     setIsSaving(true);
     try {
+      // Ensure table exists before saving
+      await createCronogramaTableIfNotExists(supabase);
+      
       if (editingId) {
         // Update existing item
         const { error } = await supabase
