@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, LogOut, Calendar as CalendarIcon } from 'lucide-react';
+import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, LogOut, Calendar as CalendarIcon, BookOpen } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useNavigation } from '@/hooks/useNavigation';
@@ -104,6 +104,13 @@ export function TabbedNavigation({ user, roles }: TabbedNavigationProps) {
                   icon={<Calendar className="h-4 w-4" />}
                   label="Cronograma"
                   isActive={location.pathname === '/cronograma'}
+                />
+                
+                <NavLink 
+                  to="/regulamento"
+                  icon={<BookOpen className="h-4 w-4" />}
+                  label="Regulamento"
+                  isActive={location.pathname === '/regulamento'}
                 />
                 
                 <NavLink 

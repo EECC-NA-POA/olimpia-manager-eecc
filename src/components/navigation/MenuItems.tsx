@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
-import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon } from 'lucide-react';
+import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 
@@ -43,7 +42,15 @@ export const MenuItems = ({ collapsed = false }) => {
     tooltip: "Cronograma"
   });
   
-  // 3. Minhas Inscrições (My Registrations) - for all roles
+  // 3. Regulamento (Regulations) - for all roles
+  menuItems.push({
+    path: "/regulamento",
+    label: "Regulamento",
+    icon: <BookOpen className="h-7 w-7" />,
+    tooltip: "Regulamento"
+  });
+  
+  // 4. Minhas Inscrições (My Registrations) - for all roles
   menuItems.push({
     path: "/athlete-registrations",
     label: "Minhas Inscrições",
@@ -51,7 +58,7 @@ export const MenuItems = ({ collapsed = false }) => {
     tooltip: "Minhas Inscrições"
   });
   
-  // 4. Pontuações (Scores) - for all roles
+  // 5. Pontuações (Scores) - for all roles
   menuItems.push({
     path: "/scores",
     label: "Pontuações",
@@ -59,7 +66,7 @@ export const MenuItems = ({ collapsed = false }) => {
     tooltip: "Pontuações"
   });
   
-  // 5. Organizador (Organizer)
+  // 6. Organizador (Organizer)
   if (isOrganizer) {
     menuItems.push({
       path: "/organizer-dashboard",
@@ -69,7 +76,7 @@ export const MenuItems = ({ collapsed = false }) => {
     });
   }
   
-  // 6. Delegação (Delegation)
+  // 7. Delegação (Delegation)
   if (isDelegationRep) {
     menuItems.push({
       path: "/delegation-dashboard",
@@ -79,7 +86,7 @@ export const MenuItems = ({ collapsed = false }) => {
     });
   }
   
-  // 7. Juiz (Judge)
+  // 8. Juiz (Judge)
   if (isJudge) {
     menuItems.push({
       path: "/judge-dashboard",
@@ -89,7 +96,7 @@ export const MenuItems = ({ collapsed = false }) => {
     });
   }
   
-  // 8. Administração (Administration)
+  // 9. Administração (Administration)
   if (isAdmin) {
     menuItems.push({
       path: "/administration",
@@ -98,7 +105,7 @@ export const MenuItems = ({ collapsed = false }) => {
       tooltip: "Administração"
     });
     
-    // 9. Gerenciar Evento (Event Management) - for admins with event creation permission
+    // 10. Gerenciar Evento (Event Management) - for admins with event creation permission
     if (canManageEvents) {
       menuItems.push({
         path: "/event-management",

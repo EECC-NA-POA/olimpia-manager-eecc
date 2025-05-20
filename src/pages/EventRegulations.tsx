@@ -1,0 +1,112 @@
+
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent } from '@/components/ui/card';
+import { LoadingState } from '@/components/dashboard/components/LoadingState';
+import { EmptyState } from '@/components/dashboard/components/EmptyState';
+import { Button } from '@/components/ui/button';
+import { ExternalLink } from 'lucide-react';
+import { EventRegulation } from '@/lib/types/database';
+import { useEventData } from '@/hooks/useEventData';
+
+const EventRegulations = () => {
+  const { currentEventId } = useAuth();
+  const { data: event } = useEventData(currentEventId);
+
+  const { data: regulation, isLoading } = useQuery({
+    queryKey: ['active-regulation', currentEventId],
+    queryFn: async () => {
+      if (!currentEventId) return null;
+      
+      const { data, error } = await supabase
+        .from('eventos_regulamentos')
+        .select('*')
+        .eq('evento_id', currentEventId)
+        .eq('is_ativo', true)
+        .order('criado_em', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching regulation:', error);
+        return null;
+      }
+
+      return data as EventRegulation | null;
+    },
+    enabled: !!currentEventId,
+  });
+
+  // Open external link in a new tab
+  const openExternalLink = (url: string | null) => {
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-6 px-4 md:px-6">
+        <LoadingState />
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto py-6 px-4 md:px-6">
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-3xl font-bold">Regulamento</h1>
+          <p className="text-muted-foreground">
+            Regulamento oficial do evento {event?.nome || 'atual'}
+          </p>
+        </div>
+
+        {regulation ? (
+          <Card className="overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-semibold">{regulation.titulo}</h2>
+                  <div className="text-sm text-muted-foreground">Versão: {regulation.versao}</div>
+                </div>
+
+                {regulation.regulamento_texto ? (
+                  <div 
+                    className="prose max-w-none mt-4"
+                    dangerouslySetInnerHTML={{ __html: regulation.regulamento_texto }}
+                  />
+                ) : regulation.regulamento_link ? (
+                  <div className="flex flex-col items-center py-6 gap-4">
+                    <p className="text-center">
+                      O regulamento está disponível apenas em um link externo. Clique no botão abaixo para acessar.
+                    </p>
+                    <Button 
+                      onClick={() => openExternalLink(regulation.regulamento_link)}
+                      className="flex items-center gap-2"
+                    >
+                      Ver Regulamento <ExternalLink className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-4">
+                    Este regulamento não possui conteúdo disponível.
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <EmptyState
+            title="Nenhum regulamento ativo"
+            description="Não há regulamentos ativos para este evento."
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default EventRegulations;

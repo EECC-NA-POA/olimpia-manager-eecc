@@ -23,6 +23,7 @@ import Cronograma from './pages/Cronograma';
 import Administration from './pages/Administration';
 import EventManagement from './pages/EventManagement';
 import AthleteRegistrations from './components/AthleteRegistrations';
+import EventRegulations from './pages/EventRegulations';
 
 // Import providers and components
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -89,6 +90,7 @@ function App() {
               <Route path="/organizer-dashboard" element={<OrganizerDashboard />} />
               <Route path="/scores" element={<Scores />} />
               <Route path="/cronograma" element={<Cronograma />} />
+              <Route path="/regulamento" element={<EventRegulations />} />
               <Route path="/administration" element={<Administration />} />
               <Route path="/event-management" element={<EventManagement />} />
               <Route path="/judge-dashboard" element={<JudgeDashboard />} />
