@@ -4,11 +4,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AthleteProfilePage from '@/components/AthleteProfilePage';
+import { usePrivacyPolicyCheck } from '@/hooks/usePrivacyPolicyCheck';
+import { PrivacyPolicyAcceptanceModal } from '@/components/auth/PrivacyPolicyAcceptanceModal';
 
 const Dashboard = () => {
-  const { user, currentEventId } = useAuth();
+  const { user, currentEventId, signOut } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Check if the user needs to accept the privacy policy
+  const { 
+    needsAcceptance, 
+    isLoading: isPolicyCheckLoading, 
+    checkCompleted,
+    refetchCheck 
+  } = usePrivacyPolicyCheck();
 
   useEffect(() => {
     if (!user) {
@@ -25,14 +35,41 @@ const Dashboard = () => {
       return;
     }
 
-    setIsLoading(false);
-  }, [user, currentEventId, navigate]);
+    // Only set loading to false when both auth checks and policy check are done
+    if (checkCompleted) {
+      setIsLoading(false);
+    }
+  }, [user, currentEventId, navigate, checkCompleted]);
 
-  if (isLoading) {
+  const handlePrivacyPolicyAccept = async () => {
+    await refetchCheck();
+  };
+  
+  const handleCancel = async () => {
+    try {
+      await signOut();
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error('Error during logout:', error);
+      toast.error('Erro ao fazer logout.');
+    }
+  };
+
+  if (isLoading || isPolicyCheckLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-olimpics-green-primary" />
       </div>
+    );
+  }
+  
+  // Show the privacy policy modal if needed
+  if (needsAcceptance) {
+    return (
+      <PrivacyPolicyAcceptanceModal
+        onAccept={handlePrivacyPolicyAccept}
+        onCancel={handleCancel}
+      />
     );
   }
 

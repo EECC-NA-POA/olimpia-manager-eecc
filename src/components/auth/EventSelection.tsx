@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Loader2, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PerfilTipo } from "@/lib/types/database";
 import { EventCarousel } from "./event-selection/EventCarousel";
 import { useEventQuery } from "./event-selection/useEventQuery";
 import { useEventRegistration } from "./event-selection/useEventRegistration";
 import { toast } from "sonner";
+import { usePrivacyPolicyCheck } from "@/hooks/usePrivacyPolicyCheck";
+import { PrivacyPolicyAcceptanceModal } from "./PrivacyPolicyAcceptanceModal";
 
 interface EventSelectionProps {
   selectedEvents: string[];
@@ -29,7 +31,14 @@ export const EventSelection = ({
   
   const { data: events, isLoading } = useEventQuery(user?.id);
   const registerEventMutation = useEventRegistration(user?.id);
-
+  
+  // Check if the user needs to accept the privacy policy
+  const { 
+    needsAcceptance, 
+    isLoading: isPolicyCheckLoading, 
+    refetchCheck 
+  } = usePrivacyPolicyCheck();
+  
   const handleEventRegistration = async (eventId: string) => {
     try {
       const result = await registerEventMutation.mutateAsync({ 
@@ -82,6 +91,29 @@ export const EventSelection = ({
       toast.error("Erro ao fazer logout. Tente novamente.");
     }
   };
+  
+  const handlePrivacyPolicyAccept = async () => {
+    await refetchCheck();
+  };
+  
+  if (isPolicyCheckLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-olimpics-green-primary" />
+        <span className="ml-2">Verificando termos de privacidade...</span>
+      </div>
+    );
+  }
+  
+  // Show the privacy policy acceptance modal if needed
+  if (needsAcceptance) {
+    return (
+      <PrivacyPolicyAcceptanceModal
+        onAccept={handlePrivacyPolicyAccept}
+        onCancel={handleExit}
+      />
+    );
+  }
 
   if (isLoading) {
     return (
