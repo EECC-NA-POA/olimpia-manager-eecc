@@ -1,6 +1,6 @@
 
 import { useAuth } from "@/contexts/AuthContext";
-import { X } from "lucide-react";
+import { X, FileText, Shield } from "lucide-react";
 import { PolicyContent } from "./privacy-policy/PolicyContent";
 import { PolicyActions } from "./privacy-policy/PolicyActions";
 import { usePrivacyPolicyAcceptance } from "@/hooks/usePrivacyPolicyAcceptance";
@@ -47,18 +47,21 @@ export const PrivacyPolicyAcceptanceModal = ({
 
   return (
     <AlertDialog open={true}>
-      <AlertDialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <AlertDialogHeader>
-          <AlertDialogTitle className="text-xl font-semibold">
-            Política de Privacidade
-          </AlertDialogTitle>
-          <AlertDialogDescription className="mt-2">
+      <AlertDialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 shadow-lg border border-gray-200 dark:border-gray-700">
+        <AlertDialogHeader className="bg-olimpics-green-primary/10 dark:bg-olimpics-green-primary/20 rounded-t-lg p-4">
+          <div className="flex items-center gap-2">
+            <Shield className="h-6 w-6 text-olimpics-green-primary" />
+            <AlertDialogTitle className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+              Política de Privacidade
+            </AlertDialogTitle>
+          </div>
+          <AlertDialogDescription className="mt-2 text-gray-600 dark:text-gray-300">
             Para continuar utilizando nosso sistema, você precisa aceitar nossa política de privacidade.
           </AlertDialogDescription>
           <Button 
             variant="ghost" 
             size="icon" 
-            className="absolute right-4 top-4" 
+            className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" 
             onClick={onCancel}
           >
             <X className="h-4 w-4" />
@@ -66,8 +69,8 @@ export const PrivacyPolicyAcceptanceModal = ({
           </Button>
         </AlertDialogHeader>
 
-        <div className="py-4">
-          <div className="border rounded-md p-4 max-h-[50vh] overflow-y-auto bg-muted/30">
+        <div className="py-4 px-6">
+          <div className="border rounded-md bg-white/80 dark:bg-gray-800/80 max-h-[50vh] overflow-y-auto shadow-inner">
             <PolicyContent
               isLoading={isLoading}
               error={error}
@@ -77,7 +80,7 @@ export const PrivacyPolicyAcceptanceModal = ({
           </div>
         </div>
 
-        <AlertDialogFooter>
+        <AlertDialogFooter className="px-6 pb-6 border-t border-gray-200 dark:border-gray-700 pt-4">
           <PolicyActions
             onAccept={handleAccept}
             onCancel={onCancel}
