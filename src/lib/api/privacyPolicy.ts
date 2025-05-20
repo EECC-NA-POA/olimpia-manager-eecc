@@ -49,10 +49,91 @@ export const fetchActivePrivacyPolicy = async (): Promise<string> => {
       return 'Política de privacidade não disponível no momento.';
     }
     
-    console.log('Privacy policy fetched successfully:', data);
+    console.log('Privacy policy fetched successfully');
     return data.termo_texto || 'Conteúdo da política de privacidade não disponível.';
   } catch (error: any) {
     console.error('Exception in fetchActivePrivacyPolicy:', error);
     return 'Não foi possível carregar a política de privacidade. Por favor, tente novamente mais tarde.';
   }
 };
+
+// Helper function to create the privacy policy acceptance RPC if it doesn't exist
+export const createPrivacyAcceptanceRPC = async () => {
+  try {
+    console.log('Setting up privacy policy acceptance RPC...');
+    
+    // Check if the function already exists
+    const { data: functionExists, error: checkError } = await supabase.rpc('function_exists', {
+      function_name: 'insert_privacy_acceptance'
+    }).single();
+    
+    if (checkError) {
+      console.log('Could not check if function exists, probably function_exists RPC is not available');
+      return;
+    }
+    
+    if (functionExists && functionExists.exists) {
+      console.log('Privacy acceptance RPC already exists');
+      return;
+    }
+    
+    // Create the function
+    const createFunctionSQL = `
+      CREATE OR REPLACE FUNCTION insert_privacy_acceptance(p_user_id UUID, p_version TEXT)
+      RETURNS BOOLEAN AS $$
+      DECLARE
+        v_policy_id UUID;
+        v_result BOOLEAN;
+      BEGIN
+        -- Get the policy ID if needed
+        SELECT id INTO v_policy_id 
+        FROM termos_privacidade 
+        WHERE versao_termo = p_version AND ativo = TRUE
+        LIMIT 1;
+
+        -- Try with termos_privacidade_id column
+        BEGIN
+          INSERT INTO logs_aceite_privacidade (usuario_id, versao_termo, termos_privacidade_id)
+          VALUES (p_user_id, p_version, v_policy_id);
+          RETURN TRUE;
+        EXCEPTION WHEN OTHERS THEN
+          -- Column doesn't exist, try next option
+        END;
+
+        -- Try with termos_id column
+        BEGIN
+          INSERT INTO logs_aceite_privacidade (usuario_id, versao_termo, termos_id)
+          VALUES (p_user_id, p_version, v_policy_id);
+          RETURN TRUE;
+        EXCEPTION WHEN OTHERS THEN
+          -- Column doesn't exist, try next option
+        END;
+
+        -- Try with minimal fields as last resort
+        BEGIN
+          INSERT INTO logs_aceite_privacidade (usuario_id, versao_termo)
+          VALUES (p_user_id, p_version);
+          RETURN TRUE;
+        EXCEPTION WHEN OTHERS THEN
+          RETURN FALSE;
+        END;
+      END;
+      $$ LANGUAGE plpgsql;
+    `;
+    
+    const { error: createError } = await supabase.rpc('execute_sql', {
+      sql: createFunctionSQL
+    });
+    
+    if (createError) {
+      console.error('Could not create privacy acceptance RPC:', createError);
+    } else {
+      console.log('Created privacy acceptance RPC successfully');
+    }
+  } catch (error) {
+    console.error('Error setting up privacy acceptance RPC:', error);
+  }
+};
+
+// Try to set up the RPC when the application starts
+createPrivacyAcceptanceRPC().catch(console.error);
