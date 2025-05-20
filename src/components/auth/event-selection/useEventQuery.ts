@@ -79,8 +79,10 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
     retry: 1,
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60, // 1 minute
-    onSuccess: (data) => {
-      console.log(`Successfully fetched ${data.length} events`);
+    meta: {
+      onSuccess: (data: any[]) => {
+        console.log(`Successfully fetched ${data.length} events`);
+      }
     }
   });
 };
