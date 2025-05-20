@@ -50,7 +50,7 @@ export function MainNavigation() {
 
   return (
     <div className="flex flex-col w-full">
-      <div className="flex min-h-screen w-full pt-28"> {/* Add padding-top to account for header + top nav */}
+      <div className="flex min-h-screen w-full"> {/* Removed padding-top - now handled in main */}
         <main className="flex-1 overflow-auto bg-olimpics-background transition-all duration-200">
           <Outlet />
         </main>

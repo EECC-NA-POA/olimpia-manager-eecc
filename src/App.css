@@ -1,4 +1,3 @@
-
 #root {
   margin: 0 auto;
   text-align: center;
@@ -11,7 +10,7 @@ body {
 
 /* Routes with authenticated menu need top padding */
 .main-navigation-content {
-  padding-top: 120px; /* Account for header (64px) + top navigation (56px) */
+  padding-top: 104px; /* Account for header (64px) + top navigation (40px) */
 }
 
 /* Routes with public access need less padding */
@@ -36,16 +35,16 @@ body {
 /* Fix for sidebar positioning and height */
 .group\/sidebar-wrapper {
   margin-top: 0 !important;
-  height: calc(100vh - 120px) !important; /* Subtract header + top nav height */
+  height: calc(100vh - 104px) !important; /* Subtract header + top nav height */
   overflow: hidden !important; /* Hide overflow in sidebar wrapper */
 }
 
 /* Ensure sidebar takes full height and is fixed in position */
 [data-sidebar="sidebar"] {
-  height: calc(100vh - 120px) !important; /* Subtract header + top nav height */
+  height: calc(100vh - 104px) !important; /* Subtract header + top nav height */
   margin-top: 0 !important;
   position: sticky !important;
-  top: 120px !important; /* Offset by header + top nav height */
+  top: 104px !important; /* Offset by header + top nav height */
   left: 0 !important;
   overflow-y: auto !important;
 }
@@ -66,8 +65,9 @@ body {
 /* Content positioning and transition */
 main {
   transition: margin-left 0.2s ease-in-out !important;
-  height: calc(100vh - 120px) !important; /* Set main content height accounting for header and top nav */
+  height: calc(100vh - 104px) !important; /* Set main content height accounting for header and top nav */
   overflow-y: auto !important; /* Allow scrolling in main content only */
+  padding-top: 104px; /* Account for fixed header + top nav */
 }
 
 /* Special style for home page to ensure scrolling works */
@@ -80,7 +80,7 @@ main {
 
 /* Remove extra space above the sidebar */
 .fixed.inset-y-0 {
-  top: 120px !important; /* Adjust for header + top nav height */
+  top: 104px !important; /* Adjust for header + top nav height */
 }
 
 /* Adjust icon display in collapsed state */
@@ -115,7 +115,7 @@ main {
 [data-sidebar="content"] {
   overflow-y: auto !important;
   flex-grow: 1 !important;
-  max-height: calc(100vh - 200px) !important; /* Allow more space for content */
+  max-height: calc(100vh - 180px) !important; /* Allow more space for content */
 }
 
 /* Footer styling to ensure it stays at the bottom and buttons are visible */
@@ -132,6 +132,7 @@ footer {
 /* Fix for double scrollbars */
 .flex.min-h-screen.w-full {
   overflow: hidden;
+  padding-top: 104px; /* Add padding for fixed header + navigation */
 }
 
 /* Ensure the sidebar footer is always visible and positioned correctly */
@@ -186,14 +187,14 @@ footer {
   overflow: auto !important;
 }
 
-/* Top navigation specific styles */
+/* Top navigation specific styles - UPDATED */
 .mt-16 {
-  margin-top: 4rem; /* 64px - height of header */
+  margin-top: 0; /* Removed margin as navigation is now inside header */
 }
 
 /* Ensure content doesn't overlap with top navigation */
 .content-padding-top {
-  padding-top: 7.5rem; /* 120px - height of header + top navigation */
+  padding-top: 104px; /* 104px - height of header + top navigation */
 }
 
 /* Fix for mobile screens */
@@ -213,7 +214,7 @@ footer {
 }
 
 /* Fixed header and navigation combination */
-.fixed.top-0.left-0.right-0.z-50.flex.flex-col {
+.fixed.top-0.left-0.right-0.z-50 {
   position: fixed;
   z-index: 50;
 }
