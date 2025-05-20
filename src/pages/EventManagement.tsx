@@ -84,9 +84,7 @@ export default function EventManagement() {
           <CardTitle className="text-olimpics-green-primary text-xl">
             {eventData.nome}
           </CardTitle>
-          <CardDescription>
-            Status: {eventData.status_evento}
-          </CardDescription>
+          {/* Removed the redundant status display from here */}
         </CardHeader>
 
         <CardContent className="pt-6">
