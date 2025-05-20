@@ -31,10 +31,12 @@ export const ContactSection = ({
     queryFn: fetchBranchesByState,
     retry: 3,
     retryDelay: 1000,
+    staleTime: 60000, // Cache for 1 minute
   });
 
   useEffect(() => {
     if (branchesByState && branchesByState.length > 0) {
+      console.log('Setting states from data:', branchesByState);
       // Extract states list
       const states = branchesByState.map(group => group.estado);
       setStatesList(states);
@@ -45,6 +47,9 @@ export const ContactSection = ({
         branchMap[group.estado] = group.branches;
       });
       setBranchesMap(branchMap);
+      
+      console.log('States list:', states);
+      console.log('Branches map:', branchMap);
     }
   }, [branchesByState]);
 
@@ -57,6 +62,7 @@ export const ContactSection = ({
   const handleStateChange = (state: string) => {
     setSelectedState(state);
     form.setValue('branchId', undefined);
+    form.setValue('state', state);
   };
 
   return (
@@ -94,17 +100,17 @@ export const ContactSection = ({
               <FormLabel>Estado</FormLabel>
               <Select
                 onValueChange={(value) => {
-                  field.onChange(value);
                   handleStateChange(value);
                 }}
-                value={field.value || selectedState || ''}
+                value={field.value || ''}
+                disabled={isLoadingBranches || statesList.length === 0}
               >
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um Estado" />
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder={isLoadingBranches ? "Carregando estados..." : "Selecione um Estado"} />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   {statesList.map((state) => (
                     <SelectItem key={state} value={state}>
                       {state}
@@ -126,14 +132,17 @@ export const ContactSection = ({
               <Select
                 onValueChange={field.onChange}
                 value={field.value}
-                disabled={!selectedState}
+                disabled={!selectedState || isLoadingBranches || branchesForSelectedState.length === 0}
               >
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder={selectedState ? "Selecione sua Sede" : "Selecione um Estado primeiro"} />
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder={selectedState 
+                      ? (branchesForSelectedState.length > 0 ? "Selecione sua Sede" : "Nenhuma sede encontrada") 
+                      : "Selecione um Estado primeiro"} 
+                    />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   {branchesForSelectedState.map((branch) => (
                     <SelectItem key={branch.id} value={branch.id}>
                       {branch.nome}

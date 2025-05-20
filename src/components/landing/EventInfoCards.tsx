@@ -2,8 +2,6 @@
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { MapPin, Calendar } from 'lucide-react';
-import { toast } from "sonner";
-import { formatToGoogleCalendarDate } from "@/utils/formatters";
 
 interface EventInfoCardsProps {
   handleLocationClick: () => void;
