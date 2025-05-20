@@ -5,15 +5,18 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchUserProfiles, fetchBranches } from '@/lib/api';
 import { UserProfilesTable } from '@/components/dashboard/UserProfilesTable';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users } from 'lucide-react';
+import { Users, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function Administration() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const currentEventId = localStorage.getItem('currentEventId');
+  const { canCreateEvents, isLoading: isLoadingPermission } = useCanCreateEvents();
 
   // Check if user has admin profile
   const hasAdminProfile = user?.papeis?.some(role => role.codigo === 'ADM');
@@ -74,6 +77,16 @@ export default function Administration() {
         <h1 className="text-3xl font-bold tracking-tight text-olimpics-text">
           Administração
         </h1>
+        
+        {canCreateEvents && (
+          <Button 
+            onClick={() => navigate('/event-management')}
+            className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary"
+          >
+            <Calendar className="h-5 w-5 mr-2" />
+            Gerenciar Evento Atual
+          </Button>
+        )}
       </div>
 
       <Card className="border-olimpics-green-primary/20">

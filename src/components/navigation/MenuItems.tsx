@@ -4,10 +4,12 @@ import { Link, useLocation } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
 import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
+import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 
 export const MenuItems = ({ collapsed = false }) => {
   const location = useLocation();
   const { roles, user } = useNavigation();
+  const { canCreateEvents } = useCanCreateEvents();
 
   // Check for specific roles
   const isJudge = user?.papeis?.some(role => role.codigo === 'JUZ') || false;
@@ -15,6 +17,9 @@ export const MenuItems = ({ collapsed = false }) => {
   const isOrganizer = roles.isOrganizer;
   const isDelegationRep = roles.isDelegationRep;
   const isAthlete = roles.isAthlete;
+  
+  // Check if user can manage events (admin with cadastra_eventos=true)
+  const canManageEvents = isAdmin && canCreateEvents;
 
   const menuItems = [];
   
@@ -92,6 +97,16 @@ export const MenuItems = ({ collapsed = false }) => {
       icon: <Settings2 className="h-7 w-7" />,
       tooltip: "Administração"
     });
+    
+    // 9. Gerenciar Evento (Event Management) - for admins with event creation permission
+    if (canManageEvents) {
+      menuItems.push({
+        path: "/event-management",
+        label: "Gerenciar Evento",
+        icon: <CalendarIcon className="h-7 w-7" />,
+        tooltip: "Gerenciar Evento"
+      });
+    }
   }
 
   return (

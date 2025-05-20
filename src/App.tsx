@@ -21,6 +21,7 @@ import RejectedAccess from './pages/RejectedAccess';
 import Scores from './pages/Scores';
 import Cronograma from './pages/Cronograma';
 import Administration from './pages/Administration';
+import EventManagement from './pages/EventManagement';
 import AthleteRegistrations from './components/AthleteRegistrations';
 
 // Import providers and components
@@ -89,6 +90,7 @@ function App() {
                   <Route path="/scores" element={<Scores />} />
                   <Route path="/cronograma" element={<Cronograma />} />
                   <Route path="/administration" element={<Administration />} />
+                  <Route path="/event-management" element={<EventManagement />} />
                   <Route path="/judge-dashboard" element={<JudgeDashboard />} />
                 </Route>
               </Routes>

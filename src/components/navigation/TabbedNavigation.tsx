@@ -1,13 +1,14 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, LogOut } from 'lucide-react';
+import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, LogOut, Calendar as CalendarIcon } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useNavigation } from '@/hooks/useNavigation';
 import { EventSwitcher } from './EventSwitcher';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 
 interface TabbedNavigationProps {
   user: any;
@@ -19,6 +20,7 @@ export function TabbedNavigation({ user, roles }: TabbedNavigationProps) {
   const { signOut } = useNavigation();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("main");
+  const { canCreateEvents } = useCanCreateEvents();
   
   // Check for specific roles
   const isJudge = user?.papeis?.some(role => role.codigo === 'JUZ') || false;
@@ -26,6 +28,9 @@ export function TabbedNavigation({ user, roles }: TabbedNavigationProps) {
   const isOrganizer = roles.isOrganizer;
   const isDelegationRep = roles.isDelegationRep;
   const isAthlete = roles.isAthlete;
+
+  // Check if user can manage events (admin with cadastra_eventos=true)
+  const canManageEvents = isAdmin && canCreateEvents;
 
   const handleLogout = async () => {
     try {
@@ -46,7 +51,7 @@ export function TabbedNavigation({ user, roles }: TabbedNavigationProps) {
     } else if (location.pathname.includes('organizer') || location.pathname.includes('delegation') || 
               location.pathname.includes('judge')) {
       setActiveTab('roles');
-    } else if (location.pathname.includes('administration')) {
+    } else if (location.pathname.includes('administration') || location.pathname.includes('event-management')) {
       setActiveTab('admin');
     }
   }, [location.pathname]);
@@ -147,12 +152,22 @@ export function TabbedNavigation({ user, roles }: TabbedNavigationProps) {
 
               <TabsContent value="admin" className="flex flex-wrap gap-1 mt-0">
                 {isAdmin && (
-                  <NavLink 
-                    to="/administration"
-                    icon={<Settings2 className="h-4 w-4" />}
-                    label="Administração"
-                    isActive={location.pathname === '/administration'}
-                  />
+                  <>
+                    <NavLink 
+                      to="/administration"
+                      icon={<Settings2 className="h-4 w-4" />}
+                      label="Administração"
+                      isActive={location.pathname === '/administration'}
+                    />
+                    {canManageEvents && (
+                      <NavLink 
+                        to="/event-management"
+                        icon={<CalendarIcon className="h-4 w-4" />}
+                        label="Gerenciar Evento"
+                        isActive={location.pathname === '/event-management'}
+                      />
+                    )}
+                  </>
                 )}
               </TabsContent>
             </div>
