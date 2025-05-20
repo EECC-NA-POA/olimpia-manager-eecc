@@ -4,10 +4,14 @@ import { EventSelection } from '@/components/auth/EventSelection';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { useUserAgeQuery } from './hooks/useUserAgeQuery';
+import { ErrorState } from '@/components/ErrorState';
+import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function EventSelectionContent() {
   const navigate = useNavigate();
-  const { data: userAge } = useUserAgeQuery();
+  const { user } = useAuth();
+  const { data: userAge, isLoading: isAgeLoading, error: ageError } = useUserAgeQuery();
 
   const handleEventSelect = (eventId: string) => {
     localStorage.setItem('currentEventId', eventId);
@@ -16,6 +20,24 @@ export function EventSelectionContent() {
   };
 
   const isUnder13 = userAge !== null && userAge < 13;
+  
+  if (isAgeLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-olimpics-green-primary" />
+      </div>
+    );
+  }
+  
+  if (ageError) {
+    return (
+      <ErrorState 
+        onRetry={() => window.location.reload()}
+        message="Erro ao carregar dados do usuário"
+        error={ageError}
+      />
+    );
+  }
 
   return (
     <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6">
