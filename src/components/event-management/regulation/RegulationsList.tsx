@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash, Switch, AlertTriangle } from 'lucide-react';
+import { Edit, Trash, ToggleLeft, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
@@ -110,7 +110,7 @@ export function RegulationsList({ eventId, onEdit }: RegulationsListProps) {
                   </div>
                 </div>
                 <div className="flex space-x-2">
-                  <Badge variant={regulation.is_ativo ? 'success' : 'warning'}>
+                  <Badge variant={regulation.is_ativo ? 'default' : 'outline'}>
                     {regulation.is_ativo ? 'Ativo' : 'Inativo'}
                   </Badge>
                 </div>
@@ -141,7 +141,7 @@ export function RegulationsList({ eventId, onEdit }: RegulationsListProps) {
                   size="sm"
                   onClick={() => handleToggleStatus(regulation)}
                 >
-                  <Switch className="h-4 w-4 mr-2" />
+                  <ToggleLeft className="h-4 w-4 mr-2" />
                   {regulation.is_ativo ? 'Desativar' : 'Ativar'}
                 </Button>
               </div>
