@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { getAvailableEvents } from '@/lib/api';
 import { Event } from '@/types/api';
+import { ChevronDown } from 'lucide-react';
 
 interface EventSwitcherProps {
   userId: string;
@@ -52,12 +53,16 @@ export function EventSwitcher({ userId, collapsed = false }: EventSwitcherProps)
   }
 
   return (
-    <div className={`${collapsed ? 'hidden' : 'flex'} items-center min-w-[150px] text-sm`}>
+    <div className={`${collapsed ? 'hidden' : 'flex'} items-center min-w-[150px] text-sm relative`}>
+      <div className="flex items-center gap-1">
+        <span className="text-white font-medium">Trocar Evento</span>
+        <ChevronDown className="h-4 w-4 text-white" />
+      </div>
       <select
         value={currentEventId || ''}
         onChange={handleEventChange}
-        className="bg-olimpics-green-secondary/30 text-white rounded-md py-1 px-2 w-full border-none focus:ring-1 focus:ring-olimpics-green-secondary"
-        style={{ maxWidth: collapsed ? '40px' : '200px' }}
+        className="absolute inset-0 opacity-0 cursor-pointer w-full"
+        aria-label="Trocar Evento"
       >
         {availableEvents.map(event => (
           <option key={event.id} value={event.id}>

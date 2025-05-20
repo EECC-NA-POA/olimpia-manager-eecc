@@ -9,6 +9,11 @@
   padding-top: 104px; /* 104px - height of header + top navigation */
 }
 
+/* Add extra space between navigation and content */
+.main-navigation-content {
+  padding-top: 120px !important; /* Increased padding for better separation */
+}
+
 /* Tabs styling overrides for the nav */
 .tabs-nav .tabs-trigger {
   background-color: transparent;
