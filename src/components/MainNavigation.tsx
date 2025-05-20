@@ -51,11 +51,11 @@ export function MainNavigation() {
 
   return (
     <div className="flex flex-col w-full">
-      {/* Top Navigation Bar */}
+      {/* Top Navigation Bar - Make sure it's visible */}
       <TopNavigation user={user} roles={roles} />
       
       <div className="flex min-h-screen w-full">
-        <main className="flex-1 overflow-auto bg-olimpics-background transition-all duration-200 pt-10">
+        <main className="flex-1 overflow-auto bg-olimpics-background transition-all duration-200">
           <Outlet />
         </main>
       </div>

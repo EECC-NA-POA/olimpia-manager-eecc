@@ -53,7 +53,7 @@ function App() {
         <AuthProvider>
           <div className="flex flex-col min-h-screen">
             <GlobalHeader />
-            <div className="flex-grow pt-16"> {/* Add padding-top to account for the fixed header */}
+            <div className="flex-grow pt-16"> {/* Padding to prevent header overlap */}
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
