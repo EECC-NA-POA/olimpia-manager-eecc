@@ -103,6 +103,11 @@ export const EventCard = ({
           <p>Início: {format(new Date(event.data_inicio_inscricao), 'dd/MM/yyyy')}</p>
           <p>Término: {format(new Date(event.data_fim_inscricao), 'dd/MM/yyyy')}</p>
           <p className="text-xs uppercase font-medium mt-2">{event.tipo}</p>
+          {event.isRegistered && (
+            <p className="text-xs font-medium text-green-600 mt-1">
+              Você já está inscrito neste evento
+            </p>
+          )}
           {event.isRegistered && event.roles?.length > 0 && (
             <p className="text-xs font-medium text-olimpics-green-primary mt-1">
               Papéis: {event.roles.map(role => role.nome).join(', ')}
