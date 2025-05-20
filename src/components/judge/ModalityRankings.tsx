@@ -72,7 +72,7 @@ export function ModalityRankings({ modalityId, eventId, scoreType }: ModalityRan
       }
       
       // Map and limit to top 10
-      const rankedAthletes = data.map(score => ({
+      const rankedAthletes = data.map((score: any) => ({
         atleta_id: score.atleta_id,
         atleta_nome: score.usuarios?.nome_completo || 'Atleta',
         valor_pontuacao: score.valor_pontuacao,

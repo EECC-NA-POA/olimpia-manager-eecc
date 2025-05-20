@@ -64,7 +64,7 @@ export function ModalityAthletesList({
       }
       
       // Transform the data to match the Athlete interface
-      return data.map(item => ({
+      return data.map((item: any) => ({
         atleta_id: item.atleta_id,
         atleta_nome: item.usuarios?.nome_completo || 'Atleta',
         tipo_documento: item.usuarios?.tipo_documento || 'N/A',

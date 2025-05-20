@@ -146,7 +146,7 @@ export function AthleteScoreForm({
           return [];
         }
         
-        return members.map(member => ({
+        return members.map((member: any) => ({
           id: member.atleta_id,
           name: member.usuarios?.nome_completo || 'Atleta',
         })) as TeamMember[];
