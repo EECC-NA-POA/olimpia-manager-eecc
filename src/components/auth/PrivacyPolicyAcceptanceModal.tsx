@@ -6,6 +6,7 @@ import { fetchActivePrivacyPolicy } from "@/lib/api/privacyPolicy";
 import { supabase } from "@/lib/supabase";
 import { LogOut, X, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
+import ReactMarkdown from 'react-markdown';
 
 import {
   AlertDialog,
@@ -118,7 +119,7 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
       );
     }
 
-    if (error !== null || !policyContent || (typeof policyContent === 'string' && policyContent.includes('Não foi possível carregar'))) {
+    if (error || !policyContent || (typeof policyContent === 'string' && policyContent.includes('Não foi possível carregar'))) {
       return (
         <div className="text-center space-y-4">
           <p className="text-red-500">
@@ -137,10 +138,9 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
     }
 
     return (
-      <div 
-        dangerouslySetInnerHTML={{ __html: policyContent }} 
-        className="policy-content prose prose-sm max-w-none dark:prose-invert"
-      />
+      <ReactMarkdown className="prose prose-sm max-w-none dark:prose-invert">
+        {policyContent}
+      </ReactMarkdown>
     );
   };
 
