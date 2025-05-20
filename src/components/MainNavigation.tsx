@@ -17,12 +17,20 @@ import { useNavigate } from 'react-router-dom';
 import { MenuItems } from './navigation/MenuItems';
 import { EventSwitcher } from './navigation/EventSwitcher';
 import { useNavigation } from '@/hooks/useNavigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export function MainNavigation() {
   const navigate = useNavigate();
   const { user, roles, signOut } = useNavigation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Restore sidebar state from localStorage if available
+  useEffect(() => {
+    const savedState = localStorage.getItem('sidebarCollapsed');
+    if (savedState !== null) {
+      setSidebarCollapsed(savedState === 'true');
+    }
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -38,7 +46,9 @@ export function MainNavigation() {
   };
 
   const toggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
+    const newState = !sidebarCollapsed;
+    setSidebarCollapsed(newState);
+    localStorage.setItem('sidebarCollapsed', newState.toString());
   };
 
   if (!user) {

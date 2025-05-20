@@ -53,7 +53,7 @@ function App() {
         <AuthProvider>
           <div className="flex flex-col min-h-screen">
             <GlobalHeader />
-            <div className="flex-grow overflow-auto pt-16"> {/* Changed from overflow-hidden to overflow-auto */}
+            <div className="flex-grow overflow-hidden pt-16"> {/* Changed back to overflow-hidden for consistent behavior */}
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
