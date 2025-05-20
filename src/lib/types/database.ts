@@ -10,11 +10,15 @@ export interface Event {
   pais: string | null;
   estado: string | null;
   cidade: string | null;
+  local: string | null;
   foto_evento: string | null;
   tipo: 'estadual' | 'nacional' | 'internacional' | 'regional';
+  data_inicio: string | null;
+  data_fim: string | null;
   created_at: string | null;
   updated_at: string | null;
-  status_evento: 'ativo' | 'encerrado' | 'suspenso';
+  status_evento: 'ativo' | 'encerrado' | 'suspenso' | 'em_teste';
+  visibilidade_publica: boolean;
 }
 
 export interface EventBranch {
@@ -44,4 +48,3 @@ export interface UserRole {
 }
 
 export type PerfilTipo = 'ATL' | 'PGR';
-
