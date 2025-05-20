@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -24,28 +25,35 @@ import { toast } from '@/hooks/use-toast';
 interface TeamsTabProps {
   userId: string;
   eventId: string | null;
+  isOrganizer?: boolean; // Para determinar permissões diferentes
 }
 
-interface Team {
-  id: number;
-  name: string;
-  athletes: any[];
-}
-
-interface Athlete {
-  atleta_id: string;
-  atleta_nome: string;
-  atleta_telefone?: string;
-  atleta_email?: string;
-  tipo_documento: string;
-  numero_documento: string;
-}
-
-export function TeamsTab({ userId, eventId }: TeamsTabProps) {
+export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
   const queryClient = useQueryClient();
   const [selectedModalityId, setSelectedModalityId] = useState<number | null>(null);
   const [teamName, setTeamName] = useState('');
-  const [teams, setTeams] = useState<Team[]>([]);
+
+  // Fetch user branch info if not an organizer
+  const { data: userInfo } = useQuery({
+    queryKey: ['user-info', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('id, filial_id')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching user info:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!userId && !isOrganizer,
+  });
 
   // Fetch modalities
   const { data: modalities, isLoading: isLoadingModalities } = useQuery({
@@ -88,16 +96,22 @@ export function TeamsTab({ userId, eventId }: TeamsTabProps) {
 
   // Fetch existing teams for the selected modality
   const { data: existingTeams, isLoading: isLoadingTeams } = useQuery({
-    queryKey: ['teams', eventId, selectedModalityId],
+    queryKey: ['teams', eventId, selectedModalityId, isOrganizer, userInfo?.filial_id],
     queryFn: async () => {
       if (!eventId || !selectedModalityId) return [];
       
-      const { data: teamsData, error: teamsError } = await supabase
+      let query = supabase
         .from('equipes')
         .select('id, nome')
         .eq('evento_id', eventId)
-        .eq('modalidade_id', selectedModalityId)
-        .order('nome');
+        .eq('modalidade_id', selectedModalityId);
+      
+      // If not an organizer, filter teams by branch
+      if (!isOrganizer && userInfo?.filial_id) {
+        query = query.eq('filial_id', userInfo.filial_id);
+      }
+      
+      const { data: teamsData, error: teamsError } = await query.order('nome');
       
       if (teamsError) {
         console.error('Error fetching teams:', teamsError);
@@ -135,11 +149,11 @@ export function TeamsTab({ userId, eventId }: TeamsTabProps) {
 
   // Fetch athletes available for team formation
   const { data: availableAthletes } = useQuery({
-    queryKey: ['athletes', eventId, selectedModalityId],
+    queryKey: ['athletes', eventId, selectedModalityId, isOrganizer, userInfo?.filial_id],
     queryFn: async () => {
       if (!eventId || !selectedModalityId) return [];
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('vw_modalidades_atletas_confirmados')
         .select(`
           atleta_id,
@@ -147,10 +161,18 @@ export function TeamsTab({ userId, eventId }: TeamsTabProps) {
           atleta_telefone,
           atleta_email,
           tipo_documento,
-          numero_documento
+          numero_documento,
+          filial_id
         `)
         .eq('evento_id', eventId)
         .eq('modalidade_id', selectedModalityId);
+      
+      // Se não for organizador, filtrar atletas pela filial do usuário
+      if (!isOrganizer && userInfo?.filial_id) {
+        query = query.eq('filial_id', userInfo.filial_id);
+      }
+      
+      const { data, error } = await query;
       
       if (error) {
         console.error('Error fetching athletes:', error);
@@ -166,7 +188,7 @@ export function TeamsTab({ userId, eventId }: TeamsTabProps) {
           });
         });
         
-        return data.filter((athlete: Athlete) => !athletesInTeams.has(athlete.atleta_id));
+        return data.filter((athlete: any) => !athletesInTeams.has(athlete.atleta_id));
       }
       
       return data;
@@ -181,12 +203,21 @@ export function TeamsTab({ userId, eventId }: TeamsTabProps) {
         throw new Error('Missing event ID or modality ID');
       }
       
+      // Determinar a filial_id com base no perfil
+      const filial_id = isOrganizer ? null : userInfo?.filial_id;
+      
+      // Se não for organizador, precisa ter uma filial
+      if (!isOrganizer && !filial_id) {
+        throw new Error('Missing branch ID for delegation representative');
+      }
+      
       const { data, error } = await supabase
         .from('equipes')
         .insert({
           nome: newTeam.name,
           evento_id: eventId,
           modalidade_id: selectedModalityId,
+          filial_id: filial_id,
           created_by: userId
         })
         .select('id')
@@ -200,7 +231,7 @@ export function TeamsTab({ userId, eventId }: TeamsTabProps) {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams', eventId, selectedModalityId] });
+      queryClient.invalidateQueries({ queryKey: ['teams', eventId, selectedModalityId, isOrganizer, userInfo?.filial_id] });
       setTeamName('');
       toast({
         title: "Equipe criada",
@@ -315,6 +346,7 @@ export function TeamsTab({ userId, eventId }: TeamsTabProps) {
                     availableAthletes={availableAthletes || []}
                     eventId={eventId}
                     modalityId={selectedModalityId}
+                    isOrganizer={isOrganizer}
                   />
                 )}
               </>

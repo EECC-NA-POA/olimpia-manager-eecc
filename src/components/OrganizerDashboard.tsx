@@ -3,7 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, ListChecks, BarChart } from "lucide-react";
+import { Users, ListChecks, BarChart, UsersRound } from "lucide-react";
 import { EmptyState } from "./dashboard/components/EmptyState";
 import { LoadingState } from "./dashboard/components/LoadingState";
 import { ErrorState } from "./dashboard/components/ErrorState";
@@ -12,6 +12,7 @@ import { NoEventSelected } from "./dashboard/components/NoEventSelected";
 import { AthletesTab } from "./dashboard/tabs/AthletesTab";
 import { EnrollmentsTab } from "./dashboard/tabs/EnrollmentsTab";
 import { StatisticsTab } from "./dashboard/tabs/StatisticsTab";
+import { TeamsTab } from "./judge/tabs/TeamsTab";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
 export default function OrganizerDashboard() {
@@ -102,6 +103,15 @@ export default function OrganizerDashboard() {
         }
         return <EnrollmentsTab enrollments={confirmedEnrollments} />;
 
+      case "teams":
+        return (
+          <TeamsTab
+            userId={user?.id}
+            eventId={currentEventId}
+            isOrganizer={true}
+          />
+        );
+
       default:
         return null;
     }
@@ -134,6 +144,13 @@ export default function OrganizerDashboard() {
             <ListChecks className="h-5 w-5" />
             Inscrições por Modalidade
           </TabsTrigger>
+          <TabsTrigger 
+            value="teams"
+            className="flex items-center gap-2 px-6 py-3 text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
+          >
+            <UsersRound className="h-5 w-5" />
+            Equipes
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="statistics" className="mt-6">
@@ -146,6 +163,10 @@ export default function OrganizerDashboard() {
 
         <TabsContent value="enrollments" className="mt-6">
           {renderTabContent("enrollments")}
+        </TabsContent>
+        
+        <TabsContent value="teams" className="mt-6">
+          {renderTabContent("teams")}
         </TabsContent>
       </Tabs>
     </div>

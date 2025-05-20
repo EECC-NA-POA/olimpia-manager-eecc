@@ -12,7 +12,7 @@ import { NoEventSelected } from "./dashboard/components/NoEventSelected";
 import { AthletesTab } from "./dashboard/tabs/AthletesTab";
 import { EnrollmentsTab } from "./dashboard/tabs/EnrollmentsTab";
 import { StatisticsTab } from "./dashboard/tabs/StatisticsTab";
-import { TeamsTab } from "./dashboard/tabs/TeamsTab";
+import { TeamsTab } from "./judge/tabs/TeamsTab";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
 export default function DelegationDashboard() {
@@ -120,8 +120,9 @@ export default function DelegationDashboard() {
       case "teams":
         return (
           <TeamsTab
+            userId={user?.id}
             eventId={currentEventId}
-            branchId={user?.filial_id}
+            isOrganizer={false} // Representante de delegação não tem permissões de organizador
           />
         );
 

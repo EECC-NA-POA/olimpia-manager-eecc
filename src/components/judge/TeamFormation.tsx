@@ -10,13 +10,15 @@ interface TeamFormationProps {
   availableAthletes: any[];
   eventId: string | null;
   modalityId: number;
+  isOrganizer?: boolean;
 }
 
 export function TeamFormation({ 
   teams, 
   availableAthletes, 
   eventId, 
-  modalityId 
+  modalityId,
+  isOrganizer = false
 }: TeamFormationProps) {
   const queryClient = useQueryClient();
   
@@ -62,8 +64,37 @@ export function TeamFormation({
             throw updateError;
           }
         } else {
-          // If athlete is in another team, throw error
-          throw new Error('Atleta já está em outra equipe');
+          // Se for organizador, pode mover o atleta entre equipes
+          if (isOrganizer) {
+            // Remove o atleta da equipe anterior
+            const { error: removeError } = await supabase
+              .from('atletas_equipes')
+              .delete()
+              .eq('id', existingAssignment.id);
+              
+            if (removeError) {
+              console.error('Error removing athlete from previous team:', removeError);
+              throw removeError;
+            }
+            
+            // Adiciona o atleta na nova equipe
+            const { error: insertError } = await supabase
+              .from('atletas_equipes')
+              .insert({
+                equipe_id: teamId,
+                atleta_id: athleteId,
+                posicao: position,
+                raia: lane || null
+              });
+            
+            if (insertError) {
+              console.error('Error inserting athlete to new team:', insertError);
+              throw insertError;
+            }
+          } else {
+            // Se não for organizador, não pode transferir entre equipes
+            throw new Error('Atleta já está em outra equipe');
+          }
         }
       } else {
         // Insert new assignment
