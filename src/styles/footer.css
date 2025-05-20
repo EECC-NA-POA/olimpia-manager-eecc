@@ -3,7 +3,7 @@
 
 /* Footer styling to ensure it stays at the bottom and buttons are visible */
 footer {
-  margin-top: auto;
+  margin-top: 0; /* Changed from auto to 0 to remove whitespace */
   z-index: 10;
 }
 

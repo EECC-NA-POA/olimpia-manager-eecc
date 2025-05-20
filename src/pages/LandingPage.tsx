@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { MapPin, Calendar, Instagram, Globe, Youtube } from 'lucide-react';
@@ -67,7 +66,7 @@ const LandingPage = () => {
     <div className="min-h-screen bg-gradient-to-b from-olimpics-background to-white home-page">
       <div className="relative min-h-screen bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary">
         <div className="absolute inset-0 bg-black/40" />
-        <div className="container relative z-10 mx-auto px-4 py-8 public-route-content">
+        <div className="container relative z-10 mx-auto px-4 pt-20 pb-8 public-route-content">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
             <div className="text-white">
               <div className="flex flex-col items-center mb-8">
