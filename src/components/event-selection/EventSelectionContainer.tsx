@@ -47,7 +47,6 @@ export function EventSelectionContainer() {
         
         // Fix the type issue: Supabase returns filiais as an object, not an array
         if (!needsSelection && data.filiais) {
-          // Access the estado property directly from the object
           setExistingState(data.filiais.estado);
         }
       } catch (err) {

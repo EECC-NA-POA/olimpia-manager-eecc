@@ -63,46 +63,53 @@ const ConditionalFooter = () => {
 };
 
 function App() {
+  const location = useLocation();
+  const isHomePage = location.pathname === "/home";
+  
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <RouteObserver />
-          <div className="flex flex-col min-h-screen">
-            <GlobalHeader />
-            <div className="flex-grow mt-8"> {/* Added margin-top for better spacing */}
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/esqueci-senha" element={<ForgotPassword />} />
-                <Route path="/redefinir-senha" element={<ResetPassword />} />
-                <Route path="/verificar-email" element={<VerifyEmail />} />
-                <Route path="/acesso-negado" element={<RejectedAccess />} />
-                <Route path="/home" element={<Dashboard />} />
-                <Route path="/event-selection" element={<EventSelectionPage />} />
-                
-                {/* Authenticated routes with top navigation */}
-                <Route element={<MainNavigation />}>
-                  <Route path="/athlete-profile" element={<Dashboard />} />
-                  <Route path="/athlete-registrations" element={<AthleteRegistrations />} />
-                  <Route path="/delegation-dashboard" element={<DelegationDashboard />} />
-                  <Route path="/organizer-dashboard" element={<OrganizerDashboard />} />
-                  <Route path="/scores" element={<Scores />} />
-                  <Route path="/cronograma" element={<Cronograma />} />
-                  <Route path="/administration" element={<Administration />} />
-                  <Route path="/event-management" element={<EventManagement />} />
-                  <Route path="/judge-dashboard" element={<JudgeDashboard />} />
-                </Route>
-              </Routes>
-            </div>
-            <MobileNavigationLink />
-            <ConditionalFooter />
-            <Toaster />
-          </div>
-        </AuthProvider>
-      </BrowserRouter>
+      <div className="flex flex-col min-h-screen">
+        <GlobalHeader />
+        <div className={`flex-grow ${isHomePage ? 'home-page' : 'mt-8'}`}>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/esqueci-senha" element={<ForgotPassword />} />
+            <Route path="/redefinir-senha" element={<ResetPassword />} />
+            <Route path="/verificar-email" element={<VerifyEmail />} />
+            <Route path="/acesso-negado" element={<RejectedAccess />} />
+            <Route path="/home" element={<Dashboard />} />
+            <Route path="/event-selection" element={<EventSelectionPage />} />
+            
+            {/* Authenticated routes with top navigation */}
+            <Route element={<MainNavigation />}>
+              <Route path="/athlete-profile" element={<Dashboard />} />
+              <Route path="/athlete-registrations" element={<AthleteRegistrations />} />
+              <Route path="/delegation-dashboard" element={<DelegationDashboard />} />
+              <Route path="/organizer-dashboard" element={<OrganizerDashboard />} />
+              <Route path="/scores" element={<Scores />} />
+              <Route path="/cronograma" element={<Cronograma />} />
+              <Route path="/administration" element={<Administration />} />
+              <Route path="/event-management" element={<EventManagement />} />
+              <Route path="/judge-dashboard" element={<JudgeDashboard />} />
+            </Route>
+          </Routes>
+        </div>
+        <MobileNavigationLink />
+        <ConditionalFooter />
+        <Toaster />
+      </div>
     </QueryClientProvider>
   );
 }
 
-export default App;
+export default function AppWithRouter() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <RouteObserver />
+        <App />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}

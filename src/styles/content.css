@@ -17,6 +17,7 @@ main {
   padding-bottom: 0 !important; /* Remove the extra padding at the bottom */
   display: flex;
   flex-direction: column;
+  margin-top: -8px; /* Remove the small gap between header and content on home page */
 }
 
 /* Proper transition for sidebar and main content */
