@@ -45,8 +45,9 @@ export function EventSelectionContainer() {
         const needsSelection = !data.filial_id;
         setNeedsBranchSelection(needsSelection);
         
-        // Fix the type issue: Supabase returns filiais as an object, not an array
+        // Fix the type issue: Supabase returns filiais as a nested object, not an array
         if (!needsSelection && data.filiais) {
+          // Access estado directly from the returned object
           setExistingState(data.filiais.estado);
         }
       } catch (err) {
