@@ -30,6 +30,7 @@ import { supabase } from '@/lib/supabase';
 import { ModalityAthletesList } from '@/components/judge/ModalityAthletesList';
 import { AthleteScoreForm } from '@/components/judge/AthleteScoreForm';
 import { toast } from 'sonner';
+import { Modality } from '@/lib/types/database';
 
 interface ScoresTabProps {
   userId: string;
@@ -48,10 +49,10 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
       
       // Get modalities with confirmed athlete enrollments
       const { data, error } = await supabase
-        .from('vw_modalidades_atletas_confirmados')
-        .select('modalidade_id, modalidade_nome, categoria, tipo_modalidade, tipo_pontuacao')
+        .from('modalidades')
+        .select('id, nome, categoria, tipo_modalidade, tipo_pontuacao')
         .eq('evento_id', eventId)
-        .order('modalidade_nome')
+        .order('nome')
         .limit(100);
       
       if (error) {
@@ -60,17 +61,13 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
         return [];
       }
       
-      // Remove duplicates (since the view joins with athletes)
-      const uniqueModalities = data.reduce((acc: any[], current) => {
-        const x = acc.find(item => item.modalidade_id === current.modalidade_id);
-        if (!x) {
-          return acc.concat([current]);
-        } else {
-          return acc;
-        }
-      }, []);
-      
-      return uniqueModalities;
+      return data.map(m => ({
+        modalidade_id: m.id,
+        modalidade_nome: m.nome,
+        categoria: m.categoria,
+        tipo_modalidade: m.tipo_modalidade,
+        tipo_pontuacao: m.tipo_pontuacao || 'points'
+      })) as Modality[];
     },
     enabled: !!eventId,
   });

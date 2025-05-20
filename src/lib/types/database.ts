@@ -1,3 +1,4 @@
+
 export interface Event {
   id: string;
   nome: string;
@@ -60,3 +61,31 @@ export interface UserRole {
 }
 
 export type PerfilTipo = 'ATL' | 'PGR';
+
+export interface ScoreRecord {
+  id: number;
+  evento_id: string;
+  modalidade_id: number;
+  atleta_id: string;
+  equipe_id?: number;
+  juiz_id: string;
+  valor_pontuacao?: number | null;
+  tempo_minutos?: number | null;
+  tempo_segundos?: number | null;
+  tempo_milissegundos?: number | null;
+  posicao_final?: number | null;
+  medalha?: string | null;
+  observacoes?: string | null;
+  data_registro: string;
+  unidade: string;
+  bateria?: string | null;
+  criterio_id?: number | null;
+}
+
+export interface Modality {
+  modalidade_id: number;
+  modalidade_nome: string;
+  categoria: string;
+  tipo_modalidade: string;
+  tipo_pontuacao: 'time' | 'distance' | 'points';
+}

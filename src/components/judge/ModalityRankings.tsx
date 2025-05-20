@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Trophy } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatScoreValue } from './utils/scoreFormatters';
+import { ScoreRecord } from '@/lib/types/database';
 
 interface ModalityRankingsProps {
   modalityId: number;
@@ -30,9 +31,9 @@ interface RankedAthlete {
   medalha: string | null;
   unidade: string;
   equipe_nome?: string;
-  tempo_minutos?: number;
-  tempo_segundos?: number;
-  tempo_milissegundos?: number;
+  tempo_minutos?: number | null;
+  tempo_segundos?: number | null;
+  tempo_milissegundos?: number | null;
 }
 
 export function ModalityRankings({ modalityId, eventId, scoreType }: ModalityRankingsProps) {
@@ -53,7 +54,7 @@ export function ModalityRankings({ modalityId, eventId, scoreType }: ModalityRan
           tempo_minutos,
           tempo_segundos,
           tempo_milissegundos,
-          profiles:atleta_id(
+          usuarios:atleta_id(
             nome_completo
           )
         `)
@@ -71,7 +72,7 @@ export function ModalityRankings({ modalityId, eventId, scoreType }: ModalityRan
       // Map and limit to top 10
       const rankedAthletes = data.map(score => ({
         atleta_id: score.atleta_id,
-        atleta_nome: score.profiles?.nome_completo || 'Atleta',
+        atleta_nome: score.usuarios?.nome_completo || 'Atleta',
         valor_pontuacao: score.valor_pontuacao,
         posicao_final: score.posicao_final,
         medalha: score.medalha,

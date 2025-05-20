@@ -37,6 +37,7 @@ import { ScoreInputField } from './ScoreInputField';
 import { parseTimeToMilliseconds, calculateTimeFromMilliseconds, formatMedal } from './utils/scoreFormatters';
 import { ModalityRankings } from './ModalityRankings';
 import { Badge } from '@/components/ui/badge';
+import { ScoreRecord, Modality } from '@/lib/types/database';
 
 // Create dynamic schema based on score type
 const createScoreSchema = (scoreType: 'time' | 'distance' | 'points') => {
@@ -68,6 +69,11 @@ interface AthleteScoreFormProps {
   judgeId: string;
 }
 
+interface TeamMember {
+  id: string;
+  name: string;
+}
+
 export function AthleteScoreForm({ 
   athleteId, 
   modalityId, 
@@ -83,9 +89,9 @@ export function AthleteScoreForm({
       if (!modalityId) return null;
       
       const { data, error } = await supabase
-        .from('vw_modalidades_atletas_confirmados')
-        .select('modalidade_id, modalidade_nome, tipo_pontuacao, tipo_modalidade')
-        .eq('modalidade_id', modalityId)
+        .from('modalidades')
+        .select('id, nome, tipo_pontuacao, tipo_modalidade')
+        .eq('id', modalityId)
         .maybeSingle();
       
       if (error) {
@@ -95,11 +101,11 @@ export function AthleteScoreForm({
       }
       
       return {
-        id: data?.modalidade_id,
-        nome: data?.modalidade_nome,
-        tipo_pontuacao: data?.tipo_pontuacao || 'pontos',
+        modalidade_id: data?.id,
+        modalidade_nome: data?.nome,
+        tipo_pontuacao: data?.tipo_pontuacao || 'points',
         tipo_modalidade: data?.tipo_modalidade
-      };
+      } as Modality;
     },
     enabled: !!modalityId,
   });
@@ -114,7 +120,7 @@ export function AthleteScoreForm({
       
       // First get the team ID for this athlete in this modality
       const { data: enrollment, error: enrollmentError } = await supabase
-        .from('inscricoes_atletas_modalidades')
+        .from('inscricoes_modalidades')
         .select('equipe_id')
         .eq('modalidade_id', modalityId)
         .eq('atleta_id', athleteId)
@@ -128,10 +134,10 @@ export function AthleteScoreForm({
       
       // Then get all athletes in that team
       const { data: members, error: membersError } = await supabase
-        .from('inscricoes_atletas_modalidades')
+        .from('inscricoes_modalidades')
         .select(`
           atleta_id,
-          profiles:atleta_id(nome_completo)
+          usuarios:atleta_id(nome_completo)
         `)
         .eq('modalidade_id', modalityId)
         .eq('evento_id', eventId)
@@ -144,8 +150,8 @@ export function AthleteScoreForm({
       
       return members.map(member => ({
         id: member.atleta_id,
-        name: member.profiles?.nome_completo || 'Atleta',
-      }));
+        name: member.usuarios?.nome_completo || 'Atleta',
+      })) as TeamMember[];
     },
     enabled: !!modalityId && !!athleteId && !!eventId && !!modality?.tipo_modalidade?.includes('COLETIVA'),
   });
@@ -182,7 +188,7 @@ export function AthleteScoreForm({
         return null;
       }
       
-      return data;
+      return data as ScoreRecord;
     },
     enabled: !!eventId && !!athleteId && !!modalityId,
   });
@@ -221,7 +227,7 @@ export function AthleteScoreForm({
     }
     
     // Sort based on score type
-    let sortedScores = [...allScores];
+    let sortedScores = [...allScores] as ScoreRecord[];
     
     if (scoreType === 'time') {
       // For time, lower is better (ascending)
@@ -378,7 +384,7 @@ export function AthleteScoreForm({
             <div>
               <CardTitle>Registrar {isTeamModality ? 'Pontuação da Equipe' : 'Pontuação'}</CardTitle>
               <CardDescription>
-                Modalidade: {modality.nome}
+                Modalidade: {modality.modalidade_nome}
                 {isTeamModality && (
                   <span className="ml-2">
                     <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
