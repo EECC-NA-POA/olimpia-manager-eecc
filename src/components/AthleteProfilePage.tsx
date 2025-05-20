@@ -8,17 +8,8 @@ import { useEventData } from "@/hooks/useEventData";
 import { useAthleteProfileData } from "@/hooks/useAthleteProfileData";
 
 export default function AthleteProfilePage() {
-  const { user } = useAuth();
-  const [currentEventId, setCurrentEventId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const eventId = localStorage.getItem('currentEventId');
-    if (eventId) {
-      setCurrentEventId(eventId);
-    }
-    console.log('Current event ID from localStorage:', eventId);
-  }, []);
-
+  const { user, currentEventId } = useAuth();
+  
   const { data: eventData } = useEventData(currentEventId);
   const { data: profile, isLoading: profileLoading } = useAthleteProfileData(user?.id, currentEventId);
 

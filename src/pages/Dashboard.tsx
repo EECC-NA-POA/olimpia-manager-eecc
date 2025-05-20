@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import AthleteProfilePage from '@/components/AthleteProfilePage';
 
 const Dashboard = () => {
   const { user, currentEventId } = useAuth();
@@ -39,20 +40,7 @@ const Dashboard = () => {
   return (
     <div className="w-full min-h-screen overflow-y-auto pb-20">
       <div className="container mx-auto p-4">
-        {/* Use nome_completo instead of nome to match the AuthUser type */}
-        <h1 className="text-2xl font-semibold mb-4">Bem-vindo(a), {user?.nome_completo || user?.email}!</h1>
-        <p>Você está logado e pronto para começar.</p>
-        {user?.papeis && user.papeis.length > 0 && (
-          <div>
-            <p>Seus papéis:</p>
-            <ul>
-              {/* Use the codigo property as key instead of id since id is not present in UserRole */}
-              {user.papeis.map((role) => (
-                <li key={role.codigo}>{role.nome}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <AthleteProfilePage />
       </div>
     </div>
   );
