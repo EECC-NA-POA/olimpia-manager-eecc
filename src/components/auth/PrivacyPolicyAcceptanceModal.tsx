@@ -171,7 +171,7 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
           <Button
             className="w-full sm:w-auto"
             onClick={handleAccept}
-            disabled={isLoading || registerAcceptanceMutation.isPending || accepted || error || !policyContent || policyContent.includes('Não foi possível carregar')}
+            disabled={isLoading || registerAcceptanceMutation.isPending || accepted || error !== undefined || !policyContent || (typeof policyContent === 'string' && policyContent.includes('Não foi possível carregar'))}
           >
             {registerAcceptanceMutation.isPending ? (
               <>
