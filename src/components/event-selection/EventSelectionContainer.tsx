@@ -46,6 +46,7 @@ export function EventSelectionContainer() {
         setNeedsBranchSelection(needsSelection);
         
         if (!needsSelection && data.filiais) {
+          // Fix here: data.filiais is an object with estado property, not an array
           setExistingState(data.filiais.estado);
         }
       } catch (err) {
