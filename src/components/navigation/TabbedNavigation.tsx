@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, LogOut, Calendar as CalendarIcon, BookOpen } from 'lucide-react';
+import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, LogOut, Calendar as CalendarIcon, BookOpen, UsersRound } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { EventSwitcher } from './EventSwitcher';
