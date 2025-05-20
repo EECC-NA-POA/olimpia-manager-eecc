@@ -14,12 +14,14 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchActivePrivacyPolicy } from "@/lib/api/privacyPolicy";
 import { FormField, FormItem } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
+import { AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 
 export const PrivacyPolicySection = () => {
   const [open, setOpen] = useState(false);
   const form = useFormContext();
   
-  const { data: privacyPolicy, isLoading, isError, error } = useQuery({
+  const { data: privacyPolicy, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['privacy-policy'],
     queryFn: fetchActivePrivacyPolicy,
     retry: 2,
@@ -29,10 +31,19 @@ export const PrivacyPolicySection = () => {
   
   const handleOpenDialog = () => {
     setOpen(true);
+    // Se ocorreu erro anteriormente, tenta buscar novamente
+    if (isError) {
+      refetch();
+    }
   };
 
   const handleCloseDialog = () => {
     setOpen(false);
+  };
+
+  const handleRetryFetch = () => {
+    toast.info("Tentando carregar a política de privacidade novamente...");
+    refetch();
   };
 
   return (
@@ -86,16 +97,31 @@ export const PrivacyPolicySection = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-olimpics-green-primary" />
               </div>
             ) : isError ? (
-              <div className="text-red-500">
-                Erro ao carregar política de privacidade. Tente novamente.
-                {error instanceof Error && <p className="text-xs">{error.message}</p>}
+              <div className="flex flex-col items-center gap-4 p-6 bg-red-50 border border-red-200 rounded-lg">
+                <AlertTriangle className="h-12 w-12 text-red-500" />
+                <div className="text-center">
+                  <h3 className="font-semibold text-lg text-red-700 mb-2">
+                    Erro ao carregar política de privacidade
+                  </h3>
+                  <p className="text-red-600 mb-4">
+                    Não foi possível carregar a política de privacidade. Por favor, tente novamente.
+                  </p>
+                  <Button onClick={handleRetryFetch} variant="outline" className="border-red-300">
+                    Tentar novamente
+                  </Button>
+                </div>
+                {error instanceof Error && (
+                  <p className="text-xs text-red-400 mt-2 w-full text-center">
+                    Detalhes técnicos: {error.message}
+                  </p>
+                )}
               </div>
             ) : (
-              <div dangerouslySetInnerHTML={{ __html: privacyPolicy || '' }} />
+              <div dangerouslySetInnerHTML={{ __html: privacyPolicy || 'Política de privacidade não disponível.' }} />
             )}
           </div>
           
-          <div className="flex justify-end">
+          <div className="flex justify-end mt-4">
             <Button onClick={handleCloseDialog}>Fechar</Button>
           </div>
         </DialogContent>
