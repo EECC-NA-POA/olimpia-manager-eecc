@@ -6,7 +6,6 @@ export const eventBasicInfoSchema = z.object({
   nome: z.string().min(3, 'Nome do evento deve ter pelo menos 3 caracteres'),
   descricao: z.string().min(10, 'Descrição do evento deve ter pelo menos 10 caracteres'),
   tipo: z.enum(['estadual', 'nacional', 'internacional', 'regional']),
-  local: z.string().optional(),
   pais: z.string().optional(),
   estado: z.string().optional(),
   cidade: z.string().optional(),

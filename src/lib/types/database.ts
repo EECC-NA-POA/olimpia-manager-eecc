@@ -10,7 +10,6 @@ export interface Event {
   pais: string | null;
   estado: string | null;
   cidade: string | null;
-  local: string | null;
   foto_evento: string | null;
   tipo: 'estadual' | 'nacional' | 'internacional' | 'regional';
   data_inicio: string | null;

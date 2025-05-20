@@ -22,7 +22,6 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
     defaultValues: {
       nome: eventData.nome || '',
       descricao: eventData.descricao || '',
-      local: eventData.local || '',
       pais: eventData.pais || 'Brasil',
       estado: eventData.estado || '',
       cidade: eventData.cidade || '',
@@ -61,7 +60,6 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
         .update({
           nome: data.nome,
           descricao: data.descricao,
-          local: data.local,
           pais: data.pais,
           estado: data.estado,
           cidade: data.cidade,

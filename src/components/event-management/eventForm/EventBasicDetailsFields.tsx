@@ -65,15 +65,6 @@ export function EventBasicDetailsFields({
           </SelectContent>
         </Select>
       </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="local">Local</Label>
-        <Input 
-          id="local" 
-          {...register('local')} 
-          placeholder="Local do evento" 
-        />
-      </div>
     </>
   );
 }
