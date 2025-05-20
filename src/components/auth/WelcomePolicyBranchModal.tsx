@@ -135,9 +135,8 @@ export const WelcomePolicyBranchModal = ({
     }}>
       <DialogContent className="sm:max-w-md md:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-xl flex items-center gap-2">
-            <Info className="h-5 w-5 text-olimpics-green-primary" />
-            Bem-vindo à Escola do Esporte com Coração
+          <DialogTitle className="text-xl flex justify-center items-center mb-2">
+            Bem-vindo(a)
           </DialogTitle>
           <DialogDescription>
             {needsLocationSelection 
@@ -152,7 +151,7 @@ export const WelcomePolicyBranchModal = ({
               <div className="p-4 bg-muted/50 rounded-md">
                 <div className="flex items-center gap-2 mb-3">
                   <MapPin className="h-5 w-5 text-olimpics-green-primary" />
-                  <h3 className="font-medium">Selecione sua localização</h3>
+                  <h3 className="font-medium">Sua sede</h3>
                 </div>
                 <LocationSelector form={form} disabled={!needsLocationSelection} />
               </div>
@@ -160,7 +159,7 @@ export const WelcomePolicyBranchModal = ({
               <div className="p-4 bg-muted/50 rounded-md">
                 <div className="flex items-center gap-2 mb-3">
                   <MapPin className="h-5 w-5 text-olimpics-green-primary" />
-                  <h3 className="font-medium">Sua localização</h3>
+                  <h3 className="font-medium">Sua sede</h3>
                 </div>
                 <LocationSelector form={form} disabled={true} />
               </div>

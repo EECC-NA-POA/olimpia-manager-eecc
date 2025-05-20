@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -47,8 +46,7 @@ export function EventSelectionContainer() {
         
         // Correct the type handling: Supabase returns nested tables as objects, not arrays
         if (!needsSelection && data.filiais) {
-          // TypeScript thinks data.filiais is an array, but it's actually a direct object
-          // Cast it to any first to resolve the type error
+          // Access the estado property from the filiais object
           const filiais = data.filiais as any;
           setExistingState(filiais.estado);
         }

@@ -1,5 +1,5 @@
 
-import { LogOut, Check, Loader2 } from "lucide-react";
+import { LogOut, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface PolicyActionsProps {
@@ -12,45 +12,20 @@ interface PolicyActionsProps {
 }
 
 export const PolicyActions = ({
-  onAccept,
   onCancel,
   isLoading,
-  isPending,
-  isAccepted,
-  isDisabled
+  isPending
 }: PolicyActionsProps) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-2">
+    <div className="flex justify-center">
       <Button 
         variant="outline" 
         className="w-full sm:w-auto flex items-center gap-2 border-gray-300 dark:border-gray-600"
         onClick={onCancel}
+        disabled={isLoading || isPending}
       >
         <LogOut className="w-4 h-4" />
-        Sair
-      </Button>
-      
-      <Button
-        className={`w-full sm:w-auto transition-all ${isAccepted ? 'bg-green-600 hover:bg-green-700' : 'bg-olimpics-green-primary hover:bg-olimpics-green-primary/90'}`}
-        onClick={onAccept}
-        disabled={isLoading || isPending || isAccepted || isDisabled}
-      >
-        {isPending ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            Processando...
-          </>
-        ) : isAccepted ? (
-          <>
-            <Check className="h-4 w-4 mr-2" />
-            Política de Privacidade Aceita
-          </>
-        ) : (
-          <>
-            <Check className="h-4 w-4 mr-2" />
-            Concordo com a Política de Privacidade
-          </>
-        )}
+        Voltar
       </Button>
     </div>
   );
