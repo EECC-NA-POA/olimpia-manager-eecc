@@ -1,0 +1,44 @@
+
+/* Base styles */
+#root {
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Remove overflow hidden to allow scrolling on home page */
+body {
+  overflow: auto; /* Changed from hidden to auto */
+}
+
+/* Ensure root and app div allow scrolling */
+#root,
+#root > div {
+  min-height: 100vh;
+  overflow-y: auto !important;
+}
+
+/* Ensure App container doesn't interfere with scrolling */
+#root > div > .flex-col.h-screen.overflow-hidden {
+  overflow: auto !important;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Global correction for content area to always be scrollable */
+.flex-grow.overflow-hidden {
+  overflow: auto !important;
+}
+
+/* Add responsive padding for content */
+@media (max-width: 768px) {
+  .content-padding {
+    padding-top: 4rem; /* Adjust for smaller screens */
+  }
+}
+
+/* Ensure content doesn't overlap with the mobile navigation */
+@media (max-width: 768px) {
+  .pb-16 {
+    padding-bottom: 4rem;
+  }
+}

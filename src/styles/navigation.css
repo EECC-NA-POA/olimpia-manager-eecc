@@ -1,0 +1,26 @@
+
+/* Top navigation specific styles */
+.mt-16 {
+  margin-top: 0; /* Removed margin as navigation is now inside header */
+}
+
+/* Ensure content doesn't overlap with top navigation */
+.content-padding-top {
+  padding-top: 104px; /* 104px - height of header + top navigation */
+}
+
+/* Fix for mobile screens */
+@media (max-width: 768px) {
+  .mt-16 {
+    overflow-x: auto;
+  }
+  
+  .mt-16::-webkit-scrollbar {
+    height: 3px;
+  }
+  
+  .mt-16::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+}

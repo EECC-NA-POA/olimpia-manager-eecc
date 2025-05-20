@@ -1,7 +1,6 @@
-
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
-import './App.css';
+import './styles/index.css'; // Updated import path
 import { GlobalHeader } from './components/GlobalHeader';
 import { PUBLIC_ROUTES } from './constants/routes';
 

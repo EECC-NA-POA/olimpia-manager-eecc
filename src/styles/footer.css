@@ -1,0 +1,13 @@
+
+/* Footer styling */
+
+/* Footer styling to ensure it stays at the bottom and buttons are visible */
+footer {
+  margin-top: auto;
+  z-index: 10;
+}
+
+/* Style dropdown content to be visible */
+.dropdown-content {
+  z-index: 2000 !important; /* Ensure dropdown menus appear above everything */
+}

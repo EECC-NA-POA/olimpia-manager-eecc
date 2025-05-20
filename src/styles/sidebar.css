@@ -1,0 +1,91 @@
+
+/* Sidebar styles */
+
+/* Fix for sidebar positioning and height */
+.group\/sidebar-wrapper {
+  margin-top: 0 !important;
+  height: calc(100vh - 104px) !important; /* Subtract header + top nav height */
+  overflow: hidden !important; /* Hide overflow in sidebar wrapper */
+}
+
+/* Ensure sidebar takes full height and is fixed in position */
+[data-sidebar="sidebar"] {
+  height: calc(100vh - 104px) !important; /* Subtract header + top nav height */
+  margin-top: 0 !important;
+  position: sticky !important;
+  top: 104px !important; /* Offset by header + top nav height */
+  left: 0 !important;
+  overflow-y: auto !important;
+}
+
+/* Fix sidebar rail and content positioning */
+[data-collapsible="icon"] {
+  width: var(--sidebar-width-icon) !important;
+  min-width: var(--sidebar-width-icon) !important;
+  background-color: transparent !important; /* Ensure transparent background when collapsed */
+}
+
+/* Expand collapsed sidebar width */
+.group-data-\[collapsible=icon\]:w-\[--sidebar-width-icon\] {
+  width: var(--sidebar-width-icon) !important;
+  background-color: transparent !important; /* Ensure transparent background */
+}
+
+/* Fix for sidebar width transition */
+.sidebar-transition {
+  transition: width 0.2s ease-in-out !important;
+  background-color: transparent !important; /* Ensure transparent background */
+}
+
+/* Fix scrolling behavior of sidebar contents */
+[data-sidebar="content"] {
+  overflow-y: auto !important;
+  flex-grow: 1 !important;
+  max-height: calc(100vh - 180px) !important; /* Allow more space for content */
+}
+
+/* Remove extra space above the sidebar */
+.fixed.inset-y-0 {
+  top: 104px !important; /* Adjust for header + top nav height */
+}
+
+/* Ensure the sidebar footer is always visible and positioned correctly */
+[data-sidebar="footer"] {
+  display: flex !important;
+  width: 100% !important;
+  z-index: 1000 !important; /* Significantly increased z-index for footer */
+  background-color: var(--olimpics-green-primary, #009B40) !important;
+  padding: 1rem !important;
+  position: sticky !important; /* Use sticky positioning */
+  bottom: 0 !important; /* Ensure it stays at the bottom */
+  margin-top: auto !important; /* Push to the bottom of the container */
+}
+
+/* Make sure buttons in sidebar footer are visible */
+[data-sidebar="footer"] button {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  margin-bottom: 0.5rem;
+  z-index: 1001 !important; /* Ensure buttons are above the footer with higher value */
+}
+
+/* Ensure all sidebar components maintain green background */
+[data-sidebar="sidebar"] {
+  background-color: var(--olimpics-green-primary, #009B40) !important;
+}
+
+/* Adjust icon display in collapsed state */
+.group-data-\[collapsible=icon\]:p-0 {
+  padding: 0.5rem !important;
+  background-color: transparent !important; /* Ensure transparent background */
+}
+
+/* Ensure the main content area expands properly */
+.group-data-\[state=collapsed\] + div {
+  margin-left: var(--sidebar-width-icon) !important;
+}
+
+.group-data-\[state=expanded\] + div {
+  margin-left: var(--sidebar-width) !important;
+}

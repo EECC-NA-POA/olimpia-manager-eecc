@@ -1,0 +1,8 @@
+
+/* Import all CSS modules */
+@import './base.css';
+@import './header.css';
+@import './navigation.css';
+@import './sidebar.css';
+@import './content.css';
+@import './footer.css';

@@ -1,0 +1,18 @@
+
+/* Header styles */
+
+/* Fixed header and navigation combination */
+.fixed.top-0.left-0.right-0.z-50 {
+  position: fixed;
+  z-index: 50;
+}
+
+/* Routes with authenticated menu need top padding */
+.main-navigation-content {
+  padding-top: 104px; /* Account for header (64px) + top navigation (40px) */
+}
+
+/* Routes with public access need less padding */
+.public-route-content {
+  padding-top: 64px; /* Account for header only */
+}
