@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -25,10 +26,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { ModalityAthletesList } from '@/components/judge/ModalityAthletesList';
 import { AthleteScoreForm } from '@/components/judge/AthleteScoreForm';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface ScoresTabProps {
   userId: string;
@@ -48,23 +49,19 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
       // Get modalities with confirmed athlete enrollments
       const { data, error } = await supabase
         .from('vw_modalidades_atletas_confirmados')
-        .select('modalidade_id, modalidade_nome, categoria, tipo_modalidade')
+        .select('modalidade_id, modalidade_nome, categoria, tipo_modalidade, tipo_pontuacao')
         .eq('evento_id', eventId)
         .order('modalidade_nome')
         .limit(100);
       
       if (error) {
         console.error('Error fetching modalities:', error);
-        toast({
-          title: "Erro",
-          description: 'Não foi possível carregar as modalidades',
-          variant: "destructive"
-        });
+        toast.error('Não foi possível carregar as modalidades');
         return [];
       }
       
       // Remove duplicates (since the view joins with athletes)
-      const uniqueModalities = data.reduce((acc, current) => {
+      const uniqueModalities = data.reduce((acc: any[], current) => {
         const x = acc.find(item => item.modalidade_id === current.modalidade_id);
         if (!x) {
           return acc.concat([current]);
@@ -111,6 +108,8 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
     );
   }
 
+  const selectedModality = modalities.find(m => m.modalidade_id === selectedModalityId);
+
   return (
     <div className="space-y-6">
       <Card>
@@ -135,6 +134,11 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
                       value={modality.modalidade_id.toString()}
                     >
                       {modality.modalidade_nome} - {modality.categoria}
+                      {' '}
+                      <span className="text-muted-foreground text-xs ml-1">
+                        ({modality.tipo_pontuacao === 'time' ? 'Tempo' : 
+                          modality.tipo_pontuacao === 'distance' ? 'Distância' : 'Pontos'})
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>

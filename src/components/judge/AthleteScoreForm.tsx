@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,7 +18,8 @@ import {
   CardContent, 
   CardDescription, 
   CardHeader, 
-  CardTitle 
+  CardTitle,
+  CardFooter
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -29,16 +31,35 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { toast } from '@/hooks/use-toast';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
+import { ScoreInputField } from './ScoreInputField';
+import { parseTimeToMilliseconds, calculateTimeFromMilliseconds, formatMedal } from './utils/scoreFormatters';
+import { ModalityRankings } from './ModalityRankings';
+import { Badge } from '@/components/ui/badge';
 
-const scoreSchema = z.object({
-  score: z.number({ required_error: 'A pontuação é obrigatória' }),
-  position: z.number().optional(),
-  medal: z.string().optional(),
-  notes: z.string().optional(),
-});
+// Create dynamic schema based on score type
+const createScoreSchema = (scoreType: 'time' | 'distance' | 'points') => {
+  const baseSchema = {
+    notes: z.string().optional(),
+  };
 
-interface ScoreFormValues extends z.infer<typeof scoreSchema> {}
+  if (scoreType === 'time') {
+    return z.object({
+      ...baseSchema,
+      time: z.object({
+        minutes: z.number().min(0, 'Minutos devem ser positivos'),
+        seconds: z.number().min(0, 'Segundos devem ser positivos').max(59, 'Segundos devem ser entre 0 e 59'),
+        milliseconds: z.number().min(0, 'Milissegundos devem ser positivos').max(999, 'Milissegundos devem ser entre 0 e 999'),
+      }),
+    });
+  }
+
+  return z.object({
+    ...baseSchema,
+    score: z.number().min(0, 'A pontuação deve ser positiva'),
+  });
+};
 
 interface AthleteScoreFormProps {
   athleteId: string;
@@ -55,14 +76,91 @@ export function AthleteScoreForm({
 }: AthleteScoreFormProps) {
   const queryClient = useQueryClient();
   
-  const form = useForm<ScoreFormValues>({
-    resolver: zodResolver(scoreSchema),
-    defaultValues: {
-      score: 0,
-      position: undefined,
-      medal: undefined,
-      notes: undefined,
+  // Get modality details to determine score type
+  const { data: modality } = useQuery({
+    queryKey: ['modality-details', modalityId],
+    queryFn: async () => {
+      if (!modalityId) return null;
+      
+      const { data, error } = await supabase
+        .from('vw_modalidades_atletas_confirmados')
+        .select('modalidade_id, modalidade_nome, tipo_pontuacao, tipo_modalidade')
+        .eq('modalidade_id', modalityId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching modality details:', error);
+        toast.error('Erro ao carregar detalhes da modalidade');
+        return null;
+      }
+      
+      return {
+        id: data?.modalidade_id,
+        nome: data?.modalidade_nome,
+        tipo_pontuacao: data?.tipo_pontuacao || 'pontos',
+        tipo_modalidade: data?.tipo_modalidade
+      };
     },
+    enabled: !!modalityId,
+  });
+
+  // Get team members if modality is team-based
+  const { data: teamMembers } = useQuery({
+    queryKey: ['team-members', modalityId, athleteId, eventId],
+    queryFn: async () => {
+      if (!modalityId || !athleteId || !eventId || !modality?.tipo_modalidade?.includes('COLETIVA')) {
+        return [];
+      }
+      
+      // First get the team ID for this athlete in this modality
+      const { data: enrollment, error: enrollmentError } = await supabase
+        .from('inscricoes_atletas_modalidades')
+        .select('equipe_id')
+        .eq('modalidade_id', modalityId)
+        .eq('atleta_id', athleteId)
+        .eq('evento_id', eventId)
+        .maybeSingle();
+      
+      if (enrollmentError || !enrollment?.equipe_id) {
+        console.error('Error fetching team:', enrollmentError);
+        return [];
+      }
+      
+      // Then get all athletes in that team
+      const { data: members, error: membersError } = await supabase
+        .from('inscricoes_atletas_modalidades')
+        .select(`
+          atleta_id,
+          profiles:atleta_id(nome_completo)
+        `)
+        .eq('modalidade_id', modalityId)
+        .eq('evento_id', eventId)
+        .eq('equipe_id', enrollment.equipe_id);
+      
+      if (membersError) {
+        console.error('Error fetching team members:', membersError);
+        return [];
+      }
+      
+      return members.map(member => ({
+        id: member.atleta_id,
+        name: member.profiles?.nome_completo || 'Atleta',
+      }));
+    },
+    enabled: !!modalityId && !!athleteId && !!eventId && !!modality?.tipo_modalidade?.includes('COLETIVA'),
+  });
+  
+  const isTeamModality = modality?.tipo_modalidade?.includes('COLETIVA');
+  const scoreType = modality?.tipo_pontuacao as 'time' | 'distance' | 'points' || 'points';
+  
+  // Create a schema based on the score type
+  const schema = createScoreSchema(scoreType);
+  
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
+    defaultValues: scoreType === 'time' 
+      ? { time: { minutes: 0, seconds: 0, milliseconds: 0 }, notes: '' }
+      : { score: 0, notes: '' },
   });
 
   // Fetch existing score if it exists
@@ -90,133 +188,265 @@ export function AthleteScoreForm({
   });
 
   // Set form values when existing score is loaded
-  React.useEffect(() => {
+  useEffect(() => {
     if (existingScore) {
-      form.setValue('score', existingScore.valor_pontuacao);
-      form.setValue('position', existingScore.posicao_final || undefined);
-      form.setValue('medal', existingScore.medalha || undefined);
-      form.setValue('notes', existingScore.observacoes || undefined);
+      if (scoreType === 'time' && existingScore.tempo_minutos !== null) {
+        form.setValue('time', {
+          minutes: existingScore.tempo_minutos || 0,
+          seconds: existingScore.tempo_segundos || 0,
+          milliseconds: existingScore.tempo_milissegundos || 0
+        });
+      } else {
+        form.setValue('score', existingScore.valor_pontuacao || 0);
+      }
+      
+      form.setValue('notes', existingScore.observacoes || '');
     }
-  }, [existingScore, form]);
+  }, [existingScore, form, scoreType]);
+
+  // Function to calculate positions after score submission
+  const calculatePositions = async () => {
+    if (!eventId || !modalityId) return;
+    
+    // First, get all scores for this modality
+    const { data: allScores, error } = await supabase
+      .from('pontuacoes')
+      .select('*')
+      .eq('evento_id', eventId)
+      .eq('modalidade_id', modalityId);
+    
+    if (error || !allScores) {
+      console.error('Error calculating positions:', error);
+      return;
+    }
+    
+    // Sort based on score type
+    let sortedScores = [...allScores];
+    
+    if (scoreType === 'time') {
+      // For time, lower is better (ascending)
+      sortedScores.sort((a, b) => {
+        // Convert both to milliseconds for comparison
+        const aTotal = parseTimeToMilliseconds(
+          a.tempo_minutos || 0,
+          a.tempo_segundos || 0,
+          a.tempo_milissegundos || 0
+        );
+        
+        const bTotal = parseTimeToMilliseconds(
+          b.tempo_minutos || 0,
+          b.tempo_segundos || 0,
+          b.tempo_milissegundos || 0
+        );
+        
+        return aTotal - bTotal;
+      });
+    } else {
+      // For points and distance, higher is better (descending)
+      sortedScores.sort((a, b) => (b.valor_pontuacao || 0) - (a.valor_pontuacao || 0));
+    }
+    
+    // Update positions and medals for each score
+    for (let i = 0; i < sortedScores.length; i++) {
+      const position = i + 1;
+      const medal = formatMedal(position);
+      
+      await supabase
+        .from('pontuacoes')
+        .update({
+          posicao_final: position,
+          medalha: medal,
+        })
+        .eq('id', sortedScores[i].id);
+    }
+  };
 
   // Submit score mutation
   const submitScoreMutation = useMutation({
-    mutationFn: async (data: ScoreFormValues) => {
+    mutationFn: async (data: z.infer<typeof schema>) => {
       if (!eventId) throw new Error('Event ID is missing');
       
-      // Check if score already exists
-      const { data: existingScore, error: checkError } = await supabase
-        .from('pontuacoes')
-        .select('id')
-        .eq('evento_id', eventId)
-        .eq('modalidade_id', modalityId)
-        .eq('atleta_id', athleteId)
-        .maybeSingle();
-      
-      if (checkError) {
-        console.error('Error checking existing score:', checkError);
-        throw checkError;
-      }
-      
-      if (existingScore) {
-        // Update existing score
-        const { error } = await supabase
-          .from('pontuacoes')
-          .update({
+      // Convert data based on score type
+      const scoreData = scoreType === 'time'
+        ? {
+            tempo_minutos: data.time?.minutes || 0,
+            tempo_segundos: data.time?.seconds || 0,
+            tempo_milissegundos: data.time?.milliseconds || 0,
+            // Calculate total milliseconds for easier sorting
+            valor_pontuacao: parseTimeToMilliseconds(
+              data.time?.minutes || 0,
+              data.time?.seconds || 0,
+              data.time?.milliseconds || 0
+            ),
+            unidade: 'ms'
+          }
+        : {
             valor_pontuacao: data.score,
-            posicao_final: data.position || null,
-            medalha: data.medal || null,
-            observacoes: data.notes || null,
-            juiz_id: judgeId,
-            data_registro: new Date().toISOString()
-          })
-          .eq('id', existingScore.id);
+            tempo_minutos: null,
+            tempo_segundos: null,
+            tempo_milissegundos: null,
+            unidade: scoreType === 'distance' ? 'm' : 'pontos'
+          };
+      
+      const commonFields = {
+        observacoes: data.notes || null,
+        juiz_id: judgeId,
+        data_registro: new Date().toISOString()
+      };
+      
+      // Function to save or update a score for a single athlete
+      const saveScore = async (currentAthleteId: string) => {
+        // Check if score already exists
+        const { data: existingScore } = await supabase
+          .from('pontuacoes')
+          .select('id')
+          .eq('evento_id', eventId)
+          .eq('modalidade_id', modalityId)
+          .eq('atleta_id', currentAthleteId)
+          .maybeSingle();
         
-        if (error) throw error;
+        if (existingScore) {
+          // Update existing score
+          await supabase
+            .from('pontuacoes')
+            .update({
+              ...scoreData,
+              ...commonFields
+            })
+            .eq('id', existingScore.id);
+        } else {
+          // Insert new score
+          await supabase
+            .from('pontuacoes')
+            .insert({
+              evento_id: eventId,
+              modalidade_id: modalityId,
+              atleta_id: currentAthleteId,
+              ...scoreData,
+              ...commonFields
+            });
+        }
+      };
+      
+      // If this is a team modality and we have team members, save the score for all team members
+      if (isTeamModality && teamMembers && teamMembers.length > 0) {
+        for (const member of teamMembers) {
+          await saveScore(member.id);
+        }
       } else {
-        // Insert new score
-        const { error } = await supabase
-          .from('pontuacoes')
-          .insert({
-            evento_id: eventId,
-            modalidade_id: modalityId,
-            atleta_id: athleteId,
-            valor_pontuacao: data.score,
-            posicao_final: data.position || null,
-            medalha: data.medal || null,
-            observacoes: data.notes || null,
-            juiz_id: judgeId,
-            unidade: 'pontos', // Default unit for scores
-            data_registro: new Date().toISOString()
-          });
-        
-        if (error) throw error;
+        // Just save for the current athlete
+        await saveScore(athleteId);
       }
+      
+      // Calculate positions after saving scores
+      await calculatePositions();
       
       return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scores', modalityId, eventId] });
+      queryClient.invalidateQueries({ queryKey: ['score', athleteId, modalityId, eventId] });
       queryClient.invalidateQueries({ queryKey: ['athletes', modalityId, eventId] });
-      toast({
-        description: "A pontuação foi registrada com sucesso",
-        variant: "success"
-      });
+      queryClient.invalidateQueries({ queryKey: ['modality-rankings', modalityId, eventId] });
+      toast.success("A pontuação foi registrada com sucesso");
     },
     onError: (error) => {
       console.error('Error submitting score:', error);
-      toast({
-        description: "Não foi possível registrar a pontuação",
-        variant: "destructive"
-      });
+      toast.error("Não foi possível registrar a pontuação");
     }
   });
 
-  const onSubmit = (data: ScoreFormValues) => {
+  const onSubmit = (data: z.infer<typeof schema>) => {
     submitScoreMutation.mutate(data);
   };
 
+  if (!modality) {
+    return (
+      <Card>
+        <CardContent className="py-4">
+          <p className="text-center text-muted-foreground">Carregando detalhes da modalidade...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Registrar Pontuação</CardTitle>
-        <CardDescription>
-          Informe a pontuação do atleta
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="score"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Pontuação</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      placeholder="0" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Registrar {isTeamModality ? 'Pontuação da Equipe' : 'Pontuação'}</CardTitle>
+              <CardDescription>
+                Modalidade: {modality.nome}
+                {isTeamModality && (
+                  <span className="ml-2">
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      Coletiva
+                    </Badge>
+                  </span>
+                )}
+              </CardDescription>
+            </div>
+            <div>
+              <Badge 
+                variant="secondary"
+                className="ml-2 capitalize"
+              >
+                {scoreType === 'time' && 'Tempo'}
+                {scoreType === 'distance' && 'Distância'}
+                {scoreType === 'points' && 'Pontos'}
+              </Badge>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {isTeamModality && teamMembers && teamMembers.length > 0 && (
+                <div className="bg-muted/50 p-3 rounded-md mb-4">
+                  <p className="text-sm font-medium mb-2">Membros da equipe ({teamMembers.length})</p>
+                  <div className="flex flex-wrap gap-2">
+                    {teamMembers.map(member => (
+                      <Badge key={member.id} variant="outline" className="bg-white">
+                        {member.name}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    A pontuação será registrada para todos os membros da equipe.
+                  </p>
+                </div>
               )}
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              {scoreType === 'time' ? (
+                <ScoreInputField
+                  form={form}
+                  name="time"
+                  label="Tempo"
+                  scoreType="time"
+                />
+              ) : (
+                <ScoreInputField
+                  form={form}
+                  name="score"
+                  label={scoreType === 'distance' ? 'Distância' : 'Pontuação'}
+                  scoreType={scoreType}
+                  placeholder={scoreType === 'distance' ? '0.00' : '0'}
+                />
+              )}
+              
               <FormField
                 control={form.control}
-                name="position"
+                name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Posição</FormLabel>
+                    <FormLabel>Observações</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="1" 
-                        {...field} 
+                      <Textarea
+                        placeholder="Observações adicionais"
+                        className="resize-none"
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -224,59 +454,25 @@ export function AthleteScoreForm({
                 )}
               />
               
-              <FormField
-                control={form.control}
-                name="medal"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Medalha</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Nenhuma" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="ouro">Ouro</SelectItem>
-                        <SelectItem value="prata">Prata</SelectItem>
-                        <SelectItem value="bronze">Bronze</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Observações</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="text" 
-                      placeholder="Observações adicionais" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <Separator />
-            
-            <Button 
-              type="submit"
-              disabled={submitScoreMutation.isPending}
-            >
-              {submitScoreMutation.isPending ? 'Enviando...' : 'Salvar Pontuação'}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+              <Separator />
+              
+              <Button 
+                type="submit"
+                disabled={submitScoreMutation.isPending}
+                className="w-full"
+              >
+                {submitScoreMutation.isPending ? 'Enviando...' : 'Salvar Pontuação'}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+      
+      <ModalityRankings 
+        modalityId={modalityId}
+        eventId={eventId}
+        scoreType={scoreType}
+      />
+    </div>
   );
 }

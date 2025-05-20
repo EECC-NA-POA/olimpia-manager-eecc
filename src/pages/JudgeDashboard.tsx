@@ -9,6 +9,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { ScoresTab } from '@/components/judge/tabs/ScoresTab';
+import { TeamsTab } from '@/components/judge/tabs/TeamsTab';
 
 export default function JudgeDashboard() {
   const { user, currentEventId } = useAuth();
@@ -68,47 +70,11 @@ export default function JudgeDashboard() {
         </TabsList>
         
         <TabsContent value="scores" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Registrar Pontuações</CardTitle>
-              <CardDescription>
-                Registre pontuações para as modalidades e atletas sob sua responsabilidade
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Selecione uma modalidade e um atleta para registrar pontuações
-              </p>
-              {/* We'll implement the detailed score registration UI in a future update */}
-              <div className="mt-4">
-                <Button disabled>
-                  Funcionalidade em desenvolvimento
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <ScoresTab userId={user.id} eventId={currentEventId} />
         </TabsContent>
         
         <TabsContent value="teams" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Formação de Equipes</CardTitle>
-              <CardDescription>
-                Organize equipes para as modalidades coletivas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Selecione uma modalidade para gerenciar equipes
-              </p>
-              {/* We'll implement the detailed team formation UI in a future update */}
-              <div className="mt-4">
-                <Button disabled>
-                  Funcionalidade em desenvolvimento
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <TeamsTab userId={user.id} eventId={currentEventId} />
         </TabsContent>
       </Tabs>
     </div>
