@@ -9,6 +9,7 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
+import { MapPin } from "lucide-react"; // Added this import
 import { LocationSelector } from "./form-sections/location/LocationSelector";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
