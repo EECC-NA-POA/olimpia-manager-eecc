@@ -14,58 +14,45 @@ import {
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useAuth } from '@/contexts/AuthContext';
 
 // Define the activity type
 interface ScheduleActivity {
-  id: number;
-  cronograma_atividade_id: number;
-  atividade: string;
+  id: string;
+  evento_id: string;
+  titulo: string;
+  descricao: string;
+  data: string;
+  hora_inicio: string;
+  hora_fim: string;
   local: string;
-  modalidade_nome: string | null;
-  modalidade_status: string | null;
-  global: boolean;
+  tipo: string;
 }
 
 // Custom ActivityCard for the general schedule that always shows green status
-function GeneralScheduleActivityCard({ category, activities }: {
-  category: string;
-  activities: ScheduleActivity[];
+function GeneralScheduleActivityCard({ activity }: {
+  activity: ScheduleActivity;
 }) {
-  const location = activities[0]?.local || '';
-  const isGlobal = activities.some(activity => activity.global);
-
   return (
-    <div className={cn(
-      "p-3 rounded-lg border",
-      isGlobal 
-        ? "border-yellow-400 bg-yellow-50" 
-        : "border-green-600 bg-green-50"
-    )}>
+    <div className="p-3 rounded-lg border border-green-600 bg-green-50">
       <div className="space-y-2">
-        <h4 className="font-medium text-olimpics-green-primary">{activities[0].atividade}</h4>
+        <h4 className="font-medium text-olimpics-green-primary">{activity.titulo}</h4>
         <div className="pl-2 space-y-3">
+          {activity.descricao && (
+            <div className="text-sm text-gray-700">
+              {activity.descricao}
+            </div>
+          )}
           <div className="text-sm text-gray-600">
-            <span>{location}</span>
+            <span>{activity.local}</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {activities.map((activity) => {
-              const displayName = activity.modalidade_nome || activity.atividade;
-              return (
-                <Badge 
-                  key={`${activity.cronograma_atividade_id}-${activity.modalidade_nome}`}
-                  variant="secondary"
-                  className={cn(
-                    "whitespace-nowrap",
-                    activity.global
-                      ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80"
-                      : "bg-green-100 text-green-800 hover:bg-green-100/80"
-                  )}
-                >
-                  {displayName}
-                  {activity.global && ' (Todos)'}
-                </Badge>
-              );
-            })}
+            <Badge 
+              variant="secondary"
+              className="bg-green-100 text-green-800 hover:bg-green-100/80 whitespace-nowrap"
+            >
+              {activity.tipo}
+            </Badge>
           </div>
         </div>
       </div>
@@ -74,16 +61,10 @@ function GeneralScheduleActivityCard({ category, activities }: {
 }
 
 // Custom ScheduleTable component for the general schedule
-function GeneralScheduleTable({ groupedActivities, dates, timeSlots }: {
-  groupedActivities: {
-    [key: string]: {
-      [key: string]: ScheduleActivity[];
-    };
-  };
-  dates: string[];
-  timeSlots: string[];
+function GeneralScheduleTable({ activities }: {
+  activities: ScheduleActivity[];
 }) {
-  if (!dates.length) {
+  if (!activities.length) {
     return (
       <div className="text-center py-8 text-gray-500">
         Nenhuma atividade encontrada no cronograma.
@@ -91,113 +72,73 @@ function GeneralScheduleTable({ groupedActivities, dates, timeSlots }: {
     );
   }
 
-  const weekDays = ["Sábado", "Domingo"];
-  const columnWidth = `${100 / (weekDays.length + 1)}%`;
+  // Group activities by date
+  const groupedByDate: Record<string, ScheduleActivity[]> = {};
+  
+  activities.forEach(activity => {
+    const date = activity.data;
+    if (!groupedByDate[date]) {
+      groupedByDate[date] = [];
+    }
+    groupedByDate[date].push(activity);
+  });
 
-  const groupByCategory = (activities: ScheduleActivity[]) => {
-    const grouped = activities.reduce((acc, activity) => {
-      const category = activity.atividade;
-      
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      
-      const isDuplicate = acc[category].some(
-        existing => existing.cronograma_atividade_id === activity.cronograma_atividade_id &&
-                    existing.modalidade_nome === activity.modalidade_nome
-      );
-      
-      if (!isDuplicate) {
-        acc[category].push(activity);
-      }
-      
-      return acc;
-    }, {} as Record<string, ScheduleActivity[]>);
-
-    return Object.entries(grouped).sort((a, b) => a[0].localeCompare(b[0]));
-  };
+  // Sort dates
+  const dates = Object.keys(groupedByDate).sort();
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse">
-        <thead>
-          <tr>
-            <th 
-              className="border-b p-4 text-left font-semibold text-olimpics-green-primary"
-              style={{ width: columnWidth }}
-            >
-              Horário
-            </th>
-            {weekDays.map((day) => (
-              <th 
-                key={day} 
-                className="border-b p-4 text-left font-semibold text-olimpics-green-primary"
-                style={{ width: columnWidth }}
-              >
-                {day}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {timeSlots.map(timeSlot => {
-            const [start, end] = timeSlot.split('-');
-            return (
-              <tr key={timeSlot} className="border-b last:border-b-0">
-                <td className="p-4 align-top" style={{ width: columnWidth }}>
-                  <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <Clock className="h-4 w-4 shrink-0" />
-                    <span className="whitespace-nowrap">
-                      {start.slice(0, 5)} - {end.slice(0, 5)}
-                    </span>
+    <div className="space-y-8">
+      {dates.map(date => (
+        <div key={date} className="space-y-4">
+          <h3 className="text-lg font-semibold text-olimpics-green-primary border-b pb-2">
+            {new Date(date).toLocaleDateString('pt-BR', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </h3>
+          
+          <div className="grid gap-4 md:grid-cols-2">
+            {groupedByDate[date]
+              .sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio))
+              .map(activity => (
+                <div key={activity.id} className="flex gap-4">
+                  <div className="w-20 flex-shrink-0">
+                    <div className="flex items-center gap-1 text-sm text-gray-600">
+                      <Clock className="h-4 w-4 shrink-0" />
+                      <span className="whitespace-nowrap">
+                        {activity.hora_inicio.slice(0, 5)}
+                        {activity.hora_fim && ` - ${activity.hora_fim.slice(0, 5)}`}
+                      </span>
+                    </div>
                   </div>
-                </td>
-                {dates.map((date) => {
-                  const activitiesForSlot = groupedActivities[date]?.[timeSlot] || [];
-                  const groupedByCategory = groupByCategory(activitiesForSlot);
-
-                  return (
-                    <td 
-                      key={`${date}-${timeSlot}`} 
-                      className="p-4 align-top"
-                      style={{ width: columnWidth }}
-                    >
-                      <div className="space-y-2">
-                        {groupedByCategory.map(([category, activities]) => (
-                          <GeneralScheduleActivityCard 
-                            key={category}
-                            category={category}
-                            activities={activities}
-                          />
-                        ))}
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  <GeneralScheduleActivityCard activity={activity} />
+                </div>
+              ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
 export default function Cronograma() {
   const [isVideoVisible, setIsVideoVisible] = useState(true);
-  const currentEventId = localStorage.getItem('currentEventId');
+  const { currentEventId } = useAuth();
 
   const { data: activities, isLoading } = useQuery({
     queryKey: ['cronograma-activities', currentEventId],
     queryFn: async () => {
       console.log('Fetching cronograma activities for event:', currentEventId);
       
+      // Fetch from the correct 'cronogramas' table
       const { data, error } = await supabase
-        .from('vw_cronograma_atividades_por_atleta')
+        .from('cronogramas')
         .select('*')
         .eq('evento_id', currentEventId)
-        .order('dia')
-        .order('horario_inicio');
+        .order('data')
+        .order('hora_inicio');
 
       if (error) {
         console.error('Error fetching cronograma:', error);
@@ -210,35 +151,6 @@ export default function Cronograma() {
     enabled: !!currentEventId,
   });
 
-  // Group activities by date and time
-  const groupedActivities = activities?.reduce((groups: any, activity) => {
-    const date = activity.dia;
-    const time = `${activity.horario_inicio}-${activity.horario_fim}`;
-    
-    if (!groups[date]) {
-      groups[date] = {};
-    }
-    
-    if (!groups[date][time]) {
-      groups[date][time] = [];
-    }
-    
-    groups[date][time].push({
-      ...activity,
-      id: activity.cronograma_atividade_id
-    });
-    
-    return groups;
-  }, {});
-
-  // Get unique dates
-  const dates = Object.keys(groupedActivities || {}).sort();
-
-  // Get unique time slots
-  const timeSlots = [...new Set(
-    activities?.map((activity: any) => `${activity.horario_inicio}-${activity.horario_fim}`)
-  )].sort();
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-4">
@@ -248,7 +160,7 @@ export default function Cronograma() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto py-6 space-y-6">
       <div className="relative">
         <div className={`transition-all duration-300 ease-in-out ${isVideoVisible ? 'h-[500px] opacity-100' : 'h-0 opacity-0 overflow-hidden'}`}>
           <div className="w-full h-full rounded-lg overflow-hidden shadow-lg">
@@ -298,11 +210,7 @@ export default function Cronograma() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <GeneralScheduleTable 
-            groupedActivities={groupedActivities || {}}
-            dates={dates}
-            timeSlots={timeSlots}
-          />
+          <GeneralScheduleTable activities={activities} />
         </CardContent>
       </Card>
     </div>

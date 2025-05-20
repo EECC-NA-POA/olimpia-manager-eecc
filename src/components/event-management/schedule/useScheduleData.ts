@@ -37,9 +37,9 @@ export const useScheduleData = (eventId: string | null) => {
       // Try to create table if it doesn't exist
       await createCronogramaTableIfNotExists(supabase);
       
-      // Then attempt to fetch data
+      // Then attempt to fetch data from the correct table 'cronogramas' with the column 'evento_id'
       const { data, error } = await supabase
-        .from('cronograma')
+        .from('cronogramas')
         .select('*')
         .eq('evento_id', eventId)
         .order('data', { ascending: true })
@@ -115,9 +115,9 @@ export const useScheduleData = (eventId: string | null) => {
       await createCronogramaTableIfNotExists(supabase);
       
       if (editingId) {
-        // Update existing item
+        // Update existing item in the 'cronogramas' table
         const { error } = await supabase
-          .from('cronograma')
+          .from('cronogramas')
           .update({
             titulo: currentItem.titulo,
             descricao: currentItem.descricao,
@@ -133,9 +133,9 @@ export const useScheduleData = (eventId: string | null) => {
         
         toast.success('Item de cronograma atualizado com sucesso!');
       } else {
-        // Create new item
+        // Create new item in the 'cronogramas' table
         const { data, error } = await supabase
-          .from('cronograma')
+          .from('cronogramas')
           .insert({
             evento_id: eventId,
             titulo: currentItem.titulo,
@@ -175,7 +175,7 @@ export const useScheduleData = (eventId: string | null) => {
     
     try {
       const { error } = await supabase
-        .from('cronograma')
+        .from('cronogramas')
         .delete()
         .eq('id', id);
       
