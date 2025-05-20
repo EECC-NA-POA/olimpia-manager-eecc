@@ -70,16 +70,22 @@ export const EventSelection = ({
     }
   };
 
-  const handleEventSelect = (eventId: string, isRegistered: boolean) => {
-    console.log('Event selected, setting in localStorage:', eventId);
-    localStorage.setItem('currentEventId', eventId);
+  const handleEventAction = (eventId: string, isRegistered: boolean) => {
+    console.log('Event action called with:', { eventId, isRegistered });
     
     if (isRegistered) {
+      // If already registered, just select the event and navigate
+      console.log('User is already registered, setting event in localStorage:', eventId);
+      localStorage.setItem('currentEventId', eventId);
       toast("Evento selecionado com sucesso!");
+      
       // Short delay to ensure toast is visible
       setTimeout(() => {
         navigate('/athlete-profile');
       }, 300);
+    } else {
+      // If not registered, proceed with registration
+      handleEventRegistration(eventId);
     }
   };
 
@@ -145,10 +151,8 @@ export const EventSelection = ({
         onRoleChange={setSelectedRole}
         onEventAction={(eventId) => {
           const event = events.find(e => e.id === eventId);
-          if (event?.isRegistered) {
-            handleEventSelect(eventId, true);
-          } else {
-            handleEventRegistration(eventId);
+          if (event) {
+            handleEventAction(eventId, event.isRegistered);
           }
         }}
         isUnderAge={isUnderAge}
