@@ -105,6 +105,45 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
     refetch();
   };
 
+  // Display the content differently based on loading and error states
+  const renderPolicyContent = () => {
+    if (isLoading) {
+      return (
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-4 w-full" />
+        </div>
+      );
+    }
+
+    if (error !== null || !policyContent || (typeof policyContent === 'string' && policyContent.includes('Não foi possível carregar'))) {
+      return (
+        <div className="text-center space-y-4">
+          <p className="text-red-500">
+            Não foi possível carregar a política de privacidade. Por favor, tente novamente.
+          </p>
+          <Button 
+            onClick={handleRetryLoad}
+            variant="outline" 
+            className="flex items-center gap-2"
+          >
+            <RefreshCcw className="h-4 w-4" />
+            Tentar novamente
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div 
+        dangerouslySetInnerHTML={{ __html: policyContent }} 
+        className="policy-content prose prose-sm max-w-none dark:prose-invert"
+      />
+    );
+  };
+
   return (
     <AlertDialog open={true}>
       <AlertDialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -128,33 +167,7 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
 
         <div className="py-4">
           <div className="border rounded-md p-4 max-h-[50vh] overflow-y-auto bg-muted/30">
-            {isLoading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6" />
-                <Skeleton className="h-4 w-full" />
-              </div>
-            ) : error || !policyContent || policyContent.includes('Não foi possível carregar') ? (
-              <div className="text-center space-y-4">
-                <p className="text-red-500">
-                  Não foi possível carregar a política de privacidade. Por favor, tente novamente.
-                </p>
-                <Button 
-                  onClick={handleRetryLoad}
-                  variant="outline" 
-                  className="flex items-center gap-2"
-                >
-                  <RefreshCcw className="h-4 w-4" />
-                  Tentar novamente
-                </Button>
-              </div>
-            ) : (
-              <div 
-                dangerouslySetInnerHTML={{ __html: policyContent }} 
-                className="policy-content prose prose-sm max-w-none dark:prose-invert"
-              />
-            )}
+            {renderPolicyContent()}
           </div>
         </div>
 
@@ -171,7 +184,7 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
           <Button
             className="w-full sm:w-auto"
             onClick={handleAccept}
-            disabled={isLoading || registerAcceptanceMutation.isPending || accepted || error !== undefined || !policyContent || (typeof policyContent === 'string' && policyContent.includes('Não foi possível carregar'))}
+            disabled={isLoading || registerAcceptanceMutation.isPending || accepted || error !== null || !policyContent || (typeof policyContent === 'string' && policyContent.includes('Não foi possível carregar'))}
           >
             {registerAcceptanceMutation.isPending ? (
               <>
