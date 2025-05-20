@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,22 +23,35 @@ export const ContactSection = ({
   isLoadingBranches: propIsLoadingBranches
 }: ContactSectionProps) => {
   const [selectedState, setSelectedState] = useState<string | null>(null);
+  const [statesList, setStatesList] = useState<string[]>([]);
+  const [branchesMap, setBranchesMap] = useState<Record<string, any[]>>({});
 
   const { data: branchesByState = [], isLoading: isLoadingBranchData } = useQuery({
     queryKey: ['branches-by-state'],
     queryFn: fetchBranchesByState,
-    enabled: !propBranches // Only fetch if branches were not provided as props
+    retry: 3,
+    retryDelay: 1000,
   });
+
+  useEffect(() => {
+    if (branchesByState && branchesByState.length > 0) {
+      // Extract states list
+      const states = branchesByState.map(group => group.estado);
+      setStatesList(states);
+      
+      // Create a map of state -> branches
+      const branchMap: Record<string, any[]> = {};
+      branchesByState.forEach(group => {
+        branchMap[group.estado] = group.branches;
+      });
+      setBranchesMap(branchMap);
+    }
+  }, [branchesByState]);
 
   const isLoadingBranches = propIsLoadingBranches || isLoadingBranchData;
   
-  // Get unique states from branches data
-  const states = branchesByState.map(group => group.estado);
-
   // Get branches for the selected state
-  const branchesForSelectedState = selectedState 
-    ? branchesByState.find(group => group.estado === selectedState)?.branches || []
-    : [];
+  const branchesForSelectedState = selectedState && branchesMap[selectedState] ? branchesMap[selectedState] : [];
 
   // Clear branch selection when state changes
   const handleStateChange = (state: string) => {
@@ -92,7 +105,7 @@ export const ContactSection = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {states.map((state) => (
+                  {statesList.map((state) => (
                     <SelectItem key={state} value={state}>
                       {state}
                     </SelectItem>

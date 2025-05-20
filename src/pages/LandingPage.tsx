@@ -13,7 +13,7 @@ import { HeaderTitle } from '@/components/landing/HeaderTitle';
 
 const LandingPage = () => {
   const handleLocationClick = () => {
-    const address = "São Paulo";
+    const address = "São Francisco Xavier, São Paulo, SP";
     const mapsUrl = `https://www.google.com.br/maps/search/${encodeURIComponent(address)}`;
     window.open(mapsUrl, '_blank');
   };

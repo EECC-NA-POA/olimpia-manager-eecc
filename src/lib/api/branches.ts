@@ -18,29 +18,38 @@ export const fetchBranches = async (): Promise<Branch[]> => {
 
 export const fetchBranchesByState = async (): Promise<{ estado: string; branches: Branch[] }[]> => {
   console.log('Fetching branches grouped by state...');
-  const { data, error } = await supabase
-    .from('filiais')
-    .select('*')
-    .order('estado', { ascending: true })
-    .order('nome', { ascending: true });
-
-  if (error) {
+  
+  try {
+    // First, get all unique states
+    const { data: statesData, error: statesError } = await supabase
+      .from('filiais')
+      .select('estado')
+      .order('estado', { ascending: true });
+    
+    if (statesError) throw statesError;
+    
+    // Get unique states
+    const uniqueStates = Array.from(new Set(statesData.map(item => item.estado)));
+    
+    // For each state, get all branches
+    const result = await Promise.all(uniqueStates.map(async (estado) => {
+      const { data: branchesData, error: branchesError } = await supabase
+        .from('filiais')
+        .select('*')
+        .eq('estado', estado)
+        .order('nome', { ascending: true });
+      
+      if (branchesError) throw branchesError;
+      
+      return {
+        estado,
+        branches: branchesData || []
+      };
+    }));
+    
+    return result;
+  } catch (error) {
     console.error('Error fetching branches by state:', error);
     throw error;
   }
-
-  // Group branches by state
-  const groupedBranches = (data || []).reduce((acc: { [key: string]: Branch[] }, branch: Branch) => {
-    if (!acc[branch.estado]) {
-      acc[branch.estado] = [];
-    }
-    acc[branch.estado].push(branch);
-    return acc;
-  }, {});
-
-  // Convert to array format for easier consumption with proper typing
-  return Object.entries(groupedBranches).map(([estado, branches]) => ({
-    estado,
-    branches: branches as Branch[]
-  }));
 };

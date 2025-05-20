@@ -27,7 +27,7 @@ export const EventInfoCards: React.FC<EventInfoCardsProps> = ({
           <div>
             <h3 className="text-xl font-bold text-olimpics-green-primary mb-2">Local</h3>
             <p className="text-olimpics-text text-lg mb-2">
-              São Paulo
+              São Francisco Xavier - São Paulo - SP
             </p>
             <p className="text-sm text-gray-600 italic">
               Clique para ver no mapa
