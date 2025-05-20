@@ -52,7 +52,7 @@ export const SignUpForm = () => {
         <Button
           type="submit"
           className="w-full bg-olimpics-green-primary hover:bg-olimpics-green-secondary text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={isSubmitting || !form.watch('acceptPrivacyPolicy')}
+          disabled={isSubmitting}
         >
           {isSubmitting ? (
             <>
