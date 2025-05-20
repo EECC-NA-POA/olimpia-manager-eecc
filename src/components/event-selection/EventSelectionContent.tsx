@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { useUserAgeQuery } from './hooks/useUserAgeQuery';
 import { ErrorState } from '@/components/ErrorState';
-import { Loader2 } from 'lucide-react';
+import { LoadingImage } from '@/components/ui/loading-image';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function EventSelectionContent() {
@@ -25,7 +25,7 @@ export function EventSelectionContent() {
   if (isAgeLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-olimpics-green-primary" />
+        <LoadingImage size="sm" />
       </div>
     );
   }

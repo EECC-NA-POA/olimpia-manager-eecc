@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -8,6 +7,7 @@ import { PUBLIC_ROUTES, PublicRoute } from '@/constants/routes';
 import { fetchUserProfile, handleAuthRedirect } from '@/services/authService';
 import { AuthContext } from '@/contexts/AuthContext';
 import { useAuthOperations } from '@/hooks/useAuthOperations';
+import { LoadingImage } from '@/components/ui/loading-image';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -164,9 +164,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   if (loading) {
     console.log('Auth is still loading, showing loading state');
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-olimpics-green-primary" />
-        <p className="text-sm text-muted-foreground">Carregando...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <LoadingImage text="Carregando..." />
       </div>
     );
   }
