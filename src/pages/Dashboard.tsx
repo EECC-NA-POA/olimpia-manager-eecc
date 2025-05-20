@@ -38,10 +38,8 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="w-full min-h-screen overflow-y-auto pb-20">
-      <div className="container mx-auto p-4">
-        <AthleteProfilePage />
-      </div>
+    <div className="w-full p-4">
+      <AthleteProfilePage />
     </div>
   );
 };

@@ -124,7 +124,7 @@ export function MainNavigation() {
             </div>
           </SidebarFooter>
         </Sidebar>
-        <main className="flex-1 overflow-auto p-6 bg-olimpics-background transition-all duration-200">
+        <main className="flex-1 overflow-auto bg-olimpics-background transition-all duration-200">
           <Outlet />
         </main>
       </div>
