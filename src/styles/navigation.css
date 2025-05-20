@@ -9,18 +9,32 @@
   padding-top: 104px; /* 104px - height of header + top navigation */
 }
 
+/* Tabs styling overrides for the nav */
+.tabs-nav .tabs-trigger {
+  background-color: transparent;
+  color: white;
+  border-radius: 0.375rem;
+  padding: 0.5rem 1rem;
+  transition: background-color 0.2s;
+}
+
+.tabs-nav .tabs-trigger[data-state="active"] {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+  font-weight: 500;
+}
+
+.tabs-nav .tabs-trigger:hover:not([data-state="active"]) {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.tabs-nav .tabs-content {
+  padding: 0.5rem 0;
+}
+
 /* Fix for mobile screens */
 @media (max-width: 768px) {
   .mt-16 {
-    overflow-x: auto;
-  }
-  
-  .mt-16::-webkit-scrollbar {
-    height: 3px;
-  }
-  
-  .mt-16::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
+    overflow-x: hidden;
   }
 }
