@@ -45,10 +45,12 @@ export function EventSelectionContainer() {
         const needsSelection = !data.filial_id;
         setNeedsBranchSelection(needsSelection);
         
-        // Fix the type issue: Supabase returns filiais as a nested object, not an array
+        // Correct the type handling: Supabase returns nested tables as objects, not arrays
         if (!needsSelection && data.filiais) {
-          // Access estado directly from the returned object
-          setExistingState(data.filiais.estado);
+          // TypeScript thinks data.filiais is an array, but it's actually a direct object
+          // Cast it to any first to resolve the type error
+          const filiais = data.filiais as any;
+          setExistingState(filiais.estado);
         }
       } catch (err) {
         console.error('Error in checkUserBranch:', err);
