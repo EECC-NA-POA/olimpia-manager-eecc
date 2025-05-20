@@ -1,17 +1,6 @@
 
 import { Outlet } from 'react-router-dom';
-import { 
-  Sidebar, 
-  SidebarProvider, 
-  SidebarContent, 
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarTrigger,
-} from './ui/sidebar';
-import { ChevronLeft, ChevronRight, LogOut, Menu } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { MenuItems } from './navigation/MenuItems';
@@ -66,7 +55,7 @@ export function MainNavigation() {
       <TopNavigation user={user} roles={roles} />
       
       <div className="flex min-h-screen w-full">
-        <main className="flex-1 overflow-auto bg-olimpics-background transition-all duration-200">
+        <main className="flex-1 overflow-auto bg-olimpics-background transition-all duration-200 pt-10">
           <Outlet />
         </main>
       </div>
