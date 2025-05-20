@@ -33,16 +33,20 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
 
         console.log('Events found:', events.length);
         
-        // Get user registrations directly from the inscricoes_usuarios_eventos table
+        // Check for user registrations by querying the inscricoes table
+        // This approach is more reliable as it directly uses the main inscricoes table
         const { data: registrations, error: regError } = await supabase
-          .from('inscricoes_usuarios_eventos')
-          .select('evento_id, status')
+          .from('inscricoes')
+          .select('evento_id')
           .eq('usuario_id', userId);
         
         if (regError) {
-          console.error('Error fetching user registrations:', regError);
-          console.log('Continuing with unregistered events');
-          // Don't throw error, just continue with events without registration status
+          console.error('Error fetching user registrations from inscricoes table:', regError);
+          // Continue with events but mark them as not registered
+          return events.map(event => ({
+            ...event,
+            isRegistered: false
+          }));
         } 
         
         // If we have registrations, mark events as registered
