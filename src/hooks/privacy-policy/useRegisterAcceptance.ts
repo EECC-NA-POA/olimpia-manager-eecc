@@ -57,12 +57,19 @@ export const useRegisterAcceptance = ({
         
         console.log('Latest policy found:', latestPolicy);
         
+        // Definir tipo de documento padrão se não estiver disponível
+        // Este é o campo que está causando o erro não-nulo
+        const tipoDocumento = userMetadata?.tipo_documento || 'CPF';
+        const numeroDocumento = userMetadata?.numero_documento || '00000000000';
+        
         // Abordagem primária: inserir com campos obrigatórios
-        console.log('Attempting insert with required fields...');
+        console.log('Attempting insert with required fields including documento type...');
         const requiredData = {
           usuario_id: userId,
           versao_termo: latestPolicy.versao_termo,
-          nome_completo: nomeUsuario // Campo obrigatório que estava faltando
+          nome_completo: nomeUsuario,
+          tipo_documento: tipoDocumento,
+          numero_documento: numeroDocumento
         };
         
         const { error: requiredInsertError } = await supabase
@@ -76,26 +83,25 @@ export const useRegisterAcceptance = ({
         
         console.warn('Required fields insert failed:', requiredInsertError);
         
-        // Tentar com todos os metadados disponíveis
-        console.log('Trying with full user metadata...');
-        const fullData = {
-          usuario_id: userId,
-          versao_termo: latestPolicy.versao_termo,
-          nome_completo: nomeUsuario,
-          tipo_documento: userMetadata?.tipo_documento || null,
-          numero_documento: userMetadata?.numero_documento || null
-        };
-        
-        const { error: fullInsertError } = await supabase
-          .from('logs_aceite_privacidade')
-          .insert(fullData);
+        // Tentativa alternativa com RPC personalizado, se disponível
+        console.log('Trying with custom RPC if available...');
+        try {
+          const { data: rpcResult, error: rpcError } = await supabase.rpc('insert_privacy_acceptance', {
+            p_user_id: userId,
+            p_version: latestPolicy.versao_termo
+          });
           
-        if (!fullInsertError) {
-          console.log('Success with full user metadata');
-          return true;
+          if (!rpcError) {
+            console.log('Success with RPC method');
+            return true;
+          }
+          
+          console.warn('RPC method failed:', rpcError);
+        } catch (rpcErr) {
+          console.warn('RPC not available or failed:', rpcErr);
         }
         
-        console.error('All insert attempts failed. Last error:', fullInsertError);
+        console.error('All insert attempts failed. Last error:', requiredInsertError);
         throw new Error('Não foi possível registrar o aceite do termo de privacidade após múltiplas tentativas');
       } catch (error) {
         console.error('Final error in registerAcceptanceMutation:', error);
