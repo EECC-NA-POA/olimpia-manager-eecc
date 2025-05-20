@@ -11,7 +11,7 @@ export const useEventData = (currentEventId: string | null) => {
       
       const { data, error } = await supabase
         .from('eventos')
-        .select('id, nome, status_evento')
+        .select('*')
         .eq('id', currentEventId)
         .single();
 

@@ -85,7 +85,7 @@ export default function EventManagement() {
             {eventData.nome}
           </CardTitle>
           <CardDescription>
-            ID: {eventData.id} • Status: {eventData.status_evento}
+            Status: {eventData.status_evento}
           </CardDescription>
         </CardHeader>
 

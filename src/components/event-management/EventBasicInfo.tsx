@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -20,21 +21,32 @@ export function EventBasicInfo({ eventId, eventData, onUpdate }: EventBasicInfoP
   const [isLoading, setIsLoading] = useState(false);
   
   // Initialize form with event data
-  const { register, handleSubmit, formState: { errors }, setValue } = useForm({
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm({
     defaultValues: {
       nome: eventData.nome || '',
       descricao: eventData.descricao || '',
       local: eventData.local || '',
+      tipo: eventData.tipo || 'estadual',
       data_inicio: eventData.data_inicio ? new Date(eventData.data_inicio).toISOString().split('T')[0] : '',
       data_fim: eventData.data_fim ? new Date(eventData.data_fim).toISOString().split('T')[0] : '',
       data_inicio_inscricao: eventData.data_inicio_inscricao ? new Date(eventData.data_inicio_inscricao).toISOString().split('T')[0] : '',
       data_fim_inscricao: eventData.data_fim_inscricao ? new Date(eventData.data_fim_inscricao).toISOString().split('T')[0] : '',
-      status_evento: eventData.status_evento || 'PLANEJAMENTO',
+      status_evento: eventData.status_evento || 'ativo',
+      foto_evento: eventData.foto_evento || '',
+      visibilidade_publica: eventData.visibilidade_publica === undefined ? true : eventData.visibilidade_publica,
     }
   });
   
   const handleStatusChange = (value: string) => {
     setValue('status_evento', value);
+  };
+
+  const handleTipoChange = (value: string) => {
+    setValue('tipo', value);
+  };
+
+  const handleVisibilidadeChange = (checked: boolean) => {
+    setValue('visibilidade_publica', checked);
   };
 
   const onSubmit = async (data: any) => {
@@ -48,12 +60,15 @@ export function EventBasicInfo({ eventId, eventData, onUpdate }: EventBasicInfoP
           nome: data.nome,
           descricao: data.descricao,
           local: data.local,
+          tipo: data.tipo,
           data_inicio: data.data_inicio,
           data_fim: data.data_fim,
           data_inicio_inscricao: data.data_inicio_inscricao,
           data_fim_inscricao: data.data_fim_inscricao,
           status_evento: data.status_evento,
-          atualizado_em: new Date().toISOString()
+          foto_evento: data.foto_evento,
+          visibilidade_publica: data.visibilidade_publica,
+          updated_at: new Date().toISOString()
         })
         .eq('id', eventId);
       
@@ -69,6 +84,8 @@ export function EventBasicInfo({ eventId, eventData, onUpdate }: EventBasicInfoP
     }
   };
 
+  const visibilidadePublica = watch('visibilidade_publica');
+
   return (
     <Card>
       <CardContent>
@@ -78,11 +95,11 @@ export function EventBasicInfo({ eventId, eventData, onUpdate }: EventBasicInfoP
               <Label htmlFor="nome">Nome do Evento</Label>
               <Input 
                 id="nome" 
-                {...register('nome', { required: true })} 
+                {...register('nome', { required: 'Nome do evento é obrigatório' })} 
                 placeholder="Nome do evento" 
                 className={errors.nome ? 'border-red-500' : ''}
               />
-              {errors.nome && <p className="text-sm text-red-500">Nome do evento é obrigatório</p>}
+              {errors.nome && <p className="text-sm text-red-500">{errors.nome.message?.toString()}</p>}
             </div>
             
             <div className="space-y-2">
@@ -92,16 +109,29 @@ export function EventBasicInfo({ eventId, eventData, onUpdate }: EventBasicInfoP
                   <SelectValue placeholder="Selecione o status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="PLANEJAMENTO">Planejamento</SelectItem>
-                  <SelectItem value="INSCRICOES_ABERTAS">Inscrições Abertas</SelectItem>
-                  <SelectItem value="INSCRICOES_ENCERRADAS">Inscrições Encerradas</SelectItem>
-                  <SelectItem value="EM_ANDAMENTO">Em Andamento</SelectItem>
-                  <SelectItem value="CONCLUIDO">Concluído</SelectItem>
-                  <SelectItem value="CANCELADO">Cancelado</SelectItem>
+                  <SelectItem value="ativo">Ativo</SelectItem>
+                  <SelectItem value="suspenso">Suspenso</SelectItem>
+                  <SelectItem value="em_teste">Em Teste</SelectItem>
+                  <SelectItem value="encerrado">Encerrado</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
+            <div className="space-y-2">
+              <Label htmlFor="tipo">Tipo de Evento</Label>
+              <Select defaultValue={eventData.tipo} onValueChange={handleTipoChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="estadual">Estadual</SelectItem>
+                  <SelectItem value="nacional">Nacional</SelectItem>
+                  <SelectItem value="internacional">Internacional</SelectItem>
+                  <SelectItem value="regional">Regional</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="local">Local</Label>
               <Input 
@@ -146,16 +176,36 @@ export function EventBasicInfo({ eventId, eventData, onUpdate }: EventBasicInfoP
                 {...register('data_fim_inscricao')} 
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="foto_evento">URL da Foto do Evento</Label>
+              <Input 
+                id="foto_evento" 
+                {...register('foto_evento')} 
+                placeholder="URL da foto do evento" 
+              />
+            </div>
+
+            <div className="flex items-center space-x-2 pt-6">
+              <Switch 
+                id="visibilidade_publica" 
+                checked={visibilidadePublica}
+                onCheckedChange={handleVisibilidadeChange}
+              />
+              <Label htmlFor="visibilidade_publica">Visibilidade Pública</Label>
+            </div>
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="descricao">Descrição</Label>
             <Textarea 
               id="descricao" 
-              {...register('descricao')} 
+              {...register('descricao', { required: 'Descrição do evento é obrigatória' })} 
               placeholder="Descrição do evento"
               rows={5} 
+              className={errors.descricao ? 'border-red-500' : ''}
             />
+            {errors.descricao && <p className="text-sm text-red-500">{errors.descricao.message?.toString()}</p>}
           </div>
           
           <div className="flex justify-end">
