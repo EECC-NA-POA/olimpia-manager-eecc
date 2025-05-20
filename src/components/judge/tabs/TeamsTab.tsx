@@ -28,6 +28,49 @@ interface TeamsTabProps {
   isOrganizer?: boolean; // Para determinar permissões diferentes
 }
 
+// Define explicit types for our queries
+interface UserInfo {
+  id: string;
+  filial_id: string;
+}
+
+interface Modality {
+  modalidade_id: number;
+  modalidade_nome: string;
+  categoria: string;
+  tipo_modalidade: string;
+}
+
+interface TeamAthlete {
+  id: number;
+  posicao: number;
+  raia: number | null;
+  atleta_id: string;
+  usuarios: {
+    nome_completo: string;
+    email: string;
+    telefone: string;
+    tipo_documento: string;
+    numero_documento: string;
+  };
+}
+
+interface Team {
+  id: number;
+  nome: string;
+  athletes: TeamAthlete[];
+}
+
+interface AvailableAthlete {
+  atleta_id: string;
+  atleta_nome: string;
+  atleta_telefone: string;
+  atleta_email: string;
+  tipo_documento: string;
+  numero_documento: string;
+  filial_id: string;
+}
+
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
   const queryClient = useQueryClient();
   const [selectedModalityId, setSelectedModalityId] = useState<number | null>(null);
@@ -50,7 +93,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
         return null;
       }
       
-      return data;
+      return data as UserInfo | null;
     },
     enabled: !!userId && !isOrganizer,
   });
@@ -80,7 +123,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
       }
       
       // Remove duplicates (since the view joins with athletes)
-      const uniqueModalities = data.reduce((acc: any[], current: any) => {
+      const uniqueModalities = data.reduce((acc: Modality[], current: Modality) => {
         const x = acc.find(item => item.modalidade_id === current.modalidade_id);
         if (!x) {
           return acc.concat([current]);
@@ -138,7 +181,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
             return { ...team, athletes: [] };
           }
           
-          return { ...team, athletes: athletesData || [] };
+          return { ...team, athletes: athletesData || [] } as Team;
         })
       );
       
@@ -181,17 +224,19 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
       
       // Filter out athletes who are already in teams
       if (existingTeams && existingTeams.length > 0) {
-        const athletesInTeams = new Set();
-        existingTeams.forEach((team: any) => {
-          team.athletes.forEach((athlete: any) => {
+        const athletesInTeams = new Set<string>();
+        existingTeams.forEach((team: Team) => {
+          team.athletes.forEach((athlete: TeamAthlete) => {
             athletesInTeams.add(athlete.atleta_id);
           });
         });
         
-        return data.filter((athlete: any) => !athletesInTeams.has(athlete.atleta_id));
+        return (data as AvailableAthlete[]).filter((athlete) => 
+          !athletesInTeams.has(athlete.atleta_id)
+        );
       }
       
-      return data;
+      return data as AvailableAthlete[];
     },
     enabled: !!eventId && !!selectedModalityId && !!existingTeams,
   });
@@ -307,7 +352,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
                   <SelectValue placeholder="Selecione uma modalidade" />
                 </SelectTrigger>
                 <SelectContent>
-                  {modalities.map((modality: any) => (
+                  {modalities.map((modality: Modality) => (
                     <SelectItem 
                       key={modality.modalidade_id} 
                       value={modality.modalidade_id.toString()}
