@@ -62,62 +62,32 @@ export const createPrivacyAcceptanceRPC = async () => {
   try {
     console.log('Setting up privacy policy acceptance RPC...');
     
-    // Check if the function already exists
-    const { data: functionExists, error: checkError } = await supabase.rpc('function_exists', {
-      function_name: 'insert_privacy_acceptance'
-    }).single();
-    
-    if (checkError) {
-      console.log('Could not check if function exists, probably function_exists RPC is not available');
-      return;
-    }
-    
-    // Fix: Add proper type checking for functionExists
-    if (functionExists && typeof functionExists === 'object' && 'exists' in functionExists && functionExists.exists) {
-      console.log('Privacy acceptance RPC already exists');
-      return;
-    }
-    
-    // Create the function
+    // Criar função RPC para registro de aceite de política de privacidade
     const createFunctionSQL = `
-      CREATE OR REPLACE FUNCTION insert_privacy_acceptance(p_user_id UUID, p_version TEXT)
+      CREATE OR REPLACE FUNCTION register_privacy_acceptance(
+        p_user_id UUID, 
+        p_version TEXT, 
+        p_policy_id UUID,
+        p_policy_text TEXT
+      )
       RETURNS BOOLEAN AS $$
-      DECLARE
-        v_policy_id UUID;
-        v_result BOOLEAN;
       BEGIN
-        -- Get the policy ID if needed
-        SELECT id INTO v_policy_id 
-        FROM termos_privacidade 
-        WHERE versao_termo = p_version AND ativo = TRUE
-        LIMIT 1;
-
-        -- Try with termos_privacidade_id column
-        BEGIN
-          INSERT INTO logs_aceite_privacidade (usuario_id, versao_termo, termos_privacidade_id)
-          VALUES (p_user_id, p_version, v_policy_id);
-          RETURN TRUE;
-        EXCEPTION WHEN OTHERS THEN
-          -- Column doesn't exist, try next option
-        END;
-
-        -- Try with termos_id column
-        BEGIN
-          INSERT INTO logs_aceite_privacidade (usuario_id, versao_termo, termos_id)
-          VALUES (p_user_id, p_version, v_policy_id);
-          RETURN TRUE;
-        EXCEPTION WHEN OTHERS THEN
-          -- Column doesn't exist, try next option
-        END;
-
-        -- Try with minimal fields as last resort
-        BEGIN
-          INSERT INTO logs_aceite_privacidade (usuario_id, versao_termo)
-          VALUES (p_user_id, p_version);
-          RETURN TRUE;
-        EXCEPTION WHEN OTHERS THEN
-          RETURN FALSE;
-        END;
+        INSERT INTO logs_aceite_privacidade (
+          usuario_id, 
+          versao_termo, 
+          termo_privacidade_id, 
+          termo_texto
+        )
+        VALUES (
+          p_user_id, 
+          p_version, 
+          p_policy_id, 
+          p_policy_text
+        );
+        RETURN TRUE;
+      EXCEPTION WHEN OTHERS THEN
+        RAISE;
+        RETURN FALSE;
       END;
       $$ LANGUAGE plpgsql;
     `;
