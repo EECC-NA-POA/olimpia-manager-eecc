@@ -4,16 +4,21 @@ import type { Branch, BranchAnalytics } from '../../types/api';
 
 export const fetchBranches = async (): Promise<Branch[]> => {
   console.log('Fetching branches...');
-  const { data, error } = await supabase
-    .from('filiais')
-    .select('*');
+  try {
+    const { data, error } = await supabase
+      .from('filiais')
+      .select('*');
 
-  if (error) {
-    console.error('Error fetching branches:', error);
-    throw error;
+    if (error) {
+      console.error('Error fetching branches:', error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error in fetchBranches:', error);
+    return []; // Return empty array instead of throwing to prevent UI crashes
   }
-
-  return data || [];
 };
 
 export const fetchBranchesByState = async (): Promise<{ estado: string; branches: Branch[] }[]> => {
@@ -26,7 +31,17 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
       .select('*')
       .order('nome', { ascending: true });
     
-    if (branchesError) throw branchesError;
+    if (branchesError) {
+      console.error('Error fetching branches by state:', branchesError);
+      return []; // Return empty array instead of throwing
+    }
+
+    if (!branchesData || branchesData.length === 0) {
+      console.log('No branches data returned');
+      return [];
+    }
+
+    console.log('Branches data retrieved:', branchesData.length, 'records');
 
     // Extract unique states and sort them
     const uniqueStates = Array.from(new Set(branchesData.map(branch => branch.estado)))
@@ -42,10 +57,11 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
       };
     });
     
-    console.log('Branches by state:', result);
+    console.log('States found:', uniqueStates.length, 'states');
+    console.log('Branches by state result:', result);
     return result;
   } catch (error) {
-    console.error('Error fetching branches by state:', error);
-    throw error;
+    console.error('Error in fetchBranchesByState:', error);
+    return []; // Return empty array instead of throwing
   }
 };

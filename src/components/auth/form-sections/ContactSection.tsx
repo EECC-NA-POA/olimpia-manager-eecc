@@ -8,6 +8,7 @@ import { PhoneInput } from './phone/PhoneInput';
 import { useQuery } from '@tanstack/react-query';
 import { fetchBranchesByState } from '@/lib/api';
 import { formRow, formColumn } from '@/lib/utils/form-layout';
+import { toast } from "sonner";
 
 interface ContactSectionProps {
   form: UseFormReturn<any>;
@@ -26,13 +27,25 @@ export const ContactSection = ({
   const [statesList, setStatesList] = useState<string[]>([]);
   const [branchesMap, setBranchesMap] = useState<Record<string, any[]>>({});
 
-  const { data: branchesByState = [], isLoading: isLoadingBranchData } = useQuery({
+  const { 
+    data: branchesByState = [], 
+    isLoading: isLoadingBranchData,
+    error: branchesError
+  } = useQuery({
     queryKey: ['branches-by-state'],
     queryFn: fetchBranchesByState,
     retry: 3,
     retryDelay: 1000,
     staleTime: 60000, // Cache for 1 minute
   });
+
+  // Show error toast if there's a problem fetching branches
+  useEffect(() => {
+    if (branchesError) {
+      console.error('Error fetching branches:', branchesError);
+      toast.error('Não foi possível carregar os estados e sedes. Tente novamente mais tarde.');
+    }
+  }, [branchesError]);
 
   useEffect(() => {
     if (branchesByState && branchesByState.length > 0) {
@@ -50,6 +63,8 @@ export const ContactSection = ({
       
       console.log('States list:', states);
       console.log('Branches map:', branchMap);
+    } else {
+      console.log('No branches by state data available');
     }
   }, [branchesByState]);
 
@@ -110,12 +125,18 @@ export const ContactSection = ({
                     <SelectValue placeholder={isLoadingBranches ? "Carregando estados..." : "Selecione um Estado"} />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent className="bg-white">
-                  {statesList.map((state) => (
-                    <SelectItem key={state} value={state}>
-                      {state}
+                <SelectContent className="bg-white max-h-[300px]">
+                  {statesList.length > 0 ? (
+                    statesList.map((state) => (
+                      <SelectItem key={state} value={state}>
+                        {state}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-states" disabled>
+                      {isLoadingBranches ? "Carregando..." : "Nenhum estado encontrado"}
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -142,12 +163,18 @@ export const ContactSection = ({
                     />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent className="bg-white">
-                  {branchesForSelectedState.map((branch) => (
-                    <SelectItem key={branch.id} value={branch.id}>
-                      {branch.nome}
+                <SelectContent className="bg-white max-h-[300px]">
+                  {branchesForSelectedState.length > 0 ? (
+                    branchesForSelectedState.map((branch) => (
+                      <SelectItem key={branch.id} value={branch.id}>
+                        {branch.nome}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-branches" disabled>
+                      {selectedState && isLoadingBranches ? "Carregando..." : "Nenhuma sede encontrada"}
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />
