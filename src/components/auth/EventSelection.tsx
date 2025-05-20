@@ -32,7 +32,6 @@ export const EventSelection = ({
   // Check if the user needs to accept the privacy policy
   const { 
     needsAcceptance, 
-    isLoading: isPolicyCheckLoading, 
     checkCompleted,
     refetchCheck 
   } = usePrivacyPolicyCheck();
@@ -99,16 +98,6 @@ export const EventSelection = ({
   const handlePrivacyPolicyAccept = async () => {
     await refetchCheck();
   };
-  
-  // Always check for privacy policy acceptance first
-  if (isPolicyCheckLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-olimpics-green-primary" />
-        <span className="ml-2">Verificando termos de privacidade...</span>
-      </div>
-    );
-  }
   
   // Show the privacy policy acceptance modal if needed
   if (needsAcceptance) {

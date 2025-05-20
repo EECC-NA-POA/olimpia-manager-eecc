@@ -52,6 +52,7 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
     },
     enabled: !!userId && enabled,
     retry: 1,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60, // 1 minute
   });
 };

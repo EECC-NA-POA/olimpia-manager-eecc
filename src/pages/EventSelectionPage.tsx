@@ -14,6 +14,7 @@ import { DEBUG_MODE } from '@/constants/routes';
 import { toast } from "sonner";
 import { usePrivacyPolicyCheck } from '@/hooks/usePrivacyPolicyCheck';
 import { PrivacyPolicyAcceptanceModal } from '@/components/auth/PrivacyPolicyAcceptanceModal';
+import { LoadingState } from '@/components/dashboard/components/LoadingState';
 
 export default function EventSelectionPage() {
   const navigate = useNavigate();
@@ -30,11 +31,15 @@ export default function EventSelectionPage() {
   } = usePrivacyPolicyCheck();
 
   // Debug logs to help diagnose the issue
-  console.log('User data:', user);
-  console.log('Can create events permission:', canCreateEvents);
-  console.log('Permission loading state:', permissionLoading);
-  console.log('Privacy policy check completed:', checkCompleted);
-  console.log('Needs privacy policy acceptance:', needsAcceptance);
+  useEffect(() => {
+    if (user) {
+      console.log('User data:', user);
+      console.log('Can create events permission:', canCreateEvents);
+      console.log('Permission loading state:', permissionLoading);
+      console.log('Privacy policy check completed:', checkCompleted);
+      console.log('Needs privacy policy acceptance:', needsAcceptance);
+    }
+  }, [user, canCreateEvents, permissionLoading, checkCompleted, needsAcceptance]);
 
   useEffect(() => {
     if (!user) {
@@ -71,8 +76,9 @@ export default function EventSelectionPage() {
       console.log('Calculated user age:', age);
       return age;
     },
-    enabled: !!user?.id,
-    retry: 1 // Only retry once to avoid excessive retries on permanent errors
+    enabled: !!user?.id && checkCompleted,
+    retry: 1, // Only retry once to avoid excessive retries on permanent errors
+    staleTime: 1000 * 60 * 10, // 10 minutes
   });
 
   const handleEventSelect = (eventId: string) => {
@@ -108,14 +114,18 @@ export default function EventSelectionPage() {
     return null;
   }
 
-  // Show loading state while checking privacy policy
-  if (isPolicyCheckLoading) {
+  // Show a brief loading state (max 1 second) for privacy policy check
+  if (isPolicyCheckLoading && !checkCompleted) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-olimpics-green-primary border-t-transparent"></div>
-          <span className="text-olimpics-green-primary font-medium">Verificando termos de privacidade...</span>
-        </div>
+      <div className="min-h-screen bg-cover bg-center bg-no-repeat"
+        style={{ 
+          backgroundImage: 'url(/lovable-uploads/7f5d4c54-bc15-4310-ac7a-ecd055bda99b.png)',
+          backgroundColor: 'rgba(0, 155, 64, 0.05)',
+          backgroundBlendMode: 'overlay',
+          boxShadow: 'inset 0 0 0 2000px rgba(0, 155, 64, 0.05)'
+        }}
+      >
+        <LoadingState />
       </div>
     );
   }

@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import AthleteProfilePage from '@/components/AthleteProfilePage';
 import { usePrivacyPolicyCheck } from '@/hooks/usePrivacyPolicyCheck';
 import { PrivacyPolicyAcceptanceModal } from '@/components/auth/PrivacyPolicyAcceptanceModal';
+import { LoadingState } from '@/components/dashboard/components/LoadingState';
 
 const Dashboard = () => {
   const { user, currentEventId, signOut } = useAuth();
@@ -15,7 +16,6 @@ const Dashboard = () => {
   // Check if the user needs to accept the privacy policy
   const { 
     needsAcceptance, 
-    isLoading: isPolicyCheckLoading, 
     checkCompleted,
     refetchCheck 
   } = usePrivacyPolicyCheck();
@@ -55,12 +55,8 @@ const Dashboard = () => {
     }
   };
 
-  if (isLoading || isPolicyCheckLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-olimpics-green-primary" />
-      </div>
-    );
+  if (isLoading) {
+    return <LoadingState />;
   }
   
   // Show the privacy policy modal if needed

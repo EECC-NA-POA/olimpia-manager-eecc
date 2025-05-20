@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "../ui/skeleton";
 
 interface PrivacyPolicyAcceptanceModalProps {
   onAccept: () => void;
@@ -25,11 +26,12 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
   const { user } = useAuth();
   const [accepted, setAccepted] = useState(false);
   
-  // Fetch the latest privacy policy
+  // Fetch the latest privacy policy with shorter timeout
   const { data: policyContent, isLoading, error } = useQuery({
     queryKey: ['latest-privacy-policy'],
     queryFn: fetchActivePrivacyPolicy,
-    retry: 3,
+    retry: 1,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   // Mutation to register user acceptance
@@ -45,7 +47,7 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
           .from('termos_privacidade')
           .select('id, versao_termo, termo_texto')
           .eq('ativo', true)
-          .order('created_at', { ascending: false })
+          .order('data_criacao', { ascending: false })
           .limit(1)
           .single();
           
@@ -121,8 +123,11 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
           
           <div className="border rounded-md p-4 max-h-[50vh] overflow-y-auto bg-muted/30">
             {isLoading ? (
-              <div className="flex items-center justify-center h-48">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-olimpics-green-primary" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-full" />
               </div>
             ) : error ? (
               <div className="text-center text-red-500">

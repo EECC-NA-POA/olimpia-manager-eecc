@@ -30,9 +30,9 @@ export const usePrivacyPolicyCheck = (): UsePrivacyPolicyCheckResult => {
       // Get the latest active privacy policy
       const { data: latestPolicy, error: policyError } = await supabase
         .from('termos_privacidade')
-        .select('id, versao_termo, created_at')
+        .select('id, versao_termo, data_criacao')
         .eq('ativo', true)
-        .order('created_at', { ascending: false })
+        .order('data_criacao', { ascending: false })
         .limit(1)
         .single();
 
@@ -74,7 +74,7 @@ export const usePrivacyPolicyCheck = (): UsePrivacyPolicyCheckResult => {
     queryKey: ['privacy-policy-acceptance', user?.id],
     queryFn: checkLatestAcceptance,
     enabled: !!user?.id,
-    retry: 2,
+    retry: 1,
     staleTime: 1000 * 60 * 5, // 5 minutes
     meta: {
       skipThrow: true

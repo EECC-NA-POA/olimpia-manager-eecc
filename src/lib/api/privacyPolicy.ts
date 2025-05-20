@@ -11,7 +11,7 @@ export const fetchActivePrivacyPolicy = async (): Promise<string> => {
       .from('termos_privacidade')
       .select('conteudo')
       .eq('ativo', true)
-      .order('created_at', { ascending: false })
+      .order('data_criacao', { ascending: false })
       .limit(1)
       .single();
     
@@ -23,7 +23,7 @@ export const fetchActivePrivacyPolicy = async (): Promise<string> => {
         console.log('Permission error, trying alternative approach...');
         
         // Tentativa usando acesso anônimo através da API pública
-        const publicResponse = await fetch(`${SUPABASE_URL}/rest/v1/termos_privacidade?select=conteudo&ativo=eq.true&order=created_at.desc&limit=1`, {
+        const publicResponse = await fetch(`${SUPABASE_URL}/rest/v1/termos_privacidade?select=conteudo&ativo=eq.true&order=data_criacao.desc&limit=1`, {
           headers: {
             'apikey': SUPABASE_PUBLISHABLE_KEY,
             'Content-Type': 'application/json'
