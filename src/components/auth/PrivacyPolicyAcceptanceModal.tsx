@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -138,9 +137,11 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
     }
 
     return (
-      <ReactMarkdown className="prose prose-sm max-w-none dark:prose-invert">
-        {policyContent}
-      </ReactMarkdown>
+      <div className="prose prose-sm max-w-none dark:prose-invert">
+        <ReactMarkdown>
+          {policyContent}
+        </ReactMarkdown>
+      </div>
     );
   };
 
