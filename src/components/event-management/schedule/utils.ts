@@ -1,7 +1,7 @@
 
-import { PostgrestClient } from '@supabase/supabase-js';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 export const formatDate = (dateStr: string) => {
   try {
@@ -14,7 +14,7 @@ export const formatDate = (dateStr: string) => {
 };
 
 // Updated to use cronogramas (plural)
-export const createCronogramaTableIfNotExists = async (supabase: any) => {
+export const createCronogramaTableIfNotExists = async (supabase: SupabaseClient) => {
   try {
     // Check if table exists first
     const { data: tableExists } = await supabase
