@@ -1,11 +1,9 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+
 import { useAuth } from "@/contexts/AuthContext";
-import { fetchActivePrivacyPolicy } from "@/lib/api/privacyPolicy";
-import { supabase } from "@/lib/supabase";
-import { LogOut, X, RefreshCcw } from "lucide-react";
-import { toast } from "sonner";
-import ReactMarkdown from 'react-markdown';
+import { X } from "lucide-react";
+import { PolicyContent } from "./privacy-policy/PolicyContent";
+import { PolicyActions } from "./privacy-policy/PolicyActions";
+import { usePrivacyPolicyAcceptance } from "@/hooks/usePrivacyPolicyAcceptance";
 
 import {
   AlertDialog,
@@ -16,134 +14,36 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "../ui/skeleton";
 
 interface PrivacyPolicyAcceptanceModalProps {
   onAccept: () => void;
   onCancel: () => void;
 }
 
-export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPolicyAcceptanceModalProps) => {
+export const PrivacyPolicyAcceptanceModal = ({ 
+  onAccept, 
+  onCancel 
+}: PrivacyPolicyAcceptanceModalProps) => {
   const { user } = useAuth();
-  const [accepted, setAccepted] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
   
-  // Fetch the latest privacy policy with shorter timeout
-  const { data: policyContent, isLoading, error, refetch } = useQuery({
-    queryKey: ['latest-privacy-policy', retryCount],
-    queryFn: fetchActivePrivacyPolicy,
-    retry: 1,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-
-  // Mutation to register user acceptance
-  const registerAcceptanceMutation = useMutation({
-    mutationFn: async () => {
-      try {
-        if (!user?.id) {
-          throw new Error('Usuário não identificado');
-        }
-        
-        // Get the latest privacy policy version
-        const { data: latestPolicy, error: policyError } = await supabase
-          .from('termos_privacidade')
-          .select('id, versao_termo, termo_texto')
-          .eq('ativo', true)
-          .order('data_criacao', { ascending: false })
-          .limit(1)
-          .single();
-          
-        if (policyError || !latestPolicy) {
-          console.error('Error fetching latest policy:', policyError);
-          throw new Error('Não foi possível obter a versão do termo de privacidade');
-        }
-        
-        console.log('Registering privacy policy acceptance for user:', user.id, 'policy:', latestPolicy.versao_termo);
-        
-        // Register user acceptance
-        const { error: acceptanceError } = await supabase
-          .from('logs_aceite_privacidade')
-          .insert({
-            usuario_id: user.id,
-            termo_id: latestPolicy.id,
-            nome_completo: user.nome_completo || user.user_metadata?.nome_completo,
-            tipo_documento: user.tipo_documento || user.user_metadata?.tipo_documento,
-            numero_documento: user.numero_documento || user.user_metadata?.numero_documento,
-            versao_termo: latestPolicy.versao_termo,
-            termo_texto: latestPolicy.termo_texto
-          });
-          
-        if (acceptanceError) {
-          console.error('Error registering acceptance:', acceptanceError);
-          throw new Error('Não foi possível registrar o aceite do termo de privacidade');
-        }
-        
-        return true;
-      } catch (error) {
-        console.error('Error in registerAcceptanceMutation:', error);
-        throw error;
-      }
+  const { 
+    policyContent,
+    isLoading,
+    error,
+    handleRetryLoad,
+    handleAccept,
+    accepted,
+    isPending,
+    policyContentHasError
+  } = usePrivacyPolicyAcceptance({
+    userId: user?.id,
+    userMetadata: {
+      nome_completo: user?.nome_completo || user?.user_metadata?.nome_completo,
+      tipo_documento: user?.tipo_documento || user?.user_metadata?.tipo_documento,
+      numero_documento: user?.numero_documento || user?.user_metadata?.numero_documento,
     },
-    onSuccess: () => {
-      console.log('Privacy policy acceptance registered successfully');
-      toast.success("Termo de privacidade aceito com sucesso!");
-      onAccept();
-    },
-    onError: (error) => {
-      console.error('Failed to register privacy policy acceptance:', error);
-      toast.error("Não foi possível registrar o aceite do termo de privacidade");
-    }
+    onAcceptSuccess: onAccept
   });
-
-  const handleAccept = () => {
-    setAccepted(true);
-    registerAcceptanceMutation.mutate();
-  };
-
-  const handleRetryLoad = () => {
-    setRetryCount(prev => prev + 1);
-    refetch();
-  };
-
-  // Display the content differently based on loading and error states
-  const renderPolicyContent = () => {
-    if (isLoading) {
-      return (
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-5/6" />
-          <Skeleton className="h-4 w-full" />
-        </div>
-      );
-    }
-
-    if (error || !policyContent || (typeof policyContent === 'string' && policyContent.includes('Não foi possível carregar'))) {
-      return (
-        <div className="text-center space-y-4">
-          <p className="text-red-500">
-            Não foi possível carregar a política de privacidade. Por favor, tente novamente.
-          </p>
-          <Button 
-            onClick={handleRetryLoad}
-            variant="outline" 
-            className="flex items-center gap-2"
-          >
-            <RefreshCcw className="h-4 w-4" />
-            Tentar novamente
-          </Button>
-        </div>
-      );
-    }
-
-    return (
-      <div className="prose prose-sm max-w-none dark:prose-invert">
-        <ReactMarkdown>
-          {policyContent}
-        </ReactMarkdown>
-      </div>
-    );
-  };
 
   return (
     <AlertDialog open={true}>
@@ -168,34 +68,24 @@ export const PrivacyPolicyAcceptanceModal = ({ onAccept, onCancel }: PrivacyPoli
 
         <div className="py-4">
           <div className="border rounded-md p-4 max-h-[50vh] overflow-y-auto bg-muted/30">
-            {renderPolicyContent()}
+            <PolicyContent
+              isLoading={isLoading}
+              error={error}
+              policyContent={policyContent}
+              onRetryLoad={handleRetryLoad}
+            />
           </div>
         </div>
 
-        <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
-          <Button 
-            variant="outline" 
-            className="w-full sm:w-auto flex items-center gap-2"
-            onClick={onCancel}
-          >
-            <LogOut className="w-4 h-4" />
-            Sair
-          </Button>
-          
-          <Button
-            className="w-full sm:w-auto"
-            onClick={handleAccept}
-            disabled={isLoading || registerAcceptanceMutation.isPending || accepted || error !== null || !policyContent || (typeof policyContent === 'string' && policyContent.includes('Não foi possível carregar'))}
-          >
-            {registerAcceptanceMutation.isPending ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white mr-2" />
-                Processando...
-              </>
-            ) : (
-              "Concordo com a Política de Privacidade"
-            )}
-          </Button>
+        <AlertDialogFooter>
+          <PolicyActions
+            onAccept={handleAccept}
+            onCancel={onCancel}
+            isLoading={isLoading}
+            isPending={isPending}
+            isAccepted={accepted}
+            isDisabled={policyContentHasError}
+          />
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
