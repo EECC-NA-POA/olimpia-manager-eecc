@@ -27,6 +27,7 @@ interface WelcomePolicyBranchModalProps {
   needsLocationSelection: boolean;
   existingBranchId?: string;
   existingState?: string;
+  existingBranchName?: string;
   onComplete: () => void;
 }
 
@@ -42,6 +43,7 @@ export const WelcomePolicyBranchModal = ({
   needsLocationSelection,
   existingBranchId,
   existingState,
+  existingBranchName,
   onComplete
 }: WelcomePolicyBranchModalProps) => {
   const { user } = useAuth();
@@ -161,7 +163,16 @@ export const WelcomePolicyBranchModal = ({
                   <MapPin className="h-5 w-5 text-olimpics-green-primary" />
                   <h3 className="font-medium">Sua sede</h3>
                 </div>
-                <LocationSelector form={form} disabled={true} />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium mb-1">Estado</p>
+                    <p className="px-3 py-2 border rounded-md bg-gray-50">{existingState}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium mb-1">Sede</p>
+                    <p className="px-3 py-2 border rounded-md bg-gray-50">{existingBranchName}</p>
+                  </div>
+                </div>
               </div>
             ) : null}
             

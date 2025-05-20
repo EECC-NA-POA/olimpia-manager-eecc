@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,6 +15,7 @@ export function EventSelectionContainer() {
   const { user, signOut } = useAuth();
   const [needsBranchSelection, setNeedsBranchSelection] = useState(false);
   const [existingState, setExistingState] = useState<string | undefined>(undefined);
+  const [existingBranchName, setExistingBranchName] = useState<string | undefined>(undefined);
   
   // Check if the user needs to accept the privacy policy
   const { 
@@ -29,10 +31,10 @@ export function EventSelectionContainer() {
       if (!user?.id) return;
       
       try {
-        // Join with filiais table to get the state
+        // Join with filiais table to get the state and branch name
         const { data, error } = await supabase
           .from('usuarios')
-          .select('filial_id, filiais:filial_id(estado)')
+          .select('filial_id, filiais:filial_id(estado, nome)')
           .eq('id', user.id)
           .single();
           
@@ -44,11 +46,12 @@ export function EventSelectionContainer() {
         const needsSelection = !data.filial_id;
         setNeedsBranchSelection(needsSelection);
         
-        // Correct the type handling: Supabase returns nested tables as objects, not arrays
+        // Access the estado and nome properties from the filiais object
         if (!needsSelection && data.filiais) {
-          // Access the estado property from the filiais object
           const filiais = data.filiais as any;
           setExistingState(filiais.estado);
+          setExistingBranchName(filiais.nome);
+          console.log('User branch data:', filiais);
         }
       } catch (err) {
         console.error('Error in checkUserBranch:', err);
@@ -135,6 +138,7 @@ export function EventSelectionContainer() {
           needsLocationSelection={needsBranchSelection}
           existingBranchId={user?.filial_id}
           existingState={existingState}
+          existingBranchName={existingBranchName}
           onComplete={handlePreferencesComplete}
         />
       </div>
