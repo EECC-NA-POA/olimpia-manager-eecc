@@ -60,17 +60,17 @@ export const usePrivacyPolicyAcceptance = ({
         
         console.log('Registering privacy policy acceptance for user:', userId, 'policy:', latestPolicy.versao_termo);
         
-        // Register user acceptance
+        // Register user acceptance - Corrigindo a estrutura para corresponder ao formato da tabela
         const { error: acceptanceError } = await supabase
           .from('logs_aceite_privacidade')
           .insert({
             usuario_id: userId,
-            termo_id: latestPolicy.id,
+            termo_privacidade_id: latestPolicy.id,  // Corrigido: Campo para o ID do termo
             nome_completo: userMetadata?.nome_completo,
             tipo_documento: userMetadata?.tipo_documento,
             numero_documento: userMetadata?.numero_documento,
             versao_termo: latestPolicy.versao_termo,
-            termo_texto: latestPolicy.termo_texto
+            texto_termo: latestPolicy.termo_texto  // Corrigido: Campo para o texto do termo
           });
           
         if (acceptanceError) {
