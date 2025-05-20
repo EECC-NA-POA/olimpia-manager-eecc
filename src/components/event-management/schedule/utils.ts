@@ -1,42 +1,44 @@
 
+import { PostgrestClient } from '@supabase/supabase-js';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
 export const formatDate = (dateStr: string) => {
-  if (!dateStr) return '';
-  
   try {
-    const date = new Date(dateStr);
-    // Check if date is valid before formatting
-    if (isNaN(date.getTime())) {
-      return dateStr;
-    }
-    return date.toLocaleDateString('pt-BR');
-  } catch (e) {
-    console.error('Error formatting date:', e);
+    const date = parseISO(dateStr);
+    return format(date, "dd/MM/yyyy", { locale: ptBR });
+  } catch (error) {
+    console.error('Error formatting date:', error);
     return dateStr;
   }
 };
 
+// Updated to use cronogramas (plural)
 export const createCronogramaTableIfNotExists = async (supabase: any) => {
   try {
-    // Check if table exists
-    const { error: checkError } = await supabase.rpc('check_if_table_exists', { table_name: 'cronograma' });
+    // Check if table exists first
+    const { data: tableExists } = await supabase
+      .from('cronogramas')
+      .select('id')
+      .limit(1);
     
-    if (checkError) {
-      console.log('Creating cronograma table...');
-      
-      // Create table if it doesn't exist
-      const { error } = await supabase.rpc('create_cronograma_table');
-      
-      if (error) {
-        console.error('Error creating cronograma table:', error);
-        return false;
-      }
-      console.log('Cronograma table created successfully');
-      return true;
+    // If we got a response, table exists
+    if (tableExists !== null) {
+      console.log('Cronogramas table exists');
+      return;
     }
     
-    return true;
-  } catch (e) {
-    console.error('Error checking/creating cronograma table:', e);
-    return false;
+    console.log('Cronogramas table does not exist, will attempt to create');
+    
+    // This is just a fallback and should be handled properly in migrations
+    const { error } = await supabase.rpc('create_cronogramas_table_if_not_exists');
+    
+    if (error) {
+      console.error('Error creating cronogramas table:', error);
+    } else {
+      console.log('Cronogramas table created successfully');
+    }
+  } catch (error) {
+    console.error('Error checking/creating cronogramas table:', error);
   }
 };

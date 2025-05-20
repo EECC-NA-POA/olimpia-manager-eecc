@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -34,12 +33,9 @@ export const useScheduleData = (eventId: string | null) => {
     try {
       console.log('Fetching schedule for event:', eventId);
       
-      // Try to create table if it doesn't exist
-      await createCronogramaTableIfNotExists(supabase);
-      
-      // Then attempt to fetch data
+      // Using the correct table name: cronogramas (plural)
       const { data, error } = await supabase
-        .from('cronograma')
+        .from('cronogramas')
         .select('*')
         .eq('evento_id', eventId)
         .order('data', { ascending: true })
@@ -111,13 +107,11 @@ export const useScheduleData = (eventId: string | null) => {
     
     setIsSaving(true);
     try {
-      // Ensure table exists before saving
-      await createCronogramaTableIfNotExists(supabase);
-      
+      // Use correct table name for saving as well
       if (editingId) {
         // Update existing item
         const { error } = await supabase
-          .from('cronograma')
+          .from('cronogramas')
           .update({
             titulo: currentItem.titulo,
             descricao: currentItem.descricao,
@@ -135,7 +129,7 @@ export const useScheduleData = (eventId: string | null) => {
       } else {
         // Create new item
         const { data, error } = await supabase
-          .from('cronograma')
+          .from('cronogramas')
           .insert({
             evento_id: eventId,
             titulo: currentItem.titulo,
@@ -174,8 +168,9 @@ export const useScheduleData = (eventId: string | null) => {
     }
     
     try {
+      // Use correct table name for deletion
       const { error } = await supabase
-        .from('cronograma')
+        .from('cronogramas')
         .delete()
         .eq('id', id);
       
