@@ -47,9 +47,9 @@ export function useAvailableAthletes(
         let filteredAthletes = data;
         if (!isOrganizer && filialId) {
           // Safe filtering to handle potential type issues
-          filteredAthletes = data.filter(athlete => {
-            return athlete && typeof athlete === 'object' && athlete !== null && 
-                  'filial_id' in athlete && athlete.filial_id === filialId;
+          filteredAthletes = data.filter(item => {
+            return item && typeof item === 'object' && 
+                  'filial_id' in item && item.filial_id === filialId;
           });
         }
         
@@ -82,14 +82,15 @@ export function useAvailableAthletes(
           
           // Only include athletes that aren't already in a team
           if (!athletesInTeams.has(athleteId)) {
+            const safeAthlete = athlete as Record<string, any>;
             availableAthletesArray.push({
               atleta_id: athleteId,
-              atleta_nome: (athlete as any).atleta_nome || '',
-              atleta_telefone: (athlete as any).atleta_telefone || '',
-              atleta_email: (athlete as any).atleta_email || '',
-              tipo_documento: (athlete as any).tipo_documento || '',
-              numero_documento: (athlete as any).numero_documento || '',
-              filial_id: (athlete as any).filial_id || ''
+              atleta_nome: safeAthlete.atleta_nome || '',
+              atleta_telefone: safeAthlete.atleta_telefone || '',
+              atleta_email: safeAthlete.atleta_email || '',
+              tipo_documento: safeAthlete.tipo_documento || '',
+              numero_documento: safeAthlete.numero_documento || '',
+              filial_id: safeAthlete.filial_id || ''
             });
           }
         }
