@@ -98,11 +98,11 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     enabled: !!userId && !isOrganizer,
   });
 
-  // Fetch modalities - Fix the type instantiation issue
+  // Fetch modalities with simplified type handling
   const { data: modalities, isLoading: isLoadingModalities } = useQuery({
     queryKey: ['modalities', eventId],
     queryFn: async () => {
-      if (!eventId) return [];
+      if (!eventId) return [] as Modality[];
       
       // Get modalities with confirmed athlete enrollments
       const { data, error } = await supabase
@@ -119,20 +119,19 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
           description: 'Não foi possível carregar as modalidades',
           variant: "destructive"
         });
-        return [];
+        return [] as Modality[];
       }
       
-      // Use type assertion with a simpler approach to avoid deep type instantiation
-      const rawData = data as any[];
+      // Handle unique modalities with direct type assertion
+      const uniqueModalitiesMap = new Map<number, Modality>();
       
-      // Handle duplicate removal manually without complex type inference
-      const uniqueIds = new Set<number>();
-      const uniqueModalities: Modality[] = [];
+      // Cast data to any[] to avoid deep type inference
+      const items = data as any[];
       
-      rawData.forEach(item => {
-        if (!uniqueIds.has(item.modalidade_id)) {
-          uniqueIds.add(item.modalidade_id);
-          uniqueModalities.push({
+      // Build a map of unique modalities
+      items.forEach(item => {
+        if (!uniqueModalitiesMap.has(item.modalidade_id)) {
+          uniqueModalitiesMap.set(item.modalidade_id, {
             modalidade_id: item.modalidade_id,
             modalidade_nome: item.modalidade_nome,
             categoria: item.categoria,
@@ -141,16 +140,17 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
         }
       });
       
-      return uniqueModalities;
+      // Convert map to array
+      return Array.from(uniqueModalitiesMap.values());
     },
     enabled: !!eventId,
   });
 
-  // Fetch existing teams for the selected modality - Fix type instantiation issue
+  // Fetch existing teams with simplified type handling
   const { data: existingTeams, isLoading: isLoadingTeams } = useQuery({
     queryKey: ['teams', eventId, selectedModalityId, isOrganizer, userInfo?.filial_id],
     queryFn: async () => {
-      if (!eventId || !selectedModalityId) return [];
+      if (!eventId || !selectedModalityId) return [] as Team[];
       
       let query = supabase
         .from('equipes')
@@ -167,16 +167,23 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
       
       if (teamsError) {
         console.error('Error fetching teams:', teamsError);
-        return [];
+        return [] as Team[];
       }
       
-      // Use explicit typing and any for intermediate data to avoid deep inference
-      const teamArray = teamsData || [];
+      // Simple array to store results
       const result: Team[] = [];
       
-      // Process each team individually to avoid complex type instantiation
-      for (const team of teamArray) {
+      // Process each team individually with explicit typing
+      const teamsList = teamsData as any[] || [];
+      for (const team of teamsList) {
         try {
+          // Type the team object explicitly
+          const teamObj = {
+            id: team.id,
+            nome: team.nome,
+            athletes: [] as TeamAthlete[]
+          };
+          
           const { data: athletesData, error: athletesError } = await supabase
             .from('atletas_equipes')
             .select(`
@@ -191,13 +198,27 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
           
           if (athletesError) {
             console.error(`Error fetching athletes for team ${team.id}:`, athletesError);
-            result.push({ ...team, athletes: [] } as Team);
-          } else {
-            result.push({ ...team, athletes: athletesData || [] } as Team);
+          } else if (athletesData) {
+            // Transform the data with explicit typing to avoid deep inference
+            teamObj.athletes = (athletesData as any[]).map(item => ({
+              id: item.id,
+              posicao: item.posicao,
+              raia: item.raia,
+              atleta_id: item.atleta_id,
+              usuarios: {
+                nome_completo: item.usuarios.nome_completo,
+                email: item.usuarios.email,
+                telefone: item.usuarios.telefone,
+                tipo_documento: item.usuarios.tipo_documento,
+                numero_documento: item.usuarios.numero_documento
+              }
+            }));
           }
+          
+          result.push(teamObj);
         } catch (err) {
           console.error(`Error processing team ${team.id}:`, err);
-          result.push({ ...team, athletes: [] } as Team);
+          result.push({ id: team.id, nome: team.nome, athletes: [] });
         }
       }
       
@@ -206,11 +227,11 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     enabled: !!eventId && !!selectedModalityId,
   });
 
-  // Fetch athletes available for team formation - Fix type instantiation issue
+  // Fetch available athletes with simplified type handling
   const { data: availableAthletes } = useQuery({
     queryKey: ['athletes', eventId, selectedModalityId, isOrganizer, userInfo?.filial_id],
     queryFn: async () => {
-      if (!eventId || !selectedModalityId) return [];
+      if (!eventId || !selectedModalityId) return [] as AvailableAthlete[];
       
       // Get confirmed athletes for the selected modality
       let query = supabase
@@ -235,33 +256,46 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
       
       if (error) {
         console.error('Error fetching athletes:', error);
-        return [];
+        return [] as AvailableAthlete[];
       }
       
-      // Avoid complex type inference with deep nesting by using simpler constructs
-      const rawAthletes = data as any[];
+      // Cast to simple array to avoid deep type inference
+      const allAthletes = (data || []) as any[];
       
       // Filter out athletes who are already in teams
       if (existingTeams && existingTeams.length > 0) {
-        // Create a set of IDs for quick lookup
+        // Create a simple Set of athlete IDs already in teams
         const athletesInTeamsSet = new Set<string>();
         
-        // Manually add all IDs to the set
-        for (const team of existingTeams) {
-          for (const athlete of team.athletes) {
+        // Add all athletes from teams to the set
+        existingTeams.forEach(team => {
+          team.athletes.forEach(athlete => {
             athletesInTeamsSet.add(athlete.atleta_id);
-          }
-        }
+          });
+        });
         
-        // Filter using the set and cast to the expected type
-        const filteredAthletes = rawAthletes.filter(
-          athlete => !athletesInTeamsSet.has(athlete.atleta_id)
-        );
-        
-        return filteredAthletes as AvailableAthlete[];
+        // Simple filter operation with explicit return type
+        return allAthletes
+          .filter(athlete => !athletesInTeamsSet.has(athlete.atleta_id))
+          .map(athlete => ({
+            atleta_id: athlete.atleta_id,
+            atleta_nome: athlete.atleta_nome,
+            atleta_telefone: athlete.atleta_telefone,
+            atleta_email: athlete.atleta_email,
+            tipo_documento: athlete.tipo_documento,
+            numero_documento: athlete.numero_documento
+          })) as AvailableAthlete[];
       }
       
-      return rawAthletes as AvailableAthlete[];
+      // Map to explicit structure to avoid type inference issues
+      return allAthletes.map(athlete => ({
+        atleta_id: athlete.atleta_id,
+        atleta_nome: athlete.atleta_nome,
+        atleta_telefone: athlete.atleta_telefone,
+        atleta_email: athlete.atleta_email,
+        tipo_documento: athlete.tipo_documento,
+        numero_documento: athlete.numero_documento
+      })) as AvailableAthlete[];
     },
     enabled: !!eventId && !!selectedModalityId && !!existingTeams,
   });
@@ -273,10 +307,10 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
         throw new Error('Missing event ID or modality ID');
       }
       
-      // Determinar a filial_id com base no perfil
+      // Determine branch ID based on profile
       const filial_id = isOrganizer ? null : userInfo?.filial_id;
       
-      // Se não for organizador, precisa ter uma filial
+      // Branch ID is required for non-organizers
       if (!isOrganizer && !filial_id) {
         throw new Error('Missing branch ID for delegation representative');
       }
