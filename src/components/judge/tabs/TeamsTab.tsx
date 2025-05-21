@@ -1,6 +1,5 @@
 
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React from 'react';
 import { 
   Card, 
   CardContent, 
@@ -8,367 +7,32 @@ import {
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { supabase } from '@/integrations/supabase/client';
 import { TeamFormation } from '@/components/judge/TeamFormation';
-import { toast } from '@/hooks/use-toast';
-
-interface TeamsTabProps {
-  userId: string;
-  eventId: string | null;
-  isOrganizer?: boolean; // Para determinar permissões diferentes
-}
-
-// Define explicit types for our queries
-interface UserInfo {
-  id: string;
-  filial_id: string;
-}
-
-interface Modality {
-  modalidade_id: number;
-  modalidade_nome: string;
-  categoria: string;
-  tipo_modalidade: string;
-}
-
-interface TeamAthlete {
-  id: number;
-  posicao: number;
-  raia: number | null;
-  atleta_id: string;
-  usuarios: {
-    nome_completo: string;
-    email: string;
-    telefone: string;
-    tipo_documento: string;
-    numero_documento: string;
-  };
-}
-
-interface Team {
-  id: number;
-  nome: string;
-  athletes: TeamAthlete[];
-}
-
-interface AvailableAthlete {
-  atleta_id: string;
-  atleta_nome: string;
-  atleta_telefone: string;
-  atleta_email: string;
-  tipo_documento: string;
-  numero_documento: string;
-  filial_id?: string; // Made optional since it might not exist in the view
-}
+import { useTeamData } from './teams/useTeamData';
+import { ModalitySelector } from './teams/ModalitySelector';
+import { TeamCreationForm } from './teams/TeamCreationForm';
+import { NoModalitiesCard } from './teams/NoModalitiesCard';
+import { TeamsTabProps } from './teams/types';
 
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
-  const queryClient = useQueryClient();
-  const [selectedModalityId, setSelectedModalityId] = useState<number | null>(null);
-  const [teamName, setTeamName] = useState('');
-
-  // Fetch user branch info if not an organizer
-  const { data: userInfo } = useQuery({
-    queryKey: ['user-info', userId],
-    queryFn: async () => {
-      if (!userId) return null;
-      
-      const { data, error } = await supabase
-        .from('usuarios')
-        .select('id, filial_id')
-        .eq('id', userId)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching user info:', error);
-        return null;
-      }
-      
-      return data as UserInfo | null;
-    },
-    enabled: !!userId && !isOrganizer,
-  });
-
-  // Fetch modalities with simplified type handling
-  const { data: modalities, isLoading: isLoadingModalities } = useQuery({
-    queryKey: ['modalities', eventId],
-    queryFn: async () => {
-      if (!eventId) return [] as Modality[];
-      
-      // Get modalities with confirmed athlete enrollments
-      const { data, error } = await supabase
-        .from('vw_modalidades_atletas_confirmados')
-        .select('modalidade_id, modalidade_nome, categoria, tipo_modalidade')
-        .eq('evento_id', eventId)
-        .order('modalidade_nome')
-        .limit(100);
-      
-      if (error) {
-        console.error('Error fetching modalities:', error);
-        toast({
-          title: "Erro",
-          description: 'Não foi possível carregar as modalidades',
-          variant: "destructive"
-        });
-        return [] as Modality[];
-      }
-      
-      // Handle unique modalities with direct type assertion
-      const uniqueModalitiesMap = new Map<number, Modality>();
-      
-      // Cast data to any[] to avoid deep type inference
-      const items = data as any[];
-      
-      // Build a map of unique modalities
-      items.forEach(item => {
-        if (!uniqueModalitiesMap.has(item.modalidade_id)) {
-          uniqueModalitiesMap.set(item.modalidade_id, {
-            modalidade_id: item.modalidade_id,
-            modalidade_nome: item.modalidade_nome,
-            categoria: item.categoria,
-            tipo_modalidade: item.tipo_modalidade
-          });
-        }
-      });
-      
-      // Convert map to array
-      return Array.from(uniqueModalitiesMap.values());
-    },
-    enabled: !!eventId,
-  });
-
-  // Fetch existing teams with simplified type handling
-  const { data: existingTeams, isLoading: isLoadingTeams } = useQuery({
-    queryKey: ['teams', eventId, selectedModalityId, isOrganizer, userInfo?.filial_id],
-    queryFn: async () => {
-      if (!eventId || !selectedModalityId) return [] as Team[];
-      
-      let query = supabase
-        .from('equipes')
-        .select('id, nome')
-        .eq('evento_id', eventId)
-        .eq('modalidade_id', selectedModalityId);
-      
-      // If not an organizer, filter teams by branch
-      if (!isOrganizer && userInfo?.filial_id) {
-        query = query.eq('filial_id', userInfo.filial_id);
-      }
-      
-      const { data: teamsData, error: teamsError } = await query.order('nome');
-      
-      if (teamsError) {
-        console.error('Error fetching teams:', teamsError);
-        return [] as Team[];
-      }
-      
-      // Simple array to store results
-      const result: Team[] = [];
-      
-      // Process each team individually with explicit typing
-      const teamsList = teamsData as any[] || [];
-      for (const team of teamsList) {
-        try {
-          // Type the team object explicitly
-          const teamObj = {
-            id: team.id,
-            nome: team.nome,
-            athletes: [] as TeamAthlete[]
-          };
-          
-          const { data: athletesData, error: athletesError } = await supabase
-            .from('atletas_equipes')
-            .select(`
-              id,
-              posicao,
-              raia,
-              atleta_id,
-              usuarios!inner(nome_completo, email, telefone, tipo_documento, numero_documento)
-            `)
-            .eq('equipe_id', team.id)
-            .order('posicao');
-          
-          if (athletesError) {
-            console.error(`Error fetching athletes for team ${team.id}:`, athletesError);
-          } else if (athletesData) {
-            // Transform the data with explicit typing to avoid deep inference
-            teamObj.athletes = (athletesData as any[]).map(item => ({
-              id: item.id,
-              posicao: item.posicao,
-              raia: item.raia,
-              atleta_id: item.atleta_id,
-              usuarios: {
-                nome_completo: item.usuarios.nome_completo,
-                email: item.usuarios.email,
-                telefone: item.usuarios.telefone,
-                tipo_documento: item.usuarios.tipo_documento,
-                numero_documento: item.usuarios.numero_documento
-              }
-            }));
-          }
-          
-          result.push(teamObj);
-        } catch (err) {
-          console.error(`Error processing team ${team.id}:`, err);
-          result.push({ id: team.id, nome: team.nome, athletes: [] });
-        }
-      }
-      
-      return result;
-    },
-    enabled: !!eventId && !!selectedModalityId,
-  });
-
-  // Fetch available athletes with simplified type handling
-  const { data: availableAthletes } = useQuery({
-    queryKey: ['athletes', eventId, selectedModalityId, isOrganizer, userInfo?.filial_id],
-    queryFn: async () => {
-      if (!eventId || !selectedModalityId) return [] as AvailableAthlete[];
-      
-      // Get confirmed athletes for the selected modality
-      let query = supabase
-        .from('vw_modalidades_atletas_confirmados')
-        .select(`
-          atleta_id,
-          atleta_nome,
-          atleta_telefone,
-          atleta_email,
-          tipo_documento,
-          numero_documento
-        `)
-        .eq('evento_id', eventId)
-        .eq('modalidade_id', selectedModalityId);
-      
-      // If not an organizer, filter athletes by branch using the user's branch
-      if (!isOrganizer && userInfo?.filial_id) {
-        query = query.eq('filial_id', userInfo.filial_id);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching athletes:', error);
-        return [] as AvailableAthlete[];
-      }
-      
-      // Cast to simple array to avoid deep type inference
-      const allAthletes = (data || []) as any[];
-      
-      // Filter out athletes who are already in teams
-      if (existingTeams && existingTeams.length > 0) {
-        // Create a simple Set of athlete IDs already in teams
-        const athletesInTeamsSet = new Set<string>();
-        
-        // Add all athletes from teams to the set
-        existingTeams.forEach(team => {
-          team.athletes.forEach(athlete => {
-            athletesInTeamsSet.add(athlete.atleta_id);
-          });
-        });
-        
-        // Simple filter operation with explicit return type
-        return allAthletes
-          .filter(athlete => !athletesInTeamsSet.has(athlete.atleta_id))
-          .map(athlete => ({
-            atleta_id: athlete.atleta_id,
-            atleta_nome: athlete.atleta_nome,
-            atleta_telefone: athlete.atleta_telefone,
-            atleta_email: athlete.atleta_email,
-            tipo_documento: athlete.tipo_documento,
-            numero_documento: athlete.numero_documento
-          })) as AvailableAthlete[];
-      }
-      
-      // Map to explicit structure to avoid type inference issues
-      return allAthletes.map(athlete => ({
-        atleta_id: athlete.atleta_id,
-        atleta_nome: athlete.atleta_nome,
-        atleta_telefone: athlete.atleta_telefone,
-        atleta_email: athlete.atleta_email,
-        tipo_documento: athlete.tipo_documento,
-        numero_documento: athlete.numero_documento
-      })) as AvailableAthlete[];
-    },
-    enabled: !!eventId && !!selectedModalityId && !!existingTeams,
-  });
-
-  // Create team mutation
-  const createTeamMutation = useMutation({
-    mutationFn: async (newTeam: { name: string }) => {
-      if (!eventId || !selectedModalityId) {
-        throw new Error('Missing event ID or modality ID');
-      }
-      
-      // Determine branch ID based on profile
-      const filial_id = isOrganizer ? null : userInfo?.filial_id;
-      
-      // Branch ID is required for non-organizers
-      if (!isOrganizer && !filial_id) {
-        throw new Error('Missing branch ID for delegation representative');
-      }
-      
-      const { data, error } = await supabase
-        .from('equipes')
-        .insert({
-          nome: newTeam.name,
-          evento_id: eventId,
-          modalidade_id: selectedModalityId,
-          filial_id: filial_id,
-          created_by: userId
-        })
-        .select('id')
-        .single();
-      
-      if (error) {
-        console.error('Error creating team:', error);
-        throw error;
-      }
-      
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams', eventId, selectedModalityId, isOrganizer, userInfo?.filial_id] });
-      setTeamName('');
-      toast({
-        title: "Equipe criada",
-        description: 'A equipe foi criada com sucesso',
-        variant: "success"
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro",
-        description: 'Não foi possível criar a equipe',
-        variant: "destructive"
-      });
-    }
-  });
+  const {
+    modalities,
+    isLoadingModalities,
+    selectedModalityId,
+    setSelectedModalityId,
+    existingTeams,
+    isLoadingTeams,
+    availableAthletes,
+    teamName,
+    setTeamName,
+    createTeamMutation,
+    handleCreateTeam
+  } = useTeamData(userId, eventId, isOrganizer);
 
   // Handle modality selection
   const handleModalityChange = (value: string) => {
     setSelectedModalityId(Number(value));
-  };
-
-  // Handle team creation
-  const handleCreateTeam = () => {
-    if (!teamName.trim()) {
-      toast({
-        title: "Nome obrigatório",
-        description: 'Por favor, informe um nome para a equipe',
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    createTeamMutation.mutate({ name: teamName });
   };
 
   if (isLoadingModalities) {
@@ -381,16 +45,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
   }
 
   if (!modalities || modalities.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Nenhuma modalidade disponível</CardTitle>
-          <CardDescription>
-            Não existem modalidades com atletas confirmados para este evento.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
+    return <NoModalitiesCard />;
   }
 
   return (
@@ -404,43 +59,19 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            <div>
-              <label className="text-sm font-medium">Modalidade</label>
-              <Select onValueChange={handleModalityChange}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione uma modalidade" />
-                </SelectTrigger>
-                <SelectContent>
-                  {modalities.map((modality: Modality) => (
-                    <SelectItem 
-                      key={modality.modalidade_id} 
-                      value={modality.modalidade_id.toString()}
-                    >
-                      {modality.modalidade_nome} - {modality.categoria}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <ModalitySelector 
+              modalities={modalities}
+              onModalityChange={handleModalityChange}
+            />
             
             {selectedModalityId && (
               <>
-                <div className="flex items-end gap-2">
-                  <div className="flex-1">
-                    <label className="text-sm font-medium">Nova Equipe</label>
-                    <Input 
-                      placeholder="Nome da equipe" 
-                      value={teamName}
-                      onChange={(e) => setTeamName(e.target.value)}
-                    />
-                  </div>
-                  <Button 
-                    onClick={handleCreateTeam}
-                    disabled={createTeamMutation.isPending}
-                  >
-                    {createTeamMutation.isPending ? 'Criando...' : 'Criar Equipe'}
-                  </Button>
-                </div>
+                <TeamCreationForm
+                  teamName={teamName}
+                  onTeamNameChange={setTeamName}
+                  onCreateTeam={handleCreateTeam}
+                  isCreating={createTeamMutation.isPending}
+                />
                 
                 {isLoadingTeams ? (
                   <Skeleton className="h-64 w-full" />
