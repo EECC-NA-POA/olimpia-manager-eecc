@@ -61,14 +61,14 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
       
       if (data) {
         // Build a map of unique modalities
-        for (const item of data) {
+        data.forEach(item => {
           uniqueModalitiesMap.set(item.modalidade_id, {
             modalidade_id: item.modalidade_id,
             modalidade_nome: item.modalidade_nome,
             categoria: item.categoria,
             tipo_modalidade: item.tipo_modalidade
           });
-        }
+        });
       }
       
       // Convert map to array
@@ -101,66 +101,55 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
         return [] as Team[];
       }
       
-      // Simple array to store results
-      const result: Team[] = [];
-      
-      // Process each team individually with explicit typing
-      const teamsList = teamsData || [];
-      for (const team of teamsList) {
-        try {
-          // Type the team object explicitly
-          const teamObj: Team = {
-            id: team.id,
-            nome: team.nome,
-            athletes: []
-          };
-          
-          const { data: athletesData, error: athletesError } = await supabase
-            .from('atletas_equipes')
-            .select(`
-              id,
-              posicao,
-              raia,
-              atleta_id,
-              usuarios!inner(nome_completo, email, telefone, tipo_documento, numero_documento)
-            `)
-            .eq('equipe_id', team.id)
-            .order('posicao');
-          
-          if (athletesError) {
-            console.error(`Error fetching athletes for team ${team.id}:`, athletesError);
-          } else if (athletesData) {
-            // Transform the data with explicit typing
-            teamObj.athletes = athletesData.map(item => ({
-              id: item.id,
-              posicao: item.posicao,
-              raia: item.raia,
-              atleta_id: item.atleta_id,
-              usuarios: {
-                nome_completo: item.usuarios.nome_completo,
-                email: item.usuarios.email,
-                telefone: item.usuarios.telefone,
-                tipo_documento: item.usuarios.tipo_documento,
-                numero_documento: item.usuarios.numero_documento
-              }
-            }));
-          }
-          
-          result.push(teamObj);
-        } catch (err) {
-          console.error(`Error processing team ${team.id}:`, err);
-          result.push({ id: team.id, nome: team.nome, athletes: [] });
+      const teamsPromises = (teamsData || []).map(async (team) => {
+        const teamObj: Team = {
+          id: team.id,
+          nome: team.nome,
+          athletes: []
+        };
+        
+        const { data: athletesData, error: athletesError } = await supabase
+          .from('atletas_equipes')
+          .select(`
+            id,
+            posicao,
+            raia,
+            atleta_id,
+            usuarios!inner(nome_completo, email, telefone, tipo_documento, numero_documento)
+          `)
+          .eq('equipe_id', team.id)
+          .order('posicao');
+        
+        if (athletesError) {
+          console.error(`Error fetching athletes for team ${team.id}:`, athletesError);
+        } else if (athletesData) {
+          teamObj.athletes = athletesData.map(item => ({
+            id: item.id,
+            posicao: item.posicao,
+            raia: item.raia,
+            atleta_id: item.atleta_id,
+            usuarios: {
+              nome_completo: item.usuarios.nome_completo,
+              email: item.usuarios.email,
+              telefone: item.usuarios.telefone,
+              tipo_documento: item.usuarios.tipo_documento,
+              numero_documento: item.usuarios.numero_documento
+            }
+          }));
         }
-      }
+        
+        return teamObj;
+      });
       
-      return result;
+      const resolvedTeams = await Promise.all(teamsPromises);
+      return resolvedTeams;
     },
     enabled: !!eventId && !!selectedModalityId,
   });
 
-  // Fetch available athletes with simplified type handling
+  // Fetch available athletes
   const { data: availableAthletes } = useQuery({
-    queryKey: ['athletes', eventId, selectedModalityId, isOrganizer, userInfo?.filial_id],
+    queryKey: ['athletes', eventId, selectedModalityId, isOrganizer, userInfo?.filial_id, existingTeams],
     queryFn: async () => {
       if (!eventId || !selectedModalityId) return [] as AvailableAthlete[];
       
@@ -173,7 +162,8 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
           atleta_telefone,
           atleta_email,
           tipo_documento,
-          numero_documento
+          numero_documento,
+          filial_id
         `)
         .eq('evento_id', eventId)
         .eq('modalidade_id', selectedModalityId);
@@ -190,43 +180,31 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
         return [] as AvailableAthlete[];
       }
       
-      // Cast to simple array to avoid deep type inference
-      const allAthletes = data || [];
+      // Create a Set of athlete IDs already in teams
+      const athletesInTeams = new Set<string>();
       
-      // Filter out athletes who are already in teams
       if (existingTeams && existingTeams.length > 0) {
-        // Create a simple Set of athlete IDs already in teams
-        const athletesInTeamsSet = new Set<string>();
-        
-        // Add all athletes from teams to the set
         existingTeams.forEach(team => {
           team.athletes.forEach(athlete => {
-            athletesInTeamsSet.add(athlete.atleta_id);
+            athletesInTeams.add(athlete.atleta_id);
           });
         });
-        
-        // Simple filter operation with explicit return type
-        return allAthletes
-          .filter(athlete => !athletesInTeamsSet.has(athlete.atleta_id))
-          .map(athlete => ({
-            atleta_id: athlete.atleta_id,
-            atleta_nome: athlete.atleta_nome,
-            atleta_telefone: athlete.atleta_telefone,
-            atleta_email: athlete.atleta_email,
-            tipo_documento: athlete.tipo_documento,
-            numero_documento: athlete.numero_documento
-          }));
       }
       
-      // Map to explicit structure to avoid type inference issues
-      return allAthletes.map(athlete => ({
-        atleta_id: athlete.atleta_id,
-        atleta_nome: athlete.atleta_nome,
-        atleta_telefone: athlete.atleta_telefone,
-        atleta_email: athlete.atleta_email,
-        tipo_documento: athlete.tipo_documento,
-        numero_documento: athlete.numero_documento
-      }));
+      // Filter and map athletes to the correct type
+      const availableAthletesArray = (data || [])
+        .filter(athlete => !athletesInTeams.has(athlete.atleta_id))
+        .map(athlete => ({
+          atleta_id: athlete.atleta_id,
+          atleta_nome: athlete.atleta_nome,
+          atleta_telefone: athlete.atleta_telefone,
+          atleta_email: athlete.atleta_email,
+          tipo_documento: athlete.tipo_documento,
+          numero_documento: athlete.numero_documento,
+          filial_id: athlete.filial_id
+        }));
+      
+      return availableAthletesArray;
     },
     enabled: !!eventId && !!selectedModalityId && !!existingTeams,
   });

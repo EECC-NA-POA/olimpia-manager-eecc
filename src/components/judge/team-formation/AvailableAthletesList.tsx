@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { AvailableAthlete } from '../tabs/teams/types';
 
 interface AvailableAthletesListProps {
-  athletes: any[];
+  athletes: AvailableAthlete[];
   onAddAthlete: (athleteId: string) => void;
   isPending: boolean;
 }

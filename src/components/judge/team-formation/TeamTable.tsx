@@ -9,9 +9,10 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { TeamTableRow } from './TeamTableRow';
+import { TeamAthlete } from '../tabs/teams/types';
 
 interface TeamTableProps {
-  athletes: any[];
+  athletes: TeamAthlete[];
   teamId: number;
   onUpdateLane: (teamId: number, athleteId: string, lane: number, position: number) => void;
   onRemoveAthlete: (teamId: number, athleteId: string) => void;

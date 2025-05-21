@@ -3,10 +3,11 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TeamTable } from './TeamTable';
 import { AvailableAthletesList } from './AvailableAthletesList';
+import { Team, AvailableAthlete, TeamAthlete } from '../tabs/teams/types';
 
 interface TeamCardProps {
-  team: any;
-  availableAthletes: any[];
+  team: Team;
+  availableAthletes: AvailableAthlete[];
   onAddAthlete: (teamId: number, athleteId: string) => void;
   onRemoveAthlete: (teamId: number, athleteId: string) => void;
   onUpdateLane: (teamId: number, athleteId: string, lane: number, position: number) => void;

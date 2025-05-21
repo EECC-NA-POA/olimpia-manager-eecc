@@ -3,9 +3,10 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TableCell, TableRow } from '@/components/ui/table';
+import { TeamAthlete } from '../tabs/teams/types';
 
 interface TeamTableRowProps {
-  athlete: any;
+  athlete: TeamAthlete;
   teamId: number;
   onUpdateLane: (teamId: number, athleteId: string, lane: number, position: number) => void;
   onRemoveAthlete: (teamId: number, athleteId: string) => void;
