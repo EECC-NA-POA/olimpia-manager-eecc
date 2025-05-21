@@ -68,19 +68,20 @@ export function useAvailableAthletes(
         
         for (const athlete of filteredAthletes) {
           // Type guard to ensure athlete has required properties
-          if (athlete && typeof athlete === 'object' && 'atleta_id' in athlete) {
-            // Only include athletes that aren't already in a team
-            if (!athletesInTeams.has(athlete.atleta_id as string)) {
-              availableAthletesArray.push({
-                atleta_id: athlete.atleta_id as string,
-                atleta_nome: athlete.atleta_nome as string,
-                atleta_telefone: athlete.atleta_telefone as string,
-                atleta_email: athlete.atleta_email as string,
-                tipo_documento: athlete.tipo_documento as string,
-                numero_documento: athlete.numero_documento as string,
-                filial_id: athlete.filial_id as string
-              });
-            }
+          if (!athlete || typeof athlete !== 'object') continue;
+          if (!('atleta_id' in athlete) || !athlete.atleta_id) continue;
+          
+          // Only include athletes that aren't already in a team
+          if (!athletesInTeams.has(athlete.atleta_id as string)) {
+            availableAthletesArray.push({
+              atleta_id: athlete.atleta_id as string,
+              atleta_nome: (athlete.atleta_nome as string) || '',
+              atleta_telefone: (athlete.atleta_telefone as string) || '',
+              atleta_email: (athlete.atleta_email as string) || '',
+              tipo_documento: (athlete.tipo_documento as string) || '',
+              numero_documento: (athlete.numero_documento as string) || '',
+              filial_id: (athlete.filial_id as string) || ''
+            });
           }
         }
         

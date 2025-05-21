@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -12,10 +12,13 @@ import { TeamFormation } from '@/components/judge/TeamFormation';
 import { useTeamData } from './teams/hooks/useTeamData';
 import { ModalitySelector } from './teams/ModalitySelector';
 import { NoModalitiesCard } from './teams/NoModalitiesCard';
+import { TeamCreationForm } from './teams/TeamCreationForm';
+import { useTeamCreation } from './teams/hooks/useTeamCreation';
 import { TeamsTabProps } from './teams/types';
 import { Info } from 'lucide-react';
 
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
+  const [teamName, setTeamName] = useState('');
   const {
     modalities,
     isLoadingModalities,
@@ -23,8 +26,20 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     setSelectedModalityId,
     existingTeams,
     isLoadingTeams,
-    availableAthletes
+    availableAthletes,
+    userInfo
   } = useTeamData(userId, eventId, isOrganizer);
+
+  // Team creation functionality
+  const { handleCreateTeam, createTeamMutation } = useTeamCreation(
+    userId,
+    eventId,
+    selectedModalityId,
+    userInfo?.filial_id,
+    isOrganizer,
+    teamName,
+    setTeamName
+  );
 
   // Handle modality selection
   const handleModalityChange = (value: string) => {
@@ -50,7 +65,10 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
         <CardHeader>
           <CardTitle>Equipes</CardTitle>
           <CardDescription>
-            Visualize as equipes formadas pelos representantes de delegação
+            {isOrganizer 
+              ? "Gerencie as equipes formadas pelos representantes de delegação" 
+              : "Monte as equipes para as modalidades coletivas"
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -62,20 +80,36 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
             
             {selectedModalityId && (
               <>
-                <div className="flex items-center gap-2 p-2 rounded-md bg-amber-50 border border-amber-200 text-amber-800">
-                  <Info size={16} />
-                  <p className="text-sm">As equipes são formadas pelos representantes de delegação e não podem ser editadas.</p>
-                </div>
+                {/* Team creation form for delegation representatives */}
+                {!isOrganizer && (
+                  <div className="pt-4">
+                    <TeamCreationForm
+                      teamName={teamName}
+                      onTeamNameChange={setTeamName}
+                      onCreateTeam={handleCreateTeam}
+                      isCreating={createTeamMutation.isPending}
+                    />
+                  </div>
+                )}
+                
+                {/* Information message for judges */}
+                {isOrganizer && (
+                  <div className="flex items-center gap-2 p-2 rounded-md bg-amber-50 border border-amber-200 text-amber-800">
+                    <Info size={16} />
+                    <p className="text-sm">As equipes são formadas pelos representantes de delegação e não podem ser editadas.</p>
+                  </div>
+                )}
                 
                 {isLoadingTeams ? (
                   <Skeleton className="h-64 w-full" />
                 ) : (
                   <TeamFormation 
                     teams={existingTeams || []}
-                    availableAthletes={[]}
+                    availableAthletes={availableAthletes || []}
                     eventId={eventId}
                     modalityId={selectedModalityId}
-                    isReadOnly={true}
+                    isOrganizer={isOrganizer}
+                    isReadOnly={isOrganizer}
                   />
                 )}
               </>

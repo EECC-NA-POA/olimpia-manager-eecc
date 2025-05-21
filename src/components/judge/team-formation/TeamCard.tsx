@@ -7,11 +7,17 @@ import { Team } from '../tabs/teams/types';
 interface TeamCardProps {
   team: Team;
   isReadOnly?: boolean;
+  onUpdateLane?: (teamId: number, athleteId: string, lane: number, position: number) => void;
+  onRemoveAthlete?: (teamId: number, athleteId: string) => void;
+  isRemovePending?: boolean;
 }
 
 export function TeamCard({
   team,
-  isReadOnly = false
+  isReadOnly = false,
+  onUpdateLane,
+  onRemoveAthlete,
+  isRemovePending = false
 }: TeamCardProps) {
   return (
     <Card>
@@ -22,7 +28,11 @@ export function TeamCard({
         <div className="space-y-4">
           <TeamTable
             athletes={team.athletes}
+            teamId={team.id}
             isReadOnly={isReadOnly}
+            onUpdateLane={onUpdateLane}
+            onRemoveAthlete={onRemoveAthlete}
+            isRemovePending={isRemovePending}
           />
         </div>
       </CardContent>

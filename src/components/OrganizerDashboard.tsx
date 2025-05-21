@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -106,7 +105,7 @@ export default function OrganizerDashboard() {
       case "teams":
         return (
           <TeamsTab
-            userId={user?.id}
+            userId={user?.id || ''}
             eventId={currentEventId}
             isOrganizer={true}
           />
