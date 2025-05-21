@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TeamFormation } from '@/components/judge/TeamFormation';
-import { useTeamData } from './teams/useTeamData';
+import { useTeamData } from './teams/hooks/useTeamData';
 import { ModalitySelector } from './teams/ModalitySelector';
 import { TeamCreationForm } from './teams/TeamCreationForm';
 import { NoModalitiesCard } from './teams/NoModalitiesCard';

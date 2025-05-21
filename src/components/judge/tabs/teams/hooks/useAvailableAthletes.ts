@@ -1,0 +1,91 @@
+
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { AvailableAthlete, Team } from '../types';
+
+export function useAvailableAthletes(
+  eventId: string | null,
+  selectedModalityId: number | null,
+  isOrganizer = false,
+  filialId?: string,
+  existingTeams: Team[] = []
+) {
+  // Fetch available athletes
+  const { data: availableAthletes } = useQuery({
+    queryKey: ['athletes', eventId, selectedModalityId, isOrganizer, filialId, existingTeams],
+    queryFn: async () => {
+      if (!eventId || !selectedModalityId) return [] as AvailableAthlete[];
+      
+      try {
+        // Construct a safe query for confirmed athletes
+        const { data, error } = await supabase
+          .from('vw_modalidades_atletas_confirmados')
+          .select(`
+            atleta_id,
+            atleta_nome,
+            atleta_telefone,
+            atleta_email,
+            tipo_documento,
+            numero_documento,
+            filial_id
+          `)
+          .eq('evento_id', eventId)
+          .eq('modalidade_id', selectedModalityId);
+        
+        if (error) {
+          console.error('Error fetching athletes:', error);
+          // Return an empty array if there's an error
+          return [] as AvailableAthlete[];
+        }
+        
+        // Ensure we have data before proceeding
+        if (!data || !Array.isArray(data)) {
+          return [] as AvailableAthlete[];
+        }
+        
+        // Filter by branch if not an organizer
+        let filteredAthletes = data;
+        if (!isOrganizer && filialId) {
+          filteredAthletes = data.filter(athlete => athlete.filial_id === filialId);
+        }
+        
+        // Create a Set of athlete IDs already in teams
+        const athletesInTeams = new Set<string>();
+        
+        if (existingTeams && existingTeams.length > 0) {
+          existingTeams.forEach(team => {
+            team.athletes.forEach(athlete => {
+              athletesInTeams.add(athlete.atleta_id);
+            });
+          });
+        }
+        
+        // Filter and map athletes safely
+        const availableAthletesArray: AvailableAthlete[] = [];
+        
+        for (const athlete of filteredAthletes) {
+          // Only include athletes that aren't already in a team
+          if (!athletesInTeams.has(athlete.atleta_id)) {
+            availableAthletesArray.push({
+              atleta_id: athlete.atleta_id,
+              atleta_nome: athlete.atleta_nome,
+              atleta_telefone: athlete.atleta_telefone,
+              atleta_email: athlete.atleta_email,
+              tipo_documento: athlete.tipo_documento,
+              numero_documento: athlete.numero_documento,
+              filial_id: athlete.filial_id
+            });
+          }
+        }
+        
+        return availableAthletesArray;
+      } catch (err) {
+        console.error("Error in useAvailableAthletes:", err);
+        return [] as AvailableAthlete[];
+      }
+    },
+    enabled: !!eventId && !!selectedModalityId && !!existingTeams,
+  });
+
+  return { availableAthletes };
+}
