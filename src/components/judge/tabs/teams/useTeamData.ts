@@ -43,8 +43,7 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
         .from('vw_modalidades_atletas_confirmados')
         .select('modalidade_id, modalidade_nome, categoria, tipo_modalidade')
         .eq('evento_id', eventId)
-        .order('modalidade_nome')
-        .limit(100);
+        .order('modalidade_nome');
       
       if (error) {
         console.error('Error fetching modalities:', error);
@@ -56,11 +55,10 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
         return [] as Modality[];
       }
       
-      // Handle unique modalities with direct type assertion
+      // Process unique modalities
       const uniqueModalitiesMap = new Map<number, Modality>();
       
-      if (data) {
-        // Build a map of unique modalities
+      if (data && data.length > 0) {
         data.forEach(item => {
           uniqueModalitiesMap.set(item.modalidade_id, {
             modalidade_id: item.modalidade_id,
@@ -77,19 +75,20 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
     enabled: !!eventId,
   });
 
-  // Fetch existing teams with simplified type handling
+  // Fetch existing teams
   const { data: existingTeams, isLoading: isLoadingTeams } = useQuery({
     queryKey: ['teams', eventId, selectedModalityId, isOrganizer, userInfo?.filial_id],
     queryFn: async () => {
       if (!eventId || !selectedModalityId) return [] as Team[];
       
+      // Build the teams query
       let query = supabase
         .from('equipes')
         .select('id, nome')
         .eq('evento_id', eventId)
         .eq('modalidade_id', selectedModalityId);
       
-      // If not an organizer, filter teams by branch
+      // Filter by branch if not an organizer
       if (!isOrganizer && userInfo?.filial_id) {
         query = query.eq('filial_id', userInfo.filial_id);
       }
@@ -101,13 +100,17 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
         return [] as Team[];
       }
       
-      const teamsPromises = (teamsData || []).map(async (team) => {
+      // Process teams with explicit typing
+      const teams: Team[] = [];
+      
+      for (const team of teamsData || []) {
         const teamObj: Team = {
           id: team.id,
           nome: team.nome,
           athletes: []
         };
         
+        // Fetch athletes for this team
         const { data: athletesData, error: athletesError } = await supabase
           .from('atletas_equipes')
           .select(`
@@ -122,7 +125,7 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
         
         if (athletesError) {
           console.error(`Error fetching athletes for team ${team.id}:`, athletesError);
-        } else if (athletesData) {
+        } else if (athletesData && athletesData.length > 0) {
           teamObj.athletes = athletesData.map(item => ({
             id: item.id,
             posicao: item.posicao,
@@ -138,11 +141,10 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
           }));
         }
         
-        return teamObj;
-      });
+        teams.push(teamObj);
+      }
       
-      const resolvedTeams = await Promise.all(teamsPromises);
-      return resolvedTeams;
+      return teams;
     },
     enabled: !!eventId && !!selectedModalityId,
   });
@@ -153,8 +155,8 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
     queryFn: async () => {
       if (!eventId || !selectedModalityId) return [] as AvailableAthlete[];
       
-      // Get confirmed athletes for the selected modality
-      let query = supabase
+      // Construct a safe query for confirmed athletes
+      const { data, error } = await supabase
         .from('vw_modalidades_atletas_confirmados')
         .select(`
           atleta_id,
@@ -168,16 +170,21 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
         .eq('evento_id', eventId)
         .eq('modalidade_id', selectedModalityId);
       
-      // If not an organizer, filter athletes by branch using the user's branch
-      if (!isOrganizer && userInfo?.filial_id) {
-        query = query.eq('filial_id', userInfo.filial_id);
-      }
-      
-      const { data, error } = await query;
-      
       if (error) {
         console.error('Error fetching athletes:', error);
+        // Return an empty array if there's an error
         return [] as AvailableAthlete[];
+      }
+      
+      // Ensure we have data before proceeding
+      if (!data || !Array.isArray(data)) {
+        return [] as AvailableAthlete[];
+      }
+      
+      // Filter by branch if not an organizer
+      let filteredAthletes = data;
+      if (!isOrganizer && userInfo?.filial_id) {
+        filteredAthletes = data.filter(athlete => athlete.filial_id === userInfo.filial_id);
       }
       
       // Create a Set of athlete IDs already in teams
@@ -191,8 +198,8 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
         });
       }
       
-      // Filter and map athletes to the correct type
-      const availableAthletesArray = (data || [])
+      // Filter and map athletes safely
+      const availableAthletesArray: AvailableAthlete[] = filteredAthletes
         .filter(athlete => !athletesInTeams.has(athlete.atleta_id))
         .map(athlete => ({
           atleta_id: athlete.atleta_id,
@@ -244,12 +251,14 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams', eventId, selectedModalityId, isOrganizer, userInfo?.filial_id] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['teams', eventId, selectedModalityId, isOrganizer, userInfo?.filial_id] 
+      });
       setTeamName('');
       toast({
         title: "Equipe criada",
         description: 'A equipe foi criada com sucesso',
-        variant: "success"
+        variant: "default"
       });
     },
     onError: (error) => {
@@ -283,7 +292,7 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
     setSelectedModalityId,
     existingTeams,
     isLoadingTeams,
-    availableAthletes,
+    availableAthletes: availableAthletes || [],
     teamName,
     setTeamName,
     createTeamMutation,
