@@ -45,6 +45,7 @@ export function useTeams(
               continue;
             }
             
+            // Create team object with explicit type
             const teamObj: Team = {
               id: team.id,
               nome: team.nome,
@@ -66,38 +67,27 @@ export function useTeams(
             
             if (athletesError) {
               console.error(`Error fetching athletes for team ${team.id}:`, athletesError);
-            } else if (athletesData && Array.isArray(athletesData) && athletesData.length > 0) {
-              teamObj.athletes = athletesData.map(item => {
-                if (!item || typeof item !== 'object') {
-                  return {
-                    id: 0,
-                    posicao: 0,
-                    raia: null,
-                    atleta_id: '',
-                    usuarios: {
-                      nome_completo: '',
-                      email: '',
-                      telefone: '',
-                      tipo_documento: '',
-                      numero_documento: ''
-                    }
-                  };
-                }
+            } else if (athletesData && Array.isArray(athletesData)) {
+              // Process athletes with type safety
+              for (const item of athletesData) {
+                if (!item || typeof item !== 'object') continue;
                 
-                return {
+                const usuario = item.usuarios || {};
+                
+                teamObj.athletes.push({
                   id: item.id || 0,
                   posicao: item.posicao || 0,
                   raia: item.raia || null,
                   atleta_id: item.atleta_id || '',
                   usuarios: {
-                    nome_completo: item.usuarios?.nome_completo || '',
-                    email: item.usuarios?.email || '',
-                    telefone: item.usuarios?.telefone || '',
-                    tipo_documento: item.usuarios?.tipo_documento || '',
-                    numero_documento: item.usuarios?.numero_documento || ''
+                    nome_completo: usuario.nome_completo || '',
+                    email: usuario.email || '',
+                    telefone: usuario.telefone || '',
+                    tipo_documento: usuario.tipo_documento || '',
+                    numero_documento: usuario.numero_documento || ''
                   }
-                };
-              });
+                });
+              }
             }
             
             teams.push(teamObj);

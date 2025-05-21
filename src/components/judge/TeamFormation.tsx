@@ -27,7 +27,8 @@ export function TeamFormation({
     handleRemoveAthleteFromTeam,
     handleUpdateLane,
     isUpdatePending,
-    isRemovePending
+    isRemovePending,
+    isAddingAthlete
   } = useTeamFormation({ 
     teams, 
     eventId, 
@@ -53,6 +54,7 @@ export function TeamFormation({
           athletes={availableAthletes}
           teams={teams}
           onAddAthleteToTeam={handleAddAthleteToTeam}
+          isPending={isAddingAthlete || false}
         />
       )}
 

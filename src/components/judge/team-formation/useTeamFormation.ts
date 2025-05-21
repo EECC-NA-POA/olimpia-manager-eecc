@@ -1,8 +1,9 @@
 
+import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
-import { Team, AvailableAthlete } from '../tabs/teams/types';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+import { Team } from '../tabs/teams/types';
 
 interface UseTeamFormationProps {
   teams: Team[];
@@ -11,181 +12,140 @@ interface UseTeamFormationProps {
   isOrganizer?: boolean;
 }
 
-export function useTeamFormation({ teams, eventId, modalityId, isOrganizer = false }: UseTeamFormationProps) {
+export function useTeamFormation({ 
+  teams, 
+  eventId, 
+  modalityId,
+  isOrganizer = false
+}: UseTeamFormationProps) {
   const queryClient = useQueryClient();
-  
-  // Update team athlete mutation
-  const updateTeamAthleteMutation = useMutation({
-    mutationFn: async ({ 
-      teamId, 
-      athleteId, 
-      position, 
-      lane 
-    }: { 
-      teamId: number; 
-      athleteId: string; 
-      position: number; 
-      lane?: number; 
-    }) => {
-      // Check if athlete is already in a team
-      const { data: existingAssignment, error: checkError } = await supabase
+  const [isAddingAthlete, setIsAddingAthlete] = useState(false);
+
+  const addAthleteMutation = useMutation({
+    mutationFn: async ({ teamId, athleteId }: { teamId: number, athleteId: string }) => {
+      // Get the team to find the next position
+      const team = teams.find(t => t.id === teamId);
+      if (!team) throw new Error('Team not found');
+      
+      // Calculate next position
+      const nextPosition = team.athletes.length > 0 
+        ? Math.max(...team.athletes.map(a => a.posicao)) + 1 
+        : 1;
+      
+      // Insert athlete into team
+      const { data, error } = await supabase
         .from('atletas_equipes')
-        .select('id, equipe_id')
-        .eq('atleta_id', athleteId)
-        .maybeSingle();
+        .insert({
+          equipe_id: teamId,
+          atleta_id: athleteId,
+          posicao: nextPosition,
+        })
+        .select();
       
-      if (checkError) {
-        console.error('Error checking athlete assignment:', checkError);
-        throw checkError;
-      }
-      
-      if (existingAssignment) {
-        // If the athlete is already in this team, update position/lane
-        if (existingAssignment.equipe_id === teamId) {
-          const { error: updateError } = await supabase
-            .from('atletas_equipes')
-            .update({ 
-              posicao: position,
-              raia: lane || null,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', existingAssignment.id);
-          
-          if (updateError) {
-            console.error('Error updating athlete assignment:', updateError);
-            throw updateError;
-          }
-        } else {
-          // If organizer, can move athlete between teams
-          if (isOrganizer) {
-            // Remove athlete from previous team
-            const { error: removeError } = await supabase
-              .from('atletas_equipes')
-              .delete()
-              .eq('id', existingAssignment.id);
-              
-            if (removeError) {
-              console.error('Error removing athlete from previous team:', removeError);
-              throw removeError;
-            }
-            
-            // Add athlete to new team
-            const { error: insertError } = await supabase
-              .from('atletas_equipes')
-              .insert({
-                equipe_id: teamId,
-                atleta_id: athleteId,
-                posicao: position,
-                raia: lane || null
-              });
-            
-            if (insertError) {
-              console.error('Error inserting athlete to new team:', insertError);
-              throw insertError;
-            }
-          } else {
-            // If not organizer, cannot transfer between teams
-            throw new Error('Atleta já está em outra equipe');
-          }
-        }
-      } else {
-        // Insert new assignment
-        const { error: insertError } = await supabase
-          .from('atletas_equipes')
-          .insert({
-            equipe_id: teamId,
-            atleta_id: athleteId,
-            posicao: position,
-            raia: lane || null
-          });
-        
-        if (insertError) {
-          console.error('Error inserting athlete assignment:', insertError);
-          throw insertError;
-        }
-      }
-      
-      return { success: true };
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams', eventId, modalityId] });
       queryClient.invalidateQueries({ queryKey: ['athletes', eventId, modalityId] });
-      toast({
-        title: "Equipe atualizada",
-        description: 'A composição da equipe foi atualizada com sucesso',
-        variant: "success"
-      });
+      toast.success('Atleta adicionado à equipe');
     },
-    onError: (error: any) => {
-      toast({
-        title: "Erro",
-        description: error.message || 'Não foi possível atualizar a equipe',
-        variant: "destructive"
-      });
-    }
+    onError: (error) => {
+      console.error('Error adding athlete:', error);
+      toast.error('Erro ao adicionar atleta à equipe');
+    },
   });
 
-  // Remove athlete from team mutation
-  const removeAthleteFromTeamMutation = useMutation({
-    mutationFn: async ({ 
-      teamId, 
-      athleteId 
-    }: { 
-      teamId: number; 
-      athleteId: string; 
-    }) => {
+  const removeAthleteMutation = useMutation({
+    mutationFn: async ({ teamId, athleteId }: { teamId: number, athleteId: string }) => {
+      // Find the athlete in the team to get its ID
+      const team = teams.find(t => t.id === teamId);
+      if (!team) throw new Error('Team not found');
+      
+      const athlete = team.athletes.find(a => a.atleta_id === athleteId);
+      if (!athlete) throw new Error('Athlete not found in team');
+      
+      // Delete the athlete from the team
       const { error } = await supabase
         .from('atletas_equipes')
         .delete()
-        .eq('equipe_id', teamId)
-        .eq('atleta_id', athleteId);
+        .eq('id', athlete.id);
       
-      if (error) {
-        console.error('Error removing athlete from team:', error);
-        throw error;
-      }
-      
-      return { success: true };
+      if (error) throw error;
+      return true;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams', eventId, modalityId] });
       queryClient.invalidateQueries({ queryKey: ['athletes', eventId, modalityId] });
-      toast({
-        title: "Atleta removido",
-        description: 'O atleta foi removido da equipe com sucesso',
-        variant: "success"
-      });
+      toast.success('Atleta removido da equipe');
     },
-    onError: (error: any) => {
-      toast({
-        title: "Erro",
-        description: error.message || 'Não foi possível remover o atleta da equipe',
-        variant: "destructive"
-      });
-    }
+    onError: (error) => {
+      console.error('Error removing athlete:', error);
+      toast.error('Erro ao remover atleta da equipe');
+    },
   });
 
-  // Handle add athlete to team
-  const handleAddAthleteToTeam = (teamId: number, athleteId: string) => {
-    const position = teams.find(t => t.id === teamId)?.athletes.length + 1 || 1;
-    updateTeamAthleteMutation.mutate({ teamId, athleteId, position });
+  const updateLaneMutation = useMutation({
+    mutationFn: async ({ 
+      teamId, 
+      athleteId, 
+      lane,
+      position
+    }: { 
+      teamId: number, 
+      athleteId: string, 
+      lane: number,
+      position: number 
+    }) => {
+      // Find the athlete in the team to get its ID
+      const team = teams.find(t => t.id === teamId);
+      if (!team) throw new Error('Team not found');
+      
+      const athlete = team.athletes.find(a => a.atleta_id === athleteId);
+      if (!athlete) throw new Error('Athlete not found in team');
+      
+      // Update the lane for the athlete
+      const { error } = await supabase
+        .from('atletas_equipes')
+        .update({ raia: lane, posicao: position })
+        .eq('id', athlete.id);
+      
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams', eventId, modalityId] });
+      toast.success('Raia atualizada com sucesso');
+    },
+    onError: (error) => {
+      console.error('Error updating lane:', error);
+      toast.error('Erro ao atualizar raia');
+    },
+  });
+
+  const handleAddAthleteToTeam = async (teamId: number, athleteId: string) => {
+    setIsAddingAthlete(true);
+    try {
+      await addAthleteMutation.mutateAsync({ teamId, athleteId });
+    } finally {
+      setIsAddingAthlete(false);
+    }
   };
 
-  // Handle remove athlete from team
   const handleRemoveAthleteFromTeam = (teamId: number, athleteId: string) => {
-    removeAthleteFromTeamMutation.mutate({ teamId, athleteId });
+    removeAthleteMutation.mutate({ teamId, athleteId });
   };
 
-  // Handle lane update
   const handleUpdateLane = (teamId: number, athleteId: string, lane: number, position: number) => {
-    updateTeamAthleteMutation.mutate({ teamId, athleteId, position, lane });
+    updateLaneMutation.mutate({ teamId, athleteId, lane, position });
   };
 
   return {
     handleAddAthleteToTeam,
     handleRemoveAthleteFromTeam,
     handleUpdateLane,
-    isUpdatePending: updateTeamAthleteMutation.isPending,
-    isRemovePending: removeAthleteFromTeamMutation.isPending
+    isUpdatePending: updateLaneMutation.isPending,
+    isRemovePending: removeAthleteMutation.isPending,
+    isAddingAthlete
   };
 }

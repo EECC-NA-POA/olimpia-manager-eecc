@@ -48,7 +48,8 @@ export function useAvailableAthletes(
         if (!isOrganizer && filialId) {
           // Safe filtering to handle potential type issues
           filteredAthletes = data.filter(athlete => {
-            return athlete && typeof athlete === 'object' && 'filial_id' in athlete && athlete.filial_id === filialId;
+            return athlete && typeof athlete === 'object' && athlete !== null && 
+                   'filial_id' in athlete && athlete.filial_id === filialId;
           });
         }
         
@@ -58,7 +59,9 @@ export function useAvailableAthletes(
         if (existingTeams && existingTeams.length > 0) {
           existingTeams.forEach(team => {
             team.athletes.forEach(athlete => {
-              athletesInTeams.add(athlete.atleta_id);
+              if (athlete && athlete.atleta_id) {
+                athletesInTeams.add(athlete.atleta_id);
+              }
             });
           });
         }
@@ -67,14 +70,18 @@ export function useAvailableAthletes(
         const availableAthletesArray: AvailableAthlete[] = [];
         
         for (const athlete of filteredAthletes) {
-          // Type guard to ensure athlete has required properties
+          // Skip if athlete is null or not an object
           if (!athlete || typeof athlete !== 'object') continue;
+          
+          // Type guard to ensure athlete has required properties
           if (!('atleta_id' in athlete) || !athlete.atleta_id) continue;
           
+          const athleteId = athlete.atleta_id as string;
+          
           // Only include athletes that aren't already in a team
-          if (!athletesInTeams.has(athlete.atleta_id as string)) {
+          if (!athletesInTeams.has(athleteId)) {
             availableAthletesArray.push({
-              atleta_id: athlete.atleta_id as string,
+              atleta_id: athleteId,
               atleta_nome: (athlete.atleta_nome as string) || '',
               atleta_telefone: (athlete.atleta_telefone as string) || '',
               atleta_email: (athlete.atleta_email as string) || '',
