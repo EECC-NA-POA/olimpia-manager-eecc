@@ -14,7 +14,7 @@ import { ModalitySelector } from './teams/ModalitySelector';
 import { NoModalitiesCard } from './teams/NoModalitiesCard';
 import { TeamCreationForm } from './teams/TeamCreationForm';
 import { useTeamCreation } from './teams/hooks/useTeamCreation';
-import { TeamsTabProps } from './teams/types';
+import { TeamsTabProps, Team, AvailableAthlete } from './teams/types';
 import { Info } from 'lucide-react';
 
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
@@ -58,6 +58,10 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
   if (!modalities || modalities.length === 0) {
     return <NoModalitiesCard />;
   }
+
+  // Use explicit typing for teams and athletes to avoid type recursion
+  const typedTeams: Team[] = existingTeams || [];
+  const typedAthletes: AvailableAthlete[] = availableAthletes || [];
 
   return (
     <div className="space-y-6">
@@ -104,8 +108,8 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
                   <Skeleton className="h-64 w-full" />
                 ) : (
                   <TeamFormation 
-                    teams={existingTeams || []}
-                    availableAthletes={availableAthletes || []}
+                    teams={typedTeams}
+                    availableAthletes={typedAthletes}
                     eventId={eventId}
                     modalityId={selectedModalityId}
                     isOrganizer={isOrganizer}

@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Team } from '../types';
+import { Team, TeamAthlete } from '../types';
 
 export function useTeams(
   eventId: string | null,
@@ -35,7 +35,7 @@ export function useTeams(
           return [] as Team[];
         }
         
-        // Process teams with explicit typing
+        // Use explicit typing for team data
         const teams: Team[] = [];
         
         if (teamsData && Array.isArray(teamsData)) {
@@ -68,25 +68,28 @@ export function useTeams(
             if (athletesError) {
               console.error(`Error fetching athletes for team ${team.id}:`, athletesError);
             } else if (athletesData && Array.isArray(athletesData)) {
-              // Process athletes with type safety
+              // Process athletes with explicit typing
               for (const item of athletesData) {
                 if (!item || typeof item !== 'object') continue;
                 
+                // Safely access usuario properties
                 const usuario = item.usuarios || {};
-                
-                teamObj.athletes.push({
+                // Create athlete with explicit typing
+                const athlete: TeamAthlete = {
                   id: item.id || 0,
                   posicao: item.posicao || 0,
                   raia: item.raia || null,
                   atleta_id: item.atleta_id || '',
                   usuarios: {
-                    nome_completo: usuario.nome_completo || '',
-                    email: usuario.email || '',
-                    telefone: usuario.telefone || '',
-                    tipo_documento: usuario.tipo_documento || '',
-                    numero_documento: usuario.numero_documento || ''
+                    nome_completo: (usuario as any)?.nome_completo || '',
+                    email: (usuario as any)?.email || '',
+                    telefone: (usuario as any)?.telefone || '',
+                    tipo_documento: (usuario as any)?.tipo_documento || '',
+                    numero_documento: (usuario as any)?.numero_documento || ''
                   }
-                });
+                };
+                
+                teamObj.athletes.push(athlete);
               }
             }
             

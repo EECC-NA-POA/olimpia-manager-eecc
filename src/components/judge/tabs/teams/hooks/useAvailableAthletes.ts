@@ -49,7 +49,7 @@ export function useAvailableAthletes(
           // Safe filtering to handle potential type issues
           filteredAthletes = data.filter(athlete => {
             return athlete && typeof athlete === 'object' && athlete !== null && 
-                   'filial_id' in athlete && athlete.filial_id === filialId;
+                  'filial_id' in athlete && athlete.filial_id === filialId;
           });
         }
         
@@ -58,11 +58,13 @@ export function useAvailableAthletes(
         
         if (existingTeams && existingTeams.length > 0) {
           existingTeams.forEach(team => {
-            team.athletes.forEach(athlete => {
-              if (athlete && athlete.atleta_id) {
-                athletesInTeams.add(athlete.atleta_id);
-              }
-            });
+            if (team && team.athletes) {
+              team.athletes.forEach(athlete => {
+                if (athlete && athlete.atleta_id) {
+                  athletesInTeams.add(athlete.atleta_id);
+                }
+              });
+            }
           });
         }
         
@@ -82,12 +84,12 @@ export function useAvailableAthletes(
           if (!athletesInTeams.has(athleteId)) {
             availableAthletesArray.push({
               atleta_id: athleteId,
-              atleta_nome: (athlete.atleta_nome as string) || '',
-              atleta_telefone: (athlete.atleta_telefone as string) || '',
-              atleta_email: (athlete.atleta_email as string) || '',
-              tipo_documento: (athlete.tipo_documento as string) || '',
-              numero_documento: (athlete.numero_documento as string) || '',
-              filial_id: (athlete.filial_id as string) || ''
+              atleta_nome: (athlete as any).atleta_nome || '',
+              atleta_telefone: (athlete as any).atleta_telefone || '',
+              atleta_email: (athlete as any).atleta_email || '',
+              tipo_documento: (athlete as any).tipo_documento || '',
+              numero_documento: (athlete as any).numero_documento || '',
+              filial_id: (athlete as any).filial_id || ''
             });
           }
         }
