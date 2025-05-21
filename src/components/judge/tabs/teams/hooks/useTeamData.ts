@@ -4,12 +4,9 @@ import { useUserInfo } from './useUserInfo';
 import { useModalities } from './useModalities';
 import { useTeams } from './useTeams';
 import { useAvailableAthletes } from './useAvailableAthletes';
-import { useTeamCreation } from './useTeamCreation';
-import { Team } from '../types';
 
 export function useTeamData(userId: string, eventId: string | null, isOrganizer = false) {
   const [selectedModalityId, setSelectedModalityId] = useState<number | null>(null);
-  const [teamName, setTeamName] = useState('');
 
   // Get user info and branch info
   const { userInfo } = useUserInfo(userId, isOrganizer);
@@ -34,17 +31,6 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
     existingTeams || []
   );
 
-  // Team creation functionality
-  const { createTeamMutation, handleCreateTeam } = useTeamCreation(
-    userId,
-    eventId,
-    selectedModalityId,
-    userInfo?.filial_id,
-    isOrganizer,
-    teamName,
-    setTeamName
-  );
-
   return {
     userInfo,
     modalities,
@@ -53,10 +39,6 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
     setSelectedModalityId,
     existingTeams,
     isLoadingTeams,
-    availableAthletes: availableAthletes || [],
-    teamName,
-    setTeamName,
-    createTeamMutation,
-    handleCreateTeam
+    availableAthletes: availableAthletes || []
   };
 }

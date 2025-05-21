@@ -8,23 +8,17 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { TeamTableRow } from './TeamTableRow';
+import { ReadOnlyTeamTableRow } from './ReadOnlyTeamTableRow';
 import { TeamAthlete } from '../tabs/teams/types';
 
 interface TeamTableProps {
   athletes: TeamAthlete[];
-  teamId: number;
-  onUpdateLane: (teamId: number, athleteId: string, lane: number, position: number) => void;
-  onRemoveAthlete: (teamId: number, athleteId: string) => void;
-  isRemovePending: boolean;
+  isReadOnly?: boolean;
 }
 
 export function TeamTable({ 
-  athletes, 
-  teamId, 
-  onUpdateLane, 
-  onRemoveAthlete,
-  isRemovePending 
+  athletes,
+  isReadOnly = false
 }: TeamTableProps) {
   if (athletes.length === 0) {
     return (
@@ -41,18 +35,13 @@ export function TeamTable({
           <TableHead>Posição</TableHead>
           <TableHead>Nome</TableHead>
           <TableHead>Raia</TableHead>
-          <TableHead>Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {athletes.map((athlete) => (
-          <TeamTableRow
+          <ReadOnlyTeamTableRow
             key={athlete.id}
             athlete={athlete}
-            teamId={teamId}
-            onUpdateLane={onUpdateLane}
-            onRemoveAthlete={onRemoveAthlete}
-            isRemovePending={isRemovePending}
           />
         ))}
       </TableBody>

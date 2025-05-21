@@ -2,32 +2,17 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TeamTable } from './TeamTable';
-import { AvailableAthletesList } from './AvailableAthletesList';
-import { Team, AvailableAthlete, TeamAthlete } from '../tabs/teams/types';
+import { Team } from '../tabs/teams/types';
 
 interface TeamCardProps {
   team: Team;
-  availableAthletes: AvailableAthlete[];
-  onAddAthlete: (teamId: number, athleteId: string) => void;
-  onRemoveAthlete: (teamId: number, athleteId: string) => void;
-  onUpdateLane: (teamId: number, athleteId: string, lane: number, position: number) => void;
-  isUpdatePending: boolean;
-  isRemovePending: boolean;
+  isReadOnly?: boolean;
 }
 
 export function TeamCard({
   team,
-  availableAthletes,
-  onAddAthlete,
-  onRemoveAthlete,
-  onUpdateLane,
-  isUpdatePending,
-  isRemovePending
+  isReadOnly = false
 }: TeamCardProps) {
-  const handleAddAthlete = (athleteId: string) => {
-    onAddAthlete(team.id, athleteId);
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -37,16 +22,7 @@ export function TeamCard({
         <div className="space-y-4">
           <TeamTable
             athletes={team.athletes}
-            teamId={team.id}
-            onUpdateLane={onUpdateLane}
-            onRemoveAthlete={onRemoveAthlete}
-            isRemovePending={isRemovePending}
-          />
-          
-          <AvailableAthletesList 
-            athletes={availableAthletes}
-            onAddAthlete={handleAddAthlete}
-            isPending={isUpdatePending}
+            isReadOnly={isReadOnly}
           />
         </div>
       </CardContent>

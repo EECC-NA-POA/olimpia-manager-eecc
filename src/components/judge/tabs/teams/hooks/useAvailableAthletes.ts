@@ -46,7 +46,10 @@ export function useAvailableAthletes(
         // Filter by branch if not an organizer
         let filteredAthletes = data;
         if (!isOrganizer && filialId) {
-          filteredAthletes = data.filter(athlete => athlete.filial_id === filialId);
+          // Safe filtering to handle potential type issues
+          filteredAthletes = data.filter(athlete => {
+            return athlete && typeof athlete === 'object' && 'filial_id' in athlete && athlete.filial_id === filialId;
+          });
         }
         
         // Create a Set of athlete IDs already in teams
@@ -64,17 +67,20 @@ export function useAvailableAthletes(
         const availableAthletesArray: AvailableAthlete[] = [];
         
         for (const athlete of filteredAthletes) {
-          // Only include athletes that aren't already in a team
-          if (!athletesInTeams.has(athlete.atleta_id)) {
-            availableAthletesArray.push({
-              atleta_id: athlete.atleta_id,
-              atleta_nome: athlete.atleta_nome,
-              atleta_telefone: athlete.atleta_telefone,
-              atleta_email: athlete.atleta_email,
-              tipo_documento: athlete.tipo_documento,
-              numero_documento: athlete.numero_documento,
-              filial_id: athlete.filial_id
-            });
+          // Type guard to ensure athlete has required properties
+          if (athlete && typeof athlete === 'object' && 'atleta_id' in athlete) {
+            // Only include athletes that aren't already in a team
+            if (!athletesInTeams.has(athlete.atleta_id as string)) {
+              availableAthletesArray.push({
+                atleta_id: athlete.atleta_id as string,
+                atleta_nome: athlete.atleta_nome as string,
+                atleta_telefone: athlete.atleta_telefone as string,
+                atleta_email: athlete.atleta_email as string,
+                tipo_documento: athlete.tipo_documento as string,
+                numero_documento: athlete.numero_documento as string,
+                filial_id: athlete.filial_id as string
+              });
+            }
           }
         }
         

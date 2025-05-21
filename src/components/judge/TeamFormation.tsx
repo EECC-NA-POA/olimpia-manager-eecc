@@ -1,37 +1,27 @@
 
 import React from 'react';
 import { TeamCard } from './team-formation/TeamCard';
-import { useTeamFormation } from './team-formation/useTeamFormation';
-import { Team, AvailableAthlete } from './tabs/teams/types';
+import { Team } from './tabs/teams/types';
 
 interface TeamFormationProps {
   teams: Team[];
-  availableAthletes: AvailableAthlete[];
+  availableAthletes: any[];
   eventId: string | null;
   modalityId: number;
   isOrganizer?: boolean;
+  isReadOnly?: boolean;
 }
 
 export function TeamFormation({ 
   teams, 
-  availableAthletes, 
-  eventId, 
-  modalityId,
-  isOrganizer = false
+  eventId,
+  isReadOnly = false
 }: TeamFormationProps) {
-  const {
-    handleAddAthleteToTeam,
-    handleRemoveAthleteFromTeam,
-    handleUpdateLane,
-    isUpdatePending,
-    isRemovePending
-  } = useTeamFormation({ teams, eventId, modalityId, isOrganizer });
-
-  if (teams.length === 0 && availableAthletes.length === 0) {
+  if (teams.length === 0) {
     return (
       <div className="text-center py-4">
         <p className="text-muted-foreground">
-          Nenhuma equipe ou atleta disponível para esta modalidade
+          Nenhuma equipe disponível para esta modalidade
         </p>
       </div>
     );
@@ -43,12 +33,7 @@ export function TeamFormation({
         <TeamCard
           key={team.id}
           team={team}
-          availableAthletes={availableAthletes}
-          onAddAthlete={handleAddAthleteToTeam}
-          onRemoveAthlete={handleRemoveAthleteFromTeam}
-          onUpdateLane={handleUpdateLane}
-          isUpdatePending={isUpdatePending}
-          isRemovePending={isRemovePending}
+          isReadOnly={isReadOnly}
         />
       ))}
     </div>
