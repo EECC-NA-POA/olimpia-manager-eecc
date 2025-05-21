@@ -40,6 +40,11 @@ export function useTeams(
         
         if (teamsData && Array.isArray(teamsData)) {
           for (const team of teamsData) {
+            // Skip invalid team data
+            if (!team || typeof team !== 'object' || !('id' in team) || !('nome' in team)) {
+              continue;
+            }
+            
             const teamObj: Team = {
               id: team.id,
               nome: team.nome,
@@ -62,19 +67,37 @@ export function useTeams(
             if (athletesError) {
               console.error(`Error fetching athletes for team ${team.id}:`, athletesError);
             } else if (athletesData && Array.isArray(athletesData) && athletesData.length > 0) {
-              teamObj.athletes = athletesData.map(item => ({
-                id: item.id,
-                posicao: item.posicao,
-                raia: item.raia,
-                atleta_id: item.atleta_id,
-                usuarios: {
-                  nome_completo: item.usuarios.nome_completo,
-                  email: item.usuarios.email,
-                  telefone: item.usuarios.telefone,
-                  tipo_documento: item.usuarios.tipo_documento,
-                  numero_documento: item.usuarios.numero_documento
+              teamObj.athletes = athletesData.map(item => {
+                if (!item || typeof item !== 'object') {
+                  return {
+                    id: 0,
+                    posicao: 0,
+                    raia: null,
+                    atleta_id: '',
+                    usuarios: {
+                      nome_completo: '',
+                      email: '',
+                      telefone: '',
+                      tipo_documento: '',
+                      numero_documento: ''
+                    }
+                  };
                 }
-              }));
+                
+                return {
+                  id: item.id || 0,
+                  posicao: item.posicao || 0,
+                  raia: item.raia || null,
+                  atleta_id: item.atleta_id || '',
+                  usuarios: {
+                    nome_completo: item.usuarios?.nome_completo || '',
+                    email: item.usuarios?.email || '',
+                    telefone: item.usuarios?.telefone || '',
+                    tipo_documento: item.usuarios?.tipo_documento || '',
+                    numero_documento: item.usuarios?.numero_documento || ''
+                  }
+                };
+              });
             }
             
             teams.push(teamObj);
