@@ -7,7 +7,6 @@ import { Team, AvailableAthlete } from '../types';
 interface EnrolledAthlete {
   id: number;
   atleta_id: string;
-  equipe_id: number | null;
   usuarios: UserInfo | null;
 }
 
@@ -39,7 +38,6 @@ export function useAvailableAthletes(
           .select(`
             id,
             atleta_id,
-            equipe_id,
             usuarios(
               nome_completo,
               tipo_documento,
@@ -75,10 +73,19 @@ export function useAvailableAthletes(
           return [];
         }
 
+        console.log('Enrolled athletes:', enrolledAthletes);
+
         // If organizer, just return all athletes (they can't modify teams)
         if (isOrganizer) {
           return [];
         }
+
+        // Get the existing athlete IDs from teams
+        const existingAthleteIds = existingTeams.flatMap(team => 
+          team.athletes?.map(athlete => athlete.atleta_id) || []
+        );
+        
+        console.log('Existing athlete IDs in teams:', existingAthleteIds);
 
         // Extract athletes that are not yet assigned to a team
         const availableAthletes: AvailableAthlete[] = [];
@@ -89,10 +96,15 @@ export function useAvailableAthletes(
             if (!item) continue;
             
             // Skip athletes already in a team
-            if (item.equipe_id !== null) continue;
+            if (existingAthleteIds.includes(item.atleta_id)) {
+              console.log(`Athlete ${item.atleta_id} already in a team, skipping`);
+              continue;
+            }
             
             // Handle the usuarios data, ensuring it's treated as an object and not an array
-            const userData = item.usuarios as UserInfo | null;
+            const userData = Array.isArray(item.usuarios) 
+              ? item.usuarios[0] 
+              : item.usuarios as UserInfo | null;
             
             availableAthletes.push({
               atleta_id: item.atleta_id,
@@ -108,7 +120,7 @@ export function useAvailableAthletes(
           }
         }
 
-        console.log('Available athletes found:', availableAthletes.length);
+        console.log('Available athletes found:', availableAthletes.length, availableAthletes);
         return availableAthletes;
       } catch (error) {
         console.error('Error in available athletes query:', error);

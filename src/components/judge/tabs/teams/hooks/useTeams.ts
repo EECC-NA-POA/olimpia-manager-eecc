@@ -27,7 +27,6 @@ export function useTeams(
           .select(`
             id,
             nome,
-            cor_uniforme,
             observacoes,
             modalidade_id,
             modalidades (
@@ -62,7 +61,6 @@ export function useTeams(
           return {
             id: team.id,
             nome: team.nome,
-            cor_uniforme: team.cor_uniforme || undefined,
             observacoes: team.observacoes || undefined,
             modalidade_id: team.modalidade_id,
             modalidade: modalidadeData?.nome,

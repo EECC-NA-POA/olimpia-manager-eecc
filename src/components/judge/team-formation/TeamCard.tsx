@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TeamTable } from './TeamTable';
-import { Team } from '../tabs/teams/types';
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Team } from '../tabs/teams/types';
+import { TeamTable } from './TeamTable';
 
 interface TeamCardProps {
   team: Team;
@@ -13,52 +13,50 @@ interface TeamCardProps {
   isRemovePending?: boolean;
 }
 
-export function TeamCard({
-  team,
+export function TeamCard({ 
+  team, 
   isReadOnly = false,
   onUpdateLane,
   onRemoveAthlete,
   isRemovePending = false
 }: TeamCardProps) {
-  const [showDetails, setShowDetails] = useState(true);
-
-  const hasAthletes = team.athletes && team.athletes.length > 0;
-
   return (
-    <Card className="border shadow-sm">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
-          <div onClick={() => setShowDetails(!showDetails)} className="cursor-pointer flex items-center gap-2">
-            <CardTitle className="text-lg">{team.nome}</CardTitle>
-            <Badge variant="outline" className="ml-2">{team.modalidade}</Badge>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <div>
+          <CardTitle className="text-lg">{team.nome}</CardTitle>
+          <div className="flex items-center gap-2 mt-1">
+            {team.modalidades?.categoria && (
+              <Badge variant="outline" className="text-xs">
+                {team.modalidades.categoria}
+              </Badge>
+            )}
+            {team.modalidades?.nome && (
+              <span className="text-sm text-muted-foreground">
+                {team.modalidades.nome}
+              </span>
+            )}
           </div>
-          
-          {team.cor_uniforme && (
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-muted-foreground">Uniforme:</span>
-              <Badge variant="outline">{team.cor_uniforme}</Badge>
-            </div>
-          )}
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {team.athletes?.length || 0} {(team.athletes?.length || 0) === 1 ? 'atleta' : 'atletas'}
         </div>
       </CardHeader>
-
-      {showDetails && (
-        <CardContent className="pt-2">
-          {!hasAthletes ? (
-            <div className="text-center py-4 text-muted-foreground">
-              Nenhum atleta adicionado a esta equipe
-            </div>
-          ) : (
-            <TeamTable 
-              team={team} 
-              isReadOnly={isReadOnly}
-              onUpdateLane={onUpdateLane}
-              onRemoveAthlete={onRemoveAthlete}
-              isRemovePending={isRemovePending}
-            />
-          )}
-        </CardContent>
-      )}
+      <CardContent>
+        {team.observacoes && (
+          <div className="mb-4">
+            <p className="text-sm text-muted-foreground">{team.observacoes}</p>
+          </div>
+        )}
+        
+        <TeamTable 
+          athletes={team.athletes || []} 
+          isReadOnly={isReadOnly}
+          onUpdateLane={onUpdateLane ? (athleteId, lane, position) => onUpdateLane(team.id, athleteId, lane, position) : undefined}
+          onRemoveAthlete={onRemoveAthlete ? (athleteId) => onRemoveAthlete(team.id, athleteId) : undefined}
+          isRemovePending={isRemovePending}
+        />
+      </CardContent>
     </Card>
   );
 }
