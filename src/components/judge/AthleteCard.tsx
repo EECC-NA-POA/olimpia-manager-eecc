@@ -55,11 +55,11 @@ export function AthleteCard({ athlete, isSelected, onClick }: AthleteCardProps) 
         return [];
       }
       
-      // Transform the data to match our expected type
+      // Transform the data to match our AthleteModalityResponse interface
       return (data || []).map(item => ({
         modalidade_id: item.modalidade_id,
         modalidades: item.modalidades
-      })) as AthleteModalityResponse[];
+      })) as unknown as AthleteModalityResponse[];
     },
     enabled: !!athlete.atleta_id,
   });
