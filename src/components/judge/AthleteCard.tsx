@@ -42,7 +42,7 @@ export function AthleteCard({ athlete, isSelected, onClick }: AthleteCardProps) 
   const totalScore = scores?.reduce((sum, score) => sum + (score.valor_pontuacao || 0), 0) || 0;
   
   // Get athlete's modalities
-  const { data: modalities } = useQuery({
+  const { data: modalities } = useQuery<AthleteModalityResponse[]>({
     queryKey: ['athlete-modalities', athlete.atleta_id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -55,7 +55,11 @@ export function AthleteCard({ athlete, isSelected, onClick }: AthleteCardProps) 
         return [];
       }
       
-      return data || [];
+      // Transform the data to match our expected type
+      return (data || []).map(item => ({
+        modalidade_id: item.modalidade_id,
+        modalidades: item.modalidades
+      }));
     },
     enabled: !!athlete.atleta_id,
   });
