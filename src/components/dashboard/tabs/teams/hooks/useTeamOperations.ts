@@ -80,7 +80,11 @@ export function useTeamOperations(eventId: string | null, branchId?: string) {
         cor_uniforme: team.cor_uniforme,
         observacoes: team.observacoes,
         modalidade_id: team.modalidade_id,
-        modalidades: team.modalidades  // This is a single object, not an array
+        // Ensure modalidades is treated as a single object, not an array
+        modalidades: {
+          nome: team.modalidades?.nome,
+          categoria: team.modalidades?.categoria
+        }
       }));
     },
     enabled: !!eventId && !!branchId,
