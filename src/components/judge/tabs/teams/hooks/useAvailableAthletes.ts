@@ -91,19 +91,20 @@ export function useAvailableAthletes(
             if (item.equipe_id !== null) continue;
             
             // Add the athlete to available list if user data exists
-            if (item.usuarios) {
-              availableAthletes.push({
-                atleta_id: item.atleta_id,
-                name: item.usuarios.nome_completo || 'Atleta',
-                atleta_nome: item.usuarios.nome_completo || 'Atleta',
-                documento_tipo: item.usuarios.tipo_documento || 'Documento',
-                documento_numero: item.usuarios.numero_documento || '',
-                identificador: item.usuarios.numero_identificador || '',
-                tipo_documento: item.usuarios.tipo_documento,
-                numero_documento: item.usuarios.numero_documento,
-                numero_identificador: item.usuarios.numero_identificador
-              });
-            }
+            // Ensure that we access usuarios as a single object, not an array
+            const userInfo = item.usuarios || {};
+            
+            availableAthletes.push({
+              atleta_id: item.atleta_id,
+              name: userInfo.nome_completo || 'Atleta',
+              atleta_nome: userInfo.nome_completo || 'Atleta',
+              documento_tipo: userInfo.tipo_documento || 'Documento',
+              documento_numero: userInfo.numero_documento || '',
+              identificador: userInfo.numero_identificador || '',
+              tipo_documento: userInfo.tipo_documento || 'Documento',
+              numero_documento: userInfo.numero_documento || '',
+              numero_identificador: userInfo.numero_identificador
+            });
           }
         }
 
