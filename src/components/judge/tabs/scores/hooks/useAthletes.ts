@@ -9,7 +9,6 @@ export interface Athlete {
   atleta_nome: string;
   tipo_documento: string;
   numero_documento: string;
-  numero_identificador?: string | null;
   equipe_id?: number | null;
 }
 
@@ -21,7 +20,6 @@ interface AthleteResponse {
     nome_completo: string;
     tipo_documento: string;
     numero_documento: string;
-    numero_identificador?: string | null;
   } | null;
   equipe_id?: number | null;
 }
@@ -33,6 +31,7 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
       if (!modalityId || !eventId) return [];
 
       try {
+        console.log('Fetching athletes for modality:', modalityId, 'event:', eventId);
         const { data, error } = await supabase
           .from('inscricoes_modalidades')
           .select(`
@@ -41,8 +40,7 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
             usuarios(
               nome_completo,
               tipo_documento,
-              numero_documento,
-              numero_identificador
+              numero_documento
             ),
             equipe_id
           `)
@@ -56,14 +54,15 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
           return [];
         }
 
-        // Use type assertion to unknown first, then to AthleteResponse[]
+        console.log('Raw athlete data:', data);
+
+        // Transform the data to match our Athlete interface
         return (data as unknown as AthleteResponse[]).map((item) => ({
           inscricao_id: item.id,
           atleta_id: item.atleta_id,
           atleta_nome: item.usuarios?.nome_completo || 'Atleta',
           tipo_documento: item.usuarios?.tipo_documento || 'Documento',
           numero_documento: item.usuarios?.numero_documento || '',
-          numero_identificador: item.usuarios?.numero_identificador || null,
           equipe_id: item.equipe_id
         }));
       } catch (error) {

@@ -66,7 +66,7 @@ export function AthleteCard({ athlete, isSelected, onClick }: AthleteCardProps) 
 
           <div>
             <p className="text-gray-500">Convênio</p>
-            <p></p>
+            <p>{athlete.atleta_nome.slice(0, 10)}</p>
           </div>
           <div>
             <p className="text-gray-500">Data da prescrição</p>

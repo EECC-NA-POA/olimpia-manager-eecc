@@ -2,7 +2,6 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { type Athlete } from '../hooks/useAthletes';
 import { AthleteCard } from '@/components/judge/AthleteCard';
 
@@ -44,6 +43,8 @@ export function AthletesList({
       </Card>
     );
   }
+
+  console.log('Rendering athletes:', athletes);
 
   const handleAthleteClick = (athlete: Athlete) => {
     // Navigate to athlete score page or open score modal
