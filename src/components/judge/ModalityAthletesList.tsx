@@ -47,7 +47,7 @@ export function ModalityAthletesList({
         .from('inscricoes_modalidades')
         .select(`
           atleta_id,
-          usuarios:atleta_id(
+          usuarios(
             nome_completo,
             tipo_documento,
             numero_documento

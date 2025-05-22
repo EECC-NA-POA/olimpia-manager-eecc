@@ -3,14 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
-interface UserInfo {
-  nome_completo?: string;
-  tipo_documento?: string;
-  numero_documento?: string;
-  numero_identificador?: string | null;
-}
-
-interface Athlete {
+export interface Athlete {
   inscricao_id: number;
   atleta_id: string;
   atleta_nome: string;
@@ -26,43 +19,45 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
     queryFn: async () => {
       if (!modalityId || !eventId) return [];
 
-      const { data, error } = await supabase
-        .from('inscricoes_modalidades')
-        .select(`
-          id,
-          atleta_id,
-          usuarios:atleta_id (
-            nome_completo,
-            tipo_documento,
-            numero_documento,
-            numero_identificador
-          ),
-          equipe_id
-        `)
-        .eq('modalidade_id', modalityId)
-        .eq('evento_id', eventId)
-        .eq('status', 'confirmado');
+      try {
+        const { data, error } = await supabase
+          .from('inscricoes_modalidades')
+          .select(`
+            id,
+            atleta_id,
+            usuarios(
+              nome_completo,
+              tipo_documento,
+              numero_documento,
+              numero_identificador
+            ),
+            equipe_id
+          `)
+          .eq('modalidade_id', modalityId)
+          .eq('evento_id', eventId)
+          .eq('status', 'confirmado');
 
-      if (error) {
-        console.error('Error fetching athletes:', error);
-        toast.error('Não foi possível carregar os atletas');
-        return [];
-      }
+        if (error) {
+          console.error('Error fetching athletes:', error);
+          toast.error('Não foi possível carregar os atletas');
+          return [];
+        }
 
-      return data.map((item) => {
-        // Handle the usuarios data, ensuring it's treated as an object and not an array
-        const userData = item.usuarios as UserInfo | null;
-        
-        return {
+        // Map the data to our Athlete type
+        return data.map((item) => ({
           inscricao_id: item.id,
           atleta_id: item.atleta_id,
-          atleta_nome: userData?.nome_completo || 'Atleta',
-          tipo_documento: userData?.tipo_documento || 'Documento',
-          numero_documento: userData?.numero_documento || '',
-          numero_identificador: userData?.numero_identificador,
+          atleta_nome: item.usuarios?.nome_completo || 'Atleta',
+          tipo_documento: item.usuarios?.tipo_documento || 'Documento',
+          numero_documento: item.usuarios?.numero_documento || '',
+          numero_identificador: item.usuarios?.numero_identificador || null,
           equipe_id: item.equipe_id
-        };
-      }) as Athlete[];
+        })) as Athlete[];
+      } catch (error) {
+        console.error('Error in athlete query execution:', error);
+        toast.error('Erro ao buscar atletas');
+        return [];
+      }
     },
     enabled: !!modalityId && !!eventId,
   });
