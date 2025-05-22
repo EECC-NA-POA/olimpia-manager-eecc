@@ -73,7 +73,15 @@ export function useTeamOperations(eventId: string | null, branchId?: string) {
         throw new Error('Não foi possível carregar as equipes');
       }
       
-      return data;
+      // Map the teams to match the expected Team type
+      return data?.map(team => ({
+        id: team.id,
+        nome: team.nome,
+        cor_uniforme: team.cor_uniforme,
+        observacoes: team.observacoes,
+        modalidade_id: team.modalidade_id,
+        modalidades: team.modalidades  // This is a single object, not an array
+      }));
     },
     enabled: !!eventId && !!branchId,
   });
