@@ -11,17 +11,39 @@ import { Athlete } from './tabs/scores/hooks/useAthletes';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { AthleteModalityResponse } from './types/modality';
+import { Check, X } from 'lucide-react';
 
 interface AthleteCardProps {
   athlete: Athlete;
   isSelected?: boolean;
   onClick?: () => void;
+  modalityId?: number;
 }
 
-export function AthleteCard({ athlete, isSelected, onClick }: AthleteCardProps) {
+export function AthleteCard({ athlete, isSelected, onClick, modalityId }: AthleteCardProps) {
+  // Fetch athlete identifier from payments
+  const { data: paymentData } = useQuery({
+    queryKey: ['athlete-payment', athlete.atleta_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pagamentos')
+        .select('numero_identificador')
+        .eq('atleta_id', athlete.atleta_id)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching payment identifier:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!athlete.atleta_id,
+  });
+
   // Fetch athlete scores
   const { data: scores } = useQuery({
-    queryKey: ['athlete-scores', athlete.atleta_id],
+    queryKey: ['athlete-scores', athlete.atleta_id, modalityId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pontuacoes')
@@ -40,6 +62,11 @@ export function AthleteCard({ athlete, isSelected, onClick }: AthleteCardProps) 
 
   // Get total score or use a placeholder
   const totalScore = scores?.reduce((sum, score) => sum + (score.valor_pontuacao || 0), 0) || 0;
+  
+  // Check if the athlete has a score for the selected modality
+  const hasScoreForCurrentModality = modalityId ? 
+    scores?.some(score => score.modalidade_id === modalityId) : 
+    false;
   
   // Get athlete's modalities
   const { data: modalities } = useQuery<AthleteModalityResponse[]>({
@@ -64,6 +91,9 @@ export function AthleteCard({ athlete, isSelected, onClick }: AthleteCardProps) 
     enabled: !!athlete.atleta_id,
   });
 
+  // Get athlete identifier or fallback to ID slice
+  const athleteIdentifier = paymentData?.numero_identificador || athlete.atleta_id.slice(-6);
+
   return (
     <Card 
       className={`
@@ -72,7 +102,22 @@ export function AthleteCard({ athlete, isSelected, onClick }: AthleteCardProps) 
       `}
       onClick={onClick}
     >
-      <div className="bg-red-500 h-1 w-full"></div>
+      <div 
+        className={`${hasScoreForCurrentModality ? 'bg-green-500' : 'bg-red-500'} h-1 w-full flex justify-end items-center pr-1`}
+      >
+        {hasScoreForCurrentModality && (
+          <span className="text-[10px] text-white flex items-center">
+            <Check size={12} className="mr-1" />
+            Avaliado
+          </span>
+        )}
+        {!hasScoreForCurrentModality && modalityId && (
+          <span className="text-[10px] text-white flex items-center">
+            <X size={12} className="mr-1" />
+            Pendente
+          </span>
+        )}
+      </div>
       <CardHeader className="p-4 pb-2 flex flex-row justify-between items-start">
         <CardTitle className="text-base">{athlete.atleta_nome}</CardTitle>
         <div className="text-xs flex flex-col items-end">
@@ -85,7 +130,7 @@ export function AthleteCard({ athlete, isSelected, onClick }: AthleteCardProps) 
         <div className="grid grid-cols-3 gap-1 text-xs">
           <div>
             <p className="text-gray-500">ID</p>
-            <p>{athlete.atleta_id.slice(-6)}</p>
+            <p>{athleteIdentifier}</p>
           </div>
           <div>
             <p className="text-gray-500">Documento</p>
