@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -17,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/lib/supabase';
-import { AthleteScoreCard } from '@/components/judge/AthleteScoreCard';
+import { AthleteScoreCard } from '../score-card';
 import { toast } from 'sonner';
 import { Modality } from '@/lib/types/database';
 
