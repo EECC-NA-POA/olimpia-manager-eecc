@@ -28,7 +28,6 @@ interface Athlete {
   atleta_email?: string;
   tipo_documento: string;
   numero_documento: string;
-  numero_identificador?: string;
 }
 
 export function ModalityAthletesList({ 
