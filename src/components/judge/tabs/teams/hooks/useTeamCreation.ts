@@ -1,13 +1,13 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 export function useTeamCreation(
   userId: string,
   eventId: string | null,
   selectedModalityId: number | null,
-  filialId?: string,
+  filialId?: string | null,
   isOrganizer = false,
   teamName = '',
   setTeamName: (name: string) => void = () => {}
@@ -28,6 +28,14 @@ export function useTeamCreation(
       if (!isOrganizer && !branch_id) {
         throw new Error('Missing branch ID for delegation representative');
       }
+      
+      console.log('Creating team with data:', {
+        nome: newTeam.name,
+        evento_id: eventId,
+        modalidade_id: selectedModalityId,
+        filial_id: branch_id,
+        created_by: userId
+      });
       
       const { data, error } = await supabase
         .from('equipes')
@@ -60,6 +68,7 @@ export function useTeamCreation(
       });
     },
     onError: (error) => {
+      console.error('Team creation error:', error);
       toast({
         title: "Erro",
         description: 'Não foi possível criar a equipe',

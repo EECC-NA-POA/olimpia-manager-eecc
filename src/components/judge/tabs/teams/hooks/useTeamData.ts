@@ -39,6 +39,6 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
     setSelectedModalityId,
     existingTeams,
     isLoadingTeams,
-    availableAthletes: availableAthletes || []
+    availableAthletes
   };
 }

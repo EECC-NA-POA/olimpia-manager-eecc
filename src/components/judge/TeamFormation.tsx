@@ -49,12 +49,12 @@ export function TeamFormation({
   return (
     <div className="space-y-6">
       {/* Show available athletes for delegation representatives */}
-      {!isReadOnly && availableAthletes.length > 0 && (
+      {!isReadOnly && availableAthletes && availableAthletes.length > 0 && (
         <AvailableAthletesList 
           athletes={availableAthletes}
           teams={teams}
           onAddAthleteToTeam={handleAddAthleteToTeam}
-          isPending={isAddingAthlete || false}
+          isPending={isAddingAthlete}
         />
       )}
 

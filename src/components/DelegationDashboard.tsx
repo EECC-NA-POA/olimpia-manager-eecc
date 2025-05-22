@@ -120,7 +120,7 @@ export default function DelegationDashboard() {
       case "teams":
         return (
           <TeamsTab
-            userId={user?.id}
+            userId={user?.id || ''}
             eventId={currentEventId}
             isOrganizer={false} // Representante de delegação não tem permissões de organizador
           />
