@@ -13,6 +13,19 @@ export interface Athlete {
   equipe_id?: number | null;
 }
 
+// Interface to type the response from Supabase
+interface AthleteResponse {
+  id: number;
+  atleta_id: string;
+  usuarios: {
+    nome_completo: string;
+    tipo_documento: string;
+    numero_documento: string;
+    numero_identificador?: string | null;
+  } | null;
+  equipe_id?: number | null;
+}
+
 export function useAthletes(modalityId: number | null, eventId: string | null) {
   const { data: athletes, isLoading: isLoadingAthletes } = useQuery({
     queryKey: ['athletes', modalityId, eventId],
@@ -43,8 +56,8 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
           return [];
         }
 
-        // Map the data to our Athlete type
-        return data.map((item) => ({
+        // Map the data to our Athlete type with proper typing
+        return (data as AthleteResponse[]).map((item) => ({
           inscricao_id: item.id,
           atleta_id: item.atleta_id,
           atleta_nome: item.usuarios?.nome_completo || 'Atleta',
@@ -52,7 +65,7 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
           numero_documento: item.usuarios?.numero_documento || '',
           numero_identificador: item.usuarios?.numero_identificador || null,
           equipe_id: item.equipe_id
-        })) as Athlete[];
+        }));
       } catch (error) {
         console.error('Error in athlete query execution:', error);
         toast.error('Erro ao buscar atletas');
@@ -64,5 +77,3 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
 
   return { athletes, isLoadingAthletes };
 }
-
-export type { Athlete };
