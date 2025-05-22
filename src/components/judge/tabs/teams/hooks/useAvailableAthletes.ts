@@ -93,19 +93,29 @@ export function useAvailableAthletes(
             if (item.equipe_id !== null) continue;
             
             // Add the athlete to available list if user data exists
-            // Ensure that we access usuarios as a properly typed object
-            const userInfo: UserInfo = item.usuarios || {};
+            // Make sure we correctly handle the usuarios data which may come as an object
+            const userInfo = item.usuarios ? {
+              nome_completo: item.usuarios.nome_completo || '',
+              tipo_documento: item.usuarios.tipo_documento || '',
+              numero_documento: item.usuarios.numero_documento || '',
+              numero_identificador: item.usuarios.numero_identificador || null
+            } : {
+              nome_completo: '',
+              tipo_documento: '',
+              numero_documento: '',
+              numero_identificador: null
+            };
             
             availableAthletes.push({
               atleta_id: item.atleta_id,
-              name: userInfo?.nome_completo || 'Atleta',
-              atleta_nome: userInfo?.nome_completo || 'Atleta',
-              documento_tipo: userInfo?.tipo_documento || 'Documento',
-              documento_numero: userInfo?.numero_documento || '',
-              identificador: userInfo?.numero_identificador || '',
-              tipo_documento: userInfo?.tipo_documento || 'Documento',
-              numero_documento: userInfo?.numero_documento || '',
-              numero_identificador: userInfo?.numero_identificador
+              name: userInfo.nome_completo || 'Atleta',
+              atleta_nome: userInfo.nome_completo || 'Atleta',
+              documento_tipo: userInfo.tipo_documento || 'Documento',
+              documento_numero: userInfo.numero_documento || '',
+              identificador: userInfo.numero_identificador || '',
+              tipo_documento: userInfo.tipo_documento || 'Documento',
+              numero_documento: userInfo.numero_documento || '',
+              numero_identificador: userInfo.numero_identificador
             });
           }
         }
