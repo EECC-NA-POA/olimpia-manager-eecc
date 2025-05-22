@@ -35,12 +35,13 @@ export function AthleteCard({
 }: AthleteCardProps) {
   // Fetch athlete identifier from payments
   const { data: paymentData } = useQuery({
-    queryKey: ['athlete-payment', athlete.atleta_id],
+    queryKey: ['athlete-payment', athlete.atleta_id, eventId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pagamentos')
         .select('numero_identificador')
         .eq('atleta_id', athlete.atleta_id)
+        .eq('evento_id', eventId)
         .maybeSingle();
       
       if (error) {
@@ -50,7 +51,7 @@ export function AthleteCard({
       
       return data;
     },
-    enabled: !!athlete.atleta_id,
+    enabled: !!athlete.atleta_id && !!eventId,
   });
 
   // Fetch athlete scores

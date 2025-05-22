@@ -43,7 +43,7 @@ export function ScoreForm({ scoreType, initialValues, onSubmit, isPending }: Sco
         ) : (
           <PointsScoreFields 
             form={form as any} 
-            scoreType={scoreType as 'distance' | 'points'} 
+            scoreType={scoreType} 
           />
         )}
         

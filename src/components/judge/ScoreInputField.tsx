@@ -120,6 +120,10 @@ export const ScoreInputField = ({
   }
   
   // For distance or points
+  const unit = scoreType === 'distance' ? 'm' : 'pts';
+  const step = scoreType === 'distance' ? '0.01' : '1';
+  const defaultPlaceholder = scoreType === 'distance' ? '0.00' : '0';
+  
   return (
     <FormField
       control={form.control}
@@ -131,15 +135,15 @@ export const ScoreInputField = ({
             <div className="relative">
               <Input 
                 type="number" 
-                placeholder={placeholder || "0"} 
-                step={scoreType === 'distance' ? '0.01' : '1'}
+                placeholder={placeholder || defaultPlaceholder} 
+                step={step}
                 min={0}
                 {...field} 
                 onChange={(e) => field.onChange(Number(e.target.value))}
                 className="pr-12"
               />
               <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                {scoreType === 'distance' ? 'm' : 'pts'}
+                {unit}
               </div>
             </div>
           </FormControl>
