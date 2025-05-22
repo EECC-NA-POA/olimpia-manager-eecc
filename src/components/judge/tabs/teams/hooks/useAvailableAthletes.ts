@@ -40,11 +40,10 @@ export function useAvailableAthletes(
             id,
             atleta_id,
             equipe_id,
-            usuarios:atleta_id (
+            usuarios(
               nome_completo,
               tipo_documento,
-              numero_documento,
-              numero_identificador
+              numero_documento
             )
           `)
           .eq('modalidade_id', modalityId)
@@ -101,14 +100,15 @@ export function useAvailableAthletes(
               atleta_nome: userData?.nome_completo || 'Atleta',
               documento_tipo: userData?.tipo_documento || 'Documento',
               documento_numero: userData?.numero_documento || '',
-              identificador: userData?.numero_identificador || '',
+              identificador: '',
               tipo_documento: userData?.tipo_documento || 'Documento',
               numero_documento: userData?.numero_documento || '',
-              numero_identificador: userData?.numero_identificador
+              numero_identificador: null
             });
           }
         }
 
+        console.log('Available athletes found:', availableAthletes.length);
         return availableAthletes;
       } catch (error) {
         console.error('Error in available athletes query:', error);

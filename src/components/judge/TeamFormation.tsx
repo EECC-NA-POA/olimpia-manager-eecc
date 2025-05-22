@@ -4,6 +4,8 @@ import { TeamCard } from './team-formation/TeamCard';
 import { useTeamFormation } from './team-formation/useTeamFormation';
 import { AvailableAthletesList } from './team-formation/AvailableAthletesList';
 import { Team, AvailableAthlete } from './tabs/teams/types';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 interface TeamFormationProps {
   teams: Team[];
@@ -58,17 +60,29 @@ export function TeamFormation({
         />
       )}
 
+      {/* Show addable athletes message when there are athletes available */}
+      {!isReadOnly && availableAthletes && availableAthletes.length > 0 && (
+        <Alert variant="info" className="bg-blue-50 border-blue-200">
+          <AlertCircle className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            Selecione os atletas acima para adicioná-los à equipe. Depois, defina a posição e raia de cada atleta abaixo.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Team cards */}
-      {teams.map((team) => (
-        <TeamCard
-          key={team.id}
-          team={team}
-          isReadOnly={isReadOnly}
-          onUpdateLane={handleUpdateLane}
-          onRemoveAthlete={handleRemoveAthleteFromTeam}
-          isRemovePending={isRemovePending}
-        />
-      ))}
+      <div className="space-y-6">
+        {teams.map((team) => (
+          <TeamCard
+            key={team.id}
+            team={team}
+            isReadOnly={isReadOnly}
+            onUpdateLane={handleUpdateLane}
+            onRemoveAthlete={handleRemoveAthleteFromTeam}
+            isRemovePending={isRemovePending}
+          />
+        ))}
+      </div>
     </div>
   );
 }

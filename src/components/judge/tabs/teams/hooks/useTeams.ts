@@ -4,73 +4,118 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Team } from '../types';
 
-// Define a simpler interface for the query result
-interface TeamQueryResult {
-  id: number;
-  nome: string;
-  cor_uniforme: string | null;
-  observacoes: string | null;
-  filial_id: string;
-  evento_id: string;
-}
-
 export function useTeams(
-  eventId: string | null, 
-  modalityId: number | null, 
-  isOrganizer: boolean = false,
-  branchId?: string | null
+  userId: string,
+  eventId: string | null,
+  modalityId: number | null,
+  branchId?: string | null,
+  isOrganizer = false
 ) {
-  const { data: existingTeams, isLoading: isLoadingTeams } = useQuery({
-    queryKey: ['teams', modalityId, eventId, branchId, isOrganizer],
+  return useQuery({
+    queryKey: ['teams', eventId, modalityId, isOrganizer, branchId],
     queryFn: async () => {
-      if (!modalityId || !eventId) {
+      if (!eventId || !modalityId) {
         return [];
       }
 
       try {
+        console.log('Fetching teams:', { eventId, modalityId, branchId, isOrganizer });
+        
+        // Build the query based on user role
         let query = supabase
           .from('equipes')
-          .select('*')
+          .select(`
+            id,
+            nome,
+            cor_uniforme,
+            observacoes,
+            modalidade_id,
+            modalidades (
+              nome,
+              categoria
+            )
+          `)
           .eq('evento_id', eventId)
           .eq('modalidade_id', modalityId);
         
-        // For delegation reps, filter by branch
+        // For delegation representatives, filter by their branch
         if (!isOrganizer && branchId) {
           query = query.eq('filial_id', branchId);
         }
         
-        const { data, error } = await query;
-        
+        const { data: teamsData, error } = await query;
+
         if (error) {
           console.error('Error fetching teams:', error);
-          toast.error('Não foi possível carregar as equipes');
+          throw error;
+        }
+
+        if (!teamsData || teamsData.length === 0) {
           return [];
         }
-        
-        // Map to a Team structure that matches our interface
-        const teams: Team[] = (data || []).map((team: TeamQueryResult) => ({
-          id: team.id,
-          nome: team.nome,
-          cor_uniforme: team.cor_uniforme || '',
-          observacoes: team.observacoes || '',
-          filial_id: team.filial_id,
-          evento_id: team.evento_id,
-          members: [], // Initialize empty members array
-          athletes: [] // Initialize empty athletes array
-        }));
 
+        // Process teams data to match Team interface
+        const teams: Team[] = teamsData.map(team => {
+          // Check if modalidades is an array and extract the first item if so
+          const modalidadeData = Array.isArray(team.modalidades) ? team.modalidades[0] : team.modalidades;
+          
+          return {
+            id: team.id,
+            nome: team.nome,
+            cor_uniforme: team.cor_uniforme || undefined,
+            observacoes: team.observacoes || undefined,
+            modalidade_id: team.modalidade_id,
+            modalidade: modalidadeData?.nome,
+            modalidades: {
+              nome: modalidadeData?.nome,
+              categoria: modalidadeData?.categoria
+            },
+            athletes: []
+          };
+        });
+
+        // For each team, fetch its athletes
+        for (const team of teams) {
+          const { data: teamAthletes, error: athletesError } = await supabase
+            .from('atletas_equipes')
+            .select(`
+              id,
+              atleta_id,
+              posicao,
+              raia,
+              usuarios:atleta_id (
+                nome_completo,
+                tipo_documento,
+                numero_documento
+              )
+            `)
+            .eq('equipe_id', team.id);
+
+          if (athletesError) {
+            console.error('Error fetching team athletes:', athletesError);
+            continue;
+          }
+
+          team.athletes = teamAthletes.map(athlete => ({
+            id: athlete.id,
+            atleta_id: athlete.atleta_id,
+            atleta_nome: athlete.usuarios?.nome_completo || 'Atleta',
+            posicao: athlete.posicao || 0,
+            raia: athlete.raia || undefined,
+            tipo_documento: athlete.usuarios?.tipo_documento,
+            numero_documento: athlete.usuarios?.numero_documento
+          }));
+        }
+
+        console.log('Teams fetched successfully:', teams);
         return teams;
+
       } catch (error) {
         console.error('Error in teams query:', error);
-        toast.error('Erro ao buscar equipes');
+        toast.error('Erro ao carregar equipes');
         return [];
       }
     },
-    enabled: !!modalityId && !!eventId
+    enabled: !!eventId && !!modalityId
   });
-
-  return {
-    existingTeams,
-    isLoadingTeams
-  };
 }
