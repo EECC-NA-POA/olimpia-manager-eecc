@@ -74,18 +74,22 @@ export function useTeamOperations(eventId: string | null, branchId?: string) {
       }
       
       // Map the teams to match the expected Team type
-      return data?.map(team => ({
-        id: team.id,
-        nome: team.nome,
-        cor_uniforme: team.cor_uniforme,
-        observacoes: team.observacoes,
-        modalidade_id: team.modalidade_id,
-        // Ensure modalidades is treated as a single object, not an array
-        modalidades: {
-          nome: team.modalidades?.nome,
-          categoria: team.modalidades?.categoria
-        }
-      }));
+      return data?.map(team => {
+        // Check if modalidades is an array and extract the first item if so
+        const modalidadeData = Array.isArray(team.modalidades) ? team.modalidades[0] : team.modalidades;
+        
+        return {
+          id: team.id,
+          nome: team.nome,
+          cor_uniforme: team.cor_uniforme,
+          observacoes: team.observacoes,
+          modalidade_id: team.modalidade_id,
+          modalidades: {
+            nome: modalidadeData?.nome,
+            categoria: modalidadeData?.categoria
+          }
+        };
+      });
     },
     enabled: !!eventId && !!branchId,
   });
