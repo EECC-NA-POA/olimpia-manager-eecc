@@ -61,18 +61,14 @@ export function useTeamCreation(
         queryKey: ['teams', eventId, selectedModalityId, isOrganizer, filialId] 
       });
       setTeamName('');
-      toast({
-        title: "Equipe criada",
-        description: 'A equipe foi criada com sucesso',
-        variant: "default"
+      toast.success("Equipe criada", {
+        description: 'A equipe foi criada com sucesso'
       });
     },
     onError: (error) => {
       console.error('Team creation error:', error);
-      toast({
-        title: "Erro",
-        description: 'Não foi possível criar a equipe',
-        variant: "destructive"
+      toast.error("Erro", {
+        description: 'Não foi possível criar a equipe'
       });
     }
   });
@@ -80,10 +76,8 @@ export function useTeamCreation(
   // Handle team creation
   const handleCreateTeam = () => {
     if (!teamName.trim()) {
-      toast({
-        title: "Nome obrigatório",
-        description: 'Por favor, informe um nome para a equipe',
-        variant: "destructive"
+      toast.error("Nome obrigatório", {
+        description: 'Por favor, informe um nome para a equipe'
       });
       return;
     }
