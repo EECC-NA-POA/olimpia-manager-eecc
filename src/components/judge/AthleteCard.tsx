@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Athlete } from './tabs/scores/hooks/useAthletes';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { AthleteModalityResponse } from './types/modality';
 
 interface AthleteCardProps {
   athlete: Athlete;
@@ -41,7 +42,7 @@ export function AthleteCard({ athlete, isSelected, onClick }: AthleteCardProps) 
   const totalScore = scores?.reduce((sum, score) => sum + (score.valor_pontuacao || 0), 0) || 0;
   
   // Get athlete's modalities
-  const { data: modalities } = useQuery({
+  const { data: modalities } = useQuery<AthleteModalityResponse[]>({
     queryKey: ['athlete-modalities', athlete.atleta_id],
     queryFn: async () => {
       const { data, error } = await supabase
