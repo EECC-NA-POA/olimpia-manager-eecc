@@ -27,6 +27,11 @@ export interface TeamAthlete {
   raia?: number;
   tipo_documento?: string;
   numero_documento?: string;
+  usuarios?: {
+    nome_completo: string;
+    tipo_documento?: string;
+    numero_documento?: string;
+  };
 }
 
 export interface AvailableAthlete {
@@ -39,4 +44,16 @@ export interface AvailableAthlete {
   tipo_documento: string;
   numero_documento: string;
   numero_identificador?: string | null;
+}
+
+export interface Modality {
+  modalidade_id: number;
+  modalidade_nome: string;
+  categoria: string;
+  tipo_modalidade: string;
+}
+
+export interface UserInfo {
+  id?: string;
+  filial_id?: string;
 }

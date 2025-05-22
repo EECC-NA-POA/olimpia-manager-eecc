@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { UserInfo } from '../types';
 
-export function useUserInfo(userId: string, isOrganizer = false) {
+export function useUserInfo(userId: string, eventId: string | null) {
   // Fetch user branch info if not an organizer
   const { data: userInfo } = useQuery({
     queryKey: ['user-info', userId],
@@ -23,7 +23,7 @@ export function useUserInfo(userId: string, isOrganizer = false) {
       
       return data as UserInfo;
     },
-    enabled: !!userId && !isOrganizer,
+    enabled: !!userId,
   });
 
   return { userInfo };

@@ -11,7 +11,7 @@ export function ReadOnlyTeamTableRow({ athlete }: ReadOnlyTeamTableRowProps) {
   return (
     <TableRow>
       <TableCell>{athlete.posicao}</TableCell>
-      <TableCell>{athlete.usuarios.nome_completo}</TableCell>
+      <TableCell>{athlete.atleta_nome}</TableCell>
       <TableCell>{athlete.raia || '-'}</TableCell>
     </TableRow>
   );

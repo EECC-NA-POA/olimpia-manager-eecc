@@ -23,7 +23,7 @@ export function TeamTableRow({
   return (
     <TableRow>
       <TableCell>{athlete.posicao}</TableCell>
-      <TableCell>{athlete.usuarios.nome_completo}</TableCell>
+      <TableCell>{athlete.atleta_nome}</TableCell>
       <TableCell>
         <Input 
           type="number" 

@@ -10,12 +10,12 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
 
   // Get available modalities (collective ones)
   const { 
-    data: modalities,
-    isLoading: isLoadingModalities
+    modalities,
+    isLoadingModalities
   } = useModalities(eventId);
 
   // Get user info (to get branch ID)
-  const { data: userInfo } = useUserInfo(userId, eventId);
+  const { userInfo } = useUserInfo(userId, eventId);
 
   // Get existing teams for the selected modality
   const {

@@ -96,15 +96,21 @@ export function useTeams(
             continue;
           }
 
-          team.athletes = teamAthletes.map(athlete => ({
-            id: athlete.id,
-            atleta_id: athlete.atleta_id,
-            atleta_nome: athlete.usuarios?.nome_completo || 'Atleta',
-            posicao: athlete.posicao || 0,
-            raia: athlete.raia || undefined,
-            tipo_documento: athlete.usuarios?.tipo_documento,
-            numero_documento: athlete.usuarios?.numero_documento
-          }));
+          team.athletes = teamAthletes.map(athlete => {
+            // Handle the usuarios data, ensuring it's treated as an object
+            const usuariosData = athlete.usuarios;
+            
+            return {
+              id: athlete.id,
+              atleta_id: athlete.atleta_id,
+              atleta_nome: usuariosData?.nome_completo || 'Atleta',
+              posicao: athlete.posicao || 0,
+              raia: athlete.raia || undefined,
+              tipo_documento: usuariosData?.tipo_documento,
+              numero_documento: usuariosData?.numero_documento,
+              usuarios: usuariosData
+            };
+          });
         }
 
         console.log('Teams fetched successfully:', teams);
