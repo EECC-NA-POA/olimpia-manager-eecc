@@ -26,6 +26,13 @@ interface ScoresTabProps {
   eventId: string | null;
 }
 
+interface UserInfo {
+  nome_completo?: string;
+  tipo_documento?: string;
+  numero_documento?: string;
+  numero_identificador?: string | null;
+}
+
 interface Athlete {
   inscricao_id: number;
   atleta_id: string;
@@ -100,16 +107,16 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
       }
 
       return data.map((item) => {
-        // Ensure that we access usuarios as a single object, not an array
-        const userInfo = item.usuarios || {};
+        // Ensure that we access usuarios as a properly typed object
+        const userInfo: UserInfo = item.usuarios as UserInfo || {};
         
         return {
           inscricao_id: item.id,
           atleta_id: item.atleta_id,
-          atleta_nome: userInfo.nome_completo || 'Atleta',
-          tipo_documento: userInfo.tipo_documento || 'Documento',
-          numero_documento: userInfo.numero_documento || '',
-          numero_identificador: userInfo.numero_identificador,
+          atleta_nome: userInfo?.nome_completo || 'Atleta',
+          tipo_documento: userInfo?.tipo_documento || 'Documento',
+          numero_documento: userInfo?.numero_documento || '',
+          numero_identificador: userInfo?.numero_identificador,
           equipe_id: item.equipe_id
         };
       }) as Athlete[];
