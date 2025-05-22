@@ -9,26 +9,15 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import { 
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { 
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/lib/supabase';
-import { ModalityAthletesList } from '@/components/judge/ModalityAthletesList';
-import { AthleteScoreForm } from '@/components/judge/AthleteScoreForm';
+import { AthleteScoreCard } from '@/components/judge/AthleteScoreCard';
 import { toast } from 'sonner';
 import { Modality } from '@/lib/types/database';
 
@@ -39,7 +28,6 @@ interface ScoresTabProps {
 
 export function ScoresTab({ userId, eventId }: ScoresTabProps) {
   const [selectedModalityId, setSelectedModalityId] = useState<number | null>(null);
-  const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
 
   // Fetch modalities
   const { data: modalities, isLoading: isLoadingModalities } = useQuery({
@@ -72,16 +60,55 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
     enabled: !!eventId,
   });
 
+  // Fetch athletes when a modality is selected
+  const { data: athletes, isLoading: isLoadingAthletes } = useQuery({
+    queryKey: ['athletes', selectedModalityId, eventId],
+    queryFn: async () => {
+      if (!selectedModalityId || !eventId) return [];
+
+      const { data, error } = await supabase
+        .from('inscricoes_modalidades')
+        .select(`
+          id,
+          atleta_id,
+          usuarios:atleta_id (
+            nome_completo,
+            tipo_documento,
+            numero_documento,
+            numero_identificador
+          ),
+          equipe_id
+        `)
+        .eq('modalidade_id', selectedModalityId)
+        .eq('evento_id', eventId)
+        .eq('status', 'confirmado');
+
+      if (error) {
+        console.error('Error fetching athletes:', error);
+        toast.error('Não foi possível carregar os atletas');
+        return [];
+      }
+
+      return data.map((item) => ({
+        inscricao_id: item.id,
+        atleta_id: item.atleta_id,
+        atleta_nome: item.usuarios?.nome_completo || 'Atleta',
+        tipo_documento: item.usuarios?.tipo_documento || 'Documento',
+        numero_documento: item.usuarios?.numero_documento || '',
+        numero_identificador: item.usuarios?.numero_identificador,
+        equipe_id: item.equipe_id
+      }));
+    },
+    enabled: !!selectedModalityId && !!eventId,
+  });
+
   // Handle modality selection
   const handleModalityChange = (value: string) => {
     setSelectedModalityId(Number(value));
-    setSelectedAthleteId(null); // Reset athlete selection when modality changes
   };
 
-  // Handle athlete selection
-  const handleAthleteSelect = (athleteId: string) => {
-    setSelectedAthleteId(athleteId);
-  };
+  // Get selected modality
+  const selectedModality = modalities?.find(m => m.modalidade_id === selectedModalityId);
 
   if (isLoadingModalities) {
     return (
@@ -105,21 +132,19 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
     );
   }
 
-  const selectedModality = modalities.find(m => m.modalidade_id === selectedModalityId);
-
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Registrar Pontuações</CardTitle>
+          <CardTitle>Registrar Pontuações Individuais</CardTitle>
           <CardDescription>
-            Selecione uma modalidade e um atleta para registrar pontuações
+            Selecione uma modalidade para visualizar os atletas
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Modalidade</label>
+              <label className="text-sm font-medium mb-2 block">Modalidade</label>
               <Select onValueChange={handleModalityChange}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecione uma modalidade" />
@@ -141,27 +166,42 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
                 </SelectContent>
               </Select>
             </div>
-            
-            {selectedModalityId && (
-              <ModalityAthletesList 
-                modalityId={selectedModalityId} 
-                eventId={eventId}
-                onAthleteSelect={handleAthleteSelect}
-                selectedAthleteId={selectedAthleteId}
-              />
-            )}
-            
-            {selectedAthleteId && selectedModalityId && (
-              <AthleteScoreForm 
-                athleteId={selectedAthleteId}
-                modalityId={selectedModalityId}
-                eventId={eventId}
-                judgeId={userId}
-              />
-            )}
           </div>
         </CardContent>
       </Card>
+      
+      {selectedModalityId && (
+        <>
+          {isLoadingAthletes ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Skeleton key={i} className="h-64" />
+              ))}
+            </div>
+          ) : athletes && athletes.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {athletes.map((athlete) => (
+                <AthleteScoreCard 
+                  key={athlete.atleta_id}
+                  athlete={athlete}
+                  modalityId={selectedModalityId}
+                  eventId={eventId}
+                  judgeId={userId}
+                  scoreType={selectedModality?.tipo_pontuacao || 'points'}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="py-6">
+                <p className="text-center text-muted-foreground">
+                  Nenhum atleta encontrado para esta modalidade
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
     </div>
   );
 }

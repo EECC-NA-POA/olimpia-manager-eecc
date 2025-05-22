@@ -144,6 +144,26 @@ export const MobileNavigationLink = () => {
     enabled: !!user?.id
   });
   
+  // Check if user can create events
+  const { data: canCreateEvents } = useQuery({
+    queryKey: ['can-create-events', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      
+      try {
+        const { data, error } = await supabase
+          .rpc('verificar_permissao_criacao_evento');
+        
+        if (error) throw error;
+        return !!data;
+      } catch (error) {
+        console.error('Error checking event creation permission:', error);
+        return false;
+      }
+    },
+    enabled: !!user?.id && roles.isAdmin
+  });
+  
   // Handle logout reliably
   const handleLogout = async () => {
     try {
@@ -230,7 +250,7 @@ export const MobileNavigationLink = () => {
       icon: function SettingsIcon(props: any) { return <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>; }
     });
     
-    if (roles.isAdmin && roles.canCreateEvents) {
+    if (roles.isAdmin && canCreateEvents) {
       navigationItems.push({
         label: "Gerenciar Evento",
         path: "/event-management",
@@ -240,7 +260,7 @@ export const MobileNavigationLink = () => {
   }
   
   // Default props
-  const defaultProps: MobileNavigationProps = {
+  const defaultProps = {
     navigationItems: navigationItems,
     currentPath: location.pathname,
     userEvents: userEvents || [],

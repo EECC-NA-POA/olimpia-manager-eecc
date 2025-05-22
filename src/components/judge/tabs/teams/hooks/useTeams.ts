@@ -1,119 +1,75 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Team, TeamAthlete } from '../types';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+import { Team } from '../types';
 
-// Helper interface to prevent deep type instantiation
+// Define a simpler interface for the query result
 interface TeamQueryResult {
-  existingTeams: Team[];
-  isLoadingTeams: boolean;
+  id: number;
+  nome: string;
+  cor_uniforme: string | null;
+  observacoes: string | null;
+  filial_id: string;
+  evento_id: string;
 }
 
 export function useTeams(
-  eventId: string | null,
-  selectedModalityId: number | null,
-  isOrganizer = false,
-  filialId?: string
-): TeamQueryResult {
-  // Fetch existing teams
-  const { data: existingTeams = [], isLoading: isLoadingTeams } = useQuery({
-    queryKey: ['teams', eventId, selectedModalityId, isOrganizer, filialId],
-    queryFn: async (): Promise<Team[]> => {
-      if (!eventId || !selectedModalityId) return [];
-      
+  eventId: string | null, 
+  modalityId: number | null, 
+  isOrganizer: boolean = false,
+  branchId?: string | null
+) {
+  const { data: existingTeams, isLoading: isLoadingTeams } = useQuery({
+    queryKey: ['teams', modalityId, eventId, branchId, isOrganizer],
+    queryFn: async () => {
+      if (!modalityId || !eventId) {
+        return [];
+      }
+
       try {
-        // Build the teams query
         let query = supabase
           .from('equipes')
-          .select('id, nome')
+          .select('*')
           .eq('evento_id', eventId)
-          .eq('modalidade_id', selectedModalityId);
+          .eq('modalidade_id', modalityId);
         
-        // Filter by branch if not an organizer
-        if (!isOrganizer && filialId) {
-          query = query.eq('filial_id', filialId);
+        // For delegation reps, filter by branch
+        if (!isOrganizer && branchId) {
+          query = query.eq('filial_id', branchId);
         }
         
-        const { data: teamsData, error: teamsError } = await query.order('nome');
+        const { data, error } = await query;
         
-        if (teamsError) {
-          console.error('Error fetching teams:', teamsError);
+        if (error) {
+          console.error('Error fetching teams:', error);
+          toast.error('Não foi possível carregar as equipes');
           return [];
         }
         
-        if (!teamsData || !Array.isArray(teamsData)) {
-          return [];
-        }
-        
-        // Map teams with explicit typing
-        const teams: Team[] = [];
-        
-        for (const team of teamsData) {
-          // Skip invalid team data
-          if (!team || typeof team !== 'object' || !('id' in team) || !('nome' in team)) {
-            continue;
-          }
-          
-          // Create team object
-          const teamObj: Team = {
-            id: team.id,
-            nome: team.nome as string,
-            athletes: []
-          };
-          
-          // Fetch athletes for this team
-          const { data: athletesData, error: athletesError } = await supabase
-            .from('atletas_equipes')
-            .select(`
-              id,
-              posicao,
-              raia,
-              atleta_id,
-              usuarios!inner(nome_completo, email, telefone, tipo_documento, numero_documento)
-            `)
-            .eq('equipe_id', team.id)
-            .order('posicao');
-          
-          if (athletesError) {
-            console.error(`Error fetching athletes for team ${team.id}:`, athletesError);
-          } else if (athletesData && Array.isArray(athletesData)) {
-            // Process athletes
-            for (const item of athletesData) {
-              if (!item || typeof item !== 'object') continue;
-              
-              // Access usuario properties safely
-              const usuario = item.usuarios || {};
-              
-              // Create athlete with explicit typing
-              const athlete: TeamAthlete = {
-                id: item.id || 0,
-                posicao: item.posicao || 0,
-                raia: item.raia || null,
-                atleta_id: item.atleta_id || '',
-                usuarios: {
-                  nome_completo: (usuario as any).nome_completo || '',
-                  email: (usuario as any).email || '',
-                  telefone: (usuario as any).telefone || '',
-                  tipo_documento: (usuario as any).tipo_documento || '',
-                  numero_documento: (usuario as any).numero_documento || ''
-                }
-              };
-              
-              teamObj.athletes.push(athlete);
-            }
-          }
-          
-          teams.push(teamObj);
-        }
-        
+        // Map to a simpler structure to avoid deep instantiation issues
+        const teams: Team[] = (data || []).map((team: TeamQueryResult) => ({
+          id: team.id,
+          nome: team.nome,
+          cor_uniforme: team.cor_uniforme || '',
+          observacoes: team.observacoes || '',
+          filial_id: team.filial_id,
+          evento_id: team.evento_id,
+          members: [] // Initialize empty members array
+        }));
+
         return teams;
-      } catch (err) {
-        console.error("Error in useTeams:", err);
+      } catch (error) {
+        console.error('Error in teams query:', error);
+        toast.error('Erro ao buscar equipes');
         return [];
       }
     },
-    enabled: !!eventId && !!selectedModalityId,
+    enabled: !!modalityId && !!eventId
   });
 
-  return { existingTeams: existingTeams || [], isLoadingTeams };
+  return {
+    existingTeams,
+    isLoadingTeams
+  };
 }

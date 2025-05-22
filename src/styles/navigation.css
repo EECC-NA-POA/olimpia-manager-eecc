@@ -23,7 +23,12 @@
   
   /* Fix bottom navigation spacing */
   body {
-    padding-bottom: 60px; /* Space for the bottom navigation */
+    padding-bottom: 65px; /* Space for the bottom navigation */
+  }
+  
+  /* Make sure the judge dashboard has proper spacing on mobile */
+  .judge-card {
+    margin-bottom: 1rem;
   }
 }
 

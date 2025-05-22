@@ -65,7 +65,7 @@ export default function JudgeDashboard() {
       
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid grid-cols-2 w-full max-w-md">
-          <TabsTrigger value="scores">Pontuações</TabsTrigger>
+          <TabsTrigger value="scores">Pontuações Individuais</TabsTrigger>
           <TabsTrigger value="teams">Equipes</TabsTrigger>
         </TabsList>
         

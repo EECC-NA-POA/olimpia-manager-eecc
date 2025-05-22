@@ -1,106 +1,116 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { AvailableAthlete, Team } from '../types';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+import { Team, AvailableAthlete } from '../types';
+
+interface EnrolledAthlete {
+  id: number;
+  atleta_id: string;
+  equipe_id: number | null;
+  usuarios: {
+    nome_completo: string;
+    tipo_documento: string;
+    numero_documento: string;
+    numero_identificador: string | null;
+  } | null;
+}
 
 export function useAvailableAthletes(
   eventId: string | null,
-  selectedModalityId: number | null,
-  isOrganizer = false,
-  filialId?: string,
+  modalityId: number | null,
+  isOrganizer: boolean = false,
+  branchId?: string | null,
   existingTeams: Team[] = []
 ) {
-  // Fetch available athletes
-  const { data: availableAthletes = [] } = useQuery({
-    queryKey: ['athletes', eventId, selectedModalityId, isOrganizer, filialId, existingTeams],
+  const { data: availableAthletes } = useQuery({
+    queryKey: ['available-athletes', modalityId, eventId, branchId, existingTeams, isOrganizer],
     queryFn: async () => {
-      if (!eventId || !selectedModalityId) return [] as AvailableAthlete[];
+      if (!modalityId || !eventId) {
+        return [];
+      }
       
       try {
-        // Construct a safe query for confirmed athletes
-        const { data, error } = await supabase
-          .from('vw_modalidades_atletas_confirmados')
+        // Get all enrollments for this modality
+        let query = supabase
+          .from('inscricoes_modalidades')
           .select(`
+            id,
             atleta_id,
-            atleta_nome,
-            atleta_telefone,
-            atleta_email,
-            tipo_documento,
-            numero_documento,
-            filial_id
+            equipe_id,
+            usuarios:atleta_id (
+              nome_completo,
+              tipo_documento,
+              numero_documento,
+              numero_identificador
+            )
           `)
+          .eq('modalidade_id', modalityId)
           .eq('evento_id', eventId)
-          .eq('modalidade_id', selectedModalityId);
-        
-        if (error) {
-          console.error('Error fetching athletes:', error);
-          // Return an empty array if there's an error
-          return [] as AvailableAthlete[];
-        }
-        
-        // Ensure we have data before proceeding
-        if (!data || !Array.isArray(data)) {
-          return [] as AvailableAthlete[];
-        }
-        
-        // Filter by branch if not an organizer
-        let filteredAthletes = data;
-        if (!isOrganizer && filialId) {
-          // Safe filtering to handle potential type issues
-          filteredAthletes = data.filter(item => {
-            return item && typeof item === 'object' && 
-                  'filial_id' in item && item.filial_id === filialId;
-          });
-        }
-        
-        // Create a Set of athlete IDs already in teams
-        const athletesInTeams = new Set<string>();
-        
-        if (existingTeams && existingTeams.length > 0) {
-          existingTeams.forEach(team => {
-            if (team && team.athletes) {
-              team.athletes.forEach(athlete => {
-                if (athlete && athlete.atleta_id) {
-                  athletesInTeams.add(athlete.atleta_id);
-                }
-              });
-            }
-          });
-        }
-        
-        // Filter and map athletes safely
-        const availableAthletesArray: AvailableAthlete[] = [];
-        
-        for (const athlete of filteredAthletes) {
-          // Skip if athlete is null or not an object
-          if (!athlete || typeof athlete !== 'object') continue;
+          .eq('status', 'confirmado');
+
+        // If not organizer, filter by branch
+        if (!isOrganizer && branchId) {
+          const { data: branchAthletes, error: branchError } = await supabase
+            .from('usuarios')
+            .select('id')
+            .eq('filial_id', branchId);
           
-          // Type guard to ensure athlete has required properties
-          if (!('atleta_id' in athlete) || !athlete.atleta_id) continue;
+          if (branchError) throw branchError;
           
-          const athleteId = athlete.atleta_id as string;
-          
-          // Only include athletes that aren't already in a team
-          if (!athletesInTeams.has(athleteId)) {
-            availableAthletesArray.push({
-              atleta_id: athleteId,
-              atleta_nome: (athlete as any).atleta_nome || '',
-              atleta_telefone: (athlete as any).atleta_telefone || '',
-              atleta_email: (athlete as any).atleta_email || '',
-              tipo_documento: (athlete as any).tipo_documento || '',
-              numero_documento: (athlete as any).numero_documento || '',
-              filial_id: (athlete as any).filial_id || ''
-            });
+          const athleteIds = branchAthletes.map(a => a.id);
+          if (athleteIds.length) {
+            query = query.in('atleta_id', athleteIds);
+          } else {
+            return [];
           }
         }
+
+        const { data: enrolledAthletes, error: enrollmentError } = await query;
         
-        return availableAthletesArray;
-      } catch (err) {
-        console.error("Error in useAvailableAthletes:", err);
-        return [] as AvailableAthlete[];
+        if (enrollmentError) {
+          console.error('Error fetching enrolled athletes:', enrollmentError);
+          toast.error('Não foi possível carregar os atletas');
+          return [];
+        }
+
+        // If organizer, just return all athletes (they can't modify teams)
+        if (isOrganizer) {
+          return [];
+        }
+
+        // Extract athletes that are not yet assigned to a team
+        const availableAthletes: AvailableAthlete[] = [];
+        
+        if (enrolledAthletes) {
+          for (const item of enrolledAthletes) {
+            // Skip if item is null
+            if (!item) continue;
+            
+            // Skip athletes already in a team
+            if (item.equipe_id !== null) continue;
+            
+            // Add the athlete to available list if user data exists
+            if (item.usuarios) {
+              availableAthletes.push({
+                atleta_id: item.atleta_id,
+                nome: item.usuarios.nome_completo || 'Atleta',
+                tipo_documento: item.usuarios.tipo_documento || 'Documento',
+                numero_documento: item.usuarios.numero_documento || '',
+                numero_identificador: item.usuarios.numero_identificador || '',
+              });
+            }
+          }
+        }
+
+        return availableAthletes;
+      } catch (error) {
+        console.error('Error in available athletes query:', error);
+        toast.error('Erro ao buscar atletas disponíveis');
+        return [];
       }
     },
-    enabled: !!eventId && !!selectedModalityId && !!existingTeams,
+    enabled: !!modalityId && !!eventId && !isOrganizer
   });
 
   return { availableAthletes: availableAthletes || [] };
