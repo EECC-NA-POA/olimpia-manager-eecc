@@ -3,18 +3,18 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Team, TeamAthlete } from '../types';
 
+// Helper interface to prevent deep type instantiation
+interface TeamQueryResult {
+  existingTeams: Team[];
+  isLoadingTeams: boolean;
+}
+
 export function useTeams(
   eventId: string | null,
   selectedModalityId: number | null,
   isOrganizer = false,
   filialId?: string
-) {
-  // Explicitly define the return type to avoid deep type instantiation
-  type TeamsQueryResult = {
-    existingTeams: Team[];
-    isLoadingTeams: boolean;
-  };
-
+): TeamQueryResult {
   // Fetch existing teams
   const { data: existingTeams = [], isLoading: isLoadingTeams } = useQuery({
     queryKey: ['teams', eventId, selectedModalityId, isOrganizer, filialId],
@@ -57,7 +57,7 @@ export function useTeams(
           // Create team object
           const teamObj: Team = {
             id: team.id,
-            nome: team.nome,
+            nome: team.nome as string,
             athletes: []
           };
           
@@ -83,20 +83,19 @@ export function useTeams(
               
               // Access usuario properties safely
               const usuario = item.usuarios || {};
-              const userRecord = usuario as Record<string, any>;
               
-              // Create athlete
+              // Create athlete with explicit typing
               const athlete: TeamAthlete = {
                 id: item.id || 0,
                 posicao: item.posicao || 0,
                 raia: item.raia || null,
                 atleta_id: item.atleta_id || '',
                 usuarios: {
-                  nome_completo: userRecord.nome_completo || '',
-                  email: userRecord.email || '',
-                  telefone: userRecord.telefone || '',
-                  tipo_documento: userRecord.tipo_documento || '',
-                  numero_documento: userRecord.numero_documento || ''
+                  nome_completo: (usuario as any).nome_completo || '',
+                  email: (usuario as any).email || '',
+                  telefone: (usuario as any).telefone || '',
+                  tipo_documento: (usuario as any).tipo_documento || '',
+                  numero_documento: (usuario as any).numero_documento || ''
                 }
               };
               
@@ -116,5 +115,5 @@ export function useTeams(
     enabled: !!eventId && !!selectedModalityId,
   });
 
-  return { existingTeams, isLoadingTeams };
+  return { existingTeams: existingTeams || [], isLoadingTeams };
 }

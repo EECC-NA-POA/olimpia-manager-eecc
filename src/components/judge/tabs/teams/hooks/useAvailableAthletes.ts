@@ -11,7 +11,7 @@ export function useAvailableAthletes(
   existingTeams: Team[] = []
 ) {
   // Fetch available athletes
-  const { data: availableAthletes } = useQuery({
+  const { data: availableAthletes = [] } = useQuery({
     queryKey: ['athletes', eventId, selectedModalityId, isOrganizer, filialId, existingTeams],
     queryFn: async () => {
       if (!eventId || !selectedModalityId) return [] as AvailableAthlete[];
@@ -82,15 +82,14 @@ export function useAvailableAthletes(
           
           // Only include athletes that aren't already in a team
           if (!athletesInTeams.has(athleteId)) {
-            const safeAthlete = athlete as Record<string, any>;
             availableAthletesArray.push({
               atleta_id: athleteId,
-              atleta_nome: safeAthlete.atleta_nome || '',
-              atleta_telefone: safeAthlete.atleta_telefone || '',
-              atleta_email: safeAthlete.atleta_email || '',
-              tipo_documento: safeAthlete.tipo_documento || '',
-              numero_documento: safeAthlete.numero_documento || '',
-              filial_id: safeAthlete.filial_id || ''
+              atleta_nome: (athlete as any).atleta_nome || '',
+              atleta_telefone: (athlete as any).atleta_telefone || '',
+              atleta_email: (athlete as any).atleta_email || '',
+              tipo_documento: (athlete as any).tipo_documento || '',
+              numero_documento: (athlete as any).numero_documento || '',
+              filial_id: (athlete as any).filial_id || ''
             });
           }
         }
@@ -104,5 +103,5 @@ export function useAvailableAthletes(
     enabled: !!eventId && !!selectedModalityId && !!existingTeams,
   });
 
-  return { availableAthletes };
+  return { availableAthletes: availableAthletes || [] };
 }
