@@ -4,15 +4,17 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from "@/contexts/AuthContext";
 import { TopNavigation } from './navigation/TopNavigation';
 import { useNavigation } from '@/hooks/useNavigation';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function GlobalHeader() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { roles } = useNavigation();
   const location = useLocation();
+  const isMobile = useIsMobile();
   
   // Don't show top navigation on event selection page
-  const showTopNav = user && location.pathname !== '/event-selection';
+  const showTopNav = user && location.pathname !== '/event-selection' && !isMobile;
   
   const handleClick = () => {
     // Only navigate to home page if not logged in

@@ -14,6 +14,19 @@
   padding-top: 140px !important; /* Increased padding for better separation */
 }
 
+/* Mobile specific adjustments */
+@media (max-width: 768px) {
+  .main-navigation-content {
+    padding-top: 80px !important; /* Less padding on mobile since we don't have the top navigation */
+    padding-bottom: 80px !important; /* Add bottom padding for mobile navigation */
+  }
+  
+  /* Fix bottom navigation spacing */
+  body {
+    padding-bottom: 60px; /* Space for the bottom navigation */
+  }
+}
+
 /* Event selection page specific spacing */
 .event-selection-container {
   padding-top: 140px !important; /* Match other pages */
@@ -40,11 +53,4 @@
 
 .tabs-nav .tabs-content {
   padding: 0.5rem 0;
-}
-
-/* Fix for mobile screens */
-@media (max-width: 768px) {
-  .mt-16 {
-    overflow-x: hidden;
-  }
 }
