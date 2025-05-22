@@ -92,30 +92,19 @@ export function useAvailableAthletes(
             // Skip athletes already in a team
             if (item.equipe_id !== null) continue;
             
-            // Add the athlete to available list if user data exists
-            // Make sure we correctly handle the usuarios data which may come as an object
-            const userInfo = item.usuarios ? {
-              nome_completo: item.usuarios.nome_completo || '',
-              tipo_documento: item.usuarios.tipo_documento || '',
-              numero_documento: item.usuarios.numero_documento || '',
-              numero_identificador: item.usuarios.numero_identificador || null
-            } : {
-              nome_completo: '',
-              tipo_documento: '',
-              numero_documento: '',
-              numero_identificador: null
-            };
+            // Handle the usuarios data, ensuring it's treated as an object and not an array
+            const userData = item.usuarios as UserInfo | null;
             
             availableAthletes.push({
               atleta_id: item.atleta_id,
-              name: userInfo.nome_completo || 'Atleta',
-              atleta_nome: userInfo.nome_completo || 'Atleta',
-              documento_tipo: userInfo.tipo_documento || 'Documento',
-              documento_numero: userInfo.numero_documento || '',
-              identificador: userInfo.numero_identificador || '',
-              tipo_documento: userInfo.tipo_documento || 'Documento',
-              numero_documento: userInfo.numero_documento || '',
-              numero_identificador: userInfo.numero_identificador
+              name: userData?.nome_completo || 'Atleta',
+              atleta_nome: userData?.nome_completo || 'Atleta',
+              documento_tipo: userData?.tipo_documento || 'Documento',
+              documento_numero: userData?.numero_documento || '',
+              identificador: userData?.numero_identificador || '',
+              tipo_documento: userData?.tipo_documento || 'Documento',
+              numero_documento: userData?.numero_documento || '',
+              numero_identificador: userData?.numero_identificador
             });
           }
         }

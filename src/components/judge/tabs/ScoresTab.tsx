@@ -107,26 +107,16 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
       }
 
       return data.map((item) => {
-        // Make sure we correctly handle the usuarios data which may come as an object
-        const userInfo = item.usuarios ? {
-          nome_completo: item.usuarios.nome_completo || '',
-          tipo_documento: item.usuarios.tipo_documento || '',
-          numero_documento: item.usuarios.numero_documento || '',
-          numero_identificador: item.usuarios.numero_identificador || null
-        } : {
-          nome_completo: '',
-          tipo_documento: '',
-          numero_documento: '',
-          numero_identificador: null
-        };
+        // Handle the usuarios data, ensuring it's treated as an object and not an array
+        const userData = item.usuarios as UserInfo | null;
         
         return {
           inscricao_id: item.id,
           atleta_id: item.atleta_id,
-          atleta_nome: userInfo.nome_completo || 'Atleta',
-          tipo_documento: userInfo.tipo_documento || 'Documento',
-          numero_documento: userInfo.numero_documento || '',
-          numero_identificador: userInfo.numero_identificador,
+          atleta_nome: userData?.nome_completo || 'Atleta',
+          tipo_documento: userData?.tipo_documento || 'Documento',
+          numero_documento: userData?.numero_documento || '',
+          numero_identificador: userData?.numero_identificador,
           equipe_id: item.equipe_id
         };
       }) as Athlete[];
