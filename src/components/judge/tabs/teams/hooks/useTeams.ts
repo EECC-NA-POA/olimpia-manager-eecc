@@ -97,8 +97,8 @@ export function useTeams(
           }
 
           team.athletes = teamAthletes.map(athlete => {
-            // Handle the usuarios data, ensuring it's treated as an object
-            const usuariosData = athlete.usuarios;
+            // Handle the usuarios data, ensuring it's treated as an object not an array
+            const usuariosData = Array.isArray(athlete.usuarios) ? athlete.usuarios[0] : athlete.usuarios;
             
             return {
               id: athlete.id,
@@ -108,7 +108,11 @@ export function useTeams(
               raia: athlete.raia || undefined,
               tipo_documento: usuariosData?.tipo_documento,
               numero_documento: usuariosData?.numero_documento,
-              usuarios: usuariosData
+              usuarios: {
+                nome_completo: usuariosData?.nome_completo || 'Atleta',
+                tipo_documento: usuariosData?.tipo_documento,
+                numero_documento: usuariosData?.numero_documento
+              }
             };
           });
         }
