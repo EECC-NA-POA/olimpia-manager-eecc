@@ -56,8 +56,8 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
           return [];
         }
 
-        // Map the data to our Athlete type with proper typing
-        return (data as AthleteResponse[]).map((item) => ({
+        // Use type assertion to unknown first, then to AthleteResponse[]
+        return (data as unknown as AthleteResponse[]).map((item) => ({
           inscricao_id: item.id,
           atleta_id: item.atleta_id,
           atleta_nome: item.usuarios?.nome_completo || 'Atleta',

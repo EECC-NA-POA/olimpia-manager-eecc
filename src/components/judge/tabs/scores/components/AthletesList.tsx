@@ -2,8 +2,9 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AthleteScoreCard } from '@/components/judge/score-card';
+import { Badge } from '@/components/ui/badge';
 import { type Athlete } from '../hooks/useAthletes';
+import { AthleteCard } from '@/components/judge/AthleteCard';
 
 interface AthletesListProps {
   athletes: Athlete[] | undefined;
@@ -26,7 +27,7 @@ export function AthletesList({
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Skeleton key={i} className="h-64" />
+          <Skeleton key={i} className="h-72" />
         ))}
       </div>
     );
@@ -44,18 +45,18 @@ export function AthletesList({
     );
   }
 
-  console.log('Rendering athletes:', athletes);
+  const handleAthleteClick = (athlete: Athlete) => {
+    // Navigate to athlete score page or open score modal
+    console.log('Athlete clicked:', athlete);
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {athletes.map((athlete) => (
-        <AthleteScoreCard 
-          key={athlete.atleta_id}
+        <AthleteCard 
+          key={athlete.atleta_id} 
           athlete={athlete}
-          modalityId={modalityId!}
-          eventId={eventId}
-          judgeId={judgeId}
-          scoreType={scoreType}
+          onClick={() => handleAthleteClick(athlete)}
         />
       ))}
     </div>
