@@ -69,7 +69,7 @@ export function AthleteScoreCard({
   // Get initial schema based on score type
   const schema = scoreType === 'time' ? timeScoreSchema : pointsScoreSchema;
   
-  // Define the form
+  // Define the form with proper types
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: scoreType === 'time' 
@@ -105,11 +105,11 @@ export function AthleteScoreCard({
   React.useEffect(() => {
     if (existingScore) {
       if (scoreType === 'time' && existingScore.tempo_minutos !== null) {
-        form.setValue('minutes', existingScore.tempo_minutos.toString() || '0');
-        form.setValue('seconds', existingScore.tempo_segundos.toString() || '0');
-        form.setValue('milliseconds', existingScore.tempo_milissegundos.toString() || '0');
+        form.setValue('minutes', existingScore.tempo_minutos?.toString() || '0');
+        form.setValue('seconds', existingScore.tempo_segundos?.toString() || '0');
+        form.setValue('milliseconds', existingScore.tempo_milissegundos?.toString() || '0');
       } else if (scoreType !== 'time' && existingScore.valor_pontuacao !== null) {
-        form.setValue('score', existingScore.valor_pontuacao.toString() || '0');
+        form.setValue('score', existingScore.valor_pontuacao?.toString() || '0');
       }
       
       form.setValue('notes', existingScore.observacoes || '');
@@ -121,7 +121,7 @@ export function AthleteScoreCard({
   const calculatePositions = async () => {
     if (!eventId || !modalityId) return;
     
-    // First, get all scores for this modality
+    // Get all scores for this modality
     const { data: allScores, error } = await supabase
       .from('pontuacoes')
       .select('*')
@@ -182,6 +182,7 @@ export function AthleteScoreCard({
       let scoreData;
       
       if (scoreType === 'time' && 'minutes' in data) {
+        // Convert string values to numbers using the transformations in the schema
         const minutes = parseInt(data.minutes.toString()) || 0;
         const seconds = parseInt(data.seconds.toString()) || 0;
         const milliseconds = parseInt(data.milliseconds.toString()) || 0;

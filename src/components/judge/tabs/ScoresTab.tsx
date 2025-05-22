@@ -26,6 +26,16 @@ interface ScoresTabProps {
   eventId: string | null;
 }
 
+interface Athlete {
+  inscricao_id: number;
+  atleta_id: string;
+  atleta_nome: string;
+  tipo_documento: string;
+  numero_documento: string;
+  numero_identificador?: string | null;
+  equipe_id?: number | null;
+}
+
 export function ScoresTab({ userId, eventId }: ScoresTabProps) {
   const [selectedModalityId, setSelectedModalityId] = useState<number | null>(null);
 
@@ -97,7 +107,7 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
         numero_documento: item.usuarios?.numero_documento || '',
         numero_identificador: item.usuarios?.numero_identificador,
         equipe_id: item.equipe_id
-      }));
+      })) as Athlete[];
     },
     enabled: !!selectedModalityId && !!eventId,
   });

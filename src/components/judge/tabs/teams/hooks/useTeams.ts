@@ -47,7 +47,7 @@ export function useTeams(
           return [];
         }
         
-        // Map to a simpler structure to avoid deep instantiation issues
+        // Map to a Team structure that matches our interface
         const teams: Team[] = (data || []).map((team: TeamQueryResult) => ({
           id: team.id,
           nome: team.nome,

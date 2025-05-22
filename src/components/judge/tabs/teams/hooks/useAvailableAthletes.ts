@@ -94,10 +94,10 @@ export function useAvailableAthletes(
             if (item.usuarios) {
               availableAthletes.push({
                 atleta_id: item.atleta_id,
-                nome: item.usuarios.nome_completo || 'Atleta',
-                tipo_documento: item.usuarios.tipo_documento || 'Documento',
-                numero_documento: item.usuarios.numero_documento || '',
-                numero_identificador: item.usuarios.numero_identificador || '',
+                name: item.usuarios.nome_completo || 'Atleta',
+                documento_tipo: item.usuarios.tipo_documento || 'Documento',
+                documento_numero: item.usuarios.numero_documento || '',
+                identificador: item.usuarios.numero_identificador || '',
               });
             }
           }

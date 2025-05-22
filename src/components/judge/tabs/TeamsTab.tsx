@@ -13,7 +13,7 @@ import { ModalitySelector } from './teams/ModalitySelector';
 import { NoModalitiesCard } from './teams/NoModalitiesCard';
 import { TeamCreationForm } from './teams/TeamCreationForm';
 import { useTeamCreation } from './teams/hooks/useTeamCreation';
-import { TeamsTabProps } from './teams/types';
+import { TeamsTabProps, Team } from './teams/types';
 import { Info } from 'lucide-react';
 import { TeamCard } from '@/components/judge/team-formation/TeamCard';
 import { useQuery } from '@tanstack/react-query';
@@ -60,7 +60,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
         return [];
       }
 
-      const teams = [...(existingTeams || [])];
+      const teams = [...(existingTeams || [])] as Team[];
       
       for (const team of teams) {
         // Get team members for each team
@@ -192,7 +192,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
                         <CardContent>
                           <h4 className="font-medium text-sm mb-2">Membros da equipe ({team.members?.length || 0})</h4>
                           <ul className="space-y-2">
-                            {team.members?.map((member: any) => (
+                            {team.members?.map((member) => (
                               <li key={member.id} className="text-sm border-b pb-1">
                                 <div className="font-medium">{member.name}</div>
                                 <div className="text-xs text-muted-foreground">{member.documento}</div>
