@@ -11,7 +11,7 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
   // Get user info and branch info
   const { userInfo } = useUserInfo(userId, isOrganizer);
 
-  // Get modalities for the event
+  // Get modalities for the event (collective ones)
   const { modalities, isLoadingModalities } = useModalities(eventId);
 
   // Get teams for the selected modality

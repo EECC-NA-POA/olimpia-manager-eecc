@@ -26,7 +26,7 @@ export function NoModalitiesCard({ isCollective = false }: NoModalitiesCardProps
       <CardContent>
         <p className="text-sm text-muted-foreground">
           {isCollective 
-            ? "Verifique se foram cadastradas modalidades coletivas para este evento."
+            ? "Verifique se foram cadastradas modalidades coletivas (tipo_modalidade = 'coletivo') para este evento."
             : "Verifique se existem atletas com inscrição confirmada nas modalidades."}
         </p>
       </CardContent>

@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 import { Modality } from '../types';
 
 export function useModalities(eventId: string | null) {
@@ -11,39 +11,37 @@ export function useModalities(eventId: string | null) {
     queryFn: async () => {
       if (!eventId) return [] as Modality[];
       
-      // Get modalities with confirmed athlete enrollments
-      const { data, error } = await supabase
-        .from('vw_modalidades_atletas_confirmados')
-        .select('modalidade_id, modalidade_nome, categoria, tipo_modalidade')
-        .eq('evento_id', eventId)
-        .order('modalidade_nome');
-      
-      if (error) {
-        console.error('Error fetching modalities:', error);
-        toast({
-          title: "Erro",
-          description: 'Não foi possível carregar as modalidades',
-          variant: "destructive"
-        });
+      try {
+        // Get all modalities for the event that are collective
+        const { data, error } = await supabase
+          .from('modalidades')
+          .select('id, nome, categoria, tipo_modalidade')
+          .eq('evento_id', eventId)
+          .eq('tipo_modalidade', 'coletivo')
+          .order('nome');
+        
+        if (error) {
+          console.error('Error fetching collective modalities:', error);
+          toast.error('Não foi possível carregar as modalidades coletivas');
+          return [] as Modality[];
+        }
+        
+        console.log('Fetched collective modalities:', data);
+        
+        // Map to the expected format
+        const formattedModalities: Modality[] = (data || []).map(item => ({
+          modalidade_id: item.id,
+          modalidade_nome: item.nome,
+          categoria: item.categoria,
+          tipo_modalidade: item.tipo_modalidade
+        }));
+        
+        return formattedModalities;
+      } catch (error) {
+        console.error('Error in modalities query:', error);
+        toast.error('Erro ao buscar modalidades');
         return [] as Modality[];
       }
-      
-      // Process unique modalities
-      const uniqueModalitiesMap = new Map<number, Modality>();
-      
-      if (data && data.length > 0) {
-        data.forEach(item => {
-          uniqueModalitiesMap.set(item.modalidade_id, {
-            modalidade_id: item.modalidade_id,
-            modalidade_nome: item.modalidade_nome,
-            categoria: item.categoria,
-            tipo_modalidade: item.tipo_modalidade
-          });
-        });
-      }
-      
-      // Convert map to array
-      return Array.from(uniqueModalitiesMap.values());
     },
     enabled: !!eventId,
   });

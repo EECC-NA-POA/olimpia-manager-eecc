@@ -30,11 +30,6 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     availableAthletes
   } = useTeamData(userId, eventId, isOrganizer);
 
-  // Filter modalities to show only collective ones
-  const collectiveModalities = modalities?.filter(mod => 
-    mod.tipo_modalidade?.toLowerCase().includes('coletiv')
-  ) || [];
-
   // Team creation functionality
   const { handleCreateTeam, createTeamMutation } = useTeamCreation(
     userId,
@@ -60,7 +55,10 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     );
   }
 
-  if (!collectiveModalities || collectiveModalities.length === 0) {
+  // Check if there are any collective modalities available
+  console.log('Available modalities:', modalities);
+  
+  if (!modalities || modalities.length === 0) {
     return <NoModalitiesCard isCollective={true} />;
   }
 
@@ -79,7 +77,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
         <CardContent>
           <div className="space-y-6">
             <ModalitySelector 
-              modalities={collectiveModalities}
+              modalities={modalities}
               onModalityChange={handleModalityChange}
             />
             
