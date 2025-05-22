@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -101,10 +102,10 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
       return data.map((item) => ({
         inscricao_id: item.id,
         atleta_id: item.atleta_id,
-        atleta_nome: item.usuarios?.nome_completo || 'Atleta',
-        tipo_documento: item.usuarios?.tipo_documento || 'Documento',
-        numero_documento: item.usuarios?.numero_documento || '',
-        numero_identificador: item.usuarios?.numero_identificador,
+        atleta_nome: item.usuarios ? item.usuarios.nome_completo || 'Atleta' : 'Atleta',
+        tipo_documento: item.usuarios ? item.usuarios.tipo_documento || 'Documento' : 'Documento',
+        numero_documento: item.usuarios ? item.usuarios.numero_documento || '' : '',
+        numero_identificador: item.usuarios ? item.usuarios.numero_identificador : null,
         equipe_id: item.equipe_id
       })) as Athlete[];
     },

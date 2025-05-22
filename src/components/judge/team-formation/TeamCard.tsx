@@ -27,7 +27,7 @@ export function TeamCard({
       <CardContent>
         <div className="space-y-4">
           <TeamTable
-            athletes={team.athletes}
+            athletes={team.athletes || []}
             teamId={team.id}
             isReadOnly={isReadOnly}
             onUpdateLane={onUpdateLane}

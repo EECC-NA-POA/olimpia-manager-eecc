@@ -95,9 +95,13 @@ export function useAvailableAthletes(
               availableAthletes.push({
                 atleta_id: item.atleta_id,
                 name: item.usuarios.nome_completo || 'Atleta',
+                atleta_nome: item.usuarios.nome_completo || 'Atleta',
                 documento_tipo: item.usuarios.tipo_documento || 'Documento',
                 documento_numero: item.usuarios.numero_documento || '',
                 identificador: item.usuarios.numero_identificador || '',
+                tipo_documento: item.usuarios.tipo_documento,
+                numero_documento: item.usuarios.numero_documento,
+                numero_identificador: item.usuarios.numero_identificador
               });
             }
           }

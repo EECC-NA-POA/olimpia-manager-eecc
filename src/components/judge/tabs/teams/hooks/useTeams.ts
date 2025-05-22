@@ -55,7 +55,8 @@ export function useTeams(
           observacoes: team.observacoes || '',
           filial_id: team.filial_id,
           evento_id: team.evento_id,
-          members: [] // Initialize empty members array
+          members: [], // Initialize empty members array
+          athletes: [] // Initialize empty athletes array
         }));
 
         return teams;

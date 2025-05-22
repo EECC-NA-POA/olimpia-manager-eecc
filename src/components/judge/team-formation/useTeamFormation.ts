@@ -28,7 +28,7 @@ export function useTeamFormation({
       if (!team) throw new Error('Team not found');
       
       // Calculate next position
-      const nextPosition = team.athletes.length > 0 
+      const nextPosition = team.athletes && team.athletes.length > 0 
         ? Math.max(...team.athletes.map(a => a.posicao)) + 1 
         : 1;
       
@@ -62,7 +62,7 @@ export function useTeamFormation({
       const team = teams.find(t => t.id === teamId);
       if (!team) throw new Error('Team not found');
       
-      const athlete = team.athletes.find(a => a.atleta_id === athleteId);
+      const athlete = team.athletes && team.athletes.find(a => a.atleta_id === athleteId);
       if (!athlete) throw new Error('Athlete not found in team');
       
       // Delete the athlete from the team
@@ -101,7 +101,7 @@ export function useTeamFormation({
       const team = teams.find(t => t.id === teamId);
       if (!team) throw new Error('Team not found');
       
-      const athlete = team.athletes.find(a => a.atleta_id === athleteId);
+      const athlete = team.athletes && team.athletes.find(a => a.atleta_id === athleteId);
       if (!athlete) throw new Error('Athlete not found in team');
       
       // Update the lane for the athlete

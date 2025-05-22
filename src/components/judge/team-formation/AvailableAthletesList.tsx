@@ -39,7 +39,7 @@ export function AvailableAthletesList({
             key={athlete.atleta_id}
             className="border rounded-md p-2 flex justify-between items-center"
           >
-            <span className="truncate">{athlete.atleta_nome}</span>
+            <span className="truncate">{athlete.name || athlete.atleta_nome}</span>
             {teams.length === 1 ? (
               // If there's only one team, show a single add button
               <Button
