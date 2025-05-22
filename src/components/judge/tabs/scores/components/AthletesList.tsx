@@ -55,9 +55,8 @@ export function AthletesList({
   }
 
   const handleAthleteClick = (athlete: Athlete) => {
-    setSelectedAthleteId(athlete.atleta_id);
-    // Navigate to athlete score page or open score modal
-    console.log('Athlete clicked:', athlete);
+    // Toggle selection
+    setSelectedAthleteId(prev => prev === athlete.atleta_id ? null : athlete.atleta_id);
   };
 
   return (
@@ -80,6 +79,9 @@ export function AthletesList({
             onClick={() => handleAthleteClick(athlete)}
             isSelected={selectedAthleteId === athlete.atleta_id}
             modalityId={modalityId || undefined}
+            scoreType={scoreType}
+            eventId={selectedAthleteId === athlete.atleta_id ? eventId : null}
+            judgeId={selectedAthleteId === athlete.atleta_id ? judgeId : undefined}
           />
         ))}
       </div>

@@ -28,7 +28,7 @@ export function useModalities(eventId: string | null) {
         modalidade_id: m.id,
         modalidade_nome: m.nome,
         categoria: m.categoria,
-        tipo_modalidade: m.tipo_modalidade,
+        tipo_modalidade: m.tipo_modalidade || 'individual',
         tipo_pontuacao: m.tipo_pontuacao || 'points'
       })) as Modality[];
     },

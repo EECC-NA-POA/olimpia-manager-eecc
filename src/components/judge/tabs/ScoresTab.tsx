@@ -18,11 +18,14 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
   // Fetch modalities using our custom hook
   const { modalities, isLoadingModalities } = useModalities(eventId);
 
+  // Filter to show only individual modalities
+  const individualModalities = modalities?.filter(m => m.tipo_modalidade === 'individual');
+
   // Fetch athletes when a modality is selected using our custom hook
   const { athletes, isLoadingAthletes } = useAthletes(selectedModalityId, eventId);
 
   // Get selected modality
-  const selectedModality = modalities?.find(m => m.modalidade_id === selectedModalityId);
+  const selectedModality = individualModalities?.find(m => m.modalidade_id === selectedModalityId);
 
   if (isLoadingModalities) {
     return (
@@ -33,14 +36,14 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
     );
   }
 
-  if (!modalities || modalities.length === 0) {
+  if (!individualModalities || individualModalities.length === 0) {
     return <NoModalitiesCard />;
   }
 
   return (
     <div className="space-y-6">
       <ModalityCard 
-        modalities={modalities}
+        modalities={individualModalities}
         onSelectModality={setSelectedModalityId}
       />
       

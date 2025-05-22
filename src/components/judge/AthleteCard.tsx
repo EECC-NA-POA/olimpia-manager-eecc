@@ -12,15 +12,27 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { AthleteModalityResponse } from './types/modality';
 import { Check, X } from 'lucide-react';
+import { AthleteScoreCard } from './score-card/AthleteScoreCard';
 
 interface AthleteCardProps {
   athlete: Athlete;
   isSelected?: boolean;
   onClick?: () => void;
   modalityId?: number;
+  scoreType?: 'time' | 'distance' | 'points';
+  eventId?: string | null;
+  judgeId?: string;
 }
 
-export function AthleteCard({ athlete, isSelected, onClick, modalityId }: AthleteCardProps) {
+export function AthleteCard({ 
+  athlete, 
+  isSelected, 
+  onClick, 
+  modalityId,
+  scoreType = 'points',
+  eventId,
+  judgeId
+}: AthleteCardProps) {
   // Fetch athlete identifier from payments
   const { data: paymentData } = useQuery({
     queryKey: ['athlete-payment', athlete.atleta_id],
@@ -59,40 +71,33 @@ export function AthleteCard({ athlete, isSelected, onClick, modalityId }: Athlet
     },
     enabled: !!athlete.atleta_id,
   });
-
-  // Get total score or use a placeholder
-  const totalScore = scores?.reduce((sum, score) => sum + (score.valor_pontuacao || 0), 0) || 0;
   
   // Check if the athlete has a score for the selected modality
   const hasScoreForCurrentModality = modalityId ? 
     scores?.some(score => score.modalidade_id === modalityId) : 
     false;
-  
-  // Get athlete's modalities
-  const { data: modalities } = useQuery<AthleteModalityResponse[]>({
-    queryKey: ['athlete-modalities', athlete.atleta_id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('inscricoes_modalidades')
-        .select('modalidade_id, modalidades(nome)')
-        .eq('atleta_id', athlete.atleta_id);
-      
-      if (error) {
-        console.error('Error fetching athlete modalities:', error);
-        return [];
-      }
-      
-      // Transform the data to match our AthleteModalityResponse interface
-      return (data || []).map(item => ({
-        modalidade_id: item.modalidade_id,
-        modalidades: item.modalidades
-      })) as unknown as AthleteModalityResponse[];
-    },
-    enabled: !!athlete.atleta_id,
-  });
 
   // Get athlete identifier or fallback to ID slice
   const athleteIdentifier = paymentData?.numero_identificador || athlete.atleta_id.slice(-6);
+
+  // If we're in selected view and have all necessary props, render the score card
+  if (isSelected && modalityId && eventId && judgeId && scoreType) {
+    return (
+      <AthleteScoreCard 
+        athlete={{
+          atleta_id: athlete.atleta_id,
+          atleta_nome: athlete.atleta_nome,
+          tipo_documento: athlete.tipo_documento,
+          numero_documento: athlete.numero_documento,
+          numero_identificador: athleteIdentifier
+        }}
+        modalityId={modalityId}
+        eventId={eventId}
+        judgeId={judgeId}
+        scoreType={scoreType}
+      />
+    );
+  }
 
   return (
     <Card 
@@ -120,10 +125,6 @@ export function AthleteCard({ athlete, isSelected, onClick, modalityId }: Athlet
       </div>
       <CardHeader className="p-4 pb-2 flex flex-row justify-between items-start">
         <CardTitle className="text-base">{athlete.atleta_nome}</CardTitle>
-        <div className="text-xs flex flex-col items-end">
-          <span className="text-gray-500">Pontuação total</span>
-          <span className="font-semibold">{totalScore}</span>
-        </div>
       </CardHeader>
       
       <CardContent className="p-4 pt-0">
@@ -143,26 +144,9 @@ export function AthleteCard({ athlete, isSelected, onClick, modalityId }: Athlet
         </div>
         
         <div className="mt-4">
-          <p className="text-gray-500 text-xs mb-1">Modalidades</p>
-          <div className="flex flex-wrap gap-2">
-            {modalities && modalities.length > 0 ? (
-              modalities.map((modalidade, i) => (
-                <Badge key={i} variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
-                  {modalidade.modalidades?.nome || `Modalidade ${modalidade.modalidade_id}`}
-                </Badge>
-              ))
-            ) : (
-              <Badge variant="outline" className="bg-gray-50 text-gray-800 border-gray-200">
-                Sem modalidades
-              </Badge>
-            )}
-          </div>
-        </div>
-
-        <div className="mt-4">
           <p className="text-gray-500 text-xs mb-1">Status</p>
           <div className="flex gap-2">
-            {scores && scores.length > 0 ? (
+            {hasScoreForCurrentModality ? (
               <Badge variant="outline" className="bg-green-50 text-green-800 border-green-200">
                 Avaliado
               </Badge>
