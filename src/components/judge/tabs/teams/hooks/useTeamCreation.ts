@@ -7,7 +7,7 @@ export function useTeamCreation(
   userId: string,
   eventId: string | null,
   selectedModalityId: number | null,
-  filialId?: string | null,
+  userInfo: { filial_id?: string | null } | null = null,
   isOrganizer = false,
   teamName = '',
   setTeamName: (name: string) => void = () => {}
@@ -21,11 +21,17 @@ export function useTeamCreation(
         throw new Error('Missing event ID or modality ID');
       }
       
+      console.log('Creating team with userInfo:', userInfo);
+      console.log('Is organizer:', isOrganizer);
+      
       // Determine branch ID based on profile
-      const branch_id = isOrganizer ? null : filialId;
+      const branch_id = isOrganizer ? null : userInfo?.filial_id;
+      
+      console.log('Branch ID for team creation:', branch_id);
       
       // Branch ID is required for non-organizers
       if (!isOrganizer && !branch_id) {
+        console.error('Missing branch ID for delegation representative. UserInfo:', userInfo);
         throw new Error('Missing branch ID for delegation representative');
       }
       
@@ -58,7 +64,7 @@ export function useTeamCreation(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['teams', eventId, selectedModalityId, isOrganizer, filialId] 
+        queryKey: ['teams', eventId, selectedModalityId, isOrganizer, userInfo?.filial_id] 
       });
       setTeamName('');
       toast.success("Equipe criada", {

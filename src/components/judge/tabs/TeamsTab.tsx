@@ -30,12 +30,15 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     availableAthletes
   } = useTeamData(userId, eventId, isOrganizer);
 
-  // Team creation functionality
+  console.log('TeamsTab - userInfo:', userInfo);
+  console.log('TeamsTab - isOrganizer:', isOrganizer);
+
+  // Team creation functionality - passing userInfo instead of just filial_id
   const { handleCreateTeam, createTeamMutation } = useTeamCreation(
     userId,
     eventId,
     selectedModalityId,
-    userInfo?.filial_id,
+    userInfo, // Pass the complete userInfo object
     isOrganizer,
     teamName,
     setTeamName

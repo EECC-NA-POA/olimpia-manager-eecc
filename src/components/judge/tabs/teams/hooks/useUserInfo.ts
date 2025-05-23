@@ -8,6 +8,8 @@ export function useUserInfo(userId: string, eventId: string | null) {
   const { data: userInfo } = useQuery({
     queryKey: ['user-info', userId],
     queryFn: async () => {
+      console.log('Fetching user info for userId:', userId);
+      
       const { data, error } = await supabase
         .from('usuarios')
         .select('id, filial_id')
@@ -19,10 +21,12 @@ export function useUserInfo(userId: string, eventId: string | null) {
         return null;
       }
       
+      console.log('User info fetched successfully:', data);
       return data as UserInfo;
     },
     enabled: !!userId,
   });
 
+  console.log('useUserInfo - returning userInfo:', userInfo);
   return { userInfo };
 }
