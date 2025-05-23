@@ -9,14 +9,12 @@ export function useModalities(eventId: string | null) {
   const { data: modalities, isLoading: isLoadingModalities } = useQuery({
     queryKey: ['modalities', eventId],
     queryFn: async () => {
-      if (!eventId) return [] as Modality[];
-      
       try {
         // Get all modalities for the event that are collective
         const { data, error } = await supabase
           .from('modalidades')
           .select('id, nome, categoria, tipo_modalidade')
-          .eq('evento_id', eventId)
+          .eq('evento_id', eventId!)
           .eq('tipo_modalidade', 'coletivo')
           .order('nome');
         
@@ -28,12 +26,12 @@ export function useModalities(eventId: string | null) {
         
         console.log('Fetched collective modalities:', data);
         
-        // Map to the expected format
+        // Map to the expected format with proper null checking
         const formattedModalities: Modality[] = (data || []).map(item => ({
-          modalidade_id: item.id,
-          modalidade_nome: item.nome,
-          categoria: item.categoria,
-          tipo_modalidade: item.tipo_modalidade
+          modalidade_id: item.id || 0,
+          modalidade_nome: item.nome || '',
+          categoria: item.categoria || '',
+          tipo_modalidade: item.tipo_modalidade || 'coletivo'
         }));
         
         return formattedModalities;
@@ -46,5 +44,5 @@ export function useModalities(eventId: string | null) {
     enabled: !!eventId,
   });
 
-  return { modalities, isLoadingModalities };
+  return { modalities: modalities || [], isLoadingModalities };
 }
