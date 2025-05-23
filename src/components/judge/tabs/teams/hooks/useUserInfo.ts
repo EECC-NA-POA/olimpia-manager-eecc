@@ -1,35 +1,39 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { UserInfo } from '../types';
 
 export function useUserInfo(userId: string, eventId: string | null) {
+  const { user } = useAuth();
+  
   // Fetch user branch info if not an organizer
   const { data: userInfo, isLoading, error } = useQuery({
     queryKey: ['user-info', userId],
     queryFn: async () => {
       console.log('useUserInfo - Starting fetch for userId:', userId);
+      console.log('useUserInfo - Auth context user:', user);
       
       if (!userId) {
         console.log('useUserInfo - No userId provided');
         return null;
       }
       
+      // If we have user data from auth context, use it directly
+      if (user?.filial_id) {
+        console.log('useUserInfo - Using auth context data:', {
+          id: user.id,
+          filial_id: user.filial_id
+        });
+        
+        return {
+          id: user.id,
+          filial_id: user.filial_id
+        } as UserInfo;
+      }
+      
       try {
-        // First check if we have a valid session
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error('useUserInfo - Session error:', sessionError);
-          throw new Error('Sessão inválida. Por favor, faça login novamente.');
-        }
-        
-        if (!sessionData.session) {
-          console.log('useUserInfo - No active session');
-          throw new Error('Sessão não encontrada. Por favor, faça login novamente.');
-        }
-        
-        console.log('useUserInfo - Valid session found, querying usuarios table for user:', userId);
+        console.log('useUserInfo - Querying usuarios table for user:', userId);
         
         const { data, error } = await supabase
           .from('usuarios')
@@ -63,14 +67,7 @@ export function useUserInfo(userId: string, eventId: string | null) {
       }
     },
     enabled: !!userId,
-    retry: (failureCount, error) => {
-      // Don't retry on authentication errors
-      const errorMessage = error?.message || '';
-      if (errorMessage.includes('Sessão') || errorMessage.includes('JWT') || errorMessage.includes('CompactDecodeError')) {
-        return false;
-      }
-      return failureCount < 2;
-    },
+    retry: 2,
     retryDelay: 1000,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -79,7 +76,8 @@ export function useUserInfo(userId: string, eventId: string | null) {
     userInfo, 
     isLoading, 
     error: error?.message,
-    userId 
+    userId,
+    authUser: user 
   });
 
   return { userInfo, isLoading, error };

@@ -1,6 +1,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 export function useTeamCreation(
@@ -13,6 +14,7 @@ export function useTeamCreation(
   setTeamName: (name: string) => void = () => {}
 ) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Create team mutation
   const createTeamMutation = useMutation({
@@ -22,29 +24,27 @@ export function useTeamCreation(
         selectedModalityId,
         userInfo,
         isOrganizer,
-        userId
+        userId,
+        authUser: user
       });
 
       if (!eventId || !selectedModalityId) {
         throw new Error('Dados do evento ou modalidade não encontrados');
       }
       
-      // Check session first
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !sessionData.session) {
-        throw new Error('Sua sessão expirou. Por favor, faça login novamente.');
-      }
-      
       // Determine branch ID based on profile
-      const branch_id = isOrganizer ? null : userInfo?.filial_id;
+      let branch_id = null;
       
-      console.log('Branch ID for team creation:', branch_id);
-      
-      // Branch ID is required for non-organizers
-      if (!isOrganizer && !branch_id) {
-        console.error('Missing branch ID for delegation representative. UserInfo:', userInfo);
-        throw new Error('Informações da filial não foram carregadas. Por favor, atualize a página e tente novamente.');
+      if (!isOrganizer) {
+        // Try to get branch_id from userInfo first, then from auth context
+        branch_id = userInfo?.filial_id || user?.filial_id;
+        
+        console.log('Branch ID for team creation:', branch_id);
+        
+        if (!branch_id) {
+          console.error('Missing branch ID for delegation representative. UserInfo:', userInfo, 'AuthUser:', user);
+          throw new Error('Informações da filial não foram carregadas. Por favor, atualize a página e tente novamente.');
+        }
       }
       
       const teamData = {
@@ -76,7 +76,7 @@ export function useTeamCreation(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['teams', eventId, selectedModalityId, isOrganizer, userInfo?.filial_id] 
+        queryKey: ['teams', eventId, selectedModalityId, isOrganizer, userInfo?.filial_id || user?.filial_id] 
       });
       setTeamName('');
       toast.success("Equipe criada", {
@@ -91,7 +91,6 @@ export function useTeamCreation(
         toast.error("Sessão expirada", {
           description: errorMessage
         });
-        // Optionally trigger a page reload or redirect to login
         window.location.reload();
       } else {
         toast.error("Erro", {
@@ -106,7 +105,8 @@ export function useTeamCreation(
     console.log('handleCreateTeam called with:', {
       teamName,
       userInfo,
-      isOrganizer
+      isOrganizer,
+      authUser: user
     });
 
     if (!teamName.trim()) {
@@ -116,12 +116,16 @@ export function useTeamCreation(
       return;
     }
 
-    // Check if userInfo is loaded for non-organizers
-    if (!isOrganizer && !userInfo) {
-      toast.error("Informações não carregadas", {
-        description: 'Aguarde o carregamento das informações ou atualize a página'
-      });
-      return;
+    // For non-organizers, check if we have branch info
+    if (!isOrganizer) {
+      const hasBranchInfo = userInfo?.filial_id || user?.filial_id;
+      
+      if (!hasBranchInfo) {
+        toast.error("Informações não carregadas", {
+          description: 'Aguarde o carregamento das informações da filial ou atualize a página'
+        });
+        return;
+      }
     }
     
     createTeamMutation.mutate({ name: teamName });
