@@ -1,6 +1,6 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export function useTeamCreation(
@@ -26,7 +26,14 @@ export function useTeamCreation(
       });
 
       if (!eventId || !selectedModalityId) {
-        throw new Error('Missing event ID or modality ID');
+        throw new Error('Dados do evento ou modalidade não encontrados');
+      }
+      
+      // Check session first
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        throw new Error('Sua sessão expirou. Por favor, faça login novamente.');
       }
       
       // Determine branch ID based on profile
@@ -37,7 +44,7 @@ export function useTeamCreation(
       // Branch ID is required for non-organizers
       if (!isOrganizer && !branch_id) {
         console.error('Missing branch ID for delegation representative. UserInfo:', userInfo);
-        throw new Error('Informações do usuário não foram carregadas. Por favor, aguarde e tente novamente.');
+        throw new Error('Informações da filial não foram carregadas. Por favor, atualize a página e tente novamente.');
       }
       
       const teamData = {
@@ -58,7 +65,10 @@ export function useTeamCreation(
       
       if (error) {
         console.error('Error creating team:', error);
-        throw error;
+        if (error.message?.includes('JWT') || error.message?.includes('session')) {
+          throw new Error('Sua sessão expirou. Por favor, faça login novamente.');
+        }
+        throw new Error('Erro ao criar a equipe. Tente novamente.');
       }
       
       console.log('Team created successfully:', data);
@@ -75,9 +85,19 @@ export function useTeamCreation(
     },
     onError: (error) => {
       console.error('Team creation error:', error);
-      toast.error("Erro", {
-        description: error.message || 'Não foi possível criar a equipe'
-      });
+      const errorMessage = error.message || 'Não foi possível criar a equipe';
+      
+      if (errorMessage.includes('sessão') || errorMessage.includes('login')) {
+        toast.error("Sessão expirada", {
+          description: errorMessage
+        });
+        // Optionally trigger a page reload or redirect to login
+        window.location.reload();
+      } else {
+        toast.error("Erro", {
+          description: errorMessage
+        });
+      }
     }
   });
 
@@ -98,8 +118,8 @@ export function useTeamCreation(
 
     // Check if userInfo is loaded for non-organizers
     if (!isOrganizer && !userInfo) {
-      toast.error("Carregando dados", {
-        description: 'Aguarde o carregamento das informações do usuário'
+      toast.error("Informações não carregadas", {
+        description: 'Aguarde o carregamento das informações ou atualize a página'
       });
       return;
     }

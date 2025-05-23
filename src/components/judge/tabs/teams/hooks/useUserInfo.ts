@@ -16,7 +16,20 @@ export function useUserInfo(userId: string, eventId: string | null) {
       }
       
       try {
-        console.log('useUserInfo - Querying usuarios table for user:', userId);
+        // First check if we have a valid session
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('useUserInfo - Session error:', sessionError);
+          throw new Error('Sessão inválida. Por favor, faça login novamente.');
+        }
+        
+        if (!sessionData.session) {
+          console.log('useUserInfo - No active session');
+          throw new Error('Sessão não encontrada. Por favor, faça login novamente.');
+        }
+        
+        console.log('useUserInfo - Valid session found, querying usuarios table for user:', userId);
         
         const { data, error } = await supabase
           .from('usuarios')
@@ -26,14 +39,14 @@ export function useUserInfo(userId: string, eventId: string | null) {
         
         if (error) {
           console.error('useUserInfo - Supabase error:', error);
-          throw error;
+          throw new Error('Erro ao carregar informações do usuário');
         }
         
         console.log('useUserInfo - Raw data from usuarios table:', data);
         
         if (!data) {
           console.log('useUserInfo - No user data found in usuarios table');
-          return null;
+          throw new Error('Usuário não encontrado');
         }
         
         const userInfo = {
@@ -46,11 +59,18 @@ export function useUserInfo(userId: string, eventId: string | null) {
         
       } catch (error) {
         console.error('useUserInfo - Exception in query:', error);
-        throw error; // Re-throw to let React Query handle it
+        throw error;
       }
     },
     enabled: !!userId,
-    retry: 2,
+    retry: (failureCount, error) => {
+      // Don't retry on authentication errors
+      const errorMessage = error?.message || '';
+      if (errorMessage.includes('Sessão') || errorMessage.includes('JWT') || errorMessage.includes('CompactDecodeError')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
     retryDelay: 1000,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

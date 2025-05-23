@@ -14,10 +14,11 @@ import { NoModalitiesCard } from './teams/NoModalitiesCard';
 import { TeamCreationForm } from './teams/TeamCreationForm';
 import { useTeamCreation } from './teams/hooks/useTeamCreation';
 import { TeamsTabProps } from './teams/types';
-import { Info, AlertCircle } from 'lucide-react';
+import { Info, AlertCircle, RefreshCw } from 'lucide-react';
 import { TeamFormation } from '@/components/judge/TeamFormation';
 import { NoTeamsMessage } from './teams/NoTeamsMessage';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
   const [teamName, setTeamName] = useState('');
@@ -57,6 +58,16 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
   const handleModalityChange = (value: string) => {
     setSelectedModalityId(Number(value));
   };
+
+  // Handle refresh for authentication errors
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
+  // Check for authentication errors
+  const isAuthError = userInfoError?.message?.includes('JWT') || 
+                     userInfoError?.message?.includes('CompactDecodeError') ||
+                     userInfoError?.message?.includes('Sessão');
 
   if (isLoadingModalities) {
     return (
@@ -105,11 +116,26 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
                           Carregando informações do usuário...
                         </AlertDescription>
                       </Alert>
+                    ) : isAuthError ? (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription className="flex items-center justify-between">
+                          <span>Erro de autenticação. Por favor, atualize a página e faça login novamente.</span>
+                          <Button variant="outline" size="sm" onClick={handleRefresh} className="ml-2">
+                            <RefreshCw className="h-4 w-4 mr-1" />
+                            Atualizar
+                          </Button>
+                        </AlertDescription>
+                      </Alert>
                     ) : userInfoError ? (
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>
-                          Erro ao carregar informações do usuário: {userInfoError.message}
+                        <AlertDescription className="flex items-center justify-between">
+                          <span>Erro ao carregar informações: {userInfoError.message}</span>
+                          <Button variant="outline" size="sm" onClick={handleRefresh} className="ml-2">
+                            <RefreshCw className="h-4 w-4 mr-1" />
+                            Tentar novamente
+                          </Button>
                         </AlertDescription>
                       </Alert>
                     ) : !userInfo ? (
