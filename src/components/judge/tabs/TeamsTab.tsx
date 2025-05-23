@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Card, 
@@ -16,6 +15,7 @@ import { useTeamCreation } from './teams/hooks/useTeamCreation';
 import { TeamsTabProps } from './teams/types';
 import { Info } from 'lucide-react';
 import { TeamFormation } from '@/components/judge/TeamFormation';
+import { NoTeamsMessage } from './teams/NoTeamsMessage';
 
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
   const [teamName, setTeamName] = useState('');
@@ -110,15 +110,17 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
                   <div className="space-y-4">
                     <Skeleton className="h-64 w-full" />
                   </div>
-                ) : (
+                ) : existingTeams && existingTeams.length > 0 ? (
                   <TeamFormation 
-                    teams={existingTeams || []}
+                    teams={existingTeams}
                     availableAthletes={availableAthletes || []}
                     eventId={eventId}
                     modalityId={selectedModalityId}
                     isOrganizer={isOrganizer}
                     isReadOnly={isOrganizer}
                   />
+                ) : (
+                  <NoTeamsMessage isOrganizer={isOrganizer} />
                 )}
               </>
             )}

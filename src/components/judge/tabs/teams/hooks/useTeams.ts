@@ -23,7 +23,6 @@ export function useTeams(
           .select(`
             id,
             nome,
-            observacoes,
             modalidade_id,
             modalidades (
               nome,
@@ -45,7 +44,10 @@ export function useTeams(
           throw error;
         }
 
+        console.log('Teams data fetched:', teamsData);
+
         if (!teamsData || teamsData.length === 0) {
+          console.log('No teams found for this modality');
           return [];
         }
 
@@ -57,7 +59,6 @@ export function useTeams(
           return {
             id: team.id,
             nome: team.nome,
-            observacoes: team.observacoes || undefined,
             modalidade_id: team.modalidade_id,
             modalidade: modalidadeData?.nome,
             modalidades: {
@@ -116,7 +117,7 @@ export function useTeams(
 
       } catch (error) {
         console.error('Error in teams query:', error);
-        toast.error('Erro ao carregar equipes');
+        // Don't show error toast for empty results - let the UI handle it gracefully
         return [];
       }
     },
