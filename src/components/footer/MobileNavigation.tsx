@@ -111,17 +111,10 @@ export const MobileNavigationLink = () => {
   const location = useLocation();
   const { roles } = useNavigation();
   
-  // Don't show mobile navigation on event selection page
-  if (!user || location.pathname === '/event-selection') {
-    return null;
-  }
-  
-  // Load user events for the event switcher
+  // Always call hooks unconditionally - use enabled to control execution
   const { data: userEvents = [] } = useQuery({
     queryKey: ['user-events', user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
-      
       const { data, error } = await supabase
         .from('inscricoes_eventos')
         .select(`
@@ -132,7 +125,7 @@ export const MobileNavigationLink = () => {
             status_evento
           )
         `)
-        .eq('usuario_id', user.id);
+        .eq('usuario_id', user!.id);
 
       if (error) {
         console.error('Error fetching user events:', error);
@@ -141,15 +134,13 @@ export const MobileNavigationLink = () => {
 
       return data.map(item => item.eventos);
     },
-    enabled: !!user?.id
+    enabled: !!user?.id && location.pathname !== '/event-selection'
   });
   
-  // Check if user can create events
+  // Always call this hook - use enabled to control execution
   const { data: canCreateEvents } = useQuery({
     queryKey: ['can-create-events', user?.id],
     queryFn: async () => {
-      if (!user?.id) return false;
-      
       try {
         const { data, error } = await supabase
           .rpc('verificar_permissao_criacao_evento');
@@ -161,8 +152,13 @@ export const MobileNavigationLink = () => {
         return false;
       }
     },
-    enabled: !!user?.id && roles.isAdmin
+    enabled: !!user?.id && roles.isAdmin && location.pathname !== '/event-selection'
   });
+  
+  // Don't show mobile navigation on event selection page or when no user
+  if (!user || location.pathname === '/event-selection') {
+    return null;
+  }
   
   // Handle logout reliably
   const handleLogout = async () => {
