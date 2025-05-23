@@ -16,8 +16,8 @@ import { Team } from '../tabs/teams/types';
 interface TeamTableProps {
   team: Team;
   isReadOnly?: boolean;
-  onUpdateLane?: (teamId: number, athleteId: string, lane: number, position: number) => void;
-  onRemoveAthlete?: (teamId: number, athleteId: string) => void;
+  onUpdateLane?: (athleteId: string, lane: number, position: number) => void;
+  onRemoveAthlete?: (athleteId: string) => void;
   isRemovePending?: boolean;
 }
 
@@ -38,13 +38,13 @@ export function TeamTable({
   const handlePositionChange = (athleteId: string, position: number) => {
     if (!onUpdateLane) return;
     const lane = sortedAthletes.find(a => a.atleta_id === athleteId)?.raia || 0;
-    onUpdateLane(team.id, athleteId, lane, position);
+    onUpdateLane(athleteId, lane, position);
   };
 
   const handleLaneChange = (athleteId: string, lane: number) => {
     if (!onUpdateLane) return;
     const position = sortedAthletes.find(a => a.atleta_id === athleteId)?.posicao || 0;
-    onUpdateLane(team.id, athleteId, lane, position);
+    onUpdateLane(athleteId, lane, position);
   };
 
   return (
@@ -109,7 +109,7 @@ export function TeamTable({
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => onRemoveAthlete && onRemoveAthlete(team.id, athlete.atleta_id)}
+                    onClick={() => onRemoveAthlete && onRemoveAthlete(athlete.atleta_id)}
                     disabled={isRemovePending}
                   >
                     <Trash2 className="h-4 w-4" />

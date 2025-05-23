@@ -50,7 +50,7 @@ export function TeamCard({
         )}
         
         <TeamTable 
-          athletes={team.athletes || []} 
+          team={team}
           isReadOnly={isReadOnly}
           onUpdateLane={onUpdateLane ? (athleteId, lane, position) => onUpdateLane(team.id, athleteId, lane, position) : undefined}
           onRemoveAthlete={onRemoveAthlete ? (athleteId) => onRemoveAthlete(team.id, athleteId) : undefined}
