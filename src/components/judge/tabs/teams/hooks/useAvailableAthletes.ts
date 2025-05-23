@@ -27,10 +27,6 @@ export function useAvailableAthletes(
   const { data: availableAthletes } = useQuery({
     queryKey: ['available-athletes', modalityId, eventId, branchId, existingTeams, isOrganizer],
     queryFn: async () => {
-      if (!modalityId || !eventId) {
-        return [];
-      }
-      
       try {
         // Get all enrollments for this modality
         let query = supabase
@@ -44,8 +40,8 @@ export function useAvailableAthletes(
               numero_documento
             )
           `)
-          .eq('modalidade_id', modalityId)
-          .eq('evento_id', eventId)
+          .eq('modalidade_id', modalityId!)
+          .eq('evento_id', eventId!)
           .eq('status', 'confirmado');
 
         // If not organizer, filter by branch
@@ -75,7 +71,7 @@ export function useAvailableAthletes(
 
         console.log('Enrolled athletes:', enrolledAthletes);
 
-        // If organizer, just return all athletes (they can't modify teams)
+        // If organizer, just return empty array (they can't modify teams)
         if (isOrganizer) {
           return [];
         }

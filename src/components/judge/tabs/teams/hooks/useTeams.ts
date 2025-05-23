@@ -14,10 +14,6 @@ export function useTeams(
   return useQuery({
     queryKey: ['teams', eventId, modalityId, isOrganizer, branchId],
     queryFn: async () => {
-      if (!eventId || !modalityId) {
-        return [];
-      }
-
       try {
         console.log('Fetching teams:', { eventId, modalityId, branchId, isOrganizer });
         
@@ -34,8 +30,8 @@ export function useTeams(
               categoria
             )
           `)
-          .eq('evento_id', eventId)
-          .eq('modalidade_id', modalityId);
+          .eq('evento_id', eventId!)
+          .eq('modalidade_id', modalityId!);
         
         // For delegation representatives, filter by their branch
         if (!isOrganizer && branchId) {

@@ -8,8 +8,6 @@ export function useUserInfo(userId: string, eventId: string | null) {
   const { data: userInfo } = useQuery({
     queryKey: ['user-info', userId],
     queryFn: async () => {
-      if (!userId) return null;
-      
       const { data, error } = await supabase
         .from('usuarios')
         .select('id, filial_id')
