@@ -21,7 +21,14 @@ export function AvailableAthletesList({
 }: AvailableAthletesListProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
+  console.log('AvailableAthletesList rendered with:', {
+    athletesCount: athletes.length,
+    teamsCount: teams.length,
+    athletes: athletes
+  });
+
   if (athletes.length === 0) {
+    console.log('No athletes available, not rendering component');
     return null;
   }
 
@@ -40,10 +47,13 @@ export function AvailableAthletesList({
   }
 
   // Filter athletes based on search term
-  const filteredAthletes = athletes.filter(athlete => 
-    athlete.atleta_nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    athlete.numero_documento.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredAthletes = athletes.filter(athlete => {
+    const nameMatch = athlete.atleta_nome?.toLowerCase().includes(searchTerm.toLowerCase());
+    const docMatch = athlete.numero_documento?.toLowerCase().includes(searchTerm.toLowerCase());
+    return nameMatch || docMatch;
+  });
+
+  console.log('Filtered athletes:', filteredAthletes.length);
 
   return (
     <Card>
