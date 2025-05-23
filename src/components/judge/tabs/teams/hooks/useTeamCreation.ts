@@ -17,6 +17,14 @@ export function useTeamCreation(
   // Create team mutation
   const createTeamMutation = useMutation({
     mutationFn: async (newTeam: { name: string }) => {
+      console.log('Creating team - Input data:', {
+        eventId,
+        selectedModalityId,
+        userInfo,
+        isOrganizer,
+        userId
+      });
+
       if (!eventId || !selectedModalityId) {
         throw new Error('Missing event ID or modality ID');
       }
@@ -32,26 +40,24 @@ export function useTeamCreation(
       // Branch ID is required for non-organizers
       if (!isOrganizer && !branch_id) {
         console.error('Missing branch ID for delegation representative. UserInfo:', userInfo);
-        throw new Error('Missing branch ID for delegation representative');
+        console.error('UserId:', userId);
+        console.error('EventId:', eventId);
+        throw new Error('Informações do usuário não carregadas. Tente novamente em alguns segundos.');
       }
       
-      console.log('Creating team with data:', {
+      const teamData = {
         nome: newTeam.name,
         evento_id: eventId,
         modalidade_id: selectedModalityId,
         filial_id: branch_id,
         created_by: userId
-      });
+      };
+      
+      console.log('Creating team with data:', teamData);
       
       const { data, error } = await supabase
         .from('equipes')
-        .insert({
-          nome: newTeam.name,
-          evento_id: eventId,
-          modalidade_id: selectedModalityId,
-          filial_id: branch_id,
-          created_by: userId
-        })
+        .insert(teamData)
         .select('id')
         .single();
       
@@ -60,6 +66,7 @@ export function useTeamCreation(
         throw error;
       }
       
+      console.log('Team created successfully:', data);
       return data;
     },
     onSuccess: () => {
@@ -74,16 +81,30 @@ export function useTeamCreation(
     onError: (error) => {
       console.error('Team creation error:', error);
       toast.error("Erro", {
-        description: 'Não foi possível criar a equipe'
+        description: error.message || 'Não foi possível criar a equipe'
       });
     }
   });
 
   // Handle team creation
   const handleCreateTeam = () => {
+    console.log('handleCreateTeam called with:', {
+      teamName,
+      userInfo,
+      isOrganizer
+    });
+
     if (!teamName.trim()) {
       toast.error("Nome obrigatório", {
         description: 'Por favor, informe um nome para a equipe'
+      });
+      return;
+    }
+
+    // Check if userInfo is loaded for non-organizers
+    if (!isOrganizer && !userInfo) {
+      toast.error("Carregando dados", {
+        description: 'Aguarde o carregamento das informações do usuário'
       });
       return;
     }

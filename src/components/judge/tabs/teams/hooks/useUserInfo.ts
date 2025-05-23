@@ -8,25 +8,50 @@ export function useUserInfo(userId: string, eventId: string | null) {
   const { data: userInfo } = useQuery({
     queryKey: ['user-info', userId],
     queryFn: async () => {
-      console.log('Fetching user info for userId:', userId);
+      console.log('useUserInfo - Starting fetch for userId:', userId);
       
-      const { data, error } = await supabase
-        .from('usuarios')
-        .select('id, filial_id')
-        .eq('id', userId)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching user info:', error);
+      if (!userId) {
+        console.log('useUserInfo - No userId provided');
         return null;
       }
       
-      console.log('User info fetched successfully:', data);
-      return data as UserInfo;
+      try {
+        const { data, error } = await supabase
+          .from('usuarios')
+          .select('id, filial_id')
+          .eq('id', userId)
+          .single();
+        
+        if (error) {
+          console.error('useUserInfo - Error fetching user info:', error);
+          throw error;
+        }
+        
+        console.log('useUserInfo - User info fetched successfully:', data);
+        
+        if (!data) {
+          console.log('useUserInfo - No user data found');
+          return null;
+        }
+        
+        const userInfo = {
+          id: data.id,
+          filial_id: data.filial_id
+        } as UserInfo;
+        
+        console.log('useUserInfo - Returning processed userInfo:', userInfo);
+        return userInfo;
+        
+      } catch (error) {
+        console.error('useUserInfo - Exception in query:', error);
+        return null;
+      }
     },
     enabled: !!userId,
+    retry: 3,
+    retryDelay: 1000,
   });
 
-  console.log('useUserInfo - returning userInfo:', userInfo);
+  console.log('useUserInfo - Hook returning userInfo:', userInfo);
   return { userInfo };
 }

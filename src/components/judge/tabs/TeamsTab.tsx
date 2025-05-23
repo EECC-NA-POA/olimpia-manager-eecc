@@ -32,6 +32,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
 
   console.log('TeamsTab - userInfo:', userInfo);
   console.log('TeamsTab - isOrganizer:', isOrganizer);
+  console.log('TeamsTab - userId:', userId);
 
   // Team creation functionality - passing userInfo instead of just filial_id
   const { handleCreateTeam, createTeamMutation } = useTeamCreation(
@@ -65,6 +66,9 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     return <NoModalitiesCard isCollective={true} />;
   }
 
+  // Show loading state if user info is not loaded for non-organizers
+  const isUserInfoLoading = !isOrganizer && !userInfo && userId;
+
   return (
     <div className="space-y-6">
       <Card>
@@ -89,12 +93,19 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
                 {/* Team creation form for delegation representatives */}
                 {!isOrganizer && (
                   <div className="pt-4">
-                    <TeamCreationForm
-                      teamName={teamName}
-                      onTeamNameChange={setTeamName}
-                      onCreateTeam={handleCreateTeam}
-                      isCreating={createTeamMutation.isPending}
-                    />
+                    {isUserInfoLoading ? (
+                      <div className="flex items-center gap-2 p-4 rounded-md bg-blue-50 border border-blue-200">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        <p className="text-sm text-blue-800">Carregando informações do usuário...</p>
+                      </div>
+                    ) : (
+                      <TeamCreationForm
+                        teamName={teamName}
+                        onTeamNameChange={setTeamName}
+                        onCreateTeam={handleCreateTeam}
+                        isCreating={createTeamMutation.isPending}
+                      />
+                    )}
                   </div>
                 )}
                 
