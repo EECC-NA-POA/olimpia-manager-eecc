@@ -29,9 +29,6 @@ export function useTeamCreation(
         throw new Error('Missing event ID or modality ID');
       }
       
-      console.log('Creating team with userInfo:', userInfo);
-      console.log('Is organizer:', isOrganizer);
-      
       // Determine branch ID based on profile
       const branch_id = isOrganizer ? null : userInfo?.filial_id;
       
@@ -40,9 +37,7 @@ export function useTeamCreation(
       // Branch ID is required for non-organizers
       if (!isOrganizer && !branch_id) {
         console.error('Missing branch ID for delegation representative. UserInfo:', userInfo);
-        console.error('UserId:', userId);
-        console.error('EventId:', eventId);
-        throw new Error('Informações do usuário não carregadas. Tente novamente em alguns segundos.');
+        throw new Error('Informações do usuário não foram carregadas. Por favor, aguarde e tente novamente.');
       }
       
       const teamData = {

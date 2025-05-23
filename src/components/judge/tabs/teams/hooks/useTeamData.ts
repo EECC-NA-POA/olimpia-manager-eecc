@@ -14,8 +14,11 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
     isLoadingModalities
   } = useModalities(eventId);
 
-  // Get user info (to get branch ID)
-  const { userInfo } = useUserInfo(userId, eventId);
+  // Get user info (to get branch ID) - only for non-organizers
+  const { userInfo, isLoading: isLoadingUserInfo, error: userInfoError } = useUserInfo(
+    isOrganizer ? '' : userId, // Don't fetch for organizers
+    eventId
+  );
 
   // Get existing teams for the selected modality
   const {
@@ -40,6 +43,8 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
     existingTeams,
     isLoadingTeams,
     userInfo,
+    isLoadingUserInfo,
+    userInfoError,
     availableAthletes
   };
 }

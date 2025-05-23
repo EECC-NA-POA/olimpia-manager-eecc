@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Card, 
@@ -13,9 +14,10 @@ import { NoModalitiesCard } from './teams/NoModalitiesCard';
 import { TeamCreationForm } from './teams/TeamCreationForm';
 import { useTeamCreation } from './teams/hooks/useTeamCreation';
 import { TeamsTabProps } from './teams/types';
-import { Info } from 'lucide-react';
+import { Info, AlertCircle } from 'lucide-react';
 import { TeamFormation } from '@/components/judge/TeamFormation';
 import { NoTeamsMessage } from './teams/NoTeamsMessage';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
   const [teamName, setTeamName] = useState('');
@@ -27,19 +29,25 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     existingTeams,
     isLoadingTeams,
     userInfo,
+    isLoadingUserInfo,
+    userInfoError,
     availableAthletes
   } = useTeamData(userId, eventId, isOrganizer);
 
-  console.log('TeamsTab - userInfo:', userInfo);
-  console.log('TeamsTab - isOrganizer:', isOrganizer);
-  console.log('TeamsTab - userId:', userId);
+  console.log('TeamsTab - Debug info:', {
+    userInfo,
+    isOrganizer,
+    userId,
+    isLoadingUserInfo,
+    userInfoError: userInfoError?.message
+  });
 
-  // Team creation functionality - passing userInfo instead of just filial_id
+  // Team creation functionality
   const { handleCreateTeam, createTeamMutation } = useTeamCreation(
     userId,
     eventId,
     selectedModalityId,
-    userInfo, // Pass the complete userInfo object
+    userInfo,
     isOrganizer,
     teamName,
     setTeamName
@@ -66,9 +74,6 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     return <NoModalitiesCard isCollective={true} />;
   }
 
-  // Show loading state if user info is not loaded for non-organizers
-  const isUserInfoLoading = !isOrganizer && !userInfo && userId;
-
   return (
     <div className="space-y-6">
       <Card>
@@ -93,11 +98,27 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
                 {/* Team creation form for delegation representatives */}
                 {!isOrganizer && (
                   <div className="pt-4">
-                    {isUserInfoLoading ? (
-                      <div className="flex items-center gap-2 p-4 rounded-md bg-blue-50 border border-blue-200">
+                    {isLoadingUserInfo ? (
+                      <Alert className="bg-blue-50 border-blue-200">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                        <p className="text-sm text-blue-800">Carregando informações do usuário...</p>
-                      </div>
+                        <AlertDescription className="text-blue-800 ml-2">
+                          Carregando informações do usuário...
+                        </AlertDescription>
+                      </Alert>
+                    ) : userInfoError ? (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          Erro ao carregar informações do usuário: {userInfoError.message}
+                        </AlertDescription>
+                      </Alert>
+                    ) : !userInfo ? (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          Não foi possível carregar as informações do usuário. Verifique se você está logado corretamente.
+                        </AlertDescription>
+                      </Alert>
                     ) : (
                       <TeamCreationForm
                         teamName={teamName}
@@ -111,10 +132,12 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
                 
                 {/* Information message for judges */}
                 {isOrganizer && (
-                  <div className="flex items-center gap-2 p-2 rounded-md bg-amber-50 border border-amber-200 text-amber-800">
-                    <Info size={16} />
-                    <p className="text-sm">As equipes são formadas pelos representantes de delegação e não podem ser editadas.</p>
-                  </div>
+                  <Alert className="bg-amber-50 border-amber-200">
+                    <Info className="h-4 w-4" />
+                    <AlertDescription className="text-amber-800">
+                      As equipes são formadas pelos representantes de delegação e não podem ser editadas.
+                    </AlertDescription>
+                  </Alert>
                 )}
                 
                 {isLoadingTeams ? (

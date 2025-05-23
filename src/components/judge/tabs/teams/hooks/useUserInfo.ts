@@ -5,7 +5,7 @@ import { UserInfo } from '../types';
 
 export function useUserInfo(userId: string, eventId: string | null) {
   // Fetch user branch info if not an organizer
-  const { data: userInfo } = useQuery({
+  const { data: userInfo, isLoading, error } = useQuery({
     queryKey: ['user-info', userId],
     queryFn: async () => {
       console.log('useUserInfo - Starting fetch for userId:', userId);
@@ -16,6 +16,8 @@ export function useUserInfo(userId: string, eventId: string | null) {
       }
       
       try {
+        console.log('useUserInfo - Querying usuarios table for user:', userId);
+        
         const { data, error } = await supabase
           .from('usuarios')
           .select('id, filial_id')
@@ -23,14 +25,14 @@ export function useUserInfo(userId: string, eventId: string | null) {
           .single();
         
         if (error) {
-          console.error('useUserInfo - Error fetching user info:', error);
+          console.error('useUserInfo - Supabase error:', error);
           throw error;
         }
         
-        console.log('useUserInfo - User info fetched successfully:', data);
+        console.log('useUserInfo - Raw data from usuarios table:', data);
         
         if (!data) {
-          console.log('useUserInfo - No user data found');
+          console.log('useUserInfo - No user data found in usuarios table');
           return null;
         }
         
@@ -39,19 +41,26 @@ export function useUserInfo(userId: string, eventId: string | null) {
           filial_id: data.filial_id
         } as UserInfo;
         
-        console.log('useUserInfo - Returning processed userInfo:', userInfo);
+        console.log('useUserInfo - Processed userInfo:', userInfo);
         return userInfo;
         
       } catch (error) {
         console.error('useUserInfo - Exception in query:', error);
-        return null;
+        throw error; // Re-throw to let React Query handle it
       }
     },
     enabled: !!userId,
-    retry: 3,
+    retry: 2,
     retryDelay: 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  console.log('useUserInfo - Hook returning userInfo:', userInfo);
-  return { userInfo };
+  console.log('useUserInfo - Hook state:', { 
+    userInfo, 
+    isLoading, 
+    error: error?.message,
+    userId 
+  });
+
+  return { userInfo, isLoading, error };
 }
