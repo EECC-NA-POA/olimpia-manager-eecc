@@ -31,7 +31,7 @@ export function useTeamsData(
         .eq('evento_id', eventId)
         .eq('modalidade_id', selectedModalityId);
 
-      // For organizers, show ALL teams. For regular users, show only their teams
+      // For organizers, show ALL teams in this modality. For regular users, show only their teams
       if (!isOrganizer && branchId) {
         query = query.eq('created_by', user?.id);
       }
