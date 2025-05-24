@@ -28,17 +28,7 @@ export function useAllTeamsData(
           nome,
           modalidade_id,
           evento_id,
-          filial_id,
-          modalidades(
-            id,
-            nome,
-            categoria,
-            tipo_modalidade
-          ),
-          filiais(
-            id,
-            nome
-          )
+          filial_id
         `)
         .eq('evento_id', eventId);
 
@@ -68,13 +58,24 @@ export function useAllTeamsData(
 
       if (!teamsData) return [];
 
-      // Process teams with athletes
+      // Process teams with athletes and modality info
       const processedTeams: TeamData[] = [];
       
       for (const team of teamsData) {
         console.log('Processing team:', team);
         
-        // Get team athletes with branch information
+        // Get modality information separately
+        const { data: modalityData, error: modalityError } = await supabase
+          .from('modalidades')
+          .select('id, nome, categoria, tipo_modalidade')
+          .eq('id', team.modalidade_id)
+          .single();
+
+        if (modalityError) {
+          console.error('Error fetching modality for team:', team.id, modalityError);
+        }
+
+        // Get team athletes with user and branch information
         const { data: athletesData, error: athletesError } = await supabase
           .from('atletas_equipes')
           .select(`
@@ -116,11 +117,6 @@ export function useAllTeamsData(
             filial_nome: filial?.nome || 'N/A'
           };
         }) || [];
-
-        // Handle modalidades data properly - get first element if array
-        const modalidadeData = Array.isArray(team.modalidades) 
-          ? team.modalidades[0] 
-          : team.modalidades;
         
         processedTeams.push({
           id: team.id,
@@ -128,11 +124,11 @@ export function useAllTeamsData(
           modalidade_id: team.modalidade_id,
           filial_id: team.filial_id,
           evento_id: team.evento_id,
-          modalidade_info: modalidadeData ? {
-            id: modalidadeData.id,
-            nome: modalidadeData.nome,
-            categoria: modalidadeData.categoria,
-            tipo_modalidade: modalidadeData.tipo_modalidade || 'coletiva'
+          modalidade_info: modalityData ? {
+            id: modalityData.id,
+            nome: modalityData.nome,
+            categoria: modalityData.categoria,
+            tipo_modalidade: modalityData.tipo_modalidade || 'coletiva'
           } : undefined,
           atletas
         });
@@ -144,7 +140,7 @@ export function useAllTeamsData(
     enabled: !!eventId,
   });
 
-  // Query for modalities
+  // Query for modalities - only collective modalities for the filter
   const modalitiesQuery = useQuery({
     queryKey: ['all-modalities', eventId],
     queryFn: async (): Promise<ModalityOption[]> => {
@@ -154,6 +150,7 @@ export function useAllTeamsData(
         .from('modalidades')
         .select('id, nome, categoria, tipo_modalidade')
         .eq('evento_id', eventId)
+        .eq('tipo_modalidade', 'coletiva')
         .order('nome');
 
       if (error) throw error;
