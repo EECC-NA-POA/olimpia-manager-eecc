@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info, AlertCircle, Users } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTeamManager } from './teams/hooks/useTeamManager';
 import { useAllTeamsData } from './teams/hooks/useAllTeamsData';
 import { ModalitySelect } from './teams/components/ModalitySelect';
@@ -21,6 +21,8 @@ interface TeamsTabProps {
 }
 
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
+  const { user } = useAuth();
+  
   // States for "Visualizar Todas" tab
   const [modalityFilter, setModalityFilter] = useState<number | null>(null);
   const [branchFilter, setBranchFilter] = useState<string | null>(null);
@@ -43,14 +45,14 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     isUpdatingAthlete
   } = useTeamManager(eventId, isOrganizer);
 
-  // Data for viewing all teams
+  // Data for viewing all teams - pass user's branch ID for delegation representatives
   const {
     teams: allTeams,
     modalities: allModalities,
     branches,
     isLoading: isLoadingAllTeams,
     error: allTeamsError
-  } = useAllTeamsData(eventId, modalityFilter, branchFilter, searchTerm);
+  } = useAllTeamsData(eventId, modalityFilter, branchFilter, searchTerm, user?.filial_id);
 
   if (isLoading && !selectedModalityId) {
     return (

@@ -12,14 +12,15 @@ export function useAllTeamsData(
   eventId: string | null,
   modalityFilter: number | null,
   branchFilter: string | null,
-  searchTerm: string
+  searchTerm: string,
+  userBranchId?: string
 ) {
   const teamsQuery = useQuery({
-    queryKey: ['all-teams', eventId, modalityFilter, branchFilter, searchTerm],
+    queryKey: ['all-teams', eventId, modalityFilter, branchFilter, searchTerm, userBranchId],
     queryFn: async () => {
       if (!eventId) return [];
 
-      console.log('Fetching teams with filters:', { eventId, modalityFilter, branchFilter, searchTerm });
+      console.log('Fetching teams with filters:', { eventId, modalityFilter, branchFilter, searchTerm, userBranchId });
 
       let query = supabase
         .from('equipes')
@@ -115,13 +116,24 @@ export function useAllTeamsData(
         // Determine the primary filial from athletes
         const primaryFilial = atletas.length > 0 ? atletas[0].filial_nome : 'N/A';
         
-        // Apply branch filter if specified
+        // Apply branch filter if specified - compare by branch name, not ID
         if (branchFilter && branchFilter !== 'all') {
-          const teamHasBranchAthletes = atletas.some(athlete => 
-            athlete.filial_nome && athlete.filial_nome.includes(branchFilter)
-          );
-          if (!teamHasBranchAthletes) {
-            continue; // Skip this team if it doesn't match the branch filter
+          // Get the branch name from the branch ID
+          const { data: branchData } = await supabase
+            .from('filiais')
+            .select('nome')
+            .eq('id', branchFilter)
+            .single();
+          
+          const branchName = branchData?.nome;
+          
+          if (branchName) {
+            const teamHasBranchAthletes = atletas.some(athlete => 
+              athlete.filial_nome === branchName
+            );
+            if (!teamHasBranchAthletes) {
+              continue; // Skip this team if it doesn't match the branch filter
+            }
           }
         }
         
@@ -166,16 +178,23 @@ export function useAllTeamsData(
     enabled: !!eventId,
   });
 
-  // Query for branches
+  // Query for branches - only show user's branch if userBranchId is provided
   const branchesQuery = useQuery({
-    queryKey: ['all-branches', eventId],
+    queryKey: ['all-branches', eventId, userBranchId],
     queryFn: async (): Promise<Branch[]> => {
       if (!eventId) return [];
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('filiais')
         .select('id, nome')
         .order('nome');
+
+      // If userBranchId is provided, filter to show only that branch
+      if (userBranchId) {
+        query = query.eq('id', userBranchId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data || [];
