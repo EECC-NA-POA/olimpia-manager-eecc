@@ -46,14 +46,10 @@ export function useTeams(
           return [];
         }
         
-        // Build the query based on user role
+        // Build the basic teams query
         let query = supabase
           .from('equipes')
-          .select(`
-            id,
-            nome,
-            modalidade_id
-          `)
+          .select('id, nome, modalidade_id')
           .eq('evento_id', eventId)
           .eq('modalidade_id', modalityId);
         
@@ -76,10 +72,10 @@ export function useTeams(
           return [];
         }
 
-        // Fetch modality info separately - remove the tipo_modalidade filter here since useModalities already filters
+        // Fetch modality info separately
         const { data: modalityData } = await supabase
           .from('modalidades')
-          .select('id, nome, categoria, tipo_modalidade')
+          .select('id, nome, categoria')
           .eq('id', modalityId)
           .single();
 
@@ -99,40 +95,39 @@ export function useTeams(
             athletes: []
           };
 
-          // Fetch team athletes separately
+          // Fetch team athletes with a simple query
           try {
             const { data: athletesData, error: athletesError } = await supabase
               .from('atletas_equipes')
-              .select(`
-                id,
-                atleta_id,
-                posicao,
-                raia,
-                usuarios!inner (
-                  nome_completo,
-                  tipo_documento,
-                  numero_documento
-                )
-              `)
+              .select('id, atleta_id, posicao, raia')
               .eq('equipe_id', teamRow.id);
 
             if (athletesError) {
               console.error('Error fetching team athletes:', athletesError);
             } else if (athletesData && athletesData.length > 0) {
-              baseTeam.athletes = athletesData.map(athleteRow => ({
-                id: athleteRow.id,
-                atleta_id: athleteRow.atleta_id,
-                atleta_nome: athleteRow.usuarios?.nome_completo || 'Atleta',
-                posicao: athleteRow.posicao || 0,
-                raia: athleteRow.raia || undefined,
-                tipo_documento: athleteRow.usuarios?.tipo_documento,
-                numero_documento: athleteRow.usuarios?.numero_documento,
-                usuarios: {
-                  nome_completo: athleteRow.usuarios?.nome_completo || 'Atleta',
-                  tipo_documento: athleteRow.usuarios?.tipo_documento,
-                  numero_documento: athleteRow.usuarios?.numero_documento
-                }
-              }));
+              // Fetch user data for each athlete separately
+              for (const athleteRow of athletesData) {
+                const { data: userData } = await supabase
+                  .from('usuarios')
+                  .select('nome_completo, tipo_documento, numero_documento')
+                  .eq('id', athleteRow.atleta_id)
+                  .single();
+
+                baseTeam.athletes.push({
+                  id: athleteRow.id,
+                  atleta_id: athleteRow.atleta_id,
+                  atleta_nome: userData?.nome_completo || 'Atleta',
+                  posicao: athleteRow.posicao || 0,
+                  raia: athleteRow.raia || undefined,
+                  tipo_documento: userData?.tipo_documento,
+                  numero_documento: userData?.numero_documento,
+                  usuarios: {
+                    nome_completo: userData?.nome_completo || 'Atleta',
+                    tipo_documento: userData?.tipo_documento,
+                    numero_documento: userData?.numero_documento
+                  }
+                });
+              }
             }
           } catch (athleteError) {
             console.error('Error processing athletes for team:', teamRow.id, athleteError);
