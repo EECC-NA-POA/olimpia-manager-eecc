@@ -21,7 +21,7 @@ export interface TeamData {
 export interface TeamAthlete {
   id: number;
   atleta_id: string;
-  nome: string;
+  atleta_nome: string;
   posicao: number;
   raia?: number;
   documento: string;

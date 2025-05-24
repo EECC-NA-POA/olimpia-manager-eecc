@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ModalityOption } from '../types/team';
+import { ModalityOption } from '../types';
 
 interface ModalitySelectProps {
   modalities: ModalityOption[];
