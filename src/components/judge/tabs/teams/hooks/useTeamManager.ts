@@ -85,7 +85,7 @@ export function useTeamManager(eventId: string | null, isOrganizer: boolean = fa
         const atletas = athletesData?.map(athlete => ({
           id: athlete.id,
           atleta_id: athlete.atleta_id,
-          nome: athlete.usuarios.nome_completo,
+          atleta_nome: athlete.usuarios.nome_completo,
           posicao: athlete.posicao || 0,
           raia: athlete.raia,
           documento: `${athlete.usuarios.tipo_documento}: ${athlete.usuarios.numero_documento}`

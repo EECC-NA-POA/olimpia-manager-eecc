@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,7 +47,7 @@ export function TeamCard({ team, onRemoveAthlete, isRemoving, isReadOnly = false
             <TableBody>
               {team.atletas.map((athlete) => (
                 <TableRow key={athlete.id}>
-                  <TableCell>{athlete.nome}</TableCell>
+                  <TableCell>{athlete.atleta_nome}</TableCell>
                   <TableCell>{athlete.documento}</TableCell>
                   <TableCell>{athlete.posicao || '-'}</TableCell>
                   <TableCell>{athlete.raia || '-'}</TableCell>
