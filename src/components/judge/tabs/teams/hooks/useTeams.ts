@@ -1,31 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
-interface Team {
-  id: number;
-  nome: string;
-  modalidade_id: number;
-  modalidade?: string;
-  modalidades: {
-    nome: string;
-    categoria: string;
-  };
-  athletes: Array<{
-    id: number;
-    atleta_id: string;
-    atleta_nome: string;
-    posicao: number;
-    raia?: number;
-    tipo_documento?: string;
-    numero_documento?: string;
-    usuarios: {
-      nome_completo: string;
-      tipo_documento?: string;
-      numero_documento?: string;
-    };
-  }>;
-}
+import { Team } from '../types';
 
 export function useTeams(
   userId: string,
