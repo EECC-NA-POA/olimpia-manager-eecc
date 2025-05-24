@@ -165,14 +165,22 @@ export function useAllTeamsData(
     queryFn: async (): Promise<ModalityOption[]> => {
       if (!eventId) return [];
 
+      console.log('Fetching modalities for filter with eventId:', eventId);
+
       const { data, error } = await supabase
         .from('modalidades')
         .select('id, nome, categoria, tipo_modalidade')
         .eq('evento_id', eventId)
-        .eq('tipo_modalidade', 'coletiva') // Garantir que só modalidades coletivas apareçam no filtro
+        .eq('tipo_modalidade', 'coletiva') // Buscar modalidades coletivas
         .order('nome');
 
-      if (error) throw error;
+      console.log('Modalities query result:', { data, error });
+
+      if (error) {
+        console.error('Error fetching modalities:', error);
+        throw error;
+      }
+      
       return data || [];
     },
     enabled: !!eventId,
