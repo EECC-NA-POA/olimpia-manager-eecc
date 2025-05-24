@@ -38,10 +38,12 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     setSelectedModalityId,
     isLoading,
     createTeam,
+    deleteTeam,
     addAthlete,
     removeAthlete,
     updateAthletePosition,
     isCreatingTeam,
+    isDeletingTeam,
     isAddingAthlete,
     isRemovingAthlete,
     isUpdatingAthlete
@@ -112,10 +114,12 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
               setSelectedModalityId={setSelectedModalityId}
               isLoading={isLoading}
               createTeam={createTeam}
+              deleteTeam={deleteTeam}
               addAthlete={addAthlete}
               removeAthlete={removeAthlete}
               updateAthletePosition={updateAthletePosition}
               isCreatingTeam={isCreatingTeam}
+              isDeletingTeam={isDeletingTeam}
               isAddingAthlete={isAddingAthlete}
               isRemovingAthlete={isRemovingAthlete}
               isUpdatingAthlete={isUpdatingAthlete}
