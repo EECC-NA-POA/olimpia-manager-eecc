@@ -57,7 +57,7 @@ export function useTeamsData(
       for (const team of teamsData) {
         console.log('Processing team for management:', team);
         
-        // Get team athletes with branch information
+        // Get team athletes with branch and payment information
         const { data: athletesData } = await supabase
           .from('atletas_equipes')
           .select(`
@@ -70,7 +70,8 @@ export function useTeamsData(
               tipo_documento,
               numero_documento,
               filiais!inner(nome)
-            )
+            ),
+            pagamentos(numero_identificador)
           `)
           .eq('equipe_id', team.id);
 
@@ -87,6 +88,11 @@ export function useTeamsData(
             ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
             : null;
 
+          // Handle pagamentos data properly
+          const pagamento = athlete.pagamentos 
+            ? (Array.isArray(athlete.pagamentos) ? athlete.pagamentos[0] : athlete.pagamentos)
+            : null;
+
           return {
             id: athlete.id,
             atleta_id: athlete.atleta_id,
@@ -94,7 +100,8 @@ export function useTeamsData(
             posicao: athlete.posicao || 0,
             raia: athlete.raia,
             documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
-            filial_nome: filial?.nome || 'N/A'
+            filial_nome: filial?.nome || 'N/A',
+            numero_identificador: pagamento?.numero_identificador || undefined
           };
         }) || [];
 

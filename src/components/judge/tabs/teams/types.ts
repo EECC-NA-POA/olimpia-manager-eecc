@@ -1,3 +1,4 @@
+
 export interface ModalityOption {
   id: number;
   nome: string;
@@ -20,6 +21,7 @@ export interface TeamAthlete {
   raia?: number;
   documento: string;
   filial_nome?: string;
+  numero_identificador?: string;
 }
 
 export interface TeamData {

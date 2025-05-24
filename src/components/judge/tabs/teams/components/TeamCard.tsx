@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Users, User } from 'lucide-react';
+import { Trash2, Users, User, MapPin, Hash } from 'lucide-react';
 import { TeamData } from '../types';
 
 interface TeamCardProps {
@@ -51,18 +51,15 @@ export function TeamCard({
             <p className="text-xs mt-1">Use a lista de atletas disponíveis acima para adicionar</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {team.atletas.map((athlete) => (
-              <Card key={athlete.id} className="p-3 bg-muted/30">
-                <div className="flex items-start justify-between gap-2">
+              <Card key={athlete.id} className="p-4 bg-muted/30">
+                <div className="flex items-start justify-between gap-2 mb-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-2">
                       <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       <p className="font-medium text-sm truncate">{athlete.atleta_nome}</p>
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">
-                      Filial: {athlete.filial_nome || 'N/A'}
-                    </p>
                   </div>
                   {!isReadOnly && (
                     <Button
@@ -74,6 +71,26 @@ export function TeamCard({
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  {athlete.filial_nome && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                      <span className="text-xs text-muted-foreground truncate">
+                        {athlete.filial_nome}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {athlete.numero_identificador && (
+                    <div className="flex items-center gap-2">
+                      <Hash className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                      <span className="text-xs text-muted-foreground">
+                        ID: {athlete.numero_identificador}
+                      </span>
+                    </div>
                   )}
                 </div>
               </Card>
