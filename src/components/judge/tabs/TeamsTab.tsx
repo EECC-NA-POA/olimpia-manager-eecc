@@ -19,6 +19,9 @@ interface TeamsTabProps {
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
   const { user } = useAuth();
   
+  // Check if user is a judge (judges should only view, not manage)
+  const isJudge = user?.papeis?.some(role => role.codigo === 'JUZ') || false;
+  
   // States for "Visualizar Todas" tab
   const [modalityFilter, setModalityFilter] = useState<number | null>(null);
   const [branchFilter, setBranchFilter] = useState<string | null>(null);
@@ -41,14 +44,14 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     isUpdatingAthlete
   } = useTeamManager(eventId, isOrganizer);
 
-  // Data for viewing all teams - for organizers, don't filter by branch
+  // Data for viewing all teams - for organizers and judges, don't filter by branch
   const {
     teams: allTeams,
     modalities: allModalities,
     branches,
     isLoading: isLoadingAllTeams,
     error: allTeamsError
-  } = useAllTeamsData(eventId, modalityFilter, branchFilter, searchTerm, isOrganizer ? undefined : user?.filial_id);
+  } = useAllTeamsData(eventId, modalityFilter, branchFilter, searchTerm, (isOrganizer || isJudge) ? undefined : user?.filial_id);
 
   if (isLoading && !selectedModalityId) {
     return <LoadingTeamsState />;
@@ -56,6 +59,32 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
 
   if (!modalities || modalities.length === 0) {
     return <NoModalitiesMessage />;
+  }
+
+  // For judges, show only the "View All Teams" tab
+  if (isJudge) {
+    return (
+      <div className="space-y-6">
+        <TeamsTabHeader isOrganizer={false}>
+          <ViewAllTeamsTab
+            allTeams={allTeams}
+            allModalities={allModalities}
+            branches={branches}
+            isLoadingAllTeams={isLoadingAllTeams}
+            allTeamsError={allTeamsError}
+            modalityFilter={modalityFilter}
+            branchFilter={branchFilter}
+            searchTerm={searchTerm}
+            setModalityFilter={setModalityFilter}
+            setBranchFilter={setBranchFilter}
+            setSearchTerm={setSearchTerm}
+            isOrganizer={false}
+            eventId={eventId}
+            isReadOnly={true}
+          />
+        </TeamsTabHeader>
+      </div>
+    );
   }
 
   return (

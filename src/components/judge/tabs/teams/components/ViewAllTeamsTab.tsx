@@ -2,19 +2,15 @@
 import React from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { TeamFilters } from './TeamFilters';
 import { AllTeamsView } from './AllTeamsView';
 import { ModalityOption, TeamData } from '../types';
 
-interface Branch {
-  id: string;
-  nome: string;
-}
-
 interface ViewAllTeamsTabProps {
   allTeams: TeamData[];
   allModalities: ModalityOption[];
-  branches: Branch[];
+  branches: { id: string; nome: string }[];
   isLoadingAllTeams: boolean;
   allTeamsError: any;
   modalityFilter: number | null;
@@ -23,8 +19,9 @@ interface ViewAllTeamsTabProps {
   setModalityFilter: (id: number | null) => void;
   setBranchFilter: (id: string | null) => void;
   setSearchTerm: (term: string) => void;
-  isOrganizer?: boolean;
+  isOrganizer: boolean;
   eventId: string | null;
+  isReadOnly?: boolean;
 }
 
 export function ViewAllTeamsTab({
@@ -39,37 +36,49 @@ export function ViewAllTeamsTab({
   setModalityFilter,
   setBranchFilter,
   setSearchTerm,
-  isOrganizer = false,
-  eventId
+  isOrganizer,
+  eventId,
+  isReadOnly = false
 }: ViewAllTeamsTabProps) {
+  if (isLoadingAllTeams) {
+    return (
+      <div className="space-y-4 mt-6">
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  if (allTeamsError) {
+    return (
+      <Alert variant="destructive" className="mt-6">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Erro ao carregar equipes: {allTeamsError.message}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <div className="space-y-6 mt-6">
       <TeamFilters
         modalities={allModalities}
         branches={branches}
-        selectedModalityId={modalityFilter}
-        selectedBranchId={branchFilter}
+        modalityFilter={modalityFilter}
+        branchFilter={branchFilter}
         searchTerm={searchTerm}
-        onModalityChange={setModalityFilter}
-        onBranchChange={setBranchFilter}
-        onSearchChange={setSearchTerm}
+        onModalityFilterChange={setModalityFilter}
+        onBranchFilterChange={setBranchFilter}
+        onSearchTermChange={setSearchTerm}
+        isOrganizer={isOrganizer}
       />
-
-      {allTeamsError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Erro ao carregar as equipes. Tente novamente.
-          </AlertDescription>
-        </Alert>
-      )}
-
+      
       <AllTeamsView 
         teams={allTeams}
-        isLoading={isLoadingAllTeams}
         isOrganizer={isOrganizer}
         eventId={eventId}
-        modalityFilter={modalityFilter}
+        isReadOnly={isReadOnly}
       />
     </div>
   );

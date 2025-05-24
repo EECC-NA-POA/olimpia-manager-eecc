@@ -1,168 +1,93 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, MapPin } from 'lucide-react';
+import { Users } from 'lucide-react';
+import { TeamFormation } from '@/components/judge/TeamFormation';
 import { TeamData } from '../types';
-import { TeamFormation } from '../../../TeamFormation';
-import { useAvailableAthletes } from '../hooks/useAvailableAthletes';
 
 interface AllTeamsViewProps {
   teams: TeamData[];
-  isLoading: boolean;
-  isOrganizer?: boolean;
+  isOrganizer: boolean;
   eventId: string | null;
-  modalityFilter: number | null;
+  isReadOnly?: boolean;
 }
 
-export function AllTeamsView({ 
-  teams, 
-  isLoading, 
-  isOrganizer = false, 
-  eventId, 
-  modalityFilter 
-}: AllTeamsViewProps) {
-  // Get available athletes for organizers when a modality is selected
-  const { data: availableAthletes } = useAvailableAthletes(
-    eventId, 
-    modalityFilter, 
-    isOrganizer,
-    null, // No branch filter for organizers
-    teams // Pass teams to filter out already added athletes
-  );
-
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="h-48 bg-gray-200 animate-pulse rounded-lg" />
-        ))}
-      </div>
-    );
-  }
-
-  if (teams.length === 0) {
+export function AllTeamsView({ teams, isOrganizer, eventId, isReadOnly = false }: AllTeamsViewProps) {
+  if (!teams || teams.length === 0) {
     return (
       <Card>
         <CardContent className="text-center py-8">
           <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
           <p className="text-muted-foreground">
-            Nenhuma equipe encontrada com os filtros aplicados.
+            Nenhuma equipe encontrada para os filtros aplicados.
           </p>
         </CardContent>
       </Card>
     );
   }
 
-  // If organizer and modality selected, show TeamFormation for editing
-  if (isOrganizer && modalityFilter) {
-    // Convert TeamData to Team format expected by TeamFormation
-    const formattedTeams = teams.map(team => {
-      // Parse the document string to extract tipo_documento and numero_documento
-      const parseDocument = (documento: string) => {
-        const parts = documento.split(': ');
-        return {
-          tipo_documento: parts[0] || '',
-          numero_documento: parts[1] || ''
-        };
+  // Group teams by modality
+  const teamsByModality = teams.reduce((acc, team) => {
+    const modalityId = team.modalidade_id;
+    if (!acc[modalityId]) {
+      acc[modalityId] = {
+        modality: team.modalidade_info,
+        teams: []
       };
+    }
+    acc[modalityId].teams.push(team);
+    return acc;
+  }, {} as Record<number, { modality: any; teams: TeamData[] }>);
 
-      return {
-        id: team.id,
-        nome: team.nome,
-        modalidade_id: team.modalidade_id,
-        filial_id: team.filial_id,
-        evento_id: team.evento_id,
-        modalidades: team.modalidade_info ? {
-          id: team.modalidade_info.id,
-          nome: team.modalidade_info.nome,
-          categoria: team.modalidade_info.categoria
-        } : undefined,
-        athletes: team.atletas?.map(atleta => {
-          const { tipo_documento, numero_documento } = parseDocument(atleta.documento);
-          return {
-            id: atleta.id,
-            atleta_id: atleta.atleta_id,
-            atleta_nome: atleta.atleta_nome,
-            posicao: atleta.posicao,
-            raia: atleta.raia || 0,
-            tipo_documento,
-            numero_documento
-          };
-        }) || []
-      };
-    });
-
-    const formattedAvailableAthletes = availableAthletes?.map(athlete => ({
-      id: athlete.id,
-      nome: athlete.nome,
-      documento: athlete.documento,
-      filial_nome: athlete.filial_nome || 'N/A'
-    })) || [];
-
-    return (
-      <TeamFormation
-        teams={formattedTeams}
-        availableAthletes={formattedAvailableAthletes}
-        eventId={eventId}
-        modalityId={modalityFilter}
-        isOrganizer={isOrganizer}
-        isReadOnly={false}
-        branchId={null}
-      />
-    );
-  }
-
-  // Default view for non-organizers or when no modality is selected
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {teams.map((team) => (
-        <Card key={team.id} className="hover:shadow-md transition-shadow">
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <CardTitle className="text-lg">{team.nome}</CardTitle>
-              <Badge variant="secondary" className="ml-2">
-                {team.atletas.length} atletas
+    <div className="space-y-8">
+      {Object.entries(teamsByModality).map(([modalityId, { modality, teams: modalityTeams }]) => (
+        <Card key={modalityId}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  {modality?.nome || 'Modalidade'}
+                </CardTitle>
+                <CardDescription>
+                  {modality?.categoria} - {modalityTeams.length} equipe{modalityTeams.length !== 1 ? 's' : ''}
+                </CardDescription>
+              </div>
+              <Badge variant="secondary">
+                {modalityTeams.length} equipe{modalityTeams.length !== 1 ? 's' : ''}
               </Badge>
             </div>
-            {team.modalidade_info && (
-              <div className="text-sm text-muted-foreground">
-                {team.modalidade_info.nome} - {team.modalidade_info.categoria}
-              </div>
-            )}
           </CardHeader>
-          <CardContent className="space-y-3">
-            {/* Athletes Grid */}
-            {team.atletas.length > 0 ? (
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  Atletas
-                </h4>
-                <div className="grid grid-cols-1 gap-2">
-                  {team.atletas.slice(0, 3).map((athlete) => (
-                    <div key={athlete.id} className="bg-gray-50 p-2 rounded text-sm">
-                      <div className="font-medium">{athlete.atleta_nome}</div>
-                      {athlete.filial_nome && (
-                        <div className="text-xs text-muted-foreground flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {athlete.filial_nome}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {team.atletas.length > 3 && (
-                    <div className="text-xs text-muted-foreground text-center py-1">
-                      +{team.atletas.length - 3} atletas
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="text-sm text-muted-foreground text-center py-4">
-                Nenhum atleta adicionado
-              </div>
-            )}
+          <CardContent>
+            <TeamFormation
+              teams={modalityTeams.map(team => ({
+                id: team.id,
+                nome: team.nome,
+                modalidade_id: team.modalidade_id,
+                observacoes: '',
+                athletes: team.atletas.map(athlete => ({
+                  id: athlete.id,
+                  atleta_id: athlete.atleta_id,
+                  atleta_nome: athlete.atleta_nome,
+                  posicao: athlete.posicao,
+                  raia: athlete.raia || 0,
+                  tipo_documento: athlete.documento.split(':')[0] || '',
+                  numero_documento: athlete.documento.split(':')[1]?.trim() || ''
+                })),
+                modalidades: {
+                  id: modality?.id || 0,
+                  nome: modality?.nome || '',
+                  categoria: modality?.categoria || ''
+                }
+              }))}
+              availableAthletes={[]}
+              eventId={eventId}
+              modalityId={parseInt(modalityId)}
+              isOrganizer={isOrganizer}
+              isReadOnly={isReadOnly}
+            />
           </CardContent>
         </Card>
       ))}
