@@ -60,7 +60,8 @@ export function TeamFormation({
             <Info className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-800">
               <strong>Atletas Disponíveis:</strong> Selecione os atletas abaixo para adicioná-los às equipes. 
-              {!isOrganizer && "Após adicionar, você pode definir a posição e raia de cada atleta nas tabelas das equipes."}
+              {isOrganizer && " Como organizador, você pode misturar atletas de diferentes filiais."}
+              {!isOrganizer && " Após adicionar, você pode definir a posição e raia de cada atleta nas tabelas das equipes."}
             </AlertDescription>
           </Alert>
           

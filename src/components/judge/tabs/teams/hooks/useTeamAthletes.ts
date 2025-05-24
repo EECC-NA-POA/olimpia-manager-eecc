@@ -10,12 +10,30 @@ export function useTeamAthletes(eventId: string | null, modalityId: number | nul
     mutationFn: async ({ teamId, athleteId }: { teamId: number; athleteId: string }) => {
       console.log('Adding athlete to team:', { teamId, athleteId });
 
-      // First, remove athlete from any existing team in this modality
+      // Check if athlete is already in this specific team
+      const { data: existingInSameTeam, error: checkSameTeamError } = await supabase
+        .from('atletas_equipes')
+        .select('id')
+        .eq('equipe_id', teamId)
+        .eq('atleta_id', athleteId)
+        .single();
+
+      if (checkSameTeamError && checkSameTeamError.code !== 'PGRST116') {
+        console.error('Error checking athlete in same team:', checkSameTeamError);
+        throw new Error('Erro ao verificar atleta na equipe');
+      }
+
+      if (existingInSameTeam) {
+        throw new Error('Atleta já está nesta equipe');
+      }
+
+      // For organizers: Remove athlete from any existing team in this modality and event
+      // For regular users: Only allow if athlete is from same branch
       const { data: existingTeamMembership, error: checkError } = await supabase
         .from('atletas_equipes')
         .select(`
           id,
-          equipes!inner(modalidade_id, evento_id)
+          equipes!inner(modalidade_id, evento_id, filial_id)
         `)
         .eq('atleta_id', athleteId);
 

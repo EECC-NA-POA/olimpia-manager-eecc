@@ -44,7 +44,7 @@ export function useAvailableAthletes(
         .eq('modalidade_id', selectedModalityId)
         .eq('status', 'confirmado');
 
-      // If not organizer, filter by branch
+      // If not organizer, filter by branch - organizers can see ALL athletes
       if (!isOrganizer && (branchId || userBranchId)) {
         query = query.eq('usuarios.filial_id', branchId || userBranchId);
       }
@@ -60,7 +60,7 @@ export function useAvailableAthletes(
 
       console.log('Found enrollments:', enrollments.length);
 
-      // Get athletes already in teams for this modality
+      // Get athletes already in teams for this modality to prevent duplicates
       const athletesInTeams = new Set();
       if (teams && teams.length > 0) {
         teams.forEach(team => {
