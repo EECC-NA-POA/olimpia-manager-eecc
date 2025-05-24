@@ -2,10 +2,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Users } from 'lucide-react';
+import { Trash2, Users, User } from 'lucide-react';
 import { TeamData } from '../types';
 
 interface TeamCardProps {
@@ -25,20 +23,6 @@ export function TeamCard({
   isUpdating = false,
   isReadOnly = false 
 }: TeamCardProps) {
-  const handlePositionChange = (athleteTeamId: number, newPosition: string) => {
-    if (onUpdatePosition) {
-      const position = newPosition ? parseInt(newPosition) : undefined;
-      onUpdatePosition(athleteTeamId, position);
-    }
-  };
-
-  const handleLaneChange = (athleteTeamId: number, newLane: string) => {
-    if (onUpdatePosition) {
-      const lane = newLane ? parseInt(newLane) : undefined;
-      onUpdatePosition(athleteTeamId, undefined, lane);
-    }
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -65,69 +49,33 @@ export function TeamCard({
             <p className="text-xs mt-1">Use a lista de atletas disponíveis acima para adicionar</p>
           </div>
         ) : (
-          <div className="border rounded-md overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead>Atleta</TableHead>
-                  <TableHead>Documento</TableHead>
-                  <TableHead className="w-24">Posição</TableHead>
-                  <TableHead className="w-24">Raia</TableHead>
-                  {!isReadOnly && <TableHead className="w-20">Ações</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {team.atletas.map((athlete) => (
-                  <TableRow key={athlete.id}>
-                    <TableCell className="font-medium">{athlete.atleta_nome}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{athlete.documento}</TableCell>
-                    <TableCell>
-                      {isReadOnly ? (
-                        <span className="text-sm">{athlete.posicao || '-'}</span>
-                      ) : (
-                        <Input
-                          type="number"
-                          min="1"
-                          placeholder="Pos."
-                          value={athlete.posicao || ''}
-                          onChange={(e) => handlePositionChange(athlete.id, e.target.value)}
-                          className="h-8 text-center"
-                          disabled={isUpdating}
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {isReadOnly ? (
-                        <span className="text-sm">{athlete.raia || '-'}</span>
-                      ) : (
-                        <Input
-                          type="number"
-                          min="1"
-                          placeholder="Raia"
-                          value={athlete.raia || ''}
-                          onChange={(e) => handleLaneChange(athlete.id, e.target.value)}
-                          className="h-8 text-center"
-                          disabled={isUpdating}
-                        />
-                      )}
-                    </TableCell>
-                    {!isReadOnly && (
-                      <TableCell>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => onRemoveAthlete(athlete.id)}
-                          disabled={isRemoving}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {team.atletas.map((athlete) => (
+              <Card key={athlete.id} className="p-3 bg-muted/30">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <p className="font-medium text-sm truncate">{athlete.atleta_nome}</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">
+                      Filial: {athlete.filial_nome || 'N/A'}
+                    </p>
+                  </div>
+                  {!isReadOnly && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => onRemoveAthlete(athlete.id)}
+                      disabled={isRemoving}
+                      className="h-7 w-7 p-0 flex-shrink-0"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            ))}
           </div>
         )}
       </CardContent>

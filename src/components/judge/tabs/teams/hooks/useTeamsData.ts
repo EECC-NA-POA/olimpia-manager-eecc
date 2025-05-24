@@ -46,7 +46,7 @@ export function useTeamsData(
       const processedTeams: TeamData[] = [];
       
       for (const team of teamsData) {
-        // Get team athletes
+        // Get team athletes with branch information
         const { data: athletesData } = await supabase
           .from('atletas_equipes')
           .select(`
@@ -57,19 +57,33 @@ export function useTeamsData(
             usuarios!inner(
               nome_completo,
               tipo_documento,
-              numero_documento
+              numero_documento,
+              filiais!inner(nome)
             )
           `)
           .eq('equipe_id', team.id);
 
-        const atletas = athletesData?.map(athlete => ({
-          id: athlete.id,
-          atleta_id: athlete.atleta_id,
-          atleta_nome: athlete.usuarios[0]?.nome_completo || '',
-          posicao: athlete.posicao || 0,
-          raia: athlete.raia,
-          documento: `${athlete.usuarios[0]?.tipo_documento || ''}: ${athlete.usuarios[0]?.numero_documento || ''}`
-        })) || [];
+        const atletas = athletesData?.map(athlete => {
+          // Handle usuarios data properly
+          const usuario = Array.isArray(athlete.usuarios) 
+            ? athlete.usuarios[0] 
+            : athlete.usuarios;
+          
+          // Handle filiais data properly  
+          const filial = usuario?.filiais 
+            ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
+            : null;
+
+          return {
+            id: athlete.id,
+            atleta_id: athlete.atleta_id,
+            atleta_nome: usuario?.nome_completo || '',
+            posicao: athlete.posicao || 0,
+            raia: athlete.raia,
+            documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
+            filial_nome: filial?.nome || 'N/A'
+          };
+        }) || [];
 
         processedTeams.push({
           id: team.id,
