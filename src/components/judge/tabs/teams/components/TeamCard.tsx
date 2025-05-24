@@ -10,22 +10,26 @@ interface TeamCardProps {
   team: TeamData;
   onRemoveAthlete: (athleteTeamId: number) => void;
   onUpdatePosition?: (athleteTeamId: number, posicao?: number, raia?: number) => void;
+  onDeleteTeam?: (teamId: number) => void;
   isRemoving: boolean;
   isUpdating?: boolean;
   isReadOnly?: boolean;
   isOrganizer?: boolean;
-  isViewAll?: boolean; // Nova prop para indicar se é a visualização "Ver Todas"
+  isViewAll?: boolean;
+  isDeletingTeam?: boolean;
 }
 
 export function TeamCard({ 
   team, 
   onRemoveAthlete, 
   onUpdatePosition,
+  onDeleteTeam,
   isRemoving,
   isUpdating = false,
   isReadOnly = false,
   isOrganizer = false,
-  isViewAll = false
+  isViewAll = false,
+  isDeletingTeam = false
 }: TeamCardProps) {
   return (
     <Card>
@@ -35,9 +39,23 @@ export function TeamCard({
             <Users className="h-5 w-5" />
             <span>{team.nome}</span>
           </div>
-          <Badge variant="outline" className="flex items-center gap-1">
-            {team.atletas.length} atleta{team.atletas.length !== 1 ? 's' : ''}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="flex items-center gap-1">
+              {team.atletas.length} atleta{team.atletas.length !== 1 ? 's' : ''}
+            </Badge>
+            {!isReadOnly && !isViewAll && onDeleteTeam && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => onDeleteTeam(team.id)}
+                disabled={isDeletingTeam}
+                className="h-8 px-2"
+                title="Excluir equipe"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </CardTitle>
         {team.modalidade_info && (
           <p className="text-sm text-muted-foreground">

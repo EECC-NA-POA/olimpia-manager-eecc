@@ -44,6 +44,50 @@ export function useTeamMutations(
     }
   });
 
+  // Delete team mutation
+  const deleteTeamMutation = useMutation({
+    mutationFn: async (teamId: number) => {
+      console.log('Deleting team:', teamId);
+
+      // First, delete all athletes from the team
+      const { error: athletesError } = await supabase
+        .from('atletas_equipes')
+        .delete()
+        .eq('equipe_id', teamId);
+
+      if (athletesError) {
+        console.error('Error deleting team athletes:', athletesError);
+        throw new Error('Erro ao remover atletas da equipe');
+      }
+
+      // Then delete the team itself
+      const { error: teamError } = await supabase
+        .from('equipes')
+        .delete()
+        .eq('id', teamId);
+
+      if (teamError) {
+        console.error('Error deleting team:', teamError);
+        throw new Error('Erro ao excluir equipe');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ 
+        queryKey: ['teams-data', eventId, selectedModalityId] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['available-athletes', eventId, selectedModalityId] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['all-teams', eventId] 
+      });
+      toast.success('Equipe excluída com sucesso!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao excluir equipe: ' + error.message);
+    }
+  });
+
   // Add athlete to team mutation
   const addAthleteMutation = useMutation({
     mutationFn: async ({ teamId, athleteId }: { teamId: number; athleteId: string }) => {
@@ -181,11 +225,13 @@ export function useTeamMutations(
 
   return {
     createTeam: createTeamMutation.mutate,
+    deleteTeam: deleteTeamMutation.mutate,
     addAthlete: ({ teamId, athleteId }: { teamId: number; athleteId: string }) => 
       addAthleteMutation.mutate({ teamId, athleteId }),
     removeAthlete: removeAthleteMutation.mutate,
     updateAthletePosition: updateAthletePositionMutation.mutate,
     isCreatingTeam: createTeamMutation.isPending,
+    isDeletingTeam: deleteTeamMutation.isPending,
     isAddingAthlete: addAthleteMutation.isPending,
     isRemovingAthlete: removeAthleteMutation.isPending,
     isUpdatingAthlete: updateAthletePositionMutation.isPending

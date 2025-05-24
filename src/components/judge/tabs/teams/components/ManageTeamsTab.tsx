@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info, AlertCircle, Users } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ModalitySelect } from './ModalitySelect';
+import { ModalityButtons } from './ModalityButtons';
 import { TeamForm } from './TeamForm';
 import { AthletesList } from './AthletesList';
 import { TeamCard } from './TeamCard';
@@ -18,10 +18,12 @@ interface ManageTeamsTabProps {
   setSelectedModalityId: (id: number) => void;
   isLoading: boolean;
   createTeam: (name: string) => void;
+  deleteTeam: (teamId: number) => void;
   addAthlete: (params: { teamId: number; athleteId: string }) => void;
   removeAthlete: (athleteTeamId: number) => void;
   updateAthletePosition: (params: { athleteTeamId: number; posicao?: number; raia?: number }) => void;
   isCreatingTeam: boolean;
+  isDeletingTeam: boolean;
   isAddingAthlete: boolean;
   isRemovingAthlete: boolean;
   isUpdatingAthlete: boolean;
@@ -36,10 +38,12 @@ export function ManageTeamsTab({
   setSelectedModalityId,
   isLoading,
   createTeam,
+  deleteTeam,
   addAthlete,
   removeAthlete,
   updateAthletePosition,
   isCreatingTeam,
+  isDeletingTeam,
   isAddingAthlete,
   isRemovingAthlete,
   isUpdatingAthlete,
@@ -55,10 +59,10 @@ export function ManageTeamsTab({
 
   return (
     <div className="space-y-6 mt-6">
-      <ModalitySelect
+      <ModalityButtons
         modalities={modalities}
-        value={selectedModalityId}
-        onValueChange={setSelectedModalityId}
+        selectedModalityId={selectedModalityId}
+        onModalitySelect={setSelectedModalityId}
       />
 
       {selectedModalityId && (
@@ -123,8 +127,10 @@ export function ManageTeamsTab({
                       team={team}
                       onRemoveAthlete={removeAthlete}
                       onUpdatePosition={handleUpdateAthletePosition}
+                      onDeleteTeam={deleteTeam}
                       isRemoving={isRemovingAthlete}
                       isUpdating={isUpdatingAthlete}
+                      isDeletingTeam={isDeletingTeam}
                       isReadOnly={false}
                       isOrganizer={isOrganizer}
                     />
