@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Users, User, MapPin, Hash } from 'lucide-react';
+import { Trash2, Users, User, MapPin } from 'lucide-react';
 import { TeamData } from '../types';
 
 interface TeamCardProps {
@@ -14,6 +14,7 @@ interface TeamCardProps {
   isUpdating?: boolean;
   isReadOnly?: boolean;
   isOrganizer?: boolean;
+  isViewAll?: boolean; // Nova prop para indicar se é a visualização "Ver Todas"
 }
 
 export function TeamCard({ 
@@ -23,7 +24,8 @@ export function TeamCard({
   isRemoving,
   isUpdating = false,
   isReadOnly = false,
-  isOrganizer = false
+  isOrganizer = false,
+  isViewAll = false
 }: TeamCardProps) {
   return (
     <Card>
@@ -48,20 +50,24 @@ export function TeamCard({
           <div className="text-center py-8 text-muted-foreground">
             <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p>Nenhum atleta adicionado ainda</p>
-            <p className="text-xs mt-1">Use a lista de atletas disponíveis acima para adicionar</p>
+            {!isViewAll && (
+              <p className="text-xs mt-1">Use a lista de atletas disponíveis acima para adicionar</p>
+            )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className={isViewAll ? "grid grid-cols-3 gap-3" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}>
             {team.atletas.map((athlete) => (
-              <Card key={athlete.id} className="p-4 bg-muted/30">
-                <div className="flex items-start justify-between gap-2 mb-3">
+              <Card key={athlete.id} className={isViewAll ? "p-3 bg-muted/30" : "p-4 bg-muted/30"}>
+                <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
                       <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <p className="font-medium text-sm truncate">{athlete.atleta_nome}</p>
+                      <p className={`font-medium truncate ${isViewAll ? 'text-xs' : 'text-sm'}`}>
+                        {athlete.atleta_nome}
+                      </p>
                     </div>
                   </div>
-                  {!isReadOnly && (
+                  {!isReadOnly && !isViewAll && (
                     <Button
                       variant="destructive"
                       size="sm"
@@ -74,25 +80,29 @@ export function TeamCard({
                   )}
                 </div>
                 
-                <div className="space-y-2">
-                  {athlete.filial_nome && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                      <span className="text-xs text-muted-foreground truncate">
-                        {athlete.filial_nome}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {athlete.numero_identificador && (
-                    <div className="flex items-center gap-2">
-                      <Hash className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                      <span className="text-xs text-muted-foreground">
-                        ID: {athlete.numero_identificador}
-                      </span>
-                    </div>
-                  )}
-                </div>
+                {/* Só mostrar filial na visualização "Ver Todas" */}
+                {isViewAll && athlete.filial_nome && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs text-muted-foreground truncate">
+                      {athlete.filial_nome}
+                    </span>
+                  </div>
+                )}
+                
+                {/* Informações completas para outras visualizações */}
+                {!isViewAll && (
+                  <div className="space-y-2">
+                    {athlete.filial_nome && (
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                        <span className="text-xs text-muted-foreground truncate">
+                          {athlete.filial_nome}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </Card>
             ))}
           </div>
