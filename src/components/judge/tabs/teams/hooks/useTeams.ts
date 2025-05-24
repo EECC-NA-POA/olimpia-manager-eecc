@@ -22,11 +22,6 @@ interface SimpleTeamAthlete {
   raia?: number;
   tipo_documento?: string;
   numero_documento?: string;
-  usuarios?: {
-    nome_completo: string;
-    tipo_documento?: string;
-    numero_documento?: string;
-  };
 }
 
 export function useTeams(
@@ -103,12 +98,7 @@ export function useTeams(
                 posicao: athlete.posicao || 0,
                 raia: athlete.raia,
                 tipo_documento: userData?.tipo_documento,
-                numero_documento: userData?.numero_documento,
-                usuarios: {
-                  nome_completo: userData?.nome_completo || 'Atleta',
-                  tipo_documento: userData?.tipo_documento,
-                  numero_documento: userData?.numero_documento
-                }
+                numero_documento: userData?.numero_documento
               });
             }
           }
