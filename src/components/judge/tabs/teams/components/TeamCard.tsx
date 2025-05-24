@@ -55,7 +55,7 @@ export function TeamCard({
             )}
           </div>
         ) : (
-          <div className={isViewAll ? "grid grid-cols-3 gap-3" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}>
+          <div className={isViewAll ? "grid grid-cols-1 gap-3" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}>
             {team.atletas.map((athlete) => (
               <Card key={athlete.id} className={isViewAll ? "p-3 bg-muted/30" : "p-4 bg-muted/30"}>
                 <div className="flex items-start justify-between gap-2 mb-2">
