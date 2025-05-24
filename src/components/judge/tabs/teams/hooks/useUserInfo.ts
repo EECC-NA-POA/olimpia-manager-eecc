@@ -1,83 +1,51 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { UserInfo } from '../types';
+
+interface UserInfoData {
+  filial_id: string;
+  nome_completo: string;
+}
 
 export function useUserInfo(userId: string, eventId: string | null) {
-  const { user } = useAuth();
-  
-  // Fetch user branch info if not an organizer
   const { data: userInfo, isLoading, error } = useQuery({
-    queryKey: ['user-info', userId],
-    queryFn: async () => {
-      console.log('useUserInfo - Starting fetch for userId:', userId);
-      console.log('useUserInfo - Auth context user:', user);
-      
-      if (!userId) {
-        console.log('useUserInfo - No userId provided');
-        return null;
-      }
-      
-      // If we have user data from auth context, use it directly
-      if (user?.filial_id) {
-        console.log('useUserInfo - Using auth context data:', {
-          id: user.id,
-          filial_id: user.filial_id
-        });
-        
-        return {
-          id: user.id,
-          filial_id: user.filial_id
-        } as UserInfo;
-      }
-      
+    queryKey: ['user-info', userId, eventId],
+    queryFn: async (): Promise<UserInfoData | null> => {
       try {
-        console.log('useUserInfo - Querying usuarios table for user:', userId);
+        console.log('Fetching user info for userId:', userId);
         
+        if (!userId) {
+          console.log('No userId provided, skipping user info fetch');
+          return null;
+        }
+
         const { data, error } = await supabase
           .from('usuarios')
-          .select('id, filial_id')
+          .select('filial_id, nome_completo')
           .eq('id', userId)
           .single();
-        
+
         if (error) {
-          console.error('useUserInfo - Supabase error:', error);
-          throw new Error('Erro ao carregar informações do usuário');
+          console.error('Error fetching user info:', error);
+          throw error;
         }
-        
-        console.log('useUserInfo - Raw data from usuarios table:', data);
-        
-        if (!data) {
-          console.log('useUserInfo - No user data found in usuarios table');
-          throw new Error('Usuário não encontrado');
-        }
-        
-        const userInfo = {
-          id: data.id,
-          filial_id: data.filial_id
-        } as UserInfo;
-        
-        console.log('useUserInfo - Processed userInfo:', userInfo);
-        return userInfo;
-        
-      } catch (error) {
-        console.error('useUserInfo - Exception in query:', error);
+
+        console.log('User info fetched:', data);
+        return data as UserInfoData;
+      } catch (error: any) {
+        console.error('Exception in user info query:', error);
         throw error;
       }
     },
-    enabled: !!userId,
-    retry: 2,
-    retryDelay: 1000,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!userId && !!eventId,
   });
 
-  console.log('useUserInfo - Hook state:', { 
-    userInfo, 
-    isLoading, 
+  console.log('useUserInfo - Hook state:', {
+    userInfo,
+    isLoading,
     error: error?.message,
     userId,
-    authUser: user 
+    eventId
   });
 
   return { userInfo, isLoading, error };

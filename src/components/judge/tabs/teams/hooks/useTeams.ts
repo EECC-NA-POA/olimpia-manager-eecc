@@ -2,30 +2,29 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-// Simple interfaces to avoid type recursion
-interface SimpleTeamData {
+// Explicit interfaces to prevent type recursion
+interface DbTeam {
   id: number;
   nome: string;
   modalidade_id: number;
 }
 
-interface SimpleAthleteData {
+interface DbModality {
+  nome: string;
+  categoria: string;
+}
+
+interface DbAthleteTeam {
   id: number;
   atleta_id: string;
   posicao: number;
   raia?: number;
 }
 
-interface SimpleUserData {
+interface DbUser {
   nome_completo: string;
   tipo_documento?: string;
   numero_documento?: string;
-}
-
-interface SimpleModalityData {
-  id: number;
-  nome: string;
-  categoria: string;
 }
 
 interface TeamAthlete {
@@ -73,8 +72,8 @@ export function useTeams(
           return [];
         }
         
-        // Build the basic teams query with explicit typing
-        let query = supabase
+        // Fetch teams with explicit typing
+        let teamsQuery = supabase
           .from('equipes')
           .select('id, nome, modalidade_id')
           .eq('evento_id', eventId)
@@ -82,14 +81,14 @@ export function useTeams(
         
         // For delegation representatives, filter by their branch
         if (!isOrganizer && branchId) {
-          query = query.eq('filial_id', branchId);
+          teamsQuery = teamsQuery.eq('filial_id', branchId);
         }
         
-        const { data: teamsData, error } = await query;
+        const { data: teamsData, error: teamsError } = await teamsQuery;
 
-        if (error) {
-          console.error('Error fetching teams:', error);
-          throw error;
+        if (teamsError) {
+          console.error('Error fetching teams:', teamsError);
+          throw teamsError;
         }
 
         console.log('Teams data fetched:', teamsData);
@@ -99,13 +98,12 @@ export function useTeams(
           return [];
         }
 
-        // Cast the data to our simple interface
-        const typedTeamsData = teamsData as SimpleTeamData[];
+        const typedTeamsData = teamsData as DbTeam[];
 
         // Fetch modality info separately
         const { data: modalityData, error: modalityError } = await supabase
           .from('modalidades')
-          .select('id, nome, categoria')
+          .select('nome, categoria')
           .eq('id', modalityId)
           .single();
 
@@ -113,7 +111,7 @@ export function useTeams(
           console.error('Error fetching modality:', modalityError);
         }
 
-        const typedModalityData = modalityData as SimpleModalityData | null;
+        const typedModalityData = modalityData as DbModality | null;
 
         // Process teams data
         const processedTeams: Team[] = [];
@@ -131,7 +129,7 @@ export function useTeams(
             athletes: []
           };
 
-          // Fetch team athletes with explicit typing
+          // Fetch team athletes
           try {
             const { data: athletesData, error: athletesError } = await supabase
               .from('atletas_equipes')
@@ -141,9 +139,9 @@ export function useTeams(
             if (athletesError) {
               console.error('Error fetching team athletes:', athletesError);
             } else if (athletesData && athletesData.length > 0) {
-              const typedAthletesData = athletesData as SimpleAthleteData[];
+              const typedAthletesData = athletesData as DbAthleteTeam[];
               
-              // Fetch user data for each athlete separately
+              // Fetch user data for each athlete
               for (const athleteRow of typedAthletesData) {
                 const { data: userData, error: userError } = await supabase
                   .from('usuarios')
@@ -155,9 +153,9 @@ export function useTeams(
                   console.error('Error fetching user data:', userError);
                 }
 
-                const typedUserData = userData as SimpleUserData | null;
+                const typedUserData = userData as DbUser | null;
 
-                baseTeam.athletes.push({
+                const athlete: TeamAthlete = {
                   id: athleteRow.id,
                   atleta_id: athleteRow.atleta_id,
                   atleta_nome: typedUserData?.nome_completo || 'Atleta',
@@ -170,7 +168,9 @@ export function useTeams(
                     tipo_documento: typedUserData?.tipo_documento,
                     numero_documento: typedUserData?.numero_documento
                   }
-                });
+                };
+
+                baseTeam.athletes.push(athlete);
               }
             }
           } catch (athleteError) {

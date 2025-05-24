@@ -3,6 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+interface ModalityData {
+  id: number;
+  nome: string;
+  categoria: string;
+  tipo_modalidade: string;
+}
+
 interface Modality {
   modalidade_id: number;
   modalidade_nome: string;
@@ -18,6 +25,7 @@ export function useModalities(eventId: string | null) {
         console.log('Fetching collective modalities for event:', eventId);
         
         if (!eventId) {
+          console.log('No eventId provided');
           return [];
         }
 
@@ -35,24 +43,25 @@ export function useModalities(eventId: string | null) {
           return [];
         }
         
-        console.log('Fetched collective modalities:', data);
+        console.log('Raw modalities data:', data);
         
         if (!data || data.length === 0) {
           console.log('No collective modalities found for this event');
           return [];
         }
         
-        // Map to the expected format
-        const formattedModalities: Modality[] = data.map(item => ({
+        // Map to the expected format with explicit typing
+        const formattedModalities: Modality[] = data.map((item: ModalityData) => ({
           modalidade_id: item.id,
           modalidade_nome: item.nome,
           categoria: item.categoria || '',
           tipo_modalidade: item.tipo_modalidade
         }));
         
+        console.log('Formatted modalities:', formattedModalities);
         return formattedModalities;
-      } catch (error) {
-        console.error('Error in modalities query:', error);
+      } catch (error: any) {
+        console.error('Exception in modalities query:', error);
         toast.error('Erro ao buscar modalidades coletivas');
         return [];
       }
