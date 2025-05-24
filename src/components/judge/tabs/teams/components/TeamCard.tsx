@@ -13,6 +13,7 @@ interface TeamCardProps {
   isRemoving: boolean;
   isUpdating?: boolean;
   isReadOnly?: boolean;
+  isOrganizer?: boolean;
 }
 
 export function TeamCard({ 
@@ -21,7 +22,8 @@ export function TeamCard({
   onUpdatePosition,
   isRemoving,
   isUpdating = false,
-  isReadOnly = false 
+  isReadOnly = false,
+  isOrganizer = false
 }: TeamCardProps) {
   return (
     <Card>
