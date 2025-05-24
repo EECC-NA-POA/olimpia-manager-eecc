@@ -96,8 +96,15 @@ export function useAllTeamsData(
         }
 
         const atletas = athletesData?.map(athlete => {
-          const usuario = athlete.usuarios;
-          const filial = usuario?.filiais;
+          // Handle usuarios as array (first element)
+          const usuario = Array.isArray(athlete.usuarios) 
+            ? athlete.usuarios[0] 
+            : athlete.usuarios;
+          
+          // Handle filiais as array (first element)
+          const filial = usuario?.filiais 
+            ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
+            : null;
 
           return {
             id: athlete.id,
@@ -110,8 +117,10 @@ export function useAllTeamsData(
           };
         }) || [];
 
-        // Handle modalidades data properly
-        const modalidadeData = team.modalidades;
+        // Handle modalidades data properly - get first element if array
+        const modalidadeData = Array.isArray(team.modalidades) 
+          ? team.modalidades[0] 
+          : team.modalidades;
         
         processedTeams.push({
           id: team.id,
