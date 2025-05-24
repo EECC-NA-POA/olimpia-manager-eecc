@@ -64,7 +64,7 @@ export function useTeamsQuery(
           console.error('Error fetching modality for team:', team.id, modalityError);
         }
 
-        // Get team athletes with user, branch and payment information
+        // Get team athletes with user and branch information
         const { data: athletesData, error: athletesError } = await supabase
           .from('atletas_equipes')
           .select(`
@@ -77,8 +77,7 @@ export function useTeamsQuery(
               tipo_documento,
               numero_documento,
               filiais(nome)
-            ),
-            pagamentos(numero_identificador)
+            )
           `)
           .eq('equipe_id', team.id);
 
@@ -86,33 +85,40 @@ export function useTeamsQuery(
           console.error('Error fetching athletes for team:', team.id, athletesError);
         }
 
-        const atletas = athletesData?.map(athlete => {
-          // Handle usuarios as array (first element)
-          const usuario = Array.isArray(athlete.usuarios) 
-            ? athlete.usuarios[0] 
-            : athlete.usuarios;
-          
-          // Handle filiais as array (first element)
-          const filial = usuario?.filiais 
-            ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
-            : null;
+        // Process athletes and get payment information separately
+        const atletas = [];
+        if (athletesData) {
+          for (const athlete of athletesData) {
+            // Handle usuarios as array (first element)
+            const usuario = Array.isArray(athlete.usuarios) 
+              ? athlete.usuarios[0] 
+              : athlete.usuarios;
+            
+            // Handle filiais as array (first element)
+            const filial = usuario?.filiais 
+              ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
+              : null;
 
-          // Handle pagamentos as array (first element)
-          const pagamento = athlete.pagamentos 
-            ? (Array.isArray(athlete.pagamentos) ? athlete.pagamentos[0] : athlete.pagamentos)
-            : null;
+            // Get payment data separately
+            const { data: pagamentoData } = await supabase
+              .from('pagamentos')
+              .select('numero_identificador')
+              .eq('atleta_id', athlete.atleta_id)
+              .eq('evento_id', eventId)
+              .single();
 
-          return {
-            id: athlete.id,
-            atleta_id: athlete.atleta_id,
-            atleta_nome: usuario?.nome_completo || '',
-            posicao: athlete.posicao || 0,
-            raia: athlete.raia,
-            documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
-            filial_nome: filial?.nome || 'N/A',
-            numero_identificador: pagamento?.numero_identificador || undefined
-          };
-        }) || [];
+            atletas.push({
+              id: athlete.id,
+              atleta_id: athlete.atleta_id,
+              atleta_nome: usuario?.nome_completo || '',
+              posicao: athlete.posicao || 0,
+              raia: athlete.raia,
+              documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
+              filial_nome: filial?.nome || 'N/A',
+              numero_identificador: pagamentoData?.numero_identificador || undefined
+            });
+          }
+        }
 
         // Determine the primary filial from athletes
         const primaryFilial = atletas.length > 0 ? atletas[0].filial_nome : 'N/A';

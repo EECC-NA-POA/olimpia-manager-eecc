@@ -57,7 +57,7 @@ export function useTeamsData(
       for (const team of teamsData) {
         console.log('Processing team for management:', team);
         
-        // Get team athletes with branch and payment information
+        // Get team athletes with branch information
         const { data: athletesData } = await supabase
           .from('atletas_equipes')
           .select(`
@@ -70,40 +70,46 @@ export function useTeamsData(
               tipo_documento,
               numero_documento,
               filiais!inner(nome)
-            ),
-            pagamentos(numero_identificador)
+            )
           `)
           .eq('equipe_id', team.id);
 
         console.log('Athletes data for team', team.id, ':', athletesData);
 
-        const atletas = athletesData?.map(athlete => {
-          // Handle usuarios data properly
-          const usuario = Array.isArray(athlete.usuarios) 
-            ? athlete.usuarios[0] 
-            : athlete.usuarios;
-          
-          // Handle filiais data properly  
-          const filial = usuario?.filiais 
-            ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
-            : null;
+        // Get payment information separately for each athlete
+        const atletas = [];
+        if (athletesData) {
+          for (const athlete of athletesData) {
+            // Handle usuarios data properly
+            const usuario = Array.isArray(athlete.usuarios) 
+              ? athlete.usuarios[0] 
+              : athlete.usuarios;
+            
+            // Handle filiais data properly  
+            const filial = usuario?.filiais 
+              ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
+              : null;
 
-          // Handle pagamentos data properly
-          const pagamento = athlete.pagamentos 
-            ? (Array.isArray(athlete.pagamentos) ? athlete.pagamentos[0] : athlete.pagamentos)
-            : null;
+            // Get payment data separately
+            const { data: pagamentoData } = await supabase
+              .from('pagamentos')
+              .select('numero_identificador')
+              .eq('atleta_id', athlete.atleta_id)
+              .eq('evento_id', eventId)
+              .single();
 
-          return {
-            id: athlete.id,
-            atleta_id: athlete.atleta_id,
-            atleta_nome: usuario?.nome_completo || '',
-            posicao: athlete.posicao || 0,
-            raia: athlete.raia,
-            documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
-            filial_nome: filial?.nome || 'N/A',
-            numero_identificador: pagamento?.numero_identificador || undefined
-          };
-        }) || [];
+            atletas.push({
+              id: athlete.id,
+              atleta_id: athlete.atleta_id,
+              atleta_nome: usuario?.nome_completo || '',
+              posicao: athlete.posicao || 0,
+              raia: athlete.raia,
+              documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
+              filial_nome: filial?.nome || 'N/A',
+              numero_identificador: pagamentoData?.numero_identificador || undefined
+            });
+          }
+        }
 
         processedTeams.push({
           id: team.id,
