@@ -1,7 +1,6 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { Team } from '../types';
 
 export function useTeams(
@@ -91,7 +90,7 @@ export function useTeams(
             continue;
           }
 
-          team.athletes = teamAthletes.map(athlete => {
+          team.athletes = teamAthletes?.map(athlete => {
             // Handle the usuarios data, ensuring it's treated as an object not an array
             const usuariosData = Array.isArray(athlete.usuarios) ? athlete.usuarios[0] : athlete.usuarios;
             
@@ -109,7 +108,7 @@ export function useTeams(
                 numero_documento: usuariosData?.numero_documento
               }
             };
-          });
+          }) || [];
         }
 
         console.log('Teams fetched successfully:', teams);

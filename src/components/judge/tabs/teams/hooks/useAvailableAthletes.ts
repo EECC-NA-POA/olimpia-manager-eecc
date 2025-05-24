@@ -1,21 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
-import { Team, AvailableAthlete } from '../types';
-
-interface EnrolledAthlete {
-  id: number;
-  atleta_id: string;
-  usuarios: UserInfo | null;
-}
-
-interface UserInfo {
-  nome_completo?: string;
-  tipo_documento?: string;
-  numero_documento?: string;
-  numero_identificador?: string | null;
-}
+import { supabase } from '@/integrations/supabase/client';
+import { AvailableAthlete, Team } from '../types';
 
 export function useAvailableAthletes(
   eventId: string | null,
@@ -24,11 +10,11 @@ export function useAvailableAthletes(
   branchId?: string | null,
   existingTeams: Team[] = []
 ) {
-  const { data: availableAthletes } = useQuery({
-    queryKey: ['available-athletes', modalityId, eventId, branchId, existingTeams, isOrganizer],
+  const { data: availableAthletes, isLoading, error } = useQuery({
+    queryKey: ['available-athletes', modalityId, eventId, branchId, existingTeams?.length],
     queryFn: async () => {
       try {
-        console.log('Starting useAvailableAthletes query with params:', {
+        console.log('Fetching available athletes with params:', {
           eventId,
           modalityId,
           isOrganizer,
@@ -36,128 +22,120 @@ export function useAvailableAthletes(
           existingTeamsCount: existingTeams.length
         });
 
-        // Get all enrollments for this modality
+        if (!eventId || !modalityId) {
+          console.log('Missing eventId or modalityId');
+          return [];
+        }
+
+        // Se for organizador, retorna array vazio (não pode modificar equipes)
+        if (isOrganizer) {
+          console.log('User is organizer, returning empty array');
+          return [];
+        }
+
+        // Buscar atletas inscritos na modalidade
+        console.log('Querying enrollments for modality:', modalityId, 'event:', eventId);
+        
         let query = supabase
           .from('inscricoes_modalidades')
           .select(`
-            id,
             atleta_id,
-            usuarios(
+            usuarios!inner(
+              id,
               nome_completo,
               tipo_documento,
-              numero_documento
+              numero_documento,
+              filial_id
             )
           `)
-          .eq('modalidade_id', modalityId!)
-          .eq('evento_id', eventId!)
+          .eq('modalidade_id', modalityId)
+          .eq('evento_id', eventId)
           .eq('status', 'confirmado');
 
-        console.log('Querying enrollments for modality:', modalityId, 'event:', eventId);
-
-        // If not organizer, filter by branch
+        // Se não for organizador, filtrar pela filial
         if (!isOrganizer && branchId) {
           console.log('Filtering by branch ID:', branchId);
-          
-          const { data: branchAthletes, error: branchError } = await supabase
-            .from('usuarios')
-            .select('id')
-            .eq('filial_id', branchId);
-          
-          if (branchError) {
-            console.error('Error fetching branch athletes:', branchError);
-            throw branchError;
-          }
-          
-          console.log('Found branch athletes:', branchAthletes?.length);
-          
-          const athleteIds = branchAthletes?.map(a => a.id) || [];
-          if (athleteIds.length > 0) {
-            query = query.in('atleta_id', athleteIds);
-          } else {
-            console.log('No athletes found for branch, returning empty array');
-            return [];
-          }
+          query = query.eq('usuarios.filial_id', branchId);
         }
 
         const { data: enrolledAthletes, error: enrollmentError } = await query;
         
         if (enrollmentError) {
           console.error('Error fetching enrolled athletes:', enrollmentError);
-          toast.error('Não foi possível carregar os atletas');
-          return [];
+          throw new Error('Erro ao buscar atletas inscritos');
         }
 
         console.log('Enrolled athletes found:', enrolledAthletes?.length || 0);
-        console.log('Enrolled athletes data:', enrolledAthletes);
+        console.log('Raw enrolled athletes data:', enrolledAthletes);
 
-        // If organizer, just return empty array (they can't modify teams)
-        if (isOrganizer) {
-          console.log('User is organizer, returning empty array');
+        if (!enrolledAthletes || enrolledAthletes.length === 0) {
+          console.log('No athletes found for this modality and branch');
           return [];
         }
 
-        // Get the existing athlete IDs from teams
-        const existingAthleteIds = existingTeams.flatMap(team => 
-          team.athletes?.map(athlete => athlete.atleta_id) || []
-        );
+        // Buscar atletas já em equipes
+        const existingAthleteIds = new Set<string>();
         
-        console.log('Existing athlete IDs in teams:', existingAthleteIds);
-
-        // Extract athletes that are not yet assigned to a team
-        const availableAthletes: AvailableAthlete[] = [];
-        
-        if (enrolledAthletes) {
-          for (const item of enrolledAthletes) {
-            // Skip if item is null
-            if (!item) {
-              console.log('Skipping null enrollment item');
-              continue;
+        if (existingTeams && existingTeams.length > 0) {
+          for (const team of existingTeams) {
+            if (team.athletes && team.athletes.length > 0) {
+              team.athletes.forEach(athlete => {
+                existingAthleteIds.add(athlete.atleta_id);
+              });
             }
-            
-            // Skip athletes already in a team
-            if (existingAthleteIds.includes(item.atleta_id)) {
-              console.log(`Athlete ${item.atleta_id} already in a team, skipping`);
-              continue;
-            }
-            
-            // Handle the usuarios data, ensuring it's treated as an object and not an array
-            const userData = Array.isArray(item.usuarios) 
-              ? item.usuarios[0] 
-              : item.usuarios as UserInfo | null;
-            
-            if (!userData) {
-              console.log(`No user data found for athlete ${item.atleta_id}, skipping`);
-              continue;
-            }
-            
-            const athlete: AvailableAthlete = {
-              atleta_id: item.atleta_id,
-              name: userData.nome_completo || 'Atleta',
-              atleta_nome: userData.nome_completo || 'Atleta',
-              documento_tipo: userData.tipo_documento || 'Documento',
-              documento_numero: userData.numero_documento || '',
-              identificador: '',
-              tipo_documento: userData.tipo_documento || 'Documento',
-              numero_documento: userData.numero_documento || '',
-              numero_identificador: null
-            };
-            
-            availableAthletes.push(athlete);
-            console.log(`Added available athlete: ${athlete.atleta_nome} (${athlete.atleta_id})`);
           }
         }
 
-        console.log('Available athletes found:', availableAthletes.length);
-        console.log('Available athletes:', availableAthletes);
+        console.log('Existing athlete IDs in teams:', Array.from(existingAthleteIds));
+
+        // Filtrar atletas disponíveis (não estão em nenhuma equipe)
+        const availableAthletes: AvailableAthlete[] = [];
+        
+        for (const enrollment of enrolledAthletes) {
+          // Verificar se o atleta já está em uma equipe
+          if (existingAthleteIds.has(enrollment.atleta_id)) {
+            console.log(`Athlete ${enrollment.atleta_id} already in a team, skipping`);
+            continue;
+          }
+
+          const usuario = enrollment.usuarios;
+          if (!usuario) {
+            console.log(`No user data found for athlete ${enrollment.atleta_id}, skipping`);
+            continue;
+          }
+
+          const athlete: AvailableAthlete = {
+            atleta_id: enrollment.atleta_id,
+            name: usuario.nome_completo || 'Atleta',
+            atleta_nome: usuario.nome_completo || 'Atleta',
+            documento_tipo: usuario.tipo_documento || 'CPF',
+            documento_numero: usuario.numero_documento || '',
+            identificador: '',
+            tipo_documento: usuario.tipo_documento || 'CPF',
+            numero_documento: usuario.numero_documento || '',
+            numero_identificador: null
+          };
+          
+          availableAthletes.push(athlete);
+          console.log(`Added available athlete: ${athlete.atleta_nome} (${athlete.atleta_id})`);
+        }
+
+        console.log('Final available athletes:', availableAthletes.length);
         return availableAthletes;
+        
       } catch (error) {
         console.error('Error in available athletes query:', error);
-        toast.error('Erro ao buscar atletas disponíveis');
-        return [];
+        throw error;
       }
     },
-    enabled: !!modalityId && !!eventId && !isOrganizer
+    enabled: !!modalityId && !!eventId && !isOrganizer,
+    retry: 2,
+    retryDelay: 1000
   });
 
-  return { availableAthletes: availableAthletes || [] };
+  return { 
+    availableAthletes: availableAthletes || [], 
+    isLoadingAthletes: isLoading,
+    athletesError: error 
+  };
 }

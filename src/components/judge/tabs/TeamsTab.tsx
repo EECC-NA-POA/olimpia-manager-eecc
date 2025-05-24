@@ -34,7 +34,9 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     userInfo,
     isLoadingUserInfo,
     userInfoError,
-    availableAthletes
+    availableAthletes,
+    isLoadingAthletes,
+    athletesError
   } = useTeamData(userId, eventId, isOrganizer);
 
   console.log('TeamsTab - Debug info:', {
@@ -43,7 +45,10 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     userId,
     isLoadingUserInfo,
     userInfoError: userInfoError?.message,
-    authUser: user
+    authUser: user,
+    availableAthletes: availableAthletes?.length,
+    isLoadingAthletes,
+    athletesError: athletesError?.message
   });
 
   // Team creation functionality
@@ -113,7 +118,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
-                          Erro ao carregar informações da filial. Tente atualizar a página.
+                          Erro ao carregar informações da filial: {userInfoError.message}
                         </AlertDescription>
                       </Alert>
                     ) : (userInfo?.filial_id || user?.filial_id) ? (
@@ -144,21 +149,38 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
                   </Alert>
                 )}
                 
-                {isLoadingTeams ? (
+                {/* Loading states */}
+                {(isLoadingTeams || isLoadingAthletes) ? (
                   <div className="space-y-4">
                     <Skeleton className="h-64 w-full" />
                   </div>
-                ) : existingTeams && existingTeams.length > 0 ? (
-                  <TeamFormation 
-                    teams={existingTeams}
-                    availableAthletes={availableAthletes || []}
-                    eventId={eventId}
-                    modalityId={selectedModalityId}
-                    isOrganizer={isOrganizer}
-                    isReadOnly={isOrganizer}
-                  />
                 ) : (
-                  <NoTeamsMessage isOrganizer={isOrganizer} />
+                  <>
+                    {/* Athletes error */}
+                    {athletesError && !isOrganizer && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          Erro ao carregar atletas: {athletesError.message}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    
+                    {/* Teams and athletes */}
+                    {existingTeams && existingTeams.length > 0 ? (
+                      <TeamFormation 
+                        teams={existingTeams}
+                        availableAthletes={availableAthletes || []}
+                        eventId={eventId}
+                        modalityId={selectedModalityId}
+                        isOrganizer={isOrganizer}
+                        isReadOnly={isOrganizer}
+                        branchId={userInfo?.filial_id || user?.filial_id}
+                      />
+                    ) : (
+                      <NoTeamsMessage isOrganizer={isOrganizer} />
+                    )}
+                  </>
                 )}
               </>
             )}

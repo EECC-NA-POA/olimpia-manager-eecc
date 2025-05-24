@@ -27,12 +27,16 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
   } = useTeams(userId, eventId, selectedModalityId, userInfo?.filial_id, isOrganizer);
   
   // Get available athletes for the selected modality
-  const { availableAthletes } = useAvailableAthletes(
+  const { 
+    availableAthletes, 
+    isLoadingAthletes, 
+    athletesError 
+  } = useAvailableAthletes(
     eventId, 
     selectedModalityId, 
     isOrganizer,
     userInfo?.filial_id,
-    existingTeams
+    existingTeams || []
   );
 
   return {
@@ -45,6 +49,8 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer 
     userInfo,
     isLoadingUserInfo,
     userInfoError,
-    availableAthletes
+    availableAthletes,
+    isLoadingAthletes,
+    athletesError
   };
 }

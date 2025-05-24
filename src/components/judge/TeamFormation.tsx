@@ -5,7 +5,7 @@ import { useTeamFormation } from './team-formation/useTeamFormation';
 import { AvailableAthletesList } from './team-formation/AvailableAthletesList';
 import { Team, AvailableAthlete } from './tabs/teams/types';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Info } from 'lucide-react';
 
 interface TeamFormationProps {
   teams: Team[];
@@ -14,6 +14,7 @@ interface TeamFormationProps {
   modalityId: number;
   isOrganizer?: boolean;
   isReadOnly?: boolean;
+  branchId?: string | null;
 }
 
 export function TeamFormation({ 
@@ -22,7 +23,8 @@ export function TeamFormation({
   eventId,
   modalityId,
   isOrganizer = false,
-  isReadOnly = false
+  isReadOnly = false,
+  branchId
 }: TeamFormationProps) {
   const {
     handleAddAthleteToTeam,
@@ -35,7 +37,8 @@ export function TeamFormation({
     teams, 
     eventId, 
     modalityId, 
-    isOrganizer 
+    isOrganizer,
+    branchId 
   });
 
   if (teams.length === 0) {
@@ -52,20 +55,30 @@ export function TeamFormation({
     <div className="space-y-6">
       {/* Show available athletes for delegation representatives */}
       {!isReadOnly && availableAthletes && availableAthletes.length > 0 && (
-        <AvailableAthletesList 
-          athletes={availableAthletes}
-          teams={teams}
-          onAddAthleteToTeam={handleAddAthleteToTeam}
-          isPending={isAddingAthlete}
-        />
+        <>
+          <Alert className="bg-blue-50 border-blue-200">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800">
+              <strong>Atletas Disponíveis:</strong> Selecione os atletas abaixo para adicioná-los às equipes. 
+              Após adicionar, você pode definir a posição e raia de cada atleta nas tabelas das equipes.
+            </AlertDescription>
+          </Alert>
+          
+          <AvailableAthletesList 
+            athletes={availableAthletes}
+            teams={teams}
+            onAddAthleteToTeam={handleAddAthleteToTeam}
+            isPending={isAddingAthlete}
+          />
+        </>
       )}
 
-      {/* Show addable athletes message when there are athletes available */}
-      {!isReadOnly && availableAthletes && availableAthletes.length > 0 && (
-        <Alert variant="info" className="bg-blue-50 border-blue-200">
-          <AlertCircle className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
-            Selecione os atletas acima para adicioná-los à equipe. Depois, defina a posição e raia de cada atleta abaixo.
+      {/* Message when no available athletes */}
+      {!isReadOnly && availableAthletes && availableAthletes.length === 0 && (
+        <Alert variant="info" className="bg-amber-50 border-amber-200">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
+            Não há atletas disponíveis da sua filial para esta modalidade, ou todos os atletas já estão em equipes.
           </AlertDescription>
         </Alert>
       )}
