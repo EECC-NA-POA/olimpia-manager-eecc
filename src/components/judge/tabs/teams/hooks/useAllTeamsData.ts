@@ -19,6 +19,8 @@ export function useAllTeamsData(
     queryFn: async () => {
       if (!eventId) return [];
 
+      console.log('Fetching teams with filters:', { eventId, modalityFilter, branchFilter, searchTerm });
+
       let query = supabase
         .from('equipes')
         .select(`
@@ -27,13 +29,13 @@ export function useAllTeamsData(
           modalidade_id,
           evento_id,
           filial_id,
-          modalidades!inner(
+          modalidades(
             id,
             nome,
             categoria,
             tipo_modalidade
           ),
-          filiais!inner(
+          filiais(
             id,
             nome
           )
@@ -56,7 +58,13 @@ export function useAllTeamsData(
       }
 
       const { data: teamsData, error } = await query;
-      if (error) throw error;
+      
+      console.log('Teams query result:', { teamsData, error });
+      
+      if (error) {
+        console.error('Error fetching teams:', error);
+        throw error;
+      }
 
       if (!teamsData) return [];
 
@@ -64,31 +72,32 @@ export function useAllTeamsData(
       const processedTeams: TeamData[] = [];
       
       for (const team of teamsData) {
+        console.log('Processing team:', team);
+        
         // Get team athletes with branch information
-        const { data: athletesData } = await supabase
+        const { data: athletesData, error: athletesError } = await supabase
           .from('atletas_equipes')
           .select(`
             id,
             atleta_id,
             posicao,
             raia,
-            usuarios!inner(
+            usuarios(
               nome_completo,
               tipo_documento,
               numero_documento,
-              filiais!inner(nome)
+              filiais(nome)
             )
           `)
           .eq('equipe_id', team.id);
 
+        if (athletesError) {
+          console.error('Error fetching athletes for team:', team.id, athletesError);
+        }
+
         const atletas = athletesData?.map(athlete => {
-          const usuario = Array.isArray(athlete.usuarios) 
-            ? athlete.usuarios[0] 
-            : athlete.usuarios;
-          
-          const filial = usuario?.filiais 
-            ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
-            : null;
+          const usuario = athlete.usuarios;
+          const filial = usuario?.filiais;
 
           return {
             id: athlete.id,
@@ -102,7 +111,7 @@ export function useAllTeamsData(
         }) || [];
 
         // Handle modalidades data properly
-        const modalidadeData = Array.isArray(team.modalidades) ? team.modalidades[0] : team.modalidades;
+        const modalidadeData = team.modalidades;
         
         processedTeams.push({
           id: team.id,
@@ -120,6 +129,7 @@ export function useAllTeamsData(
         });
       }
 
+      console.log('Final processed teams:', processedTeams);
       return processedTeams;
     },
     enabled: !!eventId,
@@ -135,7 +145,6 @@ export function useAllTeamsData(
         .from('modalidades')
         .select('id, nome, categoria, tipo_modalidade')
         .eq('evento_id', eventId)
-        .eq('tipo_modalidade', 'coletiva')
         .order('nome');
 
       if (error) throw error;
