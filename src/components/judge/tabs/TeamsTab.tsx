@@ -19,8 +19,11 @@ interface TeamsTabProps {
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
   const { user } = useAuth();
   
-  // Check if user is a judge (judges should only view, not manage)
-  const isJudge = user?.papeis?.some(role => role.codigo === 'JUZ') || false;
+  // Check if user is ONLY a judge (judges should only view, not manage)
+  // Representatives can manage their teams, organizers can manage all teams
+  const isJudgeOnly = user?.papeis?.some(role => role.codigo === 'JUZ') && 
+                      !user?.papeis?.some(role => role.codigo === 'RDD') &&
+                      !user?.papeis?.some(role => role.codigo === 'ORE');
   
   // States for "Visualizar Todas" tab
   const [modalityFilter, setModalityFilter] = useState<number | null>(null);
@@ -51,7 +54,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     branches,
     isLoading: isLoadingAllTeams,
     error: allTeamsError
-  } = useAllTeamsData(eventId, modalityFilter, branchFilter, searchTerm, (isOrganizer || isJudge) ? undefined : user?.filial_id);
+  } = useAllTeamsData(eventId, modalityFilter, branchFilter, searchTerm, (isOrganizer || isJudgeOnly) ? undefined : user?.filial_id);
 
   if (isLoading && !selectedModalityId) {
     return <LoadingTeamsState />;
@@ -61,8 +64,8 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     return <NoModalitiesMessage />;
   }
 
-  // For judges, show only the "View All Teams" tab
-  if (isJudge) {
+  // For judges only, show only the "View All Teams" tab
+  if (isJudgeOnly) {
     return (
       <div className="space-y-6">
         <TeamsTabHeader isOrganizer={false}>
