@@ -37,7 +37,7 @@ export function useTeamMutations(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId, isOrganizer] 
+        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId] 
       });
       toast.success('Equipe criada com sucesso!');
     },
@@ -108,7 +108,7 @@ export function useTeamMutations(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId, isOrganizer] 
+        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId] 
       });
       queryClient.invalidateQueries({ 
         queryKey: ['available-athletes-simple', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId] 
@@ -135,7 +135,7 @@ export function useTeamMutations(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId, isOrganizer] 
+        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId] 
       });
       queryClient.invalidateQueries({ 
         queryKey: ['available-athletes-simple', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId] 
@@ -163,7 +163,7 @@ export function useTeamMutations(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId, isOrganizer] 
+        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId] 
       });
     },
     onError: (error) => {

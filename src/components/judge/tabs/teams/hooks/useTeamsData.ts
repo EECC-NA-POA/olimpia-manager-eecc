@@ -14,9 +14,11 @@ export function useTeamsData(
   const branchId = user?.filial_id;
 
   return useQuery({
-    queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId, isOrganizer],
+    queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId],
     queryFn: async () => {
       if (!eventId || !selectedModalityId) return [];
+
+      console.log('Fetching teams for modality:', selectedModalityId, 'isOrganizer:', isOrganizer, 'branchId:', branchId);
 
       let query = supabase
         .from('equipes')
@@ -31,13 +33,20 @@ export function useTeamsData(
         .eq('evento_id', eventId)
         .eq('modalidade_id', selectedModalityId);
 
-      // For organizers, show ALL teams in this modality. For regular users, show only their teams
-      if (!isOrganizer && branchId) {
+      // For organizers: show ALL teams in this modality regardless of creator or branch
+      // For regular users: show only teams they created
+      if (!isOrganizer) {
         query = query.eq('created_by', user?.id);
       }
 
       const { data: teamsData, error } = await query;
-      if (error) throw error;
+      
+      console.log('Teams query result:', { teamsData, error, isOrganizer });
+      
+      if (error) {
+        console.error('Error fetching teams:', error);
+        throw error;
+      }
 
       if (!teamsData) return [];
 
@@ -48,6 +57,8 @@ export function useTeamsData(
       const processedTeams: TeamData[] = [];
       
       for (const team of teamsData) {
+        console.log('Processing team for management:', team);
+        
         // Get team athletes with branch information
         const { data: athletesData } = await supabase
           .from('atletas_equipes')
@@ -64,6 +75,8 @@ export function useTeamsData(
             )
           `)
           .eq('equipe_id', team.id);
+
+        console.log('Athletes data for team', team.id, ':', athletesData);
 
         const atletas = athletesData?.map(athlete => {
           // Handle usuarios data properly
@@ -98,6 +111,7 @@ export function useTeamsData(
         });
       }
 
+      console.log('Final processed teams for management:', processedTeams);
       return processedTeams;
     },
     enabled: !!eventId && !!selectedModalityId,
