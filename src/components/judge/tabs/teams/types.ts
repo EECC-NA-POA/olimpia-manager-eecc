@@ -54,6 +54,13 @@ export interface Team {
   };
 }
 
+// Add missing Modality type for ModalitySelector
+export interface Modality {
+  modalidade_id: number;
+  modalidade_nome: string;
+  categoria: string;
+}
+
 export interface AvailableAthlete {
   id: string;
   nome: string;

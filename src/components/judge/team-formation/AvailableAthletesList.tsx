@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,8 +48,8 @@ export function AvailableAthletesList({
 
   // Filter athletes based on search term
   const filteredAthletes = athletes.filter(athlete => {
-    const nameMatch = athlete.atleta_nome?.toLowerCase().includes(searchTerm.toLowerCase());
-    const docMatch = athlete.numero_documento?.toLowerCase().includes(searchTerm.toLowerCase());
+    const nameMatch = athlete.nome?.toLowerCase().includes(searchTerm.toLowerCase());
+    const docMatch = athlete.documento?.toLowerCase().includes(searchTerm.toLowerCase());
     return nameMatch || docMatch;
   });
 
@@ -73,13 +74,13 @@ export function AvailableAthletesList({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {filteredAthletes.map((athlete) => (
             <div
-              key={athlete.atleta_id}
+              key={athlete.id}
               className="border rounded-md p-3 flex flex-col gap-2"
             >
               <div>
-                <p className="font-medium truncate">{athlete.name || athlete.atleta_nome}</p>
+                <p className="font-medium truncate">{athlete.nome}</p>
                 <p className="text-sm text-muted-foreground truncate">
-                  {athlete.tipo_documento}: {athlete.numero_documento}
+                  {athlete.documento}
                 </p>
               </div>
               
@@ -88,7 +89,7 @@ export function AvailableAthletesList({
                 <Button
                   size="sm"
                   className="w-full mt-2"
-                  onClick={() => onAddAthleteToTeam(teams[0].id, athlete.atleta_id)}
+                  onClick={() => onAddAthleteToTeam(teams[0].id, athlete.id)}
                   disabled={isPending}
                 >
                   {isPending ? 'Adicionando...' : 'Adicionar a ' + teams[0].nome}
@@ -100,7 +101,7 @@ export function AvailableAthletesList({
                   onChange={(e) => {
                     const teamId = Number(e.target.value);
                     if (teamId) {
-                      onAddAthleteToTeam(teamId, athlete.atleta_id);
+                      onAddAthleteToTeam(teamId, athlete.id);
                       e.target.value = ""; // Reset after selection
                     }
                   }}

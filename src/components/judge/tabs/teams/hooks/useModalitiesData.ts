@@ -11,7 +11,7 @@ export function useModalitiesData(eventId: string | null) {
 
       const { data, error } = await supabase
         .from('modalidades')
-        .select('id, nome, categoria')
+        .select('id, nome, categoria, tipo_modalidade')
         .eq('evento_id', eventId)
         .eq('tipo_modalidade', 'coletivo')
         .order('nome');

@@ -53,7 +53,7 @@ export function useAvailableAthletesData(
       return enrollments
         .filter(enrollment => !athletesInTeams.has(enrollment.atleta_id))
         .map(enrollment => {
-          // Since we're using !inner join, usuarios will be a single object, not an array
+          // Handle usuarios data properly - it could be an array or object
           const usuario = Array.isArray(enrollment.usuarios) 
             ? enrollment.usuarios[0] 
             : enrollment.usuarios;

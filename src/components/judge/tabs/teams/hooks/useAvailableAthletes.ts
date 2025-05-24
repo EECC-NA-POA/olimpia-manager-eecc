@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AvailableAthlete, Team } from '../types';
@@ -113,19 +114,13 @@ export function useAvailableAthletes(
           }
 
           const athlete: AvailableAthlete = {
-            atleta_id: enrollment.atleta_id,
-            name: usuario.nome_completo || 'Atleta',
-            atleta_nome: usuario.nome_completo || 'Atleta',
-            documento_tipo: usuario.tipo_documento || 'CPF',
-            documento_numero: usuario.numero_documento || '',
-            identificador: '',
-            tipo_documento: usuario.tipo_documento || 'CPF',
-            numero_documento: usuario.numero_documento || '',
-            numero_identificador: null
+            id: enrollment.atleta_id,
+            nome: usuario.nome_completo || 'Atleta',
+            documento: `${usuario.tipo_documento || 'CPF'}: ${usuario.numero_documento || ''}`
           };
           
           availableAthletes.push(athlete);
-          console.log(`Added available athlete: ${athlete.atleta_nome} (${athlete.atleta_id})`);
+          console.log(`Added available athlete: ${athlete.nome} (${athlete.id})`);
         }
 
         console.log('Final available athletes:', availableAthletes.length);
