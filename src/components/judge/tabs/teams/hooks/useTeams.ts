@@ -12,12 +12,12 @@ export function useTeams(
 ) {
   return useQuery({
     queryKey: ['teams', eventId, modalityId, isOrganizer, branchId],
-    queryFn: async () => {
+    queryFn: async (): Promise<Team[]> => {
       try {
         console.log('Fetching teams:', { eventId, modalityId, branchId, isOrganizer });
         
         if (!eventId || !modalityId) {
-          return [] as Team[];
+          return [];
         }
         
         // Build the query based on user role
@@ -51,18 +51,22 @@ export function useTeams(
 
         if (!teamsData || teamsData.length === 0) {
           console.log('No teams found for this modality');
-          return [] as Team[];
+          return [];
         }
 
-        // Process teams data with explicit typing to avoid infinite recursion
+        // Process teams data
         const processedTeams: Team[] = [];
         
         for (const teamRow of teamsData) {
-          // Handle modalidades data with simple type assertion
-          const modalidadeInfo = teamRow.modalidades as any;
-          const modalidadeData = Array.isArray(modalidadeInfo) 
-            ? modalidadeInfo[0] 
-            : modalidadeInfo;
+          // Handle modalidades data safely
+          const modalidadeInfo = teamRow.modalidades;
+          let modalidadeData: any = null;
+          
+          if (Array.isArray(modalidadeInfo)) {
+            modalidadeData = modalidadeInfo[0];
+          } else {
+            modalidadeData = modalidadeInfo;
+          }
           
           const baseTeam: Team = {
             id: teamRow.id,
@@ -76,7 +80,7 @@ export function useTeams(
             athletes: []
           };
 
-          // Fetch team athletes separately to avoid complex nested types
+          // Fetch team athletes separately
           try {
             const { data: athletesData, error: athletesError } = await supabase
               .from('atletas_equipes')
@@ -97,8 +101,14 @@ export function useTeams(
               console.error('Error fetching team athletes:', athletesError);
             } else if (athletesData && athletesData.length > 0) {
               baseTeam.athletes = athletesData.map(athleteRow => {
-                const userInfo = athleteRow.usuarios as any;
-                const userData = Array.isArray(userInfo) ? userInfo[0] : userInfo;
+                const userInfo = athleteRow.usuarios;
+                let userData: any = null;
+                
+                if (Array.isArray(userInfo)) {
+                  userData = userInfo[0];
+                } else {
+                  userData = userInfo;
+                }
                 
                 return {
                   id: athleteRow.id,
@@ -128,7 +138,7 @@ export function useTeams(
 
       } catch (error) {
         console.error('Error in teams query:', error);
-        return [] as Team[];
+        return [];
       }
     },
     enabled: !!eventId && !!modalityId

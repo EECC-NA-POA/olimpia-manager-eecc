@@ -12,7 +12,7 @@ export function useAvailableAthletes(
 ) {
   const { data: availableAthletes, isLoading, error } = useQuery({
     queryKey: ['available-athletes', modalityId, eventId, branchId, existingTeams?.length],
-    queryFn: async () => {
+    queryFn: async (): Promise<AvailableAthlete[]> => {
       try {
         console.log('Fetching available athletes with params:', {
           eventId,
@@ -33,14 +33,14 @@ export function useAvailableAthletes(
           return [];
         }
 
-        // Buscar atletas inscritos na modalidade
+        // Buscar atletas inscritos na modalidade - usando a mesma query que funciona na aba de inscrições
         console.log('Querying enrollments for modality:', modalityId, 'event:', eventId);
         
         let query = supabase
           .from('inscricoes_modalidades')
           .select(`
             atleta_id,
-            usuarios!inner(
+            usuarios (
               id,
               nome_completo,
               tipo_documento,
@@ -62,20 +62,18 @@ export function useAvailableAthletes(
         
         if (enrollmentError) {
           console.error('Error fetching enrolled athletes:', enrollmentError);
-          throw new Error('Erro ao buscar atletas inscritos');
+          throw new Error('Erro ao buscar atletas inscritos: ' + enrollmentError.message);
         }
 
         console.log('Enrolled athletes found:', enrolledAthletes?.length || 0);
-        console.log('Raw enrolled athletes data:', enrolledAthletes);
 
         if (!enrolledAthletes || enrolledAthletes.length === 0) {
           console.log('No athletes found for this modality and branch');
           return [];
         }
 
-        // Buscar atletas já em equipes
+        // Coletar IDs dos atletas já em equipes
         const existingAthleteIds = new Set<string>();
-        
         if (existingTeams && existingTeams.length > 0) {
           for (const team of existingTeams) {
             if (team.athletes && team.athletes.length > 0) {
@@ -129,7 +127,7 @@ export function useAvailableAthletes(
       }
     },
     enabled: !!modalityId && !!eventId && !isOrganizer,
-    retry: 2,
+    retry: 1,
     retryDelay: 1000
   });
 
