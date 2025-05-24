@@ -2,6 +2,32 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+// Simple interfaces to avoid type recursion
+interface SimpleTeamData {
+  id: number;
+  nome: string;
+  modalidade_id: number;
+}
+
+interface SimpleAthleteData {
+  id: number;
+  atleta_id: string;
+  posicao: number;
+  raia?: number;
+}
+
+interface SimpleUserData {
+  nome_completo: string;
+  tipo_documento?: string;
+  numero_documento?: string;
+}
+
+interface SimpleModalityData {
+  id: number;
+  nome: string;
+  categoria: string;
+}
+
 interface TeamAthlete {
   id: number;
   atleta_id: string;
@@ -43,10 +69,11 @@ export function useTeams(
         console.log('Fetching teams:', { eventId, modalityId, branchId, isOrganizer });
         
         if (!eventId || !modalityId) {
+          console.log('Missing eventId or modalityId, returning empty array');
           return [];
         }
         
-        // Build the basic teams query
+        // Build the basic teams query with explicit typing
         let query = supabase
           .from('equipes')
           .select('id, nome, modalidade_id')
@@ -72,30 +99,39 @@ export function useTeams(
           return [];
         }
 
+        // Cast the data to our simple interface
+        const typedTeamsData = teamsData as SimpleTeamData[];
+
         // Fetch modality info separately
-        const { data: modalityData } = await supabase
+        const { data: modalityData, error: modalityError } = await supabase
           .from('modalidades')
           .select('id, nome, categoria')
           .eq('id', modalityId)
           .single();
 
+        if (modalityError) {
+          console.error('Error fetching modality:', modalityError);
+        }
+
+        const typedModalityData = modalityData as SimpleModalityData | null;
+
         // Process teams data
         const processedTeams: Team[] = [];
         
-        for (const teamRow of teamsData) {
+        for (const teamRow of typedTeamsData) {
           const baseTeam: Team = {
             id: teamRow.id,
             nome: teamRow.nome,
             modalidade_id: teamRow.modalidade_id,
-            modalidade: modalityData?.nome || '',
+            modalidade: typedModalityData?.nome || '',
             modalidades: {
-              nome: modalityData?.nome || '',
-              categoria: modalityData?.categoria || ''
+              nome: typedModalityData?.nome || '',
+              categoria: typedModalityData?.categoria || ''
             },
             athletes: []
           };
 
-          // Fetch team athletes with a simple query
+          // Fetch team athletes with explicit typing
           try {
             const { data: athletesData, error: athletesError } = await supabase
               .from('atletas_equipes')
@@ -105,26 +141,34 @@ export function useTeams(
             if (athletesError) {
               console.error('Error fetching team athletes:', athletesError);
             } else if (athletesData && athletesData.length > 0) {
+              const typedAthletesData = athletesData as SimpleAthleteData[];
+              
               // Fetch user data for each athlete separately
-              for (const athleteRow of athletesData) {
-                const { data: userData } = await supabase
+              for (const athleteRow of typedAthletesData) {
+                const { data: userData, error: userError } = await supabase
                   .from('usuarios')
                   .select('nome_completo, tipo_documento, numero_documento')
                   .eq('id', athleteRow.atleta_id)
                   .single();
 
+                if (userError) {
+                  console.error('Error fetching user data:', userError);
+                }
+
+                const typedUserData = userData as SimpleUserData | null;
+
                 baseTeam.athletes.push({
                   id: athleteRow.id,
                   atleta_id: athleteRow.atleta_id,
-                  atleta_nome: userData?.nome_completo || 'Atleta',
+                  atleta_nome: typedUserData?.nome_completo || 'Atleta',
                   posicao: athleteRow.posicao || 0,
                   raia: athleteRow.raia || undefined,
-                  tipo_documento: userData?.tipo_documento,
-                  numero_documento: userData?.numero_documento,
+                  tipo_documento: typedUserData?.tipo_documento,
+                  numero_documento: typedUserData?.numero_documento,
                   usuarios: {
-                    nome_completo: userData?.nome_completo || 'Atleta',
-                    tipo_documento: userData?.tipo_documento,
-                    numero_documento: userData?.numero_documento
+                    nome_completo: typedUserData?.nome_completo || 'Atleta',
+                    tipo_documento: typedUserData?.tipo_documento,
+                    numero_documento: typedUserData?.numero_documento
                   }
                 });
               }
