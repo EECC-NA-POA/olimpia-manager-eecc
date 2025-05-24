@@ -37,7 +37,7 @@ export function useAllTeamsData(
         query = query.eq('modalidade_id', modalityFilter);
       }
 
-      // Apply search filter
+      // Apply search filter - case insensitive
       if (searchTerm) {
         query = query.ilike('nome', `%${searchTerm}%`);
       }
@@ -169,7 +169,7 @@ export function useAllTeamsData(
         .from('modalidades')
         .select('id, nome, categoria, tipo_modalidade')
         .eq('evento_id', eventId)
-        .eq('tipo_modalidade', 'coletiva')
+        .eq('tipo_modalidade', 'coletiva') // Garantir que só modalidades coletivas apareçam no filtro
         .order('nome');
 
       if (error) throw error;
