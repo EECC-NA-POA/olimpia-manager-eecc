@@ -27,19 +27,13 @@ export function useAllTeamsData(
           id,
           nome,
           modalidade_id,
-          evento_id,
-          filial_id
+          evento_id
         `)
         .eq('evento_id', eventId);
 
       // Apply modality filter
       if (modalityFilter) {
         query = query.eq('modalidade_id', modalityFilter);
-      }
-
-      // Apply branch filter
-      if (branchFilter) {
-        query = query.eq('filial_id', branchFilter);
       }
 
       // Apply search filter
@@ -117,12 +111,25 @@ export function useAllTeamsData(
             filial_nome: filial?.nome || 'N/A'
           };
         }) || [];
+
+        // Determine the primary filial from athletes
+        const primaryFilial = atletas.length > 0 ? atletas[0].filial_nome : 'N/A';
+        
+        // Apply branch filter if specified
+        if (branchFilter && branchFilter !== 'all') {
+          const teamHasBranchAthletes = atletas.some(athlete => 
+            athlete.filial_nome && athlete.filial_nome.includes(branchFilter)
+          );
+          if (!teamHasBranchAthletes) {
+            continue; // Skip this team if it doesn't match the branch filter
+          }
+        }
         
         processedTeams.push({
           id: team.id,
           nome: team.nome,
           modalidade_id: team.modalidade_id,
-          filial_id: team.filial_id,
+          filial_id: primaryFilial, // Use primary filial from athletes
           evento_id: team.evento_id,
           modalidade_info: modalityData ? {
             id: modalityData.id,
