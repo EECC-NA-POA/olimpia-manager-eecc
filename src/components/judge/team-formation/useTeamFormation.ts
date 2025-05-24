@@ -45,15 +45,21 @@ export function useTeamFormation({
     removeAthleteMutation.mutate(athleteTeamId);
   };
 
-  const handleUpdateLane = async (athleteTeamId: number, lane: number | null) => {
-    console.log('handleUpdateLane called:', { athleteTeamId, lane });
+  const handleUpdateLane = async (teamId: number, athleteId: string, lane: number, position: number) => {
+    console.log('handleUpdateLane called:', { teamId, athleteId, lane, position });
     
     if (isOrganizer) {
       console.log('Organizer cannot update athlete lanes');
       return;
     }
 
-    updateLaneMutation.mutate({ athleteTeamId, lane });
+    // Find the athlete team record by teamId and athleteId
+    const team = teams.find(t => t.id === teamId);
+    const athlete = team?.athletes?.find(a => a.atleta_id === athleteId);
+    
+    if (athlete) {
+      updateLaneMutation.mutate({ athleteTeamId: athlete.id, lane });
+    }
   };
 
   return {
