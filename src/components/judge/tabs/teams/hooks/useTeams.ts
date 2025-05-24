@@ -1,7 +1,33 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Team } from '../types';
+
+interface TeamAthlete {
+  id: number;
+  atleta_id: string;
+  atleta_nome: string;
+  posicao: number;
+  raia?: number;
+  tipo_documento?: string;
+  numero_documento?: string;
+  usuarios?: {
+    nome_completo: string;
+    tipo_documento?: string;
+    numero_documento?: string;
+  };
+}
+
+interface Team {
+  id: number;
+  nome: string;
+  modalidade_id: number;
+  modalidade: string;
+  modalidades: {
+    nome: string;
+    categoria: string;
+  };
+  athletes: TeamAthlete[];
+}
 
 export function useTeams(
   userId: string,
@@ -12,7 +38,7 @@ export function useTeams(
 ) {
   return useQuery({
     queryKey: ['teams', eventId, modalityId, isOrganizer, branchId],
-    queryFn: async () => {
+    queryFn: async (): Promise<Team[]> => {
       try {
         console.log('Fetching teams:', { eventId, modalityId, branchId, isOrganizer });
         
@@ -29,11 +55,13 @@ export function useTeams(
             modalidade_id,
             modalidades!inner (
               nome,
-              categoria
+              categoria,
+              tipo_modalidade
             )
           `)
           .eq('evento_id', eventId)
-          .eq('modalidade_id', modalityId);
+          .eq('modalidade_id', modalityId)
+          .eq('modalidades.tipo_modalidade', 'coletivo');
         
         // For delegation representatives, filter by their branch
         if (!isOrganizer && branchId) {
