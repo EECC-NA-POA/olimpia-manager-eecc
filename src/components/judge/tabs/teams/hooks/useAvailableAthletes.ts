@@ -14,13 +14,14 @@ export function useAvailableAthletes(
   eventId: string | null,
   selectedModalityId: number | null,
   isOrganizer: boolean = false,
-  branchId?: string | null
+  branchId?: string | null,
+  teams?: any[] // Add teams parameter to filter out already added athletes
 ) {
   const { user } = useAuth();
   const userBranchId = user?.filial_id;
 
   return useQuery({
-    queryKey: ['available-athletes', selectedModalityId, eventId, isOrganizer ? 'organizer' : branchId || userBranchId],
+    queryKey: ['available-athletes', selectedModalityId, eventId, isOrganizer ? 'organizer' : branchId || userBranchId, teams?.length || 0],
     queryFn: async (): Promise<AvailableAthlete[]> => {
       if (!eventId || !selectedModalityId) return [];
 
@@ -59,47 +60,17 @@ export function useAvailableAthletes(
 
       console.log('Found enrollments:', enrollments.length);
 
-      // For organizers, don't filter out athletes already in teams - they should be able to move athletes between teams
-      if (isOrganizer) {
-        return enrollments.map(enrollment => {
-          // Handle usuarios data properly
-          const usuario = Array.isArray(enrollment.usuarios) 
-            ? enrollment.usuarios[0] 
-            : enrollment.usuarios;
-          
-          // Handle filiais data properly  
-          const filial = usuario?.filiais 
-            ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
-            : null;
-
-          return {
-            id: enrollment.atleta_id,
-            nome: usuario?.nome_completo || '',
-            documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
-            filial_nome: filial?.nome || 'N/A'
-          };
+      // Get athletes already in teams for this modality
+      const athletesInTeams = new Set();
+      if (teams && teams.length > 0) {
+        teams.forEach(team => {
+          if (team.athletes && team.athletes.length > 0) {
+            team.athletes.forEach(athlete => {
+              athletesInTeams.add(athlete.atleta_id);
+            });
+          }
         });
       }
-
-      // For non-organizers, filter out athletes already in teams
-      const { data: teamsData, error: teamsError } = await supabase
-        .from('equipes')
-        .select(`
-          id,
-          atletas_equipes!inner(atleta_id)
-        `)
-        .eq('evento_id', eventId)
-        .eq('modalidade_id', selectedModalityId);
-
-      if (teamsError) {
-        console.error('Error fetching teams:', teamsError);
-      }
-
-      const athletesInTeams = new Set(
-        teamsData?.flatMap(team => 
-          team.atletas_equipes.map(ae => ae.atleta_id)
-        ) || []
-      );
 
       console.log('Athletes already in teams:', Array.from(athletesInTeams));
       

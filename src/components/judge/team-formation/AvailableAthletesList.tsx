@@ -1,132 +1,100 @@
 
-import React, { useState } from 'react';
+import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { User, MapPin, Plus } from 'lucide-react';
 import { AvailableAthlete, Team } from '../tabs/teams/types';
-import { Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 
 interface AvailableAthletesListProps {
   athletes: AvailableAthlete[];
   teams: Team[];
   onAddAthleteToTeam: (teamId: number, athleteId: string) => void;
-  isPending?: boolean;
+  isPending: boolean;
 }
 
 export function AvailableAthletesList({ 
   athletes, 
-  teams,
-  onAddAthleteToTeam,
-  isPending = false
+  teams, 
+  onAddAthleteToTeam, 
+  isPending 
 }: AvailableAthletesListProps) {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTeams, setSelectedTeams] = React.useState<{ [athleteId: string]: number }>({});
 
-  console.log('AvailableAthletesList rendered with:', {
-    athletesCount: athletes.length,
-    teamsCount: teams.length,
-    athletes: athletes
-  });
+  const handleAddAthlete = (athleteId: string) => {
+    const teamId = selectedTeams[athleteId];
+    if (teamId) {
+      onAddAthleteToTeam(teamId, athleteId);
+      // Clear selection after adding
+      setSelectedTeams(prev => ({ ...prev, [athleteId]: 0 }));
+    }
+  };
 
   if (athletes.length === 0) {
-    console.log('No athletes available, not rendering component');
     return null;
   }
 
-  // If there are no teams, show a message
-  if (teams.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Adicionar Atletas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">Crie uma equipe primeiro para adicionar atletas.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Filter athletes based on search term
-  const filteredAthletes = athletes.filter(athlete => {
-    const nameMatch = athlete.nome?.toLowerCase().includes(searchTerm.toLowerCase());
-    const docMatch = athlete.documento?.toLowerCase().includes(searchTerm.toLowerCase());
-    return nameMatch || docMatch;
-  });
-
-  console.log('Filtered athletes:', filteredAthletes.length);
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Adicionar Atletas às Equipes</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar atleta por nome ou documento"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filteredAthletes.map((athlete) => (
-            <div
-              key={athlete.id}
-              className="border rounded-md p-3 flex flex-col gap-2"
-            >
-              <div>
-                <p className="font-medium truncate">{athlete.nome}</p>
-                <p className="text-sm text-muted-foreground truncate">
-                  {athlete.documento}
-                </p>
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">Adicionar Atletas às Equipes</h3>
+      
+      {/* Three cards per row layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {athletes.map((athlete) => (
+          <Card key={athlete.id} className="p-4">
+            <CardContent className="p-0 space-y-3">
+              {/* Athlete Info */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium text-sm">{athlete.nome}</span>
+                </div>
+                
+                {athlete.filial_nome && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">{athlete.filial_nome}</span>
+                  </div>
+                )}
               </div>
-              
-              {teams.length === 1 ? (
-                // If there's only one team, show a single add button
+
+              {/* Team Selection and Add Button */}
+              <div className="space-y-2">
+                <Select
+                  value={selectedTeams[athlete.id]?.toString() || ""}
+                  onValueChange={(value) => 
+                    setSelectedTeams(prev => ({ 
+                      ...prev, 
+                      [athlete.id]: parseInt(value) 
+                    }))
+                  }
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Selecionar equipe" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {teams.map((team) => (
+                      <SelectItem key={team.id} value={team.id.toString()}>
+                        {team.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
                 <Button
                   size="sm"
-                  className="w-full mt-2"
-                  onClick={() => onAddAthleteToTeam(teams[0].id, athlete.id)}
-                  disabled={isPending}
+                  onClick={() => handleAddAthlete(athlete.id)}
+                  disabled={!selectedTeams[athlete.id] || isPending}
+                  className="w-full h-8 text-xs"
                 >
-                  {isPending ? 'Adicionando...' : 'Adicionar a ' + teams[0].nome}
+                  <Plus className="h-3 w-3 mr-1" />
+                  Adicionar
                 </Button>
-              ) : (
-                // If there are multiple teams, show a dropdown
-                <select 
-                  className="border rounded px-2 py-1 text-sm w-full mt-2"
-                  onChange={(e) => {
-                    const teamId = Number(e.target.value);
-                    if (teamId) {
-                      onAddAthleteToTeam(teamId, athlete.id);
-                      e.target.value = ""; // Reset after selection
-                    }
-                  }}
-                  disabled={isPending}
-                  defaultValue=""
-                >
-                  <option value="" disabled>Selecionar equipe</option>
-                  {teams.map((team) => (
-                    <option key={team.id} value={team.id}>
-                      {team.nome}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          ))}
-          
-          {filteredAthletes.length === 0 && (
-            <div className="col-span-full text-center py-4 text-muted-foreground">
-              Nenhum atleta disponível encontrado
-              {searchTerm && " para a busca: " + searchTerm}
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 }

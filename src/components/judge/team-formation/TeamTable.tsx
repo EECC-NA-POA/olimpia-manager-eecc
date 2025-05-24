@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Table,
@@ -15,6 +16,7 @@ import { Team } from '../tabs/teams/types';
 interface TeamTableProps {
   team: Team;
   isReadOnly?: boolean;
+  isOrganizer?: boolean;
   onUpdateLane?: (athleteId: string, lane: number, position: number) => void;
   onRemoveAthlete?: (athleteId: string) => void;
   isRemovePending?: boolean;
@@ -23,6 +25,7 @@ interface TeamTableProps {
 export function TeamTable({
   team,
   isReadOnly = false,
+  isOrganizer = false,
   onUpdateLane,
   onRemoveAthlete,
   isRemovePending = false
@@ -53,8 +56,8 @@ export function TeamTable({
           <TableRow>
             <TableHead>Atleta</TableHead>
             <TableHead>Documento</TableHead>
-            <TableHead className="w-20">Posição</TableHead>
-            <TableHead className="w-20">Raia</TableHead>
+            {!isOrganizer && <TableHead className="w-20">Posição</TableHead>}
+            {!isOrganizer && <TableHead className="w-20">Raia</TableHead>}
             {!isReadOnly && <TableHead className="w-16">Ações</TableHead>}
           </TableRow>
         </TableHeader>
@@ -67,42 +70,46 @@ export function TeamTable({
               <TableCell className="whitespace-nowrap">
                 {athlete.tipo_documento}: {athlete.numero_documento}
               </TableCell>
-              <TableCell>
-                {isReadOnly ? (
-                  athlete.posicao || '-'
-                ) : (
-                  <Input
-                    type="number"
-                    min={1}
-                    className="w-16 h-8 text-center"
-                    value={athlete.posicao || ''}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      if (!isNaN(val) && val > 0) {
-                        handlePositionChange(athlete.atleta_id, val);
-                      }
-                    }}
-                  />
-                )}
-              </TableCell>
-              <TableCell>
-                {isReadOnly ? (
-                  athlete.raia || '-'
-                ) : (
-                  <Input
-                    type="number"
-                    min={0}
-                    className="w-16 h-8 text-center"
-                    value={athlete.raia || ''}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      if (!isNaN(val) && val >= 0) {
-                        handleLaneChange(athlete.atleta_id, val);
-                      }
-                    }}
-                  />
-                )}
-              </TableCell>
+              {!isOrganizer && (
+                <TableCell>
+                  {isReadOnly ? (
+                    athlete.posicao || '-'
+                  ) : (
+                    <Input
+                      type="number"
+                      min={1}
+                      className="w-16 h-8 text-center"
+                      value={athlete.posicao || ''}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (!isNaN(val) && val > 0) {
+                          handlePositionChange(athlete.atleta_id, val);
+                        }
+                      }}
+                    />
+                  )}
+                </TableCell>
+              )}
+              {!isOrganizer && (
+                <TableCell>
+                  {isReadOnly ? (
+                    athlete.raia || '-'
+                  ) : (
+                    <Input
+                      type="number"
+                      min={0}
+                      className="w-16 h-8 text-center"
+                      value={athlete.raia || ''}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (!isNaN(val) && val >= 0) {
+                          handleLaneChange(athlete.atleta_id, val);
+                        }
+                      }}
+                    />
+                  )}
+                </TableCell>
+              )}
               {!isReadOnly && (
                 <TableCell className="text-right">
                   <Button

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { TeamCard } from './team-formation/TeamCard';
 import { useTeamFormation } from './team-formation/useTeamFormation';
@@ -52,14 +53,14 @@ export function TeamFormation({
 
   return (
     <div className="space-y-6">
-      {/* Show available athletes for delegation representatives */}
+      {/* Show available athletes for delegation representatives and organizers */}
       {!isReadOnly && availableAthletes && availableAthletes.length > 0 && (
         <>
           <Alert className="bg-blue-50 border-blue-200">
             <Info className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-800">
               <strong>Atletas Disponíveis:</strong> Selecione os atletas abaixo para adicioná-los às equipes. 
-              Após adicionar, você pode definir a posição e raia de cada atleta nas tabelas das equipes.
+              {!isOrganizer && "Após adicionar, você pode definir a posição e raia de cada atleta nas tabelas das equipes."}
             </AlertDescription>
           </Alert>
           
@@ -77,7 +78,10 @@ export function TeamFormation({
         <Alert variant="info" className="bg-amber-50 border-amber-200">
           <AlertCircle className="h-4 w-4 text-amber-600" />
           <AlertDescription className="text-amber-800">
-            Não há atletas disponíveis da sua filial para esta modalidade, ou todos os atletas já estão em equipes.
+            {isOrganizer 
+              ? "Todos os atletas desta modalidade já estão em equipes."
+              : "Não há atletas disponíveis da sua filial para esta modalidade, ou todos os atletas já estão em equipes."
+            }
           </AlertDescription>
         </Alert>
       )}
@@ -89,6 +93,7 @@ export function TeamFormation({
             key={team.id}
             team={team}
             isReadOnly={isReadOnly}
+            isOrganizer={isOrganizer}
             onUpdateLane={handleUpdateLane}
             onRemoveAthlete={handleRemoveAthleteFromTeam}
             isRemovePending={isRemovePending}

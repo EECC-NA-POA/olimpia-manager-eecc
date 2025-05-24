@@ -27,7 +27,8 @@ export function AllTeamsView({
     eventId, 
     modalityFilter, 
     isOrganizer,
-    null // No branch filter for organizers
+    null, // No branch filter for organizers
+    teams // Pass teams to filter out already added athletes
   );
 
   if (isLoading) {

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +8,7 @@ import { TeamTable } from './TeamTable';
 interface TeamCardProps {
   team: Team;
   isReadOnly?: boolean;
+  isOrganizer?: boolean;
   onUpdateLane?: (teamId: number, athleteId: string, lane: number, position: number) => void;
   onRemoveAthlete?: (teamId: number, athleteId: string) => void;
   isRemovePending?: boolean;
@@ -15,6 +17,7 @@ interface TeamCardProps {
 export function TeamCard({ 
   team, 
   isReadOnly = false,
+  isOrganizer = false,
   onUpdateLane,
   onRemoveAthlete,
   isRemovePending = false
@@ -51,6 +54,7 @@ export function TeamCard({
         <TeamTable 
           team={team}
           isReadOnly={isReadOnly}
+          isOrganizer={isOrganizer}
           onUpdateLane={onUpdateLane ? (athleteId, lane, position) => onUpdateLane(team.id, athleteId, lane, position) : undefined}
           onRemoveAthlete={onRemoveAthlete ? (athleteId) => onRemoveAthlete(team.id, athleteId) : undefined}
           isRemovePending={isRemovePending}
