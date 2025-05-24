@@ -1,4 +1,5 @@
 
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Team } from '../types';
@@ -54,12 +55,14 @@ export function useTeams(
           return [];
         }
 
-        // Process teams data to match Team interface
+        // Process teams data to match Team interface with explicit typing
         const teams: Team[] = [];
         
         for (const team of teamsData) {
-          // Check if modalidades is an array and extract the first item if so
-          const modalidadeData = Array.isArray(team.modalidades) ? team.modalidades[0] : team.modalidades;
+          // Handle modalidades data with explicit type checking
+          const modalidadeData = Array.isArray(team.modalidades) 
+            ? team.modalidades[0] 
+            : team.modalidades as { nome: string; categoria: string } | null;
           
           const processedTeam: Team = {
             id: team.id,
@@ -73,7 +76,7 @@ export function useTeams(
             athletes: []
           };
 
-          // Fetch team athletes
+          // Fetch team athletes with explicit typing
           const { data: teamAthletes, error: athletesError } = await supabase
             .from('atletas_equipes')
             .select(`
@@ -96,8 +99,10 @@ export function useTeams(
 
           if (teamAthletes && teamAthletes.length > 0) {
             processedTeam.athletes = teamAthletes.map(athlete => {
-              // Handle the usuarios data, ensuring it's treated as an object not an array
-              const usuariosData = Array.isArray(athlete.usuarios) ? athlete.usuarios[0] : athlete.usuarios;
+              // Handle usuarios data with explicit typing
+              const usuariosData = Array.isArray(athlete.usuarios) 
+                ? athlete.usuarios[0] 
+                : athlete.usuarios as { nome_completo: string; tipo_documento?: string; numero_documento?: string } | null;
               
               return {
                 id: athlete.id,
@@ -130,3 +135,4 @@ export function useTeams(
     enabled: !!eventId && !!modalityId
   });
 }
+
