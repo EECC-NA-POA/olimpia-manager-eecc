@@ -16,7 +16,7 @@ export function useTeamMutations(
   // Create team mutation
   const createTeamMutation = useMutation({
     mutationFn: async (teamName: string) => {
-      if (!eventId || !selectedModalityId || !branchId) {
+      if (!eventId || !selectedModalityId) {
         throw new Error('Dados necessários não encontrados');
       }
 
@@ -26,7 +26,8 @@ export function useTeamMutations(
           nome: teamName,
           evento_id: eventId,
           modalidade_id: selectedModalityId,
-          created_by: user?.id
+          created_by: user?.id,
+          filial_id: isOrganizer ? null : branchId // Organizers can create teams without filial restriction
         })
         .select('id')
         .single();
@@ -36,7 +37,7 @@ export function useTeamMutations(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['teams-data', eventId, selectedModalityId, branchId, isOrganizer] 
+        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId, isOrganizer] 
       });
       toast.success('Equipe criada com sucesso!');
     },
@@ -66,6 +67,35 @@ export function useTeamMutations(
         throw new Error('Atleta já está nesta equipe');
       }
 
+      // For organizers: Remove athlete from any existing team in this modality and event
+      if (isOrganizer) {
+        const { data: existingTeamMembership, error: checkExistingError } = await supabase
+          .from('atletas_equipes')
+          .select(`
+            id,
+            equipes!inner(modalidade_id, evento_id)
+          `)
+          .eq('atleta_id', athleteId);
+
+        if (!checkExistingError && existingTeamMembership && existingTeamMembership.length > 0) {
+          const membershipsToRemove = existingTeamMembership.filter(membership => {
+            const equipe = Array.isArray(membership.equipes) ? membership.equipes[0] : membership.equipes;
+            return equipe && equipe.modalidade_id === selectedModalityId && equipe.evento_id === eventId;
+          });
+
+          if (membershipsToRemove.length > 0) {
+            const { error: removeError } = await supabase
+              .from('atletas_equipes')
+              .delete()
+              .in('id', membershipsToRemove.map(m => m.id));
+
+            if (removeError) {
+              console.error('Error removing athlete from previous teams:', removeError);
+            }
+          }
+        }
+      }
+
       const { error } = await supabase
         .from('atletas_equipes')
         .insert({
@@ -78,10 +108,10 @@ export function useTeamMutations(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['teams-data', eventId, selectedModalityId, branchId, isOrganizer] 
+        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId, isOrganizer] 
       });
       queryClient.invalidateQueries({ 
-        queryKey: ['available-athletes-simple', eventId, selectedModalityId, branchId] 
+        queryKey: ['available-athletes-simple', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId] 
       });
       toast.success('Atleta adicionado à equipe!');
     },
@@ -104,10 +134,10 @@ export function useTeamMutations(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['teams-data', eventId, selectedModalityId, branchId, isOrganizer] 
+        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId, isOrganizer] 
       });
       queryClient.invalidateQueries({ 
-        queryKey: ['available-athletes-simple', eventId, selectedModalityId, branchId] 
+        queryKey: ['available-athletes-simple', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId] 
       });
       toast.success('Atleta removido da equipe!');
     },
@@ -132,7 +162,7 @@ export function useTeamMutations(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['teams-data', eventId, selectedModalityId, branchId, isOrganizer] 
+        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId, isOrganizer] 
       });
     },
     onError: (error) => {
