@@ -56,26 +56,40 @@ export function AllTeamsView({
   // If organizer and modality selected, show TeamFormation for editing
   if (isOrganizer && modalityFilter) {
     // Convert TeamData to Team format expected by TeamFormation
-    const formattedTeams = teams.map(team => ({
-      id: team.id,
-      nome: team.nome,
-      modalidade_id: team.modalidade_id,
-      filial_id: team.filial_id,
-      evento_id: team.evento_id,
-      modalidades: team.modalidade_info ? {
-        nome: team.modalidade_info.nome,
-        categoria: team.modalidade_info.categoria
-      } : undefined,
-      athletes: team.atletas?.map(atleta => ({
-        id: atleta.id,
-        atleta_id: atleta.atleta_id,
-        atleta_nome: atleta.atleta_nome,
-        posicao: atleta.posicao,
-        raia: atleta.raia,
-        documento: atleta.documento,
-        filial_nome: atleta.filial_nome
-      })) || []
-    }));
+    const formattedTeams = teams.map(team => {
+      // Parse the document string to extract tipo_documento and numero_documento
+      const parseDocument = (documento: string) => {
+        const parts = documento.split(': ');
+        return {
+          tipo_documento: parts[0] || '',
+          numero_documento: parts[1] || ''
+        };
+      };
+
+      return {
+        id: team.id,
+        nome: team.nome,
+        modalidade_id: team.modalidade_id,
+        filial_id: team.filial_id,
+        evento_id: team.evento_id,
+        modalidades: team.modalidade_info ? {
+          nome: team.modalidade_info.nome,
+          categoria: team.modalidade_info.categoria
+        } : undefined,
+        athletes: team.atletas?.map(atleta => {
+          const { tipo_documento, numero_documento } = parseDocument(atleta.documento);
+          return {
+            id: atleta.id,
+            atleta_id: atleta.atleta_id,
+            atleta_nome: atleta.atleta_nome,
+            posicao: atleta.posicao,
+            raia: atleta.raia || 0,
+            tipo_documento,
+            numero_documento
+          };
+        }) || []
+      };
+    });
 
     const formattedAvailableAthletes = availableAthletes?.map(athlete => ({
       id: athlete.id,
