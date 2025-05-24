@@ -1,4 +1,3 @@
-
 export interface ModalityOption {
   id: number;
   nome: string;
@@ -10,6 +9,7 @@ export interface AthleteOption {
   id: string;
   nome: string;
   documento: string;
+  filial_nome: string;
 }
 
 export interface TeamAthlete {
