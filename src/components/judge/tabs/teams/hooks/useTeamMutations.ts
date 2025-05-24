@@ -49,7 +49,7 @@ export function useTeamMutations(
   // Add athlete to team mutation
   const addAthleteMutation = useMutation({
     mutationFn: async ({ teamId, athleteId }: { teamId: number; athleteId: string }) => {
-      console.log('Adding athlete to team:', { teamId, athleteId });
+      console.log('Adding athlete to team:', { teamId, athleteId, isOrganizer });
 
       // Check if athlete is already in the team
       const { data: existingAthlete, error: checkError } = await supabase
@@ -120,11 +120,12 @@ export function useTeamMutations(
     }
   });
 
-  // Remove athlete from team mutation
+  // Remove athlete from team mutation  
   const removeAthleteMutation = useMutation({
     mutationFn: async (athleteTeamId: number) => {
-      console.log('Removing athlete from team:', athleteTeamId);
+      console.log('Removing athlete from team:', athleteTeamId, 'isOrganizer:', isOrganizer);
 
+      // Organizers can remove any athlete from any team
       const { error } = await supabase
         .from('atletas_equipes')
         .delete()

@@ -37,7 +37,7 @@ export function useAvailableAthletesData(
         .eq('modalidade_id', selectedModalityId)
         .eq('status', 'confirmado');
 
-      // If not organizer, filter by branch - organizers can see ALL athletes
+      // For organizers, show ALL athletes. For regular users, filter by branch
       if (!isOrganizer && branchId) {
         query = query.eq('usuarios.filial_id', branchId);
       }
