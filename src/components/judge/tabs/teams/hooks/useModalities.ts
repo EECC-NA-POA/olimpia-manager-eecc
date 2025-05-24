@@ -1,6 +1,6 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Modality } from '../types';
 
@@ -21,7 +21,7 @@ export function useModalities(eventId: string | null) {
         if (error) {
           console.error('Error fetching collective modalities:', error);
           toast.error('Não foi possível carregar as modalidades coletivas');
-          return [] as Modality[];
+          return [];
         }
         
         console.log('Fetched collective modalities:', data);
@@ -38,7 +38,7 @@ export function useModalities(eventId: string | null) {
       } catch (error) {
         console.error('Error in modalities query:', error);
         toast.error('Erro ao buscar modalidades');
-        return [] as Modality[];
+        return [];
       }
     },
     enabled: !!eventId,

@@ -12,7 +12,7 @@ export function useTeams(
 ) {
   return useQuery({
     queryKey: ['teams', eventId, modalityId, isOrganizer, branchId],
-    queryFn: async (): Promise<Team[]> => {
+    queryFn: async () => {
       try {
         console.log('Fetching teams:', { eventId, modalityId, branchId, isOrganizer });
         
@@ -27,7 +27,7 @@ export function useTeams(
             id,
             nome,
             modalidade_id,
-            modalidades (
+            modalidades!inner (
               nome,
               categoria
             )
@@ -58,24 +58,14 @@ export function useTeams(
         const processedTeams: Team[] = [];
         
         for (const teamRow of teamsData) {
-          // Handle modalidades data safely
-          const modalidadeInfo = teamRow.modalidades;
-          let modalidadeData: any = null;
-          
-          if (Array.isArray(modalidadeInfo)) {
-            modalidadeData = modalidadeInfo[0];
-          } else {
-            modalidadeData = modalidadeInfo;
-          }
-          
           const baseTeam: Team = {
             id: teamRow.id,
             nome: teamRow.nome,
             modalidade_id: teamRow.modalidade_id,
-            modalidade: modalidadeData?.nome || '',
+            modalidade: teamRow.modalidades?.nome || '',
             modalidades: {
-              nome: modalidadeData?.nome || '',
-              categoria: modalidadeData?.categoria || ''
+              nome: teamRow.modalidades?.nome || '',
+              categoria: teamRow.modalidades?.categoria || ''
             },
             athletes: []
           };
@@ -89,7 +79,7 @@ export function useTeams(
                 atleta_id,
                 posicao,
                 raia,
-                usuarios:atleta_id (
+                usuarios!inner (
                   nome_completo,
                   tipo_documento,
                   numero_documento
@@ -100,31 +90,20 @@ export function useTeams(
             if (athletesError) {
               console.error('Error fetching team athletes:', athletesError);
             } else if (athletesData && athletesData.length > 0) {
-              baseTeam.athletes = athletesData.map(athleteRow => {
-                const userInfo = athleteRow.usuarios;
-                let userData: any = null;
-                
-                if (Array.isArray(userInfo)) {
-                  userData = userInfo[0];
-                } else {
-                  userData = userInfo;
+              baseTeam.athletes = athletesData.map(athleteRow => ({
+                id: athleteRow.id,
+                atleta_id: athleteRow.atleta_id,
+                atleta_nome: athleteRow.usuarios?.nome_completo || 'Atleta',
+                posicao: athleteRow.posicao || 0,
+                raia: athleteRow.raia || undefined,
+                tipo_documento: athleteRow.usuarios?.tipo_documento,
+                numero_documento: athleteRow.usuarios?.numero_documento,
+                usuarios: {
+                  nome_completo: athleteRow.usuarios?.nome_completo || 'Atleta',
+                  tipo_documento: athleteRow.usuarios?.tipo_documento,
+                  numero_documento: athleteRow.usuarios?.numero_documento
                 }
-                
-                return {
-                  id: athleteRow.id,
-                  atleta_id: athleteRow.atleta_id,
-                  atleta_nome: userData?.nome_completo || 'Atleta',
-                  posicao: athleteRow.posicao || 0,
-                  raia: athleteRow.raia || undefined,
-                  tipo_documento: userData?.tipo_documento,
-                  numero_documento: userData?.numero_documento,
-                  usuarios: {
-                    nome_completo: userData?.nome_completo || 'Atleta',
-                    tipo_documento: userData?.tipo_documento,
-                    numero_documento: userData?.numero_documento
-                  }
-                };
-              });
+              }));
             }
           } catch (athleteError) {
             console.error('Error processing athletes for team:', teamRow.id, athleteError);

@@ -12,7 +12,7 @@ export function useAvailableAthletes(
 ) {
   const { data: availableAthletes, isLoading, error } = useQuery({
     queryKey: ['available-athletes', modalityId, eventId, branchId, existingTeams?.length],
-    queryFn: async (): Promise<AvailableAthlete[]> => {
+    queryFn: async () => {
       try {
         console.log('Fetching available athletes with params:', {
           eventId,
@@ -33,14 +33,14 @@ export function useAvailableAthletes(
           return [];
         }
 
-        // Buscar atletas inscritos na modalidade - usando a mesma query que funciona na aba de inscrições
+        // Buscar atletas inscritos na modalidade usando inner join
         console.log('Querying enrollments for modality:', modalityId, 'event:', eventId);
         
         let query = supabase
           .from('inscricoes_modalidades')
           .select(`
             atleta_id,
-            usuarios (
+            usuarios!inner (
               id,
               nome_completo,
               tipo_documento,
@@ -52,10 +52,21 @@ export function useAvailableAthletes(
           .eq('evento_id', eventId)
           .eq('status', 'confirmado');
 
-        // Se não for organizador, filtrar pela filial
+        // Se não for organizador, filtrar pela filial usando a tabela usuarios
         if (!isOrganizer && branchId) {
           console.log('Filtering by branch ID:', branchId);
-          query = query.eq('usuarios.filial_id', branchId);
+          // Use a different approach to filter by branch
+          const { data: branchUsers } = await supabase
+            .from('usuarios')
+            .select('id')
+            .eq('filial_id', branchId);
+          
+          if (branchUsers && branchUsers.length > 0) {
+            const userIds = branchUsers.map(u => u.id);
+            query = query.in('atleta_id', userIds);
+          } else {
+            return [];
+          }
         }
 
         const { data: enrolledAthletes, error: enrollmentError } = await query;
