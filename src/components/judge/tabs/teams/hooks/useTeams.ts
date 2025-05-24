@@ -76,12 +76,11 @@ export function useTeams(
           return [];
         }
 
-        // Fetch modality info separately to avoid complex joins
+        // Fetch modality info separately - remove the tipo_modalidade filter here since useModalities already filters
         const { data: modalityData } = await supabase
           .from('modalidades')
           .select('id, nome, categoria, tipo_modalidade')
           .eq('id', modalityId)
-          .eq('tipo_modalidade', 'coletivo')
           .single();
 
         // Process teams data
