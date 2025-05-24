@@ -13,7 +13,7 @@ export function useTeamsData(
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : user?.id],
+    queryKey: ['teams-data', eventId, selectedModalityId],
     queryFn: async () => {
       if (!eventId || !selectedModalityId) return [];
 
