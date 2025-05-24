@@ -59,7 +59,29 @@ export function useAvailableAthletes(
 
       console.log('Found enrollments:', enrollments.length);
 
-      // Get athletes already in teams for this modality
+      // For organizers, don't filter out athletes already in teams - they should be able to move athletes between teams
+      if (isOrganizer) {
+        return enrollments.map(enrollment => {
+          // Handle usuarios data properly
+          const usuario = Array.isArray(enrollment.usuarios) 
+            ? enrollment.usuarios[0] 
+            : enrollment.usuarios;
+          
+          // Handle filiais data properly  
+          const filial = usuario?.filiais 
+            ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
+            : null;
+
+          return {
+            id: enrollment.atleta_id,
+            nome: usuario?.nome_completo || '',
+            documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
+            filial_nome: filial?.nome || 'N/A'
+          };
+        });
+      }
+
+      // For non-organizers, filter out athletes already in teams
       const { data: teamsData, error: teamsError } = await supabase
         .from('equipes')
         .select(`

@@ -10,30 +10,47 @@ export function useTeamAthletes(eventId: string | null, modalityId: number | nul
     mutationFn: async ({ teamId, athleteId }: { teamId: number; athleteId: string }) => {
       console.log('Adding athlete to team:', { teamId, athleteId });
 
-      // Verificar se o atleta já está na equipe
-      const { data: existingAthlete, error: checkError } = await supabase
+      // First, remove athlete from any existing team in this modality
+      const { data: existingTeamMembership, error: checkError } = await supabase
         .from('atletas_equipes')
-        .select('id')
-        .eq('equipe_id', teamId)
-        .eq('atleta_id', athleteId)
-        .single();
+        .select(`
+          id,
+          equipes!inner(modalidade_id, evento_id)
+        `)
+        .eq('atleta_id', athleteId);
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Error checking existing athlete:', checkError);
-        throw new Error('Erro ao verificar atleta na equipe');
+      if (checkError) {
+        console.error('Error checking existing athlete membership:', checkError);
+        throw new Error('Erro ao verificar atleta em equipes');
       }
 
-      if (existingAthlete) {
-        throw new Error('Atleta já está nesta equipe');
+      // Remove from teams in the same modality and event
+      if (existingTeamMembership && existingTeamMembership.length > 0) {
+        const membershipsToRemove = existingTeamMembership.filter(membership => {
+          const equipe = Array.isArray(membership.equipes) ? membership.equipes[0] : membership.equipes;
+          return equipe && equipe.modalidade_id === modalityId && equipe.evento_id === eventId;
+        });
+
+        if (membershipsToRemove.length > 0) {
+          const { error: removeError } = await supabase
+            .from('atletas_equipes')
+            .delete()
+            .in('id', membershipsToRemove.map(m => m.id));
+
+          if (removeError) {
+            console.error('Error removing athlete from previous teams:', removeError);
+            throw new Error('Erro ao remover atleta de equipe anterior');
+          }
+        }
       }
 
-      // Adicionar atleta à equipe
+      // Add athlete to new team
       const { data, error } = await supabase
         .from('atletas_equipes')
         .insert({
           equipe_id: teamId,
           atleta_id: athleteId,
-          posicao: 0, // Posição padrão
+          posicao: 0, // Default position
           raia: null
         })
         .select('id')
@@ -48,12 +65,15 @@ export function useTeamAthletes(eventId: string | null, modalityId: number | nul
       return data;
     },
     onSuccess: () => {
-      // Invalidar queries relacionadas
+      // Invalidate relevant queries
       queryClient.invalidateQueries({ 
         queryKey: ['teams', eventId, modalityId, false, branchId] 
       });
       queryClient.invalidateQueries({ 
-        queryKey: ['available-athletes', modalityId, eventId, branchId] 
+        queryKey: ['available-athletes', modalityId, eventId] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['all-teams', eventId] 
       });
       
       toast.success('Atleta adicionado', {
@@ -85,12 +105,15 @@ export function useTeamAthletes(eventId: string | null, modalityId: number | nul
       console.log('Athlete removed from team successfully');
     },
     onSuccess: () => {
-      // Invalidar queries relacionadas
+      // Invalidate relevant queries
       queryClient.invalidateQueries({ 
         queryKey: ['teams', eventId, modalityId, false, branchId] 
       });
       queryClient.invalidateQueries({ 
-        queryKey: ['available-athletes', modalityId, eventId, branchId] 
+        queryKey: ['available-athletes', modalityId, eventId] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['all-teams', eventId] 
       });
       
       toast.success('Atleta removido', {
@@ -122,9 +145,12 @@ export function useTeamAthletes(eventId: string | null, modalityId: number | nul
       console.log('Athlete lane updated successfully');
     },
     onSuccess: () => {
-      // Invalidar apenas as equipes para atualização em tempo real
+      // Invalidate team queries for real-time updates
       queryClient.invalidateQueries({ 
         queryKey: ['teams', eventId, modalityId, false, branchId] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['all-teams', eventId] 
       });
     },
     onError: (error) => {

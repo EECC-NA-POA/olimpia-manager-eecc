@@ -26,7 +26,7 @@ export function AllTeamsView({
   const { data: availableAthletes } = useAvailableAthletes(
     eventId, 
     modalityFilter, 
-    isOrganizer && modalityFilter ? true : false,
+    isOrganizer,
     null // No branch filter for organizers
   );
 

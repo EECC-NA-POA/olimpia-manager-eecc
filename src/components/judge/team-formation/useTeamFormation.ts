@@ -26,21 +26,21 @@ export function useTeamFormation({
   const handleAddAthleteToTeam = async (teamId: number, athleteId: string) => {
     console.log('handleAddAthleteToTeam called:', { teamId, athleteId, isOrganizer });
     
-    // Organizers can now add athletes to teams
+    // Allow organizers and branch users to add athletes
     addAthleteMutation.mutate({ teamId, athleteId });
   };
 
   const handleRemoveAthleteFromTeam = async (athleteTeamId: number) => {
     console.log('handleRemoveAthleteFromTeam called:', { athleteTeamId, isOrganizer });
     
-    // Organizers can now remove athletes from teams
+    // Allow organizers and branch users to remove athletes
     removeAthleteMutation.mutate(athleteTeamId);
   };
 
   const handleUpdateLane = async (teamId: number, athleteId: string, lane: number, position: number) => {
     console.log('handleUpdateLane called:', { teamId, athleteId, lane, position, isOrganizer });
     
-    // Organizers can now update athlete lanes
+    // Allow organizers and branch users to update athlete lanes
     // Find the athlete team record by teamId and athleteId
     const team = teams.find(t => t.id === teamId);
     const athlete = team?.athletes?.find(a => a.atleta_id === athleteId);
