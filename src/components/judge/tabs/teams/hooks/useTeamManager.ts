@@ -1,10 +1,9 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { TeamData, ModalityOption, AthleteOption } from '../types/team';
+import { TeamData, ModalityOption, AthleteOption } from '../types';
 
 export function useTeamManager(eventId: string | null, isOrganizer: boolean = false) {
   const { user } = useAuth();

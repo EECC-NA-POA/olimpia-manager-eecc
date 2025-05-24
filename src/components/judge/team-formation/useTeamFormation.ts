@@ -1,4 +1,3 @@
-
 import { Team } from '../tabs/teams/types';
 import { useTeamAthletes } from '../tabs/teams/hooks/useTeamAthletes';
 

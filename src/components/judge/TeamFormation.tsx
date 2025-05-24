@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { TeamCard } from './team-formation/TeamCard';
 import { useTeamFormation } from './team-formation/useTeamFormation';
