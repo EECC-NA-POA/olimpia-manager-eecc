@@ -73,6 +73,7 @@ export function AllTeamsView({
         filial_id: team.filial_id,
         evento_id: team.evento_id,
         modalidades: team.modalidade_info ? {
+          id: team.modalidade_info.id,
           nome: team.modalidade_info.nome,
           categoria: team.modalidade_info.categoria
         } : undefined,
