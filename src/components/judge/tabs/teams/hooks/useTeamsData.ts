@@ -14,7 +14,7 @@ export function useTeamsData(
   const branchId = user?.filial_id;
 
   return useQuery({
-    queryKey: ['teams-data', eventId, selectedModalityId, branchId, isOrganizer],
+    queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId, isOrganizer],
     queryFn: async () => {
       if (!eventId || !selectedModalityId) return [];
 
@@ -25,11 +25,13 @@ export function useTeamsData(
           nome,
           modalidade_id,
           evento_id,
-          created_by
+          created_by,
+          filial_id
         `)
         .eq('evento_id', eventId)
         .eq('modalidade_id', selectedModalityId);
 
+      // For organizers, show all teams. For regular users, show only their teams
       if (!isOrganizer && branchId) {
         query = query.eq('created_by', user?.id);
       }
@@ -89,7 +91,7 @@ export function useTeamsData(
           id: team.id,
           nome: team.nome,
           modalidade_id: team.modalidade_id,
-          filial_id: branchId || '',
+          filial_id: team.filial_id || branchId || '',
           evento_id: team.evento_id,
           modalidade_info: modalityInfo,
           atletas

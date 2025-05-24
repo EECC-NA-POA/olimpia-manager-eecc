@@ -14,14 +14,14 @@ export function useAvailableAthletesData(
   const branchId = user?.filial_id;
 
   return useQuery({
-    queryKey: ['available-athletes-simple', eventId, selectedModalityId, branchId, teams.length],
+    queryKey: ['available-athletes-simple', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId, teams.length],
     queryFn: async (): Promise<AthleteOption[]> => {
-      if (!eventId || !selectedModalityId || isOrganizer || !branchId) return [];
+      if (!eventId || !selectedModalityId) return [];
 
-      console.log('Fetching available athletes for modality:', selectedModalityId);
+      console.log('Fetching available athletes for modality:', selectedModalityId, 'isOrganizer:', isOrganizer);
 
-      // Get enrolled athletes in this modality from this branch
-      const { data: enrollments, error } = await supabase
+      // Base query to get enrolled athletes in this modality
+      let query = supabase
         .from('inscricoes_modalidades')
         .select(`
           atleta_id,
@@ -29,13 +29,20 @@ export function useAvailableAthletesData(
             nome_completo,
             tipo_documento,
             numero_documento,
-            filial_id
+            filial_id,
+            filiais!inner(nome)
           )
         `)
         .eq('evento_id', eventId)
         .eq('modalidade_id', selectedModalityId)
-        .eq('status', 'confirmado')
-        .eq('usuarios.filial_id', branchId);
+        .eq('status', 'confirmado');
+
+      // If not organizer, filter by branch - organizers can see ALL athletes
+      if (!isOrganizer && branchId) {
+        query = query.eq('usuarios.filial_id', branchId);
+      }
+
+      const { data: enrollments, error } = await query;
 
       if (error) {
         console.error('Error fetching enrollments:', error);
@@ -53,18 +60,24 @@ export function useAvailableAthletesData(
       return enrollments
         .filter(enrollment => !athletesInTeams.has(enrollment.atleta_id))
         .map(enrollment => {
-          // Handle usuarios data properly - it could be an array or object
+          // Handle usuarios data properly
           const usuario = Array.isArray(enrollment.usuarios) 
             ? enrollment.usuarios[0] 
             : enrollment.usuarios;
           
+          // Handle filiais data properly  
+          const filial = usuario?.filiais 
+            ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
+            : null;
+
           return {
             id: enrollment.atleta_id,
             nome: usuario?.nome_completo || '',
-            documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`
+            documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
+            filial_nome: filial?.nome || 'N/A'
           };
         });
     },
-    enabled: !!eventId && !!selectedModalityId && !isOrganizer && !!branchId,
+    enabled: !!eventId && !!selectedModalityId,
   });
 }

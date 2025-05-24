@@ -19,7 +19,7 @@ export function useTeamManager(eventId: string | null, isOrganizer: boolean = fa
     modalities
   );
 
-  // Fetch available athletes
+  // Fetch available athletes - for organizers we need all athletes
   const { data: availableAthletes = [], isLoading: loadingAthletes } = useAvailableAthletesData(
     eventId,
     selectedModalityId,

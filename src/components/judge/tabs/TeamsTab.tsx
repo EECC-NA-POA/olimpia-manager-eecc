@@ -61,36 +61,35 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
   return (
     <div className="space-y-6">
       <TeamsTabHeader isOrganizer={isOrganizer}>
-        <Tabs defaultValue={isOrganizer ? "view-all" : "manage"} className="w-full">
+        <Tabs defaultValue={isOrganizer ? "manage" : "manage"} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            {!isOrganizer && (
-              <TabsTrigger value="manage">Gerenciar Minhas Equipes</TabsTrigger>
-            )}
+            <TabsTrigger value="manage">
+              {isOrganizer ? "Gerenciar Equipes" : "Gerenciar Minhas Equipes"}
+            </TabsTrigger>
             <TabsTrigger value="view-all">
-              {isOrganizer ? "Gerenciar Todas as Equipes" : "Visualizar Todas as Equipes"}
+              {isOrganizer ? "Visualizar Todas as Equipes" : "Visualizar Todas as Equipes"}
             </TabsTrigger>
           </TabsList>
           
-          {!isOrganizer && (
-            <TabsContent value="manage">
-              <ManageTeamsTab
-                modalities={modalities}
-                teams={teams}
-                availableAthletes={availableAthletes}
-                selectedModalityId={selectedModalityId}
-                setSelectedModalityId={setSelectedModalityId}
-                isLoading={isLoading}
-                createTeam={createTeam}
-                addAthlete={addAthlete}
-                removeAthlete={removeAthlete}
-                updateAthletePosition={updateAthletePosition}
-                isCreatingTeam={isCreatingTeam}
-                isAddingAthlete={isAddingAthlete}
-                isRemovingAthlete={isRemovingAthlete}
-                isUpdatingAthlete={isUpdatingAthlete}
-              />
-            </TabsContent>
-          )}
+          <TabsContent value="manage">
+            <ManageTeamsTab
+              modalities={modalities}
+              teams={teams}
+              availableAthletes={availableAthletes}
+              selectedModalityId={selectedModalityId}
+              setSelectedModalityId={setSelectedModalityId}
+              isLoading={isLoading}
+              createTeam={createTeam}
+              addAthlete={addAthlete}
+              removeAthlete={removeAthlete}
+              updateAthletePosition={updateAthletePosition}
+              isCreatingTeam={isCreatingTeam}
+              isAddingAthlete={isAddingAthlete}
+              isRemovingAthlete={isRemovingAthlete}
+              isUpdatingAthlete={isUpdatingAthlete}
+              isOrganizer={isOrganizer}
+            />
+          </TabsContent>
           
           <TabsContent value="view-all">
             <ViewAllTeamsTab

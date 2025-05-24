@@ -25,6 +25,7 @@ interface ManageTeamsTabProps {
   isAddingAthlete: boolean;
   isRemovingAthlete: boolean;
   isUpdatingAthlete: boolean;
+  isOrganizer?: boolean;
 }
 
 export function ManageTeamsTab({
@@ -41,7 +42,8 @@ export function ManageTeamsTab({
   isCreatingTeam,
   isAddingAthlete,
   isRemovingAthlete,
-  isUpdatingAthlete
+  isUpdatingAthlete,
+  isOrganizer = false
 }: ManageTeamsTabProps) {
   const handleAddAthlete = (teamId: number, athleteId: string) => {
     addAthlete({ teamId, athleteId });
@@ -77,8 +79,9 @@ export function ManageTeamsTab({
                   <Alert className="bg-blue-50 border-blue-200">
                     <Info className="h-4 w-4" />
                     <AlertDescription className="text-blue-800">
-                      <strong>Atletas Disponíveis:</strong> Selecione os atletas abaixo para adicioná-los às equipes. 
-                      Após adicionar, você pode definir a posição e raia de cada atleta.
+                      <strong>Atletas Disponíveis:</strong> Selecione os atletas abaixo para adicioná-los às equipes.
+                      {isOrganizer && " Como organizador, você pode misturar atletas de diferentes filiais."}
+                      {!isOrganizer && " Após adicionar, você pode definir a posição e raia de cada atleta."}
                     </AlertDescription>
                   </Alert>
                   
@@ -95,7 +98,10 @@ export function ManageTeamsTab({
                 <Alert variant="default" className="bg-green-50 border-green-200">
                   <AlertCircle className="h-4 w-4 text-green-600" />
                   <AlertDescription className="text-green-800">
-                    Todos os atletas da sua filial já estão em equipes ou não há mais atletas disponíveis para esta modalidade.
+                    {isOrganizer 
+                      ? "Todos os atletas desta modalidade já estão em equipes."
+                      : "Todos os atletas da sua filial já estão em equipes ou não há mais atletas disponíveis para esta modalidade."
+                    }
                   </AlertDescription>
                 </Alert>
               )}
@@ -120,6 +126,7 @@ export function ManageTeamsTab({
                       isRemoving={isRemovingAthlete}
                       isUpdating={isUpdatingAthlete}
                       isReadOnly={false}
+                      isOrganizer={isOrganizer}
                     />
                   ))}
                 </div>
