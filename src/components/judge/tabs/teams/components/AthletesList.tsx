@@ -31,7 +31,7 @@ export function AthletesList({ athletes, teams, onAddAthlete, isAdding }: Athlet
             <div key={athlete.id} className="border rounded p-3 space-y-2 bg-card">
               <div>
                 <p className="font-medium text-sm">{athlete.nome}</p>
-                <p className="text-xs text-muted-foreground">{athlete.documento}</p>
+                <p className="text-xs text-muted-foreground">{athlete.filial_nome}</p>
               </div>
               
               {teams.length === 1 ? (
