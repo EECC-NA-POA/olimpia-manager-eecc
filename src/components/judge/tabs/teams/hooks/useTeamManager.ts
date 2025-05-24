@@ -36,7 +36,7 @@ export function useTeamManager(eventId: string | null, isOrganizer: boolean = fa
   // Fetch teams for selected modality
   const { data: teams = [], isLoading: loadingTeams } = useQuery({
     queryKey: ['teams-data', eventId, selectedModalityId, branchId, isOrganizer],
-    queryFn: async (): Promise<TeamData[]> => {
+    queryFn: async () => {
       if (!eventId || !selectedModalityId) return [];
 
       let query = supabase
@@ -45,14 +45,14 @@ export function useTeamManager(eventId: string | null, isOrganizer: boolean = fa
           id,
           nome,
           modalidade_id,
-          filial_id,
-          evento_id
+          evento_id,
+          created_by
         `)
         .eq('evento_id', eventId)
         .eq('modalidade_id', selectedModalityId);
 
       if (!isOrganizer && branchId) {
-        query = query.eq('filial_id', branchId);
+        query = query.eq('created_by', user?.id);
       }
 
       const { data: teamsData, error } = await query;
@@ -93,7 +93,11 @@ export function useTeamManager(eventId: string | null, isOrganizer: boolean = fa
         })) || [];
 
         processedTeams.push({
-          ...team,
+          id: team.id,
+          nome: team.nome,
+          modalidade_id: team.modalidade_id,
+          filial_id: branchId || '',
+          evento_id: team.evento_id,
           modalidade_info: modalityInfo,
           atletas
         });
@@ -156,7 +160,6 @@ export function useTeamManager(eventId: string | null, isOrganizer: boolean = fa
           nome: teamName,
           evento_id: eventId,
           modalidade_id: selectedModalityId,
-          filial_id: branchId,
           created_by: user?.id
         })
         .select('id')
@@ -235,7 +238,8 @@ export function useTeamManager(eventId: string | null, isOrganizer: boolean = fa
     setSelectedModalityId,
     isLoading: loadingModalities || loadingTeams || loadingAthletes,
     createTeam: createTeamMutation.mutate,
-    addAthlete: addAthleteMutation.mutate,
+    addAthlete: ({ teamId, athleteId }: { teamId: number; athleteId: string }) => 
+      addAthleteMutation.mutate({ teamId, athleteId }),
     removeAthlete: removeAthleteMutation.mutate,
     isCreatingTeam: createTeamMutation.isPending,
     isAddingAthlete: addAthleteMutation.isPending,

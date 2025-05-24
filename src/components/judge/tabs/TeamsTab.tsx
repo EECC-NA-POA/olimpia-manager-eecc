@@ -57,6 +57,10 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     );
   }
 
+  const handleAddAthlete = (teamId: number, athleteId: string) => {
+    addAthlete({ teamId, athleteId });
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -104,7 +108,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
                     <AthletesList
                       athletes={availableAthletes}
                       teams={teams}
-                      onAddAthlete={addAthlete}
+                      onAddAthlete={handleAddAthlete}
                       isAdding={isAddingAthlete}
                     />
                   )}
