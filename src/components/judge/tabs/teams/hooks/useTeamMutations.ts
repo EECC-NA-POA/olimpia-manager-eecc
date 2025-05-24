@@ -11,7 +11,6 @@ export function useTeamMutations(
 ) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const branchId = user?.filial_id;
 
   // Create team mutation
   const createTeamMutation = useMutation({
@@ -26,8 +25,7 @@ export function useTeamMutations(
           nome: teamName,
           evento_id: eventId,
           modalidade_id: selectedModalityId,
-          created_by: user?.id,
-          filial_id: isOrganizer ? null : branchId // Organizers can create teams without filial restriction
+          created_by: user?.id
         })
         .select('id')
         .single();
@@ -37,7 +35,7 @@ export function useTeamMutations(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId] 
+        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : user?.id] 
       });
       toast.success('Equipe criada com sucesso!');
     },
@@ -108,10 +106,10 @@ export function useTeamMutations(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId] 
+        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : user?.id] 
       });
       queryClient.invalidateQueries({ 
-        queryKey: ['available-athletes-simple', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId] 
+        queryKey: ['available-athletes-simple', eventId, selectedModalityId, isOrganizer ? 'organizer' : user?.id] 
       });
       toast.success('Atleta adicionado à equipe!');
     },
@@ -135,10 +133,10 @@ export function useTeamMutations(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId] 
+        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : user?.id] 
       });
       queryClient.invalidateQueries({ 
-        queryKey: ['available-athletes-simple', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId] 
+        queryKey: ['available-athletes-simple', eventId, selectedModalityId, isOrganizer ? 'organizer' : user?.id] 
       });
       toast.success('Atleta removido da equipe!');
     },
@@ -163,7 +161,7 @@ export function useTeamMutations(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId] 
+        queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : user?.id] 
       });
     },
     onError: (error) => {

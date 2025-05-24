@@ -11,14 +11,13 @@ export function useTeamsData(
   modalities: ModalityOption[]
 ) {
   const { user } = useAuth();
-  const branchId = user?.filial_id;
 
   return useQuery({
-    queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId],
+    queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer ? 'organizer' : user?.id],
     queryFn: async () => {
       if (!eventId || !selectedModalityId) return [];
 
-      console.log('Fetching teams for modality:', selectedModalityId, 'isOrganizer:', isOrganizer, 'branchId:', branchId);
+      console.log('Fetching teams for modality:', selectedModalityId, 'isOrganizer:', isOrganizer, 'userId:', user?.id);
 
       let query = supabase
         .from('equipes')
@@ -27,13 +26,12 @@ export function useTeamsData(
           nome,
           modalidade_id,
           evento_id,
-          created_by,
-          filial_id
+          created_by
         `)
         .eq('evento_id', eventId)
         .eq('modalidade_id', selectedModalityId);
 
-      // For organizers: show ALL teams in this modality regardless of creator or branch
+      // For organizers: show ALL teams in this modality regardless of creator
       // For regular users: show only teams they created
       if (!isOrganizer) {
         query = query.eq('created_by', user?.id);
@@ -104,7 +102,7 @@ export function useTeamsData(
           id: team.id,
           nome: team.nome,
           modalidade_id: team.modalidade_id,
-          filial_id: team.filial_id || branchId || '',
+          filial_id: '', // Not using filial_id from equipes table since it doesn't exist
           evento_id: team.evento_id,
           modalidade_info: modalityInfo,
           atletas

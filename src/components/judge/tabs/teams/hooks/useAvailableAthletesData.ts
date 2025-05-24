@@ -14,7 +14,7 @@ export function useAvailableAthletesData(
   const branchId = user?.filial_id;
 
   return useQuery({
-    queryKey: ['available-athletes-simple', eventId, selectedModalityId, isOrganizer ? 'organizer' : branchId, teams.length],
+    queryKey: ['available-athletes-simple', eventId, selectedModalityId, isOrganizer ? 'organizer' : user?.id, teams.length],
     queryFn: async (): Promise<AthleteOption[]> => {
       if (!eventId || !selectedModalityId) return [];
 
