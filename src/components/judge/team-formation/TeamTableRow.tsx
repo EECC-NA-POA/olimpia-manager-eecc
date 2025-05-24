@@ -8,8 +8,8 @@ import { TeamAthlete } from '../tabs/teams/types';
 interface TeamTableRowProps {
   athlete: TeamAthlete;
   teamId: number;
-  onUpdateLane: (teamId: number, athleteId: string, lane: number, position: number) => void;
-  onRemoveAthlete: (teamId: number, athleteId: string) => void;
+  onUpdateLane: (athleteTeamId: number, lane: number | null) => void;
+  onRemoveAthlete: (athleteTeamId: number) => void;
   isRemovePending: boolean;
 }
 
@@ -31,10 +31,8 @@ export function TeamTableRow({
           value={athlete.raia || ''}
           onChange={(e) => 
             onUpdateLane(
-              teamId, 
-              athlete.atleta_id, 
-              Number(e.target.value), 
-              athlete.posicao
+              athlete.id, 
+              e.target.value ? Number(e.target.value) : null
             )
           }
           className="w-20"
@@ -44,7 +42,7 @@ export function TeamTableRow({
         <Button
           variant="destructive"
           size="sm"
-          onClick={() => onRemoveAthlete(teamId, athlete.atleta_id)}
+          onClick={() => onRemoveAthlete(athlete.id)}
           disabled={isRemovePending}
         >
           Remover

@@ -12,9 +12,13 @@ export function useTeams(
 ) {
   return useQuery({
     queryKey: ['teams', eventId, modalityId, isOrganizer, branchId],
-    queryFn: async () => {
+    queryFn: async (): Promise<Team[]> => {
       try {
         console.log('Fetching teams:', { eventId, modalityId, branchId, isOrganizer });
+        
+        if (!eventId || !modalityId) {
+          return [];
+        }
         
         // Build the query based on user role
         let query = supabase
@@ -28,8 +32,8 @@ export function useTeams(
               categoria
             )
           `)
-          .eq('evento_id', eventId!)
-          .eq('modalidade_id', modalityId!);
+          .eq('evento_id', eventId)
+          .eq('modalidade_id', modalityId);
         
         // For delegation representatives, filter by their branch
         if (!isOrganizer && branchId) {
@@ -51,11 +55,13 @@ export function useTeams(
         }
 
         // Process teams data to match Team interface
-        const teams: Team[] = teamsData.map(team => {
+        const teams: Team[] = [];
+        
+        for (const team of teamsData) {
           // Check if modalidades is an array and extract the first item if so
           const modalidadeData = Array.isArray(team.modalidades) ? team.modalidades[0] : team.modalidades;
           
-          return {
+          const processedTeam: Team = {
             id: team.id,
             nome: team.nome,
             modalidade_id: team.modalidade_id,
@@ -66,10 +72,8 @@ export function useTeams(
             },
             athletes: []
           };
-        });
 
-        // For each team, fetch its athletes
-        for (const team of teams) {
+          // Fetch team athletes
           const { data: teamAthletes, error: athletesError } = await supabase
             .from('atletas_equipes')
             .select(`
@@ -90,25 +94,29 @@ export function useTeams(
             continue;
           }
 
-          team.athletes = teamAthletes?.map(athlete => {
-            // Handle the usuarios data, ensuring it's treated as an object not an array
-            const usuariosData = Array.isArray(athlete.usuarios) ? athlete.usuarios[0] : athlete.usuarios;
-            
-            return {
-              id: athlete.id,
-              atleta_id: athlete.atleta_id,
-              atleta_nome: usuariosData?.nome_completo || 'Atleta',
-              posicao: athlete.posicao || 0,
-              raia: athlete.raia || undefined,
-              tipo_documento: usuariosData?.tipo_documento,
-              numero_documento: usuariosData?.numero_documento,
-              usuarios: {
-                nome_completo: usuariosData?.nome_completo || 'Atleta',
+          if (teamAthletes && teamAthletes.length > 0) {
+            processedTeam.athletes = teamAthletes.map(athlete => {
+              // Handle the usuarios data, ensuring it's treated as an object not an array
+              const usuariosData = Array.isArray(athlete.usuarios) ? athlete.usuarios[0] : athlete.usuarios;
+              
+              return {
+                id: athlete.id,
+                atleta_id: athlete.atleta_id,
+                atleta_nome: usuariosData?.nome_completo || 'Atleta',
+                posicao: athlete.posicao || 0,
+                raia: athlete.raia || undefined,
                 tipo_documento: usuariosData?.tipo_documento,
-                numero_documento: usuariosData?.numero_documento
-              }
-            };
-          }) || [];
+                numero_documento: usuariosData?.numero_documento,
+                usuarios: {
+                  nome_completo: usuariosData?.nome_completo || 'Atleta',
+                  tipo_documento: usuariosData?.tipo_documento,
+                  numero_documento: usuariosData?.numero_documento
+                }
+              };
+            });
+          }
+          
+          teams.push(processedTeam);
         }
 
         console.log('Teams fetched successfully:', teams);
@@ -116,7 +124,6 @@ export function useTeams(
 
       } catch (error) {
         console.error('Error in teams query:', error);
-        // Don't show error toast for empty results - let the UI handle it gracefully
         return [];
       }
     },
