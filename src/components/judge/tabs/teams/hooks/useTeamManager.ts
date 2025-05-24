@@ -85,10 +85,10 @@ export function useTeamManager(eventId: string | null, isOrganizer: boolean = fa
         const atletas = athletesData?.map(athlete => ({
           id: athlete.id,
           atleta_id: athlete.atleta_id,
-          atleta_nome: athlete.usuarios.nome_completo,
+          atleta_nome: athlete.usuarios[0]?.nome_completo || '',
           posicao: athlete.posicao || 0,
           raia: athlete.raia,
-          documento: `${athlete.usuarios.tipo_documento}: ${athlete.usuarios.numero_documento}`
+          documento: `${athlete.usuarios[0]?.tipo_documento || ''}: ${athlete.usuarios[0]?.numero_documento || ''}`
         })) || [];
 
         processedTeams.push({
@@ -139,8 +139,8 @@ export function useTeamManager(eventId: string | null, isOrganizer: boolean = fa
         .filter(enrollment => !athletesInTeams.has(enrollment.atleta_id))
         .map(enrollment => ({
           id: enrollment.atleta_id,
-          nome: enrollment.usuarios.nome_completo,
-          documento: `${enrollment.usuarios.tipo_documento}: ${enrollment.usuarios.numero_documento}`
+          nome: enrollment.usuarios[0]?.nome_completo || '',
+          documento: `${enrollment.usuarios[0]?.tipo_documento || ''}: ${enrollment.usuarios[0]?.numero_documento || ''}`
         }));
     },
     enabled: !!eventId && !!selectedModalityId && !isOrganizer && !!branchId,
