@@ -52,16 +52,10 @@ export function useTeams(
           .select(`
             id,
             nome,
-            modalidade_id,
-            modalidades!inner (
-              nome,
-              categoria,
-              tipo_modalidade
-            )
+            modalidade_id
           `)
           .eq('evento_id', eventId)
-          .eq('modalidade_id', modalityId)
-          .eq('modalidades.tipo_modalidade', 'coletivo');
+          .eq('modalidade_id', modalityId);
         
         // For delegation representatives, filter by their branch
         if (!isOrganizer && branchId) {
@@ -82,6 +76,14 @@ export function useTeams(
           return [];
         }
 
+        // Fetch modality info separately to avoid complex joins
+        const { data: modalityData } = await supabase
+          .from('modalidades')
+          .select('id, nome, categoria, tipo_modalidade')
+          .eq('id', modalityId)
+          .eq('tipo_modalidade', 'coletivo')
+          .single();
+
         // Process teams data
         const processedTeams: Team[] = [];
         
@@ -90,10 +92,10 @@ export function useTeams(
             id: teamRow.id,
             nome: teamRow.nome,
             modalidade_id: teamRow.modalidade_id,
-            modalidade: teamRow.modalidades?.nome || '',
+            modalidade: modalityData?.nome || '',
             modalidades: {
-              nome: teamRow.modalidades?.nome || '',
-              categoria: teamRow.modalidades?.categoria || ''
+              nome: modalityData?.nome || '',
+              categoria: modalityData?.categoria || ''
             },
             athletes: []
           };
