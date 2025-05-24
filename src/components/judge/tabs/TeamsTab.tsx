@@ -1,73 +1,38 @@
 
-import React, { useState } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth } from '@/contexts/AuthContext';
-import { useTeamData } from './teams/hooks/useTeamData';
-import { ModalitySelector } from './teams/ModalitySelector';
-import { NoModalitiesCard } from './teams/NoModalitiesCard';
-import { TeamCreationForm } from './teams/TeamCreationForm';
-import { useTeamCreation } from './teams/hooks/useTeamCreation';
-import { TeamsTabProps } from './teams/types';
-import { Info, AlertCircle } from 'lucide-react';
-import { TeamFormation } from '@/components/judge/TeamFormation';
-import { NoTeamsMessage } from './teams/NoTeamsMessage';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info, AlertCircle } from 'lucide-react';
+import { useTeamManager } from './teams/hooks/useTeamManager';
+import { ModalitySelect } from './teams/components/ModalitySelect';
+import { TeamForm } from './teams/components/TeamForm';
+import { AthletesList } from './teams/components/AthletesList';
+import { TeamCard } from './teams/components/TeamCard';
+
+interface TeamsTabProps {
+  userId: string;
+  eventId: string | null;
+  isOrganizer?: boolean;
+}
 
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
-  const { user } = useAuth();
-  const [teamName, setTeamName] = useState('');
-  
   const {
     modalities,
-    isLoadingModalities,
+    teams,
+    availableAthletes,
     selectedModalityId,
     setSelectedModalityId,
-    existingTeams,
-    isLoadingTeams,
-    userInfo,
-    isLoadingUserInfo,
-    userInfoError,
-    availableAthletes,
-    isLoadingAthletes,
-    athletesError
-  } = useTeamData(userId, eventId, isOrganizer);
+    isLoading,
+    createTeam,
+    addAthlete,
+    removeAthlete,
+    isCreatingTeam,
+    isAddingAthlete,
+    isRemovingAthlete
+  } = useTeamManager(eventId, isOrganizer);
 
-  console.log('TeamsTab - Debug info:', {
-    userInfo,
-    isOrganizer,
-    userId,
-    isLoadingUserInfo,
-    userInfoError: userInfoError?.message,
-    authUser: user,
-    availableAthletes: availableAthletes?.length,
-    isLoadingAthletes,
-    athletesError: athletesError?.message
-  });
-
-  // Team creation functionality
-  const { handleCreateTeam, createTeamMutation } = useTeamCreation(
-    userId,
-    eventId,
-    selectedModalityId,
-    userInfo,
-    isOrganizer,
-    teamName,
-    setTeamName
-  );
-
-  // Handle modality selection
-  const handleModalityChange = (value: string) => {
-    setSelectedModalityId(Number(value));
-  };
-
-  if (isLoadingModalities) {
+  if (isLoading && !selectedModalityId) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-full max-w-sm" />
@@ -76,11 +41,20 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     );
   }
 
-  // Check if there are any collective modalities available
-  console.log('Available modalities:', modalities);
-  
   if (!modalities || modalities.length === 0) {
-    return <NoModalitiesCard isCollective={true} />;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Equipes</CardTitle>
+          <CardDescription>Nenhuma modalidade coletiva encontrada</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Não há modalidades coletivas disponíveis para este evento.
+          </p>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -90,101 +64,79 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
           <CardTitle>Equipes</CardTitle>
           <CardDescription>
             {isOrganizer 
-              ? "Gerencie as equipes formadas pelos representantes de delegação" 
+              ? "Visualize as equipes formadas pelos representantes de delegação" 
               : "Monte as equipes para as modalidades coletivas"
             }
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <ModalitySelector 
-              modalities={modalities}
-              onModalityChange={handleModalityChange}
-            />
-            
-            {selectedModalityId && (
-              <>
-                {/* Team creation form for delegation representatives */}
-                {!isOrganizer && (
-                  <div className="pt-4">
-                    {isLoadingUserInfo ? (
-                      <Alert className="bg-blue-50 border-blue-200">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                        <AlertDescription className="text-blue-800 ml-2">
-                          Carregando informações da filial...
-                        </AlertDescription>
-                      </Alert>
-                    ) : userInfoError ? (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>
-                          Erro ao carregar informações da filial: {userInfoError.message}
-                        </AlertDescription>
-                      </Alert>
-                    ) : (userInfo?.filial_id || user?.filial_id) ? (
-                      <TeamCreationForm
-                        teamName={teamName}
-                        onTeamNameChange={setTeamName}
-                        onCreateTeam={handleCreateTeam}
-                        isCreating={createTeamMutation.isPending}
-                      />
-                    ) : (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>
-                          Não foi possível carregar as informações da filial. Verifique se você está logado corretamente.
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
-                )}
-                
-                {/* Information message for judges */}
-                {isOrganizer && (
-                  <Alert className="bg-amber-50 border-amber-200">
-                    <Info className="h-4 w-4" />
-                    <AlertDescription className="text-amber-800">
-                      As equipes são formadas pelos representantes de delegação e não podem ser editadas.
-                    </AlertDescription>
-                  </Alert>
-                )}
-                
-                {/* Loading states */}
-                {(isLoadingTeams || isLoadingAthletes) ? (
-                  <div className="space-y-4">
-                    <Skeleton className="h-64 w-full" />
-                  </div>
-                ) : (
-                  <>
-                    {/* Athletes error */}
-                    {athletesError && !isOrganizer && (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>
-                          Erro ao carregar atletas: {athletesError.message}
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                    
-                    {/* Teams and athletes */}
-                    {existingTeams && existingTeams.length > 0 ? (
-                      <TeamFormation 
-                        teams={existingTeams}
-                        availableAthletes={availableAthletes || []}
-                        eventId={eventId}
-                        modalityId={selectedModalityId}
-                        isOrganizer={isOrganizer}
-                        isReadOnly={isOrganizer}
-                        branchId={userInfo?.filial_id || user?.filial_id}
-                      />
-                    ) : (
-                      <NoTeamsMessage isOrganizer={isOrganizer} />
-                    )}
-                  </>
-                )}
-              </>
-            )}
-          </div>
+        <CardContent className="space-y-6">
+          <ModalitySelect
+            modalities={modalities}
+            value={selectedModalityId}
+            onValueChange={setSelectedModalityId}
+          />
+
+          {selectedModalityId && (
+            <>
+              {!isOrganizer && (
+                <div className="space-y-4">
+                  <TeamForm
+                    onCreateTeam={createTeam}
+                    isCreating={isCreatingTeam}
+                  />
+                </div>
+              )}
+
+              {isOrganizer && (
+                <Alert className="bg-amber-50 border-amber-200">
+                  <Info className="h-4 w-4" />
+                  <AlertDescription className="text-amber-800">
+                    As equipes são formadas pelos representantes de delegação e não podem ser editadas.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {isLoading ? (
+                <Skeleton className="h-64 w-full" />
+              ) : (
+                <div className="space-y-6">
+                  {!isOrganizer && availableAthletes.length > 0 && teams.length > 0 && (
+                    <AthletesList
+                      athletes={availableAthletes}
+                      teams={teams}
+                      onAddAthlete={addAthlete}
+                      isAdding={isAddingAthlete}
+                    />
+                  )}
+
+                  {teams.length === 0 ? (
+                    <Card>
+                      <CardContent className="text-center py-8">
+                        <p className="text-muted-foreground">
+                          {isOrganizer 
+                            ? "Ainda não há equipes formadas para esta modalidade."
+                            : "Nenhuma equipe criada ainda. Use o formulário acima para criar sua primeira equipe."
+                          }
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="space-y-4">
+                      {teams.map((team) => (
+                        <TeamCard
+                          key={team.id}
+                          team={team}
+                          onRemoveAthlete={removeAthlete}
+                          isRemoving={isRemovingAthlete}
+                          isReadOnly={isOrganizer}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
