@@ -11,14 +11,14 @@ export function useUserInfo(userId: string, eventId: string | null) {
   const { data: userInfo, isLoading, error } = useQuery({
     queryKey: ['user-info', userId, eventId],
     queryFn: async (): Promise<UserInfoData | null> => {
-      try {
-        console.log('Fetching user info for userId:', userId);
-        
-        if (!userId) {
-          console.log('No userId provided, skipping user info fetch');
-          return null;
-        }
+      console.log('Fetching user info for userId:', userId);
+      
+      if (!userId) {
+        console.log('No userId provided, skipping user info fetch');
+        return null;
+      }
 
+      try {
         const { data, error } = await supabase
           .from('usuarios')
           .select('filial_id, nome_completo')
@@ -37,7 +37,7 @@ export function useUserInfo(userId: string, eventId: string | null) {
         throw error;
       }
     },
-    enabled: !!userId && !!eventId,
+    enabled: !!userId,
   });
 
   console.log('useUserInfo - Hook state:', {

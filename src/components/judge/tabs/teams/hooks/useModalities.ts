@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-interface ModalityData {
+// Simple interface to avoid type recursion
+interface SimpleModalityData {
   id: number;
   nome: string;
   categoria: string;
@@ -21,15 +22,14 @@ export function useModalities(eventId: string | null) {
   const { data: modalities, isLoading: isLoadingModalities } = useQuery({
     queryKey: ['collective-modalities', eventId],
     queryFn: async (): Promise<Modality[]> => {
-      try {
-        console.log('Fetching collective modalities for event:', eventId);
-        
-        if (!eventId) {
-          console.log('No eventId provided');
-          return [];
-        }
+      console.log('Fetching collective modalities for event:', eventId);
+      
+      if (!eventId) {
+        console.log('No eventId provided');
+        return [];
+      }
 
-        // Get all modalities for the event that are collective
+      try {
         const { data, error } = await supabase
           .from('modalidades')
           .select('id, nome, categoria, tipo_modalidade')
@@ -50,8 +50,8 @@ export function useModalities(eventId: string | null) {
           return [];
         }
         
-        // Map to the expected format with explicit typing
-        const formattedModalities: Modality[] = data.map((item: ModalityData) => ({
+        // Transform to expected format
+        const formattedModalities: Modality[] = data.map((item: SimpleModalityData) => ({
           modalidade_id: item.id,
           modalidade_nome: item.nome,
           categoria: item.categoria || '',
