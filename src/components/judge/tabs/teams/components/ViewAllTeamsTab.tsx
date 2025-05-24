@@ -65,13 +65,12 @@ export function ViewAllTeamsTab({
       <TeamFilters
         modalities={allModalities}
         branches={branches}
-        modalityFilter={modalityFilter}
-        branchFilter={branchFilter}
+        selectedModalityId={modalityFilter}
+        selectedBranchId={branchFilter}
         searchTerm={searchTerm}
-        onModalityFilterChange={setModalityFilter}
-        onBranchFilterChange={setBranchFilter}
-        onSearchTermChange={setSearchTerm}
-        isOrganizer={isOrganizer}
+        onModalityChange={setModalityFilter}
+        onBranchChange={setBranchFilter}
+        onSearchChange={setSearchTerm}
       />
       
       <AllTeamsView 
