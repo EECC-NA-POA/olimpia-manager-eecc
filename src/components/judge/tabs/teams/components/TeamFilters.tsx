@@ -49,14 +49,14 @@ export function TeamFilters({
 
         {/* Modality Filter */}
         <Select 
-          value={selectedModalityId?.toString() || ''} 
-          onValueChange={(value) => onModalityChange(value ? Number(value) : null)}
+          value={selectedModalityId?.toString() || 'all'} 
+          onValueChange={(value) => onModalityChange(value === 'all' ? null : Number(value))}
         >
           <SelectTrigger>
             <SelectValue placeholder="Todas as modalidades" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todas as modalidades</SelectItem>
+            <SelectItem value="all">Todas as modalidades</SelectItem>
             {modalities.map((modality) => (
               <SelectItem key={modality.id} value={modality.id.toString()}>
                 {modality.nome} - {modality.categoria}
@@ -67,14 +67,14 @@ export function TeamFilters({
 
         {/* Branch Filter */}
         <Select 
-          value={selectedBranchId || ''} 
-          onValueChange={(value) => onBranchChange(value || null)}
+          value={selectedBranchId || 'all'} 
+          onValueChange={(value) => onBranchChange(value === 'all' ? null : value)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Todas as filiais" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todas as filiais</SelectItem>
+            <SelectItem value="all">Todas as filiais</SelectItem>
             {branches.map((branch) => (
               <SelectItem key={branch.id} value={branch.id}>
                 {branch.nome}
