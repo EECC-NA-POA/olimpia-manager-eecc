@@ -18,8 +18,9 @@ export function useBranchesQuery(eventId: string | null, userBranchId?: string) 
         .select('id, nome')
         .order('nome');
 
-      // If userBranchId is provided, filter to show only that branch
-      if (userBranchId) {
+      // If userBranchId is provided and it's not a special case, filter to show only that branch
+      // For organizers, userBranchId should be undefined to show all branches
+      if (userBranchId && userBranchId !== 'all') {
         query = query.eq('id', userBranchId);
       }
 

@@ -23,6 +23,8 @@ interface ViewAllTeamsTabProps {
   setModalityFilter: (id: number | null) => void;
   setBranchFilter: (id: string | null) => void;
   setSearchTerm: (term: string) => void;
+  isOrganizer?: boolean;
+  eventId: string | null;
 }
 
 export function ViewAllTeamsTab({
@@ -36,7 +38,9 @@ export function ViewAllTeamsTab({
   searchTerm,
   setModalityFilter,
   setBranchFilter,
-  setSearchTerm
+  setSearchTerm,
+  isOrganizer = false,
+  eventId
 }: ViewAllTeamsTabProps) {
   return (
     <div className="space-y-6 mt-6">
@@ -63,6 +67,9 @@ export function ViewAllTeamsTab({
       <AllTeamsView 
         teams={allTeams}
         isLoading={isLoadingAllTeams}
+        isOrganizer={isOrganizer}
+        eventId={eventId}
+        modalityFilter={modalityFilter}
       />
     </div>
   );

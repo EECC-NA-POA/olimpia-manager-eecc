@@ -1,3 +1,4 @@
+
 import { Team } from '../tabs/teams/types';
 import { useTeamAthletes } from '../tabs/teams/hooks/useTeamAthletes';
 
@@ -23,35 +24,23 @@ export function useTeamFormation({
   } = useTeamAthletes(eventId, modalityId, branchId);
 
   const handleAddAthleteToTeam = async (teamId: number, athleteId: string) => {
-    console.log('handleAddAthleteToTeam called:', { teamId, athleteId });
+    console.log('handleAddAthleteToTeam called:', { teamId, athleteId, isOrganizer });
     
-    if (isOrganizer) {
-      console.log('Organizer cannot add athletes to teams');
-      return;
-    }
-
+    // Organizers can now add athletes to teams
     addAthleteMutation.mutate({ teamId, athleteId });
   };
 
   const handleRemoveAthleteFromTeam = async (athleteTeamId: number) => {
-    console.log('handleRemoveAthleteFromTeam called:', { athleteTeamId });
+    console.log('handleRemoveAthleteFromTeam called:', { athleteTeamId, isOrganizer });
     
-    if (isOrganizer) {
-      console.log('Organizer cannot remove athletes from teams');
-      return;
-    }
-
+    // Organizers can now remove athletes from teams
     removeAthleteMutation.mutate(athleteTeamId);
   };
 
   const handleUpdateLane = async (teamId: number, athleteId: string, lane: number, position: number) => {
-    console.log('handleUpdateLane called:', { teamId, athleteId, lane, position });
+    console.log('handleUpdateLane called:', { teamId, athleteId, lane, position, isOrganizer });
     
-    if (isOrganizer) {
-      console.log('Organizer cannot update athlete lanes');
-      return;
-    }
-
+    // Organizers can now update athlete lanes
     // Find the athlete team record by teamId and athleteId
     const team = teams.find(t => t.id === teamId);
     const athlete = team?.athletes?.find(a => a.atleta_id === athleteId);

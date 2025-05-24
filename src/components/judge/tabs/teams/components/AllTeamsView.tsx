@@ -4,13 +4,32 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, MapPin } from 'lucide-react';
 import { TeamData } from '../types';
+import { TeamFormation } from '../../../TeamFormation';
+import { useAvailableAthletes } from '../hooks/useAvailableAthletes';
 
 interface AllTeamsViewProps {
   teams: TeamData[];
   isLoading: boolean;
+  isOrganizer?: boolean;
+  eventId: string | null;
+  modalityFilter: number | null;
 }
 
-export function AllTeamsView({ teams, isLoading }: AllTeamsViewProps) {
+export function AllTeamsView({ 
+  teams, 
+  isLoading, 
+  isOrganizer = false, 
+  eventId, 
+  modalityFilter 
+}: AllTeamsViewProps) {
+  // Get available athletes for organizers when a modality is selected
+  const { data: availableAthletes } = useAvailableAthletes(
+    eventId, 
+    modalityFilter, 
+    isOrganizer && modalityFilter ? true : false,
+    null // No branch filter for organizers
+  );
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -34,6 +53,51 @@ export function AllTeamsView({ teams, isLoading }: AllTeamsViewProps) {
     );
   }
 
+  // If organizer and modality selected, show TeamFormation for editing
+  if (isOrganizer && modalityFilter) {
+    // Convert TeamData to Team format expected by TeamFormation
+    const formattedTeams = teams.map(team => ({
+      id: team.id,
+      nome: team.nome,
+      modalidade_id: team.modalidade_id,
+      filial_id: team.filial_id,
+      evento_id: team.evento_id,
+      modalidades: team.modalidade_info ? {
+        nome: team.modalidade_info.nome,
+        categoria: team.modalidade_info.categoria
+      } : undefined,
+      athletes: team.atletas?.map(atleta => ({
+        id: atleta.id,
+        atleta_id: atleta.atleta_id,
+        atleta_nome: atleta.atleta_nome,
+        posicao: atleta.posicao,
+        raia: atleta.raia,
+        documento: atleta.documento,
+        filial_nome: atleta.filial_nome
+      })) || []
+    }));
+
+    const formattedAvailableAthletes = availableAthletes?.map(athlete => ({
+      id: athlete.id,
+      nome: athlete.nome,
+      documento: athlete.documento,
+      filial_nome: athlete.filial_nome || 'N/A'
+    })) || [];
+
+    return (
+      <TeamFormation
+        teams={formattedTeams}
+        availableAthletes={formattedAvailableAthletes}
+        eventId={eventId}
+        modalityId={modalityFilter}
+        isOrganizer={isOrganizer}
+        isReadOnly={false}
+        branchId={null}
+      />
+    );
+  }
+
+  // Default view for non-organizers or when no modality is selected
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {teams.map((team) => (

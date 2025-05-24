@@ -41,14 +41,14 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     isUpdatingAthlete
   } = useTeamManager(eventId, isOrganizer);
 
-  // Data for viewing all teams - pass user's branch ID for delegation representatives
+  // Data for viewing all teams - for organizers, don't filter by branch
   const {
     teams: allTeams,
     modalities: allModalities,
     branches,
     isLoading: isLoadingAllTeams,
     error: allTeamsError
-  } = useAllTeamsData(eventId, modalityFilter, branchFilter, searchTerm, user?.filial_id);
+  } = useAllTeamsData(eventId, modalityFilter, branchFilter, searchTerm, isOrganizer ? undefined : user?.filial_id);
 
   if (isLoading && !selectedModalityId) {
     return <LoadingTeamsState />;
@@ -66,7 +66,9 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
             {!isOrganizer && (
               <TabsTrigger value="manage">Gerenciar Minhas Equipes</TabsTrigger>
             )}
-            <TabsTrigger value="view-all">Visualizar Todas as Equipes</TabsTrigger>
+            <TabsTrigger value="view-all">
+              {isOrganizer ? "Gerenciar Todas as Equipes" : "Visualizar Todas as Equipes"}
+            </TabsTrigger>
           </TabsList>
           
           {!isOrganizer && (
@@ -103,6 +105,8 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
               setModalityFilter={setModalityFilter}
               setBranchFilter={setBranchFilter}
               setSearchTerm={setSearchTerm}
+              isOrganizer={isOrganizer}
+              eventId={eventId}
             />
           </TabsContent>
         </Tabs>
