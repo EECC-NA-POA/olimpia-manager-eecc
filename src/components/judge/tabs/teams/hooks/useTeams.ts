@@ -1,5 +1,4 @@
 
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Team } from '../types';
@@ -13,12 +12,12 @@ export function useTeams(
 ) {
   return useQuery({
     queryKey: ['teams', eventId, modalityId, isOrganizer, branchId],
-    queryFn: async (): Promise<Team[]> => {
+    queryFn: async () => {
       try {
         console.log('Fetching teams:', { eventId, modalityId, branchId, isOrganizer });
         
         if (!eventId || !modalityId) {
-          return [];
+          return [] as Team[];
         }
         
         // Build the query based on user role
@@ -52,23 +51,24 @@ export function useTeams(
 
         if (!teamsData || teamsData.length === 0) {
           console.log('No teams found for this modality');
-          return [];
+          return [] as Team[];
         }
 
-        // Process teams data to match Team interface with explicit typing
-        const teams: Team[] = [];
+        // Process teams data with explicit typing to avoid infinite recursion
+        const processedTeams: Team[] = [];
         
-        for (const team of teamsData) {
-          // Handle modalidades data with explicit type checking
-          const modalidadeData = Array.isArray(team.modalidades) 
-            ? team.modalidades[0] 
-            : team.modalidades as { nome: string; categoria: string } | null;
+        for (const teamRow of teamsData) {
+          // Handle modalidades data with simple type assertion
+          const modalidadeInfo = teamRow.modalidades as any;
+          const modalidadeData = Array.isArray(modalidadeInfo) 
+            ? modalidadeInfo[0] 
+            : modalidadeInfo;
           
-          const processedTeam: Team = {
-            id: team.id,
-            nome: team.nome,
-            modalidade_id: team.modalidade_id,
-            modalidade: modalidadeData?.nome,
+          const baseTeam: Team = {
+            id: teamRow.id,
+            nome: teamRow.nome,
+            modalidade_id: teamRow.modalidade_id,
+            modalidade: modalidadeData?.nome || '',
             modalidades: {
               nome: modalidadeData?.nome || '',
               categoria: modalidadeData?.categoria || ''
@@ -76,63 +76,61 @@ export function useTeams(
             athletes: []
           };
 
-          // Fetch team athletes with explicit typing
-          const { data: teamAthletes, error: athletesError } = await supabase
-            .from('atletas_equipes')
-            .select(`
-              id,
-              atleta_id,
-              posicao,
-              raia,
-              usuarios:atleta_id (
-                nome_completo,
-                tipo_documento,
-                numero_documento
-              )
-            `)
-            .eq('equipe_id', team.id);
+          // Fetch team athletes separately to avoid complex nested types
+          try {
+            const { data: athletesData, error: athletesError } = await supabase
+              .from('atletas_equipes')
+              .select(`
+                id,
+                atleta_id,
+                posicao,
+                raia,
+                usuarios:atleta_id (
+                  nome_completo,
+                  tipo_documento,
+                  numero_documento
+                )
+              `)
+              .eq('equipe_id', teamRow.id);
 
-          if (athletesError) {
-            console.error('Error fetching team athletes:', athletesError);
-            continue;
-          }
-
-          if (teamAthletes && teamAthletes.length > 0) {
-            processedTeam.athletes = teamAthletes.map(athlete => {
-              // Handle usuarios data with explicit typing
-              const usuariosData = Array.isArray(athlete.usuarios) 
-                ? athlete.usuarios[0] 
-                : athlete.usuarios as { nome_completo: string; tipo_documento?: string; numero_documento?: string } | null;
-              
-              return {
-                id: athlete.id,
-                atleta_id: athlete.atleta_id,
-                atleta_nome: usuariosData?.nome_completo || 'Atleta',
-                posicao: athlete.posicao || 0,
-                raia: athlete.raia || undefined,
-                tipo_documento: usuariosData?.tipo_documento,
-                numero_documento: usuariosData?.numero_documento,
-                usuarios: {
-                  nome_completo: usuariosData?.nome_completo || 'Atleta',
-                  tipo_documento: usuariosData?.tipo_documento,
-                  numero_documento: usuariosData?.numero_documento
-                }
-              };
-            });
+            if (athletesError) {
+              console.error('Error fetching team athletes:', athletesError);
+            } else if (athletesData && athletesData.length > 0) {
+              baseTeam.athletes = athletesData.map(athleteRow => {
+                const userInfo = athleteRow.usuarios as any;
+                const userData = Array.isArray(userInfo) ? userInfo[0] : userInfo;
+                
+                return {
+                  id: athleteRow.id,
+                  atleta_id: athleteRow.atleta_id,
+                  atleta_nome: userData?.nome_completo || 'Atleta',
+                  posicao: athleteRow.posicao || 0,
+                  raia: athleteRow.raia || undefined,
+                  tipo_documento: userData?.tipo_documento,
+                  numero_documento: userData?.numero_documento,
+                  usuarios: {
+                    nome_completo: userData?.nome_completo || 'Atleta',
+                    tipo_documento: userData?.tipo_documento,
+                    numero_documento: userData?.numero_documento
+                  }
+                };
+              });
+            }
+          } catch (athleteError) {
+            console.error('Error processing athletes for team:', teamRow.id, athleteError);
           }
           
-          teams.push(processedTeam);
+          processedTeams.push(baseTeam);
         }
 
-        console.log('Teams fetched successfully:', teams);
-        return teams;
+        console.log('Teams fetched successfully:', processedTeams);
+        return processedTeams;
 
       } catch (error) {
         console.error('Error in teams query:', error);
-        return [];
+        return [] as Team[];
       }
     },
     enabled: !!eventId && !!modalityId
   });
 }
-
