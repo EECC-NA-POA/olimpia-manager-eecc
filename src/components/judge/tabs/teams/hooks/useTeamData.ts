@@ -6,6 +6,7 @@ import { useTeams } from './useTeams';
 import { useUserInfo } from './useUserInfo';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { AvailableAthlete } from '../types';
 
 export function useTeamData(userId: string, eventId: string | null, isOrganizer: boolean = false) {
   const { user } = useAuth();
@@ -32,10 +33,10 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer:
     isOrganizer
   );
   
-  // Get available athletes
+  // Get available athletes with proper transformation
   const { data: availableAthletes, isLoading: isLoadingAthletes, error: athletesError } = useQuery({
     queryKey: ['available-athletes', eventId, branchId],
-    queryFn: async () => {
+    queryFn: async (): Promise<AvailableAthlete[]> => {
       if (!eventId || isOrganizer) {
         return [];
       }
@@ -57,7 +58,17 @@ export function useTeamData(userId: string, eventId: string | null, isOrganizer:
           return [];
         }
 
-        return data || [];
+        if (!data) {
+          return [];
+        }
+
+        // Transform the data to match AvailableAthlete interface
+        return data.map(athlete => ({
+          atleta_id: athlete.id,
+          atleta_nome: athlete.nome_completo,
+          tipo_documento: athlete.tipo_documento,
+          numero_documento: athlete.numero_documento
+        }));
       } catch (error) {
         console.error('Error in athletes query:', error);
         return [];
