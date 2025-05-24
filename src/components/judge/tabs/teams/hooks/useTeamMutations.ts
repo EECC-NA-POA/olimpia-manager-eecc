@@ -48,6 +48,24 @@ export function useTeamMutations(
   // Add athlete to team mutation
   const addAthleteMutation = useMutation({
     mutationFn: async ({ teamId, athleteId }: { teamId: number; athleteId: string }) => {
+      console.log('Adding athlete to team:', { teamId, athleteId });
+
+      // Check if athlete is already in the team
+      const { data: existingAthlete, error: checkError } = await supabase
+        .from('atletas_equipes')
+        .select('id')
+        .eq('equipe_id', teamId)
+        .eq('atleta_id', athleteId)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
+      }
+
+      if (existingAthlete) {
+        throw new Error('Atleta já está nesta equipe');
+      }
+
       const { error } = await supabase
         .from('atletas_equipes')
         .insert({
@@ -75,6 +93,8 @@ export function useTeamMutations(
   // Remove athlete from team mutation
   const removeAthleteMutation = useMutation({
     mutationFn: async (athleteTeamId: number) => {
+      console.log('Removing athlete from team:', athleteTeamId);
+
       const { error } = await supabase
         .from('atletas_equipes')
         .delete()
@@ -96,13 +116,39 @@ export function useTeamMutations(
     }
   });
 
+  // Update athlete position mutation
+  const updateAthletePositionMutation = useMutation({
+    mutationFn: async ({ athleteTeamId, posicao, raia }: { athleteTeamId: number; posicao?: number; raia?: number }) => {
+      const updateData: any = {};
+      if (posicao !== undefined) updateData.posicao = posicao;
+      if (raia !== undefined) updateData.raia = raia;
+
+      const { error } = await supabase
+        .from('atletas_equipes')
+        .update(updateData)
+        .eq('id', athleteTeamId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ 
+        queryKey: ['teams-data', eventId, selectedModalityId, branchId, isOrganizer] 
+      });
+    },
+    onError: (error) => {
+      toast.error('Erro ao atualizar atleta: ' + error.message);
+    }
+  });
+
   return {
     createTeam: createTeamMutation.mutate,
     addAthlete: ({ teamId, athleteId }: { teamId: number; athleteId: string }) => 
       addAthleteMutation.mutate({ teamId, athleteId }),
     removeAthlete: removeAthleteMutation.mutate,
+    updateAthletePosition: updateAthletePositionMutation.mutate,
     isCreatingTeam: createTeamMutation.isPending,
     isAddingAthlete: addAthleteMutation.isPending,
-    isRemovingAthlete: removeAthleteMutation.isPending
+    isRemovingAthlete: removeAthleteMutation.isPending,
+    isUpdatingAthlete: updateAthletePositionMutation.isPending
   };
 }

@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { AthleteOption, TeamData } from '../types';
 
 interface AthletesListProps {
@@ -18,29 +20,32 @@ export function AthletesList({ athletes, teams, onAddAthlete, isAdding }: Athlet
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Atletas Disponíveis</CardTitle>
+        <CardTitle className="flex items-center justify-between">
+          Atletas Disponíveis
+          <Badge variant="secondary">{athletes.length} disponíveis</Badge>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {athletes.map((athlete) => (
-            <div key={athlete.id} className="border rounded p-3 space-y-2">
+            <div key={athlete.id} className="border rounded p-3 space-y-2 bg-card">
               <div>
-                <p className="font-medium">{athlete.nome}</p>
-                <p className="text-sm text-muted-foreground">{athlete.documento}</p>
+                <p className="font-medium text-sm">{athlete.nome}</p>
+                <p className="text-xs text-muted-foreground">{athlete.documento}</p>
               </div>
               
               {teams.length === 1 ? (
                 <Button
                   size="sm"
-                  className="w-full"
+                  className="w-full text-xs"
                   onClick={() => onAddAthlete(teams[0].id, athlete.id)}
                   disabled={isAdding}
                 >
-                  Adicionar a {teams[0].nome}
+                  {isAdding ? 'Adicionando...' : `Adicionar a ${teams[0].nome}`}
                 </Button>
               ) : (
                 <select
-                  className="w-full border rounded px-2 py-1 text-sm"
+                  className="w-full border rounded px-2 py-1 text-xs bg-background"
                   onChange={(e) => {
                     const teamId = Number(e.target.value);
                     if (teamId) {

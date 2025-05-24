@@ -32,9 +32,11 @@ export function useTeamManager(eventId: string | null, isOrganizer: boolean = fa
     createTeam,
     addAthlete,
     removeAthlete,
+    updateAthletePosition,
     isCreatingTeam,
     isAddingAthlete,
-    isRemovingAthlete
+    isRemovingAthlete,
+    isUpdatingAthlete
   } = useTeamMutations(eventId, selectedModalityId, isOrganizer);
 
   return {
@@ -47,8 +49,10 @@ export function useTeamManager(eventId: string | null, isOrganizer: boolean = fa
     createTeam,
     addAthlete,
     removeAthlete,
+    updateAthletePosition,
     isCreatingTeam,
     isAddingAthlete,
-    isRemovingAthlete
+    isRemovingAthlete,
+    isUpdatingAthlete
   };
 }
