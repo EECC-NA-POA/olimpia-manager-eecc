@@ -2,59 +2,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-// Simple, non-recursive interfaces
-interface SimpleTeam {
-  id: number;
-  nome: string;
-  modalidade_id: number;
-}
-
-interface SimpleModality {
-  nome: string;
-  categoria: string;
-}
-
-interface SimpleAthleteTeam {
-  id: number;
-  atleta_id: string;
-  posicao: number;
-  raia?: number;
-}
-
-interface SimpleUser {
-  nome_completo: string;
-  tipo_documento?: string;
-  numero_documento?: string;
-}
-
-// Final result interfaces
-interface TeamAthlete {
-  id: number;
-  atleta_id: string;
-  atleta_nome: string;
-  posicao: number;
-  raia?: number;
-  tipo_documento?: string;
-  numero_documento?: string;
-  usuarios?: {
-    nome_completo: string;
-    tipo_documento?: string;
-    numero_documento?: string;
-  };
-}
-
-interface Team {
-  id: number;
-  nome: string;
-  modalidade_id: number;
-  modalidade: string;
-  modalidades: {
-    nome: string;
-    categoria: string;
-  };
-  athletes: TeamAthlete[];
-}
-
 export function useTeams(
   userId: string,
   eventId: string | null,
@@ -64,7 +11,7 @@ export function useTeams(
 ) {
   return useQuery({
     queryKey: ['teams', eventId, modalityId, isOrganizer, branchId],
-    queryFn: async (): Promise<Team[]> => {
+    queryFn: async () => {
       console.log('Fetching teams:', { eventId, modalityId, branchId, isOrganizer });
       
       if (!eventId || !modalityId) {
@@ -73,102 +20,93 @@ export function useTeams(
       }
       
       try {
-        // Step 1: Fetch teams
-        let teamsQuery = supabase
+        // Buscar equipes simples
+        let query = supabase
           .from('equipes')
-          .select('id, nome, modalidade_id')
+          .select(`
+            id,
+            nome,
+            modalidade_id
+          `)
           .eq('evento_id', eventId)
           .eq('modalidade_id', modalityId);
         
         if (!isOrganizer && branchId) {
-          teamsQuery = teamsQuery.eq('filial_id', branchId);
+          query = query.eq('filial_id', branchId);
         }
         
-        const { data: teamsData, error: teamsError } = await teamsQuery;
+        const { data: teams, error } = await query;
 
-        if (teamsError) {
-          console.error('Error fetching teams:', teamsError);
+        if (error) {
+          console.error('Error fetching teams:', error);
           return [];
         }
 
-        if (!teamsData || teamsData.length === 0) {
-          console.log('No teams found for this modality');
+        if (!teams) {
           return [];
         }
 
-        // Step 2: Fetch modality info
-        const { data: modalityData, error: modalityError } = await supabase
+        // Buscar informações da modalidade
+        const { data: modalityData } = await supabase
           .from('modalidades')
           .select('nome, categoria')
           .eq('id', modalityId)
           .single();
 
-        if (modalityError) {
-          console.error('Error fetching modality:', modalityError);
-        }
+        // Processar cada equipe
+        const processedTeams = await Promise.all(
+          teams.map(async (team) => {
+            // Buscar atletas da equipe
+            const { data: athletes } = await supabase
+              .from('atletas_equipes')
+              .select(`
+                id,
+                atleta_id,
+                posicao,
+                raia
+              `)
+              .eq('equipe_id', team.id);
 
-        const modality = modalityData as SimpleModality | null;
+            const teamAthletes = [];
+            
+            if (athletes) {
+              for (const athlete of athletes) {
+                const { data: userData } = await supabase
+                  .from('usuarios')
+                  .select('nome_completo, tipo_documento, numero_documento')
+                  .eq('id', athlete.atleta_id)
+                  .single();
 
-        // Step 3: Process each team
-        const processedTeams: Team[] = [];
-        
-        for (const teamData of teamsData as SimpleTeam[]) {
-          const team: Team = {
-            id: teamData.id,
-            nome: teamData.nome,
-            modalidade_id: teamData.modalidade_id,
-            modalidade: modality?.nome || '',
-            modalidades: {
-              nome: modality?.nome || '',
-              categoria: modality?.categoria || ''
-            },
-            athletes: []
-          };
-
-          // Step 4: Fetch team athletes
-          const { data: athletesData, error: athletesError } = await supabase
-            .from('atletas_equipes')
-            .select('id, atleta_id, posicao, raia')
-            .eq('equipe_id', teamData.id);
-
-          if (athletesError) {
-            console.error('Error fetching team athletes:', athletesError);
-          } else if (athletesData && athletesData.length > 0) {
-            // Step 5: Fetch user data for each athlete
-            for (const athleteData of athletesData as SimpleAthleteTeam[]) {
-              const { data: userData, error: userError } = await supabase
-                .from('usuarios')
-                .select('nome_completo, tipo_documento, numero_documento')
-                .eq('id', athleteData.atleta_id)
-                .single();
-
-              if (userError) {
-                console.error('Error fetching user data:', userError);
+                teamAthletes.push({
+                  id: athlete.id,
+                  atleta_id: athlete.atleta_id,
+                  atleta_nome: userData?.nome_completo || 'Atleta',
+                  posicao: athlete.posicao || 0,
+                  raia: athlete.raia,
+                  tipo_documento: userData?.tipo_documento,
+                  numero_documento: userData?.numero_documento,
+                  usuarios: {
+                    nome_completo: userData?.nome_completo || 'Atleta',
+                    tipo_documento: userData?.tipo_documento,
+                    numero_documento: userData?.numero_documento
+                  }
+                });
               }
-
-              const user = userData as SimpleUser | null;
-
-              const athlete: TeamAthlete = {
-                id: athleteData.id,
-                atleta_id: athleteData.atleta_id,
-                atleta_nome: user?.nome_completo || 'Atleta',
-                posicao: athleteData.posicao || 0,
-                raia: athleteData.raia || undefined,
-                tipo_documento: user?.tipo_documento,
-                numero_documento: user?.numero_documento,
-                usuarios: {
-                  nome_completo: user?.nome_completo || 'Atleta',
-                  tipo_documento: user?.tipo_documento,
-                  numero_documento: user?.numero_documento
-                }
-              };
-
-              team.athletes.push(athlete);
             }
-          }
-          
-          processedTeams.push(team);
-        }
+
+            return {
+              id: team.id,
+              nome: team.nome,
+              modalidade_id: team.modalidade_id,
+              modalidade: modalityData?.nome || '',
+              modalidades: {
+                nome: modalityData?.nome || '',
+                categoria: modalityData?.categoria || ''
+              },
+              athletes: teamAthletes
+            };
+          })
+        );
 
         console.log('Teams fetched successfully:', processedTeams);
         return processedTeams;
