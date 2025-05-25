@@ -3,10 +3,8 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AthleteCard } from '@/components/judge/AthleteCard';
-import { AthleteFilters } from './AthleteFilters';
 import { AthletesGrid } from './AthletesGrid';
-import { AthletesCount } from './AthletesCount';
-import { useAthleteFiltering } from './hooks/useAthleteFiltering';
+import { useAthletesFiltering } from './hooks/useAthletesFiltering';
 import { Athlete } from '../hooks/useAthletes';
 
 interface AthletesListProps {
@@ -33,7 +31,7 @@ export function AthletesList({
     filters,
     setFilters,
     resetFilters
-  } = useAthleteFiltering(athletes || []);
+  } = useAthletesFiltering(athletes || []);
 
   if (isLoading) {
     return (
@@ -71,34 +69,20 @@ export function AthletesList({
     <Card>
       <CardHeader>
         <CardTitle>Atletas Inscritos</CardTitle>
-        <AthletesCount 
-          total={athletes.length}
-          filtered={filteredAthletes.length}
-        />
+        <div className="text-center text-sm text-muted-foreground">
+          Mostrando {filteredAthletes.length} de {athletes.length} atletas
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <AthleteFilters 
-          filters={filters}
-          onFiltersChange={setFilters}
-          onReset={resetFilters}
+        <AthletesGrid
+          athletes={filteredAthletes}
+          selectedAthleteId={selectedAthleteId}
+          onAthleteSelect={setSelectedAthleteId}
+          modalityId={modalityId}
+          scoreType={scoreType}
+          eventId={eventId}
+          judgeId={judgeId}
         />
-        
-        <AthletesGrid>
-          {filteredAthletes.map((athlete) => (
-            <AthleteCard
-              key={athlete.atleta_id}
-              athlete={athlete}
-              modalityId={modalityId}
-              scoreType={scoreType}
-              eventId={eventId}
-              judgeId={judgeId}
-              isSelected={selectedAthleteId === athlete.atleta_id}
-              onClick={() => setSelectedAthleteId(
-                selectedAthleteId === athlete.atleta_id ? null : athlete.atleta_id
-              )}
-            />
-          ))}
-        </AthletesGrid>
       </CardContent>
     </Card>
   );

@@ -8,7 +8,7 @@ interface AthletesGridProps {
   selectedAthleteId: string | null;
   onAthleteSelect: (athleteId: string | null) => void;
   modalityId: number;
-  scoreType?: 'time' | 'distance' | 'points';
+  scoreType?: 'tempo' | 'distancia' | 'pontos';
   eventId: string | null;
   judgeId: string;
 }
