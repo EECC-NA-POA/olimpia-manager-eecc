@@ -31,6 +31,12 @@ export function AthleteCard({
   eventId,
   judgeId
 }: AthleteCardProps) {
+  console.log('=== ATHLETE CARD PROPS DEBUG ===');
+  console.log('Received eventId prop:', eventId);
+  console.log('eventId type:', typeof eventId);
+  console.log('eventId is null?', eventId === null);
+  console.log('eventId is undefined?', eventId === undefined);
+  
   // Fetch athlete data using custom hooks
   const { data: paymentData, isLoading: isLoadingPayment } = useAthletePaymentData(athlete.atleta_id, eventId);
   const { data: branchData, isLoading: isLoadingBranch } = useAthleteBranchData(athlete.atleta_id);

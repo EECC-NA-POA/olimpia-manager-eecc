@@ -6,14 +6,28 @@ export function useAthletePaymentData(athleteId: string, eventId: string | null)
   return useQuery({
     queryKey: ['athlete-payment', athleteId, eventId],
     queryFn: async () => {
-      console.log('Fetching payment data for athlete:', athleteId, 'event:', eventId);
+      console.log('=== PAYMENT QUERY DEBUG ===');
+      console.log('Input athleteId:', athleteId);
+      console.log('Input eventId:', eventId);
+      console.log('athleteId type:', typeof athleteId);
+      console.log('eventId type:', typeof eventId);
       
       if (!eventId) {
         console.log('No eventId provided, skipping payment query');
         return null;
       }
       
-      // Query pagamentos table with proper field selection
+      // First, let's check what's in the pagamentos table for this athlete
+      console.log('Checking all payments for athlete:', athleteId);
+      const { data: allPayments, error: allError } = await supabase
+        .from('pagamentos')
+        .select('*')
+        .eq('atleta_id', athleteId);
+      
+      console.log('All payments for athlete:', allPayments);
+      if (allError) console.log('Error fetching all payments:', allError);
+      
+      // Now try the specific query
       const { data, error } = await supabase
         .from('pagamentos')
         .select('*')
@@ -21,14 +35,21 @@ export function useAthletePaymentData(athleteId: string, eventId: string | null)
         .eq('evento_id', eventId)
         .maybeSingle();
       
+      console.log('Specific payment query result:', data);
+      console.log('Specific payment query error:', error);
+      
       if (error) {
         console.error('Error fetching payment data:', error);
         return null;
       }
       
-      console.log('Raw payment data fetched for athlete:', athleteId, 'raw data:', data);
-      console.log('numero_identificador from payment:', data?.numero_identificador);
+      if (data) {
+        console.log('SUCCESS: Found payment data with numero_identificador:', data.numero_identificador);
+      } else {
+        console.log('NO PAYMENT DATA FOUND for athleteId:', athleteId, 'eventId:', eventId);
+      }
       
+      console.log('=== END PAYMENT QUERY DEBUG ===');
       return data;
     },
     enabled: !!athleteId && !!eventId,
