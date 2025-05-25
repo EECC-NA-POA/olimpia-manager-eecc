@@ -18,6 +18,7 @@ interface AthletesListProps {
 interface AthleteWithBranchData extends Athlete {
   branchName?: string;
   branchState?: string;
+  numero_identificador: string;
 }
 
 export function AthletesList({ 
@@ -174,7 +175,7 @@ export function AthletesList({
           console.log('Filtering by ID with term:', searchTerm);
           
           filtered = filtered.filter(athlete => {
-            const athleteId = athlete.numero_identificador || athlete.atleta_id.slice(-6);
+            const athleteId = athlete.numero_identificador;
             const matches = athleteId.toLowerCase().includes(searchTerm);
             
             console.log('Athlete:', athlete.atleta_nome, 'ID:', athleteId, 'Matches:', matches);
