@@ -2,19 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-
-export interface Modality {
-  id: string;
-  evento_id: string;
-  nome: string;
-  descricao: string;
-  vagas: number;
-  is_ativo: boolean;
-  genero: string;
-  faixa_etaria_min: number;
-  faixa_etaria_max: number | null;
-  tipo: string;
-}
+import { Modality } from '../types';
 
 export function useModalitiesData(eventId: string | null) {
   const [modalities, setModalities] = useState<Modality[]>([]);

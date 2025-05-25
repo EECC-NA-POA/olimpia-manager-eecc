@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from '@/components/ui/button';
 import { Edit, Trash } from 'lucide-react';
-import { Modality } from './hooks/useModalitiesData';
+import { Modality } from '../types';
 
 interface ModalitiesTableProps {
   modalities: Modality[];
@@ -26,17 +26,19 @@ export function ModalitiesTable({ modalities, onEdit, onDelete }: ModalitiesTabl
         <TableHeader>
           <TableRow>
             <TableHead>Nome</TableHead>
-            <TableHead>Tipo</TableHead>
-            <TableHead>Gênero</TableHead>
+            <TableHead>Tipo Modalidade</TableHead>
+            <TableHead>Tipo Pontuação</TableHead>
+            <TableHead>Categoria</TableHead>
             <TableHead>Faixa Etária</TableHead>
             <TableHead>Vagas</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Grupo</TableHead>
             <TableHead className="w-24">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow>
-            <TableCell colSpan={7} className="text-center py-4">
+            <TableCell colSpan={9} className="text-center py-4">
               Nenhuma modalidade encontrada
             </TableCell>
           </TableRow>
@@ -50,11 +52,13 @@ export function ModalitiesTable({ modalities, onEdit, onDelete }: ModalitiesTabl
       <TableHeader>
         <TableRow>
           <TableHead>Nome</TableHead>
-          <TableHead>Tipo</TableHead>
-          <TableHead>Gênero</TableHead>
+          <TableHead>Tipo Modalidade</TableHead>
+          <TableHead>Tipo Pontuação</TableHead>
+          <TableHead>Categoria</TableHead>
           <TableHead>Faixa Etária</TableHead>
           <TableHead>Vagas</TableHead>
           <TableHead>Status</TableHead>
+          <TableHead>Grupo</TableHead>
           <TableHead className="w-24">Ações</TableHead>
         </TableRow>
       </TableHeader>
@@ -63,23 +67,30 @@ export function ModalitiesTable({ modalities, onEdit, onDelete }: ModalitiesTabl
           <TableRow key={item.id}>
             <TableCell className="font-medium">{item.nome}</TableCell>
             <TableCell>
-              {item.tipo === 'INDIVIDUAL' ? 'Individual' : 
-               item.tipo === 'EQUIPE' ? 'Equipe' : 
-               item.tipo === 'DUPLA' ? 'Dupla' : item.tipo}
+              {item.tipo_modalidade === 'individual' ? 'Individual' : 'Coletivo'}
             </TableCell>
             <TableCell>
-              {item.genero === 'MASCULINO' ? 'Masculino' : 
-               item.genero === 'FEMININO' ? 'Feminino' : 'Misto'}
+              {item.tipo_pontuacao === 'tempo' ? 'Tempo' : 
+               item.tipo_pontuacao === 'distancia' ? 'Distância' : 'Pontos'}
             </TableCell>
             <TableCell>
-              {item.faixa_etaria_min}{item.faixa_etaria_max ? ` - ${item.faixa_etaria_max}` : '+'} anos
+              {item.categoria === 'masculino' ? 'Masculino' : 
+               item.categoria === 'feminino' ? 'Feminino' : 'Misto'}
             </TableCell>
-            <TableCell>{item.vagas}</TableCell>
             <TableCell>
-              <Badge variant={item.is_ativo ? "default" : "secondary"}>
-                {item.is_ativo ? 'Ativo' : 'Inativo'}
+              {item.faixa_etaria === 'adulto' ? 'Adulto' : 'Infantil'}
+            </TableCell>
+            <TableCell>{item.vagas_ocupadas}/{item.limite_vagas}</TableCell>
+            <TableCell>
+              <Badge variant={
+                item.status === 'Ativa' ? "default" : 
+                item.status === 'Em análise' ? "secondary" :
+                item.status === 'Esgotada' ? "destructive" : "outline"
+              }>
+                {item.status}
               </Badge>
             </TableCell>
+            <TableCell>{item.grupo || '-'}</TableCell>
             <TableCell>
               <div className="flex space-x-2">
                 <Button 

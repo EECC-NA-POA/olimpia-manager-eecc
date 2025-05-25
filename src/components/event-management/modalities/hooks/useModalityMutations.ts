@@ -2,18 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Modality } from './useModalitiesData';
-
-export interface ModalityForm {
-  nome: string;
-  descricao: string;
-  vagas: number;
-  is_ativo: boolean;
-  genero: string;
-  faixa_etaria_min: number;
-  faixa_etaria_max: number | null;
-  tipo: string;
-}
+import { Modality, ModalityForm } from '../types';
 
 export function useModalityMutations(eventId: string | null) {
   const [isSaving, setIsSaving] = useState(false);
@@ -39,19 +28,24 @@ export function useModalityMutations(eventId: string | null) {
           .from('modalidades')
           .update({
             nome: modalityData.nome,
-            descricao: modalityData.descricao,
-            vagas: modalityData.vagas,
-            is_ativo: modalityData.is_ativo,
-            genero: modalityData.genero,
-            faixa_etaria_min: modalityData.faixa_etaria_min,
-            faixa_etaria_max: modalityData.faixa_etaria_max,
-            tipo: modalityData.tipo
+            tipo_pontuacao: modalityData.tipo_pontuacao,
+            tipo_modalidade: modalityData.tipo_modalidade,
+            categoria: modalityData.categoria,
+            status: modalityData.status,
+            limite_vagas: modalityData.limite_vagas,
+            grupo: modalityData.grupo,
+            faixa_etaria: modalityData.faixa_etaria
           })
           .eq('id', editingId);
         
         if (error) throw error;
         
-        onSuccess({ id: editingId, evento_id: eventId, ...modalityData } as Modality);
+        onSuccess({ 
+          id: editingId, 
+          evento_id: eventId, 
+          vagas_ocupadas: 0, // This will be updated by the refetch
+          ...modalityData 
+        } as Modality);
         toast.success('Modalidade atualizada com sucesso!');
       } else {
         // Create new item
@@ -60,13 +54,14 @@ export function useModalityMutations(eventId: string | null) {
           .insert({
             evento_id: eventId,
             nome: modalityData.nome,
-            descricao: modalityData.descricao,
-            vagas: modalityData.vagas,
-            is_ativo: modalityData.is_ativo,
-            genero: modalityData.genero,
-            faixa_etaria_min: modalityData.faixa_etaria_min,
-            faixa_etaria_max: modalityData.faixa_etaria_max,
-            tipo: modalityData.tipo
+            tipo_pontuacao: modalityData.tipo_pontuacao,
+            tipo_modalidade: modalityData.tipo_modalidade,
+            categoria: modalityData.categoria,
+            status: modalityData.status,
+            limite_vagas: modalityData.limite_vagas,
+            vagas_ocupadas: 0,
+            grupo: modalityData.grupo,
+            faixa_etaria: modalityData.faixa_etaria
           })
           .select();
         

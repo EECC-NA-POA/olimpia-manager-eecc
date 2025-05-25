@@ -10,7 +10,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { 
   Select, 
   SelectContent, 
@@ -18,19 +17,17 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Modality } from './hooks/useModalitiesData';
-import { ModalityForm } from './hooks/useModalityMutations';
+import { Modality, ModalityForm } from '../types';
 
 const defaultFormValues: ModalityForm = {
   nome: '',
-  descricao: '',
-  vagas: 0,
-  is_ativo: true,
-  genero: 'MISTO',
-  faixa_etaria_min: 0,
-  faixa_etaria_max: null,
-  tipo: 'INDIVIDUAL'
+  tipo_pontuacao: 'pontos',
+  tipo_modalidade: 'individual',
+  categoria: 'misto',
+  status: 'Ativa',
+  limite_vagas: 0,
+  grupo: null,
+  faixa_etaria: 'adulto'
 };
 
 interface ModalityFormDialogProps {
@@ -54,20 +51,20 @@ export function ModalityFormDialog({
     if (editingModality) {
       setCurrentItem({
         nome: editingModality.nome || '',
-        descricao: editingModality.descricao || '',
-        vagas: editingModality.vagas || 0,
-        is_ativo: editingModality.is_ativo || true,
-        genero: editingModality.genero || 'MISTO',
-        faixa_etaria_min: editingModality.faixa_etaria_min || 0,
-        faixa_etaria_max: editingModality.faixa_etaria_max || null,
-        tipo: editingModality.tipo || 'INDIVIDUAL'
+        tipo_pontuacao: editingModality.tipo_pontuacao || 'pontos',
+        tipo_modalidade: editingModality.tipo_modalidade || 'individual',
+        categoria: editingModality.categoria || 'misto',
+        status: editingModality.status || 'Ativa',
+        limite_vagas: editingModality.limite_vagas || 0,
+        grupo: editingModality.grupo || null,
+        faixa_etaria: editingModality.faixa_etaria || 'adulto'
       });
     } else {
       setCurrentItem(defaultFormValues);
     }
   }, [editingModality, isOpen]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.type === 'number' ? 
       Number(e.target.value) : 
       e.target.value;
@@ -82,13 +79,6 @@ export function ModalityFormDialog({
     setCurrentItem({
       ...currentItem,
       [field]: value
-    });
-  };
-
-  const handleSwitchChange = (checked: boolean) => {
-    setCurrentItem({
-      ...currentItem,
-      is_ativo: checked
     });
   };
 
@@ -122,97 +112,110 @@ export function ModalityFormDialog({
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="tipo">Tipo</Label>
+              <Label htmlFor="tipo_modalidade">Tipo de Modalidade</Label>
               <Select 
-                value={currentItem.tipo} 
-                onValueChange={(value) => handleSelectChange('tipo', value)}
+                value={currentItem.tipo_modalidade} 
+                onValueChange={(value) => handleSelectChange('tipo_modalidade', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="INDIVIDUAL">Individual</SelectItem>
-                  <SelectItem value="EQUIPE">Equipe</SelectItem>
-                  <SelectItem value="DUPLA">Dupla</SelectItem>
+                  <SelectItem value="individual">Individual</SelectItem>
+                  <SelectItem value="coletivo">Coletivo</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="genero">Gênero</Label>
+              <Label htmlFor="tipo_pontuacao">Tipo de Pontuação</Label>
               <Select 
-                value={currentItem.genero} 
-                onValueChange={(value) => handleSelectChange('genero', value)}
+                value={currentItem.tipo_pontuacao} 
+                onValueChange={(value) => handleSelectChange('tipo_pontuacao', value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o gênero" />
+                  <SelectValue placeholder="Selecione o tipo de pontuação" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="MISTO">Misto</SelectItem>
-                  <SelectItem value="MASCULINO">Masculino</SelectItem>
-                  <SelectItem value="FEMININO">Feminino</SelectItem>
+                  <SelectItem value="pontos">Pontos</SelectItem>
+                  <SelectItem value="tempo">Tempo</SelectItem>
+                  <SelectItem value="distancia">Distância</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="vagas">Número de Vagas</Label>
+              <Label htmlFor="categoria">Categoria</Label>
+              <Select 
+                value={currentItem.categoria} 
+                onValueChange={(value) => handleSelectChange('categoria', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="misto">Misto</SelectItem>
+                  <SelectItem value="masculino">Masculino</SelectItem>
+                  <SelectItem value="feminino">Feminino</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="faixa_etaria">Faixa Etária</Label>
+              <Select 
+                value={currentItem.faixa_etaria} 
+                onValueChange={(value) => handleSelectChange('faixa_etaria', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a faixa etária" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="adulto">Adulto</SelectItem>
+                  <SelectItem value="infantil">Infantil</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="limite_vagas">Limite de Vagas</Label>
               <Input
-                id="vagas"
-                name="vagas"
+                id="limite_vagas"
+                name="limite_vagas"
                 type="number"
-                value={currentItem.vagas}
+                value={currentItem.limite_vagas}
                 onChange={handleInputChange}
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="faixa_etaria_min">Idade Mínima</Label>
-              <Input
-                id="faixa_etaria_min"
-                name="faixa_etaria_min"
-                type="number"
-                value={currentItem.faixa_etaria_min}
-                onChange={handleInputChange}
-              />
+              <Label htmlFor="status">Status</Label>
+              <Select 
+                value={currentItem.status} 
+                onValueChange={(value) => handleSelectChange('status', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Ativa">Ativa</SelectItem>
+                  <SelectItem value="Em análise">Em análise</SelectItem>
+                  <SelectItem value="Esgotada">Esgotada</SelectItem>
+                  <SelectItem value="Cancelada">Cancelada</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="faixa_etaria_max">Idade Máxima (deixe em branco para sem limite)</Label>
+              <Label htmlFor="grupo">Grupo (opcional)</Label>
               <Input
-                id="faixa_etaria_max"
-                name="faixa_etaria_max"
-                type="number"
-                value={currentItem.faixa_etaria_max || ''}
+                id="grupo"
+                name="grupo"
+                value={currentItem.grupo || ''}
                 onChange={handleInputChange}
-                placeholder="Sem limite"
+                placeholder="Ex: Grupo A"
               />
             </div>
-            
-            <div className="space-y-2 flex items-center">
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="is_ativo">Status</Label>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_ativo"
-                    checked={currentItem.is_ativo}
-                    onCheckedChange={handleSwitchChange}
-                  />
-                  <span>{currentItem.is_ativo ? 'Ativa' : 'Inativa'}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="descricao">Descrição</Label>
-            <Textarea
-              id="descricao"
-              name="descricao"
-              value={currentItem.descricao}
-              onChange={handleInputChange}
-              rows={3}
-            />
           </div>
         </div>
         
