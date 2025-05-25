@@ -32,6 +32,8 @@ export function AthletesList({
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
   const [searchFilter, setSearchFilter] = useState('');
   const [filterType, setFilterType] = useState<'id' | 'name' | 'filial' | 'estado'>('name');
+  const [selectedBranch, setSelectedBranch] = useState<string>('');
+  const [selectedState, setSelectedState] = useState<string>('');
 
   // Fetch branch data for all athletes
   const { data: branchesData } = useQuery({
@@ -100,33 +102,76 @@ export function AthletesList({
     }));
   }, [athletes, branchesData]);
 
-  // Filter athletes based on search criteria
-  const filteredAthletes = useMemo(() => {
-    if (!athletesWithBranchData || !searchFilter.trim()) return athletesWithBranchData;
+  // Get unique branches and states for filter options
+  const { availableBranches, availableStates } = useMemo(() => {
+    const branches = new Map<string, string>();
+    const states = new Set<string>();
 
-    const searchTerm = searchFilter.toLowerCase().trim();
-    
-    return athletesWithBranchData.filter(athlete => {
-      switch (filterType) {
-        case 'id':
-          // Search in athlete ID (last 6 characters)
-          const athleteId = athlete.atleta_id.slice(-6).toLowerCase();
-          return athleteId.includes(searchTerm);
-        
-        case 'name':
-          return athlete.atleta_nome.toLowerCase().includes(searchTerm);
-        
-        case 'filial':
-          return athlete.branchName?.toLowerCase().includes(searchTerm) || false;
-        
-        case 'estado':
-          return athlete.branchState?.toLowerCase().includes(searchTerm) || false;
-        
-        default:
-          return true;
+    athletesWithBranchData.forEach(athlete => {
+      if (athlete.branchName && athlete.branchState) {
+        branches.set(athlete.branchName, athlete.branchState);
+        states.add(athlete.branchState);
       }
     });
-  }, [athletesWithBranchData, searchFilter, filterType]);
+
+    return {
+      availableBranches: Array.from(branches.entries()).map(([name, state]) => ({ name, state })),
+      availableStates: Array.from(states).sort()
+    };
+  }, [athletesWithBranchData]);
+
+  // Filter athletes based on search criteria
+  const filteredAthletes = useMemo(() => {
+    let filtered = athletesWithBranchData;
+
+    // Apply text/select filters
+    switch (filterType) {
+      case 'id':
+        if (searchFilter.trim()) {
+          const searchTerm = searchFilter.toLowerCase().trim();
+          filtered = filtered.filter(athlete => {
+            const athleteId = athlete.atleta_id.slice(-6).toLowerCase();
+            return athleteId.includes(searchTerm);
+          });
+        }
+        break;
+      
+      case 'name':
+        if (searchFilter.trim()) {
+          const searchTerm = searchFilter.toLowerCase().trim();
+          filtered = filtered.filter(athlete => 
+            athlete.atleta_nome.toLowerCase().includes(searchTerm)
+          );
+        }
+        break;
+      
+      case 'filial':
+        if (selectedBranch) {
+          filtered = filtered.filter(athlete => 
+            athlete.branchName === selectedBranch
+          );
+        }
+        break;
+      
+      case 'estado':
+        if (selectedState) {
+          filtered = filtered.filter(athlete => 
+            athlete.branchState === selectedState
+          );
+        }
+        break;
+    }
+
+    return filtered;
+  }, [athletesWithBranchData, searchFilter, filterType, selectedBranch, selectedState]);
+
+  // Reset filters when filter type changes
+  const handleFilterTypeChange = (newFilterType: 'id' | 'name' | 'filial' | 'estado') => {
+    setFilterType(newFilterType);
+    setSearchFilter('');
+    setSelectedBranch('');
+    setSelectedState('');
+  };
 
   if (isLoading) {
     return (
@@ -141,21 +186,24 @@ export function AthletesList({
     );
   }
 
-  if (!filteredAthletes || filteredAthletes.length === 0) {
+  if (!athletesWithBranchData || athletesWithBranchData.length === 0) {
     return (
       <div className="space-y-4">
         <AthleteFilters
           searchFilter={searchFilter}
           onSearchFilterChange={setSearchFilter}
           filterType={filterType}
-          onFilterTypeChange={setFilterType}
+          onFilterTypeChange={handleFilterTypeChange}
+          availableBranches={availableBranches}
+          availableStates={availableStates}
+          selectedBranch={selectedBranch}
+          onSelectedBranchChange={setSelectedBranch}
+          selectedState={selectedState}
+          onSelectedStateChange={setSelectedState}
         />
         <div className="text-center py-8">
           <p className="text-muted-foreground">
-            {!athletesWithBranchData || athletesWithBranchData.length === 0 
-              ? 'Nenhum atleta inscrito nesta modalidade'
-              : 'Nenhum atleta encontrado com os filtros aplicados'
-            }
+            Nenhum atleta inscrito nesta modalidade
           </p>
         </div>
       </div>
@@ -168,7 +216,13 @@ export function AthletesList({
         searchFilter={searchFilter}
         onSearchFilterChange={setSearchFilter}
         filterType={filterType}
-        onFilterTypeChange={setFilterType}
+        onFilterTypeChange={handleFilterTypeChange}
+        availableBranches={availableBranches}
+        availableStates={availableStates}
+        selectedBranch={selectedBranch}
+        onSelectedBranchChange={setSelectedBranch}
+        selectedState={selectedState}
+        onSelectedStateChange={setSelectedState}
       />
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -188,11 +242,9 @@ export function AthletesList({
         ))}
       </div>
 
-      {searchFilter && (
-        <div className="text-center text-sm text-muted-foreground">
-          Mostrando {filteredAthletes.length} de {athletesWithBranchData?.length || 0} atletas
-        </div>
-      )}
+      <div className="text-center text-sm text-muted-foreground">
+        Mostrando {filteredAthletes.length} de {athletesWithBranchData?.length || 0} atletas
+      </div>
     </div>
   );
 }
