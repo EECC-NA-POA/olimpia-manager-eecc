@@ -57,6 +57,15 @@ export function ManageTeamsTab({
   confirmDeleteTeam,
   cancelDeleteTeam
 }: ManageTeamsTabProps) {
+  // Wrapper functions to handle parameter signature differences
+  const handleAddAthlete = (teamId: number, athleteId: string) => {
+    addAthlete({ teamId, athleteId });
+  };
+
+  const handleUpdatePosition = (athleteTeamId: number, posicao?: number, raia?: number) => {
+    updateAthletePosition({ athleteTeamId, posicao, raia });
+  };
+
   return (
     <div className="space-y-6">
       <ModalityButtons
@@ -76,7 +85,7 @@ export function ManageTeamsTab({
             <AthletesList
               athletes={availableAthletes}
               teams={teams}
-              onAddAthlete={addAthlete}
+              onAddAthlete={handleAddAthlete}
               isAdding={isAddingAthlete}
             />
           )}
@@ -92,7 +101,7 @@ export function ManageTeamsTab({
                   key={team.id}
                   team={team}
                   onRemoveAthlete={removeAthlete}
-                  onUpdatePosition={updateAthletePosition}
+                  onUpdatePosition={handleUpdatePosition}
                   onDeleteTeam={deleteTeam}
                   isRemoving={isRemovingAthlete}
                   isUpdating={isUpdatingAthlete}
