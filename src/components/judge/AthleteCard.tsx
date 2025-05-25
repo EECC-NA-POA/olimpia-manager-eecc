@@ -43,7 +43,8 @@ export function AthleteCard({
     paymentData,
     branchData,
     isLoadingPayment,
-    isLoadingBranch
+    isLoadingBranch,
+    numeroIdentificador: paymentData?.numero_identificador
   });
   
   // Check if the athlete has a score for the selected modality
@@ -51,8 +52,10 @@ export function AthleteCard({
     scores?.some(score => score.modalidade_id === modalityId) : 
     false;
 
-  // Get athlete identifier or fallback to ID slice
+  // Get athlete identifier from payment data or fallback to ID slice
   const athleteIdentifier = paymentData?.numero_identificador || athlete.atleta_id.slice(-6);
+
+  console.log('Final athlete identifier used:', athleteIdentifier, 'from payment data:', paymentData?.numero_identificador);
 
   // If we're in selected view and have all necessary props, render the score card
   if (isSelected && modalityId && eventId && judgeId && scoreType) {
@@ -79,7 +82,7 @@ export function AthleteCard({
         group cursor-pointer transition-all duration-300 ease-in-out
         hover:shadow-lg hover:scale-[1.02] hover:border-primary/50
         ${isSelected ? 'border-primary shadow-md scale-[1.01]' : 'shadow-sm'}
-        bg-white overflow-hidden
+        bg-white overflow-hidden relative
       `}
       onClick={onClick}
     >
@@ -88,17 +91,22 @@ export function AthleteCard({
         modalityId={modalityId}
       />
       
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold text-gray-900 group-hover:text-primary transition-colors">
+      <CardHeader className="pb-3 pt-6">
+        <CardTitle className="text-lg font-semibold text-gray-900 group-hover:text-primary transition-colors mb-2">
           {athlete.atleta_nome}
         </CardTitle>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+        <div className="flex items-center gap-2 text-sm">
+          <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium border border-blue-200">
             ID: {athleteIdentifier}
           </span>
           {branchData?.nome && (
-            <span className="bg-green-50 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+            <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium border border-green-200">
               {branchData.nome}
+            </span>
+          )}
+          {branchData?.estado && (
+            <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded-full text-xs font-medium border border-purple-200">
+              {branchData.estado}
             </span>
           )}
         </div>

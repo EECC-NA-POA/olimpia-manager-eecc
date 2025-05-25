@@ -13,19 +13,25 @@ export function useAthletePaymentData(athleteId: string, eventId: string | null)
         return null;
       }
       
+      // Join pagamentos with usuarios to get the correct payment data
       const { data, error } = await supabase
         .from('pagamentos')
-        .select('numero_identificador')
-        .eq('atleta_id', athleteId)
+        .select(`
+          numero_identificador,
+          valor,
+          status_pagamento,
+          usuarios!inner(id)
+        `)
+        .eq('usuarios.id', athleteId)
         .eq('evento_id', eventId)
         .maybeSingle();
       
       if (error) {
-        console.error('Error fetching payment identifier:', error);
+        console.error('Error fetching payment data with join:', error);
         return null;
       }
       
-      console.log('Payment data fetched:', data);
+      console.log('Payment data with join fetched:', data);
       return data;
     },
     enabled: !!athleteId && !!eventId,
