@@ -29,7 +29,7 @@ export function ModalityCard({ modalities, onSelectModality, selectedModalityId 
         <div className="space-y-4">
           <ModalityButtons 
             modalities={modalities || []}
-            onSelectModality={onSelectModality}
+            onModalitySelect={onSelectModality}
             selectedModalityId={selectedModalityId}
           />
         </div>
