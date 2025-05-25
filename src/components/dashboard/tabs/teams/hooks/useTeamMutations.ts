@@ -2,7 +2,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { TeamFormData } from '../useTeamOperations';
+import { TeamFormData } from './useTeamOperations';
 
 export function useTeamMutations(eventId: string | null, branchId?: string, editingTeam?: any) {
   const queryClient = useQueryClient();
