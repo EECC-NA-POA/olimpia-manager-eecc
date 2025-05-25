@@ -36,13 +36,20 @@ export function AthleteCard({
   const { data: branchData, isLoading: isLoadingBranch } = useAthleteBranchData(athlete.atleta_id);
   const { data: scores } = useAthleteScores(athlete.atleta_id);
   
-  // Debug logs
-  console.log('AthleteCard payment data for', athlete.atleta_nome, {
-    athleteId: athlete.atleta_id,
-    eventId,
-    paymentData,
-    numeroIdentificador: paymentData?.numero_identificador
-  });
+  // Extensive debug logs
+  console.log('=== AthleteCard Debug Start ===');
+  console.log('Athlete:', athlete.atleta_nome);
+  console.log('Athlete ID:', athlete.atleta_id);
+  console.log('Event ID:', eventId);
+  console.log('Payment data object:', paymentData);
+  console.log('Payment data type:', typeof paymentData);
+  console.log('Is payment data null/undefined?', paymentData == null);
+  
+  if (paymentData) {
+    console.log('Payment data keys:', Object.keys(paymentData));
+    console.log('numero_identificador value:', paymentData.numero_identificador);
+    console.log('numero_identificador type:', typeof paymentData.numero_identificador);
+  }
   
   // Check if the athlete has a score for the selected modality
   const hasScoreForCurrentModality = modalityId ? 
@@ -52,7 +59,9 @@ export function AthleteCard({
   // Get athlete identifier from payment data or fallback to ID slice
   const athleteIdentifier = paymentData?.numero_identificador || athlete.atleta_id.slice(-6);
 
-  console.log('Final athlete identifier used:', athleteIdentifier, 'from payment numero_identificador:', paymentData?.numero_identificador);
+  console.log('Final athlete identifier used:', athleteIdentifier);
+  console.log('Fallback used (ID slice)?', !paymentData?.numero_identificador);
+  console.log('=== AthleteCard Debug End ===');
 
   // If we're in selected view and have all necessary props, render the score card
   if (isSelected && modalityId && eventId && judgeId && scoreType) {

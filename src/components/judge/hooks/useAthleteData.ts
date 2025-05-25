@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
@@ -12,10 +13,10 @@ export function useAthletePaymentData(athleteId: string, eventId: string | null)
         return null;
       }
       
-      // Query pagamentos table directly with atleta_id
+      // Query pagamentos table with proper field selection
       const { data, error } = await supabase
         .from('pagamentos')
-        .select('numero_identificador, valor, status_pagamento, atleta_id')
+        .select('*')
         .eq('atleta_id', athleteId)
         .eq('evento_id', eventId)
         .maybeSingle();
@@ -25,7 +26,9 @@ export function useAthletePaymentData(athleteId: string, eventId: string | null)
         return null;
       }
       
-      console.log('Payment data fetched for athlete:', athleteId, 'data:', data);
+      console.log('Raw payment data fetched for athlete:', athleteId, 'raw data:', data);
+      console.log('numero_identificador from payment:', data?.numero_identificador);
+      
       return data;
     },
     enabled: !!athleteId && !!eventId,
