@@ -9,33 +9,33 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from 'react-hook-form';
-import { PointsScoreFormValues } from '../types';
+import { DistanceScoreFormValues } from '../types';
 
-interface PointsScoreFieldsProps {
-  form: UseFormReturn<PointsScoreFormValues>;
+interface DistanceScoreFieldsProps {
+  form: UseFormReturn<DistanceScoreFormValues>;
 }
 
-export function PointsScoreFields({ form }: PointsScoreFieldsProps) {
+export function DistanceScoreFields({ form }: DistanceScoreFieldsProps) {
   return (
     <FormField
       control={form.control}
       name="score"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Pontuação</FormLabel>
+          <FormLabel>Distância</FormLabel>
           <FormControl>
             <div className="relative">
               <Input 
                 type="number" 
-                step="1"
+                step="0.01"
                 min="0" 
-                placeholder="0"
+                placeholder="0.00"
                 {...field}
                 onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                 className="pr-12"
               />
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
-                pts
+                m
               </div>
             </div>
           </FormControl>

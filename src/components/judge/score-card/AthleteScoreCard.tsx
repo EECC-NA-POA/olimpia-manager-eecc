@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { MedalDisplay } from './components/MedalDisplay';
 import { ScoreForm } from './components/ScoreForm';
 import { useScoreSubmission } from './hooks/useScoreSubmission';
-import { AthleteScoreCardProps, ScoreRecord, TimeScoreFormValues, PointsScoreFormValues } from './types';
+import { AthleteScoreCardProps, ScoreRecord, TimeScoreFormValues, DistanceScoreFormValues, PointsScoreFormValues } from './types';
 
 export function AthleteScoreCard({ 
   athlete, 
@@ -23,12 +23,28 @@ export function AthleteScoreCard({
 }: AthleteScoreCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
+  // Convert legacy scoreType to new database format
+  const convertScoreType = (legacyType: string) => {
+    switch (legacyType) {
+      case 'time':
+        return 'tempo';
+      case 'distance':
+        return 'distancia';
+      case 'points':
+        return 'pontos';
+      default:
+        return 'pontos';
+    }
+  };
+
+  const dbScoreType = convertScoreType(scoreType);
+  
   const { submitScoreMutation } = useScoreSubmission(
     eventId, 
     modalityId, 
     athlete, 
     judgeId, 
-    scoreType
+    dbScoreType
   );
 
   // Fetch existing score if it exists
@@ -55,15 +71,39 @@ export function AthleteScoreCard({
     enabled: !!eventId && !!athlete.atleta_id && !!modalityId,
   });
 
+  // Fetch medal info from premiacoes
+  const { data: medalInfo } = useQuery({
+    queryKey: ['medal', athlete.atleta_id, modalityId, eventId],
+    queryFn: async () => {
+      if (!eventId) return null;
+      
+      const { data, error } = await supabase
+        .from('premiacoes')
+        .select('posicao, medalha')
+        .eq('evento_id', eventId)
+        .eq('modalidade_id', modalityId)
+        .eq('atleta_id', athlete.atleta_id)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching medal info:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!eventId && !!athlete.atleta_id && !!modalityId,
+  });
+
   // Prepare initial form values based on existing score
   const getInitialFormValues = () => {
     if (!existingScore) {
-      return scoreType === 'time' 
+      return dbScoreType === 'tempo' 
         ? { minutes: 0, seconds: 0, milliseconds: 0, notes: '' }
         : { score: 0, notes: '' };
     }
     
-    if (scoreType === 'time') {
+    if (dbScoreType === 'tempo') {
       return {
         minutes: existingScore.tempo_minutos || 0,
         seconds: existingScore.tempo_segundos || 0,
@@ -86,7 +126,7 @@ export function AthleteScoreCard({
   }, [existingScore]);
 
   // Handle form submission
-  const handleSubmit = (data: TimeScoreFormValues | PointsScoreFormValues) => {
+  const handleSubmit = (data: TimeScoreFormValues | DistanceScoreFormValues | PointsScoreFormValues) => {
     submitScoreMutation.mutate(data, {
       onSuccess: () => setIsExpanded(false)
     });
@@ -113,7 +153,8 @@ export function AthleteScoreCard({
           
           <MedalDisplay 
             scoreRecord={existingScore || null} 
-            scoreType={scoreType} 
+            medalInfo={medalInfo || null}
+            scoreType={dbScoreType} 
           />
         </div>
       </CardHeader>
@@ -130,7 +171,7 @@ export function AthleteScoreCard({
 
         {isExpanded && (
           <ScoreForm 
-            scoreType={scoreType}
+            scoreType={dbScoreType}
             initialValues={getInitialFormValues()}
             onSubmit={handleSubmit}
             isPending={submitScoreMutation.isPending}

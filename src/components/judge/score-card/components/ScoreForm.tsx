@@ -7,45 +7,82 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { TimeScoreFields } from './TimeScoreFields';
+import { DistanceScoreFields } from './DistanceScoreFields';
 import { PointsScoreFields } from './PointsScoreFields';
-import { timeScoreSchema, pointsScoreSchema, TimeScoreFormValues, PointsScoreFormValues } from '../types';
+import { 
+  timeScoreSchema, 
+  distanceScoreSchema, 
+  pointsScoreSchema,
+  TimeScoreFormValues, 
+  DistanceScoreFormValues, 
+  PointsScoreFormValues 
+} from '../types';
 
 interface ScoreFormProps {
-  scoreType: 'time' | 'distance' | 'points';
+  scoreType: 'tempo' | 'distancia' | 'pontos';
   initialValues?: any;
-  onSubmit: (data: TimeScoreFormValues | PointsScoreFormValues) => void;
+  onSubmit: (data: TimeScoreFormValues | DistanceScoreFormValues | PointsScoreFormValues) => void;
   isPending: boolean;
 }
 
 export function ScoreForm({ scoreType, initialValues, onSubmit, isPending }: ScoreFormProps) {
   // Choose schema based on score type
-  const schema = scoreType === 'time' ? timeScoreSchema : pointsScoreSchema;
+  const getSchema = () => {
+    switch (scoreType) {
+      case 'tempo':
+        return timeScoreSchema;
+      case 'distancia':
+        return distanceScoreSchema;
+      case 'pontos':
+        return pointsScoreSchema;
+      default:
+        return pointsScoreSchema;
+    }
+  };
+
+  const schema = getSchema();
   
-  // Define the form with proper types
+  // Define default values based on score type
+  const getDefaultValues = () => {
+    if (initialValues) return initialValues;
+    
+    switch (scoreType) {
+      case 'tempo':
+        return { minutes: 0, seconds: 0, milliseconds: 0, notes: '' };
+      case 'distancia':
+      case 'pontos':
+        return { score: 0, notes: '' };
+      default:
+        return { score: 0, notes: '' };
+    }
+  };
+  
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    defaultValues: initialValues || (
-      scoreType === 'time' 
-        ? { minutes: 0, seconds: 0, milliseconds: 0, notes: '' } 
-        : { score: 0, notes: '' }
-    ),
+    defaultValues: getDefaultValues(),
   });
 
-  const handleSubmit = (data: TimeScoreFormValues | PointsScoreFormValues) => {
+  const handleSubmit = (data: any) => {
     onSubmit(data);
+  };
+
+  const renderScoreFields = () => {
+    switch (scoreType) {
+      case 'tempo':
+        return <TimeScoreFields form={form as any} />;
+      case 'distancia':
+        return <DistanceScoreFields form={form as any} />;
+      case 'pontos':
+        return <PointsScoreFields form={form as any} />;
+      default:
+        return <PointsScoreFields form={form as any} />;
+    }
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 mt-4">
-        {scoreType === 'time' ? (
-          <TimeScoreFields form={form as any} />
-        ) : (
-          <PointsScoreFields 
-            form={form as any} 
-            scoreType={scoreType} 
-          />
-        )}
+        {renderScoreFields()}
         
         <FormField
           control={form.control}
