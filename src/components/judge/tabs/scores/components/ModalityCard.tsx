@@ -7,15 +7,16 @@ import {
   CardDescription, 
   CardContent 
 } from '@/components/ui/card';
-import { ModalitySelector } from './ModalitySelector';
+import { ModalityButtons } from './ModalityButtons';
 import { Modality } from '@/lib/types/database';
 
 interface ModalityCardProps {
   modalities: Modality[] | undefined;
   onSelectModality: (id: number) => void;
+  selectedModalityId: number | null;
 }
 
-export function ModalityCard({ modalities, onSelectModality }: ModalityCardProps) {
+export function ModalityCard({ modalities, onSelectModality, selectedModalityId }: ModalityCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -26,9 +27,10 @@ export function ModalityCard({ modalities, onSelectModality }: ModalityCardProps
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <ModalitySelector 
-            modalities={modalities}
+          <ModalityButtons 
+            modalities={modalities || []}
             onSelectModality={onSelectModality}
+            selectedModalityId={selectedModalityId}
           />
         </div>
       </CardContent>

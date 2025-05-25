@@ -45,6 +45,7 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
       <ModalityCard 
         modalities={individualModalities}
         onSelectModality={setSelectedModalityId}
+        selectedModalityId={selectedModalityId}
       />
       
       {selectedModalityId && (
