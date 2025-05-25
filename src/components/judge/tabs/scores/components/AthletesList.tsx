@@ -4,6 +4,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AthleteCard } from '@/components/judge/AthleteCard';
 import { Athlete } from '../hooks/useAthletes';
 import { AthleteFilters } from './AthleteFilters';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 
 interface AthletesListProps {
   athletes: Athlete[] | undefined;
@@ -12,6 +14,11 @@ interface AthletesListProps {
   eventId: string | null;
   judgeId: string;
   scoreType?: 'time' | 'distance' | 'points';
+}
+
+interface AthleteWithBranchData extends Athlete {
+  branchName?: string;
+  branchState?: string;
 }
 
 export function AthletesList({ 
@@ -26,16 +33,83 @@ export function AthletesList({
   const [searchFilter, setSearchFilter] = useState('');
   const [filterType, setFilterType] = useState<'id' | 'name' | 'filial' | 'estado'>('name');
 
+  // Fetch branch data for all athletes
+  const { data: branchesData } = useQuery({
+    queryKey: ['athletes-branches', athletes?.map(a => a.atleta_id)],
+    queryFn: async () => {
+      if (!athletes || athletes.length === 0) return {};
+      
+      console.log('Fetching branch data for athletes:', athletes.length);
+      
+      // Get user filial_ids for all athletes
+      const { data: userData, error: userError } = await supabase
+        .from('usuarios')
+        .select('id, filial_id')
+        .in('id', athletes.map(a => a.atleta_id));
+      
+      if (userError || !userData) {
+        console.error('Error fetching user filial data:', userError);
+        return {};
+      }
+      
+      // Get unique filial_ids
+      const filialIds = [...new Set(userData.map(u => u.filial_id).filter(Boolean))];
+      
+      if (filialIds.length === 0) return {};
+      
+      // Get branch details
+      const { data: branchData, error: branchError } = await supabase
+        .from('filiais')
+        .select('id, nome, estado')
+        .in('id', filialIds);
+      
+      if (branchError || !branchData) {
+        console.error('Error fetching branch data:', branchError);
+        return {};
+      }
+      
+      // Create a mapping from athlete_id to branch data
+      const branchMap: Record<string, { nome: string; estado: string }> = {};
+      
+      userData.forEach(user => {
+        if (user.filial_id) {
+          const branch = branchData.find(b => b.id === user.filial_id);
+          if (branch) {
+            branchMap[user.id] = {
+              nome: branch.nome,
+              estado: branch.estado
+            };
+          }
+        }
+      });
+      
+      console.log('Branch mapping created:', branchMap);
+      return branchMap;
+    },
+    enabled: !!athletes && athletes.length > 0,
+  });
+
+  // Combine athletes with their branch data
+  const athletesWithBranchData: AthleteWithBranchData[] = useMemo(() => {
+    if (!athletes) return [];
+    
+    return athletes.map(athlete => ({
+      ...athlete,
+      branchName: branchesData?.[athlete.atleta_id]?.nome,
+      branchState: branchesData?.[athlete.atleta_id]?.estado,
+    }));
+  }, [athletes, branchesData]);
+
   // Filter athletes based on search criteria
   const filteredAthletes = useMemo(() => {
-    if (!athletes || !searchFilter.trim()) return athletes;
+    if (!athletesWithBranchData || !searchFilter.trim()) return athletesWithBranchData;
 
     const searchTerm = searchFilter.toLowerCase().trim();
     
-    return athletes.filter(athlete => {
+    return athletesWithBranchData.filter(athlete => {
       switch (filterType) {
         case 'id':
-          // Search in athlete ID (last 6 characters) or numero_identificador if available
+          // Search in athlete ID (last 6 characters)
           const athleteId = athlete.atleta_id.slice(-6).toLowerCase();
           return athleteId.includes(searchTerm);
         
@@ -43,20 +117,16 @@ export function AthletesList({
           return athlete.atleta_nome.toLowerCase().includes(searchTerm);
         
         case 'filial':
-          // This would need branch data to be included in the athlete object
-          // For now, we'll skip this filtering as it requires additional data
-          return true;
+          return athlete.branchName?.toLowerCase().includes(searchTerm) || false;
         
         case 'estado':
-          // This would need state data to be included in the athlete object
-          // For now, we'll skip this filtering as it requires additional data
-          return true;
+          return athlete.branchState?.toLowerCase().includes(searchTerm) || false;
         
         default:
           return true;
       }
     });
-  }, [athletes, searchFilter, filterType]);
+  }, [athletesWithBranchData, searchFilter, filterType]);
 
   if (isLoading) {
     return (
@@ -82,7 +152,7 @@ export function AthletesList({
         />
         <div className="text-center py-8">
           <p className="text-muted-foreground">
-            {!athletes || athletes.length === 0 
+            {!athletesWithBranchData || athletesWithBranchData.length === 0 
               ? 'Nenhum atleta inscrito nesta modalidade'
               : 'Nenhum atleta encontrado com os filtros aplicados'
             }
@@ -120,7 +190,7 @@ export function AthletesList({
 
       {searchFilter && (
         <div className="text-center text-sm text-muted-foreground">
-          Mostrando {filteredAthletes.length} de {athletes?.length || 0} atletas
+          Mostrando {filteredAthletes.length} de {athletesWithBranchData?.length || 0} atletas
         </div>
       )}
     </div>
