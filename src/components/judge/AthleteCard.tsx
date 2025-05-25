@@ -54,6 +54,31 @@ export function AthleteCard({
     enabled: !!athlete.atleta_id && !!eventId,
   });
 
+  // Fetch athlete branch information
+  const { data: branchData } = useQuery({
+    queryKey: ['athlete-branch', athlete.atleta_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select(`
+          filiais (
+            nome,
+            estado
+          )
+        `)
+        .eq('id', athlete.atleta_id)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching branch data:', error);
+        return null;
+      }
+      
+      return data?.filiais;
+    },
+    enabled: !!athlete.atleta_id,
+  });
+
   // Fetch athlete scores
   const { data: scores } = useQuery({
     queryKey: ['athlete-scores', athlete.atleta_id, modalityId],
@@ -134,6 +159,17 @@ export function AthleteCard({
             <p className="text-gray-500">ID</p>
             <p>{athleteIdentifier}</p>
           </div>
+          <div>
+            <p className="text-gray-500">Filial</p>
+            <p>{branchData?.nome || 'N/A'}</p>
+          </div>
+          <div>
+            <p className="text-gray-500">Estado</p>
+            <p>{branchData?.estado || 'N/A'}</p>
+          </div>
+        </div>
+        
+        <div className="mt-3 grid grid-cols-2 gap-1 text-xs">
           <div>
             <p className="text-gray-500">Documento</p>
             <p>{athlete.tipo_documento}</p>
