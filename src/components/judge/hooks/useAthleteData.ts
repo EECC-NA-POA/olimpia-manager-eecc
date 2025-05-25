@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
@@ -12,11 +11,6 @@ export function useAthletePaymentData(athleteId: string, eventId: string | null)
       console.log('athleteId type:', typeof athleteId);
       console.log('eventId type:', typeof eventId);
       
-      if (!eventId) {
-        console.log('No eventId provided, skipping payment query');
-        return null;
-      }
-      
       // First, let's check what's in the pagamentos table for this athlete
       console.log('Checking all payments for athlete:', athleteId);
       const { data: allPayments, error: allError } = await supabase
@@ -27,32 +21,45 @@ export function useAthletePaymentData(athleteId: string, eventId: string | null)
       console.log('All payments for athlete:', allPayments);
       if (allError) console.log('Error fetching all payments:', allError);
       
-      // Now try the specific query
-      const { data, error } = await supabase
-        .from('pagamentos')
-        .select('*')
-        .eq('atleta_id', athleteId)
-        .eq('evento_id', eventId)
-        .maybeSingle();
-      
-      console.log('Specific payment query result:', data);
-      console.log('Specific payment query error:', error);
-      
-      if (error) {
-        console.error('Error fetching payment data:', error);
-        return null;
+      // If we have eventId, try to get payment for specific event
+      if (eventId) {
+        console.log('Trying to get payment for specific event:', eventId);
+        const { data, error } = await supabase
+          .from('pagamentos')
+          .select('*')
+          .eq('atleta_id', athleteId)
+          .eq('evento_id', eventId)
+          .maybeSingle();
+        
+        console.log('Specific payment query result:', data);
+        console.log('Specific payment query error:', error);
+        
+        if (error) {
+          console.error('Error fetching payment data:', error);
+        }
+        
+        if (data) {
+          console.log('SUCCESS: Found payment data with numero_identificador:', data.numero_identificador);
+          console.log('=== END PAYMENT QUERY DEBUG ===');
+          return data;
+        }
       }
       
-      if (data) {
-        console.log('SUCCESS: Found payment data with numero_identificador:', data.numero_identificador);
-      } else {
-        console.log('NO PAYMENT DATA FOUND for athleteId:', athleteId, 'eventId:', eventId);
+      // If no eventId or no payment found for specific event, try to get any payment for this athlete
+      console.log('No specific event payment found, getting any payment for athlete');
+      if (allPayments && allPayments.length > 0) {
+        const latestPayment = allPayments[0]; // Get the first payment record
+        console.log('Using latest payment record:', latestPayment);
+        console.log('numero_identificador from latest payment:', latestPayment.numero_identificador);
+        console.log('=== END PAYMENT QUERY DEBUG ===');
+        return latestPayment;
       }
       
+      console.log('NO PAYMENT DATA FOUND for athleteId:', athleteId);
       console.log('=== END PAYMENT QUERY DEBUG ===');
-      return data;
+      return null;
     },
-    enabled: !!athleteId && !!eventId,
+    enabled: !!athleteId,
   });
 }
 
