@@ -76,8 +76,10 @@ export function AthleteCard({
   return (
     <Card 
       className={`
-        cursor-pointer hover:border-primary/50 transition-colors overflow-hidden
-        ${isSelected ? 'border-primary' : ''}
+        group cursor-pointer transition-all duration-300 ease-in-out
+        hover:shadow-lg hover:scale-[1.02] hover:border-primary/50
+        ${isSelected ? 'border-primary shadow-md scale-[1.01]' : 'shadow-sm'}
+        bg-white overflow-hidden
       `}
       onClick={onClick}
     >
@@ -86,11 +88,23 @@ export function AthleteCard({
         modalityId={modalityId}
       />
       
-      <CardHeader className="p-4 pb-2 flex flex-row justify-between items-start">
-        <CardTitle className="text-base">{athlete.atleta_nome}</CardTitle>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg font-semibold text-gray-900 group-hover:text-primary transition-colors">
+          {athlete.atleta_nome}
+        </CardTitle>
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+            ID: {athleteIdentifier}
+          </span>
+          {branchData?.nome && (
+            <span className="bg-green-50 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+              {branchData.nome}
+            </span>
+          )}
+        </div>
       </CardHeader>
       
-      <CardContent className="p-4 pt-0">
+      <CardContent className="pt-0 space-y-4">
         <AthleteInfo 
           athlete={athlete}
           athleteIdentifier={athleteIdentifier}

@@ -2,6 +2,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Athlete } from '../tabs/scores/hooks/useAthletes';
+import { MapPin, FileText, User } from 'lucide-react';
 
 interface AthleteInfoProps {
   athlete: Athlete;
@@ -19,47 +20,49 @@ export function AthleteInfo({
   hasScoreForCurrentModality 
 }: AthleteInfoProps) {
   return (
-    <>
-      <div className="grid grid-cols-3 gap-1 text-xs">
-        <div>
-          <p className="text-gray-500">ID</p>
-          <p>{athleteIdentifier}</p>
+    <div className="space-y-4">
+      {/* Location Info */}
+      {(branchName || branchState) && (
+        <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
+          <MapPin className="w-4 h-4 text-gray-500 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Filial</p>
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {branchName || 'N/A'}
+            </p>
+            {branchState && (
+              <p className="text-xs text-gray-600">{branchState}</p>
+            )}
+          </div>
         </div>
-        <div>
-          <p className="text-gray-500">Filial</p>
-          <p>{branchName || 'N/A'}</p>
-        </div>
-        <div>
-          <p className="text-gray-500">Estado</p>
-          <p>{branchState || 'N/A'}</p>
+      )}
+      
+      {/* Document Info */}
+      <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
+        <FileText className="w-4 h-4 text-gray-500 mt-0.5" />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Documento</p>
+          <p className="text-sm font-medium text-gray-900">
+            {athlete.tipo_documento}
+          </p>
+          <p className="text-xs text-gray-600 font-mono">
+            {athlete.numero_documento}
+          </p>
         </div>
       </div>
       
-      <div className="mt-3 grid grid-cols-2 gap-1 text-xs">
-        <div>
-          <p className="text-gray-500">Documento</p>
-          <p>{athlete.tipo_documento}</p>
-        </div>
-        <div>
-          <p className="text-gray-500">Número</p>
-          <p>{athlete.numero_documento}</p>
-        </div>
+      {/* Status Badge */}
+      <div className="flex justify-center pt-2">
+        {hasScoreForCurrentModality ? (
+          <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-200">
+            ✓ Avaliado
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+            ⏳ Pendente
+          </Badge>
+        )}
       </div>
-      
-      <div className="mt-4">
-        <p className="text-gray-500 text-xs mb-1">Status</p>
-        <div className="flex gap-2">
-          {hasScoreForCurrentModality ? (
-            <Badge variant="outline" className="bg-green-50 text-green-800 border-green-200">
-              Avaliado
-            </Badge>
-          ) : (
-            <Badge variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-200">
-              Pendente
-            </Badge>
-          )}
-        </div>
-      </div>
-    </>
+    </div>
   );
 }
