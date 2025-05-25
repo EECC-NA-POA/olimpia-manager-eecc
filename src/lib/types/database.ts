@@ -74,11 +74,10 @@ export interface ScoreRecord {
   tempo_segundos?: number | null;
   tempo_milissegundos?: number | null;
   posicao_final?: number | null;
-  medalha?: string | null;
   observacoes?: string | null;
   data_registro: string;
   unidade: string;
-  bateria?: string | null;
+  bateria_id?: number | null;
   criterio_id?: number | null;
 }
 
@@ -87,5 +86,5 @@ export interface Modality {
   modalidade_nome: string;
   categoria: string;
   tipo_modalidade: string;
-  tipo_pontuacao: 'time' | 'distance' | 'points';
+  tipo_pontuacao: 'tempo' | 'distancia' | 'pontos';
 }

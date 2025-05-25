@@ -13,7 +13,7 @@ export interface AthleteScoreCardProps {
   modalityId: number;
   eventId: string | null;
   judgeId: string;
-  scoreType: 'time' | 'distance' | 'points';
+  scoreType: 'tempo' | 'distancia' | 'pontos';
 }
 
 export interface ScoreRecord {

@@ -1,13 +1,10 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Modality } from '@/lib/types/database';
 
-export interface ModalityWithScoreType extends Modality {
-  tipo_pontuacao: 'tempo' | 'distancia' | 'pontos';
-}
-
 export function useModalities(eventId: string | null) {
-  return useQuery({
+  const queryResult = useQuery({
     queryKey: ['judge-modalities', eventId],
     queryFn: async () => {
       if (!eventId) return [];
@@ -24,8 +21,22 @@ export function useModalities(eventId: string | null) {
       }
 
       console.log('Fetched modalities with scoring types:', data);
-      return data as Modality[];
+      
+      // Transform the data to match the Modality interface
+      return data.map(item => ({
+        modalidade_id: item.id,
+        modalidade_nome: item.nome,
+        categoria: item.categoria,
+        tipo_modalidade: item.tipo_modalidade,
+        tipo_pontuacao: item.tipo_pontuacao
+      })) as Modality[];
     },
     enabled: !!eventId,
   });
+
+  return {
+    modalities: queryResult.data || [],
+    isLoadingModalities: queryResult.isLoading,
+    error: queryResult.error
+  };
 }

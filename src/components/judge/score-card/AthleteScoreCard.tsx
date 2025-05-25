@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -23,21 +22,8 @@ export function AthleteScoreCard({
 }: AthleteScoreCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // Convert legacy scoreType to new database format
-  const convertScoreType = (legacyType: string) => {
-    switch (legacyType) {
-      case 'time':
-        return 'tempo';
-      case 'distance':
-        return 'distancia';
-      case 'points':
-        return 'pontos';
-      default:
-        return 'pontos';
-    }
-  };
-
-  const dbScoreType = convertScoreType(scoreType);
+  // scoreType is already in Portuguese format ('tempo' | 'distancia' | 'pontos')
+  const dbScoreType = scoreType;
   
   const { submitScoreMutation } = useScoreSubmission(
     eventId, 
