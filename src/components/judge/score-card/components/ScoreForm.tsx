@@ -6,52 +6,128 @@ import { z } from 'zod';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { TimeScoreFields } from './TimeScoreFields';
-import { DistanceScoreFields } from './DistanceScoreFields';
-import { PointsScoreFields } from './PointsScoreFields';
+import { DynamicScoreFields } from './DynamicScoreFields';
+import { useModalityRules } from '../../tabs/scores/hooks/useModalityRules';
 import { 
-  timeScoreSchema, 
-  distanceScoreSchema, 
-  pointsScoreSchema,
   TimeScoreFormValues, 
   DistanceScoreFormValues, 
   PointsScoreFormValues 
 } from '../types';
 
 interface ScoreFormProps {
-  scoreType: 'tempo' | 'distancia' | 'pontos';
+  modalityId: number;
   initialValues?: any;
-  onSubmit: (data: TimeScoreFormValues | DistanceScoreFormValues | PointsScoreFormValues) => void;
+  onSubmit: (data: any) => void;
   isPending: boolean;
 }
 
-export function ScoreForm({ scoreType, initialValues, onSubmit, isPending }: ScoreFormProps) {
-  // Choose schema based on score type
-  const getSchema = () => {
-    switch (scoreType) {
-      case 'tempo':
-        return timeScoreSchema;
-      case 'distancia':
-        return distanceScoreSchema;
-      case 'pontos':
-        return pointsScoreSchema;
-      default:
-        return pointsScoreSchema;
-    }
+// Dynamic schema based on rule type
+const createDynamicSchema = (regraTipo: string, parametros: any) => {
+  const baseSchema = {
+    notes: z.string().optional(),
   };
 
-  const schema = getSchema();
+  switch (regraTipo) {
+    case 'tempo':
+      return z.object({
+        ...baseSchema,
+        minutes: z.coerce.number().min(0).default(0),
+        seconds: z.coerce.number().min(0).max(59).default(0),
+        milliseconds: z.coerce.number().min(0).max(999).default(0),
+      });
+    
+    case 'distancia':
+    case 'pontos':
+      return z.object({
+        ...baseSchema,
+        score: z.coerce.number().min(0).default(0),
+      });
+    
+    case 'baterias':
+      const numTentativas = parametros?.num_tentativas || 3;
+      return z.object({
+        ...baseSchema,
+        tentativas: z.array(z.object({
+          valor: z.coerce.number().min(0),
+          raia: z.string().optional(),
+        })).length(numTentativas),
+      });
+    
+    case 'sets':
+      const numSets = parametros?.num_sets || 3;
+      const pontuaPorSet = parametros?.pontua_por_set !== false;
+      
+      if (pontuaPorSet) {
+        return z.object({
+          ...baseSchema,
+          sets: z.array(z.object({
+            pontos: z.coerce.number().min(0),
+          })).length(numSets),
+        });
+      } else {
+        return z.object({
+          ...baseSchema,
+          sets: z.array(z.object({
+            vencedor: z.enum(['vitoria', 'derrota']),
+          })).length(numSets),
+        });
+      }
+    
+    case 'arrows':
+      const numFlechas = parametros?.num_flechas || 6;
+      return z.object({
+        ...baseSchema,
+        flechas: z.array(z.object({
+          zona: z.string(),
+        })).length(numFlechas),
+      });
+    
+    default:
+      return z.object({
+        ...baseSchema,
+        score: z.coerce.number().min(0).default(0),
+      });
+  }
+};
+
+export function ScoreForm({ modalityId, initialValues, onSubmit, isPending }: ScoreFormProps) {
+  const { data: rule, isLoading } = useModalityRules(modalityId);
   
-  // Define default values based on score type
+  // Create schema based on rule
+  const schema = rule ? createDynamicSchema(rule.regra_tipo, rule.parametros) : z.object({
+    score: z.coerce.number().min(0).default(0),
+    notes: z.string().optional(),
+  });
+  
+  // Define default values based on rule type
   const getDefaultValues = () => {
     if (initialValues) return initialValues;
+    if (!rule) return { score: 0, notes: '' };
     
-    switch (scoreType) {
+    switch (rule.regra_tipo) {
       case 'tempo':
         return { minutes: 0, seconds: 0, milliseconds: 0, notes: '' };
-      case 'distancia':
-      case 'pontos':
-        return { score: 0, notes: '' };
+      case 'baterias':
+        const numTentativas = rule.parametros.num_tentativas || 3;
+        return {
+          tentativas: Array.from({ length: numTentativas }, () => ({ valor: 0, raia: '' })),
+          notes: ''
+        };
+      case 'sets':
+        const numSets = rule.parametros.num_sets || 3;
+        const pontuaPorSet = rule.parametros.pontua_por_set !== false;
+        return {
+          sets: Array.from({ length: numSets }, () => 
+            pontuaPorSet ? { pontos: 0 } : { vencedor: 'derrota' }
+          ),
+          notes: ''
+        };
+      case 'arrows':
+        const numFlechas = rule.parametros.num_flechas || 6;
+        return {
+          flechas: Array.from({ length: numFlechas }, () => ({ zona: '0' })),
+          notes: ''
+        };
       default:
         return { score: 0, notes: '' };
     }
@@ -66,23 +142,18 @@ export function ScoreForm({ scoreType, initialValues, onSubmit, isPending }: Sco
     onSubmit(data);
   };
 
-  const renderScoreFields = () => {
-    switch (scoreType) {
-      case 'tempo':
-        return <TimeScoreFields form={form as any} />;
-      case 'distancia':
-        return <DistanceScoreFields form={form as any} />;
-      case 'pontos':
-        return <PointsScoreFields form={form as any} />;
-      default:
-        return <PointsScoreFields form={form as any} />;
-    }
-  };
+  if (isLoading) {
+    return <div>Carregando configuração da modalidade...</div>;
+  }
+
+  if (!rule) {
+    return <div>Erro ao carregar configuração da modalidade</div>;
+  }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 mt-4">
-        {renderScoreFields()}
+        <DynamicScoreFields form={form} rule={rule} />
         
         <FormField
           control={form.control}

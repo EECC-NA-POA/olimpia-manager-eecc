@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -11,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { MedalDisplay } from './components/MedalDisplay';
 import { ScoreForm } from './components/ScoreForm';
 import { useScoreSubmission } from './hooks/useScoreSubmission';
-import { AthleteScoreCardProps, ScoreRecord, TimeScoreFormValues, DistanceScoreFormValues, PointsScoreFormValues } from './types';
+import { AthleteScoreCardProps, ScoreRecord } from './types';
 
 export function AthleteScoreCard({ 
   athlete, 
@@ -22,15 +23,12 @@ export function AthleteScoreCard({
 }: AthleteScoreCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // scoreType is already in Portuguese format ('tempo' | 'distancia' | 'pontos')
-  const dbScoreType = scoreType;
-  
   const { submitScoreMutation } = useScoreSubmission(
     eventId, 
     modalityId, 
     athlete, 
     judgeId, 
-    dbScoreType
+    scoreType
   );
 
   // Fetch existing score if it exists
@@ -81,29 +79,6 @@ export function AthleteScoreCard({
     enabled: !!eventId && !!athlete.atleta_id && !!modalityId,
   });
 
-  // Prepare initial form values based on existing score
-  const getInitialFormValues = () => {
-    if (!existingScore) {
-      return dbScoreType === 'tempo' 
-        ? { minutes: 0, seconds: 0, milliseconds: 0, notes: '' }
-        : { score: 0, notes: '' };
-    }
-    
-    if (dbScoreType === 'tempo') {
-      return {
-        minutes: existingScore.tempo_minutos || 0,
-        seconds: existingScore.tempo_segundos || 0,
-        milliseconds: existingScore.tempo_milissegundos || 0,
-        notes: existingScore.observacoes || ''
-      };
-    } else {
-      return {
-        score: existingScore.valor_pontuacao || 0,
-        notes: existingScore.observacoes || ''
-      };
-    }
-  };
-
   // Expand form when score exists
   useEffect(() => {
     if (existingScore) {
@@ -112,7 +87,7 @@ export function AthleteScoreCard({
   }, [existingScore]);
 
   // Handle form submission
-  const handleSubmit = (data: TimeScoreFormValues | DistanceScoreFormValues | PointsScoreFormValues) => {
+  const handleSubmit = (data: any) => {
     submitScoreMutation.mutate(data, {
       onSuccess: () => setIsExpanded(false)
     });
@@ -140,7 +115,7 @@ export function AthleteScoreCard({
           <MedalDisplay 
             scoreRecord={existingScore || null} 
             medalInfo={medalInfo || null}
-            scoreType={dbScoreType} 
+            scoreType={scoreType} 
           />
         </div>
       </CardHeader>
@@ -157,8 +132,8 @@ export function AthleteScoreCard({
 
         {isExpanded && (
           <ScoreForm 
-            scoreType={dbScoreType}
-            initialValues={getInitialFormValues()}
+            modalityId={modalityId}
+            initialValues={existingScore}
             onSubmit={handleSubmit}
             isPending={submitScoreMutation.isPending}
           />

@@ -2,7 +2,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { TimeScoreFormValues, DistanceScoreFormValues, PointsScoreFormValues } from '../types';
+import { useModalityRules } from '../../tabs/scores/hooks/useModalityRules';
 
 interface AthleteData {
   atleta_id: string;
@@ -17,54 +17,116 @@ export function useScoreSubmission(
   scoreType: 'tempo' | 'distancia' | 'pontos'
 ) {
   const queryClient = useQueryClient();
+  const { data: rule } = useModalityRules(modalityId);
 
   const submitScoreMutation = useMutation({
-    mutationFn: async (data: TimeScoreFormValues | DistanceScoreFormValues | PointsScoreFormValues) => {
+    mutationFn: async (formData: any) => {
       if (!eventId) throw new Error('Event ID is missing');
+      if (!rule) throw new Error('Modality rules not found');
       
-      // Convert form data based on score type
+      // Convert form data based on rule type
       let scoreData;
       
-      if (scoreType === 'tempo' && 'minutes' in data) {
-        const totalMs = (data.minutes * 60 * 1000) + (data.seconds * 1000) + data.milliseconds;
-        scoreData = {
-          tempo_minutos: data.minutes,
-          tempo_segundos: data.seconds,
-          tempo_milissegundos: data.milliseconds,
-          valor_pontuacao: totalMs, // Store total milliseconds for ranking
-          tipo_pontuacao: 'tempo',
-          unidade: 'ms'
-        };
-      } else if (scoreType === 'distancia' && 'score' in data) {
-        scoreData = {
-          valor_pontuacao: data.score,
-          tempo_minutos: null,
-          tempo_segundos: null,
-          tempo_milissegundos: null,
-          tipo_pontuacao: 'distancia',
-          unidade: 'm'
-        };
-      } else if (scoreType === 'pontos' && 'score' in data) {
-        scoreData = {
-          valor_pontuacao: data.score,
-          tempo_minutos: null,
-          tempo_segundos: null,
-          tempo_milissegundos: null,
-          tipo_pontuacao: 'pontos',
-          unidade: 'pontos'
-        };
-      } else {
-        throw new Error('Invalid form data format for score type');
+      switch (rule.regra_tipo) {
+        case 'tempo':
+          if ('minutes' in formData) {
+            const totalMs = (formData.minutes * 60 * 1000) + (formData.seconds * 1000) + formData.milliseconds;
+            scoreData = {
+              tempo_minutos: formData.minutes,
+              tempo_segundos: formData.seconds,
+              tempo_milissegundos: formData.milliseconds,
+              valor_pontuacao: totalMs,
+              dados_json: null,
+              unidade: 'ms'
+            };
+          }
+          break;
+          
+        case 'distancia':
+        case 'pontos':
+          if ('score' in formData) {
+            scoreData = {
+              valor_pontuacao: formData.score,
+              tempo_minutos: null,
+              tempo_segundos: null,
+              tempo_milissegundos: null,
+              dados_json: null,
+              unidade: rule.regra_tipo === 'distancia' ? 'm' : 'pontos'
+            };
+          }
+          break;
+          
+        case 'baterias':
+          // For heats, store individual attempts and calculate best result
+          const tentativas = formData.tentativas || [];
+          const melhorTentativa = tentativas.reduce((melhor: any, atual: any) => {
+            if (!melhor || atual.valor > melhor.valor) return atual;
+            return melhor;
+          }, null);
+          
+          scoreData = {
+            valor_pontuacao: melhorTentativa?.valor || 0,
+            tempo_minutos: null,
+            tempo_segundos: null,
+            tempo_milissegundos: null,
+            dados_json: { tentativas, melhor_tentativa: melhorTentativa },
+            unidade: rule.parametros.unidade || 'pontos'
+          };
+          break;
+          
+        case 'sets':
+          const sets = formData.sets || [];
+          if (rule.parametros.pontua_por_set !== false) {
+            // Sum points from all sets
+            const totalPontos = sets.reduce((total: number, set: any) => total + (set.pontos || 0), 0);
+            scoreData = {
+              valor_pontuacao: totalPontos,
+              tempo_minutos: null,
+              tempo_segundos: null,
+              tempo_milissegundos: null,
+              dados_json: { sets },
+              unidade: 'pontos'
+            };
+          } else {
+            // Count set victories
+            const vitorias = sets.filter((set: any) => set.vencedor === 'vitoria').length;
+            scoreData = {
+              valor_pontuacao: vitorias,
+              tempo_minutos: null,
+              tempo_segundos: null,
+              tempo_milissegundos: null,
+              dados_json: { sets, total_vitorias: vitorias },
+              unidade: 'vitorias'
+            };
+          }
+          break;
+          
+        case 'arrows':
+          const flechas = formData.flechas || [];
+          const totalPontos = flechas.reduce((total: number, flecha: any) => total + parseInt(flecha.zona || '0'), 0);
+          scoreData = {
+            valor_pontuacao: totalPontos,
+            tempo_minutos: null,
+            tempo_segundos: null,
+            tempo_milissegundos: null,
+            dados_json: { flechas, total_pontos: totalPontos },
+            unidade: 'pontos'
+          };
+          break;
+          
+        default:
+          throw new Error('Invalid rule type');
       }
       
       const commonFields = {
-        observacoes: data.notes || null,
+        observacoes: formData.notes || null,
         juiz_id: judgeId,
         data_registro: new Date().toISOString(),
         evento_id: eventId,
         modalidade_id: modalityId,
         atleta_id: athlete.atleta_id,
-        equipe_id: athlete.equipe_id || null
+        equipe_id: athlete.equipe_id || null,
+        regra_tipo: rule.regra_tipo
       };
       
       // Check if score already exists
@@ -88,7 +150,7 @@ export function useScoreSubmission(
           
         if (error) throw error;
       } else {
-        // Insert new score - the trigger will handle team replication
+        // Insert new score - the trigger will handle team replication and ranking
         const { error } = await supabase
           .from('pontuacoes')
           .insert({
