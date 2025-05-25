@@ -14,10 +14,10 @@ export function useModalityRulesData(eventId: string | null) {
       
       setIsLoading(true);
       try {
-        // Fetch modalities
+        // Fetch modalities with all fields
         const { data: modalitiesData, error: modalitiesError } = await supabase
           .from('modalidades')
-          .select('id, nome')
+          .select('*')
           .eq('evento_id', eventId)
           .order('nome');
         

@@ -26,15 +26,18 @@ export function ModalityRulesTable({ modalities, onEdit, onDelete }: ModalityRul
         <TableHeader>
           <TableRow>
             <TableHead>Modalidade</TableHead>
+            <TableHead>Tipo Modalidade</TableHead>
+            <TableHead>Categoria</TableHead>
+            <TableHead>Faixa Etária</TableHead>
             <TableHead>Tipo de Regra</TableHead>
             <TableHead>Parâmetros</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>Status da Regra</TableHead>
             <TableHead className="w-24">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow>
-            <TableCell colSpan={5} className="text-center py-4">
+            <TableCell colSpan={8} className="text-center py-4">
               Nenhuma modalidade encontrada
             </TableCell>
           </TableRow>
@@ -48,9 +51,12 @@ export function ModalityRulesTable({ modalities, onEdit, onDelete }: ModalityRul
       <TableHeader>
         <TableRow>
           <TableHead>Modalidade</TableHead>
+          <TableHead>Tipo Modalidade</TableHead>
+          <TableHead>Categoria</TableHead>
+          <TableHead>Faixa Etária</TableHead>
           <TableHead>Tipo de Regra</TableHead>
           <TableHead>Parâmetros</TableHead>
-          <TableHead>Status</TableHead>
+          <TableHead>Status da Regra</TableHead>
           <TableHead className="w-24">Ações</TableHead>
         </TableRow>
       </TableHeader>
@@ -58,6 +64,16 @@ export function ModalityRulesTable({ modalities, onEdit, onDelete }: ModalityRul
         {modalities.map((modality) => (
           <TableRow key={modality.id}>
             <TableCell className="font-medium">{modality.nome}</TableCell>
+            <TableCell>
+              {modality.tipo_modalidade === 'individual' ? 'Individual' : 'Coletivo'}
+            </TableCell>
+            <TableCell>
+              {modality.categoria === 'masculino' ? 'Masculino' : 
+               modality.categoria === 'feminino' ? 'Feminino' : 'Misto'}
+            </TableCell>
+            <TableCell>
+              {modality.faixa_etaria === 'adulto' ? 'Adulto' : 'Infantil'}
+            </TableCell>
             <TableCell>
               {modality.regra ? (
                 <Badge variant="default">
@@ -75,10 +91,11 @@ export function ModalityRulesTable({ modalities, onEdit, onDelete }: ModalityRul
             </TableCell>
             <TableCell>
               {modality.regra && (
-                <div className="text-sm">
+                <div className="text-sm space-y-1">
                   {Object.entries(modality.regra.parametros).map(([key, value]) => (
-                    <div key={key}>
-                      <strong>{key}:</strong> {String(value)}
+                    <div key={key} className="flex justify-between">
+                      <span className="font-medium">{key}:</span>
+                      <span>{String(value)}</span>
                     </div>
                   ))}
                 </div>

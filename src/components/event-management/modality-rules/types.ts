@@ -2,11 +2,20 @@
 export interface Modality {
   id: string;
   nome: string;
+  tipo_pontuacao: 'tempo' | 'distancia' | 'pontos';
+  tipo_modalidade: 'individual' | 'coletivo';
+  categoria: 'misto' | 'masculino' | 'feminino';
+  status: 'Ativa' | 'Em análise' | 'Esgotada' | 'Cancelada';
+  limite_vagas: number;
+  vagas_ocupadas: number;
+  grupo: string | null;
+  evento_id: string;
+  faixa_etaria: 'adulto' | 'infantil';
   regra?: ModalityRule;
 }
 
 export interface ModalityRule {
-  id?: string;
+  id?: number;
   modalidade_id: string;
   regra_tipo: 'pontos' | 'distancia' | 'tempo' | 'baterias' | 'sets' | 'arrows';
   parametros: {
@@ -20,6 +29,8 @@ export interface ModalityRule {
     formato_tempo?: 'mm:ss.SS' | 'hh:mm:ss';
     [key: string]: any;
   };
+  criado_em?: string;
+  atualizado_em?: string | null;
 }
 
 export interface RuleForm {
