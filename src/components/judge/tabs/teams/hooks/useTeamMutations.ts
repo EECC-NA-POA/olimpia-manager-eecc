@@ -142,8 +142,7 @@ export function useTeamMutations(
         .from('atletas_equipes')
         .insert({
           equipe_id: teamId,
-          atleta_id: athleteId,
-          posicao: 0
+          atleta_id: athleteId
         });
 
       if (error) throw error;
