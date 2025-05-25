@@ -31,8 +31,8 @@ export function ModalityButtons({
           >
             {modality.modalidade_nome} - {modality.categoria}
             <span className="text-xs ml-2 opacity-70">
-              ({modality.tipo_pontuacao === 'time' ? 'Tempo' : 
-                modality.tipo_pontuacao === 'distance' ? 'Distância' : 'Pontos'})
+              ({modality.tipo_pontuacao === 'tempo' ? 'Tempo' : 
+                modality.tipo_pontuacao === 'distancia' ? 'Distância' : 'Pontos'})
             </span>
           </Button>
         ))}

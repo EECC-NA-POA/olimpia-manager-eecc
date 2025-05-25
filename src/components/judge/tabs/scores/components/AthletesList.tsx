@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Athlete } from '../hooks/useAthletes';
+import { AthleteCard } from '@/components/judge/AthleteCard';
 import { AthleteFilters } from './AthleteFilters';
 import { AthletesGrid } from './AthletesGrid';
 import { AthletesCount } from './AthletesCount';
-import { useAthleteData } from './hooks/useAthleteData';
 import { useAthleteFiltering } from './hooks/useAthleteFiltering';
+import { Athlete } from '../hooks/useAthletes';
 
 interface AthletesListProps {
   athletes: Athlete[] | undefined;
@@ -14,112 +15,91 @@ interface AthletesListProps {
   modalityId: number;
   eventId: string | null;
   judgeId: string;
-  scoreType?: 'time' | 'distance' | 'points';
+  scoreType?: 'tempo' | 'distancia' | 'pontos';
 }
 
-export function AthletesList({ 
-  athletes, 
-  isLoading, 
-  modalityId, 
-  eventId, 
-  judgeId, 
-  scoreType 
+export function AthletesList({
+  athletes,
+  isLoading,
+  modalityId,
+  eventId,
+  judgeId,
+  scoreType = 'pontos'
 }: AthletesListProps) {
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
-  const [searchFilter, setSearchFilter] = useState('');
-  const [filterType, setFilterType] = useState<'id' | 'name' | 'filial' | 'estado'>('name');
-  const [selectedBranch, setSelectedBranch] = useState<string>('');
-  const [selectedState, setSelectedState] = useState<string>('');
 
-  // Get enhanced athlete data with branch information
-  const { athletesWithBranchData, availableBranches, availableStates } = useAthleteData({
-    athletes,
-    eventId
-  });
-
-  // Filter athletes based on search criteria
-  const filteredAthletes = useAthleteFiltering({
-    athletes: athletesWithBranchData,
-    searchFilter,
-    filterType,
-    selectedBranch,
-    selectedState
-  });
-
-  // Reset filters when filter type changes
-  const handleFilterTypeChange = (newFilterType: 'id' | 'name' | 'filial' | 'estado') => {
-    setFilterType(newFilterType);
-    setSearchFilter('');
-    setSelectedBranch('');
-    setSelectedState('');
-  };
+  const {
+    filteredAthletes,
+    filters,
+    setFilters,
+    resetFilters
+  } = useAthleteFiltering(athletes || []);
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-20 w-full" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-64 w-full" />
-          ))}
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Carregando atletas...</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, index) => (
+              <Skeleton key={index} className="h-48 w-full" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
-  if (!athletesWithBranchData || athletesWithBranchData.length === 0) {
+  if (!athletes || athletes.length === 0) {
     return (
-      <div className="space-y-4">
-        <AthleteFilters
-          searchFilter={searchFilter}
-          onSearchFilterChange={setSearchFilter}
-          filterType={filterType}
-          onFilterTypeChange={handleFilterTypeChange}
-          availableBranches={availableBranches}
-          availableStates={availableStates}
-          selectedBranch={selectedBranch}
-          onSelectedBranchChange={setSelectedBranch}
-          selectedState={selectedState}
-          onSelectedStateChange={setSelectedState}
-        />
-        <div className="text-center py-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>Nenhum atleta encontrado</CardTitle>
+        </CardHeader>
+        <CardContent>
           <p className="text-muted-foreground">
-            Nenhum atleta inscrito nesta modalidade
+            Não há atletas inscritos nesta modalidade.
           </p>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <AthleteFilters
-        searchFilter={searchFilter}
-        onSearchFilterChange={setSearchFilter}
-        filterType={filterType}
-        onFilterTypeChange={handleFilterTypeChange}
-        availableBranches={availableBranches}
-        availableStates={availableStates}
-        selectedBranch={selectedBranch}
-        onSelectedBranchChange={setSelectedBranch}
-        selectedState={selectedState}
-        onSelectedStateChange={setSelectedState}
-      />
-      
-      <AthletesGrid
-        athletes={filteredAthletes}
-        selectedAthleteId={selectedAthleteId}
-        onAthleteSelect={setSelectedAthleteId}
-        modalityId={modalityId}
-        scoreType={scoreType}
-        eventId={eventId}
-        judgeId={judgeId}
-      />
-
-      <AthletesCount 
-        filteredCount={filteredAthletes.length}
-        totalCount={athletesWithBranchData.length}
-      />
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Atletas Inscritos</CardTitle>
+        <AthletesCount 
+          total={athletes.length}
+          filtered={filteredAthletes.length}
+        />
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <AthleteFilters 
+          filters={filters}
+          onFiltersChange={setFilters}
+          onReset={resetFilters}
+        />
+        
+        <AthletesGrid>
+          {filteredAthletes.map((athlete) => (
+            <AthleteCard
+              key={athlete.atleta_id}
+              athlete={athlete}
+              modalityId={modalityId}
+              scoreType={scoreType}
+              eventId={eventId}
+              judgeId={judgeId}
+              isSelected={selectedAthleteId === athlete.atleta_id}
+              onClick={() => setSelectedAthleteId(
+                selectedAthleteId === athlete.atleta_id ? null : athlete.atleta_id
+              )}
+            />
+          ))}
+        </AthletesGrid>
+      </CardContent>
+    </Card>
   );
 }

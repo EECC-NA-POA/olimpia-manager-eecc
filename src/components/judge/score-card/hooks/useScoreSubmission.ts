@@ -14,7 +14,7 @@ export function useScoreSubmission(
     equipe_id?: number;
   },
   judgeId: string,
-  scoreType: 'time' | 'distance' | 'points'
+  scoreType: 'tempo' | 'distancia' | 'pontos'
 ) {
   const queryClient = useQueryClient();
   
@@ -37,7 +37,7 @@ export function useScoreSubmission(
     // Sort based on score type
     let sortedScores = [...allScores] as ScoreRecord[];
     
-    if (scoreType === 'time') {
+    if (scoreType === 'tempo') {
       // For time, lower is better (ascending)
       sortedScores.sort((a, b) => {
         const aTotal = parseTimeToMilliseconds(
@@ -98,7 +98,7 @@ export function useScoreSubmission(
       // Convert data based on score type
       let scoreData;
       
-      if (scoreType === 'time' && 'minutes' in data) {
+      if (scoreType === 'tempo' && 'minutes' in data) {
         const minutes = data.minutes;
         const seconds = data.seconds;
         const milliseconds = data.milliseconds;
@@ -118,7 +118,7 @@ export function useScoreSubmission(
           tempo_minutos: null,
           tempo_segundos: null,
           tempo_milissegundos: null,
-          unidade: scoreType === 'distance' ? 'm' : 'pontos'
+          unidade: scoreType === 'distancia' ? 'm' : 'pontos'
         };
       } else {
         throw new Error('Invalid form data format');

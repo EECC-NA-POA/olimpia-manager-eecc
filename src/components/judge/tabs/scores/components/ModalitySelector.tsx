@@ -39,8 +39,8 @@ export function ModalitySelector({ modalities, onSelectModality }: ModalitySelec
               {modality.modalidade_nome} - {modality.categoria}
               {' '}
               <span className="text-muted-foreground text-xs ml-1">
-                ({modality.tipo_pontuacao === 'time' ? 'Tempo' : 
-                  modality.tipo_pontuacao === 'distance' ? 'Distância' : 'Pontos'})
+                ({modality.tipo_pontuacao === 'tempo' ? 'Tempo' : 
+                  modality.tipo_pontuacao === 'distancia' ? 'Distância' : 'Pontos'})
               </span>
             </SelectItem>
           ))}

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Card, 
@@ -17,7 +16,7 @@ interface AthleteCardProps {
   isSelected?: boolean;
   onClick?: () => void;
   modalityId?: number;
-  scoreType?: 'time' | 'distance' | 'points';
+  scoreType?: 'tempo' | 'distancia' | 'pontos';
   eventId?: string | null;
   judgeId?: string;
 }
@@ -27,7 +26,7 @@ export function AthleteCard({
   isSelected, 
   onClick, 
   modalityId,
-  scoreType = 'points',
+  scoreType = 'pontos',
   eventId,
   judgeId
 }: AthleteCardProps) {
