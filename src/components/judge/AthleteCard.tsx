@@ -74,7 +74,8 @@ export function AthleteCard({
         return null;
       }
       
-      return data?.filiais;
+      // Return the first filial from the array, or null if no filials
+      return Array.isArray(data?.filiais) && data.filiais.length > 0 ? data.filiais[0] : null;
     },
     enabled: !!athlete.atleta_id,
   });
