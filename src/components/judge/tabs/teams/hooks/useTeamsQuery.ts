@@ -64,13 +64,12 @@ export function useTeamsQuery(
           console.error('Error fetching modality for team:', team.id, modalityError);
         }
 
-        // Get team athletes with user and branch information - removed posicao
+        // Get team athletes with user and branch information - removed raia e posicao
         const { data: athletesData, error: athletesError } = await supabase
           .from('atletas_equipes')
           .select(`
             id,
             atleta_id,
-            raia,
             usuarios(
               nome_completo,
               tipo_documento,
@@ -111,7 +110,7 @@ export function useTeamsQuery(
               atleta_id: athlete.atleta_id,
               atleta_nome: usuario?.nome_completo || '',
               posicao: 0, // Valor padrão já que a coluna não existe
-              raia: athlete.raia,
+              raia: 0, // Valor padrão já que a coluna não existe
               documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
               filial_nome: filial?.nome || 'N/A',
               numero_identificador: pagamentoData?.numero_identificador || undefined

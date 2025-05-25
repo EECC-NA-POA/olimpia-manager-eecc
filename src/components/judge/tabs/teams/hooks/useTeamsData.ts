@@ -57,13 +57,12 @@ export function useTeamsData(
       for (const team of teamsData) {
         console.log('Processing team for management:', team);
         
-        // Get team athletes with branch information
+        // Get team athletes with branch information - removed raia e posicao
         const { data: athletesData } = await supabase
           .from('atletas_equipes')
           .select(`
             id,
             atleta_id,
-            raia,
             usuarios!inner(
               nome_completo,
               tipo_documento,
@@ -101,8 +100,8 @@ export function useTeamsData(
               id: athlete.id,
               atleta_id: athlete.atleta_id,
               atleta_nome: usuario?.nome_completo || '',
-              posicao: 0, // Removido posicao pois não existe na tabela
-              raia: athlete.raia,
+              posicao: 0, // Valor padrão já que a coluna não existe
+              raia: 0, // Valor padrão já que a coluna não existe
               documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
               filial_nome: filial?.nome || 'N/A',
               numero_identificador: pagamentoData?.numero_identificador || undefined
