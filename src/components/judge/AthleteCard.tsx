@@ -32,9 +32,19 @@ export function AthleteCard({
   judgeId
 }: AthleteCardProps) {
   // Fetch athlete data using custom hooks
-  const { data: paymentData } = useAthletePaymentData(athlete.atleta_id, eventId);
-  const { data: branchData } = useAthleteBranchData(athlete.atleta_id);
+  const { data: paymentData, isLoading: isLoadingPayment } = useAthletePaymentData(athlete.atleta_id, eventId);
+  const { data: branchData, isLoading: isLoadingBranch } = useAthleteBranchData(athlete.atleta_id);
   const { data: scores } = useAthleteScores(athlete.atleta_id);
+  
+  // Debug logs
+  console.log('AthleteCard data for', athlete.atleta_nome, {
+    athleteId: athlete.atleta_id,
+    eventId,
+    paymentData,
+    branchData,
+    isLoadingPayment,
+    isLoadingBranch
+  });
   
   // Check if the athlete has a score for the selected modality
   const hasScoreForCurrentModality = modalityId ? 

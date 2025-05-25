@@ -6,6 +6,8 @@ export function useAthletePaymentData(athleteId: string, eventId: string | null)
   return useQuery({
     queryKey: ['athlete-payment', athleteId, eventId],
     queryFn: async () => {
+      console.log('Fetching payment data for athlete:', athleteId, 'event:', eventId);
+      
       const { data, error } = await supabase
         .from('pagamentos')
         .select('numero_identificador')
@@ -18,6 +20,7 @@ export function useAthletePaymentData(athleteId: string, eventId: string | null)
         return null;
       }
       
+      console.log('Payment data fetched:', data);
       return data;
     },
     enabled: !!athleteId && !!eventId,
@@ -28,6 +31,8 @@ export function useAthleteBranchData(athleteId: string) {
   return useQuery({
     queryKey: ['athlete-branch', athleteId],
     queryFn: async () => {
+      console.log('Fetching branch data for athlete:', athleteId);
+      
       const { data, error } = await supabase
         .from('usuarios')
         .select(`
@@ -37,15 +42,17 @@ export function useAthleteBranchData(athleteId: string) {
           )
         `)
         .eq('id', athleteId)
-        .maybeSingle();
+        .single();
       
       if (error) {
         console.error('Error fetching branch data:', error);
         return null;
       }
       
-      // Return the first filial from the array, or null if no filials
-      return Array.isArray(data?.filiais) && data.filiais.length > 0 ? data.filiais[0] : null;
+      console.log('Branch data fetched:', data);
+      
+      // The filiais should be a single object, not an array
+      return data?.filiais || null;
     },
     enabled: !!athleteId,
   });
@@ -55,6 +62,8 @@ export function useAthleteScores(athleteId: string) {
   return useQuery({
     queryKey: ['athlete-scores', athleteId],
     queryFn: async () => {
+      console.log('Fetching scores for athlete:', athleteId);
+      
       const { data, error } = await supabase
         .from('pontuacoes')
         .select('valor_pontuacao, modalidade_id')
@@ -65,6 +74,7 @@ export function useAthleteScores(athleteId: string) {
         return [];
       }
       
+      console.log('Athlete scores fetched:', data);
       return data || [];
     },
     enabled: !!athleteId,
