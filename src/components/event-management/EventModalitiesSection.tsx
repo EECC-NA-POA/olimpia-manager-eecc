@@ -43,7 +43,7 @@ export function EventModalitiesSection({ eventId }: { eventId: string | null }) 
 
   const filteredModalities = modalities.filter(item => 
     item.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.descricao?.toLowerCase().includes(searchTerm.toLowerCase())
+    item.grupo?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (isLoading) {

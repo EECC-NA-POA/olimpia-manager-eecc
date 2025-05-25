@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Table,
@@ -11,7 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from '@/components/ui/button';
 import { Edit, Trash } from 'lucide-react';
-import { Modality } from '../types';
+import { Modality } from './types';
 
 interface ModalitiesTableProps {
   modalities: Modality[];

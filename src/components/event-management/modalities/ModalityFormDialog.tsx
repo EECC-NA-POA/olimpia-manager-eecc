@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -17,7 +16,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Modality, ModalityForm } from '../types';
+import { Modality, ModalityForm } from './types';
 
 const defaultFormValues: ModalityForm = {
   nome: '',
