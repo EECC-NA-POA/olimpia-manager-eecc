@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
@@ -13,25 +12,20 @@ export function useAthletePaymentData(athleteId: string, eventId: string | null)
         return null;
       }
       
-      // Join pagamentos with usuarios to get the correct payment data
+      // Query pagamentos table directly with atleta_id
       const { data, error } = await supabase
         .from('pagamentos')
-        .select(`
-          numero_identificador,
-          valor,
-          status_pagamento,
-          usuarios!inner(id)
-        `)
-        .eq('usuarios.id', athleteId)
+        .select('numero_identificador, valor, status_pagamento, atleta_id')
+        .eq('atleta_id', athleteId)
         .eq('evento_id', eventId)
         .maybeSingle();
       
       if (error) {
-        console.error('Error fetching payment data with join:', error);
+        console.error('Error fetching payment data:', error);
         return null;
       }
       
-      console.log('Payment data with join fetched:', data);
+      console.log('Payment data fetched for athlete:', athleteId, 'data:', data);
       return data;
     },
     enabled: !!athleteId && !!eventId,

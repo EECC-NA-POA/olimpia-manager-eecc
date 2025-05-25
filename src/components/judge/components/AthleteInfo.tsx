@@ -2,41 +2,21 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Athlete } from '../tabs/scores/hooks/useAthletes';
-import { MapPin, FileText, User } from 'lucide-react';
+import { FileText } from 'lucide-react';
 
 interface AthleteInfoProps {
   athlete: Athlete;
   athleteIdentifier: string;
-  branchName?: string;
-  branchState?: string;
   hasScoreForCurrentModality: boolean;
 }
 
 export function AthleteInfo({ 
   athlete, 
   athleteIdentifier, 
-  branchName, 
-  branchState, 
   hasScoreForCurrentModality 
 }: AthleteInfoProps) {
   return (
     <div className="space-y-4">
-      {/* Location Info */}
-      {(branchName || branchState) && (
-        <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
-          <MapPin className="w-4 h-4 text-gray-500 mt-0.5" />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Filial</p>
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {branchName || 'N/A'}
-            </p>
-            {branchState && (
-              <p className="text-xs text-gray-600">{branchState}</p>
-            )}
-          </div>
-        </div>
-      )}
-      
       {/* Document Info */}
       <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
         <FileText className="w-4 h-4 text-gray-500 mt-0.5" />

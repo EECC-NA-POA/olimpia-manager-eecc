@@ -37,13 +37,10 @@ export function AthleteCard({
   const { data: scores } = useAthleteScores(athlete.atleta_id);
   
   // Debug logs
-  console.log('AthleteCard data for', athlete.atleta_nome, {
+  console.log('AthleteCard payment data for', athlete.atleta_nome, {
     athleteId: athlete.atleta_id,
     eventId,
     paymentData,
-    branchData,
-    isLoadingPayment,
-    isLoadingBranch,
     numeroIdentificador: paymentData?.numero_identificador
   });
   
@@ -55,7 +52,7 @@ export function AthleteCard({
   // Get athlete identifier from payment data or fallback to ID slice
   const athleteIdentifier = paymentData?.numero_identificador || athlete.atleta_id.slice(-6);
 
-  console.log('Final athlete identifier used:', athleteIdentifier, 'from payment data:', paymentData?.numero_identificador);
+  console.log('Final athlete identifier used:', athleteIdentifier, 'from payment numero_identificador:', paymentData?.numero_identificador);
 
   // If we're in selected view and have all necessary props, render the score card
   if (isSelected && modalityId && eventId && judgeId && scoreType) {
@@ -116,8 +113,6 @@ export function AthleteCard({
         <AthleteInfo 
           athlete={athlete}
           athleteIdentifier={athleteIdentifier}
-          branchName={branchData?.nome}
-          branchState={branchData?.estado}
           hasScoreForCurrentModality={hasScoreForCurrentModality}
         />
       </CardContent>
