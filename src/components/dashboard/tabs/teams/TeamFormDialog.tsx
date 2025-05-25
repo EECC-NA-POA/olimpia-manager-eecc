@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { 
@@ -11,33 +10,10 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from '@/components/ui/input';
+import { Form } from "@/components/ui/form";
 import { Button } from '@/components/ui/button';
-
-// Form validation schema
-const teamFormSchema = z.object({
-  nome: z.string().min(1, "Nome da equipe é obrigatório"),
-  modalidade_id: z.string().min(1, "Modalidade é obrigatória"),
-  cor_uniforme: z.string().optional(),
-  observacoes: z.string().optional(),
-});
-
-type TeamFormValues = z.infer<typeof teamFormSchema>;
+import { TeamFormFields } from './components/TeamFormFields';
+import { teamFormSchema, TeamFormValues } from './schemas/teamFormSchema';
 
 interface TeamFormDialogProps {
   isOpen: boolean;
@@ -106,75 +82,10 @@ export function TeamFormDialog({
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="nome"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome da Equipe</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nome da equipe" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="modalidade_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Modalidade</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value} 
-                    disabled={!!editingTeam}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma modalidade" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {teamModalities?.map((modality: any) => (
-                        <SelectItem key={modality.id} value={String(modality.id)}>
-                          {modality.nome} - {modality.categoria}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="cor_uniforme"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cor do Uniforme</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Azul e Branco" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="observacoes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Observações</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Observações sobre a equipe (opcional)" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <TeamFormFields 
+              form={form}
+              teamModalities={teamModalities}
+              editingTeam={editingTeam}
             />
             
             <DialogFooter>
