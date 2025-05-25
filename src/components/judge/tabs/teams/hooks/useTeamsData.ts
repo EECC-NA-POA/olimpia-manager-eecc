@@ -63,7 +63,6 @@ export function useTeamsData(
           .select(`
             id,
             atleta_id,
-            posicao,
             raia,
             usuarios!inner(
               nome_completo,
@@ -102,7 +101,7 @@ export function useTeamsData(
               id: athlete.id,
               atleta_id: athlete.atleta_id,
               atleta_nome: usuario?.nome_completo || '',
-              posicao: athlete.posicao || 0,
+              posicao: 0, // Removido posicao pois não existe na tabela
               raia: athlete.raia,
               documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
               filial_nome: filial?.nome || 'N/A',

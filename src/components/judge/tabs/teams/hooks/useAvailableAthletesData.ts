@@ -53,12 +53,29 @@ export function useAvailableAthletesData(
 
       console.log('Found enrollments:', enrollments.length);
 
-      // Filter out athletes already in teams
-      const athletesInTeams = new Set(teams.flatMap(team => team.atletas.map(a => a.atleta_id)));
-      console.log('Athletes already in teams:', Array.from(athletesInTeams));
+      // Get all athletes already in teams for this modality from database
+      const { data: athletesInTeams, error: teamsError } = await supabase
+        .from('atletas_equipes')
+        .select(`
+          atleta_id,
+          equipes!inner(modalidade_id, evento_id)
+        `)
+        .eq('equipes.modalidade_id', selectedModalityId)
+        .eq('equipes.evento_id', eventId);
+
+      if (teamsError) {
+        console.error('Error fetching athletes in teams:', teamsError);
+      }
+
+      // Create set of athlete IDs that are already in teams
+      const athletesInTeamsSet = new Set(
+        athletesInTeams?.map(item => item.atleta_id) || []
+      );
+      
+      console.log('Athletes already in teams from DB:', Array.from(athletesInTeamsSet));
       
       return enrollments
-        .filter(enrollment => !athletesInTeams.has(enrollment.atleta_id))
+        .filter(enrollment => !athletesInTeamsSet.has(enrollment.atleta_id))
         .map(enrollment => {
           // Handle usuarios data properly
           const usuario = Array.isArray(enrollment.usuarios) 
