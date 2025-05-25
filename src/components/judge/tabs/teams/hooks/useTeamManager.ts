@@ -4,9 +4,12 @@ import { useModalitiesData } from './useModalitiesData';
 import { useTeamsData } from './useTeamsData';
 import { useAvailableAthletesData } from './useAvailableAthletesData';
 import { useTeamMutations } from './useTeamMutations';
+import { TeamData } from '../types';
 
 export function useTeamManager(eventId: string | null, isOrganizer: boolean) {
   const [selectedModalityId, setSelectedModalityId] = useState<number | null>(null);
+  const [teamToDelete, setTeamToDelete] = useState<TeamData | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Fetch modalities
   const { data: modalities } = useModalitiesData(eventId);
@@ -41,21 +44,28 @@ export function useTeamManager(eventId: string | null, isOrganizer: boolean) {
     isUpdatingAthlete
   } = useTeamMutations(eventId, selectedModalityId, isOrganizer);
 
-  // Handle team deletion with confirmation
+  // Handle team deletion with custom dialog
   const handleDeleteTeam = (teamId: number) => {
     const team = teams?.find(t => t.id === teamId);
     if (!team) return;
 
-    const athleteCount = team.atletas.length;
-    let confirmMessage = `Tem certeza que deseja excluir a equipe "${team.nome}"?`;
-    
-    if (athleteCount > 0) {
-      confirmMessage += `\n\nEsta ação irá remover ${athleteCount} atleta${athleteCount > 1 ? 's' : ''} da equipe e excluir todos os registros relacionados.`;
-    }
+    setTeamToDelete(team);
+    setIsDeleteDialogOpen(true);
+  };
 
-    if (window.confirm(confirmMessage)) {
-      deleteTeam(teamId);
+  // Confirm team deletion
+  const confirmDeleteTeam = () => {
+    if (teamToDelete) {
+      deleteTeam(teamToDelete.id);
+      setIsDeleteDialogOpen(false);
+      setTeamToDelete(null);
     }
+  };
+
+  // Cancel team deletion
+  const cancelDeleteTeam = () => {
+    setIsDeleteDialogOpen(false);
+    setTeamToDelete(null);
   };
 
   return {
@@ -74,6 +84,12 @@ export function useTeamManager(eventId: string | null, isOrganizer: boolean) {
     isDeletingTeam,
     isAddingAthlete,
     isRemovingAthlete,
-    isUpdatingAthlete
+    isUpdatingAthlete,
+    // Delete dialog state
+    teamToDelete,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen: setIsDeleteDialogOpen,
+    confirmDeleteTeam,
+    cancelDeleteTeam
   };
 }

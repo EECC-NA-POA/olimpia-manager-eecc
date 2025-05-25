@@ -46,7 +46,12 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     isDeletingTeam,
     isAddingAthlete,
     isRemovingAthlete,
-    isUpdatingAthlete
+    isUpdatingAthlete,
+    teamToDelete,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    confirmDeleteTeam,
+    cancelDeleteTeam
   } = useTeamManager(eventId, isOrganizer);
 
   // Data for viewing all teams - for organizers and judges, don't filter by branch
@@ -124,6 +129,11 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
               isRemovingAthlete={isRemovingAthlete}
               isUpdatingAthlete={isUpdatingAthlete}
               isOrganizer={isOrganizer}
+              teamToDelete={teamToDelete}
+              isDeleteDialogOpen={isDeleteDialogOpen}
+              setIsDeleteDialogOpen={setIsDeleteDialogOpen}
+              confirmDeleteTeam={confirmDeleteTeam}
+              cancelDeleteTeam={cancelDeleteTeam}
             />
           </TabsContent>
           

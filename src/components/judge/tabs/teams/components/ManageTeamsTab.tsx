@@ -1,14 +1,11 @@
 
 import React from 'react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info, AlertCircle, Users } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ModalityButtons } from './ModalityButtons';
 import { TeamForm } from './TeamForm';
 import { AthletesList } from './AthletesList';
 import { TeamCard } from './TeamCard';
 import { ModalityOption, TeamData, AthleteOption } from '../types';
+import { DeleteTeamDialog } from './DeleteTeamDialog';
 
 interface ManageTeamsTabProps {
   modalities: ModalityOption[];
@@ -27,7 +24,13 @@ interface ManageTeamsTabProps {
   isAddingAthlete: boolean;
   isRemovingAthlete: boolean;
   isUpdatingAthlete: boolean;
-  isOrganizer?: boolean;
+  isOrganizer: boolean;
+  // Delete dialog props
+  teamToDelete: TeamData | null;
+  isDeleteDialogOpen: boolean;
+  setIsDeleteDialogOpen: (open: boolean) => void;
+  confirmDeleteTeam: () => void;
+  cancelDeleteTeam: () => void;
 }
 
 export function ManageTeamsTab({
@@ -47,18 +50,15 @@ export function ManageTeamsTab({
   isAddingAthlete,
   isRemovingAthlete,
   isUpdatingAthlete,
-  isOrganizer = false
+  isOrganizer,
+  teamToDelete,
+  isDeleteDialogOpen,
+  setIsDeleteDialogOpen,
+  confirmDeleteTeam,
+  cancelDeleteTeam
 }: ManageTeamsTabProps) {
-  const handleAddAthlete = (teamId: number, athleteId: string) => {
-    addAthlete({ teamId, athleteId });
-  };
-
-  const handleUpdateAthletePosition = (athleteTeamId: number, posicao?: number, raia?: number) => {
-    updateAthletePosition({ athleteTeamId, posicao, raia });
-  };
-
   return (
-    <div className="space-y-6 mt-6">
+    <div className="space-y-6">
       <ModalityButtons
         modalities={modalities}
         selectedModalityId={selectedModalityId}
@@ -67,80 +67,56 @@ export function ManageTeamsTab({
 
       {selectedModalityId && (
         <>
-          <div className="space-y-4">
-            <TeamForm
-              onCreateTeam={createTeam}
-              isCreating={isCreatingTeam}
+          <TeamForm
+            onCreateTeam={createTeam}
+            isCreating={isCreatingTeam}
+          />
+
+          {availableAthletes.length > 0 && (
+            <AthletesList
+              athletes={availableAthletes}
+              teams={teams}
+              onAddAthlete={addAthlete}
+              isAdding={isAddingAthlete}
             />
-          </div>
+          )}
 
           {isLoading ? (
-            <Skeleton className="h-64 w-full" />
+            <div className="text-center py-8">
+              <p>Carregando equipes...</p>
+            </div>
+          ) : teams.length > 0 ? (
+            <div className="grid gap-6">
+              {teams.map((team) => (
+                <TeamCard
+                  key={team.id}
+                  team={team}
+                  onRemoveAthlete={removeAthlete}
+                  onUpdatePosition={updateAthletePosition}
+                  onDeleteTeam={deleteTeam}
+                  isRemoving={isRemovingAthlete}
+                  isUpdating={isUpdatingAthlete}
+                  isOrganizer={isOrganizer}
+                  isDeletingTeam={isDeletingTeam}
+                />
+              ))}
+            </div>
           ) : (
-            <div className="space-y-6">
-              {availableAthletes.length > 0 && teams.length > 0 && (
-                <>
-                  <Alert className="bg-blue-50 border-blue-200">
-                    <Info className="h-4 w-4" />
-                    <AlertDescription className="text-blue-800">
-                      <strong>Atletas Disponíveis:</strong> Selecione os atletas abaixo para adicioná-los às equipes.
-                      {isOrganizer && " Como organizador, você pode misturar atletas de diferentes filiais."}
-                      {!isOrganizer && " Após adicionar, você pode definir a posição e raia de cada atleta."}
-                    </AlertDescription>
-                  </Alert>
-                  
-                  <AthletesList
-                    athletes={availableAthletes}
-                    teams={teams}
-                    onAddAthlete={handleAddAthlete}
-                    isAdding={isAddingAthlete}
-                  />
-                </>
-              )}
-
-              {availableAthletes.length === 0 && teams.length > 0 && (
-                <Alert variant="default" className="bg-green-50 border-green-200">
-                  <AlertCircle className="h-4 w-4 text-green-600" />
-                  <AlertDescription className="text-green-800">
-                    {isOrganizer 
-                      ? "Todos os atletas desta modalidade já estão em equipes."
-                      : "Todos os atletas da sua filial já estão em equipes ou não há mais atletas disponíveis para esta modalidade."
-                    }
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {teams.length === 0 ? (
-                <Card>
-                  <CardContent className="text-center py-8">
-                    <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                    <p className="text-muted-foreground">
-                      Nenhuma equipe criada ainda. Use o formulário acima para criar sua primeira equipe.
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {teams.map((team) => (
-                    <TeamCard
-                      key={team.id}
-                      team={team}
-                      onRemoveAthlete={removeAthlete}
-                      onUpdatePosition={handleUpdateAthletePosition}
-                      onDeleteTeam={deleteTeam}
-                      isRemoving={isRemovingAthlete}
-                      isUpdating={isUpdatingAthlete}
-                      isDeletingTeam={isDeletingTeam}
-                      isReadOnly={false}
-                      isOrganizer={isOrganizer}
-                    />
-                  ))}
-                </div>
-              )}
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Nenhuma equipe criada ainda para esta modalidade.</p>
+              <p className="text-sm mt-1">Use o formulário acima para criar uma nova equipe.</p>
             </div>
           )}
         </>
       )}
+
+      <DeleteTeamDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        team={teamToDelete}
+        onConfirm={confirmDeleteTeam}
+        isDeleting={isDeletingTeam}
+      />
     </div>
   );
 }
