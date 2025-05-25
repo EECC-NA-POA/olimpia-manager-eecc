@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AthleteCard } from '@/components/judge/AthleteCard';
@@ -91,7 +90,44 @@ export function AthletesList({
     enabled: !!athletes && athletes.length > 0,
   });
 
-  // Combine athletes with their branch data
+  // Fetch payment data for all athletes to get their numero_identificador
+  const { data: paymentData } = useQuery({
+    queryKey: ['athletes-payments', athletes?.map(a => a.atleta_id), eventId],
+    queryFn: async () => {
+      if (!athletes || athletes.length === 0) return {};
+      
+      console.log('Fetching payment data for athletes to get identifiers');
+      
+      // Get payment data for all athletes
+      const { data: payments, error } = await supabase
+        .from('pagamentos')
+        .select('atleta_id, numero_identificador, evento_id')
+        .in('atleta_id', athletes.map(a => a.atleta_id));
+      
+      if (error) {
+        console.error('Error fetching payment data:', error);
+        return {};
+      }
+      
+      // Create a mapping from athlete_id to numero_identificador
+      const paymentMap: Record<string, string> = {};
+      
+      payments?.forEach(payment => {
+        // Prefer payment for current event, fallback to any payment
+        if (eventId && payment.evento_id === eventId) {
+          paymentMap[payment.atleta_id] = payment.numero_identificador;
+        } else if (!paymentMap[payment.atleta_id]) {
+          paymentMap[payment.atleta_id] = payment.numero_identificador;
+        }
+      });
+      
+      console.log('Payment mapping created:', paymentMap);
+      return paymentMap;
+    },
+    enabled: !!athletes && athletes.length > 0,
+  });
+
+  // Combine athletes with their branch data and payment identifiers
   const athletesWithBranchData: AthleteWithBranchData[] = useMemo(() => {
     if (!athletes) return [];
     
@@ -99,8 +135,9 @@ export function AthletesList({
       ...athlete,
       branchName: branchesData?.[athlete.atleta_id]?.nome,
       branchState: branchesData?.[athlete.atleta_id]?.estado,
+      numero_identificador: paymentData?.[athlete.atleta_id] || athlete.atleta_id.slice(-6)
     }));
-  }, [athletes, branchesData]);
+  }, [athletes, branchesData, paymentData]);
 
   // Get unique branches and states for filter options
   const { availableBranches, availableStates } = useMemo(() => {
@@ -124,14 +161,24 @@ export function AthletesList({
   const filteredAthletes = useMemo(() => {
     let filtered = athletesWithBranchData;
 
+    console.log('=== FILTER DEBUG ===');
+    console.log('Filter type:', filterType);
+    console.log('Search filter:', searchFilter);
+    console.log('Total athletes:', filtered.length);
+
     // Apply text/select filters
     switch (filterType) {
       case 'id':
         if (searchFilter.trim()) {
           const searchTerm = searchFilter.toLowerCase().trim();
+          console.log('Filtering by ID with term:', searchTerm);
+          
           filtered = filtered.filter(athlete => {
-            const athleteId = athlete.atleta_id.slice(-6).toLowerCase();
-            return athleteId.includes(searchTerm);
+            const athleteId = athlete.numero_identificador || athlete.atleta_id.slice(-6);
+            const matches = athleteId.toLowerCase().includes(searchTerm);
+            
+            console.log('Athlete:', athlete.atleta_nome, 'ID:', athleteId, 'Matches:', matches);
+            return matches;
           });
         }
         break;
@@ -161,6 +208,9 @@ export function AthletesList({
         }
         break;
     }
+
+    console.log('Filtered athletes count:', filtered.length);
+    console.log('=== END FILTER DEBUG ===');
 
     return filtered;
   }, [athletesWithBranchData, searchFilter, filterType, selectedBranch, selectedState]);

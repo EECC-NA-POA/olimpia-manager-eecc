@@ -93,14 +93,14 @@ export function AthleteFilters({
 
           {showBranchSelect && (
             <Select
-              value={selectedBranch || ""}
-              onValueChange={(value) => onSelectedBranchChange?.(value)}
+              value={selectedBranch || "all"}
+              onValueChange={(value) => onSelectedBranchChange?.(value === "all" ? "" : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione uma filial" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as filiais</SelectItem>
+                <SelectItem value="all">Todas as filiais</SelectItem>
                 {availableBranches.map((branch, index) => (
                   <SelectItem key={index} value={branch.name}>
                     {branch.name} - {branch.state}
@@ -112,14 +112,14 @@ export function AthleteFilters({
 
           {showStateSelect && (
             <Select
-              value={selectedState || ""}
-              onValueChange={(value) => onSelectedStateChange?.(value)}
+              value={selectedState || "all"}
+              onValueChange={(value) => onSelectedStateChange?.(value === "all" ? "" : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um estado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os estados</SelectItem>
+                <SelectItem value="all">Todos os estados</SelectItem>
                 {availableStates.map((state) => (
                   <SelectItem key={state} value={state}>
                     {state}
