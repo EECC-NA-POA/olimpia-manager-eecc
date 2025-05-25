@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
@@ -11,17 +12,7 @@ export function useAthletePaymentData(athleteId: string, eventId: string | null)
       console.log('athleteId type:', typeof athleteId);
       console.log('eventId type:', typeof eventId);
       
-      // First, let's check what's in the pagamentos table for this athlete
-      console.log('Checking all payments for athlete:', athleteId);
-      const { data: allPayments, error: allError } = await supabase
-        .from('pagamentos')
-        .select('*')
-        .eq('atleta_id', athleteId);
-      
-      console.log('All payments for athlete:', allPayments);
-      if (allError) console.log('Error fetching all payments:', allError);
-      
-      // If we have eventId, try to get payment for specific event
+      // If we have eventId, try to get payment for specific event first
       if (eventId) {
         console.log('Trying to get payment for specific event:', eventId);
         const { data, error } = await supabase
@@ -39,16 +30,31 @@ export function useAthletePaymentData(athleteId: string, eventId: string | null)
         }
         
         if (data) {
-          console.log('SUCCESS: Found payment data with numero_identificador:', data.numero_identificador);
+          console.log('SUCCESS: Found payment data for specific event with numero_identificador:', data.numero_identificador);
           console.log('=== END PAYMENT QUERY DEBUG ===');
           return data;
+        } else {
+          console.log('No payment found for specific event');
         }
       }
       
-      // If no eventId or no payment found for specific event, try to get any payment for this athlete
-      console.log('No specific event payment found, getting any payment for athlete');
+      // If no eventId or no payment found for specific event, get any payment for this athlete
+      console.log('Getting any payment for athlete:', athleteId);
+      const { data: allPayments, error: allError } = await supabase
+        .from('pagamentos')
+        .select('*')
+        .eq('atleta_id', athleteId)
+        .order('data_criacao', { ascending: false }); // Get most recent first
+      
+      console.log('All payments for athlete:', allPayments);
+      if (allError) {
+        console.log('Error fetching all payments:', allError);
+        console.log('=== END PAYMENT QUERY DEBUG ===');
+        return null;
+      }
+      
       if (allPayments && allPayments.length > 0) {
-        const latestPayment = allPayments[0]; // Get the first payment record
+        const latestPayment = allPayments[0]; // Get the most recent payment
         console.log('Using latest payment record:', latestPayment);
         console.log('numero_identificador from latest payment:', latestPayment.numero_identificador);
         console.log('=== END PAYMENT QUERY DEBUG ===');
