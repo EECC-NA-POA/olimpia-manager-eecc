@@ -8,6 +8,11 @@ export function useAthletePaymentData(athleteId: string, eventId: string | null)
     queryFn: async () => {
       console.log('Fetching payment data for athlete:', athleteId, 'event:', eventId);
       
+      if (!eventId) {
+        console.log('No eventId provided, skipping payment query');
+        return null;
+      }
+      
       const { data, error } = await supabase
         .from('pagamentos')
         .select('numero_identificador')
@@ -33,26 +38,34 @@ export function useAthleteBranchData(athleteId: string) {
     queryFn: async () => {
       console.log('Fetching branch data for athlete:', athleteId);
       
-      const { data, error } = await supabase
+      // First, get the user's filial_id
+      const { data: userData, error: userError } = await supabase
         .from('usuarios')
-        .select(`
-          filiais (
-            nome,
-            estado
-          )
-        `)
+        .select('filial_id')
         .eq('id', athleteId)
         .single();
       
-      if (error) {
-        console.error('Error fetching branch data:', error);
+      if (userError || !userData?.filial_id) {
+        console.error('Error fetching user filial_id:', userError);
         return null;
       }
       
-      console.log('Branch data fetched:', data);
+      console.log('User filial_id:', userData.filial_id);
       
-      // The filiais should be a single object, not an array
-      return data?.filiais || null;
+      // Then get the branch details
+      const { data: branchData, error: branchError } = await supabase
+        .from('filiais')
+        .select('nome, estado')
+        .eq('id', userData.filial_id)
+        .single();
+      
+      if (branchError) {
+        console.error('Error fetching branch data:', branchError);
+        return null;
+      }
+      
+      console.log('Branch data fetched:', branchData);
+      return branchData;
     },
     enabled: !!athleteId,
   });
