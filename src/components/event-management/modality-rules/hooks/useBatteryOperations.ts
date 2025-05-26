@@ -6,11 +6,11 @@ export function useBatteryOperations() {
   const createBaterias = async (modalityId: string, eventId: string, numBaterias: number) => {
     console.log(`Creating ${numBaterias} baterias for modality ${modalityId} in event ${eventId}`);
     
+    // Check permissions first and get user outside try block
+    const { user } = await checkUserPermissions(eventId);
+    console.log('User ID for bateria creation:', user?.id);
+    
     try {
-      // Check permissions first
-      const { user } = await checkUserPermissions(eventId);
-      console.log('User ID for bateria creation:', user?.id);
-      
       // First, delete existing baterias for this modality to avoid duplicates
       console.log('Deleting existing baterias...');
       const { error: deleteError } = await supabase
