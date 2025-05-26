@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -71,7 +70,7 @@ export function JudgeViewAllTeamsTab({
   }, [allTeams, modalityFilter, branchFilter, searchTerm]);
 
   if (isLoadingAllTeams) {
-    return <LoadingState />;
+    return <LoadingTeamsState />;
   }
 
   if (allTeamsError) {

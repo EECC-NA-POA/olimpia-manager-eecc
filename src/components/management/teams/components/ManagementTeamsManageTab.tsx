@@ -94,7 +94,13 @@ export function ManagementTeamsManageTab({
                 key={team.id}
                 team={team}
                 onDeleteTeam={deleteTeam}
-                onRemoveAthlete={removeAthlete}
+                onRemoveAthlete={(athleteTeamId: number) => {
+                  // Find the athlete by athleteTeamId to get teamId and athleteId
+                  const athlete = team.atletas.find((a: any) => a.atleta_equipe_id === athleteTeamId);
+                  if (athlete) {
+                    removeAthlete({ teamId: team.id, athleteId: athlete.atleta_id });
+                  }
+                }}
                 onUpdateAthletePosition={updateAthletePosition}
                 isDeleting={isDeletingTeam}
                 isRemoving={isRemovingAthlete}
