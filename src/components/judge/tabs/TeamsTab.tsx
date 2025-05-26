@@ -73,15 +73,12 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
 
   // Transform teams data to match expected interface
   const transformedTeams = allTeams?.map(team => {
-    // Find the modality info from allModalities to get tipo_pontuacao
-    const modalityInfo = allModalities?.find(m => m.id === team.modalidade_id);
-    
     return {
       equipe_id: team.id,
       equipe_nome: team.nome,
       modalidade_id: team.modalidade_id,
       modalidade_nome: team.modalidade_info?.nome || '',
-      tipo_pontuacao: modalityInfo?.tipo_pontuacao || 'pontos',
+      tipo_pontuacao: 'pontos', // Default to 'pontos' since we can't reliably get this from the current data structure
       filial_nome: team.filial_id || '', // Use filial_id since filial_info doesn't exist
       members: team.atletas?.map(athlete => ({
         atleta_id: athlete.atleta_id,
