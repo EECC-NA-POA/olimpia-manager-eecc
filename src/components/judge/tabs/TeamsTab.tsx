@@ -22,6 +22,9 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
   // Check if user has judge role - if yes, they should only see scoring functionality
   const hasJudgeRole = user?.papeis?.some(role => role.codigo === 'JUZ') || false;
   
+  // Check if user is delegation representative
+  const isDelegationRep = user?.papeis?.some(role => role.codigo === 'RDD') || false;
+  
   // States for "Visualizar Todas" tab
   const [modalityFilter, setModalityFilter] = useState<number | null>(null);
   const [branchFilter, setBranchFilter] = useState<string | null>(null);
@@ -115,6 +118,43 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
             judgeId={userId}
           />
         </div>
+      </div>
+    );
+  }
+
+  // If user is delegation representative (but not organizer), show only the manage tab
+  if (isDelegationRep && !isOrganizer) {
+    return (
+      <div className="space-y-6">
+        <TeamsTabHeader isOrganizer={false}>
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">Gerenciar Minhas Equipes</h2>
+            <ManageTeamsTab
+              modalities={modalities}
+              teams={teams}
+              availableAthletes={availableAthletes}
+              selectedModalityId={selectedModalityId}
+              setSelectedModalityId={setSelectedModalityId}
+              isLoading={isLoading}
+              createTeam={createTeam}
+              deleteTeam={deleteTeam}
+              addAthlete={addAthlete}
+              removeAthlete={removeAthlete}
+              updateAthletePosition={updateAthletePosition}
+              isCreatingTeam={isCreatingTeam}
+              isDeletingTeam={isDeletingTeam}
+              isAddingAthlete={isAddingAthlete}
+              isRemovingAthlete={isRemovingAthlete}
+              isUpdatingAthlete={isUpdatingAthlete}
+              isOrganizer={false}
+              teamToDelete={teamToDelete}
+              isDeleteDialogOpen={isDeleteDialogOpen}
+              setIsDeleteDialogOpen={setIsDeleteDialogOpen}
+              confirmDeleteTeam={confirmDeleteTeam}
+              cancelDeleteTeam={cancelDeleteTeam}
+            />
+          </div>
+        </TeamsTabHeader>
       </div>
     );
   }

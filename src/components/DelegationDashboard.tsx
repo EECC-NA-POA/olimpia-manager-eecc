@@ -122,7 +122,7 @@ export default function DelegationDashboard() {
           <TeamsTab
             userId={user?.id || ''}
             eventId={currentEventId}
-            isOrganizer={false} // Representante de delegação não tem permissões de organizador
+            isOrganizer={false} // Representante de delegação não tem permissões de organizador, mas pode gerenciar suas equipes
           />
         );
 
