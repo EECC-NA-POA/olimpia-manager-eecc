@@ -122,6 +122,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     );
   }
 
+  // For delegation reps and organizers, show tabs with management capabilities
   return (
     <div className="space-y-6">
       <TeamsTabHeader isOrganizer={isOrganizer}>
