@@ -1,31 +1,17 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { ScoreForm } from './score-card/components/ScoreForm';
-import { useScoreSubmission } from './score-card/hooks/useScoreSubmission';
-import { ModalityRankings } from './ModalityRankings';
-import { ScoreRecord, Modality } from '@/lib/types/database';
+import { ScoreFormContainer } from './score-form/ScoreFormContainer';
+import { Modality } from '@/lib/types/database';
 
 interface AthleteScoreFormProps {
   athleteId: string;
   modalityId: number;
   eventId: string | null;
   judgeId: string;
-}
-
-interface TeamMember {
-  id: string;
-  name: string;
 }
 
 export function AthleteScoreForm({ 
@@ -62,112 +48,6 @@ export function AthleteScoreForm({
     enabled: !!modalityId,
   });
 
-  // Get team members if modality is team-based
-  const { data: teamMembers } = useQuery({
-    queryKey: ['team-members', modalityId, athleteId, eventId],
-    queryFn: async () => {
-      if (!modalityId || !athleteId || !eventId || !modality?.tipo_modalidade?.includes('COLETIVA')) {
-        return [];
-      }
-      
-      try {
-        // First get the team ID for this athlete in this modality
-        const { data: enrollment, error: enrollmentError } = await supabase
-          .from('inscricoes_modalidades')
-          .select('equipe_id')
-          .eq('modalidade_id', modalityId)
-          .eq('atleta_id', athleteId)
-          .eq('evento_id', eventId)
-          .maybeSingle();
-        
-        if (enrollmentError || !enrollment?.equipe_id) {
-          console.error('Error fetching team:', enrollmentError);
-          return [];
-        }
-        
-        // Then get all athletes in that team
-        const { data: members, error: membersError } = await supabase
-          .from('inscricoes_modalidades')
-          .select(`
-            atleta_id,
-            usuarios:atleta_id(nome_completo)
-          `)
-          .eq('modalidade_id', modalityId)
-          .eq('evento_id', eventId)
-          .eq('equipe_id', enrollment.equipe_id);
-        
-        if (membersError) {
-          console.error('Error fetching team members:', membersError);
-          return [];
-        }
-        
-        return members.map((member: any) => ({
-          id: member.atleta_id,
-          name: member.usuarios?.nome_completo || 'Atleta',
-        })) as TeamMember[];
-      } catch (error) {
-        console.error('Error in team members query:', error);
-        return [];
-      }
-    },
-    enabled: !!modalityId && !!athleteId && !!eventId && !!modality?.tipo_modalidade?.includes('COLETIVA'),
-  });
-  
-  const isTeamModality = modality?.tipo_modalidade?.includes('COLETIVA');
-  
-  // Map English score types to Portuguese for the submission hook
-  const mapScoreTypeToEnglish = (portugueseType: string): 'time' | 'distance' | 'points' => {
-    switch (portugueseType) {
-      case 'tempo':
-        return 'time';
-      case 'distancia':
-        return 'distance';
-      case 'pontos':
-      default:
-        return 'points';
-    }
-  };
-  
-  const scoreType = modality?.tipo_pontuacao || 'pontos';
-  const mappedScoreType = mapScoreTypeToEnglish(scoreType);
-  
-  // Fetch existing score if it exists
-  const { data: existingScore } = useQuery({
-    queryKey: ['score', athleteId, modalityId, eventId],
-    queryFn: async () => {
-      if (!eventId) return null;
-      
-      const { data, error } = await supabase
-        .from('pontuacoes')
-        .select('*')
-        .eq('evento_id', eventId)
-        .eq('modalidade_id', modalityId)
-        .eq('atleta_id', athleteId)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('Error fetching existing score:', error);
-        return null;
-      }
-      
-      return data as ScoreRecord;
-    },
-    enabled: !!eventId && !!athleteId && !!modalityId,
-  });
-
-  const { submitScoreMutation } = useScoreSubmission(
-    eventId, 
-    modalityId, 
-    { atleta_id: athleteId, equipe_id: teamMembers?.[0] ? teamMembers.find(m => m.id === athleteId) ? undefined : teamMembers[0] ? undefined : undefined : undefined }, 
-    judgeId, 
-    scoreType
-  );
-
-  // Handle form submission
-  const handleSubmit = (data: any) => {
-    submitScoreMutation.mutate(data);
-  };
-
   if (!modality) {
     return (
       <Card>
@@ -179,66 +59,12 @@ export function AthleteScoreForm({
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Registrar {isTeamModality ? 'Pontuação da Equipe' : 'Pontuação'}</CardTitle>
-              <CardDescription>
-                Modalidade: {modality.modalidade_nome}
-                {isTeamModality && (
-                  <span className="ml-2">
-                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                      Coletiva
-                    </Badge>
-                  </span>
-                )}
-              </CardDescription>
-            </div>
-            <div>
-              <Badge 
-                variant="secondary"
-                className="ml-2 capitalize"
-              >
-                {scoreType === 'tempo' && 'Tempo'}
-                {scoreType === 'distancia' && 'Distância'}
-                {scoreType === 'pontos' && 'Pontos'}
-              </Badge>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isTeamModality && teamMembers && teamMembers.length > 0 && (
-            <div className="bg-muted/50 p-3 rounded-md mb-4">
-              <p className="text-sm font-medium mb-2">Membros da equipe ({teamMembers.length})</p>
-              <div className="flex flex-wrap gap-2">
-                {teamMembers.map(member => (
-                  <Badge key={member.id} variant="outline" className="bg-white">
-                    {member.name}
-                  </Badge>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                A pontuação será registrada para todos os membros da equipe.
-              </p>
-            </div>
-          )}
-          
-          <ScoreForm 
-            modalityId={modalityId}
-            initialValues={existingScore}
-            onSubmit={handleSubmit}
-            isPending={submitScoreMutation.isPending}
-          />
-        </CardContent>
-      </Card>
-      
-      <ModalityRankings 
-        modalityId={modalityId}
-        eventId={eventId}
-        scoreType={mappedScoreType}
-      />
-    </div>
+    <ScoreFormContainer 
+      athleteId={athleteId}
+      modalityId={modalityId}
+      eventId={eventId}
+      judgeId={judgeId}
+      modality={modality}
+    />
   );
 }
