@@ -64,22 +64,33 @@ export const useScheduleOperations = (
         toast.success('Atividade do cronograma atualizada com sucesso!');
       } else {
         // Create new activity
-        // First, we need to get or create a cronograma for this event
         let cronogramaId = currentItem.cronograma_id;
         
         if (!cronogramaId) {
-          // Create a default cronograma for this event
-          const { data: cronogramaData, error: cronogramaError } = await supabase
+          // First, check if there's already a cronograma for this event
+          const { data: existingCronograma } = await supabase
             .from('cronogramas')
-            .insert({
-              nome: 'Cronograma Principal',
-              evento_id: eventId
-            })
-            .select()
+            .select('id')
+            .eq('evento_id', eventId)
+            .limit(1)
             .single();
           
-          if (cronogramaError) throw cronogramaError;
-          cronogramaId = cronogramaData.id;
+          if (existingCronograma) {
+            cronogramaId = existingCronograma.id;
+          } else {
+            // Create a default cronograma for this event
+            const { data: cronogramaData, error: cronogramaError } = await supabase
+              .from('cronogramas')
+              .insert({
+                nome: 'Cronograma Principal',
+                evento_id: eventId
+              })
+              .select()
+              .single();
+            
+            if (cronogramaError) throw cronogramaError;
+            cronogramaId = cronogramaData.id;
+          }
         }
         
         const { data: activityData, error } = await supabase

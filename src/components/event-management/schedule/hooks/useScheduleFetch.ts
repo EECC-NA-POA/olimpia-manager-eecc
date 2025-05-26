@@ -18,7 +18,7 @@ export const useScheduleFetch = (eventId: string | null) => {
     try {
       console.log('Fetching schedule for event:', eventId);
       
-      // Query the cronograma_atividades table with proper joins
+      // Query cronograma_atividades with join to cronogramas
       const { data, error } = await supabase
         .from('cronograma_atividades')
         .select(`
@@ -32,7 +32,8 @@ export const useScheduleFetch = (eventId: string | null) => {
           ordem,
           global,
           evento_id,
-          cronogramas!inner(
+          cronogramas!cronograma_atividades_cronograma_id_fkey(
+            id,
             nome
           ),
           cronograma_atividade_modalidades(
@@ -50,11 +51,13 @@ export const useScheduleFetch = (eventId: string | null) => {
         return;
       }
       
+      console.log('Raw schedule data:', data);
+      
       // Transform the data to match our ScheduleItem interface
       const transformedData: ScheduleItem[] = (data || []).map(item => ({
         id: item.id,
         cronograma_id: item.cronograma_id,
-        cronograma_nome: (item.cronogramas as any)?.nome || '',
+        cronograma_nome: item.cronogramas?.nome || 'Cronograma sem nome',
         dia: item.dia,
         atividade: item.atividade,
         horario_inicio: item.horario_inicio,
@@ -66,7 +69,7 @@ export const useScheduleFetch = (eventId: string | null) => {
         modalidades: (item.cronograma_atividade_modalidades || []).map((m: any) => m.modalidade_id)
       }));
       
-      console.log('Retrieved schedule items:', transformedData);
+      console.log('Transformed schedule items:', transformedData);
       setScheduleItems(transformedData);
     } catch (error) {
       console.error('Error fetching schedule:', error);
