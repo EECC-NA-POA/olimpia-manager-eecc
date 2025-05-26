@@ -113,7 +113,7 @@ export function ManagementTeamsManageTab({
                     });
                   }
                 }}
-                isDeleting={isDeletingTeam}
+                isDeletingTeam={isDeletingTeam}
                 isRemoving={isRemovingAthlete}
                 isUpdating={isUpdatingAthlete}
                 isOrganizer={isOrganizer}
