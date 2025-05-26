@@ -4,13 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
 import { ScoresTab } from '@/components/judge/tabs/ScoresTab';
-import { TeamsTab } from '@/components/judge/tabs/TeamsTab';
+import { JudgeTeamsTab } from '@/components/judge/scoring/JudgeTeamsTab';
 
 export default function JudgeDashboard() {
   const { user, currentEventId } = useAuth();
@@ -74,7 +71,7 @@ export default function JudgeDashboard() {
         </TabsContent>
         
         <TabsContent value="teams" className="mt-6">
-          <TeamsTab userId={user.id} eventId={currentEventId} />
+          <JudgeTeamsTab userId={user.id} eventId={currentEventId} />
         </TabsContent>
       </Tabs>
     </div>
