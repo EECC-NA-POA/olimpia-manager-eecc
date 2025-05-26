@@ -20,7 +20,9 @@ export function DynamicScoreFields({ form, rule }: DynamicScoreFieldsProps) {
       return <PointsScoreFields form={form} />;
     
     case 'distancia':
-      return <DistanceScoreFields form={form} />;
+      // Check if the rule has subunidade parameter to determine input format
+      const useMetersAndCentimeters = rule.parametros.subunidade === 'cm';
+      return <DistanceScoreFields form={form} useMetersAndCentimeters={useMetersAndCentimeters} />;
     
     case 'tempo':
       return <TimeScoreFields form={form} />;

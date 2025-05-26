@@ -9,13 +9,25 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from 'react-hook-form';
-import { DistanceScoreFormValues } from '../types';
+import { MetersAndCentimetersField } from './MetersAndCentimetersField';
 
 interface DistanceScoreFieldsProps {
-  form: UseFormReturn<DistanceScoreFormValues>;
+  form: UseFormReturn<any>;
+  useMetersAndCentimeters?: boolean;
 }
 
-export function DistanceScoreFields({ form }: DistanceScoreFieldsProps) {
+export function DistanceScoreFields({ form, useMetersAndCentimeters = true }: DistanceScoreFieldsProps) {
+  if (useMetersAndCentimeters) {
+    return (
+      <MetersAndCentimetersField
+        form={form}
+        metersName="meters"
+        centimetersName="centimeters"
+        label="Distância"
+      />
+    );
+  }
+
   return (
     <FormField
       control={form.control}

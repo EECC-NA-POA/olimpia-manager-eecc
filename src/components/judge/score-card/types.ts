@@ -36,8 +36,15 @@ export const timeScoreSchema = z.object({
   notes: z.string().optional(),
 });
 
-// Schema for distance score form (distancia)
+// Schema for distance score form with meters and centimeters (distancia)
 export const distanceScoreSchema = z.object({
+  meters: z.coerce.number().min(0, 'Metros devem ser positivos').default(0),
+  centimeters: z.coerce.number().min(0, 'Centímetros devem ser positivos').max(99, 'Centímetros devem ser entre 0 e 99').default(0),
+  notes: z.string().optional(),
+});
+
+// Legacy schema for distance score form (distancia) - for backward compatibility
+export const legacyDistanceScoreSchema = z.object({
   score: z.coerce.number().min(0, 'A distância deve ser positiva').default(0),
   notes: z.string().optional(),
 });
@@ -50,6 +57,7 @@ export const pointsScoreSchema = z.object({
 
 export type TimeScoreFormValues = z.infer<typeof timeScoreSchema>;
 export type DistanceScoreFormValues = z.infer<typeof distanceScoreSchema>;
+export type LegacyDistanceScoreFormValues = z.infer<typeof legacyDistanceScoreSchema>;
 export type PointsScoreFormValues = z.infer<typeof pointsScoreSchema>;
 
 export type ScoreFormValues = TimeScoreFormValues | DistanceScoreFormValues | PointsScoreFormValues;

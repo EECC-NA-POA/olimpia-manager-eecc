@@ -37,6 +37,30 @@ export function ParametrosFields({ currentItem, updateParametros }: ParametrosFi
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <Label>Subunidade</Label>
+            <Select 
+              value={currentItem.parametros.subunidade || 'cm'} 
+              onValueChange={(value) => updateParametros('subunidade', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cm">Centímetros</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Máximo Subunidade</Label>
+            <Input
+              type="number"
+              min="0"
+              max="99"
+              value={currentItem.parametros.max_subunidade || 99}
+              onChange={(e) => updateParametros('max_subunidade', parseInt(e.target.value))}
+            />
+          </div>
         </div>
       );
     

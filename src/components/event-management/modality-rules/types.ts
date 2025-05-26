@@ -20,6 +20,8 @@ export interface ModalityRule {
   regra_tipo: 'pontos' | 'distancia' | 'tempo' | 'baterias' | 'sets' | 'arrows';
   parametros: {
     unidade?: string;
+    subunidade?: string;
+    max_subunidade?: number;
     num_tentativas?: number;
     num_sets?: number;
     pontua_por_set?: boolean;
@@ -37,6 +39,8 @@ export interface RuleForm {
   regra_tipo: 'pontos' | 'distancia' | 'tempo' | 'baterias' | 'sets' | 'arrows';
   parametros: {
     unidade?: string;
+    subunidade?: string;
+    max_subunidade?: number;
     num_tentativas?: number;
     num_sets?: number;
     pontua_por_set?: boolean;

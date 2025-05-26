@@ -37,6 +37,20 @@ const createDynamicSchema = (regraTipo: string, parametros: any) => {
       });
     
     case 'distancia':
+      // Check if using meters and centimeters format
+      if (parametros?.subunidade === 'cm') {
+        return z.object({
+          ...baseSchema,
+          meters: z.coerce.number().min(0).default(0),
+          centimeters: z.coerce.number().min(0).max(99).default(0),
+        });
+      }
+      // Legacy single value format
+      return z.object({
+        ...baseSchema,
+        score: z.coerce.number().min(0).default(0),
+      });
+    
     case 'pontos':
       return z.object({
         ...baseSchema,
@@ -107,6 +121,11 @@ export function ScoreForm({ modalityId, initialValues, onSubmit, isPending }: Sc
     switch (rule.regra_tipo) {
       case 'tempo':
         return { minutes: 0, seconds: 0, milliseconds: 0, notes: '' };
+      case 'distancia':
+        if (rule.parametros.subunidade === 'cm') {
+          return { meters: 0, centimeters: 0, notes: '' };
+        }
+        return { score: 0, notes: '' };
       case 'baterias':
         const numTentativas = rule.parametros.num_tentativas || 3;
         return {
@@ -139,7 +158,18 @@ export function ScoreForm({ modalityId, initialValues, onSubmit, isPending }: Sc
   });
 
   const handleSubmit = (data: any) => {
-    onSubmit(data);
+    // Convert meters and centimeters to decimal value for distance scoring
+    if (rule?.regra_tipo === 'distancia' && rule.parametros.subunidade === 'cm' && 'meters' in data && 'centimeters' in data) {
+      const convertedData = {
+        ...data,
+        score: data.meters + (data.centimeters / 100), // Convert to decimal meters
+        meters: undefined,
+        centimeters: undefined
+      };
+      onSubmit(convertedData);
+    } else {
+      onSubmit(data);
+    }
   };
 
   if (isLoading) {
