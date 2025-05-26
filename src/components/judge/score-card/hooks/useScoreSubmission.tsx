@@ -40,16 +40,24 @@ export function useScoreSubmission(
           scoreData = {
             valor_pontuacao: totalMeters,
             unidade: 'm',
-            bateria_id: formData.heat || 1, // Default to 1 if not provided since it's required
             tentativa_numero: formData.attempt || null
           };
+          
+          // Only include bateria_id if heat is provided and baterias are configured
+          if (formData.heat && rule?.parametros?.baterias) {
+            scoreData.bateria_id = formData.heat;
+          }
         } else if ('score' in formData) {
           scoreData = {
             valor_pontuacao: formData.score,
             unidade: 'm',
-            bateria_id: formData.heat || 1, // Default to 1 if not provided since it's required
             tentativa_numero: formData.attempt || null
           };
+          
+          // Only include bateria_id if heat is provided and baterias are configured
+          if (formData.heat && rule?.parametros?.baterias) {
+            scoreData.bateria_id = formData.heat;
+          }
         }
       } else if (rule?.regra_tipo === 'tempo' || scoreType === 'tempo') {
         if ('minutes' in formData) {
@@ -58,18 +66,26 @@ export function useScoreSubmission(
           scoreData = {
             valor_pontuacao: totalMs,
             unidade: 'ms',
-            bateria_id: formData.heat || 1, // Default to 1 if not provided since it's required
             tentativa_numero: formData.attempt || null
           };
+          
+          // Only include bateria_id if heat is provided and baterias are configured
+          if (formData.heat && rule?.parametros?.baterias) {
+            scoreData.bateria_id = formData.heat;
+          }
         }
       } else {
         // Default to points scoring
         scoreData = {
           valor_pontuacao: formData.score || 0,
           unidade: 'pontos',
-          bateria_id: formData.heat || 1, // Default to 1 if not provided since it's required
           tentativa_numero: formData.attempt || null
         };
+        
+        // Only include bateria_id if heat is provided and baterias are configured
+        if (formData.heat && rule?.parametros?.baterias) {
+          scoreData.bateria_id = formData.heat;
+        }
       }
       
       if (!scoreData) {
