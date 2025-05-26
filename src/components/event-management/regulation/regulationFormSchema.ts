@@ -14,7 +14,8 @@ export const regulationSchema = z.object({
       return false;
     }
   }, 'Link inválido'),
-  is_ativo: z.boolean()
+  is_ativo: z.boolean(),
+  exibir_texto_publico: z.boolean()
 });
 
 export type RegulationFormValues = z.infer<typeof regulationSchema>;

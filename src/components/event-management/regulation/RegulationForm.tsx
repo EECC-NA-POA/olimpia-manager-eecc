@@ -6,6 +6,7 @@ import { useRegulationForm } from './useRegulationForm';
 import { RegulationBasicFields } from './RegulationBasicFields';
 import { RegulationTextEditor } from './RegulationTextEditor';
 import { RegulationStatusToggle } from './RegulationStatusToggle';
+import { RegulationVisibilityToggle } from './RegulationVisibilityToggle';
 import { RegulationFormActions } from './RegulationFormActions';
 
 interface RegulationFormProps {
@@ -30,6 +31,7 @@ export function RegulationForm({ eventId, regulation, userId, onComplete, onCanc
         <RegulationBasicFields control={form.control} />
         <RegulationTextEditor control={form.control} />
         <RegulationStatusToggle control={form.control} />
+        <RegulationVisibilityToggle control={form.control} />
         <RegulationFormActions 
           regulation={regulation}
           isSubmitting={isSubmitting}
