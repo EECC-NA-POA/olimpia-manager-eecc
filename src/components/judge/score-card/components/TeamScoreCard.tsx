@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -45,12 +44,24 @@ export function TeamScoreCard({
   // Use the first team member as representative for the team score
   const representativeAthlete = team.members[0];
   
+  // Map Portuguese score types to English for compatibility
+  const getScoreType = (tipo: string): 'time' | 'distance' | 'points' => {
+    switch (tipo) {
+      case 'tempo': return 'time';
+      case 'distancia': return 'distance';
+      case 'pontos': return 'points';
+      default: return 'points';
+    }
+  };
+  
+  const mappedScoreType = getScoreType(scoreType);
+  
   const { submitScoreMutation } = useScoreSubmission(
     eventId, 
     modalityId, 
     { atleta_id: representativeAthlete?.atleta_id, equipe_id: team.equipe_id }, 
     judgeId, 
-    scoreType
+    mappedScoreType
   );
 
   // Fetch existing score if it exists (check for any team member's score)
@@ -159,7 +170,7 @@ export function TeamScoreCard({
           <MedalDisplay 
             scoreRecord={existingScore || null} 
             medalInfo={medalInfo || null}
-            scoreType={scoreType} 
+            scoreType={mappedScoreType} 
           />
         </div>
       </CardHeader>

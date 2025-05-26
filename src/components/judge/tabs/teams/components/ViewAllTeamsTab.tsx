@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -113,13 +112,12 @@ export function ViewAllTeamsTab({
       <TeamFilters
         modalities={modalityOptions}
         branches={branches}
-        modalityFilter={modalityFilter}
-        branchFilter={branchFilter}
+        selectedModalityId={modalityFilter}
+        selectedBranchId={branchFilter}
         searchTerm={searchTerm}
-        onModalityFilterChange={setModalityFilter}
-        onBranchFilterChange={setBranchFilter}
-        onSearchTermChange={setSearchTerm}
-        showBranchFilter={isOrganizer}
+        onModalityChange={setModalityFilter}
+        onBranchChange={setBranchFilter}
+        onSearchChange={setSearchTerm}
       />
 
       {Object.keys(teamsByModality).length === 0 ? (

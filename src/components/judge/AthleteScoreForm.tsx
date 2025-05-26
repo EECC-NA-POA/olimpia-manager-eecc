@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -114,7 +113,18 @@ export function AthleteScoreForm({
   });
   
   const isTeamModality = modality?.tipo_modalidade?.includes('COLETIVA');
-  const scoreType = modality?.tipo_pontuacao as 'tempo' | 'distancia' | 'pontos' || 'pontos';
+  
+  // Map Portuguese score types to English for compatibility
+  const getScoreType = (tipo: string): 'time' | 'distance' | 'points' => {
+    switch (tipo) {
+      case 'tempo': return 'time';
+      case 'distancia': return 'distance';
+      case 'pontos': return 'points';
+      default: return 'points';
+    }
+  };
+  
+  const scoreType = getScoreType(modality?.tipo_pontuacao || 'pontos');
   
   // Fetch existing score if it exists
   const { data: existingScore } = useQuery({
