@@ -31,16 +31,8 @@ export function DynamicScoreFields({ form, rule }: DynamicScoreFieldsProps) {
       console.log('Rendering DistanceScoreFields');
       // Check if the rule specifically requires meters and centimeters input
       const useMetersAndCentimeters = parametros.subunidade === 'cm';
-      const maxSubunidade = parametros.max_subunidade || 99;
       console.log('Using meters and centimeters?', useMetersAndCentimeters);
-      console.log('Max subunidade (centimeters):', maxSubunidade);
-      return (
-        <DistanceScoreFields 
-          form={form} 
-          useMetersAndCentimeters={useMetersAndCentimeters}
-          maxSubunidade={maxSubunidade}
-        />
-      );
+      return <DistanceScoreFields form={form} useMetersAndCentimeters={useMetersAndCentimeters} />;
     
     case 'tempo':
       console.log('Rendering TimeScoreFields');

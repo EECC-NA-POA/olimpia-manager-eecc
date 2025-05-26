@@ -14,14 +14,9 @@ import { MetersAndCentimetersField } from './MetersAndCentimetersField';
 interface DistanceScoreFieldsProps {
   form: UseFormReturn<any>;
   useMetersAndCentimeters?: boolean;
-  maxSubunidade?: number;
 }
 
-export function DistanceScoreFields({ 
-  form, 
-  useMetersAndCentimeters = true, 
-  maxSubunidade = 99 
-}: DistanceScoreFieldsProps) {
+export function DistanceScoreFields({ form, useMetersAndCentimeters = true }: DistanceScoreFieldsProps) {
   // For distance scoring with rules that specify subunidade = 'cm', use separate meters and centimeters inputs
   if (useMetersAndCentimeters) {
     return (
@@ -30,7 +25,6 @@ export function DistanceScoreFields({
         metersName="meters"
         centimetersName="centimeters"
         label="Distância"
-        maxCentimeters={maxSubunidade}
       />
     );
   }

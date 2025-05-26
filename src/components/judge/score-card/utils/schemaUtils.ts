@@ -10,34 +10,30 @@ export const createDynamicSchema = (regraTipo: string, parametros: any) => {
     case 'tempo':
       return z.object({
         ...baseSchema,
-        minutes: z.coerce.number().min(0, 'Minutos devem ser positivos').default(0),
-        seconds: z.coerce.number().min(0, 'Segundos devem ser positivos').max(59, 'Segundos devem ser entre 0 e 59').default(0),
-        milliseconds: z.coerce.number().min(0, 'Milissegundos devem ser positivos').max(999, 'Milissegundos devem ser entre 0 e 999').default(0),
+        minutes: z.coerce.number().min(0).default(0),
+        seconds: z.coerce.number().min(0).max(59).default(0),
+        milliseconds: z.coerce.number().min(0).max(999).default(0),
       });
     
     case 'distancia':
       // Check if using meters and centimeters format
       if (parametros?.subunidade === 'cm') {
-        const maxSubunidade = parametros?.max_subunidade || 99;
         return z.object({
           ...baseSchema,
-          meters: z.coerce.number().min(0, 'Metros devem ser positivos').default(0),
-          centimeters: z.coerce.number()
-            .min(0, 'Centímetros devem ser positivos')
-            .max(maxSubunidade, `Centímetros devem ser entre 0 e ${maxSubunidade}`)
-            .default(0),
+          meters: z.coerce.number().min(0).default(0),
+          centimeters: z.coerce.number().min(0).max(99).default(0),
         });
       }
       // Legacy single value format
       return z.object({
         ...baseSchema,
-        score: z.coerce.number().min(0, 'A distância deve ser positiva').default(0),
+        score: z.coerce.number().min(0).default(0),
       });
     
     case 'pontos':
       return z.object({
         ...baseSchema,
-        score: z.coerce.number().min(0, 'A pontuação deve ser positiva').default(0),
+        score: z.coerce.number().min(0).default(0),
       });
     
     case 'baterias':
@@ -45,7 +41,7 @@ export const createDynamicSchema = (regraTipo: string, parametros: any) => {
       return z.object({
         ...baseSchema,
         tentativas: z.array(z.object({
-          valor: z.coerce.number().min(0, 'O valor deve ser positivo'),
+          valor: z.coerce.number().min(0),
           raia: z.string().optional(),
         })).length(numTentativas),
       });
@@ -59,7 +55,7 @@ export const createDynamicSchema = (regraTipo: string, parametros: any) => {
         return z.object({
           ...baseSchema,
           sets: z.array(z.object({
-            pontos: z.coerce.number().min(0, 'Pontos devem ser positivos'),
+            pontos: z.coerce.number().min(0),
           })).length(melhorDe),
         });
       } else if (isVolleyball) {
@@ -67,8 +63,8 @@ export const createDynamicSchema = (regraTipo: string, parametros: any) => {
           ...baseSchema,
           sets: z.array(z.object({
             vencedor: z.enum(['vitoria', 'derrota']).optional(),
-            pontosEquipe1: z.coerce.number().min(0, 'Pontos devem ser positivos').optional(),
-            pontosEquipe2: z.coerce.number().min(0, 'Pontos devem ser positivos').optional(),
+            pontosEquipe1: z.coerce.number().min(0).optional(),
+            pontosEquipe2: z.coerce.number().min(0).optional(),
           })).max(melhorDe),
         });
       } else {
@@ -85,14 +81,14 @@ export const createDynamicSchema = (regraTipo: string, parametros: any) => {
       return z.object({
         ...baseSchema,
         flechas: z.array(z.object({
-          zona: z.string().min(1, 'Zona é obrigatória'),
+          zona: z.string(),
         })).length(numFlechas),
       });
     
     default:
       return z.object({
         ...baseSchema,
-        score: z.coerce.number().min(0, 'A pontuação deve ser positiva').default(0),
+        score: z.coerce.number().min(0).default(0),
       });
   }
 };

@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -52,51 +53,27 @@ export function useScoreSubmission(
           
         case 'distancia':
           if ('meters' in formData && 'centimeters' in formData) {
-            // Convert meters and centimeters to total meters with validation
-            const meters = parseInt(formData.meters) || 0;
-            const centimeters = parseInt(formData.centimeters) || 0;
-            const maxSubunidade = rule.parametros?.max_subunidade || 99;
-            
-            // Client-side validation
-            if (meters < 0) {
-              throw new Error('Metros não podem ser negativos');
-            }
-            if (centimeters < 0 || centimeters > maxSubunidade) {
-              throw new Error(`Centímetros devem estar entre 0 e ${maxSubunidade}`);
-            }
-            
-            const totalMeters = meters + (centimeters / 100);
-            
-            // Validate that we have at most 2 decimal places (backend validation simulation)
-            const totalCentimeters = Math.round(totalMeters * 100);
-            if (totalMeters < 0 || (totalCentimeters !== totalMeters * 100)) {
-              throw new Error('Valor de distância inválido');
-            }
-            
+            // Convert meters and centimeters to total meters
+            const totalMeters = formData.meters + (formData.centimeters / 100);
             scoreData = {
               valor_pontuacao: totalMeters,
               tempo_minutos: null,
               tempo_segundos: null,
               tempo_milissegundos: null,
               dados_json: { 
-                meters: meters, 
-                centimeters: centimeters,
+                meters: formData.meters, 
+                centimeters: formData.centimeters,
                 total_meters: totalMeters
               },
               unidade: 'm'
             };
           } else if ('score' in formData) {
-            const distance = parseFloat(formData.score) || 0;
-            if (distance < 0) {
-              throw new Error('A distância deve ser positiva');
-            }
-            
             scoreData = {
-              valor_pontuacao: distance,
+              valor_pontuacao: formData.score,
               tempo_minutos: null,
               tempo_segundos: null,
               tempo_milissegundos: null,
-              dados_json: { distance: distance },
+              dados_json: { distance: formData.score },
               unidade: 'm'
             };
           }
@@ -104,17 +81,12 @@ export function useScoreSubmission(
           
         case 'pontos':
           if ('score' in formData) {
-            const points = parseFloat(formData.score) || 0;
-            if (points < 0) {
-              throw new Error('A pontuação deve ser positiva');
-            }
-            
             scoreData = {
-              valor_pontuacao: points,
+              valor_pontuacao: formData.score,
               tempo_minutos: null,
               tempo_segundos: null,
               tempo_milissegundos: null,
-              dados_json: { points: points },
+              dados_json: { points: formData.score },
               unidade: 'pontos'
             };
           }
@@ -146,7 +118,6 @@ export function useScoreSubmission(
           break;
           
         case 'sets':
-          // Enhanced sets scoring - count set victories
           const sets = formData.sets || [];
           console.log('Processing sets data:', sets);
           
