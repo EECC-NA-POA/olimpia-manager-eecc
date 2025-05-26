@@ -63,6 +63,15 @@ const getDefaultParametersForType = (regraTipo: string): RuleForm['parametros'] 
       };
     case 'arrows':
       return {
+        fase_classificacao: true,
+        num_flechas_classificacao: 72,
+        fase_eliminacao: true,
+        sets_por_combate: 5,
+        flechas_por_set: 3,
+        pontos_vitoria_set: 2,
+        pontos_empate_set: 1,
+        pontos_para_vencer: 6,
+        shoot_off: true,
         num_flechas: 6
       };
     default:
@@ -136,7 +145,7 @@ export function ModalityRuleDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             Configurar Regra de Pontuação

@@ -8,6 +8,7 @@ import { PointsScoreFields } from './PointsScoreFields';
 import { BateriasScoreFields } from './BateriasScoreFields';
 import { SetsScoreFields } from './SetsScoreFields';
 import { ArrowsScoreFields } from './ArrowsScoreFields';
+import { ArcheryScoreFields } from './ArcheryScoreFields';
 
 interface DynamicScoreFieldsProps {
   form: UseFormReturn<any>;
@@ -60,8 +61,16 @@ export function DynamicScoreFields({ form, rule }: DynamicScoreFieldsProps) {
       return <SetsScoreFields form={form} rule={rule} />;
     
     case 'arrows':
-      console.log('Rendering ArrowsScoreFields');
-      return <ArrowsScoreFields form={form} rule={rule} />;
+      console.log('Rendering ArcheryScoreFields');
+      // Check if this is Olympic-style archery with phases
+      const hasPhases = parametros.fase_classificacao || parametros.fase_eliminacao;
+      
+      if (hasPhases) {
+        return <ArcheryScoreFields form={form} rule={rule} />;
+      } else {
+        // Fallback to simple arrows input
+        return <ArrowsScoreFields form={form} rule={rule} />;
+      }
     
     default:
       console.warn('Unknown rule type, falling back to points:', rule.regra_tipo);

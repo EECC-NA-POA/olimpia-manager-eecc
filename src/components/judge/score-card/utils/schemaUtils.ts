@@ -95,13 +95,53 @@ export const createDynamicSchema = (regraTipo: string, parametros: any) => {
       }
     
     case 'arrows':
-      const numFlechas = parametros?.num_flechas || 6;
-      return z.object({
-        ...baseSchema,
-        flechas: z.array(z.object({
-          zona: z.string(),
-        })).length(numFlechas),
-      });
+      // Check if this is Olympic-style archery with phases
+      const faseClassificacao = parametros?.fase_classificacao || false;
+      const faseEliminacao = parametros?.fase_eliminacao || false;
+      const shootOff = parametros?.shoot_off || false;
+      
+      if (faseClassificacao || faseEliminacao) {
+        let archerySchema: any = { ...baseSchema };
+        
+        if (faseClassificacao) {
+          const numFlechasClassificacao = parametros?.num_flechas_classificacao || 72;
+          archerySchema.classificationArrows = z.array(z.object({
+            score: z.coerce.number().min(0).max(10),
+          })).length(numFlechasClassificacao).optional();
+        }
+        
+        if (faseEliminacao) {
+          const setsPorCombate = parametros?.sets_por_combate || 5;
+          const flechasPorSet = parametros?.flechas_por_set || 3;
+          
+          archerySchema.eliminationSets = z.array(z.object({
+            arrows: z.array(z.object({
+              score: z.coerce.number().min(0).max(10),
+            })).length(flechasPorSet),
+            total: z.number().optional(),
+            matchPoints: z.number().optional(),
+          })).length(setsPorCombate).optional();
+          
+          archerySchema.totalMatchPoints = z.number().optional();
+          archerySchema.combatFinished = z.boolean().optional();
+          archerySchema.needsShootOff = z.boolean().optional();
+          
+          if (shootOff) {
+            archerySchema.shootOffScore = z.coerce.number().min(0).max(10).optional();
+          }
+        }
+        
+        return z.object(archerySchema);
+      } else {
+        // Simple arrows format
+        const numFlechas = parametros?.num_flechas || 6;
+        return z.object({
+          ...baseSchema,
+          flechas: z.array(z.object({
+            zona: z.string(),
+          })).length(numFlechas),
+        });
+      }
     
     default:
       return z.object({

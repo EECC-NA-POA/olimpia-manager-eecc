@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -310,7 +311,7 @@ export function ParametrosFields({ currentItem, updateParametros, onResetParamet
       return (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h4 className="text-sm font-medium">Parâmetros de Flechas</h4>
+            <h4 className="text-sm font-medium">Parâmetros de Tiro com Arco</h4>
             <Button
               type="button"
               variant="outline"
@@ -323,15 +324,121 @@ export function ParametrosFields({ currentItem, updateParametros, onResetParamet
             </Button>
           </div>
           
-          <div>
-            <Label>Número de Flechas</Label>
-            <Input
-              type="number"
-              min="1"
-              value={currentItem.parametros.num_flechas || 6}
-              onChange={(e) => updateParametros('num_flechas', parseInt(e.target.value))}
+          <div className="flex items-center space-x-2">
+            <Switch
+              checked={currentItem.parametros.fase_classificacao || false}
+              onCheckedChange={(checked) => updateParametros('fase_classificacao', checked)}
             />
+            <Label>Fase de Classificação (72 flechas)</Label>
           </div>
+          
+          {currentItem.parametros.fase_classificacao && (
+            <div>
+              <Label>Número de Flechas na Classificação</Label>
+              <Input
+                type="number"
+                min="1"
+                value={currentItem.parametros.num_flechas_classificacao || 72}
+                onChange={(e) => updateParametros('num_flechas_classificacao', parseInt(e.target.value))}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Padrão olímpico: 72 flechas (6 séries de 12 flechas)
+              </p>
+            </div>
+          )}
+          
+          <div className="flex items-center space-x-2">
+            <Switch
+              checked={currentItem.parametros.fase_eliminacao || false}
+              onCheckedChange={(checked) => updateParametros('fase_eliminacao', checked)}
+            />
+            <Label>Fase de Eliminação (Combates)</Label>
+          </div>
+          
+          {currentItem.parametros.fase_eliminacao && (
+            <>
+              <div>
+                <Label>Sets por Combate</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="7"
+                  value={currentItem.parametros.sets_por_combate || 5}
+                  onChange={(e) => updateParametros('sets_por_combate', parseInt(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Padrão olímpico: melhor de 5 sets
+                </p>
+              </div>
+              <div>
+                <Label>Flechas por Set</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={currentItem.parametros.flechas_por_set || 3}
+                  onChange={(e) => updateParametros('flechas_por_set', parseInt(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Padrão olímpico: 3 flechas por set
+                </p>
+              </div>
+              <div>
+                <Label>Pontos para Vencer Set</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={currentItem.parametros.pontos_vitoria_set || 2}
+                  onChange={(e) => updateParametros('pontos_vitoria_set', parseInt(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Pontos que o vencedor do set ganha
+                </p>
+              </div>
+              <div>
+                <Label>Pontos para Empate no Set</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={currentItem.parametros.pontos_empate_set || 1}
+                  onChange={(e) => updateParametros('pontos_empate_set', parseInt(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Pontos que cada arqueiro ganha em caso de empate no set
+                </p>
+              </div>
+              <div>
+                <Label>Pontos para Vencer Combate</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={currentItem.parametros.pontos_para_vencer || 6}
+                  onChange={(e) => updateParametros('pontos_para_vencer', parseInt(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Total de pontos necessários para vencer o combate
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={currentItem.parametros.shoot_off || false}
+                  onCheckedChange={(checked) => updateParametros('shoot_off', checked)}
+                />
+                <Label>Permitir Shoot-off (Desempate)</Label>
+              </div>
+            </>
+          )}
+          
+          {!currentItem.parametros.fase_classificacao && !currentItem.parametros.fase_eliminacao && (
+            <div>
+              <Label>Número de Flechas</Label>
+              <Input
+                type="number"
+                min="1"
+                value={currentItem.parametros.num_flechas || 6}
+                onChange={(e) => updateParametros('num_flechas', parseInt(e.target.value))}
+              />
+            </div>
+          )}
         </div>
       );
     

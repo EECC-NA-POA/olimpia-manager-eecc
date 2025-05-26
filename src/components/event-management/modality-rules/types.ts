@@ -39,6 +39,16 @@ export interface ModalityRule {
     baterias?: boolean;
     raias_por_bateria?: number;
     num_baterias?: number;
+    // Archery-specific parameters
+    fase_classificacao?: boolean;
+    num_flechas_classificacao?: number;
+    fase_eliminacao?: boolean;
+    sets_por_combate?: number;
+    flechas_por_set?: number;
+    pontos_vitoria_set?: number;
+    pontos_empate_set?: number;
+    pontos_para_vencer?: number;
+    shoot_off?: boolean;
     [key: string]: any;
   };
   criado_em?: string;
@@ -68,5 +78,15 @@ export interface RuleForm {
     baterias?: boolean;
     raias_por_bateria?: number;
     num_baterias?: number;
+    // Archery-specific parameters
+    fase_classificacao?: boolean;
+    num_flechas_classificacao?: number;
+    fase_eliminacao?: boolean;
+    sets_por_combate?: number;
+    flechas_por_set?: number;
+    pontos_vitoria_set?: number;
+    pontos_empate_set?: number;
+    pontos_para_vencer?: number;
+    shoot_off?: boolean;
   };
 }
