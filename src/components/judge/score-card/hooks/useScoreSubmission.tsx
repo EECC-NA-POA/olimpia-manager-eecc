@@ -37,41 +37,36 @@ export function useScoreSubmission(
           const totalMeters = formData.meters + (formData.centimeters / 100);
           scoreData = {
             valor_pontuacao: totalMeters,
-            tempo_minutos: null,
-            tempo_segundos: null,
-            tempo_milissegundos: null,
             unidade: 'm',
-            bateria_id: formData.heat || null
+            bateria_id: formData.heat || 1, // Default to 1 if not provided since it's required
+            tentativa_numero: formData.attempt || null
           };
         } else if ('score' in formData) {
           scoreData = {
             valor_pontuacao: formData.score,
-            tempo_minutos: null,
-            tempo_segundos: null,
-            tempo_milissegundos: null,
             unidade: 'm',
-            bateria_id: formData.heat || null
+            bateria_id: formData.heat || 1, // Default to 1 if not provided since it's required
+            tentativa_numero: formData.attempt || null
           };
         }
       } else if (rule?.regra_tipo === 'tempo' || scoreType === 'tempo') {
         if ('minutes' in formData) {
+          // For time scoring, store total milliseconds in valor_pontuacao
           const totalMs = (formData.minutes * 60 * 1000) + (formData.seconds * 1000) + formData.milliseconds;
           scoreData = {
-            tempo_minutos: formData.minutes,
-            tempo_segundos: formData.seconds,
-            tempo_milissegundos: formData.milliseconds,
             valor_pontuacao: totalMs,
-            unidade: 'ms'
+            unidade: 'ms',
+            bateria_id: formData.heat || 1, // Default to 1 if not provided since it's required
+            tentativa_numero: formData.attempt || null
           };
         }
       } else {
         // Default to points scoring
         scoreData = {
           valor_pontuacao: formData.score || 0,
-          tempo_minutos: null,
-          tempo_segundos: null,
-          tempo_milissegundos: null,
-          unidade: 'pontos'
+          unidade: 'pontos',
+          bateria_id: formData.heat || 1, // Default to 1 if not provided since it's required
+          tentativa_numero: formData.attempt || null
         };
       }
       
@@ -84,8 +79,7 @@ export function useScoreSubmission(
         evento_id: eventId,
         modalidade_id: modalityId,
         atleta_id: athlete.atleta_id,
-        equipe_id: athlete.equipe_id || null,
-        regra_tipo: rule?.regra_tipo || scoreType
+        equipe_id: athlete.equipe_id || null
       };
       
       // Check if score already exists
