@@ -98,7 +98,8 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
   if (isJudgeOnly) {
     return (
       <div className="space-y-6">
-        <TeamsTabHeader isOrganizer={false}>
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Pontuar Equipes</h2>
           <ViewAllTeamsTab
             allTeams={transformedTeams}
             allModalities={transformedModalities}
@@ -116,7 +117,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
             isReadOnly={false}
             judgeId={userId}
           />
-        </TeamsTabHeader>
+        </div>
       </div>
     );
   }
