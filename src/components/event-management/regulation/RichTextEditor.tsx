@@ -20,10 +20,8 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
       [{ 'color': [] }, { 'background': [] }],
       ['link'],
       ['blockquote', 'code-block'],
-      [{ 'table': [] }],
       ['clean']
     ],
-    table: true,
   };
 
   const formats = [
@@ -34,7 +32,6 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
     'color', 'background',
     'link',
     'blockquote', 'code-block',
-    'table',
   ];
 
   return (
