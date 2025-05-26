@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -15,7 +14,7 @@ import { useScoreSubmission } from './hooks/useScoreSubmission';
 import { AthleteScoreCardProps, ScoreRecord } from './types';
 
 interface ExtendedAthleteScoreCardProps extends AthleteScoreCardProps {
-  modalityRule?: any; // Add modality rule prop
+  modalityRule?: any;
 }
 
 export function AthleteScoreCard({ 
@@ -36,7 +35,8 @@ export function AthleteScoreCard({
     modalityId, 
     athlete, 
     judgeId, 
-    scoreType
+    scoreType,
+    modalityRule
   );
 
   // Fetch existing score if it exists

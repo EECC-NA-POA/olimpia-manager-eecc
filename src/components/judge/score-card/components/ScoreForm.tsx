@@ -16,7 +16,7 @@ interface ScoreFormProps {
   initialValues?: any;
   onSubmit: (data: any) => void;
   isPending: boolean;
-  modalityRule?: any; // Add optional modality rule prop
+  modalityRule?: any;
 }
 
 export function ScoreForm({ modalityId, initialValues, onSubmit, isPending, modalityRule }: ScoreFormProps) {

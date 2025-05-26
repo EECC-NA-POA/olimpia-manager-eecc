@@ -1,7 +1,7 @@
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { useModalityRules } from '../../tabs/scores/hooks/useModalityRules';
 
 interface AthleteData {
   atleta_id: string;
@@ -13,252 +13,87 @@ export function useScoreSubmission(
   modalityId: number,
   athlete: AthleteData,
   judgeId: string,
-  scoreType: 'tempo' | 'distancia' | 'pontos'
+  scoreType: 'tempo' | 'distancia' | 'pontos',
+  modalityRule?: any
 ) {
   const queryClient = useQueryClient();
-  const { data: rule } = useModalityRules(modalityId);
 
   const submitScoreMutation = useMutation({
     mutationFn: async (formData: any) => {
       if (!eventId) throw new Error('Event ID is missing');
-      if (!rule) throw new Error('Modality rules not found');
       
       console.log('Form data received:', formData);
-      console.log('Rule type:', rule.regra_tipo);
-      console.log('Rule parameters:', rule.parametros);
+      console.log('Modality rule:', modalityRule);
       
-      // Convert form data based on rule type
+      // If no modalityRule provided, fall back to basic scoring
+      const rule = modalityRule;
+      
+      // Convert form data based on rule type or scoreType
       let scoreData;
       
-      switch (rule.regra_tipo) {
-        case 'tempo':
-          if ('minutes' in formData) {
-            const totalMs = (formData.minutes * 60 * 1000) + (formData.seconds * 1000) + formData.milliseconds;
-            scoreData = {
-              tempo_minutos: formData.minutes,
-              tempo_segundos: formData.seconds,
-              tempo_milissegundos: formData.milliseconds,
-              valor_pontuacao: totalMs,
-              dados_json: {
-                minutes: formData.minutes,
-                seconds: formData.seconds,
-                milliseconds: formData.milliseconds,
-                total_ms: totalMs
-              },
-              unidade: 'ms'
-            };
-          }
-          break;
-          
-        case 'distancia':
-          if ('meters' in formData && 'centimeters' in formData) {
-            // Convert meters and centimeters to total meters
-            const totalMeters = formData.meters + (formData.centimeters / 100);
-            scoreData = {
-              valor_pontuacao: totalMeters,
-              tempo_minutos: null,
-              tempo_segundos: null,
-              tempo_milissegundos: null,
-              dados_json: { 
-                meters: formData.meters, 
-                centimeters: formData.centimeters,
-                total_meters: totalMeters,
-                heat: formData.heat,
-                lane: formData.lane
-              },
-              unidade: 'm',
-              // Store heat and lane if provided
-              bateria_id: formData.heat || null,
-              raia: formData.lane || null
-            };
-          } else if ('score' in formData) {
-            scoreData = {
-              valor_pontuacao: formData.score,
-              tempo_minutos: null,
-              tempo_segundos: null,
-              tempo_milissegundos: null,
-              dados_json: { 
-                distance: formData.score,
-                heat: formData.heat,
-                lane: formData.lane
-              },
-              unidade: 'm',
-              // Store heat and lane if provided
-              bateria_id: formData.heat || null,
-              raia: formData.lane || null
-            };
-          }
-          
-          // Validate heats and lanes if baterias is enabled
-          if (rule.parametros?.baterias && formData.heat) {
-            if (formData.heat < 1) {
-              throw new Error('Bateria deve ser maior que 0');
-            }
-            
-            if (rule.parametros?.raias_por_bateria && formData.lane) {
-              if (formData.lane < 1 || formData.lane > rule.parametros.raias_por_bateria) {
-                throw new Error(`Raia deve estar entre 1 e ${rule.parametros.raias_por_bateria}`);
-              }
-            }
-          }
-          break;
-          
-        case 'pontos':
-          if ('score' in formData) {
-            scoreData = {
-              valor_pontuacao: formData.score,
-              tempo_minutos: null,
-              tempo_segundos: null,
-              tempo_milissegundos: null,
-              dados_json: { points: formData.score },
-              unidade: 'pontos'
-            };
-          }
-          break;
-          
-        case 'baterias':
-          // For heats, store individual attempts and calculate best result
-          const tentativas = formData.tentativas || [];
-          console.log('Processing baterias data:', tentativas);
-          
-          const melhorTentativa = tentativas.reduce((melhor: any, atual: any) => {
-            if (!melhor || (atual.valor > melhor.valor)) return atual;
-            return melhor;
-          }, null);
-          
+      if (rule?.regra_tipo === 'distancia' || scoreType === 'distancia') {
+        if ('meters' in formData && 'centimeters' in formData) {
+          // Convert meters and centimeters to total meters
+          const totalMeters = formData.meters + (formData.centimeters / 100);
           scoreData = {
-            valor_pontuacao: melhorTentativa?.valor || 0,
+            valor_pontuacao: totalMeters,
             tempo_minutos: null,
             tempo_segundos: null,
             tempo_milissegundos: null,
             dados_json: { 
-              tentativas, 
-              melhor_tentativa: melhorTentativa,
-              num_tentativas: tentativas.length,
-              tipo: 'baterias'
+              meters: formData.meters, 
+              centimeters: formData.centimeters,
+              total_meters: totalMeters,
+              heat: formData.heat || null,
+              lane: formData.lane || null
             },
-            unidade: rule.parametros.unidade || 'pontos'
+            unidade: 'm',
+            bateria_id: formData.heat || null,
+            raia: formData.lane || null
           };
-          break;
-          
-        case 'sets':
-          const sets = formData.sets || [];
-          console.log('Processing sets data:', sets);
-          
-          const isVolleyball = rule.parametros.pontos_por_set !== undefined;
-          const isTableTennis = rule.parametros.unidade === 'vitórias';
-          
-          if (rule.parametros.pontua_por_set !== false) {
-            // Sum points from all sets
-            const totalPontos = sets.reduce((total: number, set: any) => total + (set.pontos || 0), 0);
-            scoreData = {
-              valor_pontuacao: totalPontos,
-              tempo_minutos: null,
-              tempo_segundos: null,
-              tempo_milissegundos: null,
-              dados_json: { 
-                sets, 
-                total_pontos: totalPontos,
-                tipo: 'sets_pontuacao'
-              },
-              unidade: 'pontos'
-            };
-          } else if (isVolleyball || isTableTennis) {
-            // Enhanced sets scoring - count set victories
-            const vitorias = sets.filter((set: any) => set.vencedor === 'vitoria').length;
-            const derrotas = sets.filter((set: any) => set.vencedor === 'derrota').length;
-            
-            // Validate volleyball set scores if applicable
-            if (isVolleyball) {
-              for (let i = 0; i < sets.length; i++) {
-                const set = sets[i];
-                if (set.vencedor && (set.pontosEquipe1 !== undefined && set.pontosEquipe2 !== undefined)) {
-                  const isSetFinal = i === 4;
-                  const limitePontos = isSetFinal ? (rule.parametros.pontos_set_final || 15) : (rule.parametros.pontos_por_set || 25);
-                  const vantagem = rule.parametros.vantagem || 2;
-                  
-                  const maxPontos = Math.max(set.pontosEquipe1, set.pontosEquipe2);
-                  const minPontos = Math.min(set.pontosEquipe1, set.pontosEquipe2);
-                  
-                  // Validate set score
-                  if (maxPontos < limitePontos || (maxPontos - minPontos) < vantagem) {
-                    throw new Error(`Set ${i + 1} não atende aos critérios de pontuação do voleibol`);
-                  }
-                }
-              }
-            }
-            
-            scoreData = {
-              valor_pontuacao: vitorias,
-              tempo_minutos: null,
-              tempo_segundos: null,
-              tempo_milissegundos: null,
-              dados_json: { 
-                sets, 
-                total_vitorias: vitorias, 
-                total_derrotas: derrotas,
-                detalhes_modalidade: isVolleyball ? 'volleyball' : 'table_tennis',
-                tipo: 'sets_vitorias'
-              },
-              unidade: rule.parametros.unidade || 'vitorias'
-            };
-          } else {
-            // Legacy victory-only scoring
-            const vitorias = sets.filter((set: any) => set.vencedor === 'vitoria').length;
-            scoreData = {
-              valor_pontuacao: vitorias,
-              tempo_minutos: null,
-              tempo_segundos: null,
-              tempo_milissegundos: null,
-              dados_json: { 
-                sets, 
-                total_vitorias: vitorias,
-                tipo: 'sets_simples'
-              },
-              unidade: 'vitorias'
-            };
-          }
-          break;
-          
-        case 'arrows':
-          const flechas = formData.flechas || [];
-          console.log('Processing arrows data:', flechas);
-          
-          const totalPontos = flechas.reduce((total: number, flecha: any) => {
-            const pontos = parseInt(flecha.zona || '0');
-            return total + pontos;
-          }, 0);
-          
+        } else if ('score' in formData) {
           scoreData = {
-            valor_pontuacao: totalPontos,
+            valor_pontuacao: formData.score,
             tempo_minutos: null,
             tempo_segundos: null,
             tempo_milissegundos: null,
             dados_json: { 
-              flechas, 
-              total_pontos: totalPontos,
-              num_flechas: flechas.length,
-              tipo: 'arrows'
+              distance: formData.score,
+              heat: formData.heat || null,
+              lane: formData.lane || null
             },
-            unidade: 'pontos'
+            unidade: 'm',
+            bateria_id: formData.heat || null,
+            raia: formData.lane || null
           };
-          break;
-          
-        default:
-          throw new Error(`Invalid rule type: ${rule.regra_tipo}`);
-      }
-      
-      // Validate valor_pontuacao for distance modalities
-      if (rule.regra_tipo === 'distancia' && scoreData?.valor_pontuacao !== undefined) {
-        if (scoreData.valor_pontuacao < 0) {
-          throw new Error('Valor da pontuação deve ser maior ou igual a 0');
         }
-        
-        // Check if it has more than 2 decimal places
-        const decimalPlaces = (scoreData.valor_pontuacao.toString().split('.')[1] || '').length;
-        if (decimalPlaces > 2) {
-          throw new Error('Valor da pontuação deve ter no máximo 2 casas decimais');
+      } else if (rule?.regra_tipo === 'tempo' || scoreType === 'tempo') {
+        if ('minutes' in formData) {
+          const totalMs = (formData.minutes * 60 * 1000) + (formData.seconds * 1000) + formData.milliseconds;
+          scoreData = {
+            tempo_minutos: formData.minutes,
+            tempo_segundos: formData.seconds,
+            tempo_milissegundos: formData.milliseconds,
+            valor_pontuacao: totalMs,
+            dados_json: {
+              minutes: formData.minutes,
+              seconds: formData.seconds,
+              milliseconds: formData.milliseconds,
+              total_ms: totalMs
+            },
+            unidade: 'ms'
+          };
         }
+      } else {
+        // Default to points scoring
+        scoreData = {
+          valor_pontuacao: formData.score || 0,
+          tempo_minutos: null,
+          tempo_segundos: null,
+          tempo_milissegundos: null,
+          dados_json: { points: formData.score || 0 },
+          unidade: 'pontos'
+        };
       }
       
       console.log('Prepared score data:', scoreData);
@@ -271,7 +106,7 @@ export function useScoreSubmission(
         modalidade_id: modalityId,
         atleta_id: athlete.atleta_id,
         equipe_id: athlete.equipe_id || null,
-        regra_tipo: rule.regra_tipo
+        regra_tipo: rule?.regra_tipo || scoreType
       };
       
       // Check if score already exists
@@ -300,7 +135,7 @@ export function useScoreSubmission(
         
         console.log('Score updated successfully');
       } else {
-        // Insert new score - the trigger will handle team replication and ranking
+        // Insert new score
         const { error } = await supabase
           .from('pontuacoes')
           .insert({
@@ -322,12 +157,8 @@ export function useScoreSubmission(
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['scores', modalityId, eventId] });
       queryClient.invalidateQueries({ queryKey: ['score', athlete.atleta_id, modalityId, eventId] });
-      queryClient.invalidateQueries({ queryKey: ['team-score', athlete.equipe_id, modalityId, eventId] });
-      queryClient.invalidateQueries({ queryKey: ['medal', athlete.atleta_id, modalityId, eventId] });
-      queryClient.invalidateQueries({ queryKey: ['team-medal', athlete.equipe_id, modalityId, eventId] });
       queryClient.invalidateQueries({ queryKey: ['athletes', modalityId, eventId] });
       queryClient.invalidateQueries({ queryKey: ['modality-rankings', modalityId, eventId] });
-      queryClient.invalidateQueries({ queryKey: ['premiacoes', modalityId, eventId] });
       
       toast.success("Pontuação registrada com sucesso");
     },
