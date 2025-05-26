@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -44,17 +43,17 @@ export function useModalityRulesMutations() {
         // Log each permission for debugging
         userPermissions?.forEach((perm, index) => {
           console.log(`Permission ${index + 1}:`, {
-            nome: perm.perfis?.nome,
-            perfil_tipo_id: perm.perfis?.perfil_tipo_id,
-            codigo: perm.perfis?.perfis_tipo?.codigo,
-            descricao: perm.perfis?.perfis_tipo?.descricao
+            nome: perm.perfis.nome,
+            perfil_tipo_id: perm.perfis.perfil_tipo_id,
+            codigo: perm.perfis.perfis_tipo.codigo,
+            descricao: perm.perfis.perfis_tipo.descricao
           });
         });
       }
       
       // Verify admin permission exists
       const hasAdminPermission = userPermissions?.some(perm => 
-        perm.perfis?.perfis_tipo?.codigo === 'ADM'
+        perm.perfis.perfis_tipo.codigo === 'ADM'
       );
       
       console.log('Has admin permission:', hasAdminPermission);
