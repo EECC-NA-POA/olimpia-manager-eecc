@@ -86,6 +86,14 @@ export function ViewAllTeamsTab({
     );
   }
 
+  // Transform modalities for TeamFilters (convert Modality[] to ModalityOption[])
+  const modalityOptions = allModalities.map(modality => ({
+    id: modality.modalidade_id,
+    nome: modality.modalidade_nome,
+    categoria: '', // Default empty category
+    tipo_modalidade: 'coletiva' as const
+  }));
+
   // Group teams by modality for better organization
   const teamsByModality = allTeams.reduce((acc, team) => {
     const modalityId = team.modalidade_id;
@@ -103,7 +111,7 @@ export function ViewAllTeamsTab({
   return (
     <div className="space-y-6">
       <TeamFilters
-        modalities={allModalities}
+        modalities={modalityOptions}
         branches={branches}
         modalityFilter={modalityFilter}
         branchFilter={branchFilter}

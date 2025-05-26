@@ -16,6 +16,27 @@ interface TeamsTabProps {
   isOrganizer?: boolean;
 }
 
+// Define the Team interface expected by ViewAllTeamsTab
+interface Team {
+  equipe_id: number;
+  equipe_nome: string;
+  modalidade_id: number;
+  modalidade_nome: string;
+  tipo_pontuacao: string;
+  filial_nome: string;
+  members: Array<{
+    atleta_id: string;
+    atleta_nome: string;
+    numero_identificador?: string;
+  }>;
+}
+
+// Define the Modality interface expected by ViewAllTeamsTab
+interface Modality {
+  modalidade_id: number;
+  modalidade_nome: string;
+}
+
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
   const { user } = useAuth();
   
@@ -56,12 +77,28 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
 
   // Data for viewing all teams - for organizers and judges, don't filter by branch
   const {
-    teams: allTeams,
-    modalities: allModalities,
+    teams: allTeamsRaw,
+    modalities: allModalitiesRaw,
     branches,
     isLoading: isLoadingAllTeams,
     error: allTeamsError
   } = useAllTeamsData(eventId, modalityFilter, branchFilter, searchTerm, (isOrganizer || isJudgeOnly) ? undefined : user?.filial_id);
+
+  // Transform the raw data to match expected interfaces
+  const allTeams: Team[] = allTeamsRaw?.map(team => ({
+    equipe_id: team.equipe_id,
+    equipe_nome: team.equipe_nome,
+    modalidade_id: team.modalidade_id,
+    modalidade_nome: team.modalidade_nome,
+    tipo_pontuacao: team.tipo_pontuacao,
+    filial_nome: team.filial_nome,
+    members: team.members
+  })) || [];
+
+  const allModalities: Modality[] = allModalitiesRaw?.map(modality => ({
+    modalidade_id: modality.modalidade_id,
+    modalidade_nome: modality.modalidade_nome
+  })) || [];
 
   if (isLoading && !selectedModalityId) {
     return <LoadingTeamsState />;
