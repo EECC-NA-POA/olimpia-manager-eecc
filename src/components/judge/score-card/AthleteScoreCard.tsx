@@ -97,6 +97,60 @@ export function AthleteScoreCard({
     });
   };
 
+  // Prepare initial values from existing score data
+  const getInitialValues = () => {
+    if (!existingScore || !modalityRule) return null;
+    
+    const dados = existingScore.dados_json as any;
+    
+    switch (modalityRule.regra_tipo) {
+      case 'tempo':
+        return {
+          minutes: existingScore.tempo_minutos || 0,
+          seconds: existingScore.tempo_segundos || 0,
+          milliseconds: existingScore.tempo_milissegundos || 0,
+          notes: existingScore.observacoes || ''
+        };
+        
+      case 'distancia':
+        if (dados?.meters !== undefined && dados?.centimeters !== undefined) {
+          return {
+            meters: dados.meters,
+            centimeters: dados.centimeters,
+            notes: existingScore.observacoes || ''
+          };
+        }
+        return {
+          score: existingScore.valor_pontuacao || 0,
+          notes: existingScore.observacoes || ''
+        };
+        
+      case 'baterias':
+        return {
+          tentativas: dados?.tentativas || [],
+          notes: existingScore.observacoes || ''
+        };
+        
+      case 'sets':
+        return {
+          sets: dados?.sets || [],
+          notes: existingScore.observacoes || ''
+        };
+        
+      case 'arrows':
+        return {
+          flechas: dados?.flechas || [],
+          notes: existingScore.observacoes || ''
+        };
+        
+      default:
+        return {
+          score: existingScore.valor_pontuacao || 0,
+          notes: existingScore.observacoes || ''
+        };
+    }
+  };
+
   return (
     <Card className={`
       overflow-hidden transition-all duration-200
@@ -137,7 +191,7 @@ export function AthleteScoreCard({
         {isExpanded && (
           <ScoreForm 
             modalityId={modalityId}
-            initialValues={existingScore}
+            initialValues={getInitialValues()}
             onSubmit={handleSubmit}
             isPending={submitScoreMutation.isPending}
           />

@@ -15,6 +15,9 @@ interface DynamicScoreFieldsProps {
 }
 
 export function DynamicScoreFields({ form, rule }: DynamicScoreFieldsProps) {
+  console.log('DynamicScoreFields - Rule type:', rule.regra_tipo);
+  console.log('DynamicScoreFields - Rule parameters:', rule.parametros);
+  
   switch (rule.regra_tipo) {
     case 'pontos':
       return <PointsScoreFields form={form} />;
@@ -37,6 +40,7 @@ export function DynamicScoreFields({ form, rule }: DynamicScoreFieldsProps) {
       return <ArrowsScoreFields form={form} rule={rule} />;
     
     default:
+      console.warn('Unknown rule type, falling back to points:', rule.regra_tipo);
       return <PointsScoreFields form={form} />;
   }
 }

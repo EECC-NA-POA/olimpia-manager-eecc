@@ -22,11 +22,28 @@ export function BateriasScoreFields({ form, rule }: BateriasScoreFieldsProps) {
   const numRaias = rule.parametros.num_raias;
   const unidade = rule.parametros.unidade || 'pontos';
 
+  // Watch tentativas to calculate best result
+  const tentativas = form.watch('tentativas') || [];
+  const melhorResultado = tentativas.reduce((melhor: any, atual: any) => {
+    if (!melhor || (atual?.valor > melhor?.valor)) return atual;
+    return melhor;
+  }, null);
+
   return (
     <div className="space-y-4">
       <div className="text-sm text-muted-foreground">
         Registro por tentativas ({numTentativas} tentativa{numTentativas > 1 ? 's' : ''})
+        {unidade && ` - Unidade: ${unidade}`}
       </div>
+      
+      {melhorResultado && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <p className="text-green-800 font-medium">
+            Melhor resultado: {melhorResultado.valor} {unidade}
+            {melhorResultado.raia && ` (Raia ${melhorResultado.raia})`}
+          </p>
+        </div>
+      )}
       
       {Array.from({ length: numTentativas }, (_, index) => (
         <div key={index} className="border rounded-lg p-4 space-y-3">
@@ -39,7 +56,7 @@ export function BateriasScoreFields({ form, rule }: BateriasScoreFieldsProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Raia</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione a raia" />

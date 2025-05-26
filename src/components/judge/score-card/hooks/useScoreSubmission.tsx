@@ -24,6 +24,10 @@ export function useScoreSubmission(
       if (!eventId) throw new Error('Event ID is missing');
       if (!rule) throw new Error('Modality rules not found');
       
+      console.log('Form data received:', formData);
+      console.log('Rule type:', rule.regra_tipo);
+      console.log('Rule parameters:', rule.parametros);
+      
       // Convert form data based on rule type
       let scoreData;
       
@@ -36,7 +40,12 @@ export function useScoreSubmission(
               tempo_segundos: formData.seconds,
               tempo_milissegundos: formData.milliseconds,
               valor_pontuacao: totalMs,
-              dados_json: null,
+              dados_json: {
+                minutes: formData.minutes,
+                seconds: formData.seconds,
+                milliseconds: formData.milliseconds,
+                total_ms: totalMs
+              },
               unidade: 'ms'
             };
           }
@@ -51,7 +60,11 @@ export function useScoreSubmission(
               tempo_minutos: null,
               tempo_segundos: null,
               tempo_milissegundos: null,
-              dados_json: { meters: formData.meters, centimeters: formData.centimeters },
+              dados_json: { 
+                meters: formData.meters, 
+                centimeters: formData.centimeters,
+                total_meters: totalMeters
+              },
               unidade: 'm'
             };
           } else if ('score' in formData) {
@@ -60,7 +73,7 @@ export function useScoreSubmission(
               tempo_minutos: null,
               tempo_segundos: null,
               tempo_milissegundos: null,
-              dados_json: null,
+              dados_json: { distance: formData.score },
               unidade: 'm'
             };
           }
@@ -73,7 +86,7 @@ export function useScoreSubmission(
               tempo_minutos: null,
               tempo_segundos: null,
               tempo_milissegundos: null,
-              dados_json: null,
+              dados_json: { points: formData.score },
               unidade: 'pontos'
             };
           }
@@ -82,8 +95,10 @@ export function useScoreSubmission(
         case 'baterias':
           // For heats, store individual attempts and calculate best result
           const tentativas = formData.tentativas || [];
+          console.log('Processing baterias data:', tentativas);
+          
           const melhorTentativa = tentativas.reduce((melhor: any, atual: any) => {
-            if (!melhor || atual.valor > melhor.valor) return atual;
+            if (!melhor || (atual.valor > melhor.valor)) return atual;
             return melhor;
           }, null);
           
@@ -92,13 +107,20 @@ export function useScoreSubmission(
             tempo_minutos: null,
             tempo_segundos: null,
             tempo_milissegundos: null,
-            dados_json: { tentativas, melhor_tentativa: melhorTentativa },
+            dados_json: { 
+              tentativas, 
+              melhor_tentativa: melhorTentativa,
+              num_tentativas: tentativas.length,
+              tipo: 'baterias'
+            },
             unidade: rule.parametros.unidade || 'pontos'
           };
           break;
           
         case 'sets':
           const sets = formData.sets || [];
+          console.log('Processing sets data:', sets);
+          
           const isVolleyball = rule.parametros.pontos_por_set !== undefined;
           const isTableTennis = rule.parametros.unidade === 'vitórias';
           
@@ -110,7 +132,11 @@ export function useScoreSubmission(
               tempo_minutos: null,
               tempo_segundos: null,
               tempo_milissegundos: null,
-              dados_json: { sets },
+              dados_json: { 
+                sets, 
+                total_pontos: totalPontos,
+                tipo: 'sets_pontuacao'
+              },
               unidade: 'pontos'
             };
           } else if (isVolleyball || isTableTennis) {
@@ -147,7 +173,8 @@ export function useScoreSubmission(
                 sets, 
                 total_vitorias: vitorias, 
                 total_derrotas: derrotas,
-                detalhes_modalidade: isVolleyball ? 'volleyball' : 'table_tennis'
+                detalhes_modalidade: isVolleyball ? 'volleyball' : 'table_tennis',
+                tipo: 'sets_vitorias'
               },
               unidade: rule.parametros.unidade || 'vitorias'
             };
@@ -159,7 +186,11 @@ export function useScoreSubmission(
               tempo_minutos: null,
               tempo_segundos: null,
               tempo_milissegundos: null,
-              dados_json: { sets, total_vitorias: vitorias },
+              dados_json: { 
+                sets, 
+                total_vitorias: vitorias,
+                tipo: 'sets_simples'
+              },
               unidade: 'vitorias'
             };
           }
@@ -167,20 +198,33 @@ export function useScoreSubmission(
           
         case 'arrows':
           const flechas = formData.flechas || [];
-          const totalPontos = flechas.reduce((total: number, flecha: any) => total + parseInt(flecha.zona || '0'), 0);
+          console.log('Processing arrows data:', flechas);
+          
+          const totalPontos = flechas.reduce((total: number, flecha: any) => {
+            const pontos = parseInt(flecha.zona || '0');
+            return total + pontos;
+          }, 0);
+          
           scoreData = {
             valor_pontuacao: totalPontos,
             tempo_minutos: null,
             tempo_segundos: null,
             tempo_milissegundos: null,
-            dados_json: { flechas, total_pontos: totalPontos },
+            dados_json: { 
+              flechas, 
+              total_pontos: totalPontos,
+              num_flechas: flechas.length,
+              tipo: 'arrows'
+            },
             unidade: 'pontos'
           };
           break;
           
         default:
-          throw new Error('Invalid rule type');
+          throw new Error(`Invalid rule type: ${rule.regra_tipo}`);
       }
+      
+      console.log('Prepared score data:', scoreData);
       
       const commonFields = {
         observacoes: formData.notes || null,
@@ -212,7 +256,12 @@ export function useScoreSubmission(
           })
           .eq('id', existingScore.id);
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating score:', error);
+          throw error;
+        }
+        
+        console.log('Score updated successfully');
       } else {
         // Insert new score - the trigger will handle team replication and ranking
         const { error } = await supabase
@@ -222,7 +271,12 @@ export function useScoreSubmission(
             ...commonFields
           });
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error inserting score:', error);
+          throw error;
+        }
+        
+        console.log('Score inserted successfully');
       }
       
       return { success: true };
@@ -242,7 +296,7 @@ export function useScoreSubmission(
     },
     onError: (error) => {
       console.error('Error submitting score:', error);
-      toast.error("Erro ao registrar pontuação");
+      toast.error(`Erro ao registrar pontuação: ${error.message}`);
     }
   });
 
