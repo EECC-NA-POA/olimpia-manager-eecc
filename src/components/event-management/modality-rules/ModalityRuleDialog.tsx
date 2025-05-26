@@ -33,7 +33,7 @@ const defaultFormValues: RuleForm = {
   parametros: {}
 };
 
-const getDefaultParametersForType = (regraTipo: string) => {
+const getDefaultParametersForType = (regraTipo: string): RuleForm['parametros'] => {
   switch (regraTipo) {
     case 'distancia':
       return {
@@ -45,7 +45,7 @@ const getDefaultParametersForType = (regraTipo: string) => {
       };
     case 'tempo':
       return {
-        formato_tempo: 'mm:ss.SS'
+        formato_tempo: 'mm:ss.SS' as const
       };
     case 'baterias':
       return {
