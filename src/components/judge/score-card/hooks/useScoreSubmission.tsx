@@ -21,6 +21,8 @@ export function useScoreSubmission(
   const submitScoreMutation = useMutation({
     mutationFn: async (formData: any) => {
       if (!eventId) throw new Error('Event ID is missing');
+      if (!judgeId) throw new Error('Judge ID is missing');
+      if (!athlete.atleta_id) throw new Error('Athlete ID is missing');
       
       console.log('Form data received:', formData);
       console.log('Modality rule:', modalityRule);
@@ -70,9 +72,15 @@ export function useScoreSubmission(
         };
       }
       
+      if (!scoreData) {
+        throw new Error('Failed to prepare score data');
+      }
+      
       console.log('Prepared score data:', scoreData);
       
-      const commonFields = {
+      // Ensure all required fields are present
+      const finalScoreData = {
+        ...scoreData,
         observacoes: formData.notes || null,
         juiz_id: judgeId,
         data_registro: new Date().toISOString(),
@@ -81,6 +89,8 @@ export function useScoreSubmission(
         atleta_id: athlete.atleta_id,
         equipe_id: athlete.equipe_id || null
       };
+      
+      console.log('Final score data being inserted:', finalScoreData);
       
       // Check if score already exists
       const { data: existingScore } = await supabase
@@ -93,35 +103,31 @@ export function useScoreSubmission(
       
       if (existingScore) {
         // Update existing score
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('pontuacoes')
-          .update({
-            ...scoreData,
-            ...commonFields
-          })
-          .eq('id', existingScore.id);
+          .update(finalScoreData)
+          .eq('id', existingScore.id)
+          .select();
           
         if (error) {
           console.error('Error updating score:', error);
           throw error;
         }
         
-        console.log('Score updated successfully');
+        console.log('Score updated successfully:', data);
       } else {
         // Insert new score
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('pontuacoes')
-          .insert({
-            ...scoreData,
-            ...commonFields
-          });
+          .insert(finalScoreData)
+          .select();
           
         if (error) {
           console.error('Error inserting score:', error);
           throw error;
         }
         
-        console.log('Score inserted successfully');
+        console.log('Score inserted successfully:', data);
       }
       
       return { success: true };
