@@ -49,11 +49,13 @@ export const useNavigation = () => {
         navigate('/athlete-profile', { replace: true });
       } else if (roles.isOrganizer) {
         navigate('/organizer-dashboard', { replace: true });
-      } else if (roles.isDelegationRep) {
+      } else if (roles.isDelegationRep && !roles.isJudge) {
+        // Pure delegation users go to delegation dashboard
         navigate('/delegation-dashboard', { replace: true });
       } else if (roles.isAdmin) {
         navigate('/administration', { replace: true });
       } else if (roles.isJudge) {
+        // Judges (including those who are also delegation reps) go to judge dashboard
         navigate('/judge-dashboard', { replace: true });
       }
     }

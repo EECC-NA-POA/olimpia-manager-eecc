@@ -19,11 +19,12 @@ interface TeamsTabProps {
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
   const { user } = useAuth();
   
-  // Check if user is ONLY a judge (judges should only view, not manage)
-  // Representatives can manage their teams, organizers can manage all teams
+  // Check user roles
   const isJudgeOnly = user?.papeis?.some(role => role.codigo === 'JUZ') && 
                       !user?.papeis?.some(role => role.codigo === 'RDD') &&
                       !user?.papeis?.some(role => role.codigo === 'ORE');
+  
+  const isDelegationRep = user?.papeis?.some(role => role.codigo === 'RDD');
   
   // States for "Visualizar Todas" tab
   const [modalityFilter, setModalityFilter] = useState<number | null>(null);
@@ -94,7 +95,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     modalidade_nome: modality.nome
   })) || [];
 
-  // For judges only, show only the "View All Teams" tab with scoring capability
+  // For judges only, show only the "Pontuar Equipes" tab with scoring capability
   if (isJudgeOnly) {
     return (
       <div className="space-y-6">
@@ -124,7 +125,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
   return (
     <div className="space-y-6">
       <TeamsTabHeader isOrganizer={isOrganizer}>
-        <Tabs defaultValue={isOrganizer ? "manage" : "manage"} className="w-full">
+        <Tabs defaultValue="manage" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="manage">
               {isOrganizer ? "Gerenciar Equipes" : "Gerenciar Minhas Equipes"}
