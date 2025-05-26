@@ -15,7 +15,7 @@ import { ScheduleItem } from './types';
 interface ScheduleTableProps {
   scheduleItems: ScheduleItem[];
   openEditDialog: (item: ScheduleItem) => void;
-  handleDelete: (id: string) => void;
+  handleDelete: (id: number) => void;
   formatDate: (dateStr: string) => string;
 }
 
@@ -29,31 +29,33 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Título</TableHead>
-          <TableHead>Data</TableHead>
+          <TableHead>Atividade</TableHead>
+          <TableHead>Dia</TableHead>
           <TableHead>Horário</TableHead>
           <TableHead>Local</TableHead>
-          <TableHead>Tipo</TableHead>
+          <TableHead>Global</TableHead>
+          <TableHead>Cronograma</TableHead>
           <TableHead className="w-24">Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {scheduleItems.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={6} className="text-center py-4">
-              Nenhum item de cronograma encontrado
+            <TableCell colSpan={7} className="text-center py-4">
+              Nenhuma atividade de cronograma encontrada
             </TableCell>
           </TableRow>
         ) : (
           scheduleItems.map((item) => (
             <TableRow key={item.id}>
-              <TableCell>{item.titulo}</TableCell>
-              <TableCell>{formatDate(item.data)}</TableCell>
+              <TableCell>{item.atividade}</TableCell>
+              <TableCell>{formatDate(item.dia)}</TableCell>
               <TableCell>
-                {item.hora_inicio} {item.hora_fim ? `- ${item.hora_fim}` : ''}
+                {item.horario_inicio} {item.horario_fim ? `- ${item.horario_fim}` : ''}
               </TableCell>
               <TableCell>{item.local}</TableCell>
-              <TableCell>{item.tipo}</TableCell>
+              <TableCell>{item.global ? 'Sim' : 'Não'}</TableCell>
+              <TableCell>{item.cronograma_nome}</TableCell>
               <TableCell>
                 <div className="flex space-x-2">
                   <Button 

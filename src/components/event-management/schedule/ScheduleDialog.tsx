@@ -17,7 +17,7 @@ interface ScheduleDialogProps {
   title: string;
   currentItem: ScheduleFormType;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  handleSelectChange: (field: string, value: string) => void;
+  handleSelectChange: (field: string, value: string | number | boolean) => void;
   handleSave: () => void;
   isSaving: boolean;
 }

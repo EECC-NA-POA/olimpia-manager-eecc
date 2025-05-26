@@ -3,19 +3,13 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ScheduleForm as ScheduleFormType } from './types';
 
 interface ScheduleFormProps {
   currentItem: ScheduleFormType;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  handleSelectChange: (field: string, value: string) => void;
+  handleSelectChange: (field: string, value: string | number | boolean) => void;
 }
 
 export const ScheduleForm: React.FC<ScheduleFormProps> = ({
@@ -26,88 +20,69 @@ export const ScheduleForm: React.FC<ScheduleFormProps> = ({
   return (
     <div className="space-y-4 py-4">
       <div className="space-y-2">
-        <Label htmlFor="titulo">Título</Label>
+        <Label htmlFor="atividade">Atividade</Label>
         <Input
-          id="titulo"
-          name="titulo"
-          value={currentItem.titulo}
+          id="atividade"
+          name="atividade"
+          value={currentItem.atividade}
           onChange={handleInputChange}
+          placeholder="Nome da atividade"
         />
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="data">Data</Label>
+          <Label htmlFor="dia">Dia</Label>
           <Input
-            id="data"
-            name="data"
+            id="dia"
+            name="dia"
             type="date"
-            value={currentItem.data}
+            value={currentItem.dia}
             onChange={handleInputChange}
           />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="tipo">Tipo</Label>
-          <Select 
-            value={currentItem.tipo} 
-            onValueChange={(value) => handleSelectChange('tipo', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="JOGO">Jogo</SelectItem>
-              <SelectItem value="CERIMONIA">Cerimônia</SelectItem>
-              <SelectItem value="TREINAMENTO">Treinamento</SelectItem>
-              <SelectItem value="REUNIAO">Reunião</SelectItem>
-              <SelectItem value="OUTRO">Outro</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label htmlFor="local">Local</Label>
+          <Input
+            id="local"
+            name="local"
+            value={currentItem.local}
+            onChange={handleInputChange}
+            placeholder="Local da atividade"
+          />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="hora_inicio">Hora de Início</Label>
+          <Label htmlFor="horario_inicio">Horário de Início</Label>
           <Input
-            id="hora_inicio"
-            name="hora_inicio"
+            id="horario_inicio"
+            name="horario_inicio"
             type="time"
-            value={currentItem.hora_inicio}
+            value={currentItem.horario_inicio}
             onChange={handleInputChange}
           />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="hora_fim">Hora de Término</Label>
+          <Label htmlFor="horario_fim">Horário de Término</Label>
           <Input
-            id="hora_fim"
-            name="hora_fim"
+            id="horario_fim"
+            name="horario_fim"
             type="time"
-            value={currentItem.hora_fim}
+            value={currentItem.horario_fim}
             onChange={handleInputChange}
           />
         </div>
       </div>
       
-      <div className="space-y-2">
-        <Label htmlFor="local">Local</Label>
-        <Input
-          id="local"
-          name="local"
-          value={currentItem.local}
-          onChange={handleInputChange}
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="global"
+          checked={currentItem.global}
+          onCheckedChange={(checked) => handleSelectChange('global', !!checked)}
         />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="descricao">Descrição</Label>
-        <Textarea
-          id="descricao"
-          name="descricao"
-          value={currentItem.descricao}
-          onChange={handleInputChange}
-          rows={3}
-        />
+        <Label htmlFor="global">Atividade global (para todas as modalidades)</Label>
       </div>
     </div>
   );

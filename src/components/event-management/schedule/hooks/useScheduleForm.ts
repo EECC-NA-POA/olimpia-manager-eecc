@@ -5,20 +5,37 @@ import { defaultFormValues } from '../constants';
 
 export const useScheduleForm = () => {
   const [currentItem, setCurrentItem] = useState<ScheduleForm>(defaultFormValues);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setCurrentItem({
-      ...currentItem,
-      [e.target.name]: e.target.value
-    });
+    const { name, value, type } = e.target;
+    
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setCurrentItem({
+        ...currentItem,
+        [name]: checked
+      });
+    } else {
+      setCurrentItem({
+        ...currentItem,
+        [name]: value
+      });
+    }
   };
 
-  const handleSelectChange = (field: string, value: string) => {
+  const handleSelectChange = (field: string, value: string | number | boolean) => {
     setCurrentItem({
       ...currentItem,
       [field]: value
+    });
+  };
+
+  const handleModalitiesChange = (modalidades: number[]) => {
+    setCurrentItem({
+      ...currentItem,
+      modalidades
     });
   };
 
@@ -29,18 +46,16 @@ export const useScheduleForm = () => {
   };
 
   const openEditDialog = (item: ScheduleItem) => {
-    // Format date to YYYY-MM-DD for input[type="date"]
-    const formattedDate = item.data ? new Date(item.data).toISOString().split('T')[0] : '';
-    
     setEditingId(item.id);
     setCurrentItem({
-      titulo: item.titulo || '',
-      descricao: item.descricao || '',
-      local: item.local || '',
-      data: formattedDate,
-      hora_inicio: item.hora_inicio || '',
-      hora_fim: item.hora_fim || '',
-      tipo: item.tipo || 'JOGO'
+      cronograma_id: item.cronograma_id,
+      atividade: item.atividade,
+      dia: item.dia,
+      horario_inicio: item.horario_inicio,
+      horario_fim: item.horario_fim,
+      local: item.local,
+      global: item.global,
+      modalidades: item.modalidades
     });
     setIsDialogOpen(true);
   };
@@ -58,6 +73,7 @@ export const useScheduleForm = () => {
     setIsDialogOpen,
     handleInputChange,
     handleSelectChange,
+    handleModalitiesChange,
     openAddDialog,
     openEditDialog,
     resetForm

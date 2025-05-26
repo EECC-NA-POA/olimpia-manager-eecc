@@ -10,56 +10,110 @@ export const useScheduleOperations = (
 ) => {
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = async (currentItem: ScheduleForm, editingId: string | null): Promise<boolean> => {
+  const handleSave = async (currentItem: ScheduleForm, editingId: number | null): Promise<boolean> => {
     if (!eventId) {
       toast.error('ID do evento não encontrado');
       return false;
     }
     
     // Basic validation
-    if (!currentItem.titulo || !currentItem.data) {
-      toast.error('Preencha pelo menos o título e a data');
+    if (!currentItem.atividade || !currentItem.dia) {
+      toast.error('Preencha pelo menos a atividade e o dia');
       return false;
     }
     
     setIsSaving(true);
     try {
       if (editingId) {
-        // Update existing item
+        // Update existing activity
         const { error } = await supabase
-          .from('cronogramas')
+          .from('cronograma_atividades')
           .update({
-            titulo: currentItem.titulo,
-            descricao: currentItem.descricao,
+            atividade: currentItem.atividade,
+            dia: currentItem.dia,
+            horario_inicio: currentItem.horario_inicio,
+            horario_fim: currentItem.horario_fim,
             local: currentItem.local,
-            data: currentItem.data,
-            hora_inicio: currentItem.hora_inicio,
-            hora_fim: currentItem.hora_fim,
-            tipo: currentItem.tipo
+            global: currentItem.global
           })
           .eq('id', editingId);
         
         if (error) throw error;
         
-        toast.success('Item de cronograma atualizado com sucesso!');
+        // Update modalities if any
+        if (currentItem.modalidades.length > 0) {
+          // Delete existing modality associations
+          await supabase
+            .from('cronograma_atividade_modalidades')
+            .delete()
+            .eq('cronograma_atividade_id', editingId);
+          
+          // Insert new modality associations
+          const modalityInserts = currentItem.modalidades.map(modalidadeId => ({
+            cronograma_atividade_id: editingId,
+            modalidade_id: modalidadeId
+          }));
+          
+          const { error: modalityError } = await supabase
+            .from('cronograma_atividade_modalidades')
+            .insert(modalityInserts);
+          
+          if (modalityError) throw modalityError;
+        }
+        
+        toast.success('Atividade do cronograma atualizada com sucesso!');
       } else {
-        // Create new item
-        const { error } = await supabase
-          .from('cronogramas')
+        // Create new activity
+        // First, we need to get or create a cronograma for this event
+        let cronogramaId = currentItem.cronograma_id;
+        
+        if (!cronogramaId) {
+          // Create a default cronograma for this event
+          const { data: cronogramaData, error: cronogramaError } = await supabase
+            .from('cronogramas')
+            .insert({
+              nome: 'Cronograma Principal',
+              evento_id: eventId
+            })
+            .select()
+            .single();
+          
+          if (cronogramaError) throw cronogramaError;
+          cronogramaId = cronogramaData.id;
+        }
+        
+        const { data: activityData, error } = await supabase
+          .from('cronograma_atividades')
           .insert({
+            cronograma_id: cronogramaId,
             evento_id: eventId,
-            titulo: currentItem.titulo,
-            descricao: currentItem.descricao,
+            atividade: currentItem.atividade,
+            dia: currentItem.dia,
+            horario_inicio: currentItem.horario_inicio,
+            horario_fim: currentItem.horario_fim,
             local: currentItem.local,
-            data: currentItem.data,
-            hora_inicio: currentItem.hora_inicio,
-            hora_fim: currentItem.hora_fim,
-            tipo: currentItem.tipo
-          });
+            global: currentItem.global
+          })
+          .select()
+          .single();
         
         if (error) throw error;
         
-        toast.success('Item de cronograma adicionado com sucesso!');
+        // Insert modality associations if any
+        if (currentItem.modalidades.length > 0) {
+          const modalityInserts = currentItem.modalidades.map(modalidadeId => ({
+            cronograma_atividade_id: activityData.id,
+            modalidade_id: modalidadeId
+          }));
+          
+          const { error: modalityError } = await supabase
+            .from('cronograma_atividade_modalidades')
+            .insert(modalityInserts);
+          
+          if (modalityError) throw modalityError;
+        }
+        
+        toast.success('Atividade do cronograma adicionada com sucesso!');
       }
       
       // Refresh the list
@@ -67,34 +121,34 @@ export const useScheduleOperations = (
       
       return true; // Success
     } catch (error) {
-      console.error('Error saving schedule item:', error);
-      toast.error('Erro ao salvar item de cronograma');
+      console.error('Error saving schedule activity:', error);
+      toast.error('Erro ao salvar atividade do cronograma');
       return false; // Failure
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este item do cronograma?')) {
+  const handleDelete = async (id: number) => {
+    if (!confirm('Tem certeza que deseja excluir esta atividade do cronograma?')) {
       return;
     }
     
     try {
       const { error } = await supabase
-        .from('cronogramas')
+        .from('cronograma_atividades')
         .delete()
         .eq('id', id);
       
       if (error) throw error;
       
-      toast.success('Item de cronograma excluído com sucesso!');
+      toast.success('Atividade do cronograma excluída com sucesso!');
       
       // Refresh the list
       refreshSchedule();
     } catch (error) {
-      console.error('Error deleting schedule item:', error);
-      toast.error('Erro ao excluir item de cronograma');
+      console.error('Error deleting schedule activity:', error);
+      toast.error('Erro ao excluir atividade do cronograma');
     }
   };
 

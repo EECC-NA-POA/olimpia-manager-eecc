@@ -45,7 +45,7 @@ export function EventScheduleSection({ eventId }: { eventId: string | null }) {
                 onClick={openAddDialog} 
                 className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary"
               >
-                <Plus className="h-4 w-4 mr-2" /> Adicionar Item
+                <Plus className="h-4 w-4 mr-2" /> Adicionar Atividade
               </Button>
             </div>
             
@@ -62,7 +62,7 @@ export function EventScheduleSection({ eventId }: { eventId: string | null }) {
       <ScheduleDialog
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        title={editingId ? 'Editar Item do Cronograma' : 'Adicionar Item ao Cronograma'}
+        title={editingId ? 'Editar Atividade do Cronograma' : 'Adicionar Atividade ao Cronograma'}
         currentItem={currentItem}
         handleInputChange={handleInputChange}
         handleSelectChange={handleSelectChange}

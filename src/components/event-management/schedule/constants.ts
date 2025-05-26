@@ -2,11 +2,12 @@
 import { ScheduleForm } from './types';
 
 export const defaultFormValues: ScheduleForm = {
-  titulo: '',
-  descricao: '',
+  cronograma_id: null,
+  atividade: '',
+  dia: '',
+  horario_inicio: '',
+  horario_fim: '',
   local: '',
-  data: '',
-  hora_inicio: '',
-  hora_fim: '',
-  tipo: 'JOGO'
+  global: false,
+  modalidades: []
 };

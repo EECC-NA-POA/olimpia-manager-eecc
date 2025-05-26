@@ -18,13 +18,30 @@ export const useScheduleFetch = (eventId: string | null) => {
     try {
       console.log('Fetching schedule for event:', eventId);
       
-      // Query the cronogramas table with proper ordering
+      // Query the cronograma_atividades table with proper joins
       const { data, error } = await supabase
-        .from('cronogramas')
-        .select('*')
+        .from('cronograma_atividades')
+        .select(`
+          id,
+          cronograma_id,
+          dia,
+          atividade,
+          horario_inicio,
+          horario_fim,
+          local,
+          ordem,
+          global,
+          evento_id,
+          cronogramas!inner(
+            nome
+          ),
+          cronograma_atividade_modalidades(
+            modalidade_id
+          )
+        `)
         .eq('evento_id', eventId)
-        .order('data', { ascending: true })
-        .order('hora_inicio', { ascending: true });
+        .order('dia', { ascending: true })
+        .order('horario_inicio', { ascending: true });
       
       if (error) {
         console.error('Error fetching schedule:', error);
@@ -33,8 +50,24 @@ export const useScheduleFetch = (eventId: string | null) => {
         return;
       }
       
-      console.log('Retrieved schedule items:', data);
-      setScheduleItems(data || []);
+      // Transform the data to match our ScheduleItem interface
+      const transformedData: ScheduleItem[] = (data || []).map(item => ({
+        id: item.id,
+        cronograma_id: item.cronograma_id,
+        cronograma_nome: (item.cronogramas as any)?.nome || '',
+        dia: item.dia,
+        atividade: item.atividade,
+        horario_inicio: item.horario_inicio,
+        horario_fim: item.horario_fim,
+        local: item.local,
+        ordem: item.ordem,
+        global: item.global,
+        evento_id: item.evento_id,
+        modalidades: (item.cronograma_atividade_modalidades || []).map((m: any) => m.modalidade_id)
+      }));
+      
+      console.log('Retrieved schedule items:', transformedData);
+      setScheduleItems(transformedData);
     } catch (error) {
       console.error('Error fetching schedule:', error);
       toast.error('Erro ao carregar cronograma');
