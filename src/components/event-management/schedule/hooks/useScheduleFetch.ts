@@ -55,10 +55,15 @@ export const useScheduleFetch = (eventId: string | null) => {
       
       // Transform the data to match our ScheduleItem interface
       const transformedData: ScheduleItem[] = (data || []).map(item => {
+        // Handle the cronogramas join - it's an array, so we take the first element
+        const cronogramaData = Array.isArray(item.cronogramas) && item.cronogramas.length > 0 
+          ? item.cronogramas[0] 
+          : null;
+        
         return {
           id: item.id,
           cronograma_id: item.cronograma_id,
-          cronograma_nome: item.cronogramas?.nome || 'Cronograma sem nome',
+          cronograma_nome: cronogramaData?.nome || 'Cronograma sem nome',
           dia: item.dia,
           atividade: item.atividade,
           horario_inicio: item.horario_inicio,
