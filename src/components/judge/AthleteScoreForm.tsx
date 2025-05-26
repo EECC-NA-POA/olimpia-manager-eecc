@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -114,8 +115,21 @@ export function AthleteScoreForm({
   
   const isTeamModality = modality?.tipo_modalidade?.includes('COLETIVA');
   
-  // Keep Portuguese score types for consistency with backend
+  // Map Portuguese score types to English for the submission hook
+  const mapScoreType = (portugueseType: string): 'time' | 'distance' | 'points' => {
+    switch (portugueseType) {
+      case 'tempo':
+        return 'time';
+      case 'distancia':
+        return 'distance';
+      case 'pontos':
+      default:
+        return 'points';
+    }
+  };
+  
   const scoreType = modality?.tipo_pontuacao || 'pontos';
+  const mappedScoreType = mapScoreType(scoreType);
   
   // Fetch existing score if it exists
   const { data: existingScore } = useQuery({
@@ -146,7 +160,7 @@ export function AthleteScoreForm({
     modalityId, 
     { atleta_id: athleteId, equipe_id: teamMembers?.[0] ? teamMembers.find(m => m.id === athleteId) ? undefined : teamMembers[0] ? undefined : undefined : undefined }, 
     judgeId, 
-    scoreType
+    mappedScoreType
   );
 
   // Handle form submission
@@ -223,7 +237,7 @@ export function AthleteScoreForm({
       <ModalityRankings 
         modalityId={modalityId}
         eventId={eventId}
-        scoreType={scoreType}
+        scoreType={mappedScoreType}
       />
     </div>
   );

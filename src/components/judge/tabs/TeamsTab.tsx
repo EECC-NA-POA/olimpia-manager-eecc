@@ -79,7 +79,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     modalidade_nome: team.modalidade_info?.nome || '',
     tipo_pontuacao: team.modalidade_info?.tipo_pontuacao || 'pontos',
     filial_nome: team.filial?.nome || '',
-    members: team.athletes?.map(athlete => ({
+    members: team.atletas?.map(athlete => ({
       atleta_id: athlete.id,
       atleta_nome: athlete.nome,
       numero_identificador: athlete.numero_identificador
