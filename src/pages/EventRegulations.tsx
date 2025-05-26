@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
 import { EventRegulation } from '@/lib/types/database';
 import { useEventData } from '@/hooks/useEventData';
+import '../styles/regulation-display.css';
 
 const EventRegulations = () => {
   const { currentEventId } = useAuth();
@@ -88,7 +89,7 @@ const EventRegulations = () => {
 
                 {regulation.regulamento_texto ? (
                   <div 
-                    className="regulation-content mt-4"
+                    className="regulation-content mt-4 text-left"
                     dangerouslySetInnerHTML={{ __html: regulation.regulamento_texto }}
                   />
                 ) : !regulation.regulamento_link ? (
