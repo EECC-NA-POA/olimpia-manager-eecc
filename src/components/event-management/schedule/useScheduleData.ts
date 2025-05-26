@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -34,29 +33,17 @@ export const useScheduleData = (eventId: string | null) => {
     try {
       console.log('Fetching schedule for event:', eventId);
       
-      // First, let's check what columns exist in the table
-      const { data: tableInfo, error: tableError } = await supabase
-        .from('cronogramas')
-        .select('*')
-        .limit(1);
-      
-      if (tableError) {
-        console.error('Error checking table structure:', tableError);
-      } else {
-        console.log('Table structure sample:', tableInfo);
-      }
-      
-      // Using the correct table name: cronogramas (plural)
-      // Remove the problematic ordering by 'data' column for now
+      // Query the cronogramas table with proper ordering
       const { data, error } = await supabase
         .from('cronogramas')
         .select('*')
         .eq('evento_id', eventId)
-        .order('created_at', { ascending: true });
+        .order('data', { ascending: true })
+        .order('hora_inicio', { ascending: true });
       
       if (error) {
         console.error('Error fetching schedule:', error);
-        toast.error('Erro ao carregar itens de cronograma');
+        toast.error('Erro ao carregar cronograma');
         setScheduleItems([]);
         return;
       }
@@ -65,7 +52,7 @@ export const useScheduleData = (eventId: string | null) => {
       setScheduleItems(data || []);
     } catch (error) {
       console.error('Error fetching schedule:', error);
-      toast.error('Erro ao carregar itens de cronograma');
+      toast.error('Erro ao carregar cronograma');
       setScheduleItems([]);
     } finally {
       setIsLoading(false);
@@ -120,7 +107,6 @@ export const useScheduleData = (eventId: string | null) => {
     
     setIsSaving(true);
     try {
-      // Use correct table name for saving as well
       if (editingId) {
         // Update existing item
         const { error } = await supabase
@@ -181,7 +167,6 @@ export const useScheduleData = (eventId: string | null) => {
     }
     
     try {
-      // Use correct table name for deletion
       const { error } = await supabase
         .from('cronogramas')
         .delete()
