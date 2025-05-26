@@ -32,7 +32,15 @@ const regulationSchema = z.object({
   titulo: z.string().min(3, 'Título deve ter pelo menos 3 caracteres'),
   versao: z.string().min(1, 'Versão é obrigatória'),
   regulamento_texto: z.string().min(10, 'O texto do regulamento deve ter pelo menos 10 caracteres'),
-  regulamento_link: z.string().url('Link inválido').optional().or(z.literal('')),
+  regulamento_link: z.string().optional().refine((val) => {
+    if (!val || val.trim() === '') return true;
+    try {
+      new URL(val);
+      return true;
+    } catch {
+      return false;
+    }
+  }, 'Link inválido'),
   is_ativo: z.boolean()
 });
 
@@ -58,40 +66,61 @@ export function RegulationForm({ eventId, regulation, userId, onComplete, onCanc
       return;
     }
 
+    console.log('Form data being submitted:', data);
+
     setIsSubmitting(true);
     try {
+      // Process the link field - convert empty string to null
+      const processedLink = data.regulamento_link?.trim() === '' ? null : data.regulamento_link?.trim() || null;
+      
+      console.log('Processed link:', processedLink);
+
       if (regulation && regulation.id) {
         // Update existing regulation
+        const updateData = {
+          titulo: data.titulo,
+          versao: data.versao,
+          regulamento_texto: data.regulamento_texto,
+          regulamento_link: processedLink,
+          is_ativo: data.is_ativo,
+          atualizado_por: userId,
+          atualizado_em: new Date().toISOString()
+        };
+        
+        console.log('Updating regulation with data:', updateData);
+        
         const { error } = await supabase
           .from('eventos_regulamentos')
-          .update({
-            titulo: data.titulo,
-            versao: data.versao,
-            regulamento_texto: data.regulamento_texto,
-            regulamento_link: data.regulamento_link || null,
-            is_ativo: data.is_ativo,
-            atualizado_por: userId,
-            atualizado_em: new Date().toISOString()
-          })
+          .update(updateData)
           .eq('id', regulation.id);
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating regulation:', error);
+          throw error;
+        }
         toast.success('Regulamento atualizado com sucesso!');
       } else {
-        // Create new regulation - don't pass id field
+        // Create new regulation
+        const insertData = {
+          evento_id: eventId,
+          titulo: data.titulo,
+          versao: data.versao,
+          regulamento_texto: data.regulamento_texto,
+          regulamento_link: processedLink,
+          is_ativo: data.is_ativo,
+          criado_por: userId
+        };
+        
+        console.log('Creating regulation with data:', insertData);
+        
         const { error } = await supabase
           .from('eventos_regulamentos')
-          .insert({
-            evento_id: eventId,
-            titulo: data.titulo,
-            versao: data.versao,
-            regulamento_texto: data.regulamento_texto,
-            regulamento_link: data.regulamento_link || null,
-            is_ativo: data.is_ativo,
-            criado_por: userId
-          });
+          .insert(insertData);
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error creating regulation:', error);
+          throw error;
+        }
         toast.success('Regulamento criado com sucesso!');
       }
       
