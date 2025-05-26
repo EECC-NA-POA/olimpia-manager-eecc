@@ -123,65 +123,88 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
   }
 
   // For delegation reps and organizers, show tabs with management capabilities
+  // But if user is BOTH judge AND delegation rep, don't show management tab
+  const showManagementTab = (isDelegationRep || isOrganizer) && !isJudgeOnly;
+
   return (
     <div className="space-y-6">
       <TeamsTabHeader isOrganizer={isOrganizer}>
-        <Tabs defaultValue="manage" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="manage">
-              {isOrganizer ? "Gerenciar Equipes" : "Gerenciar Minhas Equipes"}
-            </TabsTrigger>
-            <TabsTrigger value="view-all">
-              {isOrganizer ? "Visualizar Todas as Equipes" : "Pontuar Equipes"}
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="manage">
-            <ManageTeamsTab
-              modalities={modalities}
-              teams={teams}
-              availableAthletes={availableAthletes}
-              selectedModalityId={selectedModalityId}
-              setSelectedModalityId={setSelectedModalityId}
-              isLoading={isLoading}
-              createTeam={createTeam}
-              deleteTeam={deleteTeam}
-              addAthlete={addAthlete}
-              removeAthlete={removeAthlete}
-              updateAthletePosition={updateAthletePosition}
-              isCreatingTeam={isCreatingTeam}
-              isDeletingTeam={isDeletingTeam}
-              isAddingAthlete={isAddingAthlete}
-              isRemovingAthlete={isRemovingAthlete}
-              isUpdatingAthlete={isUpdatingAthlete}
-              isOrganizer={isOrganizer}
-              teamToDelete={teamToDelete}
-              isDeleteDialogOpen={isDeleteDialogOpen}
-              setIsDeleteDialogOpen={setIsDeleteDialogOpen}
-              confirmDeleteTeam={confirmDeleteTeam}
-              cancelDeleteTeam={cancelDeleteTeam}
-            />
-          </TabsContent>
-          
-          <TabsContent value="view-all">
-            <ViewAllTeamsTab
-              allTeams={transformedTeams}
-              allModalities={transformedModalities}
-              branches={branches}
-              isLoadingAllTeams={isLoadingAllTeams}
-              allTeamsError={allTeamsError}
-              modalityFilter={modalityFilter}
-              branchFilter={branchFilter}
-              searchTerm={searchTerm}
-              setModalityFilter={setModalityFilter}
-              setBranchFilter={setBranchFilter}
-              setSearchTerm={setSearchTerm}
-              isOrganizer={isOrganizer}
-              eventId={eventId}
-              judgeId={userId}
-            />
-          </TabsContent>
-        </Tabs>
+        {showManagementTab ? (
+          <Tabs defaultValue="manage" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="manage">
+                {isOrganizer ? "Gerenciar Equipes" : "Gerenciar Minhas Equipes"}
+              </TabsTrigger>
+              <TabsTrigger value="view-all">
+                {isOrganizer ? "Visualizar Todas as Equipes" : "Pontuar Equipes"}
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="manage">
+              <ManageTeamsTab
+                modalities={modalities}
+                teams={teams}
+                availableAthletes={availableAthletes}
+                selectedModalityId={selectedModalityId}
+                setSelectedModalityId={setSelectedModalityId}
+                isLoading={isLoading}
+                createTeam={createTeam}
+                deleteTeam={deleteTeam}
+                addAthlete={addAthlete}
+                removeAthlete={removeAthlete}
+                updateAthletePosition={updateAthletePosition}
+                isCreatingTeam={isCreatingTeam}
+                isDeletingTeam={isDeletingTeam}
+                isAddingAthlete={isAddingAthlete}
+                isRemovingAthlete={isRemovingAthlete}
+                isUpdatingAthlete={isUpdatingAthlete}
+                isOrganizer={isOrganizer}
+                teamToDelete={teamToDelete}
+                isDeleteDialogOpen={isDeleteDialogOpen}
+                setIsDeleteDialogOpen={setIsDeleteDialogOpen}
+                confirmDeleteTeam={confirmDeleteTeam}
+                cancelDeleteTeam={cancelDeleteTeam}
+              />
+            </TabsContent>
+            
+            <TabsContent value="view-all">
+              <ViewAllTeamsTab
+                allTeams={transformedTeams}
+                allModalities={transformedModalities}
+                branches={branches}
+                isLoadingAllTeams={isLoadingAllTeams}
+                allTeamsError={allTeamsError}
+                modalityFilter={modalityFilter}
+                branchFilter={branchFilter}
+                searchTerm={searchTerm}
+                setModalityFilter={setModalityFilter}
+                setBranchFilter={setBranchFilter}
+                setSearchTerm={setSearchTerm}
+                isOrganizer={isOrganizer}
+                eventId={eventId}
+                judgeId={userId}
+              />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          // For users who don't have management access, show only the view tab
+          <ViewAllTeamsTab
+            allTeams={transformedTeams}
+            allModalities={transformedModalities}
+            branches={branches}
+            isLoadingAllTeams={isLoadingAllTeams}
+            allTeamsError={allTeamsError}
+            modalityFilter={modalityFilter}
+            branchFilter={branchFilter}
+            searchTerm={searchTerm}
+            setModalityFilter={setModalityFilter}
+            setBranchFilter={setBranchFilter}
+            setSearchTerm={setSearchTerm}
+            isOrganizer={isOrganizer}
+            eventId={eventId}
+            judgeId={userId}
+          />
+        )}
       </TeamsTabHeader>
     </div>
   );
