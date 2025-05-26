@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,15 +19,11 @@ interface TeamsTabProps {
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
   const { user } = useAuth();
   
-  // Check if user is ONLY a judge (judges should only score, not manage)
+  // Check if user is ONLY a judge (judges should only view, not manage)
+  // Representatives can manage their teams, organizers can manage all teams
   const isJudgeOnly = user?.papeis?.some(role => role.codigo === 'JUZ') && 
                       !user?.papeis?.some(role => role.codigo === 'RDD') &&
                       !user?.papeis?.some(role => role.codigo === 'ORE');
-  
-  // Check if user is delegation representative (can manage but not score)
-  const isDelegationOnly = user?.papeis?.some(role => role.codigo === 'RDD') &&
-                           !user?.papeis?.some(role => role.codigo === 'JUZ') &&
-                           !user?.papeis?.some(role => role.codigo === 'ORE');
   
   // States for "Visualizar Todas" tab
   const [modalityFilter, setModalityFilter] = useState<number | null>(null);
@@ -97,7 +94,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     modalidade_nome: modality.nome
   })) || [];
 
-  // For judges only, show only the scoring tab
+  // For judges only, show only the "View All Teams" tab with scoring capability
   if (isJudgeOnly) {
     return (
       <div className="space-y-6">
@@ -124,41 +121,6 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     );
   }
 
-  // For delegation representatives only, show only the management tab
-  if (isDelegationOnly) {
-    return (
-      <div className="space-y-6">
-        <TeamsTabHeader isOrganizer={false}>
-          <ManageTeamsTab
-            modalities={modalities}
-            teams={teams}
-            availableAthletes={availableAthletes}
-            selectedModalityId={selectedModalityId}
-            setSelectedModalityId={setSelectedModalityId}
-            isLoading={isLoading}
-            createTeam={createTeam}
-            deleteTeam={deleteTeam}
-            addAthlete={addAthlete}
-            removeAthlete={removeAthlete}
-            updateAthletePosition={updateAthletePosition}
-            isCreatingTeam={isCreatingTeam}
-            isDeletingTeam={isDeletingTeam}
-            isAddingAthlete={isAddingAthlete}
-            isRemovingAthlete={isRemovingAthlete}
-            isUpdatingAthlete={isUpdatingAthlete}
-            isOrganizer={false}
-            teamToDelete={teamToDelete}
-            isDeleteDialogOpen={isDeleteDialogOpen}
-            setIsDeleteDialogOpen={setIsDeleteDialogOpen}
-            confirmDeleteTeam={confirmDeleteTeam}
-            cancelDeleteTeam={cancelDeleteTeam}
-          />
-        </TeamsTabHeader>
-      </div>
-    );
-  }
-
-  // For organizers and users with multiple roles, show both tabs
   return (
     <div className="space-y-6">
       <TeamsTabHeader isOrganizer={isOrganizer}>

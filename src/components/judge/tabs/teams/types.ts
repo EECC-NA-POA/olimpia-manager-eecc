@@ -69,28 +69,3 @@ export interface AvailableAthlete {
   documento: string;
   filial_nome?: string;
 }
-
-// Add missing transformed types
-export interface TransformedTeam {
-  equipe_id: number;
-  equipe_nome: string;
-  modalidade_id: number;
-  modalidade_nome: string;
-  tipo_pontuacao: string;
-  filial_nome: string;
-  members: {
-    atleta_id: string;
-    atleta_nome: string;
-    numero_identificador: string;
-  }[];
-}
-
-export interface TransformedModality {
-  modalidade_id: number;
-  modalidade_nome: string;
-}
-
-export interface Branch {
-  id: string;
-  nome: string;
-}
