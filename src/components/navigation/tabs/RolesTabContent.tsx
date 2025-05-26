@@ -13,15 +13,15 @@ export function RolesTabContent({ isOrganizer, isDelegationRep, isJudge }: Roles
   return (
     <>
       {isOrganizer && (
-        <NavLink to="/organizer-dashboard" icon={Settings} label="Organizador" />
+        <NavLink to="/organizer-dashboard" icon={<Settings className="h-4 w-4" />} label="Organizador" />
       )}
       
       {isDelegationRep && !isJudge && (
-        <NavLink to="/delegation-dashboard" icon={Users} label="Delegação" />
+        <NavLink to="/delegation-dashboard" icon={<Users className="h-4 w-4" />} label="Delegação" />
       )}
       
       {isJudge && (
-        <NavLink to="/judge-dashboard" icon={Gavel} label="Juiz" />
+        <NavLink to="/judge-dashboard" icon={<Gavel className="h-4 w-4" />} label="Juiz" />
       )}
     </>
   );
