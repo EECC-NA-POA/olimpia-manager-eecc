@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/select';
 import { ParametrosFields } from './ParametrosFields';
 import { RuleForm, Modality } from './types';
+import { useBatteryOperations } from './hooks/useBatteryOperations';
+import { toast } from 'sonner';
 
 interface ModalityRuleDialogProps {
   isOpen: boolean;
@@ -88,6 +90,7 @@ export function ModalityRuleDialog({
   isSaving 
 }: ModalityRuleDialogProps) {
   const [currentItem, setCurrentItem] = useState<RuleForm>(defaultFormValues);
+  const { deleteBaterias } = useBatteryOperations();
 
   useEffect(() => {
     if (editingModalityId) {
@@ -122,12 +125,36 @@ export function ModalityRuleDialog({
     });
   };
 
-  const handleResetParameters = () => {
-    const defaultParams = getDefaultParametersForType(currentItem.regra_tipo);
-    setCurrentItem({
-      ...currentItem,
-      parametros: defaultParams
-    });
+  const handleResetParameters = async () => {
+    if (!editingModalityId) return;
+    
+    try {
+      // Find the modality to get evento_id
+      const modality = modalities.find(m => m.id === editingModalityId);
+      
+      if (modality?.evento_id) {
+        console.log('Deleting existing baterias before resetting parameters...');
+        await deleteBaterias(editingModalityId, modality.evento_id);
+        toast.success('Baterias excluídas ao resetar configuração');
+      }
+      
+      // Reset parameters to default
+      const defaultParams = getDefaultParametersForType(currentItem.regra_tipo);
+      setCurrentItem({
+        ...currentItem,
+        parametros: defaultParams
+      });
+    } catch (error) {
+      console.error('Error deleting baterias during reset:', error);
+      toast.error('Erro ao excluir baterias durante o reset');
+      
+      // Still reset parameters even if bateria deletion fails
+      const defaultParams = getDefaultParametersForType(currentItem.regra_tipo);
+      setCurrentItem({
+        ...currentItem,
+        parametros: defaultParams
+      });
+    }
   };
 
   const handleRuleTypeChange = (value: any) => {
