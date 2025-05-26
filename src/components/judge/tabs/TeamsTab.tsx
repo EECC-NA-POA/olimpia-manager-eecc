@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
@@ -78,11 +79,11 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     modalidade_id: team.modalidade_id,
     modalidade_nome: team.modalidade_info?.nome || '',
     tipo_pontuacao: team.modalidade_info?.tipo_pontuacao || 'pontos',
-    filial_nome: team.filial?.nome || '',
+    filial_nome: team.filial_info?.nome || '',
     members: team.atletas?.map(athlete => ({
-      atleta_id: athlete.id,
-      atleta_nome: athlete.nome,
-      numero_identificador: athlete.numero_identificador
+      atleta_id: athlete.id.toString(),
+      atleta_nome: athlete.nome_completo || athlete.nome || '',
+      numero_identificador: athlete.numero_identificador || ''
     })) || []
   })) || [];
 
