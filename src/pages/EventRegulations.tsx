@@ -40,6 +40,13 @@ const EventRegulations = () => {
     enabled: !!currentEventId,
   });
 
+  // Check if the link is a PDF
+  const isPDF = (url: string | null) => {
+    if (!url) return false;
+    const lowerUrl = url.toLowerCase();
+    return lowerUrl.includes('.pdf') || lowerUrl.includes('pdf');
+  };
+
   // Open external link in a new tab
   const openExternalLink = (url: string | null) => {
     if (url) {
@@ -82,8 +89,28 @@ const EventRegulations = () => {
                       variant="outline"
                     >
                       <ExternalLink className="h-4 w-4" />
-                      Abrir Regulamento Completo
+                      Abrir em Nova Aba
                     </Button>
+                  </div>
+                )}
+
+                {/* PDF Embed Section */}
+                {regulation.regulamento_link && isPDF(regulation.regulamento_link) && (
+                  <div className="w-full mb-6">
+                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                      <h3 className="text-lg font-medium mb-2">Visualização do Documento</h3>
+                      <p className="text-sm text-muted-foreground">
+                        O documento está sendo exibido abaixo. Caso não consiga visualizar, use o botão acima para abrir em nova aba.
+                      </p>
+                    </div>
+                    <div className="border rounded-lg overflow-hidden">
+                      <iframe
+                        src={regulation.regulamento_link}
+                        className="w-full h-[600px] border-0"
+                        title="Regulamento do Evento"
+                        loading="lazy"
+                      />
+                    </div>
                   </div>
                 )}
 
