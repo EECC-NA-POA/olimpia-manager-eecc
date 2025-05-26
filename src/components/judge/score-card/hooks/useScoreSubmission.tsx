@@ -43,16 +43,24 @@ export function useScoreSubmission(
             tentativa_numero: formData.attempt || null
           };
           
-          // Only include bateria_id if heat is provided and baterias are configured
-          console.log('Checking heat conditions:', {
-            hasHeat: !!formData.heat,
-            hasHeatsInRule: !!rule?.parametros?.baterias,
-            heatValue: formData.heat
-          });
-          
+          // Validate bateria exists before including bateria_id
           if (formData.heat && rule?.parametros?.baterias) {
-            console.log('Adding bateria_id to scoreData:', formData.heat);
-            scoreData.bateria_id = formData.heat;
+            console.log('Checking if bateria exists for heat:', formData.heat);
+            
+            const { data: bateriaExists } = await supabase
+              .from('baterias')
+              .select('id')
+              .eq('id', formData.heat)
+              .eq('modalidade_id', modalityId)
+              .eq('evento_id', eventId)
+              .maybeSingle();
+            
+            if (bateriaExists) {
+              console.log('Bateria exists, adding bateria_id:', formData.heat);
+              scoreData.bateria_id = formData.heat;
+            } else {
+              console.warn('Bateria does not exist, skipping bateria_id');
+            }
           }
         } else if ('score' in formData) {
           scoreData = {
@@ -61,16 +69,24 @@ export function useScoreSubmission(
             tentativa_numero: formData.attempt || null
           };
           
-          // Only include bateria_id if heat is provided and baterias are configured
-          console.log('Checking heat conditions for score format:', {
-            hasHeat: !!formData.heat,
-            hasHeatsInRule: !!rule?.parametros?.baterias,
-            heatValue: formData.heat
-          });
-          
+          // Validate bateria exists before including bateria_id
           if (formData.heat && rule?.parametros?.baterias) {
-            console.log('Adding bateria_id to scoreData for score format:', formData.heat);
-            scoreData.bateria_id = formData.heat;
+            console.log('Checking if bateria exists for score format:', formData.heat);
+            
+            const { data: bateriaExists } = await supabase
+              .from('baterias')
+              .select('id')
+              .eq('id', formData.heat)
+              .eq('modalidade_id', modalityId)
+              .eq('evento_id', eventId)
+              .maybeSingle();
+            
+            if (bateriaExists) {
+              console.log('Bateria exists for score format, adding bateria_id:', formData.heat);
+              scoreData.bateria_id = formData.heat;
+            } else {
+              console.warn('Bateria does not exist for score format, skipping bateria_id');
+            }
           }
         }
       } else if (rule?.regra_tipo === 'tempo' || scoreType === 'tempo') {
@@ -83,16 +99,24 @@ export function useScoreSubmission(
             tentativa_numero: formData.attempt || null
           };
           
-          // Only include bateria_id if heat is provided and baterias are configured
-          console.log('Checking heat conditions for time:', {
-            hasHeat: !!formData.heat,
-            hasHeatsInRule: !!rule?.parametros?.baterias,
-            heatValue: formData.heat
-          });
-          
+          // Validate bateria exists before including bateria_id
           if (formData.heat && rule?.parametros?.baterias) {
-            console.log('Adding bateria_id to scoreData for time:', formData.heat);
-            scoreData.bateria_id = formData.heat;
+            console.log('Checking if bateria exists for time:', formData.heat);
+            
+            const { data: bateriaExists } = await supabase
+              .from('baterias')
+              .select('id')
+              .eq('id', formData.heat)
+              .eq('modalidade_id', modalityId)
+              .eq('evento_id', eventId)
+              .maybeSingle();
+            
+            if (bateriaExists) {
+              console.log('Bateria exists for time, adding bateria_id:', formData.heat);
+              scoreData.bateria_id = formData.heat;
+            } else {
+              console.warn('Bateria does not exist for time, skipping bateria_id');
+            }
           }
         }
       } else {
@@ -103,16 +127,24 @@ export function useScoreSubmission(
           tentativa_numero: formData.attempt || null
         };
         
-        // Only include bateria_id if heat is provided and baterias are configured
-        console.log('Checking heat conditions for points:', {
-          hasHeat: !!formData.heat,
-          hasHeatsInRule: !!rule?.parametros?.baterias,
-          heatValue: formData.heat
-        });
-        
+        // Validate bateria exists before including bateria_id
         if (formData.heat && rule?.parametros?.baterias) {
-          console.log('Adding bateria_id to scoreData for points:', formData.heat);
-          scoreData.bateria_id = formData.heat;
+          console.log('Checking if bateria exists for points:', formData.heat);
+          
+          const { data: bateriaExists } = await supabase
+            .from('baterias')
+            .select('id')
+            .eq('id', formData.heat)
+            .eq('modalidade_id', modalityId)
+            .eq('evento_id', eventId)
+            .maybeSingle();
+          
+          if (bateriaExists) {
+            console.log('Bateria exists for points, adding bateria_id:', formData.heat);
+            scoreData.bateria_id = formData.heat;
+          } else {
+            console.warn('Bateria does not exist for points, skipping bateria_id');
+          }
         }
       }
       
