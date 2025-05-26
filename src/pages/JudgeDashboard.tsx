@@ -17,41 +17,31 @@ export default function JudgeDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('scores');
 
-  // Check if the user has judge or delegation privileges
-  const { data: userAccess, isLoading: isCheckingRole } = useQuery({
-    queryKey: ['userAccess', user?.id],
+  // Check if the user has judge privileges
+  const { data: isJudge, isLoading: isCheckingRole } = useQuery({
+    queryKey: ['isJudge', user?.id],
     queryFn: async () => {
-      if (!user?.id) return { isJudge: false, isDelegation: false };
+      if (!user?.id) return false;
       
-      // Check if user has the judge role (JUZ) or delegation role (RDD)
+      // Check if user has the judge role (JUZ)
       const hasJudgeRole = user.papeis?.some(role => role.codigo === 'JUZ') || false;
-      const hasDelegationRole = user.papeis?.some(role => role.codigo === 'RDD') || false;
       
-      if (!hasJudgeRole && !hasDelegationRole) {
-        return { isJudge: false, isDelegation: false };
+      if (!hasJudgeRole) {
+        return false;
       }
       
-      return { isJudge: hasJudgeRole, isDelegation: hasDelegationRole };
+      return true;
     },
     enabled: !!user?.id,
   });
 
-  // Redirect if not a judge or delegation user
+  // Redirect if not a judge
   React.useEffect(() => {
-    if (!isCheckingRole && !userAccess?.isJudge && !userAccess?.isDelegation && user) {
+    if (!isCheckingRole && !isJudge && user) {
       toast.error('Você não tem permissão para acessar esta página');
       navigate('/');
     }
-  }, [userAccess, isCheckingRole, user, navigate]);
-
-  // Set default tab based on user role
-  React.useEffect(() => {
-    if (userAccess?.isJudge && !userAccess?.isDelegation) {
-      setActiveTab('scores');
-    } else if (userAccess?.isDelegation) {
-      setActiveTab('teams');
-    }
-  }, [userAccess]);
+  }, [isJudge, isCheckingRole, user, navigate]);
 
   if (isCheckingRole) {
     return (
@@ -65,21 +55,10 @@ export default function JudgeDashboard() {
     );
   }
 
-  if (!userAccess?.isJudge && !userAccess?.isDelegation || !user) {
+  if (!isJudge || !user) {
     return null; // Will redirect in the useEffect
   }
 
-  // For delegation users, only show teams tab (no scoring)
-  if (userAccess.isDelegation && !userAccess.isJudge) {
-    return (
-      <div className="container mx-auto p-6 space-y-6">
-        <h1 className="text-2xl font-bold">Painel da Delegação</h1>
-        <TeamsTab userId={user.id} eventId={currentEventId} />
-      </div>
-    );
-  }
-
-  // For judges, show both tabs but with proper restrictions
   return (
     <div className="container mx-auto p-6 space-y-6">
       <h1 className="text-2xl font-bold">Painel do Juiz</h1>
@@ -87,7 +66,7 @@ export default function JudgeDashboard() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid grid-cols-2 w-full max-w-md">
           <TabsTrigger value="scores">Pontuações Individuais</TabsTrigger>
-          <TabsTrigger value="teams">Pontuar Equipes</TabsTrigger>
+          <TabsTrigger value="teams">Equipes</TabsTrigger>
         </TabsList>
         
         <TabsContent value="scores" className="mt-6">
