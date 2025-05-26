@@ -43,6 +43,29 @@ export function useScoreSubmission(
           break;
           
         case 'distancia':
+          if ('meters' in formData && 'centimeters' in formData) {
+            // Convert meters and centimeters to total meters
+            const totalMeters = formData.meters + (formData.centimeters / 100);
+            scoreData = {
+              valor_pontuacao: totalMeters,
+              tempo_minutos: null,
+              tempo_segundos: null,
+              tempo_milissegundos: null,
+              dados_json: { meters: formData.meters, centimeters: formData.centimeters },
+              unidade: 'm'
+            };
+          } else if ('score' in formData) {
+            scoreData = {
+              valor_pontuacao: formData.score,
+              tempo_minutos: null,
+              tempo_segundos: null,
+              tempo_milissegundos: null,
+              dados_json: null,
+              unidade: 'm'
+            };
+          }
+          break;
+          
         case 'pontos':
           if ('score' in formData) {
             scoreData = {
@@ -51,7 +74,7 @@ export function useScoreSubmission(
               tempo_segundos: null,
               tempo_milissegundos: null,
               dados_json: null,
-              unidade: rule.regra_tipo === 'distancia' ? 'm' : 'pontos'
+              unidade: 'pontos'
             };
           }
           break;
@@ -208,7 +231,9 @@ export function useScoreSubmission(
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['scores', modalityId, eventId] });
       queryClient.invalidateQueries({ queryKey: ['score', athlete.atleta_id, modalityId, eventId] });
+      queryClient.invalidateQueries({ queryKey: ['team-score', athlete.equipe_id, modalityId, eventId] });
       queryClient.invalidateQueries({ queryKey: ['medal', athlete.atleta_id, modalityId, eventId] });
+      queryClient.invalidateQueries({ queryKey: ['team-medal', athlete.equipe_id, modalityId, eventId] });
       queryClient.invalidateQueries({ queryKey: ['athletes', modalityId, eventId] });
       queryClient.invalidateQueries({ queryKey: ['modality-rankings', modalityId, eventId] });
       queryClient.invalidateQueries({ queryKey: ['premiacoes', modalityId, eventId] });

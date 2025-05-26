@@ -71,7 +71,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     return <NoModalitiesMessage />;
   }
 
-  // For judges only, show only the "View All Teams" tab
+  // For judges only, show only the "View All Teams" tab with scoring capability
   if (isJudgeOnly) {
     return (
       <div className="space-y-6">
@@ -90,7 +90,8 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
             setSearchTerm={setSearchTerm}
             isOrganizer={false}
             eventId={eventId}
-            isReadOnly={true}
+            isReadOnly={false}
+            judgeId={userId}
           />
         </TeamsTabHeader>
       </div>
@@ -106,7 +107,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
               {isOrganizer ? "Gerenciar Equipes" : "Gerenciar Minhas Equipes"}
             </TabsTrigger>
             <TabsTrigger value="view-all">
-              {isOrganizer ? "Visualizar Todas as Equipes" : "Visualizar Todas as Equipes"}
+              {isOrganizer ? "Visualizar Todas as Equipes" : "Pontuar Equipes"}
             </TabsTrigger>
           </TabsList>
           
@@ -152,6 +153,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
               setSearchTerm={setSearchTerm}
               isOrganizer={isOrganizer}
               eventId={eventId}
+              judgeId={userId}
             />
           </TabsContent>
         </Tabs>
