@@ -76,6 +76,9 @@ export function useScoreSubmission(
           
         case 'sets':
           const sets = formData.sets || [];
+          const isVolleyball = rule.parametros.pontos_por_set !== undefined;
+          const isTableTennis = rule.parametros.unidade === 'vitórias';
+          
           if (rule.parametros.pontua_por_set !== false) {
             // Sum points from all sets
             const totalPontos = sets.reduce((total: number, set: any) => total + (set.pontos || 0), 0);
@@ -87,8 +90,46 @@ export function useScoreSubmission(
               dados_json: { sets },
               unidade: 'pontos'
             };
+          } else if (isVolleyball || isTableTennis) {
+            // Enhanced sets scoring - count set victories
+            const vitorias = sets.filter((set: any) => set.vencedor === 'vitoria').length;
+            const derrotas = sets.filter((set: any) => set.vencedor === 'derrota').length;
+            
+            // Validate volleyball set scores if applicable
+            if (isVolleyball) {
+              for (let i = 0; i < sets.length; i++) {
+                const set = sets[i];
+                if (set.vencedor && (set.pontosEquipe1 !== undefined && set.pontosEquipe2 !== undefined)) {
+                  const isSetFinal = i === 4;
+                  const limitePontos = isSetFinal ? (rule.parametros.pontos_set_final || 15) : (rule.parametros.pontos_por_set || 25);
+                  const vantagem = rule.parametros.vantagem || 2;
+                  
+                  const maxPontos = Math.max(set.pontosEquipe1, set.pontosEquipe2);
+                  const minPontos = Math.min(set.pontosEquipe1, set.pontosEquipe2);
+                  
+                  // Validate set score
+                  if (maxPontos < limitePontos || (maxPontos - minPontos) < vantagem) {
+                    throw new Error(`Set ${i + 1} não atende aos critérios de pontuação do voleibol`);
+                  }
+                }
+              }
+            }
+            
+            scoreData = {
+              valor_pontuacao: vitorias,
+              tempo_minutos: null,
+              tempo_segundos: null,
+              tempo_milissegundos: null,
+              dados_json: { 
+                sets, 
+                total_vitorias: vitorias, 
+                total_derrotas: derrotas,
+                detalhes_modalidade: isVolleyball ? 'volleyball' : 'table_tennis'
+              },
+              unidade: rule.parametros.unidade || 'vitorias'
+            };
           } else {
-            // Count set victories
+            // Legacy victory-only scoring
             const vitorias = sets.filter((set: any) => set.vencedor === 'vitoria').length;
             scoreData = {
               valor_pontuacao: vitorias,

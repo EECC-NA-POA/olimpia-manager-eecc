@@ -68,22 +68,32 @@ const createDynamicSchema = (regraTipo: string, parametros: any) => {
       });
     
     case 'sets':
-      const numSets = parametros?.num_sets || 3;
+      const melhorDe = parametros?.melhor_de || parametros?.num_sets || 3;
       const pontuaPorSet = parametros?.pontua_por_set !== false;
+      const isVolleyball = parametros?.pontos_por_set !== undefined;
       
       if (pontuaPorSet) {
         return z.object({
           ...baseSchema,
           sets: z.array(z.object({
             pontos: z.coerce.number().min(0),
-          })).length(numSets),
+          })).length(melhorDe),
+        });
+      } else if (isVolleyball) {
+        return z.object({
+          ...baseSchema,
+          sets: z.array(z.object({
+            vencedor: z.enum(['vitoria', 'derrota']).optional(),
+            pontosEquipe1: z.coerce.number().min(0).optional(),
+            pontosEquipe2: z.coerce.number().min(0).optional(),
+          })).max(melhorDe),
         });
       } else {
         return z.object({
           ...baseSchema,
           sets: z.array(z.object({
-            vencedor: z.enum(['vitoria', 'derrota']),
-          })).length(numSets),
+            vencedor: z.enum(['vitoria', 'derrota']).optional(),
+          })).max(melhorDe),
         });
       }
     
@@ -133,14 +143,30 @@ export function ScoreForm({ modalityId, initialValues, onSubmit, isPending }: Sc
           notes: ''
         };
       case 'sets':
-        const numSets = rule.parametros.num_sets || 3;
+        const melhorDe = rule.parametros.melhor_de || rule.parametros.num_sets || 3;
         const pontuaPorSet = rule.parametros.pontua_por_set !== false;
-        return {
-          sets: Array.from({ length: numSets }, () => 
-            pontuaPorSet ? { pontos: 0 } : { vencedor: 'derrota' }
-          ),
-          notes: ''
-        };
+        const isVolleyball = rule.parametros.pontos_por_set !== undefined;
+        
+        if (pontuaPorSet) {
+          return {
+            sets: Array.from({ length: melhorDe }, () => ({ pontos: 0 })),
+            notes: ''
+          };
+        } else if (isVolleyball) {
+          return {
+            sets: Array.from({ length: melhorDe }, () => ({ 
+              vencedor: undefined, 
+              pontosEquipe1: 0, 
+              pontosEquipe2: 0 
+            })),
+            notes: ''
+          };
+        } else {
+          return {
+            sets: Array.from({ length: melhorDe }, () => ({ vencedor: undefined })),
+            notes: ''
+          };
+        }
       case 'arrows':
         const numFlechas = rule.parametros.num_flechas || 6;
         return {

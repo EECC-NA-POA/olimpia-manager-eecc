@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -129,12 +128,22 @@ export function ParametrosFields({ currentItem, updateParametros }: ParametrosFi
       return (
         <div className="space-y-4">
           <div>
-            <Label>Número de Sets</Label>
+            <Label>Melhor de Quantos Sets</Label>
             <Input
               type="number"
               min="1"
-              value={currentItem.parametros.num_sets || 1}
-              onChange={(e) => updateParametros('num_sets', parseInt(e.target.value))}
+              max="7"
+              value={currentItem.parametros.melhor_de || currentItem.parametros.num_sets || 3}
+              onChange={(e) => updateParametros('melhor_de', parseInt(e.target.value))}
+            />
+          </div>
+          <div>
+            <Label>Sets Necessários Para Vencer</Label>
+            <Input
+              type="number"
+              min="1"
+              value={currentItem.parametros.vencer_sets_para_seguir || Math.ceil((currentItem.parametros.melhor_de || 3) / 2)}
+              onChange={(e) => updateParametros('vencer_sets_para_seguir', parseInt(e.target.value))}
             />
           </div>
           <div className="flex items-center space-x-2">
@@ -144,6 +153,59 @@ export function ParametrosFields({ currentItem, updateParametros }: ParametrosFi
             />
             <Label>Pontua por set (se desmarcado, apenas vitórias contam)</Label>
           </div>
+          
+          {/* Volleyball-specific parameters */}
+          <div>
+            <Label>Unidade</Label>
+            <Select 
+              value={currentItem.parametros.unidade || 'sets'} 
+              onValueChange={(value) => updateParametros('unidade', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sets">Sets</SelectItem>
+                <SelectItem value="vitórias">Vitórias</SelectItem>
+                <SelectItem value="pontos">Pontos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {(currentItem.parametros.unidade === 'sets' || !currentItem.parametros.unidade) && (
+            <>
+              <div>
+                <Label>Pontos por Set (Sets 1-4)</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  placeholder="25 (para voleibol)"
+                  value={currentItem.parametros.pontos_por_set || ''}
+                  onChange={(e) => updateParametros('pontos_por_set', e.target.value ? parseInt(e.target.value) : undefined)}
+                />
+              </div>
+              <div>
+                <Label>Pontos Set Final (Set 5)</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  placeholder="15 (para voleibol)"
+                  value={currentItem.parametros.pontos_set_final || ''}
+                  onChange={(e) => updateParametros('pontos_set_final', e.target.value ? parseInt(e.target.value) : undefined)}
+                />
+              </div>
+              <div>
+                <Label>Vantagem Mínima</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  placeholder="2 (para voleibol)"
+                  value={currentItem.parametros.vantagem || ''}
+                  onChange={(e) => updateParametros('vantagem', e.target.value ? parseInt(e.target.value) : undefined)}
+                />
+              </div>
+            </>
+          )}
         </div>
       );
     

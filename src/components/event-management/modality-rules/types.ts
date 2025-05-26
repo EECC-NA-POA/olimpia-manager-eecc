@@ -29,6 +29,12 @@ export interface ModalityRule {
     zonas?: Array<{ nome: string; pontos: number }>;
     num_flechas?: number;
     formato_tempo?: 'mm:ss.SS' | 'hh:mm:ss';
+    // Enhanced sets scoring parameters
+    melhor_de?: number;
+    vencer_sets_para_seguir?: number;
+    pontos_por_set?: number;
+    pontos_set_final?: number;
+    vantagem?: number;
     [key: string]: any;
   };
   criado_em?: string;
@@ -48,5 +54,11 @@ export interface RuleForm {
     zonas?: Array<{ nome: string; pontos: number }>;
     num_flechas?: number;
     formato_tempo?: 'mm:ss.SS' | 'hh:mm:ss';
+    // Enhanced sets scoring parameters
+    melhor_de?: number;
+    vencer_sets_para_seguir?: number;
+    pontos_por_set?: number;
+    pontos_set_final?: number;
+    vantagem?: number;
   };
 }
