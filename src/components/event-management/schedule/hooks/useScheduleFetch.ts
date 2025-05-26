@@ -54,20 +54,27 @@ export const useScheduleFetch = (eventId: string | null) => {
       console.log('Raw schedule data:', data);
       
       // Transform the data to match our ScheduleItem interface
-      const transformedData: ScheduleItem[] = (data || []).map(item => ({
-        id: item.id,
-        cronograma_id: item.cronograma_id,
-        cronograma_nome: item.cronogramas?.nome || 'Cronograma sem nome',
-        dia: item.dia,
-        atividade: item.atividade,
-        horario_inicio: item.horario_inicio,
-        horario_fim: item.horario_fim,
-        local: item.local,
-        ordem: item.ordem,
-        global: item.global,
-        evento_id: item.evento_id,
-        modalidades: (item.cronograma_atividade_modalidades || []).map((m: any) => m.modalidade_id)
-      }));
+      const transformedData: ScheduleItem[] = (data || []).map(item => {
+        // Handle the cronogramas join - it can be an object or array
+        const cronogramaData = Array.isArray(item.cronogramas) 
+          ? item.cronogramas[0] 
+          : item.cronogramas;
+        
+        return {
+          id: item.id,
+          cronograma_id: item.cronograma_id,
+          cronograma_nome: cronogramaData?.nome || 'Cronograma sem nome',
+          dia: item.dia,
+          atividade: item.atividade,
+          horario_inicio: item.horario_inicio,
+          horario_fim: item.horario_fim,
+          local: item.local,
+          ordem: item.ordem,
+          global: item.global,
+          evento_id: item.evento_id,
+          modalidades: (item.cronograma_atividade_modalidades || []).map((m: any) => m.modalidade_id)
+        };
+      });
       
       console.log('Transformed schedule items:', transformedData);
       setScheduleItems(transformedData);
