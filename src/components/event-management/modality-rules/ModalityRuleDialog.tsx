@@ -41,7 +41,8 @@ const getDefaultParametersForType = (regraTipo: string): RuleForm['parametros'] 
         subunidade: 'cm',
         max_subunidade: 99,
         baterias: false,
-        raias_por_bateria: undefined
+        raias_por_bateria: undefined,
+        num_baterias: undefined
       };
     case 'tempo':
       return {

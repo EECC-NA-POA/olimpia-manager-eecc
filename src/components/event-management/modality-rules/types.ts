@@ -38,6 +38,7 @@ export interface ModalityRule {
     // Distance modality heat and lane parameters
     baterias?: boolean;
     raias_por_bateria?: number;
+    num_baterias?: number;
     [key: string]: any;
   };
   criado_em?: string;
@@ -66,5 +67,6 @@ export interface RuleForm {
     // Distance modality heat and lane parameters
     baterias?: boolean;
     raias_por_bateria?: number;
+    num_baterias?: number;
   };
 }
