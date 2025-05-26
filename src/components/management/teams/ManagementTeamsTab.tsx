@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTeamManager } from './hooks/useManagementTeamManager';
+import { useManagementTeamManager } from './hooks/useManagementTeamManager';
 import { ManagementTeamsTabHeader } from './components/ManagementTeamsTabHeader';
 import { ManagementTeamsManageTab } from './components/ManagementTeamsManageTab';
 import { NoModalitiesMessage } from '../../judge/tabs/teams/components/NoModalitiesMessage';
@@ -39,7 +38,7 @@ export function ManagementTeamsTab({ userId, eventId, isOrganizer = false }: Man
     setIsDeleteDialogOpen,
     confirmDeleteTeam,
     cancelDeleteTeam
-  } = useTeamManager(eventId, isOrganizer);
+  } = useManagementTeamManager(eventId, isOrganizer);
 
   if (isLoading && !selectedModalityId) {
     return <LoadingTeamsState />;

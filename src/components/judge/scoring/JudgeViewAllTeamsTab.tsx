@@ -6,9 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Eye, Users } from 'lucide-react';
-import { LoadingState } from '../../tabs/teams/components/LoadingTeamsState';
-import { ErrorState } from '../../tabs/teams/components/ErrorState';
-import { EmptyState } from '../../tabs/teams/components/EmptyState';
+import { LoadingTeamsState } from '../../common/teams/LoadingTeamsState';
+import { ErrorState } from '../../common/teams/ErrorState';
+import { EmptyState } from '../../common/teams/EmptyState';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { AthleteScoreForm } from '../AthleteScoreForm';

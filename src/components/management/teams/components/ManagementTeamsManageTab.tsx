@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { ModalityButtons } from '../../../judge/tabs/teams/components/ModalityButtons';
-import { TeamForm } from '../../../judge/tabs/teams/components/TeamForm';
-import { AthletesList } from '../../../judge/tabs/teams/components/AthletesList';
+import { ManagementModalityButtons } from './ManagementModalityButtons';
+import { ManagementTeamForm } from './ManagementTeamForm';
+import { ManagementAthletesList } from './ManagementAthletesList';
 import { TeamCard } from '../../../judge/tabs/teams/components/TeamCard';
 import { ModalityOption, TeamData, AthleteOption } from '../../../judge/tabs/teams/types';
-import { DeleteTeamDialog } from '../../../judge/tabs/teams/components/DeleteTeamDialog';
+import { ManagementDeleteTeamDialog } from './ManagementDeleteTeamDialog';
 
 interface ManagementTeamsManageTabProps {
   modalities: ModalityOption[];
@@ -14,7 +14,7 @@ interface ManagementTeamsManageTabProps {
   selectedModalityId: number | null;
   setSelectedModalityId: (id: number | null) => void;
   isLoading: boolean;
-  createTeam: (data: any) => void;
+  createTeam: (name: string) => void;
   deleteTeam: (teamId: number) => void;
   addAthlete: (data: { teamId: number; athleteId: string }) => void;
   removeAthlete: (data: { teamId: number; athleteId: string }) => void;
@@ -61,7 +61,7 @@ export function ManagementTeamsManageTab({
   return (
     <div className="space-y-6">
       {/* Modality Selection */}
-      <ModalityButtons
+      <ManagementModalityButtons
         modalities={modalities}
         selectedModalityId={selectedModalityId}
         onSelectModality={setSelectedModalityId}
@@ -70,7 +70,7 @@ export function ManagementTeamsManageTab({
       {selectedModalityId && selectedModality && (
         <>
           {/* Team Creation Form */}
-          <TeamForm
+          <ManagementTeamForm
             modalityId={selectedModalityId}
             modalityName={selectedModality.nome}
             onCreateTeam={createTeam}
@@ -79,7 +79,7 @@ export function ManagementTeamsManageTab({
           />
 
           {/* Available Athletes */}
-          <AthletesList
+          <ManagementAthletesList
             athletes={availableAthletes}
             teams={teams}
             onAddAthlete={addAthlete}
@@ -108,11 +108,12 @@ export function ManagementTeamsManageTab({
       )}
 
       {/* Delete Confirmation Dialog */}
-      <DeleteTeamDialog
+      <ManagementDeleteTeamDialog
         isOpen={isDeleteDialogOpen}
-        onClose={cancelDeleteTeam}
+        onOpenChange={setIsDeleteDialogOpen}
+        team={teamToDelete}
         onConfirm={confirmDeleteTeam}
-        teamName={teamToDelete?.nome || ''}
+        isDeleting={isDeletingTeam}
       />
     </div>
   );

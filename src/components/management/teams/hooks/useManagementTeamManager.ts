@@ -93,3 +93,6 @@ export function useManagementTeamManager(eventId: string | null, isOrganizer: bo
     cancelDeleteTeam
   };
 }
+
+// Alias export for backward compatibility
+export { useManagementTeamManager as useTeamManager };
