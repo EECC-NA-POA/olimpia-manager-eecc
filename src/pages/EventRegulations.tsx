@@ -73,28 +73,29 @@ const EventRegulations = () => {
                   <div className="text-sm text-muted-foreground">Versão: {regulation.versao}</div>
                 </div>
 
-                {regulation.regulamento_texto ? (
-                  <div 
-                    className="prose max-w-none mt-4"
-                    dangerouslySetInnerHTML={{ __html: regulation.regulamento_texto }}
-                  />
-                ) : regulation.regulamento_link ? (
-                  <div className="flex flex-col items-center py-6 gap-4">
-                    <p className="text-center">
-                      O regulamento está disponível apenas em um link externo. Clique no botão abaixo para acessar.
-                    </p>
+                {regulation.regulamento_link && (
+                  <div className="flex justify-center mb-4">
                     <Button 
                       onClick={() => openExternalLink(regulation.regulamento_link)}
                       className="flex items-center gap-2"
+                      variant="outline"
                     >
-                      Ver Regulamento <ExternalLink className="h-4 w-4" />
+                      <ExternalLink className="h-4 w-4" />
+                      Abrir Regulamento Completo
                     </Button>
                   </div>
-                ) : (
+                )}
+
+                {regulation.regulamento_texto ? (
+                  <div 
+                    className="regulation-content mt-4"
+                    dangerouslySetInnerHTML={{ __html: regulation.regulamento_texto }}
+                  />
+                ) : !regulation.regulamento_link ? (
                   <p className="text-center text-muted-foreground py-4">
                     Este regulamento não possui conteúdo disponível.
                   </p>
-                )}
+                ) : null}
               </div>
             </CardContent>
           </Card>

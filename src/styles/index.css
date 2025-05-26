@@ -1,11 +1,10 @@
 
-
-/* Import all CSS modules */
 @import './base.css';
 @import './header.css';
-@import './navigation.css';
 @import './sidebar.css';
+@import './navigation.css';
 @import './content.css';
 @import './footer.css';
 @import './privacy-policy.css';
-
+@import './rich-text-editor.css';
+@import './regulation-display.css';
