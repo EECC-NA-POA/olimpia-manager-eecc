@@ -44,7 +44,14 @@ export function useScoreSubmission(
           };
           
           // Only include bateria_id if heat is provided and baterias are configured
+          console.log('Checking heat conditions:', {
+            hasHeat: !!formData.heat,
+            hasHeatsInRule: !!rule?.parametros?.baterias,
+            heatValue: formData.heat
+          });
+          
           if (formData.heat && rule?.parametros?.baterias) {
+            console.log('Adding bateria_id to scoreData:', formData.heat);
             scoreData.bateria_id = formData.heat;
           }
         } else if ('score' in formData) {
@@ -55,7 +62,14 @@ export function useScoreSubmission(
           };
           
           // Only include bateria_id if heat is provided and baterias are configured
+          console.log('Checking heat conditions for score format:', {
+            hasHeat: !!formData.heat,
+            hasHeatsInRule: !!rule?.parametros?.baterias,
+            heatValue: formData.heat
+          });
+          
           if (formData.heat && rule?.parametros?.baterias) {
+            console.log('Adding bateria_id to scoreData for score format:', formData.heat);
             scoreData.bateria_id = formData.heat;
           }
         }
@@ -70,7 +84,14 @@ export function useScoreSubmission(
           };
           
           // Only include bateria_id if heat is provided and baterias are configured
+          console.log('Checking heat conditions for time:', {
+            hasHeat: !!formData.heat,
+            hasHeatsInRule: !!rule?.parametros?.baterias,
+            heatValue: formData.heat
+          });
+          
           if (formData.heat && rule?.parametros?.baterias) {
+            console.log('Adding bateria_id to scoreData for time:', formData.heat);
             scoreData.bateria_id = formData.heat;
           }
         }
@@ -83,7 +104,14 @@ export function useScoreSubmission(
         };
         
         // Only include bateria_id if heat is provided and baterias are configured
+        console.log('Checking heat conditions for points:', {
+          hasHeat: !!formData.heat,
+          hasHeatsInRule: !!rule?.parametros?.baterias,
+          heatValue: formData.heat
+        });
+        
         if (formData.heat && rule?.parametros?.baterias) {
+          console.log('Adding bateria_id to scoreData for points:', formData.heat);
           scoreData.bateria_id = formData.heat;
         }
       }
@@ -92,7 +120,7 @@ export function useScoreSubmission(
         throw new Error('Failed to prepare score data');
       }
       
-      console.log('Prepared score data:', scoreData);
+      console.log('Prepared score data (before final data):', scoreData);
       
       // Ensure all required fields are present
       const finalScoreData = {
@@ -107,6 +135,7 @@ export function useScoreSubmission(
       };
       
       console.log('Final score data being inserted:', finalScoreData);
+      console.log('Final score data has bateria_id?', 'bateria_id' in finalScoreData);
       
       // Check if score already exists
       const { data: existingScore } = await supabase
