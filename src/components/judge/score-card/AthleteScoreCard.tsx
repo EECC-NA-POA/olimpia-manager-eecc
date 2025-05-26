@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { MedalDisplay } from './components/MedalDisplay';
 import { ScoreForm } from './components/ScoreForm';
 import { useScoreSubmission } from './hooks/useScoreSubmission';
+import { useModalityRules } from '../tabs/scores/hooks/useModalityRules';
 import { AthleteScoreCardProps, ScoreRecord } from './types';
 
 export function AthleteScoreCard({ 
@@ -22,6 +23,9 @@ export function AthleteScoreCard({
   scoreType
 }: AthleteScoreCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Fetch modality rules to determine the correct input type
+  const { data: modalityRule } = useModalityRules(modalityId);
   
   const { submitScoreMutation } = useScoreSubmission(
     eventId, 

@@ -8,6 +8,7 @@ import { useScoreSubmission } from '../score-card/hooks/useScoreSubmission';
 import { ModalityRankings } from '../ModalityRankings';
 import { ModalityHeader } from './ModalityHeader';
 import { TeamMembersDisplay } from './TeamMembersDisplay';
+import { useModalityRules } from '../tabs/scores/hooks/useModalityRules';
 import { ScoreRecord, Modality } from '@/lib/types/database';
 
 interface ScoreFormContainerProps {
@@ -26,6 +27,9 @@ export function ScoreFormContainer({
   modality
 }: ScoreFormContainerProps) {
   const isTeamModality = modality?.tipo_modalidade?.includes('COLETIVA');
+  
+  // Fetch modality rules to determine scoring logic
+  const { data: modalityRule } = useModalityRules(modalityId);
   
   // Map English score types to Portuguese for the submission hook
   const mapScoreTypeToEnglish = (portugueseType: string): 'time' | 'distance' | 'points' => {

@@ -17,6 +17,7 @@ interface DistanceScoreFieldsProps {
 }
 
 export function DistanceScoreFields({ form, useMetersAndCentimeters = true }: DistanceScoreFieldsProps) {
+  // For distance scoring with rules that specify subunidade = 'cm', use separate meters and centimeters inputs
   if (useMetersAndCentimeters) {
     return (
       <MetersAndCentimetersField
@@ -28,6 +29,7 @@ export function DistanceScoreFields({ form, useMetersAndCentimeters = true }: Di
     );
   }
 
+  // For other distance scoring, use a single decimal input
   return (
     <FormField
       control={form.control}
