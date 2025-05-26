@@ -17,17 +17,14 @@ export const checkUserPermissions = async (eventId: string) => {
   
   console.log('Current user ID:', user.id);
   
-  // Check user permissions more thoroughly
+  // Check user permissions by looking for 'Administração' profile name
   const { data: userPermissions, error: permError } = await supabase
     .from('papeis_usuarios')
     .select(`
       perfis!inner(
         nome,
-        perfil_tipo_id,
-        perfis_tipo!inner(
-          codigo,
-          descricao
-        )
+        descricao,
+        perfil_tipo_id
       )
     `)
     .eq('usuario_id', user.id)
@@ -44,15 +41,14 @@ export const checkUserPermissions = async (eventId: string) => {
   userPermissions?.forEach((permission: any, index: number) => {
     console.log(`Permission ${index + 1}:`, {
       nome: permission.perfis?.nome,
-      perfil_tipo_id: permission.perfis?.perfil_tipo_id,
-      codigo: permission.perfis?.perfis_tipo?.codigo,
-      descricao: permission.perfis?.perfis_tipo?.descricao
+      descricao: permission.perfis?.descricao,
+      perfil_tipo_id: permission.perfis?.perfil_tipo_id
     });
   });
   
-  // Verify admin permission exists
+  // Verify admin permission by checking for 'Administração' in profile name
   const hasAdminPermission = userPermissions?.some((permission: any) => 
-    permission.perfis?.perfis_tipo?.codigo === 'ADM'
+    permission.perfis?.nome === 'Administração'
   );
   
   console.log('Has admin permission:', hasAdminPermission);
