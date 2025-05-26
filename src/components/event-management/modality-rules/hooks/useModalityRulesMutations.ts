@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -19,13 +20,16 @@ export function useModalityRulesMutations() {
       
       console.log('Current user ID:', user?.id);
       
-      // Check user permissions
+      // Check user permissions more thoroughly
       const { data: userPermissions, error: permError } = await supabase
         .from('papeis_usuarios')
         .select(`
           perfis!inner(
+            nome,
+            perfil_tipo_id,
             perfis_tipo!inner(
-              codigo
+              codigo,
+              descricao
             )
           )
         `)
@@ -35,7 +39,28 @@ export function useModalityRulesMutations() {
       if (permError) {
         console.error('Error checking permissions:', permError);
       } else {
-        console.log('User permissions:', userPermissions);
+        console.log('User permissions detailed:', userPermissions);
+        
+        // Log each permission for debugging
+        userPermissions?.forEach((perm, index) => {
+          console.log(`Permission ${index + 1}:`, {
+            nome: perm.perfis?.nome,
+            perfil_tipo_id: perm.perfis?.perfil_tipo_id,
+            codigo: perm.perfis?.perfis_tipo?.codigo,
+            descricao: perm.perfis?.perfis_tipo?.descricao
+          });
+        });
+      }
+      
+      // Verify admin permission exists
+      const hasAdminPermission = userPermissions?.some(perm => 
+        perm.perfis?.perfis_tipo?.codigo === 'ADM'
+      );
+      
+      console.log('Has admin permission:', hasAdminPermission);
+      
+      if (!hasAdminPermission) {
+        throw new Error('Usuário não possui permissão de administrador para este evento');
       }
       
       // First, delete existing baterias for this modality to avoid duplicates
@@ -51,49 +76,65 @@ export function useModalityRulesMutations() {
         // Don't throw here, continue with creation
       }
       
-      // Create new baterias with proper data types
-      const bateriasToInsert = Array.from({ length: numBaterias }, (_, index) => ({
-        evento_id: eventId,
-        modalidade_id: parseInt(modalityId),
-        numero: index + 1,
-        descricao: `Bateria ${index + 1}`
-      }));
+      // Try using RPC function instead of direct insert
+      console.log('Attempting to create baterias using RPC...');
       
-      console.log('Attempting to insert baterias:', bateriasToInsert);
-      console.log('Bateria table structure check - modalidade_id type:', typeof bateriasToInsert[0].modalidade_id);
-      console.log('Bateria table structure check - evento_id type:', typeof bateriasToInsert[0].evento_id);
+      const { data: rpcResult, error: rpcError } = await supabase.rpc('criar_baterias_modalidade', {
+        p_modalidade_id: parseInt(modalityId),
+        p_evento_id: eventId,
+        p_num_baterias: numBaterias
+      });
       
-      const { data, error } = await supabase
-        .from('baterias')
-        .insert(bateriasToInsert)
-        .select();
-      
-      if (error) {
-        console.error('Detailed error creating baterias:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
+      if (rpcError) {
+        console.error('RPC function error:', rpcError);
+        console.log('Falling back to direct insert...');
         
-        if (error.code === '42501') {
-          throw new Error('Você não tem permissão para criar baterias. Verifique suas permissões.');
+        // Fallback to direct insert
+        const bateriasToInsert = Array.from({ length: numBaterias }, (_, index) => ({
+          evento_id: eventId,
+          modalidade_id: parseInt(modalityId),
+          numero: index + 1,
+          descricao: `Bateria ${index + 1}`
+        }));
+        
+        console.log('Attempting to insert baterias directly:', bateriasToInsert);
+        console.log('Bateria table structure check - modalidade_id type:', typeof bateriasToInsert[0].modalidade_id);
+        console.log('Bateria table structure check - evento_id type:', typeof bateriasToInsert[0].evento_id);
+        
+        const { data, error } = await supabase
+          .from('baterias')
+          .insert(bateriasToInsert)
+          .select();
+        
+        if (error) {
+          console.error('Detailed error creating baterias:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          
+          if (error.code === '42501') {
+            throw new Error('Política RLS bloqueando inserção. Verifique as políticas da tabela baterias.');
+          }
+          
+          if (error.code === '23503') {
+            throw new Error('Erro de referência: modalidade ou evento não encontrado.');
+          }
+          
+          if (error.code === '23505') {
+            throw new Error('Bateria duplicada encontrada.');
+          }
+          
+          throw new Error(`Erro ao criar baterias: ${error.message}`);
         }
         
-        // Add more specific error handling
-        if (error.code === '23503') {
-          throw new Error('Erro de referência: modalidade ou evento não encontrado.');
-        }
-        
-        if (error.code === '23505') {
-          throw new Error('Bateria duplicada encontrada.');
-        }
-        
-        throw new Error(`Erro ao criar baterias: ${error.message}`);
+        console.log(`Successfully created ${numBaterias} baterias via direct insert:`, data);
+        return data;
+      } else {
+        console.log(`Successfully created ${numBaterias} baterias via RPC:`, rpcResult);
+        return rpcResult;
       }
-      
-      console.log(`Successfully created ${numBaterias} baterias:`, data);
-      return data;
     } catch (error) {
       console.error('Error in createBaterias:', error);
       throw error;
