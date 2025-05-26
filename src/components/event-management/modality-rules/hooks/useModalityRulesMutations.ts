@@ -10,31 +10,48 @@ export function useModalityRulesMutations() {
   const createBaterias = async (modalityId: string, eventId: string, numBaterias: number) => {
     console.log(`Creating ${numBaterias} baterias for modality ${modalityId} in event ${eventId}`);
     
-    // First, delete existing baterias for this modality to avoid duplicates
-    await supabase
-      .from('baterias')
-      .delete()
-      .eq('modalidade_id', modalityId)
-      .eq('evento_id', eventId);
-    
-    // Create new baterias
-    const bateriasToInsert = Array.from({ length: numBaterias }, (_, index) => ({
-      evento_id: eventId,
-      modalidade_id: parseInt(modalityId),
-      numero: index + 1,
-      descricao: `Bateria ${index + 1}`
-    }));
-    
-    const { error } = await supabase
-      .from('baterias')
-      .insert(bateriasToInsert);
-    
-    if (error) {
-      console.error('Error creating baterias:', error);
+    try {
+      // First, delete existing baterias for this modality to avoid duplicates
+      const { error: deleteError } = await supabase
+        .from('baterias')
+        .delete()
+        .eq('modalidade_id', modalityId)
+        .eq('evento_id', eventId);
+      
+      if (deleteError) {
+        console.error('Error deleting existing baterias:', deleteError);
+        // Don't throw here, continue with creation
+      }
+      
+      // Create new baterias with proper data types
+      const bateriasToInsert = Array.from({ length: numBaterias }, (_, index) => ({
+        evento_id: eventId,
+        modalidade_id: parseInt(modalityId),
+        numero: index + 1,
+        descricao: `Bateria ${index + 1}`
+      }));
+      
+      console.log('Attempting to insert baterias:', bateriasToInsert);
+      
+      const { data, error } = await supabase
+        .from('baterias')
+        .insert(bateriasToInsert)
+        .select();
+      
+      if (error) {
+        console.error('Error creating baterias:', error);
+        if (error.code === '42501') {
+          throw new Error('Você não tem permissão para criar baterias. Verifique suas permissões.');
+        }
+        throw error;
+      }
+      
+      console.log(`Successfully created ${numBaterias} baterias:`, data);
+      return data;
+    } catch (error) {
+      console.error('Error in createBaterias:', error);
       throw error;
     }
-    
-    console.log(`Successfully created ${numBaterias} baterias`);
   };
 
   const saveRule = async (
@@ -44,11 +61,15 @@ export function useModalityRulesMutations() {
     setModalities: (modalities: Modality[]) => void
   ) => {
     setIsSaving(true);
+    console.log('Saving rule for modality:', modalityId, 'with form:', ruleForm);
+    
     try {
       const modality = modalities.find(m => m.id === modalityId);
+      console.log('Found modality:', modality);
       
       if (modality?.regra) {
         // Update existing rule
+        console.log('Updating existing rule');
         const { error } = await supabase
           .from('modalidade_regras')
           .update({
@@ -57,9 +78,13 @@ export function useModalityRulesMutations() {
           })
           .eq('modalidade_id', modalityId);
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating rule:', error);
+          throw error;
+        }
       } else {
         // Create new rule
+        console.log('Creating new rule');
         const { error } = await supabase
           .from('modalidade_regras')
           .insert({
@@ -68,39 +93,57 @@ export function useModalityRulesMutations() {
             parametros: ruleForm.parametros
           });
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error creating rule:', error);
+          throw error;
+        }
       }
       
       // Check if we need to create baterias
       if (ruleForm.parametros.baterias && ruleForm.parametros.num_baterias) {
         const modalityData = modalities.find(m => m.id === modalityId);
         if (modalityData?.evento_id) {
-          await createBaterias(
-            modalityId, 
-            modalityData.evento_id, 
-            ruleForm.parametros.num_baterias
-          );
-          console.log(`Created ${ruleForm.parametros.num_baterias} baterias for modality ${modalityId}`);
+          console.log('Creating baterias because rule has baterias=true and num_baterias:', ruleForm.parametros.num_baterias);
+          
+          try {
+            await createBaterias(
+              modalityId, 
+              modalityData.evento_id, 
+              ruleForm.parametros.num_baterias
+            );
+            console.log(`Successfully created ${ruleForm.parametros.num_baterias} baterias for modality ${modalityId}`);
+          } catch (bateriaError) {
+            console.error('Failed to create baterias, but rule was saved:', bateriaError);
+            // Show a warning but don't fail the entire operation
+            toast.error('Regra salva, mas não foi possível criar as baterias. Verifique suas permissões.');
+          }
+        } else {
+          console.warn('No evento_id found for modality, cannot create baterias');
         }
       }
       
       // Refresh the data
-      const { data: updatedRule } = await supabase
+      const { data: updatedRule, error: fetchError } = await supabase
         .from('modalidade_regras')
         .select('*')
         .eq('modalidade_id', modalityId)
         .single();
       
+      if (fetchError) {
+        console.error('Error fetching updated rule:', fetchError);
+      }
+      
       setModalities(modalities.map(m => 
         m.id === modalityId 
-          ? { ...m, regra: updatedRule }
+          ? { ...m, regra: updatedRule || undefined }
           : m
       ));
       
       toast.success('Regra salva com sucesso!');
     } catch (error) {
       console.error('Error saving rule:', error);
-      toast.error('Erro ao salvar regra');
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao salvar regra';
+      toast.error(`Erro ao salvar regra: ${errorMessage}`);
     } finally {
       setIsSaving(false);
     }
@@ -119,11 +162,16 @@ export function useModalityRulesMutations() {
       // Delete associated baterias first
       const modalityData = modalities.find(m => m.id === modalityId);
       if (modalityData?.evento_id) {
-        await supabase
+        const { error: bateriaError } = await supabase
           .from('baterias')
           .delete()
           .eq('modalidade_id', modalityId)
           .eq('evento_id', modalityData.evento_id);
+          
+        if (bateriaError) {
+          console.error('Error deleting baterias:', bateriaError);
+          // Continue with rule deletion even if bateria deletion fails
+        }
       }
       
       // Then delete the rule
