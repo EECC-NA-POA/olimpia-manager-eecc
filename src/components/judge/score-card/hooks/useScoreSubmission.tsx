@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -63,9 +62,14 @@ export function useScoreSubmission(
               dados_json: { 
                 meters: formData.meters, 
                 centimeters: formData.centimeters,
-                total_meters: totalMeters
+                total_meters: totalMeters,
+                heat: formData.heat,
+                lane: formData.lane
               },
-              unidade: 'm'
+              unidade: 'm',
+              // Store heat and lane if provided
+              bateria_id: formData.heat || null,
+              raia: formData.lane || null
             };
           } else if ('score' in formData) {
             scoreData = {
@@ -73,9 +77,29 @@ export function useScoreSubmission(
               tempo_minutos: null,
               tempo_segundos: null,
               tempo_milissegundos: null,
-              dados_json: { distance: formData.score },
-              unidade: 'm'
+              dados_json: { 
+                distance: formData.score,
+                heat: formData.heat,
+                lane: formData.lane
+              },
+              unidade: 'm',
+              // Store heat and lane if provided
+              bateria_id: formData.heat || null,
+              raia: formData.lane || null
             };
+          }
+          
+          // Validate heats and lanes if baterias is enabled
+          if (rule.parametros?.baterias && formData.heat) {
+            if (formData.heat < 1) {
+              throw new Error('Bateria deve ser maior que 0');
+            }
+            
+            if (rule.parametros?.raias_por_bateria && formData.lane) {
+              if (formData.lane < 1 || formData.lane > rule.parametros.raias_por_bateria) {
+                throw new Error(`Raia deve estar entre 1 e ${rule.parametros.raias_por_bateria}`);
+              }
+            }
           }
           break;
           
@@ -222,6 +246,19 @@ export function useScoreSubmission(
           
         default:
           throw new Error(`Invalid rule type: ${rule.regra_tipo}`);
+      }
+      
+      // Validate valor_pontuacao for distance modalities
+      if (rule.regra_tipo === 'distancia' && scoreData?.valor_pontuacao !== undefined) {
+        if (scoreData.valor_pontuacao < 0) {
+          throw new Error('Valor da pontuação deve ser maior ou igual a 0');
+        }
+        
+        // Check if it has more than 2 decimal places
+        const decimalPlaces = (scoreData.valor_pontuacao.toString().split('.')[1] || '').length;
+        if (decimalPlaces > 2) {
+          throw new Error('Valor da pontuação deve ter no máximo 2 casas decimais');
+        }
       }
       
       console.log('Prepared score data:', scoreData);

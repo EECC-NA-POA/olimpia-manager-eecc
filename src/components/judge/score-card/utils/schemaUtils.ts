@@ -16,19 +16,37 @@ export const createDynamicSchema = (regraTipo: string, parametros: any) => {
       });
     
     case 'distancia':
+      const baterias = parametros?.baterias === true;
+      const raiasPorBateria = parametros?.raias_por_bateria;
+      
+      // Base distance schema
+      let distanceSchema: any = { ...baseSchema };
+      
+      // Add heat validation if baterias is enabled
+      if (baterias) {
+        distanceSchema.heat = z.coerce.number().min(1, "Bateria deve ser maior que 0");
+        
+        // Add lane validation if raiasPorBateria is specified
+        if (raiasPorBateria) {
+          distanceSchema.lane = z.coerce.number()
+            .min(1, "Raia deve ser maior que 0")
+            .max(raiasPorBateria, `Raia deve ser menor ou igual a ${raiasPorBateria}`);
+        }
+      }
+      
       // Check if using meters and centimeters format
       if (parametros?.subunidade === 'cm') {
-        return z.object({
-          ...baseSchema,
-          meters: z.coerce.number().min(0).default(0),
-          centimeters: z.coerce.number().min(0).max(99).default(0),
-        });
+        distanceSchema.meters = z.coerce.number().min(0).default(0);
+        distanceSchema.centimeters = z.coerce.number()
+          .min(0)
+          .max(parametros?.max_subunidade || 99)
+          .default(0);
+      } else {
+        // Legacy single value format
+        distanceSchema.score = z.coerce.number().min(0).default(0);
       }
-      // Legacy single value format
-      return z.object({
-        ...baseSchema,
-        score: z.coerce.number().min(0).default(0),
-      });
+      
+      return z.object(distanceSchema);
     
     case 'pontos':
       return z.object({

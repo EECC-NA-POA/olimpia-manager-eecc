@@ -31,8 +31,21 @@ export function DynamicScoreFields({ form, rule }: DynamicScoreFieldsProps) {
       console.log('Rendering DistanceScoreFields');
       // Check if the rule specifically requires meters and centimeters input
       const useMetersAndCentimeters = parametros.subunidade === 'cm';
+      const baterias = parametros.baterias === true;
+      const raiasPorBateria = parametros.raias_por_bateria;
+      
       console.log('Using meters and centimeters?', useMetersAndCentimeters);
-      return <DistanceScoreFields form={form} useMetersAndCentimeters={useMetersAndCentimeters} />;
+      console.log('Using heats?', baterias);
+      console.log('Lanes per heat?', raiasPorBateria);
+      
+      return (
+        <DistanceScoreFields 
+          form={form} 
+          useMetersAndCentimeters={useMetersAndCentimeters}
+          baterias={baterias}
+          raiasPorBateria={raiasPorBateria}
+        />
+      );
     
     case 'tempo':
       console.log('Rendering TimeScoreFields');

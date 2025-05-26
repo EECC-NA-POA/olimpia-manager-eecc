@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -60,6 +61,26 @@ export function ParametrosFields({ currentItem, updateParametros }: ParametrosFi
               onChange={(e) => updateParametros('max_subunidade', parseInt(e.target.value))}
             />
           </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              checked={currentItem.parametros.baterias || false}
+              onCheckedChange={(checked) => updateParametros('baterias', checked)}
+            />
+            <Label>Usar baterias (múltiplas séries)</Label>
+          </div>
+          {currentItem.parametros.baterias && (
+            <div>
+              <Label>Raias por Bateria (opcional)</Label>
+              <Input
+                type="number"
+                min="1"
+                max="10"
+                placeholder="Ex: 8"
+                value={currentItem.parametros.raias_por_bateria || ''}
+                onChange={(e) => updateParametros('raias_por_bateria', e.target.value ? parseInt(e.target.value) : undefined)}
+              />
+            </div>
+          )}
         </div>
       );
     

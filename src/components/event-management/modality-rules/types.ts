@@ -35,6 +35,9 @@ export interface ModalityRule {
     pontos_por_set?: number;
     pontos_set_final?: number;
     vantagem?: number;
+    // Distance modality heat and lane parameters
+    baterias?: boolean;
+    raias_por_bateria?: number;
     [key: string]: any;
   };
   criado_em?: string;
@@ -60,5 +63,8 @@ export interface RuleForm {
     pontos_por_set?: number;
     pontos_set_final?: number;
     vantagem?: number;
+    // Distance modality heat and lane parameters
+    baterias?: boolean;
+    raias_por_bateria?: number;
   };
 }
