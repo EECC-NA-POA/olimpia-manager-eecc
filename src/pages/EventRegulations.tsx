@@ -87,16 +87,16 @@ const EventRegulations = () => {
                   </div>
                 )}
 
-                {regulation.exibir_texto_publico !== false && regulation.regulamento_texto ? (
+                {regulation.is_regulamento_texto !== false && regulation.regulamento_texto ? (
                   <div 
                     className="regulation-content mt-4 text-left"
                     dangerouslySetInnerHTML={{ __html: regulation.regulamento_texto }}
                   />
-                ) : regulation.exibir_texto_publico === false && !regulation.regulamento_link ? (
+                ) : regulation.is_regulamento_texto === false && !regulation.regulamento_link ? (
                   <p className="text-center text-muted-foreground py-4">
                     O regulamento não está disponível para visualização no momento.
                   </p>
-                ) : regulation.exibir_texto_publico === false && regulation.regulamento_link ? (
+                ) : regulation.is_regulamento_texto === false && regulation.regulamento_link ? (
                   <p className="text-center text-muted-foreground py-4">
                     Utilize o botão acima para acessar o regulamento completo.
                   </p>

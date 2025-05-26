@@ -23,7 +23,7 @@ export function useRegulationForm({ eventId, regulation, userId, onComplete }: U
       regulamento_texto: regulation?.regulamento_texto || '',
       regulamento_link: regulation?.regulamento_link || '',
       is_ativo: regulation?.is_ativo ?? true,
-      exibir_texto_publico: regulation?.exibir_texto_publico ?? true
+      is_regulamento_texto: regulation?.is_regulamento_texto ?? true
     }
   });
   
@@ -52,7 +52,7 @@ export function useRegulationForm({ eventId, regulation, userId, onComplete }: U
           regulamento_texto: data.regulamento_texto,
           regulamento_link: processedLink,
           is_ativo: data.is_ativo,
-          exibir_texto_publico: data.exibir_texto_publico,
+          is_regulamento_texto: data.is_regulamento_texto,
           atualizado_por: userId,
           atualizado_em: new Date().toISOString()
         };
@@ -78,7 +78,7 @@ export function useRegulationForm({ eventId, regulation, userId, onComplete }: U
           regulamento_texto: data.regulamento_texto,
           regulamento_link: processedLink,
           is_ativo: data.is_ativo,
-          exibir_texto_publico: data.exibir_texto_publico,
+          is_regulamento_texto: data.is_regulamento_texto,
           criado_por: userId
         };
         

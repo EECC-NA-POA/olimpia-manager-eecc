@@ -1,4 +1,3 @@
-
 export interface Event {
   id: string;
   nome: string;
@@ -33,7 +32,7 @@ export interface EventRegulation {
   regulamento_texto: string;
   regulamento_link: string | null;
   is_ativo: boolean;
-  exibir_texto_publico?: boolean;
+  is_regulamento_texto?: boolean;
   criado_por: string;
   criado_em: string;
   atualizado_por: string | null;

@@ -19,7 +19,7 @@ export function RegulationVisibilityToggle({ control }: RegulationVisibilityTogg
   return (
     <FormField
       control={control}
-      name="exibir_texto_publico"
+      name="is_regulamento_texto"
       render={({ field }) => (
         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
           <div className="space-y-0.5">
