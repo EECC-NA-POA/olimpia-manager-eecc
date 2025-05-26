@@ -3,6 +3,8 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { RotateCcw } from 'lucide-react';
 import { 
   Select, 
   SelectContent, 
@@ -15,13 +17,28 @@ import { RuleForm } from './types';
 interface ParametrosFieldsProps {
   currentItem: RuleForm;
   updateParametros: (field: string, value: any) => void;
+  onResetParameters: () => void;
 }
 
-export function ParametrosFields({ currentItem, updateParametros }: ParametrosFieldsProps) {
+export function ParametrosFields({ currentItem, updateParametros, onResetParameters }: ParametrosFieldsProps) {
   switch (currentItem.regra_tipo) {
     case 'distancia':
       return (
         <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h4 className="text-sm font-medium">Parâmetros de Distância</h4>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onResetParameters}
+              className="flex items-center gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Resetar
+            </Button>
+          </div>
+          
           <div>
             <Label>Unidade</Label>
             <Select 
@@ -70,15 +87,18 @@ export function ParametrosFields({ currentItem, updateParametros }: ParametrosFi
           </div>
           {currentItem.parametros.baterias && (
             <div>
-              <Label>Raias por Bateria (opcional)</Label>
+              <Label>Raias por Bateria</Label>
               <Input
                 type="number"
                 min="1"
                 max="10"
-                placeholder="Ex: 8"
+                placeholder="Ex: 8 (número de raias por bateria)"
                 value={currentItem.parametros.raias_por_bateria || ''}
                 onChange={(e) => updateParametros('raias_por_bateria', e.target.value ? parseInt(e.target.value) : undefined)}
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Define quantas raias cada bateria terá (obrigatório para controle de raias)
+              </p>
             </div>
           )}
         </div>
@@ -87,6 +107,20 @@ export function ParametrosFields({ currentItem, updateParametros }: ParametrosFi
     case 'tempo':
       return (
         <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h4 className="text-sm font-medium">Parâmetros de Tempo</h4>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onResetParameters}
+              className="flex items-center gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Resetar
+            </Button>
+          </div>
+          
           <div>
             <Label>Formato do Tempo</Label>
             <Select 
@@ -108,6 +142,20 @@ export function ParametrosFields({ currentItem, updateParametros }: ParametrosFi
     case 'baterias':
       return (
         <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h4 className="text-sm font-medium">Parâmetros de Baterias</h4>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onResetParameters}
+              className="flex items-center gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Resetar
+            </Button>
+          </div>
+          
           <div>
             <Label>Número de Tentativas</Label>
             <Input
@@ -148,6 +196,20 @@ export function ParametrosFields({ currentItem, updateParametros }: ParametrosFi
     case 'sets':
       return (
         <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h4 className="text-sm font-medium">Parâmetros de Sets</h4>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onResetParameters}
+              className="flex items-center gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Resetar
+            </Button>
+          </div>
+          
           <div>
             <Label>Melhor de Quantos Sets</Label>
             <Input
@@ -175,7 +237,6 @@ export function ParametrosFields({ currentItem, updateParametros }: ParametrosFi
             <Label>Pontua por set (se desmarcado, apenas vitórias contam)</Label>
           </div>
           
-          {/* Volleyball-specific parameters */}
           <div>
             <Label>Unidade</Label>
             <Select 
@@ -233,6 +294,20 @@ export function ParametrosFields({ currentItem, updateParametros }: ParametrosFi
     case 'arrows':
       return (
         <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h4 className="text-sm font-medium">Parâmetros de Flechas</h4>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onResetParameters}
+              className="flex items-center gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Resetar
+            </Button>
+          </div>
+          
           <div>
             <Label>Número de Flechas</Label>
             <Input
@@ -242,6 +317,28 @@ export function ParametrosFields({ currentItem, updateParametros }: ParametrosFi
               onChange={(e) => updateParametros('num_flechas', parseInt(e.target.value))}
             />
           </div>
+        </div>
+      );
+    
+    case 'pontos':
+      return (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h4 className="text-sm font-medium">Parâmetros de Pontos</h4>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onResetParameters}
+              className="flex items-center gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Resetar
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Modalidade de pontos simples - não há parâmetros adicionais para configurar.
+          </p>
         </div>
       );
     

@@ -33,6 +33,42 @@ const defaultFormValues: RuleForm = {
   parametros: {}
 };
 
+const getDefaultParametersForType = (regraTipo: string) => {
+  switch (regraTipo) {
+    case 'distancia':
+      return {
+        unidade: 'metros',
+        subunidade: 'cm',
+        max_subunidade: 99,
+        baterias: false,
+        raias_por_bateria: undefined
+      };
+    case 'tempo':
+      return {
+        formato_tempo: 'mm:ss.SS'
+      };
+    case 'baterias':
+      return {
+        num_tentativas: 1,
+        num_raias: undefined,
+        unidade: 'pontos'
+      };
+    case 'sets':
+      return {
+        melhor_de: 3,
+        vencer_sets_para_seguir: 2,
+        pontua_por_set: true,
+        unidade: 'sets'
+      };
+    case 'arrows':
+      return {
+        num_flechas: 6
+      };
+    default:
+      return {};
+  }
+};
+
 export function ModalityRuleDialog({ 
   isOpen, 
   onClose, 
@@ -76,6 +112,22 @@ export function ModalityRuleDialog({
     });
   };
 
+  const handleResetParameters = () => {
+    const defaultParams = getDefaultParametersForType(currentItem.regra_tipo);
+    setCurrentItem({
+      ...currentItem,
+      parametros: defaultParams
+    });
+  };
+
+  const handleRuleTypeChange = (value: any) => {
+    const defaultParams = getDefaultParametersForType(value);
+    setCurrentItem({ 
+      regra_tipo: value, 
+      parametros: defaultParams 
+    });
+  };
+
   const handleClose = () => {
     onClose();
     setCurrentItem(defaultFormValues);
@@ -95,7 +147,7 @@ export function ModalityRuleDialog({
             <Label>Tipo de Regra</Label>
             <Select 
               value={currentItem.regra_tipo} 
-              onValueChange={(value: any) => setCurrentItem({ ...currentItem, regra_tipo: value, parametros: {} })}
+              onValueChange={handleRuleTypeChange}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -113,7 +165,8 @@ export function ModalityRuleDialog({
           
           <ParametrosFields 
             currentItem={currentItem} 
-            updateParametros={updateParametros} 
+            updateParametros={updateParametros}
+            onResetParameters={handleResetParameters}
           />
         </div>
         
