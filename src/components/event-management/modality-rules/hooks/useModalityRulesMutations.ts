@@ -41,19 +41,19 @@ export function useModalityRulesMutations() {
         console.log('User permissions detailed:', userPermissions);
         
         // Log each permission for debugging
-        userPermissions?.forEach((perm, index) => {
+        userPermissions?.forEach((permission, index) => {
           console.log(`Permission ${index + 1}:`, {
-            nome: perm.perfis.nome,
-            perfil_tipo_id: perm.perfis.perfil_tipo_id,
-            codigo: perm.perfis.perfis_tipo.codigo,
-            descricao: perm.perfis.perfis_tipo.descricao
+            nome: permission.perfis.nome,
+            perfil_tipo_id: permission.perfis.perfil_tipo_id,
+            codigo: permission.perfis.perfis_tipo.codigo,
+            descricao: permission.perfis.perfis_tipo.descricao
           });
         });
       }
       
       // Verify admin permission exists
-      const hasAdminPermission = userPermissions?.some(perm => 
-        perm.perfis.perfis_tipo.codigo === 'ADM'
+      const hasAdminPermission = userPermissions?.some(permission => 
+        permission.perfis.perfis_tipo.codigo === 'ADM'
       );
       
       console.log('Has admin permission:', hasAdminPermission);
