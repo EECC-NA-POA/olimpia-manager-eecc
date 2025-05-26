@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -135,12 +136,12 @@ export function JudgeViewAllTeamsTab({
             
             <div>
               <label className="block text-sm font-medium mb-2">Modalidade</label>
-              <Select value={modalityFilter?.toString() || ""} onValueChange={(value) => setModalityFilter(value ? parseInt(value) : null)}>
+              <Select value={modalityFilter?.toString() || "all"} onValueChange={(value) => setModalityFilter(value === "all" ? null : parseInt(value))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Todas as modalidades" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as modalidades</SelectItem>
+                  <SelectItem value="all">Todas as modalidades</SelectItem>
                   {allModalities.map((modality) => (
                     <SelectItem key={modality.modalidade_id} value={modality.modalidade_id.toString()}>
                       {modality.modalidade_nome}
@@ -152,12 +153,12 @@ export function JudgeViewAllTeamsTab({
 
             <div>
               <label className="block text-sm font-medium mb-2">Filial</label>
-              <Select value={branchFilter || ""} onValueChange={(value) => setBranchFilter(value || null)}>
+              <Select value={branchFilter || "all"} onValueChange={(value) => setBranchFilter(value === "all" ? null : value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Todas as filiais" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as filiais</SelectItem>
+                  <SelectItem value="all">Todas as filiais</SelectItem>
                   {branches?.map((branch) => (
                     <SelectItem key={branch.id} value={branch.nome}>
                       {branch.nome}
