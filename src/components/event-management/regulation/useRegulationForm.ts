@@ -43,6 +43,7 @@ export function useRegulationForm({ eventId, regulation, userId, onComplete }: U
       const processedLink = data.regulamento_link?.trim() === '' ? null : data.regulamento_link?.trim() || null;
       
       console.log('Processed link:', processedLink);
+      console.log('is_regulamento_texto value:', data.is_regulamento_texto);
 
       if (regulation && regulation.id) {
         // Update existing regulation
@@ -52,22 +53,26 @@ export function useRegulationForm({ eventId, regulation, userId, onComplete }: U
           regulamento_texto: data.regulamento_texto,
           regulamento_link: processedLink,
           is_ativo: data.is_ativo,
-          is_regulamento_texto: data.is_regulamento_texto,
+          is_regulamento_texto: data.is_regulamento_texto, // Ensure this boolean is explicitly set
           atualizado_por: userId,
           atualizado_em: new Date().toISOString()
         };
         
         console.log('Updating regulation with data:', updateData);
         
-        const { error } = await supabase
+        const { data: updatedData, error } = await supabase
           .from('eventos_regulamentos')
           .update(updateData)
-          .eq('id', regulation.id);
+          .eq('id', regulation.id)
+          .select()
+          .single();
         
         if (error) {
           console.error('Error updating regulation:', error);
           throw error;
         }
+        
+        console.log('Updated regulation result:', updatedData);
         toast.success('Regulamento atualizado com sucesso!');
       } else {
         // Create new regulation
@@ -78,20 +83,24 @@ export function useRegulationForm({ eventId, regulation, userId, onComplete }: U
           regulamento_texto: data.regulamento_texto,
           regulamento_link: processedLink,
           is_ativo: data.is_ativo,
-          is_regulamento_texto: data.is_regulamento_texto,
+          is_regulamento_texto: data.is_regulamento_texto, // Ensure this boolean is explicitly set
           criado_por: userId
         };
         
         console.log('Creating regulation with data:', insertData);
         
-        const { error } = await supabase
+        const { data: createdData, error } = await supabase
           .from('eventos_regulamentos')
-          .insert(insertData);
+          .insert(insertData)
+          .select()
+          .single();
         
         if (error) {
           console.error('Error creating regulation:', error);
           throw error;
         }
+        
+        console.log('Created regulation result:', createdData);
         toast.success('Regulamento criado com sucesso!');
       }
       
