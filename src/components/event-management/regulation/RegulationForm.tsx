@@ -30,8 +30,13 @@ export function RegulationForm({ eventId, regulation, userId, onComplete, onCanc
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <RegulationBasicFields control={form.control} />
         <RegulationTextEditor control={form.control} />
-        <RegulationStatusToggle control={form.control} />
-        <RegulationVisibilityToggle control={form.control} />
+        
+        {/* Status and Visibility toggles side by side */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <RegulationStatusToggle control={form.control} />
+          <RegulationVisibilityToggle control={form.control} />
+        </div>
+        
         <RegulationFormActions 
           regulation={regulation}
           isSubmitting={isSubmitting}
