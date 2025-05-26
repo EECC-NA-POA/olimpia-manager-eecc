@@ -81,8 +81,8 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     tipo_pontuacao: team.modalidade_info?.tipo_pontuacao || 'pontos',
     filial_nome: team.filial_info?.nome || '',
     members: team.atletas?.map(athlete => ({
-      atleta_id: athlete.id.toString(),
-      atleta_nome: athlete.nome_completo || athlete.nome || '',
+      atleta_id: athlete.atleta_id,
+      atleta_nome: athlete.atleta_nome || '',
       numero_identificador: athlete.numero_identificador || ''
     })) || []
   })) || [];
