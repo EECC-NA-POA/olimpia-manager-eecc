@@ -49,6 +49,9 @@ export function ViewAllTeamsTab({
     return <ErrorState onRetry={() => window.location.reload()} />;
   }
 
+  // If this is a judge (judgeId is provided), they should be able to score, so isReadOnly should be false
+  const shouldBeReadOnly = judgeId ? false : isReadOnly;
+
   return (
     <div className="space-y-6">
       <TeamFilters
@@ -67,7 +70,7 @@ export function ViewAllTeamsTab({
         teams={allTeams}
         isOrganizer={isOrganizer}
         eventId={eventId}
-        isReadOnly={isReadOnly}
+        isReadOnly={shouldBeReadOnly}
         judgeId={judgeId}
       />
     </div>
