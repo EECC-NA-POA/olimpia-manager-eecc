@@ -14,6 +14,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
   const modules = {
     toolbar: [
       ['bold', 'italic', 'underline', 'strike'],
+      [{ 'align': [] }], // Text alignment buttons
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
       [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
       [{ 'color': [] }, { 'background': [] }],
@@ -24,6 +25,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
 
   const formats = [
     'bold', 'italic', 'underline', 'strike',
+    'align', // Add alignment format
     'list', 'bullet',
     'header',
     'color', 'background',

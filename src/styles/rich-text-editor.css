@@ -37,3 +37,21 @@
   padding-left: 1.5em;
   margin-bottom: 0.5em;
 }
+
+/* Ensure alignment buttons display properly */
+.rich-text-editor .ql-align .ql-picker-label::before,
+.rich-text-editor .ql-align .ql-picker-item::before {
+  content: '\e049';
+}
+
+.rich-text-editor .ql-align .ql-picker-item[data-value="center"]::before {
+  content: '\e050';
+}
+
+.rich-text-editor .ql-align .ql-picker-item[data-value="right"]::before {
+  content: '\e048';
+}
+
+.rich-text-editor .ql-align .ql-picker-item[data-value="justify"]::before {
+  content: '\e047';
+}

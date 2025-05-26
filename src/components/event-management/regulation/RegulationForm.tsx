@@ -60,7 +60,7 @@ export function RegulationForm({ eventId, regulation, userId, onComplete, onCanc
 
     setIsSubmitting(true);
     try {
-      if (regulation) {
+      if (regulation && regulation.id) {
         // Update existing regulation
         const { error } = await supabase
           .from('eventos_regulamentos')
@@ -78,7 +78,7 @@ export function RegulationForm({ eventId, regulation, userId, onComplete, onCanc
         if (error) throw error;
         toast.success('Regulamento atualizado com sucesso!');
       } else {
-        // Create new regulation
+        // Create new regulation - don't pass id field
         const { error } = await supabase
           .from('eventos_regulamentos')
           .insert({
@@ -212,7 +212,7 @@ export function RegulationForm({ eventId, regulation, userId, onComplete, onCanc
             type="submit" 
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Salvando...' : regulation ? 'Atualizar' : 'Salvar'} Regulamento
+            {isSubmitting ? 'Salvando...' : regulation?.id ? 'Atualizar' : 'Salvar'} Regulamento
           </Button>
         </div>
       </form>
