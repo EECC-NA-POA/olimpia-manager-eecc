@@ -101,7 +101,18 @@ export function ManagementTeamsManageTab({
                     removeAthlete({ teamId: team.id, athleteId: athlete.atleta_id });
                   }
                 }}
-                onUpdateAthletePosition={updateAthletePosition}
+                onUpdatePosition={(athleteTeamId: number, posicao?: number, raia?: number) => {
+                  // Find the athlete by athleteTeamId to get teamId and athleteId
+                  const athlete = team.atletas.find((a: any) => a.atleta_equipe_id === athleteTeamId);
+                  if (athlete && posicao !== undefined) {
+                    updateAthletePosition({ 
+                      teamId: team.id, 
+                      athleteId: athlete.atleta_id, 
+                      position: posicao, 
+                      lane: raia 
+                    });
+                  }
+                }}
                 isDeleting={isDeletingTeam}
                 isRemoving={isRemovingAthlete}
                 isUpdating={isUpdatingAthlete}

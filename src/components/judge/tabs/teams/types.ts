@@ -22,6 +22,7 @@ export interface TeamAthlete {
   documento: string;
   filial_nome?: string;
   numero_identificador?: string;
+  atleta_equipe_id?: number; // Adding the missing property
 }
 
 export interface TeamData {
