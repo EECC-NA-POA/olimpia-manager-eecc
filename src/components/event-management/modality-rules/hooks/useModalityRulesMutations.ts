@@ -7,6 +7,36 @@ import { Modality, RuleForm } from '../types';
 export function useModalityRulesMutations() {
   const [isSaving, setIsSaving] = useState(false);
 
+  const createBaterias = async (modalityId: string, eventId: string, numBaterias: number) => {
+    console.log(`Creating ${numBaterias} baterias for modality ${modalityId} in event ${eventId}`);
+    
+    // First, delete existing baterias for this modality to avoid duplicates
+    await supabase
+      .from('baterias')
+      .delete()
+      .eq('modalidade_id', modalityId)
+      .eq('evento_id', eventId);
+    
+    // Create new baterias
+    const bateriasToInsert = Array.from({ length: numBaterias }, (_, index) => ({
+      evento_id: eventId,
+      modalidade_id: parseInt(modalityId),
+      numero: index + 1,
+      descricao: `Bateria ${index + 1}`
+    }));
+    
+    const { error } = await supabase
+      .from('baterias')
+      .insert(bateriasToInsert);
+    
+    if (error) {
+      console.error('Error creating baterias:', error);
+      throw error;
+    }
+    
+    console.log(`Successfully created ${numBaterias} baterias`);
+  };
+
   const saveRule = async (
     modalityId: string,
     ruleForm: RuleForm,
@@ -41,6 +71,19 @@ export function useModalityRulesMutations() {
         if (error) throw error;
       }
       
+      // Check if we need to create baterias
+      if (ruleForm.parametros.baterias && ruleForm.parametros.num_baterias) {
+        const modalityData = modalities.find(m => m.id === modalityId);
+        if (modalityData?.evento_id) {
+          await createBaterias(
+            modalityId, 
+            modalityData.evento_id, 
+            ruleForm.parametros.num_baterias
+          );
+          console.log(`Created ${ruleForm.parametros.num_baterias} baterias for modality ${modalityId}`);
+        }
+      }
+      
       // Refresh the data
       const { data: updatedRule } = await supabase
         .from('modalidade_regras')
@@ -73,6 +116,17 @@ export function useModalityRulesMutations() {
     }
     
     try {
+      // Delete associated baterias first
+      const modalityData = modalities.find(m => m.id === modalityId);
+      if (modalityData?.evento_id) {
+        await supabase
+          .from('baterias')
+          .delete()
+          .eq('modalidade_id', modalityId)
+          .eq('evento_id', modalityData.evento_id);
+      }
+      
+      // Then delete the rule
       const { error } = await supabase
         .from('modalidade_regras')
         .delete()
