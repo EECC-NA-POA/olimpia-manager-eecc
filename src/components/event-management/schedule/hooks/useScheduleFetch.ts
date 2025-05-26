@@ -32,7 +32,7 @@ export const useScheduleFetch = (eventId: string | null) => {
           ordem,
           global,
           evento_id,
-          cronogramas!cronograma_atividades_cronograma_id_fkey(
+          cronogramas(
             id,
             nome
           ),
@@ -55,15 +55,10 @@ export const useScheduleFetch = (eventId: string | null) => {
       
       // Transform the data to match our ScheduleItem interface
       const transformedData: ScheduleItem[] = (data || []).map(item => {
-        // Handle the cronogramas join - it can be an object or array
-        const cronogramaData = Array.isArray(item.cronogramas) 
-          ? item.cronogramas[0] 
-          : item.cronogramas;
-        
         return {
           id: item.id,
           cronograma_id: item.cronograma_id,
-          cronograma_nome: cronogramaData?.nome || 'Cronograma sem nome',
+          cronograma_nome: item.cronogramas?.nome || 'Cronograma sem nome',
           dia: item.dia,
           atividade: item.atividade,
           horario_inicio: item.horario_inicio,
