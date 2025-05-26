@@ -1,5 +1,4 @@
 
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
@@ -73,19 +72,24 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
   }
 
   // Transform teams data to match expected interface
-  const transformedTeams = allTeams?.map(team => ({
-    equipe_id: team.id,
-    equipe_nome: team.nome,
-    modalidade_id: team.modalidade_id,
-    modalidade_nome: team.modalidade_info?.nome || '',
-    tipo_pontuacao: team.modalidade_info?.tipo_pontuacao || 'pontos',
-    filial_nome: team.filial_info?.nome || '',
-    members: team.atletas?.map(athlete => ({
-      atleta_id: athlete.atleta_id,
-      atleta_nome: athlete.atleta_nome || '',
-      numero_identificador: athlete.numero_identificador || ''
-    })) || []
-  })) || [];
+  const transformedTeams = allTeams?.map(team => {
+    // Find the modality info from allModalities to get tipo_pontuacao
+    const modalityInfo = allModalities?.find(m => m.id === team.modalidade_id);
+    
+    return {
+      equipe_id: team.id,
+      equipe_nome: team.nome,
+      modalidade_id: team.modalidade_id,
+      modalidade_nome: team.modalidade_info?.nome || '',
+      tipo_pontuacao: modalityInfo?.tipo_pontuacao || 'pontos',
+      filial_nome: team.filial_id || '', // Use filial_id since filial_info doesn't exist
+      members: team.atletas?.map(athlete => ({
+        atleta_id: athlete.atleta_id,
+        atleta_nome: athlete.atleta_nome || '',
+        numero_identificador: athlete.numero_identificador || ''
+      })) || []
+    };
+  }) || [];
 
   // Transform modalities data to match expected interface
   const transformedModalities = allModalities?.map(modality => ({
