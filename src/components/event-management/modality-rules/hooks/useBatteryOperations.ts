@@ -36,18 +36,17 @@ export function useBatteryOperations() {
       if (rpcError) {
         console.error('RPC function error:', rpcError);
         
-        // If RPC fails, try direct insert with proper user context
-        console.log('RPC failed, attempting direct insert with user context...');
+        // If RPC fails, try direct insert without criado_por field
+        console.log('RPC failed, attempting direct insert...');
         
         const bateriasToInsert = Array.from({ length: numBaterias }, (_, index) => ({
           evento_id: eventId,
           modalidade_id: parseInt(modalityId),
           numero: index + 1,
           descricao: `Bateria ${index + 1}`,
-          criado_por: user?.id, // Add user context for RLS
         }));
         
-        console.log('Inserting baterias with user context:', bateriasToInsert);
+        console.log('Inserting baterias:', bateriasToInsert);
         
         const { data, error } = await supabase
           .from('baterias')
