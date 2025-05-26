@@ -40,11 +40,41 @@ const EventRegulations = () => {
     enabled: !!currentEventId,
   });
 
-  // Check if the link is a PDF
-  const isPDF = (url: string | null) => {
+  // Check if the link is a PDF or Google Drive document
+  const isPDFOrDriveDoc = (url: string | null) => {
     if (!url) return false;
     const lowerUrl = url.toLowerCase();
-    return lowerUrl.includes('.pdf') || lowerUrl.includes('pdf');
+    return lowerUrl.includes('.pdf') || lowerUrl.includes('pdf') || lowerUrl.includes('drive.google.com');
+  };
+
+  // Convert Google Drive view link to embed link
+  const getEmbedUrl = (url: string | null) => {
+    if (!url) return null;
+    
+    // If it's a Google Drive link, convert to embed format
+    if (url.includes('drive.google.com')) {
+      // Extract file ID from various Google Drive URL formats
+      let fileId = null;
+      
+      // Format: https://drive.google.com/file/d/FILE_ID/view
+      const viewMatch = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+      if (viewMatch) {
+        fileId = viewMatch[1];
+      }
+      
+      // Format: https://drive.google.com/open?id=FILE_ID
+      const openMatch = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+      if (openMatch) {
+        fileId = openMatch[1];
+      }
+      
+      if (fileId) {
+        return `https://drive.google.com/file/d/${fileId}/preview`;
+      }
+    }
+    
+    // Return original URL for regular PDFs
+    return url;
   };
 
   // Open external link in a new tab
@@ -94,8 +124,8 @@ const EventRegulations = () => {
                   </div>
                 )}
 
-                {/* PDF Embed Section */}
-                {regulation.regulamento_link && isPDF(regulation.regulamento_link) && (
+                {/* PDF/Drive Document Embed Section */}
+                {regulation.regulamento_link && isPDFOrDriveDoc(regulation.regulamento_link) && (
                   <div className="w-full mb-6">
                     <div className="bg-gray-50 rounded-lg p-4 mb-4">
                       <h3 className="text-lg font-medium mb-2">Visualização do Documento</h3>
@@ -105,7 +135,7 @@ const EventRegulations = () => {
                     </div>
                     <div className="border rounded-lg overflow-hidden">
                       <iframe
-                        src={regulation.regulamento_link}
+                        src={getEmbedUrl(regulation.regulamento_link)}
                         className="w-full h-[600px] border-0"
                         title="Regulamento do Evento"
                         loading="lazy"
