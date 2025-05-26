@@ -9,7 +9,10 @@ export const useScheduleFetch = (eventId: string | null) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchSchedule = async () => {
-    if (!eventId) return;
+    if (!eventId) {
+      setIsLoading(false);
+      return;
+    }
     
     setIsLoading(true);
     try {

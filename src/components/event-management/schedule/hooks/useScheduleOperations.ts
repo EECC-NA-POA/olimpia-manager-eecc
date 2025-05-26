@@ -10,13 +10,16 @@ export const useScheduleOperations = (
 ) => {
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = async (currentItem: ScheduleForm, editingId: string | null) => {
-    if (!eventId) return;
+  const handleSave = async (currentItem: ScheduleForm, editingId: string | null): Promise<boolean> => {
+    if (!eventId) {
+      toast.error('ID do evento não encontrado');
+      return false;
+    }
     
     // Basic validation
     if (!currentItem.titulo || !currentItem.data) {
       toast.error('Preencha pelo menos o título e a data');
-      return;
+      return false;
     }
     
     setIsSaving(true);
@@ -41,7 +44,7 @@ export const useScheduleOperations = (
         toast.success('Item de cronograma atualizado com sucesso!');
       } else {
         // Create new item
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('cronogramas')
           .insert({
             evento_id: eventId,
@@ -52,8 +55,7 @@ export const useScheduleOperations = (
             hora_inicio: currentItem.hora_inicio,
             hora_fim: currentItem.hora_fim,
             tipo: currentItem.tipo
-          })
-          .select();
+          });
         
         if (error) throw error;
         
