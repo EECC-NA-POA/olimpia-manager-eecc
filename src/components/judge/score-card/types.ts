@@ -26,6 +26,7 @@ export interface ScoreRecord {
   unidade?: string;
   bateria_id?: number;
   observacoes?: string;
+  dados_json?: any; // Added this property to fix the TypeScript error
 }
 
 // Schema for time score form (tempo)
