@@ -16,13 +16,18 @@ interface ScoreFormProps {
   initialValues?: any;
   onSubmit: (data: any) => void;
   isPending: boolean;
+  modalityRule?: any; // Add optional modality rule prop
 }
 
-export function ScoreForm({ modalityId, initialValues, onSubmit, isPending }: ScoreFormProps) {
-  const { data: rule, isLoading } = useModalityRules(modalityId);
+export function ScoreForm({ modalityId, initialValues, onSubmit, isPending, modalityRule }: ScoreFormProps) {
+  // Use passed modalityRule if available, otherwise fetch it
+  const { data: fetchedRule, isLoading } = useModalityRules(modalityId);
+  const rule = modalityRule || fetchedRule;
   
   console.log('ScoreForm - modalityId:', modalityId);
-  console.log('ScoreForm - rule:', rule);
+  console.log('ScoreForm - passed modalityRule:', modalityRule);
+  console.log('ScoreForm - fetchedRule:', fetchedRule);
+  console.log('ScoreForm - final rule:', rule);
   console.log('ScoreForm - initialValues:', initialValues);
   
   // Create schema based on rule
@@ -41,7 +46,7 @@ export function ScoreForm({ modalityId, initialValues, onSubmit, isPending }: Sc
     onSubmit(data);
   };
 
-  if (isLoading) {
+  if (!modalityRule && isLoading) {
     return <div>Carregando configuração da modalidade...</div>;
   }
 

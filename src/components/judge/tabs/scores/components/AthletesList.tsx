@@ -14,6 +14,7 @@ interface AthletesListProps {
   eventId: string | null;
   judgeId: string;
   scoreType?: 'tempo' | 'distancia' | 'pontos';
+  modalityRule?: any; // Add modality rule prop
 }
 
 export function AthletesList({
@@ -22,7 +23,8 @@ export function AthletesList({
   modalityId,
   eventId,
   judgeId,
-  scoreType = 'pontos'
+  scoreType = 'pontos',
+  modalityRule
 }: AthletesListProps) {
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
 
@@ -71,6 +73,12 @@ export function AthletesList({
         <CardTitle>Atletas Inscritos</CardTitle>
         <div className="text-center text-sm text-muted-foreground">
           Mostrando {filteredAthletes.length} de {athletes.length} atletas
+          {modalityRule && (
+            <div className="mt-2 text-xs bg-blue-50 text-blue-700 p-2 rounded border">
+              Modalidade: {modalityRule.regra_tipo} 
+              {modalityRule.parametros?.unidade && ` (${modalityRule.parametros.unidade})`}
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -82,6 +90,7 @@ export function AthletesList({
           scoreType={scoreType}
           eventId={eventId}
           judgeId={judgeId}
+          modalityRule={modalityRule}
         />
       </CardContent>
     </Card>

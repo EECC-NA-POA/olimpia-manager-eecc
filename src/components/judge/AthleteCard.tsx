@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   Card, 
@@ -19,6 +20,7 @@ interface AthleteCardProps {
   scoreType?: 'tempo' | 'distancia' | 'pontos';
   eventId?: string | null;
   judgeId?: string;
+  modalityRule?: any; // Add modality rule prop
 }
 
 export function AthleteCard({ 
@@ -28,33 +30,17 @@ export function AthleteCard({
   modalityId,
   scoreType = 'pontos',
   eventId,
-  judgeId
+  judgeId,
+  modalityRule
 }: AthleteCardProps) {
   console.log('=== ATHLETE CARD PROPS DEBUG ===');
   console.log('Received eventId prop:', eventId);
-  console.log('eventId type:', typeof eventId);
-  console.log('eventId is null?', eventId === null);
-  console.log('eventId is undefined?', eventId === undefined);
+  console.log('Received modalityRule:', modalityRule);
   
   // Fetch athlete data using custom hooks
   const { data: paymentData, isLoading: isLoadingPayment } = useAthletePaymentData(athlete.atleta_id, eventId);
   const { data: branchData, isLoading: isLoadingBranch } = useAthleteBranchData(athlete.atleta_id);
   const { data: scores } = useAthleteScores(athlete.atleta_id);
-  
-  // Extensive debug logs
-  console.log('=== AthleteCard Debug Start ===');
-  console.log('Athlete:', athlete.atleta_nome);
-  console.log('Athlete ID:', athlete.atleta_id);
-  console.log('Event ID:', eventId);
-  console.log('Payment data object:', paymentData);
-  console.log('Payment data type:', typeof paymentData);
-  console.log('Is payment data null/undefined?', paymentData == null);
-  
-  if (paymentData) {
-    console.log('Payment data keys:', Object.keys(paymentData));
-    console.log('numero_identificador value:', paymentData.numero_identificador);
-    console.log('numero_identificador type:', typeof paymentData.numero_identificador);
-  }
   
   // Check if the athlete has a score for the selected modality
   const hasScoreForCurrentModality = modalityId ? 
@@ -65,7 +51,6 @@ export function AthleteCard({
   const athleteIdentifier = paymentData?.numero_identificador || athlete.atleta_id.slice(-6);
 
   console.log('Final athlete identifier used:', athleteIdentifier);
-  console.log('Fallback used (ID slice)?', !paymentData?.numero_identificador);
   console.log('=== AthleteCard Debug End ===');
 
   // If we're in selected view and have all necessary props, render the score card
@@ -83,6 +68,7 @@ export function AthleteCard({
         eventId={eventId}
         judgeId={judgeId}
         scoreType={scoreType}
+        modalityRule={modalityRule}
       />
     );
   }
@@ -121,6 +107,12 @@ export function AthleteCard({
             </span>
           )}
         </div>
+        {modalityRule && (
+          <div className="mt-2 text-xs bg-orange-50 text-orange-700 p-2 rounded border border-orange-200">
+            Tipo: {modalityRule.regra_tipo}
+            {modalityRule.parametros?.unidade && ` (${modalityRule.parametros.unidade})`}
+          </div>
+        )}
       </CardHeader>
       
       <CardContent className="pt-0 space-y-4">

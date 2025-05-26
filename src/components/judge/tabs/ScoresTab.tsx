@@ -24,7 +24,7 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
   // Fetch athletes when a modality is selected using our custom hook
   const { athletes, isLoadingAthletes } = useAthletes(selectedModalityId, eventId);
 
-  // Get selected modality
+  // Get selected modality with its rule
   const selectedModality = individualModalities?.find(m => m.modalidade_id === selectedModalityId);
 
   if (isLoadingModalities) {
@@ -56,6 +56,7 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
           eventId={eventId}
           judgeId={userId}
           scoreType={selectedModality?.tipo_pontuacao}
+          modalityRule={selectedModality?.regra}
         />
       )}
     </div>

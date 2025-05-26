@@ -12,22 +12,23 @@ import { Button } from '@/components/ui/button';
 import { MedalDisplay } from './components/MedalDisplay';
 import { ScoreForm } from './components/ScoreForm';
 import { useScoreSubmission } from './hooks/useScoreSubmission';
-import { useModalityRules } from '../tabs/scores/hooks/useModalityRules';
 import { AthleteScoreCardProps, ScoreRecord } from './types';
+
+interface ExtendedAthleteScoreCardProps extends AthleteScoreCardProps {
+  modalityRule?: any; // Add modality rule prop
+}
 
 export function AthleteScoreCard({ 
   athlete, 
   modalityId, 
   eventId, 
   judgeId,
-  scoreType
-}: AthleteScoreCardProps) {
+  scoreType,
+  modalityRule
+}: ExtendedAthleteScoreCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // Fetch modality rules to determine the correct input type
-  const { data: modalityRule } = useModalityRules(modalityId);
-  
-  console.log('AthleteScoreCard - modalityRule:', modalityRule);
+  console.log('AthleteScoreCard - modalityRule prop:', modalityRule);
   console.log('AthleteScoreCard - scoreType prop:', scoreType);
 
   const { submitScoreMutation } = useScoreSubmission(
@@ -119,11 +120,21 @@ export function AthleteScoreCard({
         
       case 'distancia':
         if (dados?.meters !== undefined && dados?.centimeters !== undefined) {
-          return {
+          let initialData: any = {
             meters: dados.meters,
             centimeters: dados.centimeters,
             notes: existingScore.observacoes || ''
           };
+          
+          // Add heat and lane data if present
+          if (dados.heat !== undefined) {
+            initialData.heat = dados.heat;
+          }
+          if (dados.lane !== undefined) {
+            initialData.lane = dados.lane;
+          }
+          
+          return initialData;
         }
         return {
           score: existingScore.valor_pontuacao || 0,
@@ -163,10 +174,34 @@ export function AthleteScoreCard({
         }
         
       case 'arrows':
-        return {
-          flechas: dados?.flechas || Array.from({ length: modalityRule.parametros?.num_flechas || 6 }, () => ({ zona: '0' })),
-          notes: existingScore.observacoes || ''
-        };
+        const faseClassificacao = modalityRule.parametros?.fase_classificacao || false;
+        const faseEliminacao = modalityRule.parametros?.fase_eliminacao || false;
+        
+        if (faseClassificacao || faseEliminacao) {
+          let initialData: any = { notes: existingScore.observacoes || '' };
+          
+          if (faseClassificacao && dados?.classificationArrows) {
+            initialData.classificationArrows = dados.classificationArrows;
+          }
+          
+          if (faseEliminacao && dados?.eliminationSets) {
+            initialData.eliminationSets = dados.eliminationSets;
+            initialData.totalMatchPoints = dados.totalMatchPoints || 0;
+            initialData.combatFinished = dados.combatFinished || false;
+            initialData.needsShootOff = dados.needsShootOff || false;
+            
+            if (dados.shootOffScore !== undefined) {
+              initialData.shootOffScore = dados.shootOffScore;
+            }
+          }
+          
+          return initialData;
+        } else {
+          return {
+            flechas: dados?.flechas || Array.from({ length: modalityRule.parametros?.num_flechas || 6 }, () => ({ zona: '0' })),
+            notes: existingScore.observacoes || ''
+          };
+        }
         
       default:
         return {
@@ -225,6 +260,7 @@ export function AthleteScoreCard({
             initialValues={getInitialValues()}
             onSubmit={handleSubmit}
             isPending={submitScoreMutation.isPending}
+            modalityRule={modalityRule}
           />
         )}
       </CardContent>
