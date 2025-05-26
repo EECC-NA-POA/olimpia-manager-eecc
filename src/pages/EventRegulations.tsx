@@ -136,7 +136,7 @@ const EventRegulations = () => {
                     <div className="border rounded-lg overflow-hidden">
                       <iframe
                         src={getEmbedUrl(regulation.regulamento_link)}
-                        className="w-full h-[600px] border-0"
+                        className="w-full h-[842px] border-0"
                         title="Regulamento do Evento"
                         loading="lazy"
                       />
