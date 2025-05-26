@@ -27,6 +27,9 @@ export function AthleteScoreCard({
   // Fetch modality rules to determine the correct input type
   const { data: modalityRule } = useModalityRules(modalityId);
   
+  console.log('AthleteScoreCard - modalityRule:', modalityRule);
+  console.log('AthleteScoreCard - scoreType prop:', scoreType);
+
   const { submitScoreMutation } = useScoreSubmission(
     eventId, 
     modalityId, 
@@ -92,6 +95,7 @@ export function AthleteScoreCard({
 
   // Handle form submission
   const handleSubmit = (data: any) => {
+    console.log('AthleteScoreCard - Submitting data:', data);
     submitScoreMutation.mutate(data, {
       onSuccess: () => setIsExpanded(false)
     });
@@ -102,6 +106,7 @@ export function AthleteScoreCard({
     if (!existingScore || !modalityRule) return null;
     
     const dados = existingScore.dados_json as any;
+    console.log('AthleteScoreCard - existingScore dados_json:', dados);
     
     switch (modalityRule.regra_tipo) {
       case 'tempo':
@@ -127,19 +132,39 @@ export function AthleteScoreCard({
         
       case 'baterias':
         return {
-          tentativas: dados?.tentativas || [],
+          tentativas: dados?.tentativas || Array.from({ length: modalityRule.parametros?.num_tentativas || 3 }, () => ({ valor: 0, raia: '' })),
           notes: existingScore.observacoes || ''
         };
         
       case 'sets':
-        return {
-          sets: dados?.sets || [],
-          notes: existingScore.observacoes || ''
-        };
+        const melhorDe = modalityRule.parametros?.melhor_de || modalityRule.parametros?.num_sets || 3;
+        const pontuaPorSet = modalityRule.parametros?.pontua_por_set !== false;
+        const isVolleyball = modalityRule.parametros?.pontos_por_set !== undefined;
+        
+        if (pontuaPorSet) {
+          return {
+            sets: dados?.sets || Array.from({ length: melhorDe }, () => ({ pontos: 0 })),
+            notes: existingScore.observacoes || ''
+          };
+        } else if (isVolleyball) {
+          return {
+            sets: dados?.sets || Array.from({ length: melhorDe }, () => ({ 
+              vencedor: undefined, 
+              pontosEquipe1: 0, 
+              pontosEquipe2: 0 
+            })),
+            notes: existingScore.observacoes || ''
+          };
+        } else {
+          return {
+            sets: dados?.sets || Array.from({ length: melhorDe }, () => ({ vencedor: undefined })),
+            notes: existingScore.observacoes || ''
+          };
+        }
         
       case 'arrows':
         return {
-          flechas: dados?.flechas || [],
+          flechas: dados?.flechas || Array.from({ length: modalityRule.parametros?.num_flechas || 6 }, () => ({ zona: '0' })),
           notes: existingScore.observacoes || ''
         };
         
@@ -166,6 +191,12 @@ export function AthleteScoreCard({
             {athlete.numero_identificador && (
               <p className="text-xs text-muted-foreground">
                 ID: {athlete.numero_identificador}
+              </p>
+            )}
+            {modalityRule && (
+              <p className="text-xs text-blue-600 font-medium mt-1">
+                Modalidade: {modalityRule.regra_tipo}
+                {modalityRule.parametros?.unidade && ` (${modalityRule.parametros.unidade})`}
               </p>
             )}
           </div>

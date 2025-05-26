@@ -18,9 +18,15 @@ interface BateriasScoreFieldsProps {
 }
 
 export function BateriasScoreFields({ form, rule }: BateriasScoreFieldsProps) {
-  const numTentativas = rule.parametros.num_tentativas || 3;
-  const numRaias = rule.parametros.num_raias;
-  const unidade = rule.parametros.unidade || 'pontos';
+  // Provide default values if parametros is empty
+  const parametros = rule.parametros || {};
+  const numTentativas = parametros.num_tentativas || 3;
+  const numRaias = parametros.num_raias;
+  const unidade = parametros.unidade || 'pontos';
+
+  console.log('BateriasScoreFields - numTentativas:', numTentativas);
+  console.log('BateriasScoreFields - numRaias:', numRaias);
+  console.log('BateriasScoreFields - unidade:', unidade);
 
   // Watch tentativas to calculate best result
   const tentativas = form.watch('tentativas') || [];

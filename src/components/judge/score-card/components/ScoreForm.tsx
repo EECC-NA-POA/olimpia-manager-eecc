@@ -10,7 +10,6 @@ import { DynamicScoreFields } from './DynamicScoreFields';
 import { useModalityRules } from '../../tabs/scores/hooks/useModalityRules';
 import { createDynamicSchema } from '../utils/schemaUtils';
 import { getDefaultValues } from '../utils/defaultValuesUtils';
-import { prepareSubmissionData } from '../utils/formSubmissionUtils';
 
 interface ScoreFormProps {
   modalityId: number;
@@ -21,6 +20,10 @@ interface ScoreFormProps {
 
 export function ScoreForm({ modalityId, initialValues, onSubmit, isPending }: ScoreFormProps) {
   const { data: rule, isLoading } = useModalityRules(modalityId);
+  
+  console.log('ScoreForm - modalityId:', modalityId);
+  console.log('ScoreForm - rule:', rule);
+  console.log('ScoreForm - initialValues:', initialValues);
   
   // Create schema based on rule
   const schema = rule ? createDynamicSchema(rule.regra_tipo, rule.parametros) : z.object({
@@ -34,8 +37,8 @@ export function ScoreForm({ modalityId, initialValues, onSubmit, isPending }: Sc
   });
 
   const handleSubmit = (data: any) => {
-    const preparedData = prepareSubmissionData(data, rule);
-    onSubmit(preparedData);
+    console.log('ScoreForm - Form data submitted:', data);
+    onSubmit(data);
   };
 
   if (isLoading) {
@@ -46,10 +49,18 @@ export function ScoreForm({ modalityId, initialValues, onSubmit, isPending }: Sc
     return <div>Erro ao carregar configuração da modalidade</div>;
   }
 
+  console.log('ScoreForm - Rendering form with rule:', rule);
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 mt-4">
-        <DynamicScoreFields form={form} rule={rule} />
+        <div className="border rounded-lg p-4 bg-gray-50">
+          <h4 className="font-medium mb-3">
+            Modalidade: {rule.regra_tipo} 
+            {rule.parametros?.unidade && ` (${rule.parametros.unidade})`}
+          </h4>
+          <DynamicScoreFields form={form} rule={rule} />
+        </div>
         
         <FormField
           control={form.control}
