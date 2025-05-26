@@ -38,20 +38,58 @@
   margin-bottom: 0.5em;
 }
 
-/* Ensure alignment buttons display properly */
-.rich-text-editor .ql-align .ql-picker-label::before,
+/* Table styling */
+.rich-text-editor .ql-editor table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.rich-text-editor .ql-editor table td,
+.rich-text-editor .ql-editor table th {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+.rich-text-editor .ql-editor table th {
+  background-color: #f5f5f5;
+  font-weight: bold;
+}
+
+/* Fix alignment button icons */
+.rich-text-editor .ql-align .ql-picker-label::before {
+  content: '≡';
+  font-size: 14px;
+  line-height: 1;
+}
+
 .rich-text-editor .ql-align .ql-picker-item::before {
-  content: '\e049';
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.rich-text-editor .ql-align .ql-picker-item[data-value=""]::before {
+  content: '≡';
 }
 
 .rich-text-editor .ql-align .ql-picker-item[data-value="center"]::before {
-  content: '\e050';
+  content: '≡';
+  text-align: center;
 }
 
 .rich-text-editor .ql-align .ql-picker-item[data-value="right"]::before {
-  content: '\e048';
+  content: '≡';
+  text-align: right;
 }
 
 .rich-text-editor .ql-align .ql-picker-item[data-value="justify"]::before {
-  content: '\e047';
+  content: '≡';
+}
+
+/* Table button styling */
+.rich-text-editor .ql-table::before {
+  content: '⊞';
+  font-size: 14px;
 }
