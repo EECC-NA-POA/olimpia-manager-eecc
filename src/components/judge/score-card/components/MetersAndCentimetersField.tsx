@@ -15,13 +15,15 @@ interface MetersAndCentimetersFieldProps {
   metersName: string;
   centimetersName: string;
   label?: string;
+  maxCentimeters?: number;
 }
 
 export function MetersAndCentimetersField({ 
   form, 
   metersName, 
   centimetersName, 
-  label = "Distância" 
+  label = "Distância",
+  maxCentimeters = 99
 }: MetersAndCentimetersFieldProps) {
   return (
     <div className="space-y-2">
@@ -39,7 +41,12 @@ export function MetersAndCentimetersField({
                     placeholder="0"
                     min="0" 
                     {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      if (value >= 0) {
+                        field.onChange(value);
+                      }
+                    }}
                     className="pr-12"
                   />
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
@@ -62,9 +69,14 @@ export function MetersAndCentimetersField({
                     type="number" 
                     placeholder="0"
                     min="0"
-                    max="99"
+                    max={maxCentimeters}
                     {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      if (value >= 0 && value <= maxCentimeters) {
+                        field.onChange(value);
+                      }
+                    }}
                     className="pr-12"
                   />
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
@@ -76,6 +88,9 @@ export function MetersAndCentimetersField({
             </FormItem>
           )}
         />
+      </div>
+      <div className="text-xs text-muted-foreground">
+        Centímetros: 0 - {maxCentimeters}
       </div>
     </div>
   );
