@@ -17,41 +17,44 @@ import {
 } from "@/components/ui/select";
 import { UseFormReturn } from 'react-hook-form';
 import { MetersAndCentimetersField } from './MetersAndCentimetersField';
+import { Bateria } from '../../tabs/scores/hooks/useBateriaData';
 
 interface DistanceScoreFieldsProps {
   form: UseFormReturn<any>;
   useMetersAndCentimeters?: boolean;
   baterias?: boolean;
   raiasPorBateria?: number;
+  bateriasData?: Bateria[];
 }
 
 export function DistanceScoreFields({ 
   form, 
   useMetersAndCentimeters = true, 
   baterias = false,
-  raiasPorBateria 
+  raiasPorBateria,
+  bateriasData = []
 }: DistanceScoreFieldsProps) {
   // For distance scoring with rules that specify subunidade = 'cm', use separate meters and centimeters inputs
   if (useMetersAndCentimeters) {
     return (
       <div className="space-y-4">
         {/* Heat selector if baterias is enabled */}
-        {baterias && (
+        {baterias && bateriasData.length > 0 && (
           <FormField
             control={form.control}
             name="heat"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Bateria</FormLabel>
+                <FormLabel>Bateria *</FormLabel>
                 <FormControl>
                   <Select value={field.value?.toString()} onValueChange={(value) => field.onChange(parseInt(value))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione a bateria" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Array.from({ length: 10 }, (_, i) => i + 1).map((heat) => (
-                        <SelectItem key={heat} value={heat.toString()}>
-                          Bateria {heat}
+                      {bateriasData.map((bateria) => (
+                        <SelectItem key={bateria.id} value={bateria.id.toString()}>
+                          Bateria {bateria.numero}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -70,7 +73,7 @@ export function DistanceScoreFields({
             name="lane"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Raia</FormLabel>
+                <FormLabel>Raia *</FormLabel>
                 <FormControl>
                   <Select value={field.value?.toString()} onValueChange={(value) => field.onChange(parseInt(value))}>
                     <SelectTrigger>
@@ -105,22 +108,22 @@ export function DistanceScoreFields({
   return (
     <div className="space-y-4">
       {/* Heat selector if baterias is enabled */}
-      {baterias && (
+      {baterias && bateriasData.length > 0 && (
         <FormField
           control={form.control}
           name="heat"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Bateria</FormLabel>
+              <FormLabel>Bateria *</FormLabel>
               <FormControl>
                 <Select value={field.value?.toString()} onValueChange={(value) => field.onChange(parseInt(value))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a bateria" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Array.from({ length: 10 }, (_, i) => i + 1).map((heat) => (
-                      <SelectItem key={heat} value={heat.toString()}>
-                        Bateria {heat}
+                    {bateriasData.map((bateria) => (
+                      <SelectItem key={bateria.id} value={bateria.id.toString()}>
+                        Bateria {bateria.numero}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -139,7 +142,7 @@ export function DistanceScoreFields({
           name="lane"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Raia</FormLabel>
+              <FormLabel>Raia *</FormLabel>
               <FormControl>
                 <Select value={field.value?.toString()} onValueChange={(value) => field.onChange(parseInt(value))}>
                   <SelectTrigger>

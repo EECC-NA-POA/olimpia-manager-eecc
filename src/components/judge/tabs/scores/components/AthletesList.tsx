@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AthleteCard } from '@/components/judge/AthleteCard';
 import { AthletesGrid } from './AthletesGrid';
 import { useAthletesFiltering } from './hooks/useAthletesFiltering';
+import { useBateriaData } from '../hooks/useBateriaData';
 import { Athlete } from '../hooks/useAthletes';
 
 interface AthletesListProps {
@@ -14,7 +15,7 @@ interface AthletesListProps {
   eventId: string | null;
   judgeId: string;
   scoreType?: 'tempo' | 'distancia' | 'pontos';
-  modalityRule?: any; // Add modality rule prop
+  modalityRule?: any;
 }
 
 export function AthletesList({
@@ -34,6 +35,12 @@ export function AthletesList({
     setFilters,
     resetFilters
   } = useAthletesFiltering(athletes || []);
+
+  // Fetch baterias data for this modality
+  const { data: bateriasData = [], isLoading: isLoadingBaterias } = useBateriaData(
+    modalityId, 
+    eventId
+  );
 
   if (isLoading) {
     return (
@@ -67,6 +74,12 @@ export function AthletesList({
     );
   }
 
+  const showBateriaInfo = modalityRule && (
+    (modalityRule.regra_tipo === 'distancia' && modalityRule.parametros?.baterias) ||
+    modalityRule.regra_tipo === 'baterias' ||
+    modalityRule.regra_tipo === 'tempo'
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -77,6 +90,16 @@ export function AthletesList({
             <div className="mt-2 text-xs bg-blue-50 text-blue-700 p-2 rounded border">
               Modalidade: {modalityRule.regra_tipo} 
               {modalityRule.parametros?.unidade && ` (${modalityRule.parametros.unidade})`}
+              {showBateriaInfo && bateriasData.length > 0 && (
+                <div className="mt-1">
+                  Baterias disponíveis: {bateriasData.map(b => `Bateria ${b.numero}`).join(', ')}
+                </div>
+              )}
+              {showBateriaInfo && bateriasData.length === 0 && (
+                <div className="mt-1 text-amber-600">
+                  ⚠️ Nenhuma bateria configurada - configure nas regras da modalidade
+                </div>
+              )}
             </div>
           )}
         </div>

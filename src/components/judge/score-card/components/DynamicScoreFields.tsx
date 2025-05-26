@@ -9,16 +9,18 @@ import { BateriasScoreFields } from './BateriasScoreFields';
 import { SetsScoreFields } from './SetsScoreFields';
 import { ArrowsScoreFields } from './ArrowsScoreFields';
 import { ArcheryScoreFields } from './ArcheryScoreFields';
+import { Bateria } from '../../tabs/scores/hooks/useBateriaData';
 
 interface DynamicScoreFieldsProps {
   form: UseFormReturn<any>;
   rule: ModalityRule;
+  bateriasData?: Bateria[];
 }
 
-export function DynamicScoreFields({ form, rule }: DynamicScoreFieldsProps) {
+export function DynamicScoreFields({ form, rule, bateriasData = [] }: DynamicScoreFieldsProps) {
   console.log('DynamicScoreFields - Rule type:', rule.regra_tipo);
   console.log('DynamicScoreFields - Rule parameters:', rule.parametros);
-  console.log('DynamicScoreFields - Full rule object:', rule);
+  console.log('DynamicScoreFields - Baterias data:', bateriasData);
   
   // Ensure parametros has default values if empty
   const parametros = rule.parametros || {};
@@ -45,6 +47,7 @@ export function DynamicScoreFields({ form, rule }: DynamicScoreFieldsProps) {
           useMetersAndCentimeters={useMetersAndCentimeters}
           baterias={baterias}
           raiasPorBateria={raiasPorBateria}
+          bateriasData={bateriasData}
         />
       );
     
