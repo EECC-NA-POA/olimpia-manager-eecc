@@ -34,14 +34,13 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
           <TableHead>Horário</TableHead>
           <TableHead>Local</TableHead>
           <TableHead>Global</TableHead>
-          <TableHead>Cronograma</TableHead>
           <TableHead className="w-24">Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {scheduleItems.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} className="text-center py-4">
+            <TableCell colSpan={6} className="text-center py-4">
               Nenhuma atividade de cronograma encontrada
             </TableCell>
           </TableRow>
@@ -55,7 +54,6 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
               </TableCell>
               <TableCell>{item.local}</TableCell>
               <TableCell>{item.global ? 'Sim' : 'Não'}</TableCell>
-              <TableCell>{item.cronograma_nome}</TableCell>
               <TableCell>
                 <div className="flex space-x-2">
                   <Button 
