@@ -41,8 +41,7 @@ export function useScoreSubmission(
             tempo_segundos: null,
             tempo_milissegundos: null,
             unidade: 'm',
-            bateria_id: formData.heat || null,
-            raia: formData.lane || null
+            bateria_id: formData.heat || null
           };
         } else if ('score' in formData) {
           scoreData = {
@@ -51,8 +50,7 @@ export function useScoreSubmission(
             tempo_segundos: null,
             tempo_milissegundos: null,
             unidade: 'm',
-            bateria_id: formData.heat || null,
-            raia: formData.lane || null
+            bateria_id: formData.heat || null
           };
         }
       } else if (rule?.regra_tipo === 'tempo' || scoreType === 'tempo') {
