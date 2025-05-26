@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -11,7 +10,36 @@ export function useModalityRulesMutations() {
     console.log(`Creating ${numBaterias} baterias for modality ${modalityId} in event ${eventId}`);
     
     try {
+      // First, let's check the current user's permissions
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        console.error('Error getting current user:', userError);
+        throw new Error('Erro ao verificar usuário atual');
+      }
+      
+      console.log('Current user ID:', user?.id);
+      
+      // Check user permissions
+      const { data: userPermissions, error: permError } = await supabase
+        .from('papeis_usuarios')
+        .select(`
+          perfis!inner(
+            perfis_tipo!inner(
+              codigo
+            )
+          )
+        `)
+        .eq('usuario_id', user?.id)
+        .eq('evento_id', eventId);
+      
+      if (permError) {
+        console.error('Error checking permissions:', permError);
+      } else {
+        console.log('User permissions:', userPermissions);
+      }
+      
       // First, delete existing baterias for this modality to avoid duplicates
+      console.log('Deleting existing baterias...');
       const { error: deleteError } = await supabase
         .from('baterias')
         .delete()
@@ -32,6 +60,8 @@ export function useModalityRulesMutations() {
       }));
       
       console.log('Attempting to insert baterias:', bateriasToInsert);
+      console.log('Bateria table structure check - modalidade_id type:', typeof bateriasToInsert[0].modalidade_id);
+      console.log('Bateria table structure check - evento_id type:', typeof bateriasToInsert[0].evento_id);
       
       const { data, error } = await supabase
         .from('baterias')
@@ -39,11 +69,27 @@ export function useModalityRulesMutations() {
         .select();
       
       if (error) {
-        console.error('Error creating baterias:', error);
+        console.error('Detailed error creating baterias:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        
         if (error.code === '42501') {
           throw new Error('Você não tem permissão para criar baterias. Verifique suas permissões.');
         }
-        throw error;
+        
+        // Add more specific error handling
+        if (error.code === '23503') {
+          throw new Error('Erro de referência: modalidade ou evento não encontrado.');
+        }
+        
+        if (error.code === '23505') {
+          throw new Error('Bateria duplicada encontrada.');
+        }
+        
+        throw new Error(`Erro ao criar baterias: ${error.message}`);
       }
       
       console.log(`Successfully created ${numBaterias} baterias:`, data);
@@ -114,8 +160,9 @@ export function useModalityRulesMutations() {
             console.log(`Successfully created ${ruleForm.parametros.num_baterias} baterias for modality ${modalityId}`);
           } catch (bateriaError) {
             console.error('Failed to create baterias, but rule was saved:', bateriaError);
-            // Show a warning but don't fail the entire operation
-            toast.error('Regra salva, mas não foi possível criar as baterias. Verifique suas permissões.');
+            // Show a more detailed error message
+            const errorMessage = bateriaError instanceof Error ? bateriaError.message : 'Erro desconhecido ao criar baterias';
+            toast.error(`Regra salva, mas não foi possível criar as baterias: ${errorMessage}`);
           }
         } else {
           console.warn('No evento_id found for modality, cannot create baterias');
