@@ -60,7 +60,7 @@ export function useModalityRulesMutations() {
       console.log('Has admin permission:', hasAdminPermission);
       
       if (!hasAdminPermission) {
-        throw new Error('Usuário não possui permissão de administrador para este evento');
+        throw new Error('Você não tem permissão para criar baterias. Verifique suas permissões.');
       }
       
       // First, delete existing baterias for this modality to avoid duplicates
