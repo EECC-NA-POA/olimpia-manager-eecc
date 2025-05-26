@@ -117,7 +117,6 @@ export function ManagementTeamsManageTab({
                 isRemoving={isRemovingAthlete}
                 isUpdating={isUpdatingAthlete}
                 isOrganizer={isOrganizer}
-                showScoring={false}
               />
             ))}
           </div>
