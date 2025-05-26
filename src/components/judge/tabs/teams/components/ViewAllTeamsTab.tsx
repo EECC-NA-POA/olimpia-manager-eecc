@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -85,7 +86,7 @@ export function ViewAllTeamsTab({
     );
   }
 
-  // Transform modalities for TeamFilters (convert Modality[] to ModalityOption[])
+  // Transform modalities for TeamFilters
   const modalityOptions = allModalities.map(modality => ({
     id: modality.modalidade_id,
     nome: modality.modalidade_nome,

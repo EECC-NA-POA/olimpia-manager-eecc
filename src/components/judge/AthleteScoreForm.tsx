@@ -54,7 +54,7 @@ export function AthleteScoreForm({
       return {
         modalidade_id: data?.id,
         modalidade_nome: data?.nome,
-        tipo_pontuacao: data?.tipo_pontuacao || 'points',
+        tipo_pontuacao: data?.tipo_pontuacao || 'pontos',
         tipo_modalidade: data?.tipo_modalidade
       } as Modality;
     },
@@ -114,17 +114,8 @@ export function AthleteScoreForm({
   
   const isTeamModality = modality?.tipo_modalidade?.includes('COLETIVA');
   
-  // Map Portuguese score types to English for compatibility
-  const getScoreType = (tipo: string): 'time' | 'distance' | 'points' => {
-    switch (tipo) {
-      case 'tempo': return 'time';
-      case 'distancia': return 'distance';
-      case 'pontos': return 'points';
-      default: return 'points';
-    }
-  };
-  
-  const scoreType = getScoreType(modality?.tipo_pontuacao || 'pontos');
+  // Keep Portuguese score types for consistency with backend
+  const scoreType = modality?.tipo_pontuacao || 'pontos';
   
   // Fetch existing score if it exists
   const { data: existingScore } = useQuery({

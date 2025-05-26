@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
@@ -70,14 +71,35 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     return <NoModalitiesMessage />;
   }
 
+  // Transform teams data to match expected interface
+  const transformedTeams = allTeams?.map(team => ({
+    equipe_id: team.id,
+    equipe_nome: team.nome,
+    modalidade_id: team.modalidade_id,
+    modalidade_nome: team.modalidade_info?.nome || '',
+    tipo_pontuacao: team.modalidade_info?.tipo_pontuacao || 'pontos',
+    filial_nome: team.filial?.nome || '',
+    members: team.athletes?.map(athlete => ({
+      atleta_id: athlete.id,
+      atleta_nome: athlete.nome,
+      numero_identificador: athlete.numero_identificador
+    })) || []
+  })) || [];
+
+  // Transform modalities data to match expected interface
+  const transformedModalities = allModalities?.map(modality => ({
+    modalidade_id: modality.id,
+    modalidade_nome: modality.nome
+  })) || [];
+
   // For judges only, show only the "View All Teams" tab with scoring capability
   if (isJudgeOnly) {
     return (
       <div className="space-y-6">
         <TeamsTabHeader isOrganizer={false}>
           <ViewAllTeamsTab
-            allTeams={allTeams || []}
-            allModalities={allModalities || []}
+            allTeams={transformedTeams}
+            allModalities={transformedModalities}
             branches={branches}
             isLoadingAllTeams={isLoadingAllTeams}
             allTeamsError={allTeamsError}
@@ -139,8 +161,8 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
           
           <TabsContent value="view-all">
             <ViewAllTeamsTab
-              allTeams={allTeams || []}
-              allModalities={allModalities || []}
+              allTeams={transformedTeams}
+              allModalities={transformedModalities}
               branches={branches}
               isLoadingAllTeams={isLoadingAllTeams}
               allTeamsError={allTeamsError}
