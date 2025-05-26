@@ -40,13 +40,6 @@ export function useScoreSubmission(
             tempo_minutos: null,
             tempo_segundos: null,
             tempo_milissegundos: null,
-            dados_json: { 
-              meters: formData.meters, 
-              centimeters: formData.centimeters,
-              total_meters: totalMeters,
-              heat: formData.heat || null,
-              lane: formData.lane || null
-            },
             unidade: 'm',
             bateria_id: formData.heat || null,
             raia: formData.lane || null
@@ -57,11 +50,6 @@ export function useScoreSubmission(
             tempo_minutos: null,
             tempo_segundos: null,
             tempo_milissegundos: null,
-            dados_json: { 
-              distance: formData.score,
-              heat: formData.heat || null,
-              lane: formData.lane || null
-            },
             unidade: 'm',
             bateria_id: formData.heat || null,
             raia: formData.lane || null
@@ -75,12 +63,6 @@ export function useScoreSubmission(
             tempo_segundos: formData.seconds,
             tempo_milissegundos: formData.milliseconds,
             valor_pontuacao: totalMs,
-            dados_json: {
-              minutes: formData.minutes,
-              seconds: formData.seconds,
-              milliseconds: formData.milliseconds,
-              total_ms: totalMs
-            },
             unidade: 'ms'
           };
         }
@@ -91,7 +73,6 @@ export function useScoreSubmission(
           tempo_minutos: null,
           tempo_segundos: null,
           tempo_milissegundos: null,
-          dados_json: { points: formData.score || 0 },
           unidade: 'pontos'
         };
       }
