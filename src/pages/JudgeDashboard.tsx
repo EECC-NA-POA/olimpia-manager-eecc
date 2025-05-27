@@ -43,6 +43,16 @@ export default function JudgeDashboard() {
     }
   }, [isJudge, isCheckingRole, user, navigate]);
 
+  // Add debug logs for authentication and event data
+  React.useEffect(() => {
+    console.log('=== JUDGE DASHBOARD DEBUG ===');
+    console.log('User:', user?.id);
+    console.log('Event ID:', currentEventId);
+    console.log('Is Judge:', isJudge);
+    console.log('User roles:', user?.papeis?.map(p => p.codigo));
+    console.log('=== END DEBUG ===');
+  }, [user, currentEventId, isJudge]);
+
   if (isCheckingRole) {
     return (
       <div className="container mx-auto p-6 space-y-6">
@@ -57,6 +67,22 @@ export default function JudgeDashboard() {
 
   if (!isJudge || !user) {
     return null; // Will redirect in the useEffect
+  }
+
+  if (!currentEventId) {
+    return (
+      <div className="container mx-auto p-6 space-y-6">
+        <h1 className="text-2xl font-bold">Painel do Juiz</h1>
+        <Card>
+          <CardHeader>
+            <CardTitle>Nenhum evento selecionado</CardTitle>
+            <CardDescription>
+              Selecione um evento para começar a avaliar atletas.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
   }
 
   console.log('JudgeDashboard - Current event ID:', currentEventId);
