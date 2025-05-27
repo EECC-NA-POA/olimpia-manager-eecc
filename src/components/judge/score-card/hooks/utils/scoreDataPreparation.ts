@@ -1,3 +1,4 @@
+
 import { ModalityRule } from '../../../tabs/scores/hooks/useModalityRules';
 
 interface AthleteData {
@@ -45,10 +46,7 @@ export function prepareScoreData(
         
         scoreData = {
           valor_pontuacao: totalSeconds,
-          unidade: 'segundos',
-          tempo_minutos: minutes,
-          tempo_segundos: seconds,
-          tempo_milissegundos: milliseconds
+          unidade: 'segundos'
         };
         
         if (raia) {
@@ -72,10 +70,7 @@ export function prepareScoreData(
           
           scoreData = {
             valor_pontuacao: totalSeconds,
-            unidade: 'segundos',
-            tempo_minutos: minutes,
-            tempo_segundos: seconds,
-            tempo_milissegundos: milliseconds
+            unidade: 'segundos'
           };
           
           if (raia) {
@@ -89,10 +84,7 @@ export function prepareScoreData(
             
             scoreData = {
               valor_pontuacao: totalSeconds,
-              unidade: 'segundos',
-              tempo_minutos: formData.minutes,
-              tempo_segundos: formData.seconds,
-              tempo_milissegundos: formData.milliseconds
+              unidade: 'segundos'
             };
             
             if (formData.heat) {
@@ -107,10 +99,7 @@ export function prepareScoreData(
             console.log('No time data found, using default values');
             scoreData = {
               valor_pontuacao: 0,
-              unidade: 'segundos',
-              tempo_minutos: 0,
-              tempo_segundos: 0,
-              tempo_milissegundos: 0
+              unidade: 'segundos'
             };
           }
         }
@@ -232,10 +221,7 @@ export function prepareScoreData(
       
       scoreData = {
         valor_pontuacao: totalSeconds,
-        unidade: 'segundos',
-        tempo_minutos: formData.minutes,
-        tempo_segundos: formData.seconds,
-        tempo_milissegundos: formData.milliseconds
+        unidade: 'segundos'
       };
       
       if (formData.heat) {
@@ -292,15 +278,6 @@ export function prepareFinalScoreData(
   };
 
   // Add optional fields only if they exist
-  if (scoreData.tempo_minutos !== undefined) {
-    finalData.tempo_minutos = scoreData.tempo_minutos;
-  }
-  if (scoreData.tempo_segundos !== undefined) {
-    finalData.tempo_segundos = scoreData.tempo_segundos;
-  }
-  if (scoreData.tempo_milissegundos !== undefined) {
-    finalData.tempo_milissegundos = scoreData.tempo_milissegundos;
-  }
   if (scoreData.bateria_id !== undefined) {
     finalData.bateria_id = scoreData.bateria_id;
   }

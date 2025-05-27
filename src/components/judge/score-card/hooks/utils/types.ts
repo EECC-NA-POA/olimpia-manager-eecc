@@ -14,8 +14,6 @@ export interface ScoreRecordData {
   observacoes: any;
   juiz_id: any;
   data_registro: any;
-  tempo_minutos?: number;
-  tempo_segundos?: number;
   bateria_id: number;
 }
 

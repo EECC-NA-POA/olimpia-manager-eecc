@@ -40,14 +40,6 @@ export async function handleIndividualScore(
       data_registro: recordData.data_registro
     };
 
-    // Only add time fields if they exist in the database schema
-    if (recordData.tempo_minutos !== undefined) {
-      updateData.tempo_minutos = recordData.tempo_minutos;
-    }
-    if (recordData.tempo_segundos !== undefined) {
-      updateData.tempo_segundos = recordData.tempo_segundos;
-    }
-
     const { data: updateResult, error: updateError } = await supabase
       .from('pontuacoes')
       .update(updateData)
@@ -65,7 +57,6 @@ export async function handleIndividualScore(
     // Insert new record for this bateria
     console.log('Inserting new individual record for bateria:', recordData.bateria_id);
     
-    // Create insert data without time fields that don't exist
     const insertData: any = {
       evento_id: recordData.evento_id,
       modalidade_id: recordData.modalidade_id,
@@ -78,14 +69,6 @@ export async function handleIndividualScore(
       data_registro: recordData.data_registro,
       bateria_id: recordData.bateria_id
     };
-
-    // Only add time fields if they exist in the database schema
-    if (recordData.tempo_minutos !== undefined) {
-      insertData.tempo_minutos = recordData.tempo_minutos;
-    }
-    if (recordData.tempo_segundos !== undefined) {
-      insertData.tempo_segundos = recordData.tempo_segundos;
-    }
 
     const { data: insertResult, error: insertError } = await supabase
       .from('pontuacoes')
