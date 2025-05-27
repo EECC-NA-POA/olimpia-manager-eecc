@@ -23,6 +23,9 @@ export function BateriaScoresDisplay({
     baterias
   });
 
+  console.log('BateriaScoresDisplay - batteriaScores:', batteriaScores);
+  console.log('BateriaScoresDisplay - isLoadingScores:', isLoadingScores);
+
   const { updateScoreMutation } = useScoreMutation({
     athleteId,
     modalityId,
@@ -52,6 +55,7 @@ export function BateriaScoresDisplay({
       <CardContent className="space-y-2">
         {baterias.map((bateria) => {
           const score = batteriaScores?.find(s => s.bateria_id === bateria.id);
+          console.log(`BateriaScoresDisplay - Bateria ${bateria.numero} (ID: ${bateria.id}):`, score);
           
           return (
             <BateriaScoreItem

@@ -22,6 +22,7 @@ export function useBateriaScores({ athleteId, modalityId, eventId, baterias }: U
         .eq('evento_id', eventId)
         .eq('modalidade_id', modalityId)
         .eq('atleta_id', athleteId)
+        .not('bateria_id', 'is', null)
         .order('bateria_id');
       
       if (error) {
