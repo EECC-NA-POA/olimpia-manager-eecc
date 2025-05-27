@@ -1,3 +1,4 @@
+
 import { ModalityRule } from '../../../tabs/scores/hooks/useModalityRules';
 
 interface AthleteData {
@@ -33,9 +34,9 @@ export function prepareScoreData(
       if (tentativaKeys.length > 0) {
         // Process the first tentativa found (old format)
         const tentativaNumber = tentativaKeys[0].split('_')[1];
-        const minutes = formData[`tentativa_${tentativaNumber}_minutes`] || 0;
-        const seconds = formData[`tentativa_${tentativaNumber}_seconds`] || 0;
-        const milliseconds = formData[`tentativa_${tentativaNumber}_milliseconds`] || 0;
+        const minutes = Number(formData[`tentativa_${tentativaNumber}_minutes`]) || 0;
+        const seconds = Number(formData[`tentativa_${tentativaNumber}_seconds`]) || 0;
+        const milliseconds = Number(formData[`tentativa_${tentativaNumber}_milliseconds`]) || 0;
         const raia = formData[`tentativa_${tentativaNumber}_raia`];
         
         console.log('Processing tentativa (old format):', { tentativaNumber, minutes, seconds, milliseconds, raia });
@@ -60,9 +61,9 @@ export function prepareScoreData(
         
         // Look for individual time fields in root level
         if ('tentativa_1_minutes' in formData || 'tentativa_1_seconds' in formData || 'tentativa_1_milliseconds' in formData) {
-          const minutes = formData.tentativa_1_minutes || 0;
-          const seconds = formData.tentativa_1_seconds || 0;
-          const milliseconds = formData.tentativa_1_milliseconds || 0;
+          const minutes = Number(formData.tentativa_1_minutes) || 0;
+          const seconds = Number(formData.tentativa_1_seconds) || 0;
+          const milliseconds = Number(formData.tentativa_1_milliseconds) || 0;
           const raia = formData.tentativa_1_raia;
           
           console.log('Processing tentativa (new individual fields):', { minutes, seconds, milliseconds, raia });
@@ -84,9 +85,9 @@ export function prepareScoreData(
         } else {
           // Handle standard time input for tempo scoreType
           if ('minutes' in formData) {
-            const minutes = formData.minutes || 0;
-            const seconds = formData.seconds || 0;
-            const milliseconds = formData.milliseconds || 0;
+            const minutes = Number(formData.minutes) || 0;
+            const seconds = Number(formData.seconds) || 0;
+            const milliseconds = Number(formData.milliseconds) || 0;
             
             const totalMs = (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
             const totalSeconds = totalMs / 1000;
@@ -107,7 +108,7 @@ export function prepareScoreData(
               scoreData.raia = formData.lane;
             }
           } else {
-            // If no valid time data found, create a default with 0 values
+            // If no valid time data found, create a default with 0 values but ensure valor_pontuacao is 0, not null
             console.log('No time data found, using default values');
             scoreData = {
               valor_pontuacao: 0,
@@ -231,9 +232,9 @@ export function prepareScoreData(
     }
   } else if (rule?.regra_tipo === 'tempo' || scoreType === 'tempo') {
     if ('minutes' in formData) {
-      const minutes = formData.minutes || 0;
-      const seconds = formData.seconds || 0;
-      const milliseconds = formData.milliseconds || 0;
+      const minutes = Number(formData.minutes) || 0;
+      const seconds = Number(formData.seconds) || 0;
+      const milliseconds = Number(formData.milliseconds) || 0;
       
       const totalMs = (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
       const totalSeconds = totalMs / 1000;
@@ -256,7 +257,7 @@ export function prepareScoreData(
     }
   } else {
     scoreData = {
-      valor_pontuacao: formData.score || 0,
+      valor_pontuacao: Number(formData.score) || 0,
       unidade: 'pontos'
     };
     
@@ -268,9 +269,9 @@ export function prepareScoreData(
     }
   }
   
-  // Ensure we have a valid valor_pontuacao
-  if (scoreData.valor_pontuacao === undefined || scoreData.valor_pontuacao === null) {
-    console.log('No valor_pontuacao found, setting to 0');
+  // Ensure we have a valid valor_pontuacao - NEVER allow null
+  if (scoreData.valor_pontuacao === undefined || scoreData.valor_pontuacao === null || isNaN(scoreData.valor_pontuacao)) {
+    console.log('Invalid valor_pontuacao found, setting to 0');
     scoreData.valor_pontuacao = 0;
   }
   
