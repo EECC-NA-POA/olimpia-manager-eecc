@@ -54,7 +54,7 @@ export function TimeScoreFields({ form, bateriasData = [], modalityRule }: TimeS
                   <SelectContent>
                     {bateriasData.length > 0 ? (
                       bateriasData.map((bateria) => (
-                        <SelectItem key={bateria.id} value={bateria.numero.toString()}>
+                        <SelectItem key={bateria.id} value={bateria.id.toString()}>
                           Bateria {bateria.numero}
                         </SelectItem>
                       ))

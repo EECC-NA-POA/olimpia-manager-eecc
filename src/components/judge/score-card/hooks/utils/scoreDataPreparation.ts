@@ -57,8 +57,10 @@ export function prepareScoreData(
         tempo_milissegundos: formData.milliseconds
       };
       
-      // Add heat information if provided
+      // Add heat information if provided - heat can be bateria number or ID
       if (formData.heat) {
+        // If heat is provided, check if it's a bateria ID or number
+        // For tempo modalities, we typically use the heat value directly as bateria_id
         scoreData.bateria_id = formData.heat;
       }
       

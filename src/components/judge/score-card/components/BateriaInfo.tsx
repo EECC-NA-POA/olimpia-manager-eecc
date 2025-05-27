@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Bateria } from '../../tabs/scores/hooks/useBateriaData';
 import { ModalityRule } from '../../tabs/scores/hooks/useModalityRules';
 
@@ -20,20 +21,49 @@ export function BateriaInfo({ baterias, rule, showInIndividualCards = true }: Ba
   const parametros = rule.parametros || {};
   const raiasPorBateria = parametros.raias_por_bateria;
   const numTentativas = parametros.num_tentativas;
+  const needsBaterias = parametros.baterias === true;
 
-  if (!baterias.length) {
+  // If the rule requires baterias but none are created, show a warning with action
+  if (needsBaterias && !baterias.length) {
     return (
       <Card className="mb-4 border-amber-200 bg-amber-50">
-        <CardContent className="pt-4">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm text-amber-800">
+            ⚠️ Configuração Incompleta - {rule.regra_tipo}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
           <p className="text-amber-800 text-sm">
-            ⚠️ Nenhuma bateria configurada para esta modalidade. 
-            Configure as baterias nas regras da modalidade primeiro.
+            Esta modalidade está configurada para usar baterias, mas nenhuma bateria foi criada ainda.
           </p>
+          <div className="text-xs text-amber-700 bg-amber-100 p-2 rounded">
+            💡 As baterias devem ser criadas automaticamente ao salvar as regras da modalidade. 
+            Se isso não aconteceu, verifique a configuração da regra da modalidade.
+          </div>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="font-medium text-amber-700">Configurado para usar baterias:</span>
+              <p className="text-amber-600">Sim</p>
+            </div>
+            
+            {raiasPorBateria && (
+              <div>
+                <span className="font-medium text-amber-700">Raias por bateria:</span>
+                <p className="text-amber-600">{raiasPorBateria}</p>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     );
   }
 
+  // If baterias are not needed, don't show this component
+  if (!needsBaterias) {
+    return null;
+  }
+
+  // Show normal bateria info when they exist
   return (
     <Card className="mb-4 border-blue-200 bg-blue-50">
       <CardHeader className="pb-3">
@@ -84,7 +114,7 @@ export function BateriaInfo({ baterias, rule, showInIndividualCards = true }: Ba
         
         {rule.regra_tipo === 'tempo' && (
           <div className="text-xs text-blue-600 bg-blue-100 p-2 rounded">
-            💡 Para tempo: informe minutos, segundos e milissegundos
+            💡 Para tempo: informe minutos, segundos e milissegundos. Selecione a bateria e raia quando aplicável.
           </div>
         )}
         

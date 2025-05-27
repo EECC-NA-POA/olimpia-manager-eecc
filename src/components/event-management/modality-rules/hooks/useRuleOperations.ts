@@ -51,19 +51,24 @@ export function useRuleOperations() {
         }
       }
       
-      // Check if we need to create baterias
-      if (ruleForm.parametros.baterias && ruleForm.parametros.num_baterias) {
+      // Check if we need to create baterias for any rule type that uses them
+      const needsBaterias = ruleForm.parametros.baterias === true;
+      const numBaterias = ruleForm.parametros.num_baterias || 
+                          ruleForm.parametros.num_tentativas || 
+                          (ruleForm.regra_tipo === 'tempo' && needsBaterias ? 5 : 0); // Default heats for tempo modalities
+      
+      if (needsBaterias && numBaterias > 0) {
         const modalityData = modalities.find(m => m.id === modalityId);
         if (modalityData?.evento_id) {
-          console.log('Creating baterias because rule has baterias=true and num_baterias:', ruleForm.parametros.num_baterias);
+          console.log('Creating baterias because rule has baterias=true. Num baterias:', numBaterias);
           
           try {
             await createBaterias(
               modalityId, 
               modalityData.evento_id, 
-              ruleForm.parametros.num_baterias
+              numBaterias
             );
-            console.log(`Successfully created ${ruleForm.parametros.num_baterias} baterias for modality ${modalityId}`);
+            console.log(`Successfully created ${numBaterias} baterias for modality ${modalityId}`);
           } catch (bateriaError) {
             console.error('Failed to create baterias, but rule was saved:', bateriaError);
             // Show a more detailed error message
@@ -72,6 +77,17 @@ export function useRuleOperations() {
           }
         } else {
           console.warn('No evento_id found for modality, cannot create baterias');
+        }
+      } else if (!needsBaterias) {
+        // If baterias is false, delete existing baterias
+        const modalityData = modalities.find(m => m.id === modalityId);
+        if (modalityData?.evento_id) {
+          console.log('Deleting existing baterias because rule has baterias=false');
+          try {
+            await deleteBaterias(modalityId, modalityData.evento_id);
+          } catch (deleteError) {
+            console.error('Failed to delete baterias:', deleteError);
+          }
         }
       }
       
