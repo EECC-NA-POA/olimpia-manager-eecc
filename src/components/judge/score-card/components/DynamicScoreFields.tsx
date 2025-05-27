@@ -34,13 +34,20 @@ export function DynamicScoreFields({ form, rule, bateriasData = [] }: DynamicSco
     return <BateriasScoreFields form={form} rule={rule} />;
   }
   
+  // Base the field type on the rule type, not the modality's tipo_pontuacao
   switch (rule.regra_tipo) {
-    case 'pontos':
-      console.log('Rendering PointsScoreFields');
-      return <PointsScoreFields form={form} />;
+    case 'tempo':
+      console.log('Rendering TimeScoreFields for tempo rule');
+      return (
+        <TimeScoreFields 
+          form={form} 
+          bateriasData={bateriasData}
+          modalityRule={rule}
+        />
+      );
     
     case 'distancia':
-      console.log('Rendering DistanceScoreFields');
+      console.log('Rendering DistanceScoreFields for distancia rule');
       // Check if the rule specifically requires meters and centimeters input
       const useMetersAndCentimeters = parametros.subunidade === 'cm';
       const raiasPorBateria = parametros.raias_por_bateria;
@@ -58,22 +65,16 @@ export function DynamicScoreFields({ form, rule, bateriasData = [] }: DynamicSco
         />
       );
     
-    case 'tempo':
-      console.log('Rendering TimeScoreFields');
-      return (
-        <TimeScoreFields 
-          form={form} 
-          bateriasData={bateriasData}
-          modalityRule={rule}
-        />
-      );
+    case 'pontos':
+      console.log('Rendering PointsScoreFields for pontos rule');
+      return <PointsScoreFields form={form} />;
     
     case 'sets':
-      console.log('Rendering SetsScoreFields');
+      console.log('Rendering SetsScoreFields for sets rule');
       return <SetsScoreFields form={form} rule={rule} />;
     
     case 'arrows':
-      console.log('Rendering ArcheryScoreFields');
+      console.log('Rendering ArcheryScoreFields for arrows rule');
       // Check if this is Olympic-style archery with phases
       const hasPhases = parametros.fase_classificacao || parametros.fase_eliminacao;
       

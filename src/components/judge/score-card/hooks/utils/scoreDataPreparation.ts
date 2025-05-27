@@ -18,16 +18,18 @@ export function prepareScoreData(
   const rule = modalityRule;
   let scoreData: any = {};
   
+  // Base processing on rule type, not scoreType
+  const effectiveType = rule?.regra_tipo || scoreType;
+  console.log('Effective processing type:', effectiveType);
+  
   // Handle "baterias" rule type with specific units
-  if (rule?.regra_tipo === 'baterias') {
+  if (rule?.parametros?.baterias === true) {
     const parametros = rule.parametros || {};
-    const unidade = parametros.unidade || 'pontos';
     
-    console.log('Processing baterias rule with unit:', unidade);
-    console.log('Score type from modality:', scoreType);
+    console.log('Processing baterias rule for rule type:', rule.regra_tipo);
     
-    // For baterias rule with tempo unit, or when scoreType is tempo
-    if (unidade === 'tempo' || scoreType === 'tempo') {
+    // For baterias with tempo rule, or when rule type is tempo
+    if (rule.regra_tipo === 'tempo') {
       // Check for new format first (tentativa_X_minutes, etc.)
       const tentativaKeys = Object.keys(formData).filter(key => key.startsWith('tentativa_') && key.includes('_minutes'));
       
@@ -120,7 +122,7 @@ export function prepareScoreData(
           }
         }
       }
-    } else if (unidade === 'distancia') {
+    } else if (rule.regra_tipo === 'distancia') {
       // Handle distance scoring for baterias
       const tentativaKeys = Object.keys(formData).filter(key => key.startsWith('tentativa_') && key.includes('_meters'));
       
@@ -175,7 +177,7 @@ export function prepareScoreData(
         
         scoreData = {
           valor_pontuacao: score,
-          unidade: unidade
+          unidade: 'pontos'
         };
         
         if (raia) {
@@ -189,7 +191,7 @@ export function prepareScoreData(
           
           scoreData = {
             valor_pontuacao: score,
-            unidade: unidade
+            unidade: 'pontos'
           };
           
           if (raia) {
@@ -198,12 +200,47 @@ export function prepareScoreData(
         } else {
           scoreData = {
             valor_pontuacao: 0,
-            unidade: unidade
+            unidade: 'pontos'
           };
         }
       }
     }
-  } else if (rule?.regra_tipo === 'distancia' || scoreType === 'distancia') {
+  } else if (effectiveType === 'tempo') {
+    // Handle tempo rule without baterias
+    if ('minutes' in formData) {
+      const minutes = Number(formData.minutes) || 0;
+      const seconds = Number(formData.seconds) || 0;
+      const milliseconds = Number(formData.milliseconds) || 0;
+      
+      // Convert to total seconds (more precise for database storage)
+      const totalSeconds = (minutes * 60) + seconds + (milliseconds / 1000);
+      
+      scoreData = {
+        valor_pontuacao: totalSeconds,
+        unidade: 'segundos',
+        tempo_minutos: minutes,
+        tempo_segundos: seconds,
+        tempo_milissegundos: milliseconds
+      };
+      
+      if (formData.heat) {
+        scoreData.bateria_id = formData.heat;
+      }
+      
+      if (formData.lane) {
+        scoreData.raia = formData.lane;
+      }
+    } else {
+      // Default time values
+      scoreData = {
+        valor_pontuacao: 0,
+        unidade: 'segundos',
+        tempo_minutos: 0,
+        tempo_segundos: 0,
+        tempo_milissegundos: 0
+      };
+    }
+  } else if (effectiveType === 'distancia') {
     if ('meters' in formData && 'centimeters' in formData) {
       const totalMeters = Number(formData.meters) + (Number(formData.centimeters) / 100);
       scoreData = {
@@ -230,32 +267,8 @@ export function prepareScoreData(
         scoreData.raia = formData.lane;
       }
     }
-  } else if (rule?.regra_tipo === 'tempo' || scoreType === 'tempo') {
-    if ('minutes' in formData) {
-      const minutes = Number(formData.minutes) || 0;
-      const seconds = Number(formData.seconds) || 0;
-      const milliseconds = Number(formData.milliseconds) || 0;
-      
-      // Convert to total seconds (more precise for database storage)
-      const totalSeconds = (minutes * 60) + seconds + (milliseconds / 1000);
-      
-      scoreData = {
-        valor_pontuacao: totalSeconds,
-        unidade: 'segundos',
-        tempo_minutos: minutes,
-        tempo_segundos: seconds,
-        tempo_milissegundos: milliseconds
-      };
-      
-      if (formData.heat) {
-        scoreData.bateria_id = formData.heat;
-      }
-      
-      if (formData.lane) {
-        scoreData.raia = formData.lane;
-      }
-    }
   } else {
+    // Default to points
     scoreData = {
       valor_pontuacao: Number(formData.score) || 0,
       unidade: 'pontos'
