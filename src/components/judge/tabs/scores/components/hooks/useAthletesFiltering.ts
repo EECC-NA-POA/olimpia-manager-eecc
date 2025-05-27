@@ -1,7 +1,7 @@
 
 import { useState, useMemo } from 'react';
 import { Athlete } from '../../hooks/useAthletes';
-import { useAthletePaymentData } from '../../../hooks/useAthleteData';
+import { useAthletePaymentData } from '../../hooks/useAthleteData';
 
 interface FilterState {
   searchFilter: string;
