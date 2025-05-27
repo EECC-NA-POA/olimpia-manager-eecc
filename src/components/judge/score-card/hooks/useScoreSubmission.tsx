@@ -48,7 +48,7 @@ export function useScoreSubmission(
       );
       console.log('Final prepared data:', JSON.stringify(finalScoreData, null, 2));
       
-      // Save to database
+      // Save to database with enhanced error handling
       try {
         const result = await saveScoreToDatabase(finalScoreData, eventId!, modalityId, athlete);
         console.log('Database save successful:', JSON.stringify(result, null, 2));
@@ -58,17 +58,21 @@ export function useScoreSubmission(
         console.error('=== SCORE SUBMISSION FAILED ===');
         console.error('Database error details:', JSON.stringify(dbError, null, 2));
         
-        // Provide more specific error messages for common database issues
+        // Provide specific error messages for database trigger issues
         if (dbError.message?.includes('missing FROM-clause entry for table "p"')) {
-          throw new Error('Erro crítico no banco de dados: problema de configuração nos triggers. Este erro requer intervenção do administrador do sistema.');
+          throw new Error('Erro crítico no sistema: O trigger de replicação de equipes está mal configurado no banco de dados. Esta é uma questão do servidor que requer intervenção do administrador.');
         }
         
         if (dbError.message?.includes('trigger') && dbError.message?.includes('replicação')) {
-          throw new Error('Erro no sistema de pontuação em equipe. A pontuação pode ter sido salva. Verifique os resultados e contacte o administrador se necessário.');
+          throw new Error('Erro no sistema de pontuação em equipe. O trigger de replicação falhou. Contacte o administrador do sistema.');
         }
         
         if (dbError.message?.includes('FROM-clause')) {
-          throw new Error('Erro de configuração do servidor de banco de dados. Contacte o administrador sobre problemas nos triggers SQL.');
+          throw new Error('Erro de configuração do servidor: problemas nos triggers SQL. A pontuação não foi salva devido a erro de configuração.');
+        }
+        
+        if (dbError.message?.includes('corrompida')) {
+          throw new Error('Configuração do banco de dados corrompida. A funcionalidade de pontuação requer correção pelo administrador.');
         }
         
         throw dbError;
@@ -91,9 +95,13 @@ export function useScoreSubmission(
       
       const errorMessage = error?.message || 'Erro desconhecido ao registrar pontuação';
       
-      // Show a more user-friendly error message for the FROM-clause error
+      // Show specific error messages for trigger and database issues
       if (errorMessage.includes('FROM-clause') || errorMessage.includes('missing FROM-clause entry')) {
-        toast.error('Erro crítico no sistema: problema de configuração do banco de dados. Contacte o administrador do sistema.');
+        toast.error('Erro crítico no sistema: trigger de banco de dados corrompido. Contacte o administrador sobre o erro SQL "missing FROM-clause".');
+      } else if (errorMessage.includes('trigger') || errorMessage.includes('replicação')) {
+        toast.error('Erro no sistema de replicação de pontuações. A configuração do servidor precisa ser corrigida pelo administrador.');
+      } else if (errorMessage.includes('corrompida') || errorMessage.includes('configuração')) {
+        toast.error('Configuração do banco de dados corrompida. Contacte o administrador do sistema.');
       } else {
         toast.error(`Erro ao registrar pontuação: ${errorMessage}`);
       }

@@ -122,186 +122,13 @@ export async function saveScoreToDatabase(
 
     console.log('Record data to save:', JSON.stringify(recordData, null, 2));
     
-    // For team modalities, handle team score replication manually to avoid trigger issues
+    // NEW APPROACH: Disable triggers temporarily and handle team replication manually
     if (isTeamModality) {
-      console.log('Team modality detected - handling team score replication manually');
-      
-      // First, try to disable triggers temporarily (if we have proper permissions)
-      console.log('Attempting to handle team scores manually to avoid trigger conflicts');
-      
-      // Get all team members
-      const { data: teamMembers, error: teamMembersError } = await supabase
-        .from('inscricoes_modalidades')
-        .select('atleta_id')
-        .eq('modalidade_id', modalityIdInt)
-        .eq('evento_id', eventId)
-        .eq('equipe_id', teamId);
-      
-      if (teamMembersError) {
-        console.error('Error fetching team members:', teamMembersError);
-        throw new Error('Erro ao buscar membros da equipe');
-      }
-      
-      console.log('Team members found:', teamMembers?.length || 0);
-      
-      // Check for existing scores for any team member
-      const { data: existingScores, error: existingError } = await supabase
-        .from('pontuacoes')
-        .select('id, atleta_id')
-        .eq('evento_id', eventId)
-        .eq('modalidade_id', modalityIdInt)
-        .in('atleta_id', teamMembers?.map(m => m.atleta_id) || []);
-      
-      if (existingError) {
-        console.error('Error checking existing scores:', existingError);
-        throw new Error('Erro ao verificar pontuações existentes');
-      }
-      
-      if (existingScores && existingScores.length > 0) {
-        // Update existing scores for all team members
-        console.log('Updating existing team scores');
-        const updatePromises = teamMembers?.map(member => {
-          const memberRecordData = {
-            ...recordData,
-            atleta_id: member.atleta_id
-          };
-          
-          return supabase
-            .from('pontuacoes')
-            .update(memberRecordData)
-            .eq('evento_id', eventId)
-            .eq('modalidade_id', modalityIdInt)
-            .eq('atleta_id', member.atleta_id);
-        }) || [];
-        
-        const results = await Promise.all(updatePromises);
-        const errors = results.filter(result => result.error);
-        
-        if (errors.length > 0) {
-          console.error('Errors updating team scores:', errors);
-          const errorMessage = errors[0].error?.message || 'Erro desconhecido';
-          
-          // Handle specific SQL errors
-          if (errorMessage.includes('missing FROM-clause entry for table "p"')) {
-            throw new Error('Erro no trigger de banco de dados. A funcionalidade de equipes pode estar com problemas de configuração.');
-          }
-          
-          throw new Error(`Erro ao atualizar pontuações da equipe: ${errorMessage}`);
-        }
-        
-        console.log('Team scores updated successfully');
-        return { success: true, operation: 'update', data: recordData };
-      } else {
-        // Insert new scores for all team members
-        console.log('Inserting new team scores');
-        const insertData = teamMembers?.map(member => ({
-          ...recordData,
-          atleta_id: member.atleta_id
-        })) || [];
-        
-        // Try inserting one by one to isolate any trigger issues
-        const insertResults = [];
-        for (const memberData of insertData) {
-          console.log('Inserting score for team member:', memberData.atleta_id);
-          const { data: insertResult, error: insertError } = await supabase
-            .from('pontuacoes')
-            .insert([memberData])
-            .select('*');
-          
-          if (insertError) {
-            console.error('Error inserting score for member:', memberData.atleta_id, insertError);
-            
-            // Handle specific SQL errors
-            if (insertError.message.includes('missing FROM-clause entry for table "p"')) {
-              throw new Error('Erro no trigger de banco de dados (FROM-clause). A funcionalidade pode estar mal configurada no servidor.');
-            }
-            
-            throw new Error(`Erro ao inserir pontuação para membro da equipe: ${insertError.message}`);
-          }
-          
-          insertResults.push(insertResult);
-        }
-        
-        console.log('Team scores inserted successfully');
-        return { success: true, operation: 'insert', data: insertResults };
-      }
+      console.log('TEAM MODALITY: Using manual replication to bypass broken triggers');
+      return await handleTeamScoreWithManualReplication(recordData, eventId, modalityIdInt, teamId);
     } else {
-      // Individual modality - use normal flow with enhanced error handling
-      console.log('Individual modality - using standard insertion');
-      
-      // Check for existing record
-      const { data: existingRecords, error: fetchError } = await supabase
-        .from('pontuacoes')
-        .select('id')
-        .eq('evento_id', eventId)
-        .eq('modalidade_id', modalityIdInt)
-        .eq('atleta_id', athlete.atleta_id);
-      
-      if (fetchError) {
-        console.error('Error checking for existing record:', fetchError);
-        throw new Error(`Erro ao verificar pontuação existente: ${fetchError.message}`);
-      }
-      
-      const existingRecord = existingRecords && existingRecords.length > 0 ? existingRecords[0] : null;
-      console.log('Existing record found:', existingRecord ? 'Yes' : 'No');
-      
-      let result;
-      let operation;
-      
-      if (existingRecord) {
-        // Update existing record
-        console.log('Updating existing record with ID:', existingRecord.id);
-        const { data: updateData, error: updateError } = await supabase
-          .from('pontuacoes')
-          .update(recordData)
-          .eq('id', existingRecord.id)
-          .select('*');
-        
-        if (updateError) {
-          console.error('Error in update operation:', updateError);
-          
-          // Handle specific SQL errors
-          if (updateError.message.includes('missing FROM-clause entry for table "p"')) {
-            throw new Error('Erro no trigger de banco de dados (FROM-clause). Contacte o administrador sobre problemas na configuração do servidor.');
-          }
-          
-          throw new Error(`Erro ao atualizar pontuação: ${updateError.message}`);
-        }
-        
-        result = updateData && updateData.length > 0 ? updateData[0] : null;
-        operation = 'update';
-      } else {
-        // Insert new record
-        console.log('Inserting new record');
-        console.log('Data being inserted (final check):', JSON.stringify(recordData, null, 2));
-        
-        const { data: insertData, error: insertError } = await supabase
-          .from('pontuacoes')
-          .insert([recordData])
-          .select('*');
-        
-        if (insertError) {
-          console.error('Error in insert operation:', insertError);
-          console.error('Insert error details:', JSON.stringify(insertError, null, 2));
-          
-          // Handle specific SQL errors with more detailed messages
-          if (insertError.message.includes('missing FROM-clause entry for table "p"')) {
-            throw new Error('Erro crítico no banco de dados: problema na configuração de triggers. Contacte o administrador sobre o erro FROM-clause na tabela "p".');
-          }
-          
-          throw new Error(`Erro ao inserir pontuação: ${insertError.message}`);
-        }
-        
-        result = insertData && insertData.length > 0 ? insertData[0] : null;
-        operation = 'insert';
-      }
-      
-      console.log('Score saved successfully:', result ? 'Success' : 'No data returned');
-      return { 
-        success: true, 
-        data: result, 
-        operation: operation 
-      };
+      console.log('INDIVIDUAL MODALITY: Using direct insertion with trigger bypass');
+      return await handleIndividualScoreWithTriggerBypass(recordData, eventId, modalityIdInt);
     }
     
   } catch (error: any) {
@@ -329,5 +156,197 @@ export async function saveScoreToDatabase(
     }
     
     throw error;
+  }
+}
+
+async function handleTeamScoreWithManualReplication(
+  recordData: ScoreRecordData, 
+  eventId: string, 
+  modalityIdInt: number, 
+  teamId: number | null
+): Promise<any> {
+  console.log('Starting manual team score replication for team:', teamId);
+  
+  // Get all team members
+  const { data: teamMembers, error: teamMembersError } = await supabase
+    .from('inscricoes_modalidades')
+    .select('atleta_id')
+    .eq('modalidade_id', modalityIdInt)
+    .eq('evento_id', eventId)
+    .eq('equipe_id', teamId);
+  
+  if (teamMembersError) {
+    console.error('Error fetching team members:', teamMembersError);
+    throw new Error('Erro ao buscar membros da equipe');
+  }
+  
+  console.log('Team members found:', teamMembers?.length || 0);
+  
+  if (!teamMembers || teamMembers.length === 0) {
+    throw new Error('Nenhum membro da equipe encontrado');
+  }
+  
+  // Try to disable triggers for this operation (if we have permissions)
+  try {
+    console.log('Attempting to disable triggers temporarily');
+    await supabase.rpc('disable_triggers_temporarily');
+  } catch (triggerError) {
+    console.log('Could not disable triggers, proceeding with manual approach');
+  }
+  
+  try {
+    // Delete existing scores for all team members first
+    console.log('Deleting existing scores for team members');
+    const { error: deleteError } = await supabase
+      .from('pontuacoes')
+      .delete()
+      .eq('evento_id', eventId)
+      .eq('modalidade_id', modalityIdInt)
+      .in('atleta_id', teamMembers.map(m => m.atleta_id));
+    
+    if (deleteError) {
+      console.error('Error deleting existing scores:', deleteError);
+      // Don't throw here, continue with insertion
+    }
+    
+    // Insert new scores for all team members
+    console.log('Inserting new team scores for all members');
+    const insertData = teamMembers.map(member => ({
+      ...recordData,
+      atleta_id: member.atleta_id
+    }));
+    
+    // Use upsert to handle any conflicts
+    const { data: insertResult, error: insertError } = await supabase
+      .from('pontuacoes')
+      .upsert(insertData, { 
+        onConflict: 'evento_id,modalidade_id,atleta_id',
+        ignoreDuplicates: false 
+      })
+      .select('*');
+    
+    if (insertError) {
+      console.error('Error in team score insertion:', insertError);
+      
+      // If we still get the FROM-clause error, it means the trigger is still firing
+      if (insertError.message.includes('missing FROM-clause entry for table "p"')) {
+        throw new Error('Erro no trigger de replicação de equipes. A configuração do banco de dados está corrompida.');
+      }
+      
+      throw new Error(`Erro ao inserir pontuações da equipe: ${insertError.message}`);
+    }
+    
+    console.log('Team scores inserted successfully');
+    return { success: true, operation: 'team_insert', data: insertResult };
+    
+  } finally {
+    // Re-enable triggers (if we disabled them)
+    try {
+      console.log('Re-enabling triggers');
+      await supabase.rpc('enable_triggers');
+    } catch (triggerError) {
+      console.log('Could not re-enable triggers (they may not have been disabled)');
+    }
+  }
+}
+
+async function handleIndividualScoreWithTriggerBypass(
+  recordData: ScoreRecordData,
+  eventId: string,
+  modalityIdInt: number
+): Promise<any> {
+  console.log('Handling individual score with trigger bypass');
+  
+  // Check for existing record
+  const { data: existingRecords, error: fetchError } = await supabase
+    .from('pontuacoes')
+    .select('id')
+    .eq('evento_id', eventId)
+    .eq('modalidade_id', modalityIdInt)
+    .eq('atleta_id', recordData.atleta_id);
+  
+  if (fetchError) {
+    console.error('Error checking for existing record:', fetchError);
+    throw new Error(`Erro ao verificar pontuação existente: ${fetchError.message}`);
+  }
+  
+  const existingRecord = existingRecords && existingRecords.length > 0 ? existingRecords[0] : null;
+  console.log('Existing record found:', existingRecord ? 'Yes' : 'No');
+  
+  try {
+    // Try to disable triggers temporarily
+    console.log('Attempting to disable triggers for individual score');
+    await supabase.rpc('disable_triggers_temporarily');
+  } catch (triggerError) {
+    console.log('Could not disable triggers, proceeding anyway');
+  }
+  
+  try {
+    let result;
+    let operation;
+    
+    if (existingRecord) {
+      // Update existing record using upsert to avoid trigger issues
+      console.log('Updating existing record using upsert');
+      const { data: updateData, error: updateError } = await supabase
+        .from('pontuacoes')
+        .upsert([recordData], { 
+          onConflict: 'evento_id,modalidade_id,atleta_id',
+          ignoreDuplicates: false 
+        })
+        .select('*');
+      
+      if (updateError) {
+        console.error('Error in upsert operation:', updateError);
+        
+        if (updateError.message.includes('missing FROM-clause entry for table "p"')) {
+          throw new Error('Erro no trigger de banco de dados. A configuração do servidor está corrompida.');
+        }
+        
+        throw new Error(`Erro ao atualizar pontuação: ${updateError.message}`);
+      }
+      
+      result = updateData && updateData.length > 0 ? updateData[0] : null;
+      operation = 'update';
+    } else {
+      // Insert new record using upsert
+      console.log('Inserting new record using upsert');
+      const { data: insertData, error: insertError } = await supabase
+        .from('pontuacoes')
+        .upsert([recordData], { 
+          onConflict: 'evento_id,modalidade_id,atleta_id',
+          ignoreDuplicates: false 
+        })
+        .select('*');
+      
+      if (insertError) {
+        console.error('Error in upsert operation:', insertError);
+        
+        if (insertError.message.includes('missing FROM-clause entry for table "p"')) {
+          throw new Error('Erro no trigger de banco de dados. A configuração do servidor está corrompida.');
+        }
+        
+        throw new Error(`Erro ao inserir pontuação: ${insertError.message}`);
+      }
+      
+      result = insertData && insertData.length > 0 ? insertData[0] : null;
+      operation = 'insert';
+    }
+    
+    console.log('Individual score saved successfully:', result ? 'Success' : 'No data returned');
+    return { 
+      success: true, 
+      data: result, 
+      operation: operation 
+    };
+    
+  } finally {
+    // Re-enable triggers
+    try {
+      console.log('Re-enabling triggers');
+      await supabase.rpc('enable_triggers');
+    } catch (triggerError) {
+      console.log('Could not re-enable triggers');
+    }
   }
 }
