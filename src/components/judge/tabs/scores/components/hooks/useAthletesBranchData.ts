@@ -1,6 +1,5 @@
-
 import { useMemo } from 'react';
-import { useAthleteBranchData } from '../../hooks/useAthleteData';
+import { useAthleteBranchData } from '../../../../hooks/useAthleteData';
 import { Athlete } from '../../hooks/useAthletes';
 
 export function useAthletesBranchData(athletes: Athlete[]) {
