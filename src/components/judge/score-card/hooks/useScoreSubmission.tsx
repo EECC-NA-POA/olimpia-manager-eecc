@@ -24,6 +24,11 @@ export function useScoreSubmission(
     mutationFn: async (formData: any) => {
       console.log('=== SCORE SUBMISSION START ===');
       console.log('Form data:', JSON.stringify(formData, null, 2));
+      console.log('Event ID:', eventId);
+      console.log('Modality ID:', modalityId);
+      console.log('Athlete:', JSON.stringify(athlete, null, 2));
+      console.log('Judge ID:', judgeId);
+      console.log('Score Type:', scoreType);
       
       // Validate required fields
       validateScoreSubmission(eventId, judgeId, athlete);
@@ -43,10 +48,17 @@ export function useScoreSubmission(
       );
       console.log('Final prepared data:', JSON.stringify(finalScoreData, null, 2));
       
-      // Save to database
-      const result = await saveScoreToDatabase(finalScoreData, eventId!, modalityId, athlete);
-      console.log('=== SCORE SUBMISSION SUCCESS ===');
-      return result;
+      // Save to database with comprehensive error handling
+      try {
+        const result = await saveScoreToDatabase(finalScoreData, eventId!, modalityId, athlete);
+        console.log('Database save successful:', JSON.stringify(result, null, 2));
+        console.log('=== SCORE SUBMISSION SUCCESS ===');
+        return result;
+      } catch (dbError) {
+        console.error('=== SCORE SUBMISSION FAILED ===');
+        console.error('Database error details:', JSON.stringify(dbError, null, 2));
+        throw dbError;
+      }
     },
     onSuccess: () => {
       console.log('Score submission successful, invalidating queries...');
@@ -60,7 +72,9 @@ export function useScoreSubmission(
     },
     onError: (error: any) => {
       console.error('=== SCORE SUBMISSION ERROR ===');
-      console.error('Error details:', error);
+      console.error('Error object:', JSON.stringify(error, null, 2));
+      console.error('Error message:', error?.message);
+      console.error('Error code:', error?.code);
       
       const errorMessage = error?.message || 'Erro desconhecido ao registrar pontuação';
       toast.error(`Erro ao registrar pontuação: ${errorMessage}`);
