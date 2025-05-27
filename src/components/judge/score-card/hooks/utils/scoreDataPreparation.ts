@@ -16,7 +16,6 @@ export function prepareScoreData(
   
   const rule = modalityRule;
   let scoreData;
-  let dadosJson: any = {};
   
   if (rule?.regra_tipo === 'distancia' || scoreType === 'distancia') {
     if ('meters' in formData && 'centimeters' in formData) {
@@ -26,18 +25,8 @@ export function prepareScoreData(
         unidade: 'm'
       };
       
-      dadosJson = {
-        meters: formData.meters,
-        centimeters: formData.centimeters,
-        totalMeters: totalMeters
-      };
-      
       if (formData.heat) {
-        dadosJson.heat = formData.heat;
         scoreData.bateria_id = formData.heat;
-      }
-      if (formData.lane) {
-        dadosJson.lane = formData.lane;
       }
     } else if ('score' in formData) {
       scoreData = {
@@ -45,16 +34,8 @@ export function prepareScoreData(
         unidade: 'm'
       };
       
-      dadosJson = {
-        score: formData.score
-      };
-      
       if (formData.heat) {
-        dadosJson.heat = formData.heat;
         scoreData.bateria_id = formData.heat;
-      }
-      if (formData.lane) {
-        dadosJson.lane = formData.lane;
       }
     }
   } else if (rule?.regra_tipo === 'tempo' || scoreType === 'tempo') {
@@ -68,15 +49,7 @@ export function prepareScoreData(
         tempo_milissegundos: formData.milliseconds
       };
       
-      dadosJson = {
-        minutes: formData.minutes,
-        seconds: formData.seconds,
-        milliseconds: formData.milliseconds,
-        totalMs: totalMs
-      };
-      
       if (formData.heat) {
-        dadosJson.heat = formData.heat;
         scoreData.bateria_id = formData.heat;
       }
     }
@@ -86,12 +59,7 @@ export function prepareScoreData(
       unidade: 'pontos'
     };
     
-    dadosJson = {
-      score: formData.score || 0
-    };
-    
     if (formData.heat) {
-      dadosJson.heat = formData.heat;
       scoreData.bateria_id = formData.heat;
     }
   }
@@ -100,14 +68,13 @@ export function prepareScoreData(
     throw new Error('Failed to prepare score data');
   }
   
-  console.log('Prepared score data (before final data):', scoreData);
+  console.log('Prepared score data:', scoreData);
   
-  return { scoreData, dadosJson };
+  return { scoreData };
 }
 
 export function prepareFinalScoreData(
   scoreData: any,
-  dadosJson: any,
   formData: any,
   judgeId: string,
   eventId: string,
@@ -116,7 +83,6 @@ export function prepareFinalScoreData(
 ) {
   return {
     ...scoreData,
-    dados_json: dadosJson,
     observacoes: formData.notes || null,
     juiz_id: judgeId,
     data_registro: new Date().toISOString(),

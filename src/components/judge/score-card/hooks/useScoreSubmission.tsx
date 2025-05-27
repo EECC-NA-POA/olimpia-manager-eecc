@@ -26,12 +26,11 @@ export function useScoreSubmission(
       validateScoreSubmission(eventId, judgeId, athlete);
       
       // Prepare score data based on rule type
-      const { scoreData, dadosJson } = prepareScoreData(formData, modalityRule, scoreType);
+      const { scoreData } = prepareScoreData(formData, modalityRule, scoreType);
       
       // Prepare final data structure
       const finalScoreData = prepareFinalScoreData(
         scoreData,
-        dadosJson,
         formData,
         judgeId,
         eventId!,
