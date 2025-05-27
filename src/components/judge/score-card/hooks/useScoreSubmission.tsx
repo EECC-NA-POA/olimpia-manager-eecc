@@ -1,7 +1,9 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { validateScoreSubmission } from './utils/scoreValidation';
+import { prepareScoreData, prepareFinalScoreData } from './utils/scoreDataPreparation';
+import { saveScoreToDatabase } from './utils/scoreDatabase';
 
 interface AthleteData {
   atleta_id: string;
@@ -20,163 +22,25 @@ export function useScoreSubmission(
 
   const submitScoreMutation = useMutation({
     mutationFn: async (formData: any) => {
-      if (!eventId) throw new Error('Event ID is missing');
-      if (!judgeId) throw new Error('Judge ID is missing');
-      if (!athlete.atleta_id) throw new Error('Athlete ID is missing');
+      // Validate required fields
+      validateScoreSubmission(eventId, judgeId, athlete);
       
-      console.log('Form data received:', formData);
-      console.log('Modality rule:', modalityRule);
+      // Prepare score data based on rule type
+      const { scoreData, dadosJson } = prepareScoreData(formData, modalityRule, scoreType);
       
-      // If no modalityRule provided, fall back to basic scoring
-      const rule = modalityRule;
+      // Prepare final data structure
+      const finalScoreData = prepareFinalScoreData(
+        scoreData,
+        dadosJson,
+        formData,
+        judgeId,
+        eventId!,
+        modalityId,
+        athlete
+      );
       
-      // Convert form data based on rule type or scoreType
-      let scoreData;
-      let dadosJson: any = {};
-      
-      if (rule?.regra_tipo === 'distancia' || scoreType === 'distancia') {
-        if ('meters' in formData && 'centimeters' in formData) {
-          // Convert meters and centimeters to total meters
-          const totalMeters = formData.meters + (formData.centimeters / 100);
-          scoreData = {
-            valor_pontuacao: totalMeters,
-            unidade: 'm'
-          };
-          
-          // Store detailed data in dados_json
-          dadosJson = {
-            meters: formData.meters,
-            centimeters: formData.centimeters,
-            totalMeters: totalMeters
-          };
-          
-          // Add heat and lane data if present
-          if (formData.heat) {
-            dadosJson.heat = formData.heat;
-            scoreData.bateria_id = formData.heat;
-          }
-          if (formData.lane) {
-            dadosJson.lane = formData.lane;
-          }
-        } else if ('score' in formData) {
-          scoreData = {
-            valor_pontuacao: formData.score,
-            unidade: 'm'
-          };
-          
-          dadosJson = {
-            score: formData.score
-          };
-          
-          if (formData.heat) {
-            dadosJson.heat = formData.heat;
-            scoreData.bateria_id = formData.heat;
-          }
-          if (formData.lane) {
-            dadosJson.lane = formData.lane;
-          }
-        }
-      } else if (rule?.regra_tipo === 'tempo' || scoreType === 'tempo') {
-        if ('minutes' in formData) {
-          // For time scoring, store total milliseconds in valor_pontuacao
-          const totalMs = (formData.minutes * 60 * 1000) + (formData.seconds * 1000) + formData.milliseconds;
-          scoreData = {
-            valor_pontuacao: totalMs,
-            unidade: 'ms',
-            tempo_minutos: formData.minutes,
-            tempo_segundos: formData.seconds,
-            tempo_milissegundos: formData.milliseconds
-          };
-          
-          dadosJson = {
-            minutes: formData.minutes,
-            seconds: formData.seconds,
-            milliseconds: formData.milliseconds,
-            totalMs: totalMs
-          };
-          
-          if (formData.heat) {
-            dadosJson.heat = formData.heat;
-            scoreData.bateria_id = formData.heat;
-          }
-        }
-      } else {
-        // Default to points scoring
-        scoreData = {
-          valor_pontuacao: formData.score || 0,
-          unidade: 'pontos'
-        };
-        
-        dadosJson = {
-          score: formData.score || 0
-        };
-        
-        if (formData.heat) {
-          dadosJson.heat = formData.heat;
-          scoreData.bateria_id = formData.heat;
-        }
-      }
-      
-      if (!scoreData) {
-        throw new Error('Failed to prepare score data');
-      }
-      
-      console.log('Prepared score data (before final data):', scoreData);
-      
-      // Ensure all required fields are present
-      const finalScoreData = {
-        ...scoreData,
-        dados_json: dadosJson,
-        observacoes: formData.notes || null,
-        juiz_id: judgeId,
-        data_registro: new Date().toISOString(),
-        evento_id: eventId,
-        modalidade_id: modalityId,
-        atleta_id: athlete.atleta_id,
-        equipe_id: athlete.equipe_id || null
-      };
-      
-      console.log('Final score data being inserted:', finalScoreData);
-      
-      // Check if score already exists
-      const { data: existingScore } = await supabase
-        .from('pontuacoes')
-        .select('id')
-        .eq('evento_id', eventId)
-        .eq('modalidade_id', modalityId)
-        .eq('atleta_id', athlete.atleta_id)
-        .maybeSingle();
-      
-      if (existingScore) {
-        // Update existing score
-        const { data, error } = await supabase
-          .from('pontuacoes')
-          .update(finalScoreData)
-          .eq('id', existingScore.id)
-          .select();
-          
-        if (error) {
-          console.error('Error updating score:', error);
-          throw error;
-        }
-        
-        console.log('Score updated successfully:', data);
-      } else {
-        // Insert new score
-        const { data, error } = await supabase
-          .from('pontuacoes')
-          .insert(finalScoreData)
-          .select();
-          
-        if (error) {
-          console.error('Error inserting score:', error);
-          throw error;
-        }
-        
-        console.log('Score inserted successfully:', data);
-      }
-      
-      return { success: true };
+      // Save to database
+      return await saveScoreToDatabase(finalScoreData, eventId!, modalityId, athlete);
     },
     onSuccess: () => {
       // Invalidate related queries
