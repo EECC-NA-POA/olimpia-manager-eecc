@@ -1,4 +1,3 @@
-
 import { ModalityRule } from '../../../tabs/scores/hooks/useModalityRules';
 
 interface AthleteData {
@@ -13,6 +12,7 @@ export function prepareScoreData(
 ) {
   console.log('Form data received:', formData);
   console.log('Modality rule:', modalityRule);
+  console.log('Score type:', scoreType);
   
   const rule = modalityRule;
   let scoreData: any = {};
@@ -23,8 +23,10 @@ export function prepareScoreData(
     const unidade = parametros.unidade || 'pontos';
     
     console.log('Processing baterias rule with unit:', unidade);
+    console.log('Score type from modality:', scoreType);
     
-    if (unidade === 'tempo') {
+    // For baterias rule with tempo unit, or when scoreType is tempo
+    if (unidade === 'tempo' || scoreType === 'tempo') {
       // Check for new format first (tentativa_X_minutes, etc.)
       const tentativaKeys = Object.keys(formData).filter(key => key.startsWith('tentativa_') && key.includes('_minutes'));
       
@@ -80,15 +82,37 @@ export function prepareScoreData(
             scoreData.raia = parseInt(raia);
           }
         } else {
-          // If no valid time data found, create a default with 0 values
-          console.log('No time data found, using default values');
-          scoreData = {
-            valor_pontuacao: 0,
-            unidade: 'segundos',
-            tempo_minutos: 0,
-            tempo_segundos: 0,
-            tempo_milissegundos: 0
-          };
+          // Handle standard time input for tempo scoreType
+          if ('minutes' in formData) {
+            const totalMs = (formData.minutes * 60 * 1000) + (formData.seconds * 1000) + formData.milliseconds;
+            const totalSeconds = totalMs / 1000;
+            
+            scoreData = {
+              valor_pontuacao: totalSeconds,
+              unidade: 'segundos',
+              tempo_minutos: formData.minutes,
+              tempo_segundos: formData.seconds,
+              tempo_milissegundos: formData.milliseconds
+            };
+            
+            if (formData.heat) {
+              scoreData.bateria_id = formData.heat;
+            }
+            
+            if (formData.lane) {
+              scoreData.raia = formData.lane;
+            }
+          } else {
+            // If no valid time data found, create a default with 0 values
+            console.log('No time data found, using default values');
+            scoreData = {
+              valor_pontuacao: 0,
+              unidade: 'segundos',
+              tempo_minutos: 0,
+              tempo_segundos: 0,
+              tempo_milissegundos: 0
+            };
+          }
         }
       }
     } else if (unidade === 'distancia') {
