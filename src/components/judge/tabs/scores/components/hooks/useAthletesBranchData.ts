@@ -1,11 +1,14 @@
 
 import { useMemo } from 'react';
-import { useAthleteBranchData } from '../../../../hooks/useAthleteData';
+import { useAthleteBranchData } from '../../../hooks/useAthleteData';
 import { Athlete } from '../../hooks/useAthletes';
 
 export function useAthletesBranchData(athletes: Athlete[]) {
+  // Ensure athletes is always an array to prevent hook dependency issues
+  const safeAthletes = athletes || [];
+
   // Get branch data for all athletes by calling the hook for each athlete
-  const athletesBranchQueries = athletes.map(athlete => 
+  const athletesBranchQueries = safeAthletes.map(athlete => 
     useAthleteBranchData(athlete.atleta_id)
   );
 
@@ -34,7 +37,7 @@ export function useAthletesBranchData(athletes: Athlete[]) {
 
   // Create athlete data with branch information
   const athletesBranchData = useMemo(() => {
-    return athletes.map((athlete, index) => {
+    return safeAthletes.map((athlete, index) => {
       const branchData = athletesBranchQueries[index]?.data;
       return {
         athleteId: athlete.atleta_id,
@@ -43,7 +46,7 @@ export function useAthletesBranchData(athletes: Athlete[]) {
         branchState: branchData?.estado || ''
       };
     });
-  }, [athletes, athletesBranchQueries]);
+  }, [safeAthletes, athletesBranchQueries]);
 
   return {
     availableBranches,

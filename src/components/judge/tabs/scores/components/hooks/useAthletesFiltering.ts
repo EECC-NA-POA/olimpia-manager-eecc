@@ -1,7 +1,7 @@
 
 import { useState, useMemo } from 'react';
 import { Athlete } from '../../hooks/useAthletes';
-import { useAthletePaymentData } from '../../../../hooks/useAthleteData';
+import { useAthletePaymentData } from '../../../hooks/useAthleteData';
 
 interface FilterState {
   searchFilter: string;
@@ -39,6 +39,9 @@ export function useAthletesFiltering({
     statusFilter: 'all'
   });
 
+  // Ensure we have a safe athletes array
+  const safeAthletes = athletes || [];
+
   // Create a map for quick branch data lookup
   const branchDataMap = useMemo(() => {
     const map = new Map();
@@ -48,8 +51,8 @@ export function useAthletesFiltering({
     return map;
   }, [athletesBranchData]);
 
-  // Get athlete payment data for ID filtering
-  const athletesWithPaymentData = athletes.map(athlete => {
+  // Get athlete payment data for ID filtering - only call hooks for existing athletes
+  const athletesWithPaymentData = safeAthletes.map(athlete => {
     const paymentQuery = useAthletePaymentData(athlete.atleta_id, null);
     return {
       ...athlete,
@@ -58,7 +61,7 @@ export function useAthletesFiltering({
   });
 
   const filteredAthletes = useMemo(() => {
-    let filtered = athletes;
+    let filtered = safeAthletes;
 
     console.log('=== FILTER DEBUG ===');
     console.log('Filter type:', filters.filterType);
@@ -127,7 +130,7 @@ export function useAthletesFiltering({
     console.log('=== END FILTER DEBUG ===');
 
     return filtered;
-  }, [athletes, filters, athleteScores, branchDataMap, athletesWithPaymentData]);
+  }, [safeAthletes, filters, athleteScores, branchDataMap, athletesWithPaymentData]);
 
   const resetFilters = () => {
     setFilters({
