@@ -18,7 +18,7 @@ interface ScoreRecordData {
   data_registro: any;
   tempo_minutos?: number;
   tempo_segundos?: number;
-  bateria_id: number; // Make this required since DB requires it
+  bateria_id: number;
 }
 
 export async function saveScoreToDatabase(
@@ -30,20 +30,24 @@ export async function saveScoreToDatabase(
   console.log('=== STARTING SCORE SAVE OPERATION ===');
   console.log('Final score data:', finalScoreData);
   console.log('Event ID:', eventId);
-  console.log('Modality ID:', modalityId);
+  console.log('Modality ID (type check):', modalityId, typeof modalityId);
   console.log('Athlete ID:', athlete.atleta_id);
   
   try {
+    // Ensure modalityId is a proper integer
+    const modalityIdInt = parseInt(modalityId.toString(), 10);
+    console.log('Converted modalityId to integer:', modalityIdInt);
+    
     // Ensure bateria_id is provided - if not, we need to get a default one
     let bateriaId = finalScoreData.bateria_id;
     
     if (!bateriaId) {
       console.log('No bateria_id provided, fetching default bateria for modality');
-      // Get the first available bateria for this modality/event
+      // Get the first available bateria for this modality/event with explicit type casting
       const { data: bateriaResults, error: bateriaError } = await supabase
         .from('baterias')
         .select('id')
-        .eq('modalidade_id', modalityId)
+        .eq('modalidade_id', modalityIdInt)
         .eq('evento_id', eventId)
         .limit(1);
       
@@ -60,10 +64,10 @@ export async function saveScoreToDatabase(
       console.log('Using default bateria ID:', bateriaId);
     }
 
-    // Prepare the complete record data with all required properties
+    // Prepare the complete record data with explicit type casting
     const recordData: ScoreRecordData = {
       evento_id: eventId,
-      modalidade_id: modalityId,
+      modalidade_id: modalityIdInt, // Ensure this is an integer
       atleta_id: athlete.atleta_id,
       equipe_id: athlete.equipe_id || null,
       valor_pontuacao: finalScoreData.valor_pontuacao || null,
@@ -71,7 +75,7 @@ export async function saveScoreToDatabase(
       observacoes: finalScoreData.observacoes || null,
       juiz_id: finalScoreData.juiz_id,
       data_registro: finalScoreData.data_registro || new Date().toISOString(),
-      bateria_id: bateriaId // This is now required
+      bateria_id: parseInt(bateriaId.toString(), 10) // Ensure this is an integer
     };
 
     // Add optional time fields if they exist
@@ -82,14 +86,16 @@ export async function saveScoreToDatabase(
       recordData.tempo_segundos = finalScoreData.tempo_segundos;
     }
 
-    console.log('Record data to save:', recordData);
+    console.log('Record data to save (with type verification):', recordData);
+    console.log('Type check - modalidade_id:', typeof recordData.modalidade_id);
+    console.log('Type check - bateria_id:', typeof recordData.bateria_id);
     
-    // First, try to find existing record using a more explicit query
+    // First, try to find existing record using explicit casting
     const { data: existingRecords, error: fetchError } = await supabase
       .from('pontuacoes')
       .select('id')
       .eq('evento_id', eventId)
-      .eq('modalidade_id', modalityId)
+      .eq('modalidade_id', modalityIdInt)
       .eq('atleta_id', athlete.atleta_id);
     
     if (fetchError) {
@@ -98,6 +104,7 @@ export async function saveScoreToDatabase(
     }
     
     const existingRecord = existingRecords && existingRecords.length > 0 ? existingRecords[0] : null;
+    console.log('Existing record found:', existingRecord);
     
     let result;
     let operation;
@@ -113,6 +120,7 @@ export async function saveScoreToDatabase(
       
       if (updateError) {
         console.error('Error in update operation:', updateError);
+        console.error('Update error details:', JSON.stringify(updateError, null, 2));
         throw new Error(`Erro ao atualizar pontuação: ${updateError.message}`);
       }
       
@@ -121,6 +129,8 @@ export async function saveScoreToDatabase(
     } else {
       // Insert new record
       console.log('Inserting new record');
+      console.log('Data being inserted:', JSON.stringify(recordData, null, 2));
+      
       const { data: insertData, error: insertError } = await supabase
         .from('pontuacoes')
         .insert([recordData])
@@ -128,6 +138,9 @@ export async function saveScoreToDatabase(
       
       if (insertError) {
         console.error('Error in insert operation:', insertError);
+        console.error('Insert error details:', JSON.stringify(insertError, null, 2));
+        console.error('Insert error code:', insertError.code);
+        console.error('Insert error hint:', insertError.hint);
         throw new Error(`Erro ao inserir pontuação: ${insertError.message}`);
       }
       
@@ -145,6 +158,8 @@ export async function saveScoreToDatabase(
   } catch (error: any) {
     console.error('=== SCORE SAVE OPERATION FAILED ===');
     console.error('Error details:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
     
     // Handle specific database error codes
     if (error.code === '23505') {
@@ -157,6 +172,11 @@ export async function saveScoreToDatabase(
     
     if (error.code === '23503') {
       throw new Error('Dados inválidos: verifique se o evento, modalidade e atleta existem');
+    }
+    
+    // Check for missing FROM-clause errors specifically
+    if (error.message?.includes('missing FROM-clause') || error.message?.includes('table "p"')) {
+      throw new Error('Erro de configuração de trigger no banco de dados. Contacte o administrador sobre o trigger trg_replicate_team_scores.');
     }
     
     throw error;
