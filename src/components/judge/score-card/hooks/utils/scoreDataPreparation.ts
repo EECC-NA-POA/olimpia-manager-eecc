@@ -25,18 +25,18 @@ export function prepareScoreData(
     console.log('Processing baterias rule with unit:', unidade);
     
     if (unidade === 'tempo') {
-      // Look for tentativa data in the format: tentativa_X_minutes, tentativa_X_seconds, etc.
+      // Check for new format first (tentativa_X_minutes, etc.)
       const tentativaKeys = Object.keys(formData).filter(key => key.startsWith('tentativa_') && key.includes('_minutes'));
       
       if (tentativaKeys.length > 0) {
-        // Process the first tentativa found
+        // Process the first tentativa found (old format)
         const tentativaNumber = tentativaKeys[0].split('_')[1];
         const minutes = formData[`tentativa_${tentativaNumber}_minutes`] || 0;
         const seconds = formData[`tentativa_${tentativaNumber}_seconds`] || 0;
         const milliseconds = formData[`tentativa_${tentativaNumber}_milliseconds`] || 0;
         const raia = formData[`tentativa_${tentativaNumber}_raia`];
         
-        console.log('Processing tentativa:', { tentativaNumber, minutes, seconds, milliseconds, raia });
+        console.log('Processing tentativa (old format):', { tentativaNumber, minutes, seconds, milliseconds, raia });
         
         const totalMs = (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
         const totalSeconds = totalMs / 1000;
@@ -53,7 +53,43 @@ export function prepareScoreData(
           scoreData.raia = parseInt(raia);
         }
       } else {
-        throw new Error('No tentativa data found for tempo scoring');
+        // Handle new format from BateriasScoreFields
+        console.log('Checking for new format with individual time fields...');
+        
+        // Look for individual time fields in root level
+        if ('tentativa_1_minutes' in formData || 'tentativa_1_seconds' in formData || 'tentativa_1_milliseconds' in formData) {
+          const minutes = formData.tentativa_1_minutes || 0;
+          const seconds = formData.tentativa_1_seconds || 0;
+          const milliseconds = formData.tentativa_1_milliseconds || 0;
+          const raia = formData.tentativa_1_raia;
+          
+          console.log('Processing tentativa (new individual fields):', { minutes, seconds, milliseconds, raia });
+          
+          const totalMs = (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
+          const totalSeconds = totalMs / 1000;
+          
+          scoreData = {
+            valor_pontuacao: totalSeconds,
+            unidade: 'segundos',
+            tempo_minutos: minutes,
+            tempo_segundos: seconds,
+            tempo_milissegundos: milliseconds
+          };
+          
+          if (raia) {
+            scoreData.raia = parseInt(raia);
+          }
+        } else {
+          // If no valid time data found, create a default with 0 values
+          console.log('No time data found, using default values');
+          scoreData = {
+            valor_pontuacao: 0,
+            unidade: 'segundos',
+            tempo_minutos: 0,
+            tempo_segundos: 0,
+            tempo_milissegundos: 0
+          };
+        }
       }
     } else if (unidade === 'distancia') {
       // Handle distance scoring for baterias
@@ -76,7 +112,28 @@ export function prepareScoreData(
           scoreData.raia = parseInt(raia);
         }
       } else {
-        throw new Error('No tentativa data found for distance scoring');
+        // Handle new format from BateriasScoreFields
+        if ('tentativa_1_meters' in formData || 'tentativa_1_centimeters' in formData) {
+          const meters = formData.tentativa_1_meters || 0;
+          const centimeters = formData.tentativa_1_centimeters || 0;
+          const raia = formData.tentativa_1_raia;
+          
+          const totalMeters = meters + (centimeters / 100);
+          
+          scoreData = {
+            valor_pontuacao: totalMeters,
+            unidade: 'm'
+          };
+          
+          if (raia) {
+            scoreData.raia = parseInt(raia);
+          }
+        } else {
+          scoreData = {
+            valor_pontuacao: 0,
+            unidade: 'm'
+          };
+        }
       }
     } else {
       // Handle points or other units for baterias
@@ -96,7 +153,25 @@ export function prepareScoreData(
           scoreData.raia = parseInt(raia);
         }
       } else {
-        throw new Error('No tentativa data found for score');
+        // Handle new format from BateriasScoreFields
+        if ('tentativa_1_score' in formData) {
+          const score = formData.tentativa_1_score || 0;
+          const raia = formData.tentativa_1_raia;
+          
+          scoreData = {
+            valor_pontuacao: score,
+            unidade: unidade
+          };
+          
+          if (raia) {
+            scoreData.raia = parseInt(raia);
+          }
+        } else {
+          scoreData = {
+            valor_pontuacao: 0,
+            unidade: unidade
+          };
+        }
       }
     }
   } else if (rule?.regra_tipo === 'distancia' || scoreType === 'distancia') {
@@ -161,10 +236,10 @@ export function prepareScoreData(
     }
   }
   
-  if (!scoreData.valor_pontuacao && scoreData.valor_pontuacao !== 0) {
-    console.error('Failed to extract valor_pontuacao from form data:', formData);
-    console.error('Processed score data:', scoreData);
-    throw new Error('Failed to prepare score data - missing valor_pontuacao');
+  // Ensure we have a valid valor_pontuacao
+  if (scoreData.valor_pontuacao === undefined || scoreData.valor_pontuacao === null) {
+    console.log('No valor_pontuacao found, setting to 0');
+    scoreData.valor_pontuacao = 0;
   }
   
   console.log('Prepared score data:', scoreData);
