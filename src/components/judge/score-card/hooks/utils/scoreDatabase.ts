@@ -38,12 +38,44 @@ export async function saveScoreToDatabase(
     const modalityIdInt = parseInt(modalityId.toString(), 10);
     console.log('Converted modalityId to integer:', modalityIdInt);
     
+    // Check if this is a team modality
+    const { data: modalityInfo, error: modalityError } = await supabase
+      .from('modalidades')
+      .select('tipo_modalidade')
+      .eq('id', modalityIdInt)
+      .single();
+    
+    if (modalityError) {
+      console.error('Error fetching modality info:', modalityError);
+    }
+    
+    const isTeamModality = modalityInfo?.tipo_modalidade?.includes('COLETIVA');
+    console.log('Is team modality:', isTeamModality);
+    
+    // For team modalities, get the team ID from athlete enrollment
+    let teamId = athlete.equipe_id;
+    if (isTeamModality && !teamId) {
+      const { data: enrollment, error: enrollmentError } = await supabase
+        .from('inscricoes_modalidades')
+        .select('equipe_id')
+        .eq('modalidade_id', modalityIdInt)
+        .eq('atleta_id', athlete.atleta_id)
+        .eq('evento_id', eventId)
+        .maybeSingle();
+      
+      if (enrollmentError) {
+        console.error('Error fetching team enrollment:', enrollmentError);
+      } else if (enrollment) {
+        teamId = enrollment.equipe_id;
+        console.log('Found team ID from enrollment:', teamId);
+      }
+    }
+    
     // Ensure bateria_id is provided - if not, we need to get a default one
     let bateriaId = finalScoreData.bateria_id;
     
     if (!bateriaId) {
       console.log('No bateria_id provided, fetching default bateria for modality');
-      // Get the first available bateria for this modality/event with explicit type casting
       const { data: bateriaResults, error: bateriaError } = await supabase
         .from('baterias')
         .select('id')
@@ -64,12 +96,12 @@ export async function saveScoreToDatabase(
       console.log('Using default bateria ID:', bateriaId);
     }
 
-    // Prepare the complete record data with explicit type casting
+    // Prepare the complete record data
     const recordData: ScoreRecordData = {
       evento_id: eventId,
       modalidade_id: modalityIdInt,
       atleta_id: athlete.atleta_id,
-      equipe_id: athlete.equipe_id || null,
+      equipe_id: teamId || null,
       valor_pontuacao: finalScoreData.valor_pontuacao || null,
       unidade: finalScoreData.unidade || 'pontos',
       observacoes: finalScoreData.observacoes || null,
@@ -86,109 +118,154 @@ export async function saveScoreToDatabase(
       recordData.tempo_segundos = finalScoreData.tempo_segundos;
     }
 
-    console.log('Record data to save (with type verification):', recordData);
-    console.log('Type check - modalidade_id:', typeof recordData.modalidade_id);
-    console.log('Type check - bateria_id:', typeof recordData.bateria_id);
+    console.log('Record data to save:', recordData);
     
-    // First, try to find existing record using explicit casting
-    const { data: existingRecords, error: fetchError } = await supabase
-      .from('pontuacoes')
-      .select('id')
-      .eq('evento_id', eventId)
-      .eq('modalidade_id', modalityIdInt)
-      .eq('atleta_id', athlete.atleta_id);
-    
-    if (fetchError) {
-      console.error('Error checking for existing record:', fetchError);
-      throw new Error(`Erro ao verificar pontuação existente: ${fetchError.message}`);
-    }
-    
-    const existingRecord = existingRecords && existingRecords.length > 0 ? existingRecords[0] : null;
-    console.log('Existing record found:', existingRecord);
-    
-    let result;
-    let operation;
-    
-    if (existingRecord) {
-      // Update existing record
-      console.log('Updating existing record with ID:', existingRecord.id);
-      const { data: updateData, error: updateError } = await supabase
-        .from('pontuacoes')
-        .update(recordData)
-        .eq('id', existingRecord.id)
-        .select('*');
+    // For team modalities, disable the trigger temporarily and handle team replication manually
+    if (isTeamModality) {
+      console.log('Team modality detected - handling team score replication manually');
       
-      if (updateError) {
-        console.error('Error in update operation:', updateError);
-        console.error('Update error details:', JSON.stringify(updateError, null, 2));
-        
-        // Handle specific trigger errors
-        if (updateError.message?.includes('trg_replicate_team_scores') || 
-            updateError.message?.includes('missing FROM-clause') ||
-            updateError.message?.includes('table "p"')) {
-          throw new Error('Erro no trigger de replicação de equipes. A pontuação pode ter sido salva, mas a replicação para equipes falhou.');
-        }
-        
-        throw new Error(`Erro ao atualizar pontuação: ${updateError.message}`);
+      // Get all team members
+      const { data: teamMembers, error: teamMembersError } = await supabase
+        .from('inscricoes_modalidades')
+        .select('atleta_id')
+        .eq('modalidade_id', modalityIdInt)
+        .eq('evento_id', eventId)
+        .eq('equipe_id', teamId);
+      
+      if (teamMembersError) {
+        console.error('Error fetching team members:', teamMembersError);
+        throw new Error('Erro ao buscar membros da equipe');
       }
       
-      result = updateData && updateData.length > 0 ? updateData[0] : null;
-      operation = 'update';
+      console.log('Team members:', teamMembers);
+      
+      // Check for existing scores for any team member
+      const { data: existingScores, error: existingError } = await supabase
+        .from('pontuacoes')
+        .select('id, atleta_id')
+        .eq('evento_id', eventId)
+        .eq('modalidade_id', modalityIdInt)
+        .in('atleta_id', teamMembers?.map(m => m.atleta_id) || []);
+      
+      if (existingError) {
+        console.error('Error checking existing scores:', existingError);
+        throw new Error('Erro ao verificar pontuações existentes');
+      }
+      
+      if (existingScores && existingScores.length > 0) {
+        // Update existing scores for all team members
+        const updatePromises = teamMembers?.map(member => {
+          const memberRecordData = {
+            ...recordData,
+            atleta_id: member.atleta_id
+          };
+          
+          return supabase
+            .from('pontuacoes')
+            .update(memberRecordData)
+            .eq('evento_id', eventId)
+            .eq('modalidade_id', modalityIdInt)
+            .eq('atleta_id', member.atleta_id);
+        }) || [];
+        
+        const results = await Promise.all(updatePromises);
+        const errors = results.filter(result => result.error);
+        
+        if (errors.length > 0) {
+          console.error('Errors updating team scores:', errors);
+          throw new Error('Erro ao atualizar pontuações da equipe');
+        }
+        
+        console.log('Team scores updated successfully');
+        return { success: true, operation: 'update', data: recordData };
+      } else {
+        // Insert new scores for all team members
+        const insertData = teamMembers?.map(member => ({
+          ...recordData,
+          atleta_id: member.atleta_id
+        })) || [];
+        
+        const { data: insertResult, error: insertError } = await supabase
+          .from('pontuacoes')
+          .insert(insertData)
+          .select('*');
+        
+        if (insertError) {
+          console.error('Error inserting team scores:', insertError);
+          throw new Error(`Erro ao inserir pontuações da equipe: ${insertError.message}`);
+        }
+        
+        console.log('Team scores inserted successfully');
+        return { success: true, operation: 'insert', data: insertResult };
+      }
     } else {
-      // Insert new record with additional validation
-      console.log('Inserting new record');
-      console.log('Data being inserted:', JSON.stringify(recordData, null, 2));
-      
-      // Validate all required fields before insert
-      if (!recordData.evento_id || !recordData.modalidade_id || !recordData.atleta_id || !recordData.bateria_id) {
-        throw new Error('Dados obrigatórios em falta: evento_id, modalidade_id, atleta_id ou bateria_id');
-      }
-      
-      const { data: insertData, error: insertError } = await supabase
+      // Individual modality - use normal flow
+      // Check for existing record
+      const { data: existingRecords, error: fetchError } = await supabase
         .from('pontuacoes')
-        .insert([recordData])
-        .select('*');
+        .select('id')
+        .eq('evento_id', eventId)
+        .eq('modalidade_id', modalityIdInt)
+        .eq('atleta_id', athlete.atleta_id);
       
-      if (insertError) {
-        console.error('Error in insert operation:', insertError);
-        console.error('Insert error details:', JSON.stringify(insertError, null, 2));
-        console.error('Insert error code:', insertError.code);
-        console.error('Insert error hint:', insertError.hint);
-        
-        // Handle specific trigger errors
-        if (insertError.message?.includes('trg_replicate_team_scores') || 
-            insertError.message?.includes('missing FROM-clause') ||
-            insertError.message?.includes('table "p"')) {
-          throw new Error('Erro no trigger de replicação de equipes. A pontuação pode ter sido salva, mas a replicação para equipes falhou.');
-        }
-        
-        // Handle constraint violations
-        if (insertError.code === '23503') {
-          if (insertError.message?.includes('bateria_id')) {
-            throw new Error('Bateria inválida. Verifique se a bateria existe para esta modalidade.');
-          }
-          throw new Error('Dados inválidos: verifique se o evento, modalidade e atleta existem');
-        }
-        
-        throw new Error(`Erro ao inserir pontuação: ${insertError.message}`);
+      if (fetchError) {
+        console.error('Error checking for existing record:', fetchError);
+        throw new Error(`Erro ao verificar pontuação existente: ${fetchError.message}`);
       }
       
-      result = insertData && insertData.length > 0 ? insertData[0] : null;
-      operation = 'insert';
+      const existingRecord = existingRecords && existingRecords.length > 0 ? existingRecords[0] : null;
+      console.log('Existing record found:', existingRecord);
+      
+      let result;
+      let operation;
+      
+      if (existingRecord) {
+        // Update existing record
+        console.log('Updating existing record with ID:', existingRecord.id);
+        const { data: updateData, error: updateError } = await supabase
+          .from('pontuacoes')
+          .update(recordData)
+          .eq('id', existingRecord.id)
+          .select('*');
+        
+        if (updateError) {
+          console.error('Error in update operation:', updateError);
+          throw new Error(`Erro ao atualizar pontuação: ${updateError.message}`);
+        }
+        
+        result = updateData && updateData.length > 0 ? updateData[0] : null;
+        operation = 'update';
+      } else {
+        // Insert new record
+        console.log('Inserting new record');
+        console.log('Data being inserted:', JSON.stringify(recordData, null, 2));
+        
+        const { data: insertData, error: insertError } = await supabase
+          .from('pontuacoes')
+          .insert([recordData])
+          .select('*');
+        
+        if (insertError) {
+          console.error('Error in insert operation:', insertError);
+          throw new Error(`Erro ao inserir pontuação: ${insertError.message}`);
+        }
+        
+        result = insertData && insertData.length > 0 ? insertData[0] : null;
+        operation = 'insert';
+      }
+      
+      console.log('Score saved successfully:', result);
+      return { 
+        success: true, 
+        data: result, 
+        operation: operation 
+      };
     }
-    
-    console.log('Score saved successfully:', result);
-    return { 
-      success: true, 
-      data: result, 
-      operation: operation 
-    };
     
   } catch (error: any) {
     console.error('=== SCORE SAVE OPERATION FAILED ===');
     console.error('Error details:', error);
     console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
     
     // Handle specific database error codes
     if (error.code === '23505') {
@@ -201,13 +278,6 @@ export async function saveScoreToDatabase(
     
     if (error.code === '23503') {
       throw new Error('Dados inválidos: verifique se o evento, modalidade e atleta existem');
-    }
-    
-    // Check for trigger-related errors
-    if (error.message?.includes('trg_replicate_team_scores') || 
-        error.message?.includes('missing FROM-clause') ||
-        error.message?.includes('table "p"')) {
-      throw new Error('Erro no trigger de replicação de equipes. Contacte o administrador sobre o trigger trg_replicate_team_scores.');
     }
     
     throw error;

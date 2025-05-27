@@ -48,15 +48,21 @@ export function useScoreSubmission(
       );
       console.log('Final prepared data:', JSON.stringify(finalScoreData, null, 2));
       
-      // Save to database with comprehensive error handling
+      // Save to database
       try {
         const result = await saveScoreToDatabase(finalScoreData, eventId!, modalityId, athlete);
         console.log('Database save successful:', JSON.stringify(result, null, 2));
         console.log('=== SCORE SUBMISSION SUCCESS ===');
         return result;
-      } catch (dbError) {
+      } catch (dbError: any) {
         console.error('=== SCORE SUBMISSION FAILED ===');
         console.error('Database error details:', JSON.stringify(dbError, null, 2));
+        
+        // Provide more specific error messages
+        if (dbError.message?.includes('trigger') || dbError.message?.includes('replicação')) {
+          throw new Error('Erro no sistema de pontuação em equipe. A pontuação pode ter sido salva. Verifique os resultados e contacte o administrador se necessário.');
+        }
+        
         throw dbError;
       }
     },
@@ -74,7 +80,6 @@ export function useScoreSubmission(
       console.error('=== SCORE SUBMISSION ERROR ===');
       console.error('Error object:', JSON.stringify(error, null, 2));
       console.error('Error message:', error?.message);
-      console.error('Error code:', error?.code);
       
       const errorMessage = error?.message || 'Erro desconhecido ao registrar pontuação';
       toast.error(`Erro ao registrar pontuação: ${errorMessage}`);
