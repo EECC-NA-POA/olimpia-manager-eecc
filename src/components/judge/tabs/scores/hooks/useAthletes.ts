@@ -26,10 +26,29 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
   const { data: athletes, isLoading: isLoadingAthletes } = useQuery({
     queryKey: ['athletes', modalityId, eventId],
     queryFn: async () => {
-      if (!modalityId || !eventId) return [];
+      if (!modalityId || !eventId) {
+        console.log('Missing required params - modalityId:', modalityId, 'eventId:', eventId);
+        return [];
+      }
 
       try {
         console.log('Fetching athletes for modality:', modalityId, 'event:', eventId);
+        
+        // Check if we have a valid session first
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          toast.error('Erro de autenticação. Faça login novamente.');
+          return [];
+        }
+        
+        if (!session) {
+          console.error('No active session found');
+          toast.error('Sessão expirada. Faça login novamente.');
+          return [];
+        }
+
+        console.log('Session is valid, proceeding with query');
         
         const { data, error } = await supabase
           .from('inscricoes_modalidades')
@@ -48,6 +67,16 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
 
         if (error) {
           console.error('Error fetching athletes:', error);
+          
+          // Handle specific JWT errors
+          if (error.message?.includes('JWT') || error.message?.includes('CompactDecodeError')) {
+            toast.error('Erro de autenticação. Faça login novamente.');
+            // Sign out and redirect
+            await supabase.auth.signOut();
+            window.location.href = '/login';
+            return [];
+          }
+          
           toast.error('Não foi possível carregar os atletas');
           return [];
         }
@@ -70,13 +99,29 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
 
         console.log('Transformed athlete data:', transformedData);
         return transformedData;
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error in athlete query execution:', error);
+        
+        // Handle authentication errors
+        if (error.message?.includes('JWT') || error.message?.includes('CompactDecodeError')) {
+          toast.error('Erro de autenticação. Faça login novamente.');
+          await supabase.auth.signOut();
+          window.location.href = '/login';
+          return [];
+        }
+        
         toast.error('Erro ao buscar atletas');
         return [];
       }
     },
     enabled: !!modalityId && !!eventId,
+    retry: (failureCount, error: any) => {
+      // Don't retry on authentication errors
+      if (error?.message?.includes('JWT') || error?.message?.includes('CompactDecodeError')) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 
   return { athletes, isLoadingAthletes };
