@@ -10,7 +10,6 @@ export interface ScoreData {
   tempo_minutos?: number;
   tempo_segundos?: number;
   tempo_milissegundos?: number;
-  raia?: number;
   bateria_id?: number;
 }
 

@@ -13,7 +13,6 @@ export function processDistanciaScore(formData: any, rule?: any): ScoreData {
   if ('tentativa_1_meters' in formData || 'tentativa_1_centimeters' in formData) {
     const meters = Number(formData.tentativa_1_meters) || 0;
     const centimeters = Number(formData.tentativa_1_centimeters) || 0;
-    const raia = formData.tentativa_1_raia;
     
     const totalMeters = meters + (centimeters / 100);
     
@@ -21,10 +20,6 @@ export function processDistanciaScore(formData: any, rule?: any): ScoreData {
       valor_pontuacao: totalMeters,
       unidade: 'm'
     };
-    
-    if (raia) {
-      scoreData.raia = parseInt(raia);
-    }
   } else if ('meters' in formData && 'centimeters' in formData) {
     // Handle standard distance input
     const totalMeters = Number(formData.meters) + (Number(formData.centimeters) / 100);
@@ -36,9 +31,6 @@ export function processDistanciaScore(formData: any, rule?: any): ScoreData {
     if (formData.heat) {
       scoreData.bateria_id = formData.heat;
     }
-    if (formData.lane) {
-      scoreData.raia = formData.lane;
-    }
   } else if ('score' in formData) {
     // Handle score-based distance input
     scoreData = {
@@ -48,9 +40,6 @@ export function processDistanciaScore(formData: any, rule?: any): ScoreData {
     
     if (formData.heat) {
       scoreData.bateria_id = formData.heat;
-    }
-    if (formData.lane) {
-      scoreData.raia = formData.lane;
     }
   }
 

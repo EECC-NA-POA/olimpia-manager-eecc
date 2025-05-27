@@ -32,12 +32,9 @@ export function prepareFinalScoreData(
     finalData.tempo_milissegundos = scoreData.tempo_milissegundos;
   }
 
-  // Add optional fields only if they exist
+  // Add bateria_id if it exists
   if (scoreData.bateria_id !== undefined) {
     finalData.bateria_id = scoreData.bateria_id;
-  }
-  if (scoreData.raia !== undefined) {
-    finalData.raia = scoreData.raia;
   }
 
   console.log('Final score data prepared:', finalData);

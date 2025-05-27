@@ -14,9 +14,8 @@ export function processTempoScore(formData: any, rule?: any): ScoreData {
     const minutes = Number(formData.tentativa_1_minutes) || 0;
     const seconds = Number(formData.tentativa_1_seconds) || 0;
     const milliseconds = Number(formData.tentativa_1_milliseconds) || 0;
-    const raia = formData.tentativa_1_raia;
     
-    console.log('Processing tentativa (time fields):', { minutes, seconds, milliseconds, raia });
+    console.log('Processing tentativa (time fields):', { minutes, seconds, milliseconds });
     
     const totalSeconds = (minutes * 60) + seconds + (milliseconds / 1000);
     
@@ -27,10 +26,6 @@ export function processTempoScore(formData: any, rule?: any): ScoreData {
       tempo_segundos: seconds,
       tempo_milissegundos: milliseconds
     };
-    
-    if (raia) {
-      scoreData.raia = parseInt(raia);
-    }
   } else if ('minutes' in formData) {
     // Handle standard time input
     const minutes = Number(formData.minutes) || 0;
@@ -49,10 +44,6 @@ export function processTempoScore(formData: any, rule?: any): ScoreData {
     
     if (formData.heat) {
       scoreData.bateria_id = formData.heat;
-    }
-    
-    if (formData.lane) {
-      scoreData.raia = formData.lane;
     }
   } else {
     // Default time values
