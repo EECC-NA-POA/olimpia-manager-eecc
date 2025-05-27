@@ -25,15 +25,18 @@ export interface ScoreRecord {
   tipo_pontuacao?: 'tempo' | 'distancia' | 'pontos';
   unidade?: string;
   bateria_id?: number;
+  raia?: number;
   observacoes?: string;
   dados_json?: any; // Added this property to fix the TypeScript error
 }
 
-// Schema for time score form (tempo)
+// Schema for time score form (tempo) - updated to include heat and lane
 export const timeScoreSchema = z.object({
   minutes: z.coerce.number().min(0, 'Minutos devem ser positivos').default(0),
   seconds: z.coerce.number().min(0, 'Segundos devem ser positivos').max(59, 'Segundos devem ser entre 0 e 59').default(0),
   milliseconds: z.coerce.number().min(0, 'Milissegundos devem ser positivos').max(999, 'Milissegundos devem ser entre 0 e 999').default(0),
+  heat: z.coerce.number().min(1).optional(),
+  lane: z.coerce.number().min(1).optional(),
   notes: z.string().optional(),
 });
 
