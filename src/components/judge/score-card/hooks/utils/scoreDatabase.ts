@@ -38,7 +38,7 @@ export async function saveScoreToDatabase(
     const modalityIdInt = parseInt(modalityId.toString(), 10);
     console.log('Converted modalityId to integer:', modalityIdInt);
     
-    // Check if this is a team modality
+    // Check if this is a team modality by checking tipo_modalidade
     const { data: modalityInfo, error: modalityError } = await supabase
       .from('modalidades')
       .select('tipo_modalidade')
@@ -52,6 +52,7 @@ export async function saveScoreToDatabase(
     
     const isTeamModality = modalityInfo?.tipo_modalidade?.includes('COLETIVA');
     console.log('Is team modality:', isTeamModality);
+    console.log('Modality type:', modalityInfo?.tipo_modalidade);
     
     // For team modalities, get the team ID from athlete enrollment
     let teamId = athlete.equipe_id;
@@ -122,13 +123,13 @@ export async function saveScoreToDatabase(
 
     console.log('Record data to save:', JSON.stringify(recordData, null, 2));
     
-    // NEW APPROACH: Disable triggers temporarily and handle team replication manually
+    // Choose the correct approach based on modality type
     if (isTeamModality) {
-      console.log('TEAM MODALITY: Using manual replication to bypass broken triggers');
-      return await handleTeamScoreWithManualReplication(recordData, eventId, modalityIdInt, teamId);
+      console.log('TEAM MODALITY: Using team score handling');
+      return await handleTeamScore(recordData, eventId, modalityIdInt, teamId);
     } else {
-      console.log('INDIVIDUAL MODALITY: Using direct insertion with trigger bypass');
-      return await handleIndividualScoreWithTriggerBypass(recordData, eventId, modalityIdInt);
+      console.log('INDIVIDUAL MODALITY: Using individual score handling');
+      return await handleIndividualScore(recordData, eventId, modalityIdInt);
     }
     
   } catch (error: any) {
@@ -137,7 +138,7 @@ export async function saveScoreToDatabase(
     console.error('Error message:', error.message);
     console.error('Error code:', error.code);
     
-    // Handle specific database error codes with more informative messages
+    // Handle specific database error codes
     if (error.code === '23505') {
       throw new Error('Já existe uma pontuação para este atleta nesta modalidade');
     }
@@ -150,22 +151,31 @@ export async function saveScoreToDatabase(
       throw new Error('Dados inválidos: verifique se o evento, modalidade e atleta existem');
     }
     
-    // Handle the specific FROM-clause error even if it doesn't have a specific code
+    // Handle the specific FROM-clause error
     if (error.message?.includes('missing FROM-clause entry for table "p"')) {
       throw new Error('Erro no trigger de banco de dados (FROM-clause). Esta é uma questão de configuração do servidor que requer atenção do administrador.');
+    }
+    
+    // Handle ON CONFLICT constraint error
+    if (error.message?.includes('there is no unique or exclusion constraint matching the ON CONFLICT specification')) {
+      throw new Error('Erro de configuração de banco de dados. A tabela não possui as constraints necessárias para atualização.');
     }
     
     throw error;
   }
 }
 
-async function handleTeamScoreWithManualReplication(
+async function handleTeamScore(
   recordData: ScoreRecordData, 
   eventId: string, 
   modalityIdInt: number, 
   teamId: number | null
 ): Promise<any> {
-  console.log('Starting manual team score replication for team:', teamId);
+  console.log('Starting team score handling for team:', teamId);
+  
+  if (!teamId) {
+    throw new Error('ID da equipe não encontrado para modalidade coletiva');
+  }
   
   // Get all team members
   const { data: teamMembers, error: teamMembersError } = await supabase
@@ -186,76 +196,47 @@ async function handleTeamScoreWithManualReplication(
     throw new Error('Nenhum membro da equipe encontrado');
   }
   
-  // Try to disable triggers for this operation (if we have permissions)
-  try {
-    console.log('Attempting to disable triggers temporarily');
-    await supabase.rpc('disable_triggers_temporarily');
-  } catch (triggerError) {
-    console.log('Could not disable triggers, proceeding with manual approach');
+  // Delete existing scores for all team members first
+  console.log('Deleting existing scores for team members');
+  const { error: deleteError } = await supabase
+    .from('pontuacoes')
+    .delete()
+    .eq('evento_id', eventId)
+    .eq('modalidade_id', modalityIdInt)
+    .in('atleta_id', teamMembers.map(m => m.atleta_id));
+  
+  if (deleteError) {
+    console.error('Error deleting existing scores:', deleteError);
+    // Continue with insertion even if delete fails
   }
   
-  try {
-    // Delete existing scores for all team members first
-    console.log('Deleting existing scores for team members');
-    const { error: deleteError } = await supabase
-      .from('pontuacoes')
-      .delete()
-      .eq('evento_id', eventId)
-      .eq('modalidade_id', modalityIdInt)
-      .in('atleta_id', teamMembers.map(m => m.atleta_id));
-    
-    if (deleteError) {
-      console.error('Error deleting existing scores:', deleteError);
-      // Don't throw here, continue with insertion
-    }
-    
-    // Insert new scores for all team members
-    console.log('Inserting new team scores for all members');
-    const insertData = teamMembers.map(member => ({
-      ...recordData,
-      atleta_id: member.atleta_id
-    }));
-    
-    // Use upsert to handle any conflicts
-    const { data: insertResult, error: insertError } = await supabase
-      .from('pontuacoes')
-      .upsert(insertData, { 
-        onConflict: 'evento_id,modalidade_id,atleta_id',
-        ignoreDuplicates: false 
-      })
-      .select('*');
-    
-    if (insertError) {
-      console.error('Error in team score insertion:', insertError);
-      
-      // If we still get the FROM-clause error, it means the trigger is still firing
-      if (insertError.message.includes('missing FROM-clause entry for table "p"')) {
-        throw new Error('Erro no trigger de replicação de equipes. A configuração do banco de dados está corrompida.');
-      }
-      
-      throw new Error(`Erro ao inserir pontuações da equipe: ${insertError.message}`);
-    }
-    
-    console.log('Team scores inserted successfully');
-    return { success: true, operation: 'team_insert', data: insertResult };
-    
-  } finally {
-    // Re-enable triggers (if we disabled them)
-    try {
-      console.log('Re-enabling triggers');
-      await supabase.rpc('enable_triggers');
-    } catch (triggerError) {
-      console.log('Could not re-enable triggers (they may not have been disabled)');
-    }
+  // Insert new scores for all team members
+  console.log('Inserting new team scores for all members');
+  const insertData = teamMembers.map(member => ({
+    ...recordData,
+    atleta_id: member.atleta_id
+  }));
+  
+  const { data: insertResult, error: insertError } = await supabase
+    .from('pontuacoes')
+    .insert(insertData)
+    .select('*');
+  
+  if (insertError) {
+    console.error('Error in team score insertion:', insertError);
+    throw new Error(`Erro ao inserir pontuações da equipe: ${insertError.message}`);
   }
+  
+  console.log('Team scores inserted successfully');
+  return { success: true, operation: 'team_insert', data: insertResult };
 }
 
-async function handleIndividualScoreWithTriggerBypass(
+async function handleIndividualScore(
   recordData: ScoreRecordData,
   eventId: string,
   modalityIdInt: number
 ): Promise<any> {
-  console.log('Handling individual score with trigger bypass');
+  console.log('Handling individual score');
   
   // Check for existing record
   const { data: existingRecords, error: fetchError } = await supabase
@@ -273,80 +254,55 @@ async function handleIndividualScoreWithTriggerBypass(
   const existingRecord = existingRecords && existingRecords.length > 0 ? existingRecords[0] : null;
   console.log('Existing record found:', existingRecord ? 'Yes' : 'No');
   
-  try {
-    // Try to disable triggers temporarily
-    console.log('Attempting to disable triggers for individual score');
-    await supabase.rpc('disable_triggers_temporarily');
-  } catch (triggerError) {
-    console.log('Could not disable triggers, proceeding anyway');
+  let result;
+  let operation;
+  
+  if (existingRecord) {
+    // Update existing record
+    console.log('Updating existing individual record');
+    const { data: updateData, error: updateError } = await supabase
+      .from('pontuacoes')
+      .update({
+        valor_pontuacao: recordData.valor_pontuacao,
+        unidade: recordData.unidade,
+        observacoes: recordData.observacoes,
+        juiz_id: recordData.juiz_id,
+        data_registro: recordData.data_registro,
+        bateria_id: recordData.bateria_id,
+        ...(recordData.tempo_minutos !== undefined && { tempo_minutos: recordData.tempo_minutos }),
+        ...(recordData.tempo_segundos !== undefined && { tempo_segundos: recordData.tempo_segundos })
+      })
+      .eq('id', existingRecord.id)
+      .select('*');
+    
+    if (updateError) {
+      console.error('Error in update operation:', updateError);
+      throw new Error(`Erro ao atualizar pontuação: ${updateError.message}`);
+    }
+    
+    result = updateData && updateData.length > 0 ? updateData[0] : null;
+    operation = 'update';
+  } else {
+    // Insert new record
+    console.log('Inserting new individual record');
+    const { data: insertData, error: insertError } = await supabase
+      .from('pontuacoes')
+      .insert([recordData])
+      .select('*');
+    
+    if (insertError) {
+      console.error('Error in insert operation:', insertError);
+      throw new Error(`Erro ao inserir pontuação: ${insertError.message}`);
+    }
+    
+    result = insertData && insertData.length > 0 ? insertData[0] : null;
+    operation = 'insert';
   }
   
-  try {
-    let result;
-    let operation;
-    
-    if (existingRecord) {
-      // Update existing record using upsert to avoid trigger issues
-      console.log('Updating existing record using upsert');
-      const { data: updateData, error: updateError } = await supabase
-        .from('pontuacoes')
-        .upsert([recordData], { 
-          onConflict: 'evento_id,modalidade_id,atleta_id',
-          ignoreDuplicates: false 
-        })
-        .select('*');
-      
-      if (updateError) {
-        console.error('Error in upsert operation:', updateError);
-        
-        if (updateError.message.includes('missing FROM-clause entry for table "p"')) {
-          throw new Error('Erro no trigger de banco de dados. A configuração do servidor está corrompida.');
-        }
-        
-        throw new Error(`Erro ao atualizar pontuação: ${updateError.message}`);
-      }
-      
-      result = updateData && updateData.length > 0 ? updateData[0] : null;
-      operation = 'update';
-    } else {
-      // Insert new record using upsert
-      console.log('Inserting new record using upsert');
-      const { data: insertData, error: insertError } = await supabase
-        .from('pontuacoes')
-        .upsert([recordData], { 
-          onConflict: 'evento_id,modalidade_id,atleta_id',
-          ignoreDuplicates: false 
-        })
-        .select('*');
-      
-      if (insertError) {
-        console.error('Error in upsert operation:', insertError);
-        
-        if (insertError.message.includes('missing FROM-clause entry for table "p"')) {
-          throw new Error('Erro no trigger de banco de dados. A configuração do servidor está corrompida.');
-        }
-        
-        throw new Error(`Erro ao inserir pontuação: ${insertError.message}`);
-      }
-      
-      result = insertData && insertData.length > 0 ? insertData[0] : null;
-      operation = 'insert';
-    }
-    
-    console.log('Individual score saved successfully:', result ? 'Success' : 'No data returned');
-    return { 
-      success: true, 
-      data: result, 
-      operation: operation 
-    };
-    
-  } finally {
-    // Re-enable triggers
-    try {
-      console.log('Re-enabling triggers');
-      await supabase.rpc('enable_triggers');
-    } catch (triggerError) {
-      console.log('Could not re-enable triggers');
-    }
-  }
+  console.log('Individual score saved successfully:', result ? 'Success' : 'No data returned');
+  return { 
+    success: true, 
+    data: result, 
+    operation: operation 
+  };
 }
