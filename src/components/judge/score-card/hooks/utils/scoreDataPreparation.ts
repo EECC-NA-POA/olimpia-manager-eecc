@@ -17,7 +17,89 @@ export function prepareScoreData(
   const rule = modalityRule;
   let scoreData: any = {};
   
-  if (rule?.regra_tipo === 'distancia' || scoreType === 'distancia') {
+  // Handle "baterias" rule type with specific units
+  if (rule?.regra_tipo === 'baterias') {
+    const parametros = rule.parametros || {};
+    const unidade = parametros.unidade || 'pontos';
+    
+    console.log('Processing baterias rule with unit:', unidade);
+    
+    if (unidade === 'tempo') {
+      // Look for tentativa data in the format: tentativa_X_minutes, tentativa_X_seconds, etc.
+      const tentativaKeys = Object.keys(formData).filter(key => key.startsWith('tentativa_') && key.includes('_minutes'));
+      
+      if (tentativaKeys.length > 0) {
+        // Process the first tentativa found
+        const tentativaNumber = tentativaKeys[0].split('_')[1];
+        const minutes = formData[`tentativa_${tentativaNumber}_minutes`] || 0;
+        const seconds = formData[`tentativa_${tentativaNumber}_seconds`] || 0;
+        const milliseconds = formData[`tentativa_${tentativaNumber}_milliseconds`] || 0;
+        const raia = formData[`tentativa_${tentativaNumber}_raia`];
+        
+        console.log('Processing tentativa:', { tentativaNumber, minutes, seconds, milliseconds, raia });
+        
+        const totalMs = (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
+        const totalSeconds = totalMs / 1000;
+        
+        scoreData = {
+          valor_pontuacao: totalSeconds,
+          unidade: 'segundos',
+          tempo_minutos: minutes,
+          tempo_segundos: seconds,
+          tempo_milissegundos: milliseconds
+        };
+        
+        if (raia) {
+          scoreData.raia = parseInt(raia);
+        }
+      } else {
+        throw new Error('No tentativa data found for tempo scoring');
+      }
+    } else if (unidade === 'distancia') {
+      // Handle distance scoring for baterias
+      const tentativaKeys = Object.keys(formData).filter(key => key.startsWith('tentativa_') && key.includes('_meters'));
+      
+      if (tentativaKeys.length > 0) {
+        const tentativaNumber = tentativaKeys[0].split('_')[1];
+        const meters = formData[`tentativa_${tentativaNumber}_meters`] || 0;
+        const centimeters = formData[`tentativa_${tentativaNumber}_centimeters`] || 0;
+        const raia = formData[`tentativa_${tentativaNumber}_raia`];
+        
+        const totalMeters = meters + (centimeters / 100);
+        
+        scoreData = {
+          valor_pontuacao: totalMeters,
+          unidade: 'm'
+        };
+        
+        if (raia) {
+          scoreData.raia = parseInt(raia);
+        }
+      } else {
+        throw new Error('No tentativa data found for distance scoring');
+      }
+    } else {
+      // Handle points or other units for baterias
+      const tentativaKeys = Object.keys(formData).filter(key => key.startsWith('tentativa_') && key.includes('_score'));
+      
+      if (tentativaKeys.length > 0) {
+        const tentativaNumber = tentativaKeys[0].split('_')[1];
+        const score = formData[`tentativa_${tentativaNumber}_score`] || 0;
+        const raia = formData[`tentativa_${tentativaNumber}_raia`];
+        
+        scoreData = {
+          valor_pontuacao: score,
+          unidade: unidade
+        };
+        
+        if (raia) {
+          scoreData.raia = parseInt(raia);
+        }
+      } else {
+        throw new Error('No tentativa data found for score');
+      }
+    }
+  } else if (rule?.regra_tipo === 'distancia' || scoreType === 'distancia') {
     if ('meters' in formData && 'centimeters' in formData) {
       const totalMeters = formData.meters + (formData.centimeters / 100);
       scoreData = {
@@ -50,21 +132,17 @@ export function prepareScoreData(
       const totalSeconds = totalMs / 1000;
       
       scoreData = {
-        valor_pontuacao: totalSeconds, // Store as decimal seconds
+        valor_pontuacao: totalSeconds,
         unidade: 'segundos',
         tempo_minutos: formData.minutes,
         tempo_segundos: formData.seconds,
         tempo_milissegundos: formData.milliseconds
       };
       
-      // Add heat information if provided - heat can be bateria number or ID
       if (formData.heat) {
-        // If heat is provided, check if it's a bateria ID or number
-        // For tempo modalities, we typically use the heat value directly as bateria_id
         scoreData.bateria_id = formData.heat;
       }
       
-      // Add lane information if provided
       if (formData.lane) {
         scoreData.raia = formData.lane;
       }
@@ -84,6 +162,8 @@ export function prepareScoreData(
   }
   
   if (!scoreData.valor_pontuacao && scoreData.valor_pontuacao !== 0) {
+    console.error('Failed to extract valor_pontuacao from form data:', formData);
+    console.error('Processed score data:', scoreData);
     throw new Error('Failed to prepare score data - missing valor_pontuacao');
   }
   
