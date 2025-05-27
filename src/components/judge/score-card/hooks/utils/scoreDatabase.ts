@@ -25,9 +25,9 @@ export async function saveScoreToDatabase(
       .eq('evento_id', eventId)
       .eq('modalidade_id', modalityId)
       .eq('atleta_id', athlete.atleta_id)
-      .maybeSingle();
+      .single();
     
-    if (selectError) {
+    if (selectError && selectError.code !== 'PGRST116') {
       console.error('Error checking existing score:', selectError);
       throw selectError;
     }
@@ -41,7 +41,8 @@ export async function saveScoreToDatabase(
         .from('pontuacoes')
         .update(finalScoreData)
         .eq('id', existingScore.id)
-        .select();
+        .select()
+        .single();
         
       if (error) {
         console.error('Error updating score:', error);
@@ -56,7 +57,8 @@ export async function saveScoreToDatabase(
       const { data, error } = await supabase
         .from('pontuacoes')
         .insert(finalScoreData)
-        .select();
+        .select()
+        .single();
         
       if (error) {
         console.error('Error inserting score:', error);
