@@ -37,11 +37,12 @@ export async function saveScoreToDatabase(
     }
     
     console.log('Score updated successfully:', data);
+    return { success: true, data };
   } else {
     // Insert new score
     const { data, error } = await supabase
       .from('pontuacoes')
-      .insert(finalScoreData)
+      .insert([finalScoreData])
       .select();
       
     if (error) {
@@ -50,7 +51,6 @@ export async function saveScoreToDatabase(
     }
     
     console.log('Score inserted successfully:', data);
+    return { success: true, data };
   }
-  
-  return { success: true };
 }
