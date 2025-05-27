@@ -81,7 +81,7 @@ export function prepareFinalScoreData(
   modalityId: number,
   athlete: AthleteData
 ) {
-  const finalData = {
+  const finalData: any = {
     valor_pontuacao: scoreData.valor_pontuacao,
     unidade: scoreData.unidade,
     observacoes: formData.notes || null,
