@@ -60,10 +60,18 @@ export function BateriaScoresDisplay({
         return [];
       }
       
-      console.log('Fetched bateria scores:', data);
-      return data as BateriaScore[];
+      console.log('Fetched bateria scores raw data:', data);
+      
+      // Map the scores to include bateria info
+      const mappedScores = (data || []).map(score => ({
+        ...score,
+        bateria_numero: baterias.find(b => b.id === score.bateria_id)?.numero || 0
+      }));
+      
+      console.log('Mapped bateria scores:', mappedScores);
+      return mappedScores as BateriaScore[];
     },
-    enabled: !!athleteId && !!modalityId && !!eventId,
+    enabled: !!athleteId && !!modalityId && !!eventId && baterias.length > 0,
   });
 
   // Update score mutation
@@ -86,6 +94,7 @@ export function BateriaScoresDisplay({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bateria-scores', athleteId, modalityId, eventId] });
+      queryClient.invalidateQueries({ queryKey: ['bateria-scores-check', athleteId, modalityId, eventId] });
       queryClient.invalidateQueries({ queryKey: ['scores', modalityId, eventId] });
       setEditingBateria(null);
       setEditValues({});
@@ -177,27 +186,15 @@ export function BateriaScoresDisplay({
     );
   }
 
-  if (!batteriaScores || batteriaScores.length === 0) {
-    return (
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle className="text-sm">Pontuações por Bateria</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">Nenhuma pontuação registrada ainda.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
+  // Show all baterias with their scores (if any)
   return (
     <Card className="mt-4 border-blue-200 bg-blue-50">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm text-blue-800">Pontuações Registradas</CardTitle>
+        <CardTitle className="text-sm text-blue-800">Pontuações por Bateria</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         {baterias.map((bateria) => {
-          const score = batteriaScores.find(s => s.bateria_id === bateria.id);
+          const score = batteriaScores?.find(s => s.bateria_id === bateria.id);
           const isEditing = editingBateria === bateria.id;
           
           if (!score) {
