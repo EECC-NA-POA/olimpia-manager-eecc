@@ -34,7 +34,7 @@ export function DynamicScoreFields({ form, rule, bateriasData = [] }: DynamicSco
     return <BateriasScoreFields form={form} rule={rule} />;
   }
   
-  // Base the field type on the rule type, not the modality's tipo_pontuacao
+  // Base the field type on the rule type - this is the key fix
   switch (rule.regra_tipo) {
     case 'tempo':
       console.log('Rendering TimeScoreFields for tempo rule');

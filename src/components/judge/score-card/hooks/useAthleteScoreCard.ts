@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -24,7 +25,8 @@ export function useAthleteScoreCard(
     modalityId, 
     athlete, 
     judgeId, 
-    scoreType
+    scoreType,
+    modalityRule
   );
 
   // Fetch existing score if it exists

@@ -15,12 +15,14 @@ export function useScoreSubmission(
   modalityId: number,
   athlete: AthleteData,
   judgeId: string,
-  scoreType: 'tempo' | 'distancia' | 'pontos'
+  scoreType: 'tempo' | 'distancia' | 'pontos',
+  modalityRule?: any
 ) {
   const queryClient = useQueryClient();
   
-  // Get modality rules to determine the actual scoring type
-  const { data: modalityRule } = useModalityRules(modalityId);
+  // Get modality rules to determine the actual scoring type if not passed
+  const { data: fetchedModalityRule } = useModalityRules(modalityId);
+  const effectiveModalityRule = modalityRule || fetchedModalityRule;
 
   const submitScoreMutation = useMutation({
     mutationFn: async (formData: any) => {
@@ -29,13 +31,13 @@ export function useScoreSubmission(
       }
 
       console.log('Submit score mutation - Form data:', formData);
-      console.log('Submit score mutation - Modality rule:', modalityRule);
+      console.log('Submit score mutation - Modality rule:', effectiveModalityRule);
       console.log('Submit score mutation - Score type:', scoreType);
 
       // Determine the effective score type based on the modality rule
       let effectiveScoreType = scoreType;
-      if (modalityRule?.regra_tipo) {
-        switch (modalityRule.regra_tipo) {
+      if (effectiveModalityRule?.regra_tipo) {
+        switch (effectiveModalityRule.regra_tipo) {
           case 'tempo':
             effectiveScoreType = 'tempo';
             break;
@@ -54,7 +56,7 @@ export function useScoreSubmission(
       console.log('Effective score type for processing:', effectiveScoreType);
 
       // Prepare score data
-      const { scoreData } = prepareScoreData(formData, modalityRule, effectiveScoreType);
+      const { scoreData } = prepareScoreData(formData, effectiveModalityRule, effectiveScoreType);
       
       // Prepare final data for database
       const finalData = prepareFinalScoreData(
