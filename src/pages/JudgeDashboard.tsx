@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { ScoresTab } from '@/components/judge/tabs/ScoresTab';
 import { TeamsTab } from '@/components/judge/tabs/TeamsTab';
 
@@ -58,6 +58,9 @@ export default function JudgeDashboard() {
   if (!isJudge || !user) {
     return null; // Will redirect in the useEffect
   }
+
+  console.log('JudgeDashboard - Current event ID:', currentEventId);
+  console.log('JudgeDashboard - User ID:', user.id);
 
   return (
     <div className="container mx-auto p-6 space-y-6">

@@ -30,12 +30,13 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
 
       try {
         console.log('Fetching athletes for modality:', modalityId, 'event:', eventId);
+        
         const { data, error } = await supabase
           .from('inscricoes_modalidades')
           .select(`
             id,
             atleta_id,
-            usuarios(
+            usuarios!inner(
               nome_completo,
               tipo_documento,
               numero_documento
@@ -53,14 +54,22 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
 
         console.log('Raw athlete data:', data);
 
+        if (!data || data.length === 0) {
+          console.log('No athletes found for this modality');
+          return [];
+        }
+
         // Transform the data to match our Athlete interface
-        return (data as unknown as AthleteResponse[]).map((item) => ({
+        const transformedData = data.map((item) => ({
           inscricao_id: item.id,
           atleta_id: item.atleta_id,
           atleta_nome: item.usuarios?.nome_completo || 'Atleta',
           tipo_documento: item.usuarios?.tipo_documento || 'Documento',
           numero_documento: item.usuarios?.numero_documento || '',
         }));
+
+        console.log('Transformed athlete data:', transformedData);
+        return transformedData;
       } catch (error) {
         console.error('Error in athlete query execution:', error);
         toast.error('Erro ao buscar atletas');
