@@ -14,10 +14,12 @@ export interface Modality {
   regra?: ModalityRule;
 }
 
+export type RegrasTipo = 'pontos' | 'distancia' | 'tempo' | 'baterias' | 'sets' | 'arrows';
+
 export interface ModalityRule {
   id?: number;
   modalidade_id: string;
-  regra_tipo: 'pontos' | 'distancia' | 'tempo' | 'baterias' | 'sets' | 'arrows';
+  regra_tipo: RegrasTipo;
   parametros: {
     unidade?: string;
     subunidade?: string;
@@ -56,7 +58,7 @@ export interface ModalityRule {
 }
 
 export interface RuleForm {
-  regra_tipo: 'pontos' | 'distancia' | 'tempo' | 'baterias' | 'sets' | 'arrows';
+  regra_tipo: RegrasTipo;
   parametros: {
     unidade?: string;
     subunidade?: string;
