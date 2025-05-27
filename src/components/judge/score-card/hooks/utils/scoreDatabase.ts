@@ -6,6 +6,21 @@ interface AthleteData {
   equipe_id?: number;
 }
 
+interface ScoreRecordData {
+  evento_id: string;
+  modalidade_id: number;
+  atleta_id: string;
+  equipe_id: number | null;
+  valor_pontuacao: any;
+  unidade: any;
+  observacoes: any;
+  juiz_id: any;
+  data_registro: any;
+  tempo_minutos?: number;
+  tempo_segundos?: number;
+  bateria_id?: number;
+}
+
 export async function saveScoreToDatabase(
   finalScoreData: any,
   eventId: string,
@@ -19,8 +34,8 @@ export async function saveScoreToDatabase(
   console.log('Athlete ID:', athlete.atleta_id);
   
   try {
-    // Prepare the complete record data
-    const recordData = {
+    // Prepare the complete record data with all possible properties
+    const recordData: ScoreRecordData = {
       evento_id: eventId,
       modalidade_id: modalityId,
       atleta_id: athlete.atleta_id,
@@ -57,7 +72,7 @@ export async function saveScoreToDatabase(
     
     if (error) {
       console.error('Error in upsert operation:', error);
-      throw new Error(`Erro ao salvar pontuação: ${error.message}`);
+      throw new Error(`Erro ao inserir pontuação: ${error.message}`);
     }
     
     console.log('Score saved successfully:', data);
