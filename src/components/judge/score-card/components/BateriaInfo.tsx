@@ -23,9 +23,10 @@ export function BateriaInfo({ baterias, rule, showInIndividualCards = true }: Ba
   const numTentativas = parametros.num_tentativas;
   
   // Check if baterias are needed based on rule type and parameters
+  // For 'baterias' rule type, we always need baterias regardless of other parameters
   const needsBaterias = rule.regra_tipo === 'baterias' || 
-                        rule.regra_tipo === 'tempo' && parametros.baterias === true ||
-                        rule.regra_tipo === 'distancia' && parametros.baterias === true;
+                        (rule.regra_tipo === 'tempo' && parametros.baterias === true) ||
+                        (rule.regra_tipo === 'distancia' && parametros.baterias === true);
 
   console.log('BateriaInfo - Rule type:', rule.regra_tipo);
   console.log('BateriaInfo - Parametros:', parametros);
@@ -128,13 +129,13 @@ export function BateriaInfo({ baterias, rule, showInIndividualCards = true }: Ba
           </div>
         )}
         
-        {rule.regra_tipo === 'tempo' && (
+        {(rule.regra_tipo === 'tempo' || (rule.regra_tipo === 'baterias' && parametros.unidade === 'tempo')) && (
           <div className="text-xs text-blue-600 bg-blue-100 p-2 rounded">
             💡 Para tempo: informe minutos, segundos e milissegundos. Selecione a bateria e raia quando aplicável.
           </div>
         )}
         
-        {rule.regra_tipo === 'baterias' && (
+        {rule.regra_tipo === 'baterias' && parametros.unidade !== 'tempo' && (
           <div className="text-xs text-blue-600 bg-blue-100 p-2 rounded">
             💡 Registre o resultado de cada tentativa {raiasPorBateria ? 'e selecione a raia' : ''}
           </div>
