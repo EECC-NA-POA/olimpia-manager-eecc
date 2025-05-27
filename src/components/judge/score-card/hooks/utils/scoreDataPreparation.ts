@@ -41,8 +41,8 @@ export function prepareScoreData(
         
         console.log('Processing tentativa (old format):', { tentativaNumber, minutes, seconds, milliseconds, raia });
         
-        const totalMs = (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
-        const totalSeconds = totalMs / 1000;
+        // Convert to total seconds (more precise for database storage)
+        const totalSeconds = (minutes * 60) + seconds + (milliseconds / 1000);
         
         scoreData = {
           valor_pontuacao: totalSeconds,
@@ -68,8 +68,8 @@ export function prepareScoreData(
           
           console.log('Processing tentativa (new individual fields):', { minutes, seconds, milliseconds, raia });
           
-          const totalMs = (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
-          const totalSeconds = totalMs / 1000;
+          // Convert to total seconds (more precise for database storage)
+          const totalSeconds = (minutes * 60) + seconds + (milliseconds / 1000);
           
           scoreData = {
             valor_pontuacao: totalSeconds,
@@ -89,8 +89,8 @@ export function prepareScoreData(
             const seconds = Number(formData.seconds) || 0;
             const milliseconds = Number(formData.milliseconds) || 0;
             
-            const totalMs = (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
-            const totalSeconds = totalMs / 1000;
+            // Convert to total seconds (more precise for database storage)
+            const totalSeconds = (minutes * 60) + seconds + (milliseconds / 1000);
             
             scoreData = {
               valor_pontuacao: totalSeconds,
@@ -108,10 +108,10 @@ export function prepareScoreData(
               scoreData.raia = formData.lane;
             }
           } else {
-            // If no valid time data found, create a default with 0 values but ensure valor_pontuacao is 0, not null
+            // If no valid time data found, ensure we still have a valid valor_pontuacao
             console.log('No time data found, using default values');
             scoreData = {
-              valor_pontuacao: 0,
+              valor_pontuacao: 0, // Default to 0 seconds instead of null
               unidade: 'segundos',
               tempo_minutos: 0,
               tempo_segundos: 0,
@@ -126,8 +126,8 @@ export function prepareScoreData(
       
       if (tentativaKeys.length > 0) {
         const tentativaNumber = tentativaKeys[0].split('_')[1];
-        const meters = formData[`tentativa_${tentativaNumber}_meters`] || 0;
-        const centimeters = formData[`tentativa_${tentativaNumber}_centimeters`] || 0;
+        const meters = Number(formData[`tentativa_${tentativaNumber}_meters`]) || 0;
+        const centimeters = Number(formData[`tentativa_${tentativaNumber}_centimeters`]) || 0;
         const raia = formData[`tentativa_${tentativaNumber}_raia`];
         
         const totalMeters = meters + (centimeters / 100);
@@ -143,8 +143,8 @@ export function prepareScoreData(
       } else {
         // Handle new format from BateriasScoreFields
         if ('tentativa_1_meters' in formData || 'tentativa_1_centimeters' in formData) {
-          const meters = formData.tentativa_1_meters || 0;
-          const centimeters = formData.tentativa_1_centimeters || 0;
+          const meters = Number(formData.tentativa_1_meters) || 0;
+          const centimeters = Number(formData.tentativa_1_centimeters) || 0;
           const raia = formData.tentativa_1_raia;
           
           const totalMeters = meters + (centimeters / 100);
@@ -170,7 +170,7 @@ export function prepareScoreData(
       
       if (tentativaKeys.length > 0) {
         const tentativaNumber = tentativaKeys[0].split('_')[1];
-        const score = formData[`tentativa_${tentativaNumber}_score`] || 0;
+        const score = Number(formData[`tentativa_${tentativaNumber}_score`]) || 0;
         const raia = formData[`tentativa_${tentativaNumber}_raia`];
         
         scoreData = {
@@ -184,7 +184,7 @@ export function prepareScoreData(
       } else {
         // Handle new format from BateriasScoreFields
         if ('tentativa_1_score' in formData) {
-          const score = formData.tentativa_1_score || 0;
+          const score = Number(formData.tentativa_1_score) || 0;
           const raia = formData.tentativa_1_raia;
           
           scoreData = {
@@ -205,7 +205,7 @@ export function prepareScoreData(
     }
   } else if (rule?.regra_tipo === 'distancia' || scoreType === 'distancia') {
     if ('meters' in formData && 'centimeters' in formData) {
-      const totalMeters = formData.meters + (formData.centimeters / 100);
+      const totalMeters = Number(formData.meters) + (Number(formData.centimeters) / 100);
       scoreData = {
         valor_pontuacao: totalMeters,
         unidade: 'm'
@@ -219,7 +219,7 @@ export function prepareScoreData(
       }
     } else if ('score' in formData) {
       scoreData = {
-        valor_pontuacao: formData.score,
+        valor_pontuacao: Number(formData.score) || 0,
         unidade: 'm'
       };
       
@@ -236,8 +236,8 @@ export function prepareScoreData(
       const seconds = Number(formData.seconds) || 0;
       const milliseconds = Number(formData.milliseconds) || 0;
       
-      const totalMs = (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
-      const totalSeconds = totalMs / 1000;
+      // Convert to total seconds (more precise for database storage)
+      const totalSeconds = (minutes * 60) + seconds + (milliseconds / 1000);
       
       scoreData = {
         valor_pontuacao: totalSeconds,
@@ -269,7 +269,7 @@ export function prepareScoreData(
     }
   }
   
-  // Ensure we have a valid valor_pontuacao - NEVER allow null
+  // Ensure we ALWAYS have a valid valor_pontuacao - NEVER allow null
   if (scoreData.valor_pontuacao === undefined || scoreData.valor_pontuacao === null || isNaN(scoreData.valor_pontuacao)) {
     console.log('Invalid valor_pontuacao found, setting to 0');
     scoreData.valor_pontuacao = 0;
