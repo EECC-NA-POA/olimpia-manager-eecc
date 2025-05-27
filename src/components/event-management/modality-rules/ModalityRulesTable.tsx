@@ -80,10 +80,10 @@ export function ModalityRulesTable({ modalities, onEdit, onDelete }: ModalityRul
                   {modality.regra.regra_tipo === 'pontos' ? 'Pontos' :
                    modality.regra.regra_tipo === 'distancia' ? 'Distância' :
                    modality.regra.regra_tipo === 'tempo' ? 'Tempo' :
-                   modality.regra.regra_tipo === 'baterias' ? 'Baterias' :
                    modality.regra.regra_tipo === 'sets' ? 'Sets' :
                    modality.regra.regra_tipo === 'arrows' ? 'Flechas' :
                    modality.regra.regra_tipo}
+                  {modality.regra.parametros?.baterias && ' (com baterias)'}
                 </Badge>
               ) : (
                 <Badge variant="secondary">Não configurada</Badge>

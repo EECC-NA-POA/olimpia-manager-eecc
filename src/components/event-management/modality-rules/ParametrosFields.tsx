@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -152,6 +151,45 @@ export function ParametrosFields({ currentItem, updateParametros, onResetParamet
               </SelectContent>
             </Select>
           </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              checked={currentItem.parametros.baterias || false}
+              onCheckedChange={(checked) => updateParametros('baterias', checked)}
+            />
+            <Label>Usar baterias (múltiplas séries)</Label>
+          </div>
+          {currentItem.parametros.baterias && (
+            <>
+              <div>
+                <Label>Número de Baterias</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="20"
+                  placeholder="Ex: 3 (número de baterias/séries)"
+                  value={currentItem.parametros.num_baterias || ''}
+                  onChange={(e) => updateParametros('num_baterias', e.target.value ? parseInt(e.target.value) : undefined)}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Define quantas baterias/séries serão realizadas
+                </p>
+              </div>
+              <div>
+                <Label>Raias por Bateria</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="10"
+                  placeholder="Ex: 8 (número de raias por bateria)"
+                  value={currentItem.parametros.raias_por_bateria || ''}
+                  onChange={(e) => updateParametros('raias_por_bateria', e.target.value ? parseInt(e.target.value) : undefined)}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Define quantas raias cada bateria terá (obrigatório para controle de raias)
+                </p>
+              </div>
+            </>
+          )}
         </div>
       );
     

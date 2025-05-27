@@ -71,7 +71,7 @@ export function ModalityHeader({ rule, baterias }: ModalityHeaderProps) {
             </div>
           )}
           
-          {rule.regra_tipo === 'baterias' && (
+          {parametros.baterias && (
             <div className="text-xs text-blue-600 bg-blue-100 p-2 rounded">
               💡 Registre o resultado de cada tentativa {raiasPorBateria ? 'e selecione a raia' : ''}
             </div>
