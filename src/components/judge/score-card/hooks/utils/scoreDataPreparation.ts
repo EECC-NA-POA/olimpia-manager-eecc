@@ -1,4 +1,3 @@
-
 import { ModalityRule } from '../../../tabs/scores/hooks/useModalityRules';
 
 interface AthleteData {
@@ -46,7 +45,10 @@ export function prepareScoreData(
         
         scoreData = {
           valor_pontuacao: totalSeconds,
-          unidade: 'segundos'
+          unidade: 'segundos',
+          tempo_minutos: minutes,
+          tempo_segundos: seconds,
+          tempo_milissegundos: milliseconds
         };
         
         if (raia) {
@@ -70,7 +72,10 @@ export function prepareScoreData(
           
           scoreData = {
             valor_pontuacao: totalSeconds,
-            unidade: 'segundos'
+            unidade: 'segundos',
+            tempo_minutos: minutes,
+            tempo_segundos: seconds,
+            tempo_milissegundos: milliseconds
           };
           
           if (raia) {
@@ -79,12 +84,19 @@ export function prepareScoreData(
         } else {
           // Handle standard time input for tempo scoreType
           if ('minutes' in formData) {
-            const totalMs = (formData.minutes * 60 * 1000) + (formData.seconds * 1000) + formData.milliseconds;
+            const minutes = formData.minutes || 0;
+            const seconds = formData.seconds || 0;
+            const milliseconds = formData.milliseconds || 0;
+            
+            const totalMs = (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
             const totalSeconds = totalMs / 1000;
             
             scoreData = {
               valor_pontuacao: totalSeconds,
-              unidade: 'segundos'
+              unidade: 'segundos',
+              tempo_minutos: minutes,
+              tempo_segundos: seconds,
+              tempo_milissegundos: milliseconds
             };
             
             if (formData.heat) {
@@ -99,7 +111,10 @@ export function prepareScoreData(
             console.log('No time data found, using default values');
             scoreData = {
               valor_pontuacao: 0,
-              unidade: 'segundos'
+              unidade: 'segundos',
+              tempo_minutos: 0,
+              tempo_segundos: 0,
+              tempo_milissegundos: 0
             };
           }
         }
@@ -216,12 +231,19 @@ export function prepareScoreData(
     }
   } else if (rule?.regra_tipo === 'tempo' || scoreType === 'tempo') {
     if ('minutes' in formData) {
-      const totalMs = (formData.minutes * 60 * 1000) + (formData.seconds * 1000) + formData.milliseconds;
+      const minutes = formData.minutes || 0;
+      const seconds = formData.seconds || 0;
+      const milliseconds = formData.milliseconds || 0;
+      
+      const totalMs = (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
       const totalSeconds = totalMs / 1000;
       
       scoreData = {
         valor_pontuacao: totalSeconds,
-        unidade: 'segundos'
+        unidade: 'segundos',
+        tempo_minutos: minutes,
+        tempo_segundos: seconds,
+        tempo_milissegundos: milliseconds
       };
       
       if (formData.heat) {
@@ -276,6 +298,17 @@ export function prepareFinalScoreData(
     atleta_id: athlete.atleta_id,
     equipe_id: athlete.equipe_id || null
   };
+
+  // Add time fields if they exist
+  if (scoreData.tempo_minutos !== undefined) {
+    finalData.tempo_minutos = scoreData.tempo_minutos;
+  }
+  if (scoreData.tempo_segundos !== undefined) {
+    finalData.tempo_segundos = scoreData.tempo_segundos;
+  }
+  if (scoreData.tempo_milissegundos !== undefined) {
+    finalData.tempo_milissegundos = scoreData.tempo_milissegundos;
+  }
 
   // Add optional fields only if they exist
   if (scoreData.bateria_id !== undefined) {

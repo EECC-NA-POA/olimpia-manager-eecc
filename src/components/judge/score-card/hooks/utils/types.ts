@@ -15,6 +15,10 @@ export interface ScoreRecordData {
   juiz_id: any;
   data_registro: any;
   bateria_id: number;
+  // Campos de tempo separados para granularidade
+  tempo_minutos?: number | null;
+  tempo_segundos?: number | null;
+  tempo_milissegundos?: number | null;
 }
 
 export interface SaveScoreResult {
