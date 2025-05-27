@@ -51,7 +51,7 @@ export function useRuleOperations() {
         }
       }
       
-      // Check if we need to create baterias - MORE ROBUST LOGIC
+      // Check if we need to create baterias - Fixed logic for 'baterias' rule type
       const needsBaterias = ruleForm.regra_tipo === 'baterias' || 
                             (ruleForm.regra_tipo === 'tempo' && ruleForm.parametros.baterias === true) ||
                             (ruleForm.regra_tipo === 'distancia' && ruleForm.parametros.baterias === true);

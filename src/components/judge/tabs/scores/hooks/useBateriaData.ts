@@ -13,9 +13,12 @@ export function useBateriaData(modalityId: number | null, eventId: string | null
   return useQuery({
     queryKey: ['baterias', modalityId, eventId],
     queryFn: async () => {
-      if (!modalityId || !eventId) return [];
+      if (!modalityId || !eventId) {
+        console.log('useBateriaData: Missing parameters', { modalityId, eventId });
+        return [];
+      }
 
-      console.log('Fetching baterias for modality:', modalityId, 'event:', eventId);
+      console.log('useBateriaData: Fetching baterias for modality:', modalityId, 'event:', eventId);
 
       const { data, error } = await supabase
         .from('baterias')
@@ -25,11 +28,17 @@ export function useBateriaData(modalityId: number | null, eventId: string | null
         .order('numero');
 
       if (error) {
-        console.error('Error fetching baterias:', error);
+        console.error('useBateriaData: Error fetching baterias:', error);
         throw error;
       }
 
-      console.log('Fetched baterias:', data);
+      console.log('useBateriaData: Raw data from database:', data);
+      console.log('useBateriaData: Number of baterias found:', data?.length || 0);
+      
+      if (!data || data.length === 0) {
+        console.warn('useBateriaData: No baterias found in database for modality', modalityId, 'event', eventId);
+      }
+
       return data as Bateria[];
     },
     enabled: !!modalityId && !!eventId,

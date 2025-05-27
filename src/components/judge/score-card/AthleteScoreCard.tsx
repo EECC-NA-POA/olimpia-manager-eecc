@@ -42,7 +42,7 @@ export function AthleteScoreCard({
     modalityRule
   );
 
-  const { data: bateriasData = [] } = useBateriaData(modalityId, eventId);
+  const { data: bateriasData = [], isLoading: isLoadingBaterias } = useBateriaData(modalityId, eventId);
 
   // Use the actual bateria scores data instead of just checking existence
   const { batteriaScores = [] } = useBateriaScores({
@@ -59,11 +59,16 @@ export function AthleteScoreCard({
   const allBateriasFilled = hasBaterias && bateriasData.length > 0 && 
     uniqueBateriaIds.size >= bateriasData.length;
 
-  console.log('AthleteScoreCard - Rendering for athlete:', athlete.atleta_nome, {
+  console.log('AthleteScoreCard - Debug info for athlete:', athlete.atleta_nome, {
+    modalityId,
+    eventId,
+    modalityRule: modalityRule?.regra_tipo,
+    isLoadingBaterias,
     hasBaterias,
     bateriasTotal: bateriasData.length,
     bateriasPreenchidas: uniqueBateriaIds.size,
     allBateriasFilled,
+    bateriasData,
     batteriaScores: batteriaScores.map(s => ({ bateria_id: s.bateria_id, valor: s.valor_pontuacao }))
   });
 
@@ -81,8 +86,15 @@ export function AthleteScoreCard({
       />
 
       <CardContent className="pt-0 space-y-3">
+        {/* Show loading state for baterias */}
+        {isLoadingBaterias && (
+          <div className="text-sm text-muted-foreground">
+            Carregando informações das baterias...
+          </div>
+        )}
+
         {/* Always show bateria scores if there are baterias */}
-        {hasBaterias && (
+        {!isLoadingBaterias && hasBaterias && (
           <BateriaScoresDisplay
             athleteId={athlete.atleta_id}
             modalityId={modalityId}
@@ -93,8 +105,20 @@ export function AthleteScoreCard({
           />
         )}
 
-        {/* Only show the register button if not all baterias are filled */}
-        {!allBateriasFilled && (
+        {/* Show warning if rule requires baterias but none found */}
+        {!isLoadingBaterias && !hasBaterias && modalityRule?.regra_tipo === 'baterias' && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <div className="text-amber-800 text-sm font-medium">
+              ⚠️ Nenhuma bateria configurada
+            </div>
+            <div className="text-amber-700 text-xs mt-1">
+              Configure nas regras da modalidade
+            </div>
+          </div>
+        )}
+
+        {/* Only show the register button if not all baterias are filled or if no baterias are needed */}
+        {!isLoadingBaterias && !allBateriasFilled && (
           <Button 
             variant={isExpanded ? "outline" : "default"}
             size="sm" 
