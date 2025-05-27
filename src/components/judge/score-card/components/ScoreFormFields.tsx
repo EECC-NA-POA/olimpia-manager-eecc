@@ -32,6 +32,8 @@ export function ScoreFormFields({
   showModalityInfo = false
 }: ScoreFormFieldsProps) {
   console.log('ScoreFormFields - Rendering with isPending:', isPending);
+  console.log('ScoreFormFields - Current form values:', form.getValues());
+  console.log('ScoreFormFields - Form errors:', form.formState.errors);
 
   return (
     <>
@@ -60,7 +62,6 @@ export function ScoreFormFields({
         type="submit"
         disabled={isPending}
         className="w-full"
-        onClick={() => console.log('Button clicked!')}
       >
         {isPending ? 'Enviando...' : 'Salvar Pontuação'}
       </Button>

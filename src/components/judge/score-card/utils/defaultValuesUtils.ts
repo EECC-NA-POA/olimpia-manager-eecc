@@ -1,123 +1,66 @@
 
-export const getDefaultValues = (initialValues: any, rule: any) => {
+export function getDefaultValues(initialValues: any, rule: any) {
+  console.log('getDefaultValues - initialValues:', initialValues);
+  console.log('getDefaultValues - rule:', rule);
+  
   if (initialValues) {
+    console.log('getDefaultValues - returning initial values');
     return initialValues;
   }
 
+  const defaults: any = {
+    notes: '',
+  };
+
   if (!rule) {
-    return { score: 0, notes: '' };
+    console.log('getDefaultValues - no rule, returning basic defaults');
+    return {
+      ...defaults,
+      score: 0,
+    };
   }
 
-  const parametros = rule.parametros || {};
-
-  switch (rule.regra_tipo) {
-    case 'tempo':
-      return {
-        minutes: 0,
-        seconds: 0,
-        milliseconds: 0,
-        notes: ''
-      };
-
-    case 'distancia':
-      if (parametros.subunidade === 'cm') {
-        let defaults: any = {
-          meters: 0,
-          centimeters: 0,
-          notes: ''
-        };
-        
-        if (parametros.baterias) {
-          defaults.heat = 1;
-          if (parametros.raias_por_bateria) {
-            defaults.lane = 1;
-          }
-        }
-        
-        return defaults;
-      }
-      return {
-        score: 0,
-        notes: ''
-      };
-
-    case 'baterias':
-      const numTentativas = parametros.num_tentativas || 3;
-      return {
-        tentativas: Array.from({ length: numTentativas }, () => ({ valor: 0, raia: '' })),
-        notes: ''
-      };
-
-    case 'sets':
-      const melhorDe = parametros.melhor_de || parametros.num_sets || 3;
-      const pontuaPorSet = parametros.pontua_por_set !== false;
-      const isVolleyball = parametros.pontos_por_set !== undefined;
-      
-      if (pontuaPorSet) {
-        return {
-          sets: Array.from({ length: melhorDe }, () => ({ pontos: 0 })),
-          notes: ''
-        };
-      } else if (isVolleyball) {
-        return {
-          sets: Array.from({ length: melhorDe }, () => ({ 
-            vencedor: undefined, 
-            pontosEquipe1: 0, 
-            pontosEquipe2: 0 
-          })),
-          notes: ''
-        };
-      } else {
-        return {
-          sets: Array.from({ length: melhorDe }, () => ({ vencedor: undefined })),
-          notes: ''
-        };
-      }
-
-    case 'arrows':
-      const faseClassificacao = parametros.fase_classificacao || false;
-      const faseEliminacao = parametros.fase_eliminacao || false;
-      
-      if (faseClassificacao || faseEliminacao) {
-        let defaults: any = { notes: '' };
-        
-        if (faseClassificacao) {
-          const numFlechasClassificacao = parametros.num_flechas_classificacao || 72;
-          defaults.classificationArrows = Array.from({ length: numFlechasClassificacao }, () => ({ score: 0 }));
-        }
-        
-        if (faseEliminacao) {
-          const setsPorCombate = parametros.sets_por_combate || 5;
-          const flechasPorSet = parametros.flechas_por_set || 3;
-          
-          defaults.eliminationSets = Array.from({ length: setsPorCombate }, () => ({
-            arrows: Array.from({ length: flechasPorSet }, () => ({ score: 0 })),
-            total: 0,
-            matchPoints: 0
-          }));
-          defaults.totalMatchPoints = 0;
-          defaults.combatFinished = false;
-          defaults.needsShootOff = false;
-          
-          if (parametros.shoot_off) {
-            defaults.shootOffScore = 0;
-          }
-        }
-        
-        return defaults;
-      } else {
-        // Simple arrows format
-        const numFlechas = parametros.num_flechas || 6;
-        return {
-          flechas: Array.from({ length: numFlechas }, () => ({ zona: '0' })),
-          notes: ''
-        };
-      }
-
-    default:
-      return {
-        score: 0,
-        notes: ''
-      };
+  // Handle tempo type with baterias
+  if (rule.regra_tipo === 'tempo' && rule.parametros?.baterias) {
+    console.log('getDefaultValues - tempo with baterias');
+    defaults.heat = 1; // Default to first bateria
+    defaults.lane = 1; // Default to first lane
+    defaults.minutes = 0;
+    defaults.seconds = 0;
+    defaults.milliseconds = 0;
   }
-};
+  // Handle other tempo types
+  else if (rule.regra_tipo === 'tempo') {
+    console.log('getDefaultValues - tempo without baterias');
+    defaults.minutes = 0;
+    defaults.seconds = 0;
+    defaults.milliseconds = 0;
+  }
+  // Handle distance type
+  else if (rule.regra_tipo === 'distancia') {
+    console.log('getDefaultValues - distancia');
+    defaults.meters = 0;
+    defaults.centimeters = 0;
+    if (rule.parametros?.baterias) {
+      defaults.heat = 1;
+      defaults.lane = 1;
+    }
+  }
+  // Handle points type
+  else if (rule.regra_tipo === 'pontos' || rule.regra_tipo === 'sets' || rule.regra_tipo === 'arrows') {
+    console.log('getDefaultValues - pontos/sets/arrows');
+    defaults.score = 0;
+    if (rule.parametros?.baterias) {
+      defaults.heat = 1;
+      defaults.lane = 1;
+    }
+  }
+  // Fallback for unknown types
+  else {
+    console.log('getDefaultValues - fallback');
+    defaults.score = 0;
+  }
+
+  console.log('getDefaultValues - final defaults:', defaults);
+  return defaults;
+}
