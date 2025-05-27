@@ -1,8 +1,6 @@
 
-export interface AthleteData {
-  atleta_id: string;
-  equipe_id?: number;
-}
+// Re-export from the new types file for backward compatibility
+export type { AthleteData, ScoreRecordData, SaveScoreResult } from './scoreTypes';
 
 export interface ScoreRecordData {
   evento_id: string;
