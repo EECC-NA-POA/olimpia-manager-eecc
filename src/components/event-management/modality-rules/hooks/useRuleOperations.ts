@@ -1,7 +1,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Modality, RuleForm } from '../types';
+import { Modality, RuleForm, ModalityRule } from '../types';
 import { useBatteryOperations } from './useBatteryOperations';
 
 export function useRuleOperations() {
@@ -143,7 +143,7 @@ export function useRuleOperations() {
   const ensureBateriasForRule = async (
     modalityId: string,
     eventId: string,
-    rule: any
+    rule: ModalityRule
   ) => {
     console.log('Ensuring baterias exist for modality:', modalityId);
     
