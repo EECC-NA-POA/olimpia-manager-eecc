@@ -16,6 +16,8 @@ interface AthleteFiltersProps {
   onSelectedBranchChange?: (value: string) => void;
   selectedState?: string;
   onSelectedStateChange?: (value: string) => void;
+  statusFilter?: 'all' | 'avaliado' | 'pendente';
+  onStatusFilterChange?: (value: 'all' | 'avaliado' | 'pendente') => void;
 }
 
 export function AthleteFilters({
@@ -28,7 +30,9 @@ export function AthleteFilters({
   selectedBranch,
   onSelectedBranchChange,
   selectedState,
-  onSelectedStateChange
+  onSelectedStateChange,
+  statusFilter = 'all',
+  onStatusFilterChange
 }: AthleteFiltersProps) {
   const getPlaceholder = () => {
     switch (filterType) {
@@ -56,7 +60,7 @@ export function AthleteFilters({
         Filtros de Atletas
       </h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label>Tipo de Busca</Label>
           <Select
@@ -128,6 +132,23 @@ export function AthleteFilters({
               </SelectContent>
             </Select>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <Label>Status de Avaliação</Label>
+          <Select
+            value={statusFilter}
+            onValueChange={onStatusFilterChange}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Todos os status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="avaliado">✓ Avaliado</SelectItem>
+              <SelectItem value="pendente">⏳ Pendente</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>

@@ -4,7 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AthleteCard } from '@/components/judge/AthleteCard';
 import { AthletesGrid } from './AthletesGrid';
+import { AthleteFilters } from './AthleteFilters';
 import { useAthletesFiltering } from './hooks/useAthletesFiltering';
+import { useAthletesBranchData } from './hooks/useAthletesBranchData';
+import { useAthletesScoreStatus } from './hooks/useAthletesScoreStatus';
 import { useBateriaData } from '../hooks/useBateriaData';
 import { Athlete } from '../hooks/useAthletes';
 
@@ -29,12 +32,22 @@ export function AthletesList({
 }: AthletesListProps) {
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
 
+  // Get branch data for filtering
+  const { availableBranches, availableStates } = useAthletesBranchData(athletes || []);
+
+  // Get scores status for all athletes
+  const athleteScores = useAthletesScoreStatus({
+    athletes: athletes || [],
+    modalityId,
+    eventId
+  });
+
   const {
     filteredAthletes,
     filters,
     setFilters,
     resetFilters
-  } = useAthletesFiltering(athletes || []);
+  } = useAthletesFiltering(athletes || [], athleteScores);
 
   // Fetch baterias data for this modality
   const { data: bateriasData = [], isLoading: isLoadingBaterias } = useBateriaData(
@@ -105,6 +118,21 @@ export function AthletesList({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        <AthleteFilters
+          searchFilter={filters.searchFilter}
+          onSearchFilterChange={(value) => setFilters({ ...filters, searchFilter: value })}
+          filterType={filters.filterType}
+          onFilterTypeChange={(value) => setFilters({ ...filters, filterType: value })}
+          availableBranches={availableBranches}
+          availableStates={availableStates}
+          selectedBranch={filters.selectedBranch}
+          onSelectedBranchChange={(value) => setFilters({ ...filters, selectedBranch: value })}
+          selectedState={filters.selectedState}
+          onSelectedStateChange={(value) => setFilters({ ...filters, selectedState: value })}
+          statusFilter={filters.statusFilter}
+          onStatusFilterChange={(value) => setFilters({ ...filters, statusFilter: value })}
+        />
+        
         <AthletesGrid
           athletes={filteredAthletes}
           selectedAthleteId={selectedAthleteId}
