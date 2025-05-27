@@ -18,61 +18,61 @@ export async function saveScoreToDatabase(
   console.log('Athlete ID:', athlete.atleta_id);
   
   try {
-    // Use upsert (insert or update) instead of separate delete/insert
-    console.log('Using upsert operation...');
-    const { data, error } = await supabase
+    // First, check if a score already exists
+    const { data: existingScore, error: findError } = await supabase
       .from('pontuacoes')
-      .upsert(finalScoreData, {
-        onConflict: 'evento_id,modalidade_id,atleta_id'
-      });
+      .select('id')
+      .eq('evento_id', eventId)
+      .eq('modalidade_id', modalityId)
+      .eq('atleta_id', athlete.atleta_id)
+      .maybeSingle();
     
-    if (error) {
-      console.error('Upsert failed, trying manual approach:', error);
-      
-      // Fallback: try direct insert (let database handle conflicts)
-      const { data: insertData, error: insertError } = await supabase
-        .from('pontuacoes')
-        .insert(finalScoreData);
-      
-      if (insertError) {
-        console.error('Insert also failed:', insertError);
-        
-        // Last resort: try update by finding the record first
-        const { data: existingData, error: findError } = await supabase
-          .from('pontuacoes')
-          .select('id')
-          .eq('evento_id', eventId)
-          .eq('modalidade_id', modalityId)
-          .eq('atleta_id', athlete.atleta_id)
-          .limit(1);
-        
-        if (!findError && existingData && existingData.length > 0) {
-          const { data: updateData, error: updateError } = await supabase
-            .from('pontuacoes')
-            .update(finalScoreData)
-            .eq('id', existingData[0].id);
-          
-          if (updateError) {
-            console.error('Update also failed:', updateError);
-            throw updateError;
-          }
-          
-          console.log('Record updated successfully via fallback');
-          return { success: true, data: updateData };
-        } else {
-          throw insertError;
-        }
-      }
-      
-      console.log('Record inserted successfully via fallback');
-      return { success: true, data: insertData };
+    if (findError) {
+      console.error('Error checking for existing score:', findError);
+      throw findError;
     }
     
-    console.log('Record upserted successfully');
-    return { success: true, data };
+    let result;
+    
+    if (existingScore) {
+      // Update existing score
+      console.log('Updating existing score with ID:', existingScore.id);
+      const { data, error } = await supabase
+        .from('pontuacoes')
+        .update(finalScoreData)
+        .eq('id', existingScore.id)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error updating score:', error);
+        throw error;
+      }
+      
+      result = { success: true, data, operation: 'update' };
+      console.log('Score updated successfully');
+    } else {
+      // Insert new score
+      console.log('Inserting new score');
+      const { data, error } = await supabase
+        .from('pontuacoes')
+        .insert(finalScoreData)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error inserting score:', error);
+        throw error;
+      }
+      
+      result = { success: true, data, operation: 'insert' };
+      console.log('Score inserted successfully');
+    }
+    
+    return result;
     
   } catch (error) {
-    console.error('All database operations failed:', error);
+    console.error('Database operation failed:', error);
     throw error;
   }
 }
