@@ -1,4 +1,3 @@
-
 import { ModalityRule } from '../../../tabs/scores/hooks/useModalityRules';
 
 interface AthleteData {
@@ -30,18 +29,16 @@ export function prepareScoreData(
     
     // For baterias with tempo rule, or when rule type is tempo
     if (rule.regra_tipo === 'tempo') {
-      // Check for new format first (tentativa_X_minutes, etc.)
-      const tentativaKeys = Object.keys(formData).filter(key => key.startsWith('tentativa_') && key.includes('_minutes'));
+      // Handle new format from BateriasScoreFields
+      console.log('Processing tempo baterias with individual time fields...');
       
-      if (tentativaKeys.length > 0) {
-        // Process the first tentativa found (old format)
-        const tentativaNumber = tentativaKeys[0].split('_')[1];
-        const minutes = Number(formData[`tentativa_${tentativaNumber}_minutes`]) || 0;
-        const seconds = Number(formData[`tentativa_${tentativaNumber}_seconds`]) || 0;
-        const milliseconds = Number(formData[`tentativa_${tentativaNumber}_milliseconds`]) || 0;
-        const raia = formData[`tentativa_${tentativaNumber}_raia`];
+      if ('tentativa_1_minutes' in formData || 'tentativa_1_seconds' in formData || 'tentativa_1_milliseconds' in formData) {
+        const minutes = Number(formData.tentativa_1_minutes) || 0;
+        const seconds = Number(formData.tentativa_1_seconds) || 0;
+        const milliseconds = Number(formData.tentativa_1_milliseconds) || 0;
+        const raia = formData.tentativa_1_raia;
         
-        console.log('Processing tentativa (old format):', { tentativaNumber, minutes, seconds, milliseconds, raia });
+        console.log('Processing tentativa (time fields):', { minutes, seconds, milliseconds, raia });
         
         // Convert to total seconds (more precise for database storage)
         const totalSeconds = (minutes * 60) + seconds + (milliseconds / 1000);
@@ -58,17 +55,11 @@ export function prepareScoreData(
           scoreData.raia = parseInt(raia);
         }
       } else {
-        // Handle new format from BateriasScoreFields
-        console.log('Checking for new format with individual time fields...');
-        
-        // Look for individual time fields in root level
-        if ('tentativa_1_minutes' in formData || 'tentativa_1_seconds' in formData || 'tentativa_1_milliseconds' in formData) {
-          const minutes = Number(formData.tentativa_1_minutes) || 0;
-          const seconds = Number(formData.tentativa_1_seconds) || 0;
-          const milliseconds = Number(formData.tentativa_1_milliseconds) || 0;
-          const raia = formData.tentativa_1_raia;
-          
-          console.log('Processing tentativa (new individual fields):', { minutes, seconds, milliseconds, raia });
+        // Handle standard time input for tempo scoreType
+        if ('minutes' in formData) {
+          const minutes = Number(formData.minutes) || 0;
+          const seconds = Number(formData.seconds) || 0;
+          const milliseconds = Number(formData.milliseconds) || 0;
           
           // Convert to total seconds (more precise for database storage)
           const totalSeconds = (minutes * 60) + seconds + (milliseconds / 1000);
@@ -81,56 +72,31 @@ export function prepareScoreData(
             tempo_milissegundos: milliseconds
           };
           
-          if (raia) {
-            scoreData.raia = parseInt(raia);
+          if (formData.heat) {
+            scoreData.bateria_id = formData.heat;
+          }
+          
+          if (formData.lane) {
+            scoreData.raia = formData.lane;
           }
         } else {
-          // Handle standard time input for tempo scoreType
-          if ('minutes' in formData) {
-            const minutes = Number(formData.minutes) || 0;
-            const seconds = Number(formData.seconds) || 0;
-            const milliseconds = Number(formData.milliseconds) || 0;
-            
-            // Convert to total seconds (more precise for database storage)
-            const totalSeconds = (minutes * 60) + seconds + (milliseconds / 1000);
-            
-            scoreData = {
-              valor_pontuacao: totalSeconds,
-              unidade: 'segundos',
-              tempo_minutos: minutes,
-              tempo_segundos: seconds,
-              tempo_milissegundos: milliseconds
-            };
-            
-            if (formData.heat) {
-              scoreData.bateria_id = formData.heat;
-            }
-            
-            if (formData.lane) {
-              scoreData.raia = formData.lane;
-            }
-          } else {
-            // If no valid time data found, ensure we still have a valid valor_pontuacao
-            console.log('No time data found, using default values');
-            scoreData = {
-              valor_pontuacao: 0, // Default to 0 seconds instead of null
-              unidade: 'segundos',
-              tempo_minutos: 0,
-              tempo_segundos: 0,
-              tempo_milissegundos: 0
-            };
-          }
+          // If no valid time data found, ensure we still have a valid valor_pontuacao
+          console.log('No time data found, using default values');
+          scoreData = {
+            valor_pontuacao: 0, // Default to 0 seconds instead of null
+            unidade: 'segundos',
+            tempo_minutos: 0,
+            tempo_segundos: 0,
+            tempo_milissegundos: 0
+          };
         }
       }
     } else if (rule.regra_tipo === 'distancia') {
       // Handle distance scoring for baterias
-      const tentativaKeys = Object.keys(formData).filter(key => key.startsWith('tentativa_') && key.includes('_meters'));
-      
-      if (tentativaKeys.length > 0) {
-        const tentativaNumber = tentativaKeys[0].split('_')[1];
-        const meters = Number(formData[`tentativa_${tentativaNumber}_meters`]) || 0;
-        const centimeters = Number(formData[`tentativa_${tentativaNumber}_centimeters`]) || 0;
-        const raia = formData[`tentativa_${tentativaNumber}_raia`];
+      if ('tentativa_1_meters' in formData || 'tentativa_1_centimeters' in formData) {
+        const meters = Number(formData.tentativa_1_meters) || 0;
+        const centimeters = Number(formData.tentativa_1_centimeters) || 0;
+        const raia = formData.tentativa_1_raia;
         
         const totalMeters = meters + (centimeters / 100);
         
@@ -143,37 +109,16 @@ export function prepareScoreData(
           scoreData.raia = parseInt(raia);
         }
       } else {
-        // Handle new format from BateriasScoreFields
-        if ('tentativa_1_meters' in formData || 'tentativa_1_centimeters' in formData) {
-          const meters = Number(formData.tentativa_1_meters) || 0;
-          const centimeters = Number(formData.tentativa_1_centimeters) || 0;
-          const raia = formData.tentativa_1_raia;
-          
-          const totalMeters = meters + (centimeters / 100);
-          
-          scoreData = {
-            valor_pontuacao: totalMeters,
-            unidade: 'm'
-          };
-          
-          if (raia) {
-            scoreData.raia = parseInt(raia);
-          }
-        } else {
-          scoreData = {
-            valor_pontuacao: 0,
-            unidade: 'm'
-          };
-        }
+        scoreData = {
+          valor_pontuacao: 0,
+          unidade: 'm'
+        };
       }
     } else {
       // Handle points or other units for baterias
-      const tentativaKeys = Object.keys(formData).filter(key => key.startsWith('tentativa_') && key.includes('_score'));
-      
-      if (tentativaKeys.length > 0) {
-        const tentativaNumber = tentativaKeys[0].split('_')[1];
-        const score = Number(formData[`tentativa_${tentativaNumber}_score`]) || 0;
-        const raia = formData[`tentativa_${tentativaNumber}_raia`];
+      if ('tentativa_1_score' in formData) {
+        const score = Number(formData.tentativa_1_score) || 0;
+        const raia = formData.tentativa_1_raia;
         
         scoreData = {
           valor_pontuacao: score,
@@ -184,25 +129,10 @@ export function prepareScoreData(
           scoreData.raia = parseInt(raia);
         }
       } else {
-        // Handle new format from BateriasScoreFields
-        if ('tentativa_1_score' in formData) {
-          const score = Number(formData.tentativa_1_score) || 0;
-          const raia = formData.tentativa_1_raia;
-          
-          scoreData = {
-            valor_pontuacao: score,
-            unidade: 'pontos'
-          };
-          
-          if (raia) {
-            scoreData.raia = parseInt(raia);
-          }
-        } else {
-          scoreData = {
-            valor_pontuacao: 0,
-            unidade: 'pontos'
-          };
-        }
+        scoreData = {
+          valor_pontuacao: 0,
+          unidade: 'pontos'
+        };
       }
     }
   } else if (effectiveType === 'tempo') {

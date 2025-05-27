@@ -1,21 +1,21 @@
 
 import React from 'react';
+import { UseFormReturn } from 'react-hook-form';
 import {
   FormField,
   FormItem,
   FormLabel,
   FormControl,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { UseFormReturn } from 'react-hook-form';
+} from '@/components/ui/select';
 import { ModalityRule } from '../../tabs/scores/hooks/useModalityRules';
 
 interface BateriasScoreFieldsProps {
@@ -25,113 +25,71 @@ interface BateriasScoreFieldsProps {
 
 export function BateriasScoreFields({ form, rule }: BateriasScoreFieldsProps) {
   const parametros = rule.parametros || {};
-  const numTentativas = parametros.num_tentativas || 1;
-  const numRaias = parametros.num_raias || parametros.raias_por_bateria;
-  const unidade = parametros.unidade || 'pontos';
+  const raiasPorBateria = parametros.raias_por_bateria;
+  
+  console.log('BateriasScoreFields - Rule type:', rule.regra_tipo);
+  console.log('BateriasScoreFields - Parameters:', parametros);
 
-  console.log('BateriasScoreFields - numTentativas:', numTentativas);
-  console.log('BateriasScoreFields - numRaias:', numRaias);
-  console.log('BateriasScoreFields - unidade:', unidade);
-
-  // Generate array of attempts
-  const tentativas = Array.from({ length: numTentativas }, (_, i) => i + 1);
-
-  return (
-    <div className="space-y-6">
-      {tentativas.map((tentativa) => (
-        <div key={tentativa} className="border rounded-lg p-4 space-y-4">
-          <h4 className="font-semibold text-sm">Tentativa {tentativa}</h4>
-          
-          {/* Lane selector if multiple lanes are configured */}
-          {numRaias && (
-            <FormField
-              control={form.control}
-              name={`tentativa_${tentativa}_raia`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Raia</FormLabel>
-                  <FormControl>
-                    <Select 
-                      value={field.value?.toString() || ""} 
-                      onValueChange={(value) => field.onChange(parseInt(value, 10))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a raia" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: numRaias }, (_, i) => i + 1).map((raia) => (
-                          <SelectItem key={raia} value={raia.toString()}>
-                            Raia {raia}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-
-          {/* Score input based on unit type */}
-          {unidade === 'tempo' ? (
-            // Time input fields for tempo modalities
+  // Determine field type based on rule type
+  const renderScoreFields = () => {
+    switch (rule.regra_tipo) {
+      case 'tempo':
+        return (
+          <>
             <div className="grid grid-cols-3 gap-2">
               <FormField
                 control={form.control}
-                name={`tentativa_${tentativa}_minutes`}
+                name="tentativa_1_minutes"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Minutos</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
-                        min="0" 
-                        placeholder="min" 
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        placeholder="0" 
+                        min={0}
+                        {...field} 
+                        onChange={(e) => field.onChange(Number(e.target.value) || 0)}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
               <FormField
                 control={form.control}
-                name={`tentativa_${tentativa}_seconds`}
+                name="tentativa_1_seconds"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Segundos</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
-                        min="0" 
-                        max="59"
-                        placeholder="seg" 
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        placeholder="0" 
+                        min={0}
+                        max={59}
+                        {...field} 
+                        onChange={(e) => field.onChange(Number(e.target.value) || 0)}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
               <FormField
                 control={form.control}
-                name={`tentativa_${tentativa}_milliseconds`}
+                name="tentativa_1_milliseconds"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Milissegundos</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
-                        min="0" 
-                        max="999"
-                        placeholder="ms" 
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        placeholder="0" 
+                        min={0}
+                        max={999}
+                        {...field} 
+                        onChange={(e) => field.onChange(Number(e.target.value) || 0)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -139,44 +97,47 @@ export function BateriasScoreFields({ form, rule }: BateriasScoreFieldsProps) {
                 )}
               />
             </div>
-          ) : unidade === 'distancia' ? (
-            // Distance input fields
+          </>
+        );
+      
+      case 'distancia':
+        return (
+          <>
             <div className="grid grid-cols-2 gap-2">
               <FormField
                 control={form.control}
-                name={`tentativa_${tentativa}_meters`}
+                name="tentativa_1_meters"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Metros</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
-                        min="0" 
-                        step="0.01"
-                        placeholder="0.00" 
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        placeholder="0" 
+                        min={0}
+                        step="1"
+                        {...field} 
+                        onChange={(e) => field.onChange(Number(e.target.value) || 0)}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
               <FormField
                 control={form.control}
-                name={`tentativa_${tentativa}_centimeters`}
+                name="tentativa_1_centimeters"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Centímetros</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
-                        min="0" 
-                        max="99"
-                        placeholder="00" 
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        placeholder="0" 
+                        min={0}
+                        max={99}
+                        {...field} 
+                        onChange={(e) => field.onChange(Number(e.target.value) || 0)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -184,31 +145,73 @@ export function BateriasScoreFields({ form, rule }: BateriasScoreFieldsProps) {
                 )}
               />
             </div>
-          ) : (
-            // Generic score input for points or other units
-            <FormField
-              control={form.control}
-              name={`tentativa_${tentativa}_score`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Resultado ({unidade})</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      min="0" 
-                      step={unidade === 'pontos' ? '1' : '0.01'}
-                      placeholder="0" 
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          </>
+        );
+      
+      default:
+        // For points, sets, arrows, etc.
+        return (
+          <FormField
+            control={form.control}
+            name="tentativa_1_score"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Resultado ({rule.regra_tipo === 'sets' ? 'sets' : 
+                           rule.regra_tipo === 'arrows' ? 'pontos' : 'pontos'})
+                </FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="0" 
+                    min={0}
+                    step={rule.regra_tipo === 'arrows' ? '1' : '0.1'}
+                    {...field} 
+                    onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="text-sm font-medium text-blue-800">
+        Tentativa 1
+      </div>
+      
+      {renderScoreFields()}
+      
+      {raiasPorBateria && (
+        <FormField
+          control={form.control}
+          name="tentativa_1_raia"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Raia</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a raia" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {Array.from({ length: raiasPorBateria }, (_, i) => (
+                    <SelectItem key={i + 1} value={(i + 1).toString()}>
+                      Raia {i + 1}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
           )}
-        </div>
-      ))}
+        />
+      )}
     </div>
   );
 }
