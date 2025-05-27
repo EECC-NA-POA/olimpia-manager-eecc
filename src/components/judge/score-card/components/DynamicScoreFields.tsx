@@ -53,7 +53,13 @@ export function DynamicScoreFields({ form, rule, bateriasData = [] }: DynamicSco
     
     case 'tempo':
       console.log('Rendering TimeScoreFields');
-      return <TimeScoreFields form={form} />;
+      return (
+        <TimeScoreFields 
+          form={form} 
+          bateriasData={bateriasData}
+          modalityRule={rule}
+        />
+      );
     
     case 'baterias':
       console.log('Rendering BateriasScoreFields');

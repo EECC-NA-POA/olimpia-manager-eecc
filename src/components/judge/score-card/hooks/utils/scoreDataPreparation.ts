@@ -28,6 +28,9 @@ export function prepareScoreData(
       if (formData.heat) {
         scoreData.bateria_id = formData.heat;
       }
+      if (formData.lane) {
+        scoreData.raia = formData.lane;
+      }
     } else if ('score' in formData) {
       scoreData = {
         valor_pontuacao: formData.score,
@@ -37,20 +40,31 @@ export function prepareScoreData(
       if (formData.heat) {
         scoreData.bateria_id = formData.heat;
       }
+      if (formData.lane) {
+        scoreData.raia = formData.lane;
+      }
     }
   } else if (rule?.regra_tipo === 'tempo' || scoreType === 'tempo') {
     if ('minutes' in formData) {
       const totalMs = (formData.minutes * 60 * 1000) + (formData.seconds * 1000) + formData.milliseconds;
+      const totalSeconds = totalMs / 1000;
+      
       scoreData = {
-        valor_pontuacao: totalMs,
-        unidade: 'ms',
+        valor_pontuacao: totalSeconds, // Store as decimal seconds
+        unidade: 'segundos',
         tempo_minutos: formData.minutes,
         tempo_segundos: formData.seconds,
         tempo_milissegundos: formData.milliseconds
       };
       
+      // Add heat information if provided
       if (formData.heat) {
         scoreData.bateria_id = formData.heat;
+      }
+      
+      // Add lane information if provided
+      if (formData.lane) {
+        scoreData.raia = formData.lane;
       }
     }
   } else {
@@ -61,6 +75,9 @@ export function prepareScoreData(
     
     if (formData.heat) {
       scoreData.bateria_id = formData.heat;
+    }
+    if (formData.lane) {
+      scoreData.raia = formData.lane;
     }
   }
   
@@ -105,6 +122,9 @@ export function prepareFinalScoreData(
   }
   if (scoreData.bateria_id !== undefined) {
     finalData.bateria_id = scoreData.bateria_id;
+  }
+  if (scoreData.raia !== undefined) {
+    finalData.raia = scoreData.raia;
   }
 
   console.log('Final score data prepared:', finalData);

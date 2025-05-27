@@ -8,29 +8,46 @@ export const createDynamicSchema = (regraTipo: string, parametros: any) => {
 
   switch (regraTipo) {
     case 'tempo':
-      return z.object({
+      const baterias = parametros?.baterias === true;
+      const raiasPorBateria = parametros?.raias_por_bateria;
+      
+      let timeSchema: any = {
         ...baseSchema,
         minutes: z.coerce.number().min(0).default(0),
         seconds: z.coerce.number().min(0).max(59).default(0),
         milliseconds: z.coerce.number().min(0).max(999).default(0),
-      });
+      };
+      
+      // Add heat validation if baterias is enabled
+      if (baterias) {
+        timeSchema.heat = z.coerce.number().min(1, "Bateria deve ser maior que 0");
+        
+        // Add lane validation if raiasPorBateria is specified
+        if (raiasPorBateria) {
+          timeSchema.lane = z.coerce.number()
+            .min(1, "Raia deve ser maior que 0")
+            .max(raiasPorBateria, `Raia deve ser menor ou igual a ${raiasPorBateria}`);
+        }
+      }
+      
+      return z.object(timeSchema);
     
     case 'distancia':
-      const baterias = parametros?.baterias === true;
-      const raiasPorBateria = parametros?.raias_por_bateria;
+      const distBaterias = parametros?.baterias === true;
+      const distRaiasPorBateria = parametros?.raias_por_bateria;
       
       // Base distance schema
       let distanceSchema: any = { ...baseSchema };
       
       // Add heat validation if baterias is enabled
-      if (baterias) {
+      if (distBaterias) {
         distanceSchema.heat = z.coerce.number().min(1, "Bateria deve ser maior que 0");
         
         // Add lane validation if raiasPorBateria is specified
-        if (raiasPorBateria) {
+        if (distRaiasPorBateria) {
           distanceSchema.lane = z.coerce.number()
             .min(1, "Raia deve ser maior que 0")
-            .max(raiasPorBateria, `Raia deve ser menor ou igual a ${raiasPorBateria}`);
+            .max(distRaiasPorBateria, `Raia deve ser menor ou igual a ${distRaiasPorBateria}`);
         }
       }
       
