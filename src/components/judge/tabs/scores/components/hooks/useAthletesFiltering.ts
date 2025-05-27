@@ -1,6 +1,8 @@
+
 import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 import { Athlete } from '../../hooks/useAthletes';
-import { useAthletePaymentData } from '../../../../hooks/useAthleteData';
 
 interface FilterState {
   searchFilter: string;
@@ -21,6 +23,7 @@ interface UseAthletesFilteringProps {
   }>;
   availableBranches: Array<{ name: string; state: string }>;
   availableStates: string[];
+  eventId?: string | null;
 }
 
 export function useAthletesFiltering({
@@ -28,7 +31,8 @@ export function useAthletesFiltering({
   athleteScores = {},
   athletesBranchData,
   availableBranches,
-  availableStates
+  availableStates,
+  eventId
 }: UseAthletesFilteringProps) {
   const [filters, setFilters] = useState<FilterState>({
     searchFilter: '',
@@ -40,6 +44,7 @@ export function useAthletesFiltering({
 
   // Ensure we have a safe athletes array
   const safeAthletes = athletes || [];
+  const athleteIds = safeAthletes.map(athlete => athlete.atleta_id);
 
   // Create a map for quick branch data lookup
   const branchDataMap = useMemo(() => {
@@ -50,13 +55,41 @@ export function useAthletesFiltering({
     return map;
   }, [athletesBranchData]);
 
-  // Get athlete payment data for ID filtering - only call hooks for existing athletes
-  const athletesWithPaymentData = safeAthletes.map(athlete => {
-    const paymentQuery = useAthletePaymentData(athlete.atleta_id, null);
-    return {
-      ...athlete,
-      numero_identificador: paymentQuery.data?.numero_identificador || ''
-    };
+  // Fetch payment data for all athletes to get their numero_identificador
+  const { data: paymentData } = useQuery({
+    queryKey: ['athletes-payments-batch', athleteIds, eventId],
+    queryFn: async () => {
+      if (athleteIds.length === 0) return {};
+      
+      console.log('Fetching payment data for athletes to get identifiers');
+      
+      // Get payment data for all athletes
+      const { data: payments, error } = await supabase
+        .from('pagamentos')
+        .select('atleta_id, numero_identificador, evento_id')
+        .in('atleta_id', athleteIds);
+      
+      if (error) {
+        console.error('Error fetching payment data:', error);
+        return {};
+      }
+      
+      // Create a mapping from athlete_id to numero_identificador
+      const paymentMap: Record<string, string> = {};
+      
+      payments?.forEach(payment => {
+        // Prefer payment for current event, fallback to any payment
+        if (eventId && payment.evento_id === eventId) {
+          paymentMap[payment.atleta_id] = payment.numero_identificador;
+        } else if (!paymentMap[payment.atleta_id]) {
+          paymentMap[payment.atleta_id] = payment.numero_identificador;
+        }
+      });
+      
+      console.log('Payment mapping created:', paymentMap);
+      return paymentMap;
+    },
+    enabled: athleteIds.length > 0,
   });
 
   const filteredAthletes = useMemo(() => {
@@ -87,8 +120,7 @@ export function useAthletesFiltering({
           console.log('Filtering by ID with term:', searchTerm);
           
           filtered = filtered.filter(athlete => {
-            const athleteWithPayment = athletesWithPaymentData.find(a => a.atleta_id === athlete.atleta_id);
-            const athleteId = athleteWithPayment?.numero_identificador || '';
+            const athleteId = paymentData?.[athlete.atleta_id] || athlete.atleta_id.slice(-6);
             const matches = athleteId.toLowerCase().includes(searchTerm);
             
             console.log('Athlete:', athlete.atleta_nome, 'ID:', athleteId, 'Matches:', matches);
@@ -129,7 +161,7 @@ export function useAthletesFiltering({
     console.log('=== END FILTER DEBUG ===');
 
     return filtered;
-  }, [safeAthletes, filters, athleteScores, branchDataMap, athletesWithPaymentData]);
+  }, [safeAthletes, filters, athleteScores, branchDataMap, paymentData]);
 
   const resetFilters = () => {
     setFilters({

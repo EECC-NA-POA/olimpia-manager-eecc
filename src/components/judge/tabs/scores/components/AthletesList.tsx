@@ -52,7 +52,8 @@ export function AthletesList({
     athleteScores,
     athletesBranchData,
     availableBranches,
-    availableStates
+    availableStates,
+    eventId
   });
 
   // Fetch baterias data for this modality
