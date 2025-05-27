@@ -52,17 +52,26 @@ export async function handleTeamScore(
   if (existingIds.length > 0) {
     // Update existing records for this bateria
     console.log('Updating existing team scores for bateria:', recordData.bateria_id);
+    
+    const updateData: any = {
+      valor_pontuacao: recordData.valor_pontuacao,
+      unidade: recordData.unidade,
+      observacoes: recordData.observacoes,
+      juiz_id: recordData.juiz_id,
+      data_registro: recordData.data_registro
+    };
+
+    // Only add time fields if they exist in the database schema
+    if (recordData.tempo_minutos !== undefined) {
+      updateData.tempo_minutos = recordData.tempo_minutos;
+    }
+    if (recordData.tempo_segundos !== undefined) {
+      updateData.tempo_segundos = recordData.tempo_segundos;
+    }
+
     const { data: updateResult, error: updateError } = await supabase
       .from('pontuacoes')
-      .update({
-        valor_pontuacao: recordData.valor_pontuacao,
-        unidade: recordData.unidade,
-        observacoes: recordData.observacoes,
-        juiz_id: recordData.juiz_id,
-        data_registro: recordData.data_registro,
-        ...(recordData.tempo_minutos !== undefined && { tempo_minutos: recordData.tempo_minutos }),
-        ...(recordData.tempo_segundos !== undefined && { tempo_segundos: recordData.tempo_segundos })
-      })
+      .update(updateData)
       .in('id', existingIds)
       .select('*');
     
@@ -76,10 +85,31 @@ export async function handleTeamScore(
   } else {
     // Insert new scores for all team members for this bateria
     console.log('Inserting new team scores for all members for bateria:', recordData.bateria_id);
-    const insertData = teamMembers.map(member => ({
-      ...recordData,
-      atleta_id: member.atleta_id
-    }));
+    
+    const insertData = teamMembers.map(member => {
+      const memberData: any = {
+        evento_id: recordData.evento_id,
+        modalidade_id: recordData.modalidade_id,
+        atleta_id: member.atleta_id,
+        equipe_id: recordData.equipe_id,
+        valor_pontuacao: recordData.valor_pontuacao,
+        unidade: recordData.unidade,
+        observacoes: recordData.observacoes,
+        juiz_id: recordData.juiz_id,
+        data_registro: recordData.data_registro,
+        bateria_id: recordData.bateria_id
+      };
+
+      // Only add time fields if they exist in the database schema
+      if (recordData.tempo_minutos !== undefined) {
+        memberData.tempo_minutos = recordData.tempo_minutos;
+      }
+      if (recordData.tempo_segundos !== undefined) {
+        memberData.tempo_segundos = recordData.tempo_segundos;
+      }
+
+      return memberData;
+    });
     
     const { data: insertResult, error: insertError } = await supabase
       .from('pontuacoes')
