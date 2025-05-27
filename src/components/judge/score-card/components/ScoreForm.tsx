@@ -45,14 +45,19 @@ export function ScoreForm({
 
   console.log('ScoreForm - Rendering form with rule:', rule);
 
+  const handleFormSubmit = (data: any) => {
+    console.log('ScoreForm - Form submitted with data:', data);
+    onSubmit(data);
+  };
+
   return (
     <Form {...form}>
-      <form className="space-y-4 mt-4">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 mt-4">
         <ScoreFormFields 
           form={form}
           rule={rule}
           bateriasData={bateriasData}
-          onSubmit={onSubmit}
+          onSubmit={handleFormSubmit}
           isPending={isPending}
           showModalityInfo={showModalityInfo}
         />

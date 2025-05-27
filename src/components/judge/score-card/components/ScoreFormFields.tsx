@@ -63,7 +63,6 @@ export function ScoreFormFields({
         type="submit"
         disabled={isPending}
         className="w-full"
-        onClick={form.handleSubmit(handleSubmit)}
       >
         {isPending ? 'Enviando...' : 'Salvar Pontuação'}
       </Button>
