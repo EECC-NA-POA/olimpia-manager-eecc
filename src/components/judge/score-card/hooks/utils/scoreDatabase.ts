@@ -18,7 +18,7 @@ interface ScoreRecordData {
   data_registro: any;
   tempo_minutos?: number;
   tempo_segundos?: number;
-  bateria_id?: number;
+  bateria_id: number; // Make this required since DB requires it
 }
 
 export async function saveScoreToDatabase(
@@ -34,7 +34,29 @@ export async function saveScoreToDatabase(
   console.log('Athlete ID:', athlete.atleta_id);
   
   try {
-    // Prepare the complete record data with all possible properties
+    // Ensure bateria_id is provided - if not, we need to get a default one
+    let bateriaId = finalScoreData.bateria_id;
+    
+    if (!bateriaId) {
+      console.log('No bateria_id provided, fetching default bateria for modality');
+      // Get the first available bateria for this modality/event
+      const { data: defaultBateria, error: bateriaError } = await supabase
+        .from('baterias')
+        .select('id')
+        .eq('modalidade_id', modalityId)
+        .eq('evento_id', eventId)
+        .limit(1)
+        .single();
+      
+      if (bateriaError || !defaultBateria) {
+        throw new Error('Nenhuma bateria encontrada para esta modalidade. Configure as baterias primeiro.');
+      }
+      
+      bateriaId = defaultBateria.id;
+      console.log('Using default bateria ID:', bateriaId);
+    }
+
+    // Prepare the complete record data with all required properties
     const recordData: ScoreRecordData = {
       evento_id: eventId,
       modalidade_id: modalityId,
@@ -44,7 +66,8 @@ export async function saveScoreToDatabase(
       unidade: finalScoreData.unidade || 'pontos',
       observacoes: finalScoreData.observacoes || null,
       juiz_id: finalScoreData.juiz_id,
-      data_registro: finalScoreData.data_registro || new Date().toISOString()
+      data_registro: finalScoreData.data_registro || new Date().toISOString(),
+      bateria_id: bateriaId // This is now required
     };
 
     // Add optional time fields if they exist
@@ -54,25 +77,23 @@ export async function saveScoreToDatabase(
     if (finalScoreData.tempo_segundos !== undefined && finalScoreData.tempo_segundos !== null) {
       recordData.tempo_segundos = finalScoreData.tempo_segundos;
     }
-    if (finalScoreData.bateria_id !== undefined && finalScoreData.bateria_id !== null) {
-      recordData.bateria_id = finalScoreData.bateria_id;
-    }
 
     console.log('Record data to save:', recordData);
     
-    // First, try to find existing record
-    const { data: existingRecord, error: fetchError } = await supabase
+    // First, try to find existing record using a more explicit query
+    const { data: existingRecords, error: fetchError } = await supabase
       .from('pontuacoes')
       .select('id')
       .eq('evento_id', eventId)
       .eq('modalidade_id', modalityId)
-      .eq('atleta_id', athlete.atleta_id)
-      .maybeSingle();
+      .eq('atleta_id', athlete.atleta_id);
     
     if (fetchError) {
       console.error('Error checking for existing record:', fetchError);
       throw new Error(`Erro ao verificar pontuação existente: ${fetchError.message}`);
     }
+    
+    const existingRecord = existingRecords && existingRecords.length > 0 ? existingRecords[0] : null;
     
     let result;
     let operation;
