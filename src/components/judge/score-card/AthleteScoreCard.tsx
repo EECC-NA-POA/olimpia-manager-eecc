@@ -45,6 +45,8 @@ export function AthleteScoreCard({
 
   const hasBaterias = bateriasData.length > 0;
 
+  console.log('AthleteScoreCard - Rendering for athlete:', athlete.atleta_nome, 'hasBaterias:', hasBaterias, 'bateriasData:', bateriasData);
+
   return (
     <Card className={`
       overflow-hidden transition-all duration-200
@@ -58,16 +60,8 @@ export function AthleteScoreCard({
         modalityRule={modalityRule}
       />
 
-      <CardContent className="pt-0">
-        <Button 
-          variant={isExpanded ? "outline" : "default"}
-          size="sm" 
-          className="w-full my-2"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          {isExpanded ? "Esconder formulário" : "Registrar pontuação"}
-        </Button>
-
+      <CardContent className="pt-0 space-y-3">
+        {/* Always show bateria scores if there are baterias */}
         {hasBaterias && (
           <BateriaScoresDisplay
             athleteId={athlete.atleta_id}
@@ -78,6 +72,15 @@ export function AthleteScoreCard({
             scoreType={scoreType}
           />
         )}
+
+        <Button 
+          variant={isExpanded ? "outline" : "default"}
+          size="sm" 
+          className="w-full"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          {isExpanded ? "Esconder formulário" : "Registrar nova pontuação"}
+        </Button>
 
         {isExpanded && (
           <ScoreForm 

@@ -13,8 +13,6 @@ interface BateriaScore {
   id: number;
   bateria_id: number;
   valor_pontuacao: number | null;
-  tempo_minutos: number | null;
-  tempo_segundos: number | null;
   unidade: string;
   observacoes: string | null;
   bateria_numero?: number;
@@ -41,13 +39,17 @@ export function BateriaScoresDisplay({
   const [editValues, setEditValues] = useState<{[key: string]: any}>({});
   const queryClient = useQueryClient();
 
+  console.log('BateriaScoresDisplay - Props:', { athleteId, modalityId, eventId, baterias });
+
   // Fetch existing scores for all baterias
-  const { data: batteriaScores } = useQuery({
+  const { data: batteriaScores, isLoading: isLoadingScores } = useQuery({
     queryKey: ['bateria-scores', athleteId, modalityId, eventId],
     queryFn: async () => {
+      console.log('Fetching bateria scores for:', { athleteId, modalityId, eventId });
+      
       const { data, error } = await supabase
         .from('pontuacoes')
-        .select('id, bateria_id, valor_pontuacao, tempo_minutos, tempo_segundos, unidade, observacoes')
+        .select('id, bateria_id, valor_pontuacao, unidade, observacoes')
         .eq('evento_id', eventId)
         .eq('modalidade_id', modalityId)
         .eq('atleta_id', athleteId)
@@ -58,6 +60,7 @@ export function BateriaScoresDisplay({
         return [];
       }
       
+      console.log('Fetched bateria scores:', data);
       return data as BateriaScore[];
     },
     enabled: !!athleteId && !!modalityId && !!eventId,
@@ -66,6 +69,8 @@ export function BateriaScoresDisplay({
   // Update score mutation
   const updateScoreMutation = useMutation({
     mutationFn: async ({ scoreId, newValues }: { scoreId: number, newValues: any }) => {
+      console.log('Updating score:', scoreId, newValues);
+      
       const { data, error } = await supabase
         .from('pontuacoes')
         .update({
@@ -87,6 +92,7 @@ export function BateriaScoresDisplay({
       toast.success('Pontuação atualizada com sucesso');
     },
     onError: (error: any) => {
+      console.error('Error updating score:', error);
       toast.error(`Erro ao atualizar pontuação: ${error.message}`);
     }
   });
@@ -95,8 +101,6 @@ export function BateriaScoresDisplay({
     setEditingBateria(bateriaId);
     setEditValues({
       valor_pontuacao: currentScore.valor_pontuacao || '',
-      tempo_minutos: currentScore.tempo_minutos || '',
-      tempo_segundos: currentScore.tempo_segundos || '',
       observacoes: currentScore.observacoes || ''
     });
   };
@@ -106,8 +110,6 @@ export function BateriaScoresDisplay({
     
     // Convert empty strings to null for numeric fields
     if (cleanedValues.valor_pontuacao === '') cleanedValues.valor_pontuacao = null;
-    if (cleanedValues.tempo_minutos === '') cleanedValues.tempo_minutos = null;
-    if (cleanedValues.tempo_segundos === '') cleanedValues.tempo_segundos = null;
     if (cleanedValues.observacoes === '') cleanedValues.observacoes = null;
     
     updateScoreMutation.mutate({ scoreId, newValues: cleanedValues });
@@ -120,66 +122,117 @@ export function BateriaScoresDisplay({
 
   const formatScoreDisplay = (score: BateriaScore) => {
     if (scoreType === 'tempo') {
-      const minutes = score.tempo_minutos || 0;
-      const seconds = score.tempo_segundos || 0;
-      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    } else if (scoreType === 'distancia' || scoreType === 'pontos') {
+      // Convert milliseconds back to readable format
+      const totalMs = score.valor_pontuacao || 0;
+      const minutes = Math.floor(totalMs / 60000);
+      const seconds = Math.floor((totalMs % 60000) / 1000);
+      const ms = totalMs % 1000;
+      
+      if (minutes > 0) {
+        return `${minutes}:${seconds.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+      } else {
+        return `${seconds}.${ms.toString().padStart(3, '0')}s`;
+      }
+    } else if (scoreType === 'distancia') {
+      const value = score.valor_pontuacao || 0;
+      return `${value.toFixed(2)}m`;
+    } else {
       return score.valor_pontuacao ? `${score.valor_pontuacao} ${score.unidade}` : 'Não registrado';
     }
-    return 'Não registrado';
   };
 
+  const getScoreInputField = (score: BateriaScore) => {
+    if (scoreType === 'tempo') {
+      // For time, show the raw milliseconds value for editing
+      return (
+        <Input
+          type="number"
+          placeholder="Milissegundos"
+          value={editValues.valor_pontuacao}
+          onChange={(e) => setEditValues(prev => ({ ...prev, valor_pontuacao: Number(e.target.value) }))}
+          className="w-24 h-8"
+        />
+      );
+    } else {
+      return (
+        <Input
+          type="number"
+          step="0.01"
+          placeholder="Valor"
+          value={editValues.valor_pontuacao}
+          onChange={(e) => setEditValues(prev => ({ ...prev, valor_pontuacao: Number(e.target.value) }))}
+          className="w-20 h-8"
+        />
+      );
+    }
+  };
+
+  if (isLoadingScores) {
+    return (
+      <Card className="mt-4">
+        <CardContent className="pt-4">
+          <p className="text-sm text-muted-foreground">Carregando pontuações...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!batteriaScores || batteriaScores.length === 0) {
-    return null;
+    return (
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="text-sm">Pontuações por Bateria</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">Nenhuma pontuação registrada ainda.</p>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <Card className="mt-4">
-      <CardHeader>
-        <CardTitle className="text-sm">Pontuações por Bateria</CardTitle>
+    <Card className="mt-4 border-blue-200 bg-blue-50">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm text-blue-800">Pontuações Registradas</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         {baterias.map((bateria) => {
           const score = batteriaScores.find(s => s.bateria_id === bateria.id);
           const isEditing = editingBateria === bateria.id;
           
-          if (!score) return null;
+          if (!score) {
+            return (
+              <div key={bateria.id} className="flex items-center justify-between p-2 border rounded bg-gray-50">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="bg-white">Bateria {bateria.numero}</Badge>
+                  <span className="text-sm text-gray-500">Não registrado</span>
+                </div>
+              </div>
+            );
+          }
           
           return (
-            <div key={bateria.id} className="flex items-center justify-between p-2 border rounded">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Bateria {bateria.numero}</Badge>
+            <div key={bateria.id} className="flex items-center justify-between p-2 border rounded bg-white">
+              <div className="flex items-center gap-2 flex-1">
+                <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                  Bateria {bateria.numero}
+                </Badge>
                 {!isEditing ? (
-                  <span className="text-sm">{formatScoreDisplay(score)}</span>
-                ) : (
-                  <div className="flex gap-2">
-                    {scoreType === 'tempo' ? (
-                      <>
-                        <Input
-                          type="number"
-                          placeholder="Min"
-                          value={editValues.tempo_minutos}
-                          onChange={(e) => setEditValues(prev => ({ ...prev, tempo_minutos: Number(e.target.value) }))}
-                          className="w-16 h-8"
-                        />
-                        <Input
-                          type="number"
-                          placeholder="Seg"
-                          value={editValues.tempo_segundos}
-                          onChange={(e) => setEditValues(prev => ({ ...prev, tempo_segundos: Number(e.target.value) }))}
-                          className="w-16 h-8"
-                        />
-                      </>
-                    ) : (
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="Valor"
-                        value={editValues.valor_pontuacao}
-                        onChange={(e) => setEditValues(prev => ({ ...prev, valor_pontuacao: Number(e.target.value) }))}
-                        className="w-20 h-8"
-                      />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">{formatScoreDisplay(score)}</span>
+                    {score.observacoes && (
+                      <span className="text-xs text-gray-500">{score.observacoes}</span>
                     )}
+                  </div>
+                ) : (
+                  <div className="flex gap-2 items-center">
+                    {getScoreInputField(score)}
+                    <Input
+                      placeholder="Observações"
+                      value={editValues.observacoes}
+                      onChange={(e) => setEditValues(prev => ({ ...prev, observacoes: e.target.value }))}
+                      className="w-24 h-8 text-xs"
+                    />
                   </div>
                 )}
               </div>
@@ -190,6 +243,7 @@ export function BateriaScoresDisplay({
                     size="sm"
                     variant="ghost"
                     onClick={() => handleEdit(bateria.id, score)}
+                    className="h-6 w-6 p-0"
                   >
                     <Edit className="h-3 w-3" />
                   </Button>
@@ -200,6 +254,7 @@ export function BateriaScoresDisplay({
                       variant="ghost"
                       onClick={() => handleSave(score.id)}
                       disabled={updateScoreMutation.isPending}
+                      className="h-6 w-6 p-0"
                     >
                       <Save className="h-3 w-3" />
                     </Button>
@@ -207,6 +262,7 @@ export function BateriaScoresDisplay({
                       size="sm"
                       variant="ghost"
                       onClick={handleCancel}
+                      className="h-6 w-6 p-0"
                     >
                       <X className="h-3 w-3" />
                     </Button>
