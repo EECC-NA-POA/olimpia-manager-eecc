@@ -58,9 +58,17 @@ export function useScoreSubmission(
         console.error('=== SCORE SUBMISSION FAILED ===');
         console.error('Database error details:', JSON.stringify(dbError, null, 2));
         
-        // Provide more specific error messages
-        if (dbError.message?.includes('trigger') || dbError.message?.includes('replicação')) {
+        // Provide more specific error messages for common database issues
+        if (dbError.message?.includes('missing FROM-clause entry for table "p"')) {
+          throw new Error('Erro crítico no banco de dados: problema de configuração nos triggers. Este erro requer intervenção do administrador do sistema.');
+        }
+        
+        if (dbError.message?.includes('trigger') && dbError.message?.includes('replicação')) {
           throw new Error('Erro no sistema de pontuação em equipe. A pontuação pode ter sido salva. Verifique os resultados e contacte o administrador se necessário.');
+        }
+        
+        if (dbError.message?.includes('FROM-clause')) {
+          throw new Error('Erro de configuração do servidor de banco de dados. Contacte o administrador sobre problemas nos triggers SQL.');
         }
         
         throw dbError;
@@ -82,7 +90,13 @@ export function useScoreSubmission(
       console.error('Error message:', error?.message);
       
       const errorMessage = error?.message || 'Erro desconhecido ao registrar pontuação';
-      toast.error(`Erro ao registrar pontuação: ${errorMessage}`);
+      
+      // Show a more user-friendly error message for the FROM-clause error
+      if (errorMessage.includes('FROM-clause') || errorMessage.includes('missing FROM-clause entry')) {
+        toast.error('Erro crítico no sistema: problema de configuração do banco de dados. Contacte o administrador do sistema.');
+      } else {
+        toast.error(`Erro ao registrar pontuação: ${errorMessage}`);
+      }
     }
   });
 

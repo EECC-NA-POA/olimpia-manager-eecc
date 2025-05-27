@@ -47,6 +47,7 @@ export async function saveScoreToDatabase(
     
     if (modalityError) {
       console.error('Error fetching modality info:', modalityError);
+      throw new Error(`Erro ao buscar informações da modalidade: ${modalityError.message}`);
     }
     
     const isTeamModality = modalityInfo?.tipo_modalidade?.includes('COLETIVA');
@@ -65,6 +66,7 @@ export async function saveScoreToDatabase(
       
       if (enrollmentError) {
         console.error('Error fetching team enrollment:', enrollmentError);
+        throw new Error(`Erro ao buscar inscrição da equipe: ${enrollmentError.message}`);
       } else if (enrollment) {
         teamId = enrollment.equipe_id;
         console.log('Found team ID from enrollment:', teamId);
@@ -96,7 +98,7 @@ export async function saveScoreToDatabase(
       console.log('Using default bateria ID:', bateriaId);
     }
 
-    // Prepare the complete record data
+    // Prepare the complete record data with explicit type conversion
     const recordData: ScoreRecordData = {
       evento_id: eventId,
       modalidade_id: modalityIdInt,
@@ -118,11 +120,14 @@ export async function saveScoreToDatabase(
       recordData.tempo_segundos = finalScoreData.tempo_segundos;
     }
 
-    console.log('Record data to save:', recordData);
+    console.log('Record data to save:', JSON.stringify(recordData, null, 2));
     
-    // For team modalities, disable the trigger temporarily and handle team replication manually
+    // For team modalities, handle team score replication manually to avoid trigger issues
     if (isTeamModality) {
       console.log('Team modality detected - handling team score replication manually');
+      
+      // First, try to disable triggers temporarily (if we have proper permissions)
+      console.log('Attempting to handle team scores manually to avoid trigger conflicts');
       
       // Get all team members
       const { data: teamMembers, error: teamMembersError } = await supabase
@@ -137,7 +142,7 @@ export async function saveScoreToDatabase(
         throw new Error('Erro ao buscar membros da equipe');
       }
       
-      console.log('Team members:', teamMembers);
+      console.log('Team members found:', teamMembers?.length || 0);
       
       // Check for existing scores for any team member
       const { data: existingScores, error: existingError } = await supabase
@@ -154,6 +159,7 @@ export async function saveScoreToDatabase(
       
       if (existingScores && existingScores.length > 0) {
         // Update existing scores for all team members
+        console.log('Updating existing team scores');
         const updatePromises = teamMembers?.map(member => {
           const memberRecordData = {
             ...recordData,
@@ -173,33 +179,56 @@ export async function saveScoreToDatabase(
         
         if (errors.length > 0) {
           console.error('Errors updating team scores:', errors);
-          throw new Error('Erro ao atualizar pontuações da equipe');
+          const errorMessage = errors[0].error?.message || 'Erro desconhecido';
+          
+          // Handle specific SQL errors
+          if (errorMessage.includes('missing FROM-clause entry for table "p"')) {
+            throw new Error('Erro no trigger de banco de dados. A funcionalidade de equipes pode estar com problemas de configuração.');
+          }
+          
+          throw new Error(`Erro ao atualizar pontuações da equipe: ${errorMessage}`);
         }
         
         console.log('Team scores updated successfully');
         return { success: true, operation: 'update', data: recordData };
       } else {
         // Insert new scores for all team members
+        console.log('Inserting new team scores');
         const insertData = teamMembers?.map(member => ({
           ...recordData,
           atleta_id: member.atleta_id
         })) || [];
         
-        const { data: insertResult, error: insertError } = await supabase
-          .from('pontuacoes')
-          .insert(insertData)
-          .select('*');
-        
-        if (insertError) {
-          console.error('Error inserting team scores:', insertError);
-          throw new Error(`Erro ao inserir pontuações da equipe: ${insertError.message}`);
+        // Try inserting one by one to isolate any trigger issues
+        const insertResults = [];
+        for (const memberData of insertData) {
+          console.log('Inserting score for team member:', memberData.atleta_id);
+          const { data: insertResult, error: insertError } = await supabase
+            .from('pontuacoes')
+            .insert([memberData])
+            .select('*');
+          
+          if (insertError) {
+            console.error('Error inserting score for member:', memberData.atleta_id, insertError);
+            
+            // Handle specific SQL errors
+            if (insertError.message.includes('missing FROM-clause entry for table "p"')) {
+              throw new Error('Erro no trigger de banco de dados (FROM-clause). A funcionalidade pode estar mal configurada no servidor.');
+            }
+            
+            throw new Error(`Erro ao inserir pontuação para membro da equipe: ${insertError.message}`);
+          }
+          
+          insertResults.push(insertResult);
         }
         
         console.log('Team scores inserted successfully');
-        return { success: true, operation: 'insert', data: insertResult };
+        return { success: true, operation: 'insert', data: insertResults };
       }
     } else {
-      // Individual modality - use normal flow
+      // Individual modality - use normal flow with enhanced error handling
+      console.log('Individual modality - using standard insertion');
+      
       // Check for existing record
       const { data: existingRecords, error: fetchError } = await supabase
         .from('pontuacoes')
@@ -214,7 +243,7 @@ export async function saveScoreToDatabase(
       }
       
       const existingRecord = existingRecords && existingRecords.length > 0 ? existingRecords[0] : null;
-      console.log('Existing record found:', existingRecord);
+      console.log('Existing record found:', existingRecord ? 'Yes' : 'No');
       
       let result;
       let operation;
@@ -230,6 +259,12 @@ export async function saveScoreToDatabase(
         
         if (updateError) {
           console.error('Error in update operation:', updateError);
+          
+          // Handle specific SQL errors
+          if (updateError.message.includes('missing FROM-clause entry for table "p"')) {
+            throw new Error('Erro no trigger de banco de dados (FROM-clause). Contacte o administrador sobre problemas na configuração do servidor.');
+          }
+          
           throw new Error(`Erro ao atualizar pontuação: ${updateError.message}`);
         }
         
@@ -238,7 +273,7 @@ export async function saveScoreToDatabase(
       } else {
         // Insert new record
         console.log('Inserting new record');
-        console.log('Data being inserted:', JSON.stringify(recordData, null, 2));
+        console.log('Data being inserted (final check):', JSON.stringify(recordData, null, 2));
         
         const { data: insertData, error: insertError } = await supabase
           .from('pontuacoes')
@@ -247,6 +282,13 @@ export async function saveScoreToDatabase(
         
         if (insertError) {
           console.error('Error in insert operation:', insertError);
+          console.error('Insert error details:', JSON.stringify(insertError, null, 2));
+          
+          // Handle specific SQL errors with more detailed messages
+          if (insertError.message.includes('missing FROM-clause entry for table "p"')) {
+            throw new Error('Erro crítico no banco de dados: problema na configuração de triggers. Contacte o administrador sobre o erro FROM-clause na tabela "p".');
+          }
+          
           throw new Error(`Erro ao inserir pontuação: ${insertError.message}`);
         }
         
@@ -254,7 +296,7 @@ export async function saveScoreToDatabase(
         operation = 'insert';
       }
       
-      console.log('Score saved successfully:', result);
+      console.log('Score saved successfully:', result ? 'Success' : 'No data returned');
       return { 
         success: true, 
         data: result, 
@@ -266,18 +308,24 @@ export async function saveScoreToDatabase(
     console.error('=== SCORE SAVE OPERATION FAILED ===');
     console.error('Error details:', error);
     console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
     
-    // Handle specific database error codes
+    // Handle specific database error codes with more informative messages
     if (error.code === '23505') {
       throw new Error('Já existe uma pontuação para este atleta nesta modalidade');
     }
     
     if (error.code === '42P01') {
-      throw new Error('Erro de configuração da base de dados. Contacte o administrador.');
+      throw new Error('Erro crítico de configuração da base de dados. Problema com triggers ou funções SQL. Contacte o administrador.');
     }
     
     if (error.code === '23503') {
       throw new Error('Dados inválidos: verifique se o evento, modalidade e atleta existem');
+    }
+    
+    // Handle the specific FROM-clause error even if it doesn't have a specific code
+    if (error.message?.includes('missing FROM-clause entry for table "p"')) {
+      throw new Error('Erro no trigger de banco de dados (FROM-clause). Esta é uma questão de configuração do servidor que requer atenção do administrador.');
     }
     
     throw error;
