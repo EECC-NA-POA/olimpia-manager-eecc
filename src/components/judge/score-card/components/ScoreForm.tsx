@@ -44,15 +44,27 @@ export function ScoreForm({
   }
 
   console.log('ScoreForm - Rendering form with rule:', rule);
+  console.log('ScoreForm - isPending:', isPending);
 
   const handleFormSubmit = (data: any) => {
+    console.log('=== FORM SUBMISSION START ===');
     console.log('ScoreForm - Form submitted with data:', data);
+    console.log('ScoreForm - Calling onSubmit with data:', data);
     onSubmit(data);
+    console.log('=== FORM SUBMISSION CALLED ===');
+  };
+
+  const handleInvalidSubmit = (errors: any) => {
+    console.log('=== FORM VALIDATION ERRORS ===');
+    console.log('Form errors:', errors);
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 mt-4">
+      <form 
+        onSubmit={form.handleSubmit(handleFormSubmit, handleInvalidSubmit)} 
+        className="space-y-4 mt-4"
+      >
         <ScoreFormFields 
           form={form}
           rule={rule}
