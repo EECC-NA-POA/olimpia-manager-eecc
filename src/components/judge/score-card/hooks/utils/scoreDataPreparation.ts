@@ -15,7 +15,7 @@ export function prepareScoreData(
   console.log('Modality rule:', modalityRule);
   
   const rule = modalityRule;
-  let scoreData;
+  let scoreData: any = {};
   
   if (rule?.regra_tipo === 'distancia' || scoreType === 'distancia') {
     if ('meters' in formData && 'centimeters' in formData) {
@@ -64,8 +64,8 @@ export function prepareScoreData(
     }
   }
   
-  if (!scoreData) {
-    throw new Error('Failed to prepare score data');
+  if (!scoreData.valor_pontuacao && scoreData.valor_pontuacao !== 0) {
+    throw new Error('Failed to prepare score data - missing valor_pontuacao');
   }
   
   console.log('Prepared score data:', scoreData);
@@ -81,8 +81,9 @@ export function prepareFinalScoreData(
   modalityId: number,
   athlete: AthleteData
 ) {
-  return {
-    ...scoreData,
+  const finalData = {
+    valor_pontuacao: scoreData.valor_pontuacao,
+    unidade: scoreData.unidade,
     observacoes: formData.notes || null,
     juiz_id: judgeId,
     data_registro: new Date().toISOString(),
@@ -91,4 +92,21 @@ export function prepareFinalScoreData(
     atleta_id: athlete.atleta_id,
     equipe_id: athlete.equipe_id || null
   };
+
+  // Add optional fields only if they exist
+  if (scoreData.tempo_minutos !== undefined) {
+    finalData.tempo_minutos = scoreData.tempo_minutos;
+  }
+  if (scoreData.tempo_segundos !== undefined) {
+    finalData.tempo_segundos = scoreData.tempo_segundos;
+  }
+  if (scoreData.tempo_milissegundos !== undefined) {
+    finalData.tempo_milissegundos = scoreData.tempo_milissegundos;
+  }
+  if (scoreData.bateria_id !== undefined) {
+    finalData.bateria_id = scoreData.bateria_id;
+  }
+
+  console.log('Final score data prepared:', finalData);
+  return finalData;
 }
