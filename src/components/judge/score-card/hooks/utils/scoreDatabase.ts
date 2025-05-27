@@ -67,7 +67,7 @@ export async function saveScoreToDatabase(
     // Prepare the complete record data with explicit type casting
     const recordData: ScoreRecordData = {
       evento_id: eventId,
-      modalidade_id: modalityIdInt, // Ensure this is an integer
+      modalidade_id: modalityIdInt,
       atleta_id: athlete.atleta_id,
       equipe_id: athlete.equipe_id || null,
       valor_pontuacao: finalScoreData.valor_pontuacao || null,
@@ -75,7 +75,7 @@ export async function saveScoreToDatabase(
       observacoes: finalScoreData.observacoes || null,
       juiz_id: finalScoreData.juiz_id,
       data_registro: finalScoreData.data_registro || new Date().toISOString(),
-      bateria_id: parseInt(bateriaId.toString(), 10) // Ensure this is an integer
+      bateria_id: parseInt(bateriaId.toString(), 10)
     };
 
     // Add optional time fields if they exist
@@ -121,15 +121,28 @@ export async function saveScoreToDatabase(
       if (updateError) {
         console.error('Error in update operation:', updateError);
         console.error('Update error details:', JSON.stringify(updateError, null, 2));
+        
+        // Handle specific trigger errors
+        if (updateError.message?.includes('trg_replicate_team_scores') || 
+            updateError.message?.includes('missing FROM-clause') ||
+            updateError.message?.includes('table "p"')) {
+          throw new Error('Erro no trigger de replicação de equipes. A pontuação pode ter sido salva, mas a replicação para equipes falhou.');
+        }
+        
         throw new Error(`Erro ao atualizar pontuação: ${updateError.message}`);
       }
       
       result = updateData && updateData.length > 0 ? updateData[0] : null;
       operation = 'update';
     } else {
-      // Insert new record
+      // Insert new record with additional validation
       console.log('Inserting new record');
       console.log('Data being inserted:', JSON.stringify(recordData, null, 2));
+      
+      // Validate all required fields before insert
+      if (!recordData.evento_id || !recordData.modalidade_id || !recordData.atleta_id || !recordData.bateria_id) {
+        throw new Error('Dados obrigatórios em falta: evento_id, modalidade_id, atleta_id ou bateria_id');
+      }
       
       const { data: insertData, error: insertError } = await supabase
         .from('pontuacoes')
@@ -141,6 +154,22 @@ export async function saveScoreToDatabase(
         console.error('Insert error details:', JSON.stringify(insertError, null, 2));
         console.error('Insert error code:', insertError.code);
         console.error('Insert error hint:', insertError.hint);
+        
+        // Handle specific trigger errors
+        if (insertError.message?.includes('trg_replicate_team_scores') || 
+            insertError.message?.includes('missing FROM-clause') ||
+            insertError.message?.includes('table "p"')) {
+          throw new Error('Erro no trigger de replicação de equipes. A pontuação pode ter sido salva, mas a replicação para equipes falhou.');
+        }
+        
+        // Handle constraint violations
+        if (insertError.code === '23503') {
+          if (insertError.message?.includes('bateria_id')) {
+            throw new Error('Bateria inválida. Verifique se a bateria existe para esta modalidade.');
+          }
+          throw new Error('Dados inválidos: verifique se o evento, modalidade e atleta existem');
+        }
+        
         throw new Error(`Erro ao inserir pontuação: ${insertError.message}`);
       }
       
@@ -174,9 +203,11 @@ export async function saveScoreToDatabase(
       throw new Error('Dados inválidos: verifique se o evento, modalidade e atleta existem');
     }
     
-    // Check for missing FROM-clause errors specifically
-    if (error.message?.includes('missing FROM-clause') || error.message?.includes('table "p"')) {
-      throw new Error('Erro de configuração de trigger no banco de dados. Contacte o administrador sobre o trigger trg_replicate_team_scores.');
+    // Check for trigger-related errors
+    if (error.message?.includes('trg_replicate_team_scores') || 
+        error.message?.includes('missing FROM-clause') ||
+        error.message?.includes('table "p"')) {
+      throw new Error('Erro no trigger de replicação de equipes. Contacte o administrador sobre o trigger trg_replicate_team_scores.');
     }
     
     throw error;
