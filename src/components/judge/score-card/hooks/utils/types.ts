@@ -1,0 +1,26 @@
+
+export interface AthleteData {
+  atleta_id: string;
+  equipe_id?: number;
+}
+
+export interface ScoreRecordData {
+  evento_id: string;
+  modalidade_id: number;
+  atleta_id: string;
+  equipe_id: number | null;
+  valor_pontuacao: any;
+  unidade: any;
+  observacoes: any;
+  juiz_id: any;
+  data_registro: any;
+  tempo_minutos?: number;
+  tempo_segundos?: number;
+  bateria_id: number;
+}
+
+export interface SaveScoreResult {
+  success: boolean;
+  operation: string;
+  data?: any;
+}
