@@ -39,7 +39,7 @@ export async function saveScoreToDatabase(
     const existingScore = existingScores && existingScores.length > 0 ? existingScores[0] : null;
     
     // Prepare basic data structure with only confirmed columns
-    const basicData = {
+    const basicData: any = {
       valor_pontuacao: finalScoreData.valor_pontuacao || null,
       unidade: finalScoreData.unidade || 'pontos',
       observacoes: finalScoreData.observacoes || null,
