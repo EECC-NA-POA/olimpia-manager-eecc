@@ -11,6 +11,9 @@ import { AthleteScoreCard } from './score-card/AthleteScoreCard';
 import { AthleteScoreStatus } from './components/AthleteScoreStatus';
 import { AthleteInfo } from './components/AthleteInfo';
 import { useAthletePaymentData, useAthleteBranchData, useAthleteScores } from './hooks/useAthleteData';
+import { useBateriaData } from './tabs/scores/hooks/useBateriaData';
+import { useBateriaScores } from './score-card/components/bateria-scores/hooks/useBateriaScores';
+import { Badge } from '@/components/ui/badge';
 
 interface AthleteCardProps {
   athlete: Athlete;
@@ -42,6 +45,15 @@ export function AthleteCard({
   const { data: branchData, isLoading: isLoadingBranch } = useAthleteBranchData(athlete.atleta_id);
   const { data: scores } = useAthleteScores(athlete.atleta_id);
   
+  // Get bateria data and scores for closed card display
+  const { data: bateriasData = [] } = useBateriaData(modalityId, eventId);
+  const { batteriaScores = [] } = useBateriaScores({
+    athleteId: athlete.atleta_id,
+    modalityId: modalityId || 0,
+    eventId: eventId || '',
+    baterias: bateriasData
+  });
+  
   // Check if the athlete has a score for the selected modality
   const hasScoreForCurrentModality = modalityId ? 
     scores?.some(score => score.modalidade_id === modalityId) : 
@@ -52,6 +64,27 @@ export function AthleteCard({
 
   console.log('Final athlete identifier used:', athleteIdentifier);
   console.log('=== AthleteCard Debug End ===');
+
+  // Format score display for bateria scores
+  const formatScoreDisplay = (score: any) => {
+    if (scoreType === 'tempo') {
+      const totalMs = score.valor_pontuacao || 0;
+      const minutes = Math.floor(totalMs / 60000);
+      const seconds = Math.floor((totalMs % 60000) / 1000);
+      const ms = totalMs % 1000;
+      
+      if (minutes > 0) {
+        return `${minutes}:${seconds.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+      } else {
+        return `${seconds}.${ms.toString().padStart(3, '0')}s`;
+      }
+    } else if (scoreType === 'distancia') {
+      const value = score.valor_pontuacao || 0;
+      return `${value.toFixed(2)}m`;
+    } else {
+      return score.valor_pontuacao ? `${score.valor_pontuacao} ${score.unidade}` : 'N/A';
+    }
+  };
 
   // If we're in selected view and have all necessary props, render the score card
   if (isSelected && modalityId && eventId && judgeId && scoreType) {
@@ -107,20 +140,42 @@ export function AthleteCard({
             </span>
           )}
         </div>
-        {modalityRule && (
-          <div className="mt-2 text-xs bg-orange-50 text-orange-700 p-2 rounded border border-orange-200">
-            Tipo: {modalityRule.regra_tipo}
-            {modalityRule.parametros?.unidade && ` (${modalityRule.parametros.unidade})`}
+        
+        {/* Show bateria scores for closed card */}
+        {bateriasData.length > 0 && batteriaScores.length > 0 && (
+          <div className="mt-2 space-y-1">
+            <p className="text-xs text-gray-600 font-medium">Pontuações por Bateria:</p>
+            <div className="flex flex-wrap gap-1">
+              {bateriasData.map((bateria) => {
+                const score = batteriaScores.find(s => s.bateria_id === bateria.id);
+                return (
+                  <Badge 
+                    key={bateria.id}
+                    variant={score ? "default" : "outline"}
+                    className={`text-xs ${score ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'}`}
+                  >
+                    B{bateria.numero}: {score ? formatScoreDisplay(score) : 'N/A'}
+                  </Badge>
+                );
+              })}
+            </div>
           </div>
         )}
       </CardHeader>
       
       <CardContent className="pt-0 space-y-4">
-        <AthleteInfo 
-          athlete={athlete}
-          athleteIdentifier={athleteIdentifier}
-          hasScoreForCurrentModality={hasScoreForCurrentModality}
-        />
+        {/* Status Badge */}
+        <div className="flex justify-center pt-2">
+          {hasScoreForCurrentModality ? (
+            <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-200">
+              ✓ Avaliado
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+              ⏳ Pendente
+            </Badge>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
