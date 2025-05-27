@@ -60,26 +60,63 @@ export async function saveScoreToDatabase(
 
     console.log('Record data to save:', recordData);
     
-    // Use upsert to handle both insert and update in one operation
-    const { data, error } = await supabase
+    // First, try to find existing record
+    const { data: existingRecord, error: fetchError } = await supabase
       .from('pontuacoes')
-      .upsert(recordData, {
-        onConflict: 'evento_id,modalidade_id,atleta_id',
-        ignoreDuplicates: false
-      })
-      .select()
-      .single();
+      .select('id')
+      .eq('evento_id', eventId)
+      .eq('modalidade_id', modalityId)
+      .eq('atleta_id', athlete.atleta_id)
+      .maybeSingle();
     
-    if (error) {
-      console.error('Error in upsert operation:', error);
-      throw new Error(`Erro ao inserir pontuação: ${error.message}`);
+    if (fetchError) {
+      console.error('Error checking for existing record:', fetchError);
+      throw new Error(`Erro ao verificar pontuação existente: ${fetchError.message}`);
     }
     
-    console.log('Score saved successfully:', data);
+    let result;
+    let operation;
+    
+    if (existingRecord) {
+      // Update existing record
+      console.log('Updating existing record with ID:', existingRecord.id);
+      const { data, error } = await supabase
+        .from('pontuacoes')
+        .update(recordData)
+        .eq('id', existingRecord.id)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error in update operation:', error);
+        throw new Error(`Erro ao atualizar pontuação: ${error.message}`);
+      }
+      
+      result = data;
+      operation = 'update';
+    } else {
+      // Insert new record
+      console.log('Inserting new record');
+      const { data, error } = await supabase
+        .from('pontuacoes')
+        .insert(recordData)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error in insert operation:', error);
+        throw new Error(`Erro ao inserir pontuação: ${error.message}`);
+      }
+      
+      result = data;
+      operation = 'insert';
+    }
+    
+    console.log('Score saved successfully:', result);
     return { 
       success: true, 
-      data: data, 
-      operation: 'upsert' 
+      data: result, 
+      operation: operation 
     };
     
   } catch (error: any) {
