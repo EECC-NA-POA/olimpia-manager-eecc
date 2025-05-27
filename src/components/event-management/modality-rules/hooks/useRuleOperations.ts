@@ -51,16 +51,33 @@ export function useRuleOperations() {
         }
       }
       
-      // Check if we need to create baterias for any rule type that uses them
-      const needsBaterias = ruleForm.parametros.baterias === true;
-      const numBaterias = ruleForm.parametros.num_baterias || 
-                          ruleForm.parametros.num_tentativas || 
-                          (ruleForm.regra_tipo === 'tempo' && needsBaterias ? 5 : 0); // Default heats for tempo modalities
+      // Check if we need to create baterias
+      const needsBaterias = ruleForm.regra_tipo === 'baterias' || 
+                            (ruleForm.regra_tipo === 'tempo' && ruleForm.parametros.baterias === true) ||
+                            (ruleForm.regra_tipo === 'distancia' && ruleForm.parametros.baterias === true);
+      
+      let numBaterias = 0;
+      
+      if (needsBaterias) {
+        // Determine number of baterias to create
+        if (ruleForm.regra_tipo === 'baterias') {
+          numBaterias = ruleForm.parametros.num_tentativas || 1;
+        } else if (ruleForm.parametros.num_baterias) {
+          numBaterias = ruleForm.parametros.num_baterias;
+        } else if (ruleForm.parametros.num_tentativas) {
+          numBaterias = ruleForm.parametros.num_tentativas;
+        } else {
+          // Default to 3 baterias if not specified
+          numBaterias = 3;
+        }
+      }
+      
+      console.log('Needs baterias:', needsBaterias, 'Num baterias:', numBaterias);
       
       if (needsBaterias && numBaterias > 0) {
         const modalityData = modalities.find(m => m.id === modalityId);
         if (modalityData?.evento_id) {
-          console.log('Creating baterias because rule has baterias=true. Num baterias:', numBaterias);
+          console.log('Creating baterias because rule needs them. Num baterias:', numBaterias);
           
           try {
             await createBaterias(
@@ -82,7 +99,7 @@ export function useRuleOperations() {
         // If baterias is false, delete existing baterias
         const modalityData = modalities.find(m => m.id === modalityId);
         if (modalityData?.evento_id) {
-          console.log('Deleting existing baterias because rule has baterias=false');
+          console.log('Deleting existing baterias because rule does not need them');
           try {
             await deleteBaterias(modalityId, modalityData.evento_id);
           } catch (deleteError) {

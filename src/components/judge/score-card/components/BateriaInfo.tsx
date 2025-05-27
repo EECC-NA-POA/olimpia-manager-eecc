@@ -19,9 +19,18 @@ export function BateriaInfo({ baterias, rule, showInIndividualCards = true }: Ba
   }
 
   const parametros = rule.parametros || {};
-  const raiasPorBateria = parametros.raias_por_bateria;
+  const raiasPorBateria = parametros.raias_por_bateria || parametros.num_raias;
   const numTentativas = parametros.num_tentativas;
-  const needsBaterias = parametros.baterias === true;
+  
+  // Check if baterias are needed based on rule type and parameters
+  const needsBaterias = rule.regra_tipo === 'baterias' || 
+                        rule.regra_tipo === 'tempo' && parametros.baterias === true ||
+                        rule.regra_tipo === 'distancia' && parametros.baterias === true;
+
+  console.log('BateriaInfo - Rule type:', rule.regra_tipo);
+  console.log('BateriaInfo - Parametros:', parametros);
+  console.log('BateriaInfo - Needs baterias:', needsBaterias);
+  console.log('BateriaInfo - Baterias count:', baterias.length);
 
   // If the rule requires baterias but none are created, show a warning with action
   if (needsBaterias && !baterias.length) {
@@ -42,14 +51,21 @@ export function BateriaInfo({ baterias, rule, showInIndividualCards = true }: Ba
           </div>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="font-medium text-amber-700">Configurado para usar baterias:</span>
-              <p className="text-amber-600">Sim</p>
+              <span className="font-medium text-amber-700">Tipo de regra:</span>
+              <p className="text-amber-600">{rule.regra_tipo}</p>
             </div>
             
             {raiasPorBateria && (
               <div>
                 <span className="font-medium text-amber-700">Raias por bateria:</span>
                 <p className="text-amber-600">{raiasPorBateria}</p>
+              </div>
+            )}
+            
+            {numTentativas && (
+              <div>
+                <span className="font-medium text-amber-700">Tentativas:</span>
+                <p className="text-amber-600">{numTentativas}</p>
               </div>
             )}
           </div>
