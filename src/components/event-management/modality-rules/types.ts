@@ -1,3 +1,4 @@
+
 export interface Modality {
   id: string;
   nome: string;
@@ -13,7 +14,7 @@ export interface Modality {
   regra?: ModalityRule;
 }
 
-export type RegrasTipo = 'tempo' | 'distancia' | 'pontos' | 'baterias' | 'sets' | 'arrows';
+export type RegrasTipo = 'tempo' | 'distancia' | 'pontos' | 'sets' | 'arrows';
 
 export interface ModalityRule {
   id?: number;

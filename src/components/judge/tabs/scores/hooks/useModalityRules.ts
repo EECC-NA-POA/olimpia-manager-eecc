@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 
 export interface ModalityRule {
   modalidade_id: number;
-  regra_tipo: 'pontos' | 'distancia' | 'tempo' | 'baterias' | 'sets' | 'arrows';
+  regra_tipo: 'pontos' | 'distancia' | 'tempo' | 'sets' | 'arrows';
   parametros: {
     unidade?: string;
     subunidade?: string;

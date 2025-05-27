@@ -25,6 +25,15 @@ export function DynamicScoreFields({ form, rule, bateriasData = [] }: DynamicSco
   // Ensure parametros has default values if empty
   const parametros = rule.parametros || {};
   
+  // Check if this rule uses baterias (any rule type can use baterias)
+  const usesBaterias = parametros.baterias === true;
+  
+  // If the rule uses baterias, show the BateriasScoreFields component
+  if (usesBaterias) {
+    console.log('Rendering BateriasScoreFields for rule type:', rule.regra_tipo);
+    return <BateriasScoreFields form={form} rule={rule} />;
+  }
+  
   switch (rule.regra_tipo) {
     case 'pontos':
       console.log('Rendering PointsScoreFields');
@@ -34,18 +43,16 @@ export function DynamicScoreFields({ form, rule, bateriasData = [] }: DynamicSco
       console.log('Rendering DistanceScoreFields');
       // Check if the rule specifically requires meters and centimeters input
       const useMetersAndCentimeters = parametros.subunidade === 'cm';
-      const baterias = parametros.baterias === true;
       const raiasPorBateria = parametros.raias_por_bateria;
       
       console.log('Using meters and centimeters?', useMetersAndCentimeters);
-      console.log('Using heats?', baterias);
       console.log('Lanes per heat?', raiasPorBateria);
       
       return (
         <DistanceScoreFields 
           form={form} 
           useMetersAndCentimeters={useMetersAndCentimeters}
-          baterias={baterias}
+          baterias={false}
           raiasPorBateria={raiasPorBateria}
           bateriasData={bateriasData}
         />
@@ -60,10 +67,6 @@ export function DynamicScoreFields({ form, rule, bateriasData = [] }: DynamicSco
           modalityRule={rule}
         />
       );
-    
-    case 'baterias':
-      console.log('Rendering BateriasScoreFields');
-      return <BateriasScoreFields form={form} rule={rule} />;
     
     case 'sets':
       console.log('Rendering SetsScoreFields');

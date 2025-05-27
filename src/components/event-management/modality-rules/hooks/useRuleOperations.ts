@@ -26,7 +26,8 @@ export function useRuleOperations() {
           .from('modalidade_regras')
           .update({
             regra_tipo: ruleForm.regra_tipo,
-            parametros: ruleForm.parametros
+            parametros: ruleForm.parametros,
+            atualizado_em: new Date().toISOString()
           })
           .eq('modalidade_id', modalityId);
         
@@ -51,25 +52,20 @@ export function useRuleOperations() {
         }
       }
       
-      // Check if we need to create baterias - Fixed logic for 'baterias' rule type
-      const needsBaterias = ruleForm.regra_tipo === 'baterias' || 
-                            (ruleForm.regra_tipo === 'tempo' && ruleForm.parametros.baterias === true) ||
-                            (ruleForm.regra_tipo === 'distancia' && ruleForm.parametros.baterias === true);
+      // Check if we need to create baterias - based on the baterias parameter
+      const needsBaterias = ruleForm.parametros.baterias === true;
       
       let numBaterias = 0;
       
       if (needsBaterias) {
-        // Determine number of baterias to create with better logic
-        if (ruleForm.regra_tipo === 'baterias') {
-          // For baterias rule type, always create at least 1 bateria
-          numBaterias = Math.max(ruleForm.parametros.num_tentativas || 1, 1);
-        } else if (ruleForm.parametros.num_baterias) {
+        // Determine number of baterias to create
+        if (ruleForm.parametros.num_baterias) {
           numBaterias = ruleForm.parametros.num_baterias;
         } else if (ruleForm.parametros.num_tentativas) {
           numBaterias = ruleForm.parametros.num_tentativas;
         } else {
-          // Default to 1 bateria for baterias rule type
-          numBaterias = ruleForm.regra_tipo === 'baterias' ? 1 : 3;
+          // Default to 3 baterias
+          numBaterias = 3;
         }
       }
       
@@ -147,9 +143,7 @@ export function useRuleOperations() {
   ) => {
     console.log('Ensuring baterias exist for modality:', modalityId);
     
-    const needsBaterias = rule.regra_tipo === 'baterias' || 
-                          (rule.regra_tipo === 'tempo' && rule.parametros?.baterias === true) ||
-                          (rule.regra_tipo === 'distancia' && rule.parametros?.baterias === true);
+    const needsBaterias = rule.parametros?.baterias === true;
     
     if (!needsBaterias) {
       console.log('Rule does not need baterias');
@@ -174,10 +168,8 @@ export function useRuleOperations() {
     }
     
     // Create baterias
-    let numBaterias = 1; // Default
-    if (rule.regra_tipo === 'baterias') {
-      numBaterias = Math.max(rule.parametros?.num_tentativas || 1, 1);
-    } else if (rule.parametros?.num_baterias) {
+    let numBaterias = 3; // Default
+    if (rule.parametros?.num_baterias) {
       numBaterias = rule.parametros.num_baterias;
     } else if (rule.parametros?.num_tentativas) {
       numBaterias = rule.parametros.num_tentativas;
