@@ -21,17 +21,6 @@ export function prepareFinalScoreData(
     equipe_id: athlete.equipe_id || null
   };
 
-  // Add time fields if they exist
-  if (scoreData.tempo_minutos !== undefined) {
-    finalData.tempo_minutos = scoreData.tempo_minutos;
-  }
-  if (scoreData.tempo_segundos !== undefined) {
-    finalData.tempo_segundos = scoreData.tempo_segundos;
-  }
-  if (scoreData.tempo_milissegundos !== undefined) {
-    finalData.tempo_milissegundos = scoreData.tempo_milissegundos;
-  }
-
   // Add bateria_id if it exists
   if (scoreData.bateria_id !== undefined) {
     finalData.bateria_id = scoreData.bateria_id;

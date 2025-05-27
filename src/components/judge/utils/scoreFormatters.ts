@@ -2,17 +2,16 @@
 export const formatScoreValue = (
   score: {
     valor_pontuacao?: number | null;
-    tempo_minutos?: number;
-    tempo_segundos?: number;
-    tempo_milissegundos?: number;
     unidade?: string;
   },
   type: 'time' | 'distance' | 'points'
 ): string => {
-  if (type === 'time' && score.tempo_minutos !== undefined) {
-    const minutes = score.tempo_minutos || 0;
-    const seconds = score.tempo_segundos || 0;
-    const milliseconds = score.tempo_milissegundos || 0;
+  if (type === 'time' && score.valor_pontuacao !== undefined) {
+    // Convert total seconds back to mm:ss.SSS format for display
+    const totalSeconds = score.valor_pontuacao || 0;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    const milliseconds = Math.floor((totalSeconds % 1) * 1000);
     
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
   }

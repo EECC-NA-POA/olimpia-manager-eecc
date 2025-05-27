@@ -17,14 +17,12 @@ export function processTempoScore(formData: any, rule?: any): ScoreData {
     
     console.log('Processing tentativa (time fields):', { minutes, seconds, milliseconds });
     
+    // Convert everything to total seconds for storage
     const totalSeconds = (minutes * 60) + seconds + (milliseconds / 1000);
     
     scoreData = {
       valor_pontuacao: totalSeconds,
-      unidade: 'segundos',
-      tempo_minutos: minutes,
-      tempo_segundos: seconds,
-      tempo_milissegundos: milliseconds
+      unidade: 'segundos'
     };
   } else if ('minutes' in formData) {
     // Handle standard time input
@@ -32,14 +30,12 @@ export function processTempoScore(formData: any, rule?: any): ScoreData {
     const seconds = Number(formData.seconds) || 0;
     const milliseconds = Number(formData.milliseconds) || 0;
     
+    // Convert everything to total seconds for storage
     const totalSeconds = (minutes * 60) + seconds + (milliseconds / 1000);
     
     scoreData = {
       valor_pontuacao: totalSeconds,
-      unidade: 'segundos',
-      tempo_minutos: minutes,
-      tempo_segundos: seconds,
-      tempo_milissegundos: milliseconds
+      unidade: 'segundos'
     };
     
     if (formData.heat) {
@@ -49,10 +45,7 @@ export function processTempoScore(formData: any, rule?: any): ScoreData {
     // Default time values
     scoreData = {
       valor_pontuacao: 0,
-      unidade: 'segundos',
-      tempo_minutos: 0,
-      tempo_segundos: 0,
-      tempo_milissegundos: 0
+      unidade: 'segundos'
     };
   }
 

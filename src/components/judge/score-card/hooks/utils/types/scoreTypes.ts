@@ -7,9 +7,6 @@ export interface AthleteData {
 export interface ScoreData {
   valor_pontuacao: number;
   unidade: string;
-  tempo_minutos?: number;
-  tempo_segundos?: number;
-  tempo_milissegundos?: number;
   bateria_id?: number;
 }
 
@@ -28,10 +25,6 @@ export interface ScoreRecordData {
   juiz_id: any;
   data_registro: any;
   bateria_id: number;
-  // Campos de tempo separados para granularidade
-  tempo_minutos?: number | null;
-  tempo_segundos?: number | null;
-  tempo_milissegundos?: number | null;
 }
 
 export interface SaveScoreResult {
