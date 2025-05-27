@@ -19,12 +19,12 @@ export async function saveScoreToDatabase(
   console.log('Athlete ID:', athlete.atleta_id);
   
   try {
-    // Step 1: Try to find existing score using simple select
+    // Step 1: Check for existing score
     console.log('Step 1: Checking for existing score...');
     
     const { data: existingScores, error: selectError } = await supabase
       .from('pontuacoes')
-      .select('id, evento_id, modalidade_id, atleta_id')
+      .select('id')
       .eq('evento_id', eventId)
       .eq('modalidade_id', modalityId)
       .eq('atleta_id', athlete.atleta_id);
@@ -38,23 +38,35 @@ export async function saveScoreToDatabase(
     
     const existingScore = existingScores && existingScores.length > 0 ? existingScores[0] : null;
     
+    // Prepare basic data structure with only confirmed columns
+    const basicData = {
+      valor_pontuacao: finalScoreData.valor_pontuacao || null,
+      unidade: finalScoreData.unidade || 'pontos',
+      observacoes: finalScoreData.observacoes || null,
+      juiz_id: finalScoreData.juiz_id,
+      data_registro: finalScoreData.data_registro || new Date().toISOString()
+    };
+
+    // Add optional fields only if they have values
+    if (finalScoreData.tempo_minutos !== undefined && finalScoreData.tempo_minutos !== null) {
+      basicData.tempo_minutos = finalScoreData.tempo_minutos;
+    }
+    if (finalScoreData.tempo_segundos !== undefined && finalScoreData.tempo_segundos !== null) {
+      basicData.tempo_segundos = finalScoreData.tempo_segundos;
+    }
+    if (finalScoreData.bateria_id !== undefined && finalScoreData.bateria_id !== null) {
+      basicData.bateria_id = finalScoreData.bateria_id;
+    }
+
+    console.log('Prepared basic data:', basicData);
+    
     if (existingScore) {
       // Step 2: Update existing score
       console.log('Step 2: Updating existing score with ID:', existingScore.id);
       
       const { data: updatedData, error: updateError } = await supabase
         .from('pontuacoes')
-        .update({
-          valor_pontuacao: finalScoreData.valor_pontuacao,
-          unidade: finalScoreData.unidade,
-          observacoes: finalScoreData.observacoes,
-          juiz_id: finalScoreData.juiz_id,
-          data_registro: finalScoreData.data_registro,
-          tempo_minutos: finalScoreData.tempo_minutos || null,
-          tempo_segundos: finalScoreData.tempo_segundos || null,
-          tempo_milissegundos: finalScoreData.tempo_milissegundos || null,
-          bateria_id: finalScoreData.bateria_id || null
-        })
+        .update(basicData)
         .eq('id', existingScore.id)
         .select();
       
@@ -79,15 +91,7 @@ export async function saveScoreToDatabase(
         modalidade_id: modalityId,
         atleta_id: athlete.atleta_id,
         equipe_id: athlete.equipe_id || null,
-        valor_pontuacao: finalScoreData.valor_pontuacao,
-        unidade: finalScoreData.unidade,
-        observacoes: finalScoreData.observacoes || null,
-        juiz_id: finalScoreData.juiz_id,
-        data_registro: finalScoreData.data_registro,
-        tempo_minutos: finalScoreData.tempo_minutos || null,
-        tempo_segundos: finalScoreData.tempo_segundos || null,
-        tempo_milissegundos: finalScoreData.tempo_milissegundos || null,
-        bateria_id: finalScoreData.bateria_id || null
+        ...basicData
       };
       
       console.log('Data to insert:', insertData);
@@ -114,7 +118,7 @@ export async function saveScoreToDatabase(
     console.error('=== SCORE SAVE OPERATION FAILED ===');
     console.error('Error details:', error);
     
-    // If it's a database constraint error, provide more specific feedback
+    // Provide specific error messages for common database issues
     if (error.code === '23505') {
       throw new Error('Já existe uma pontuação para este atleta nesta modalidade');
     }
