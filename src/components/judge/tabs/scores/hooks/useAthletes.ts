@@ -31,23 +31,6 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
       try {
         console.log('Fetching athletes for modality:', modalityId, 'event:', eventId);
         
-        // Check authentication first
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          toast.error('Erro de autenticação. Faça login novamente.');
-          return [];
-        }
-        
-        if (!session) {
-          console.error('No active session found');
-          toast.error('Sessão expirada. Faça login novamente.');
-          return [];
-        }
-        
-        console.log('Session is valid, fetching athletes...');
-        
         const { data, error } = await supabase
           .from('inscricoes_modalidades')
           .select(`
@@ -65,16 +48,6 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
 
         if (error) {
           console.error('Error fetching athletes:', error);
-          
-          // Handle JWT errors specifically
-          if (error.message?.includes('JWT') || error.message?.includes('CompactDecodeError')) {
-            console.log('JWT error detected, signing out...');
-            await supabase.auth.signOut();
-            toast.error('Sessão expirada. Por favor, faça login novamente.');
-            window.location.href = '/login';
-            return [];
-          }
-          
           toast.error('Não foi possível carregar os atletas');
           return [];
         }
@@ -99,16 +72,6 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
         return transformedData;
       } catch (error) {
         console.error('Error in athlete query execution:', error);
-        
-        // Handle JWT errors in catch block too
-        if (error instanceof Error && (error.message?.includes('JWT') || error.message?.includes('CompactDecodeError'))) {
-          console.log('JWT error in catch block, signing out...');
-          await supabase.auth.signOut();
-          toast.error('Sessão expirada. Por favor, faça login novamente.');
-          window.location.href = '/login';
-          return [];
-        }
-        
         toast.error('Erro ao buscar atletas');
         return [];
       }
