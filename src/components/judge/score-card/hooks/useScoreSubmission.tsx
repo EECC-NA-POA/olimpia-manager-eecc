@@ -32,6 +32,7 @@ export function useScoreSubmission(
       
       // Convert form data based on rule type or scoreType
       let scoreData;
+      let dadosJson: any = {};
       
       if (rule?.regra_tipo === 'distancia' || scoreType === 'distancia') {
         if ('meters' in formData && 'centimeters' in formData) {
@@ -39,54 +40,40 @@ export function useScoreSubmission(
           const totalMeters = formData.meters + (formData.centimeters / 100);
           scoreData = {
             valor_pontuacao: totalMeters,
-            unidade: 'm',
-            tentativa_numero: formData.attempt || null
+            unidade: 'm'
           };
           
-          // Validate bateria exists before including bateria_id
-          if (formData.heat && rule?.parametros?.baterias) {
-            console.log('Checking if bateria exists for heat:', formData.heat);
-            
-            const { data: bateriaExists } = await supabase
-              .from('baterias')
-              .select('id')
-              .eq('id', formData.heat)
-              .eq('modalidade_id', modalityId)
-              .eq('evento_id', eventId)
-              .maybeSingle();
-            
-            if (bateriaExists) {
-              console.log('Bateria exists, adding bateria_id:', formData.heat);
-              scoreData.bateria_id = formData.heat;
-            } else {
-              console.warn('Bateria does not exist, skipping bateria_id');
-            }
+          // Store detailed data in dados_json
+          dadosJson = {
+            meters: formData.meters,
+            centimeters: formData.centimeters,
+            totalMeters: totalMeters
+          };
+          
+          // Add heat and lane data if present
+          if (formData.heat) {
+            dadosJson.heat = formData.heat;
+            scoreData.bateria_id = formData.heat;
+          }
+          if (formData.lane) {
+            dadosJson.lane = formData.lane;
           }
         } else if ('score' in formData) {
           scoreData = {
             valor_pontuacao: formData.score,
-            unidade: 'm',
-            tentativa_numero: formData.attempt || null
+            unidade: 'm'
           };
           
-          // Validate bateria exists before including bateria_id
-          if (formData.heat && rule?.parametros?.baterias) {
-            console.log('Checking if bateria exists for score format:', formData.heat);
-            
-            const { data: bateriaExists } = await supabase
-              .from('baterias')
-              .select('id')
-              .eq('id', formData.heat)
-              .eq('modalidade_id', modalityId)
-              .eq('evento_id', eventId)
-              .maybeSingle();
-            
-            if (bateriaExists) {
-              console.log('Bateria exists for score format, adding bateria_id:', formData.heat);
-              scoreData.bateria_id = formData.heat;
-            } else {
-              console.warn('Bateria does not exist for score format, skipping bateria_id');
-            }
+          dadosJson = {
+            score: formData.score
+          };
+          
+          if (formData.heat) {
+            dadosJson.heat = formData.heat;
+            scoreData.bateria_id = formData.heat;
+          }
+          if (formData.lane) {
+            dadosJson.lane = formData.lane;
           }
         }
       } else if (rule?.regra_tipo === 'tempo' || scoreType === 'tempo') {
@@ -96,55 +83,37 @@ export function useScoreSubmission(
           scoreData = {
             valor_pontuacao: totalMs,
             unidade: 'ms',
-            tentativa_numero: formData.attempt || null
+            tempo_minutos: formData.minutes,
+            tempo_segundos: formData.seconds,
+            tempo_milissegundos: formData.milliseconds
           };
           
-          // Validate bateria exists before including bateria_id
-          if (formData.heat && rule?.parametros?.baterias) {
-            console.log('Checking if bateria exists for time:', formData.heat);
-            
-            const { data: bateriaExists } = await supabase
-              .from('baterias')
-              .select('id')
-              .eq('id', formData.heat)
-              .eq('modalidade_id', modalityId)
-              .eq('evento_id', eventId)
-              .maybeSingle();
-            
-            if (bateriaExists) {
-              console.log('Bateria exists for time, adding bateria_id:', formData.heat);
-              scoreData.bateria_id = formData.heat;
-            } else {
-              console.warn('Bateria does not exist for time, skipping bateria_id');
-            }
+          dadosJson = {
+            minutes: formData.minutes,
+            seconds: formData.seconds,
+            milliseconds: formData.milliseconds,
+            totalMs: totalMs
+          };
+          
+          if (formData.heat) {
+            dadosJson.heat = formData.heat;
+            scoreData.bateria_id = formData.heat;
           }
         }
       } else {
         // Default to points scoring
         scoreData = {
           valor_pontuacao: formData.score || 0,
-          unidade: 'pontos',
-          tentativa_numero: formData.attempt || null
+          unidade: 'pontos'
         };
         
-        // Validate bateria exists before including bateria_id
-        if (formData.heat && rule?.parametros?.baterias) {
-          console.log('Checking if bateria exists for points:', formData.heat);
-          
-          const { data: bateriaExists } = await supabase
-            .from('baterias')
-            .select('id')
-            .eq('id', formData.heat)
-            .eq('modalidade_id', modalityId)
-            .eq('evento_id', eventId)
-            .maybeSingle();
-          
-          if (bateriaExists) {
-            console.log('Bateria exists for points, adding bateria_id:', formData.heat);
-            scoreData.bateria_id = formData.heat;
-          } else {
-            console.warn('Bateria does not exist for points, skipping bateria_id');
-          }
+        dadosJson = {
+          score: formData.score || 0
+        };
+        
+        if (formData.heat) {
+          dadosJson.heat = formData.heat;
+          scoreData.bateria_id = formData.heat;
         }
       }
       
@@ -157,6 +126,7 @@ export function useScoreSubmission(
       // Ensure all required fields are present
       const finalScoreData = {
         ...scoreData,
+        dados_json: dadosJson,
         observacoes: formData.notes || null,
         juiz_id: judgeId,
         data_registro: new Date().toISOString(),
@@ -167,7 +137,6 @@ export function useScoreSubmission(
       };
       
       console.log('Final score data being inserted:', finalScoreData);
-      console.log('Final score data has bateria_id?', 'bateria_id' in finalScoreData);
       
       // Check if score already exists
       const { data: existingScore } = await supabase
