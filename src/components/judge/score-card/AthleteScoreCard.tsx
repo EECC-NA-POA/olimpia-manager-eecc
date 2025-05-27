@@ -12,8 +12,7 @@ import { useAthleteScoreCard } from './hooks/useAthleteScoreCard';
 import { getInitialValues } from './utils/initialValuesUtils';
 import { AthleteScoreCardProps } from './types';
 import { useBateriaData } from '../tabs/scores/hooks/useBateriaData';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { useBateriaScores } from './components/bateria-scores/hooks/useBateriaScores';
 
 interface ExtendedAthleteScoreCardProps extends AthleteScoreCardProps {
   modalityRule?: any;
@@ -45,40 +44,27 @@ export function AthleteScoreCard({
 
   const { data: bateriasData = [] } = useBateriaData(modalityId, eventId);
 
-  // Fetch existing scores for all baterias to check if all are filled
-  const { data: batteriaScores = [] } = useQuery({
-    queryKey: ['bateria-scores-check', athlete.atleta_id, modalityId, eventId],
-    queryFn: async () => {
-      if (!eventId) return [];
-      
-      const { data, error } = await supabase
-        .from('pontuacoes')
-        .select('bateria_id')
-        .eq('evento_id', eventId)
-        .eq('modalidade_id', modalityId)
-        .eq('atleta_id', athlete.atleta_id);
-      
-      if (error) {
-        console.error('Error fetching bateria scores:', error);
-        return [];
-      }
-      
-      return data || [];
-    },
-    enabled: !!eventId && !!athlete.atleta_id && !!modalityId && bateriasData.length > 0,
+  // Use the actual bateria scores data instead of just checking existence
+  const { batteriaScores = [] } = useBateriaScores({
+    athleteId: athlete.atleta_id,
+    modalityId,
+    eventId: eventId!,
+    baterias: bateriasData
   });
 
   const hasBaterias = bateriasData.length > 0;
   
-  // Check if all baterias have been scored
+  // Check if all baterias have been scored by comparing the number of unique bateria_ids
+  const uniqueBateriaIds = new Set(batteriaScores.map(score => score.bateria_id));
   const allBateriasFilled = hasBaterias && bateriasData.length > 0 && 
-    batteriaScores.length >= bateriasData.length;
+    uniqueBateriaIds.size >= bateriasData.length;
 
   console.log('AthleteScoreCard - Rendering for athlete:', athlete.atleta_nome, {
     hasBaterias,
     bateriasTotal: bateriasData.length,
-    bateriasPreenchidas: batteriaScores.length,
-    allBateriasFilled
+    bateriasPreenchidas: uniqueBateriaIds.size,
+    allBateriasFilled,
+    batteriaScores: batteriaScores.map(s => ({ bateria_id: s.bateria_id, valor: s.valor_pontuacao }))
   });
 
   return (

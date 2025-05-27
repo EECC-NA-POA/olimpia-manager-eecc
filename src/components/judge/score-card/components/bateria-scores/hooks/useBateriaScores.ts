@@ -16,13 +16,21 @@ export function useBateriaScores({ athleteId, modalityId, eventId, baterias }: U
     queryFn: async () => {
       console.log('Fetching bateria scores for:', { athleteId, modalityId, eventId });
       
+      // Get all bateria IDs for this modality
+      const bateriaIds = baterias.map(b => b.id);
+      
+      if (bateriaIds.length === 0) {
+        console.log('No baterias found, returning empty array');
+        return [];
+      }
+      
       const { data, error } = await supabase
         .from('pontuacoes')
         .select('id, bateria_id, valor_pontuacao, unidade, observacoes')
         .eq('evento_id', eventId)
         .eq('modalidade_id', modalityId)
         .eq('atleta_id', athleteId)
-        .not('bateria_id', 'is', null)
+        .in('bateria_id', bateriaIds)
         .order('bateria_id');
       
       if (error) {
