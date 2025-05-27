@@ -40,19 +40,23 @@ export async function saveScoreToDatabase(
     if (!bateriaId) {
       console.log('No bateria_id provided, fetching default bateria for modality');
       // Get the first available bateria for this modality/event
-      const { data: defaultBateria, error: bateriaError } = await supabase
+      const { data: bateriaResults, error: bateriaError } = await supabase
         .from('baterias')
         .select('id')
         .eq('modalidade_id', modalityId)
         .eq('evento_id', eventId)
-        .limit(1)
-        .single();
+        .limit(1);
       
-      if (bateriaError || !defaultBateria) {
+      if (bateriaError) {
+        console.error('Error fetching bateria:', bateriaError);
+        throw new Error(`Erro ao buscar bateria: ${bateriaError.message}`);
+      }
+      
+      if (!bateriaResults || bateriaResults.length === 0) {
         throw new Error('Nenhuma bateria encontrada para esta modalidade. Configure as baterias primeiro.');
       }
       
-      bateriaId = defaultBateria.id;
+      bateriaId = bateriaResults[0].id;
       console.log('Using default bateria ID:', bateriaId);
     }
 
@@ -101,35 +105,33 @@ export async function saveScoreToDatabase(
     if (existingRecord) {
       // Update existing record
       console.log('Updating existing record with ID:', existingRecord.id);
-      const { data, error } = await supabase
+      const { data: updateData, error: updateError } = await supabase
         .from('pontuacoes')
         .update(recordData)
         .eq('id', existingRecord.id)
-        .select()
-        .single();
+        .select('*');
       
-      if (error) {
-        console.error('Error in update operation:', error);
-        throw new Error(`Erro ao atualizar pontuação: ${error.message}`);
+      if (updateError) {
+        console.error('Error in update operation:', updateError);
+        throw new Error(`Erro ao atualizar pontuação: ${updateError.message}`);
       }
       
-      result = data;
+      result = updateData && updateData.length > 0 ? updateData[0] : null;
       operation = 'update';
     } else {
       // Insert new record
       console.log('Inserting new record');
-      const { data, error } = await supabase
+      const { data: insertData, error: insertError } = await supabase
         .from('pontuacoes')
-        .insert(recordData)
-        .select()
-        .single();
+        .insert([recordData])
+        .select('*');
       
-      if (error) {
-        console.error('Error in insert operation:', error);
-        throw new Error(`Erro ao inserir pontuação: ${error.message}`);
+      if (insertError) {
+        console.error('Error in insert operation:', insertError);
+        throw new Error(`Erro ao inserir pontuação: ${insertError.message}`);
       }
       
-      result = data;
+      result = insertData && insertData.length > 0 ? insertData[0] : null;
       operation = 'insert';
     }
     
