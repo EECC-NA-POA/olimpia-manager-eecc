@@ -18,55 +18,34 @@ export async function saveScoreToDatabase(
   console.log('Athlete ID:', athlete.atleta_id);
   
   try {
-    // First, check if a record already exists
-    console.log('Checking for existing record...');
-    const { data: existingRecord, error: checkError } = await supabase
+    // Simple approach: delete existing record if it exists, then insert new one
+    console.log('Deleting any existing record...');
+    const { error: deleteError } = await supabase
       .from('pontuacoes')
-      .select('id')
+      .delete()
       .eq('evento_id', eventId)
       .eq('modalidade_id', modalityId)
-      .eq('atleta_id', athlete.atleta_id)
-      .maybeSingle();
+      .eq('atleta_id', athlete.atleta_id);
     
-    if (checkError) {
-      console.error('Error checking for existing record:', checkError);
-      throw checkError;
-    }
-    
-    if (existingRecord) {
-      // Update the existing record
-      console.log('Updating existing record with ID:', existingRecord.id);
-      const { data: updateResult, error: updateError } = await supabase
-        .from('pontuacoes')
-        .update(finalScoreData)
-        .eq('id', existingRecord.id)
-        .select()
-        .single();
-      
-      if (updateError) {
-        console.error('Error updating record:', updateError);
-        throw updateError;
-      }
-      
-      console.log('Record updated successfully:', updateResult);
-      return { success: true, data: updateResult };
+    if (deleteError) {
+      console.log('No existing record to delete or error:', deleteError.message);
     } else {
-      // Insert a new record
-      console.log('Inserting new record...');
-      const { data: insertResult, error: insertError } = await supabase
-        .from('pontuacoes')
-        .insert(finalScoreData)
-        .select()
-        .single();
-      
-      if (insertError) {
-        console.error('Error inserting record:', insertError);
-        throw insertError;
-      }
-      
-      console.log('Record inserted successfully:', insertResult);
-      return { success: true, data: insertResult };
+      console.log('Existing record deleted successfully');
     }
+    
+    // Now insert the new record
+    console.log('Inserting new record...');
+    const { data, error } = await supabase
+      .from('pontuacoes')
+      .insert(finalScoreData);
+    
+    if (error) {
+      console.error('Error inserting record:', error);
+      throw error;
+    }
+    
+    console.log('Record inserted successfully');
+    return { success: true, data };
   } catch (error) {
     console.error('Database operation failed:', error);
     throw error;
