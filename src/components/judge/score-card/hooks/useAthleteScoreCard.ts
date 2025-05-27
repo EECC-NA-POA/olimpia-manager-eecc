@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useScoreSubmission } from './useScoreSubmission';
 import { ScoreRecord } from '../types';
 
@@ -41,14 +41,14 @@ export function useAthleteScoreCard(
         .eq('evento_id', eventId)
         .eq('modalidade_id', modalityId)
         .eq('atleta_id', athlete.atleta_id)
-        .maybeSingle();
+        .limit(1);
       
       if (error) {
         console.error('Error fetching existing score:', error);
         return null;
       }
       
-      return data as ScoreRecord;
+      return data && data.length > 0 ? data[0] as ScoreRecord : null;
     },
     enabled: !!eventId && !!athlete.atleta_id && !!modalityId,
   });
@@ -65,14 +65,14 @@ export function useAthleteScoreCard(
         .eq('evento_id', eventId)
         .eq('modalidade_id', modalityId)
         .eq('atleta_id', athlete.atleta_id)
-        .maybeSingle();
+        .limit(1);
       
       if (error) {
         console.error('Error fetching medal info:', error);
         return null;
       }
       
-      return data;
+      return data && data.length > 0 ? data[0] : null;
     },
     enabled: !!eventId && !!athlete.atleta_id && !!modalityId,
   });
