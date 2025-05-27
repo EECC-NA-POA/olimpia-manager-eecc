@@ -33,7 +33,7 @@ export function AthletesList({
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
 
   // Get branch data for filtering
-  const { availableBranches, availableStates } = useAthletesBranchData(athletes || []);
+  const { availableBranches, availableStates, athletesBranchData } = useAthletesBranchData(athletes || []);
 
   // Get scores status for all athletes
   const athleteScores = useAthletesScoreStatus({
@@ -47,7 +47,13 @@ export function AthletesList({
     filters,
     setFilters,
     resetFilters
-  } = useAthletesFiltering(athletes || [], athleteScores);
+  } = useAthletesFiltering({
+    athletes: athletes || [],
+    athleteScores,
+    athletesBranchData,
+    availableBranches,
+    availableStates
+  });
 
   // Fetch baterias data for this modality
   const { data: bateriasData = [], isLoading: isLoadingBaterias } = useBateriaData(

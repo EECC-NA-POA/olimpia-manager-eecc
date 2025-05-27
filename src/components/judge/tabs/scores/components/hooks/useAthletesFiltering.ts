@@ -1,6 +1,7 @@
 
 import { useState, useMemo } from 'react';
 import { Athlete } from '../../hooks/useAthletes';
+import { useAthletePaymentData } from '../../../../hooks/useAthleteData';
 
 interface FilterState {
   searchFilter: string;
@@ -12,10 +13,24 @@ interface FilterState {
 
 interface UseAthletesFilteringProps {
   athletes: Athlete[];
-  athleteScores?: Record<string, boolean>; // Map of athleteId -> hasScore
+  athleteScores?: Record<string, boolean>;
+  athletesBranchData: Array<{
+    athleteId: string;
+    athleteName: string;
+    branchName: string;
+    branchState: string;
+  }>;
+  availableBranches: Array<{ name: string; state: string }>;
+  availableStates: string[];
 }
 
-export function useAthletesFiltering(athletes: Athlete[], athleteScores: Record<string, boolean> = {}) {
+export function useAthletesFiltering({
+  athletes,
+  athleteScores = {},
+  athletesBranchData,
+  availableBranches,
+  availableStates
+}: UseAthletesFilteringProps) {
   const [filters, setFilters] = useState<FilterState>({
     searchFilter: '',
     filterType: 'name',
@@ -24,24 +39,34 @@ export function useAthletesFiltering(athletes: Athlete[], athleteScores: Record<
     statusFilter: 'all'
   });
 
-  // Extract unique branches and states from athletes
-  const { availableBranches, availableStates } = useMemo(() => {
-    const branchesSet = new Set<string>();
-    const statesSet = new Set<string>();
-    
-    athletes.forEach(athlete => {
-      // Note: We'll need to get branch data from the athlete card data hook
-      // For now, we'll use placeholder logic
+  // Create a map for quick branch data lookup
+  const branchDataMap = useMemo(() => {
+    const map = new Map();
+    athletesBranchData.forEach(data => {
+      map.set(data.athleteId, data);
     });
+    return map;
+  }, [athletesBranchData]);
 
+  // Get athlete payment data for ID filtering
+  const athletesWithPaymentData = athletes.map(athlete => {
+    const paymentQuery = useAthletePaymentData(athlete.atleta_id, null);
     return {
-      availableBranches: Array.from(branchesSet).map(name => ({ name, state: '' })),
-      availableStates: Array.from(statesSet)
+      ...athlete,
+      numero_identificador: paymentQuery.data?.numero_identificador || ''
     };
-  }, [athletes]);
+  });
 
   const filteredAthletes = useMemo(() => {
     let filtered = athletes;
+
+    console.log('=== FILTER DEBUG ===');
+    console.log('Filter type:', filters.filterType);
+    console.log('Search filter:', filters.searchFilter);
+    console.log('Selected branch:', filters.selectedBranch);
+    console.log('Selected state:', filters.selectedState);
+    console.log('Status filter:', filters.statusFilter);
+    console.log('Total athletes:', filtered.length);
 
     // Apply status filter first
     if (filters.statusFilter !== 'all') {
@@ -49,6 +74,7 @@ export function useAthletesFiltering(athletes: Athlete[], athleteScores: Record<
         const hasScore = athleteScores[athlete.atleta_id] || false;
         return filters.statusFilter === 'avaliado' ? hasScore : !hasScore;
       });
+      console.log('After status filter:', filtered.length);
     }
 
     // Apply text/select filters based on filter type
@@ -56,9 +82,16 @@ export function useAthletesFiltering(athletes: Athlete[], athleteScores: Record<
       case 'id':
         if (filters.searchFilter.trim()) {
           const searchTerm = filters.searchFilter.toLowerCase().trim();
-          filtered = filtered.filter(athlete => 
-            athlete.atleta_id.toLowerCase().includes(searchTerm)
-          );
+          console.log('Filtering by ID with term:', searchTerm);
+          
+          filtered = filtered.filter(athlete => {
+            const athleteWithPayment = athletesWithPaymentData.find(a => a.atleta_id === athlete.atleta_id);
+            const athleteId = athleteWithPayment?.numero_identificador || '';
+            const matches = athleteId.toLowerCase().includes(searchTerm);
+            
+            console.log('Athlete:', athlete.atleta_nome, 'ID:', athleteId, 'Matches:', matches);
+            return matches;
+          });
         }
         break;
       
@@ -73,33 +106,28 @@ export function useAthletesFiltering(athletes: Athlete[], athleteScores: Record<
       
       case 'filial':
         if (filters.selectedBranch) {
-          // This will need to be implemented with actual branch data
-          // For now, we'll just filter by the search term if provided
-          if (filters.searchFilter.trim()) {
-            const searchTerm = filters.searchFilter.toLowerCase().trim();
-            filtered = filtered.filter(athlete => 
-              athlete.atleta_nome.toLowerCase().includes(searchTerm)
-            );
-          }
+          filtered = filtered.filter(athlete => {
+            const branchData = branchDataMap.get(athlete.atleta_id);
+            return branchData?.branchName === filters.selectedBranch;
+          });
         }
         break;
       
       case 'estado':
         if (filters.selectedState) {
-          // This will need to be implemented with actual state data
-          // For now, we'll just filter by the search term if provided
-          if (filters.searchFilter.trim()) {
-            const searchTerm = filters.searchFilter.toLowerCase().trim();
-            filtered = filtered.filter(athlete => 
-              athlete.atleta_nome.toLowerCase().includes(searchTerm)
-            );
-          }
+          filtered = filtered.filter(athlete => {
+            const branchData = branchDataMap.get(athlete.atleta_id);
+            return branchData?.branchState === filters.selectedState;
+          });
         }
         break;
     }
 
+    console.log('Filtered athletes count:', filtered.length);
+    console.log('=== END FILTER DEBUG ===');
+
     return filtered;
-  }, [athletes, filters, athleteScores]);
+  }, [athletes, filters, athleteScores, branchDataMap, athletesWithPaymentData]);
 
   const resetFilters = () => {
     setFilters({
@@ -115,8 +143,6 @@ export function useAthletesFiltering(athletes: Athlete[], athleteScores: Record<
     filteredAthletes,
     filters,
     setFilters,
-    resetFilters,
-    availableBranches,
-    availableStates
+    resetFilters
   };
 }
