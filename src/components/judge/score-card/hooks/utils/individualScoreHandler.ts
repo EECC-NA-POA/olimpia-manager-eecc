@@ -7,16 +7,16 @@ export async function handleIndividualScore(
   eventId: string,
   modalityIdInt: number
 ): Promise<SaveScoreResult> {
-  console.log('Handling individual score');
+  console.log('Handling individual score for bateria:', recordData.bateria_id);
   
   // Check for existing record for this specific bateria
   const { data: existingRecords, error: fetchError } = await supabase
     .from('pontuacoes')
-    .select('id')
+    .select('id, valor_pontuacao, unidade, observacoes, tempo_minutos, tempo_segundos')
     .eq('evento_id', eventId)
     .eq('modalidade_id', modalityIdInt)
     .eq('atleta_id', recordData.atleta_id)
-    .eq('bateria_id', recordData.bateria_id); // Include bateria_id in the check
+    .eq('bateria_id', recordData.bateria_id);
   
   if (fetchError) {
     console.error('Error checking for existing record:', fetchError);
@@ -24,14 +24,14 @@ export async function handleIndividualScore(
   }
   
   const existingRecord = existingRecords && existingRecords.length > 0 ? existingRecords[0] : null;
-  console.log('Existing record found for this bateria:', existingRecord ? 'Yes' : 'No');
+  console.log('Existing record found for bateria', recordData.bateria_id, ':', existingRecord ? 'Yes' : 'No');
   
   let result;
   let operation;
   
   if (existingRecord) {
     // Update existing record for this specific bateria
-    console.log('Updating existing individual record for this bateria');
+    console.log('Updating existing individual record for bateria:', recordData.bateria_id);
     const { data: updateData, error: updateError } = await supabase
       .from('pontuacoes')
       .update({

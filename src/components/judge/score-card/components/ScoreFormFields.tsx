@@ -11,7 +11,6 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { DynamicScoreFields } from './DynamicScoreFields';
-import { BateriaInfo } from './BateriaInfo';
 import { ModalityRule } from '../../tabs/scores/hooks/useModalityRules';
 import { Bateria } from '../../tabs/scores/hooks/useBateriaData';
 
@@ -21,6 +20,7 @@ interface ScoreFormFieldsProps {
   bateriasData: Bateria[];
   onSubmit: (data: any) => void;
   isPending: boolean;
+  showModalityInfo?: boolean;
 }
 
 export function ScoreFormFields({ 
@@ -28,7 +28,8 @@ export function ScoreFormFields({
   rule, 
   bateriasData, 
   onSubmit, 
-  isPending 
+  isPending,
+  showModalityInfo = false
 }: ScoreFormFieldsProps) {
   const handleSubmit = (data: any) => {
     console.log('ScoreFormFields - Form data submitted:', data);
@@ -37,13 +38,6 @@ export function ScoreFormFields({
 
   return (
     <>
-      {/* Show bateria info for relevant rule types */}
-      {(rule.regra_tipo === 'distancia' && rule.parametros?.baterias) || 
-       rule.regra_tipo === 'baterias' || 
-       rule.regra_tipo === 'tempo' ? (
-        <BateriaInfo baterias={bateriasData} rule={rule} />
-      ) : null}
-      
       <DynamicScoreFields form={form} rule={rule} bateriasData={bateriasData} />
       
       <FormField

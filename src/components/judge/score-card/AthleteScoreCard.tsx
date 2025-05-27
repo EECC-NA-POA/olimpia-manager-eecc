@@ -7,9 +7,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { AthleteCardHeader } from './components/AthleteCardHeader';
 import { ScoreForm } from './components/ScoreForm';
+import { BateriaScoresDisplay } from './components/BateriaScoresDisplay';
 import { useAthleteScoreCard } from './hooks/useAthleteScoreCard';
 import { getInitialValues } from './utils/initialValuesUtils';
 import { AthleteScoreCardProps } from './types';
+import { useBateriaData } from '../tabs/scores/hooks/useBateriaData';
 
 interface ExtendedAthleteScoreCardProps extends AthleteScoreCardProps {
   modalityRule?: any;
@@ -23,9 +25,6 @@ export function AthleteScoreCard({
   scoreType,
   modalityRule
 }: ExtendedAthleteScoreCardProps) {
-  console.log('AthleteScoreCard - modalityRule prop:', modalityRule);
-  console.log('AthleteScoreCard - scoreType prop:', scoreType);
-
   const {
     isExpanded,
     setIsExpanded,
@@ -41,6 +40,10 @@ export function AthleteScoreCard({
     scoreType,
     modalityRule
   );
+
+  const { data: bateriasData = [] } = useBateriaData(modalityId, eventId);
+
+  const hasBaterias = bateriasData.length > 0;
 
   return (
     <Card className={`
@@ -65,6 +68,17 @@ export function AthleteScoreCard({
           {isExpanded ? "Esconder formulário" : "Registrar pontuação"}
         </Button>
 
+        {hasBaterias && (
+          <BateriaScoresDisplay
+            athleteId={athlete.atleta_id}
+            modalityId={modalityId}
+            eventId={eventId!}
+            judgeId={judgeId}
+            baterias={bateriasData}
+            scoreType={scoreType}
+          />
+        )}
+
         {isExpanded && (
           <ScoreForm 
             modalityId={modalityId}
@@ -73,6 +87,7 @@ export function AthleteScoreCard({
             isPending={isPending}
             modalityRule={modalityRule}
             eventId={eventId}
+            showModalityInfo={false}
           />
         )}
       </CardContent>

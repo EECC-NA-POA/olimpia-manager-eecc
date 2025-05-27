@@ -2,7 +2,6 @@
 import React from 'react';
 import { Form } from '@/components/ui/form';
 import { useScoreForm } from '../hooks/useScoreForm';
-import { ModalityInfo } from './ModalityInfo';
 import { ScoreFormFields } from './ScoreFormFields';
 
 interface ScoreFormProps {
@@ -12,6 +11,7 @@ interface ScoreFormProps {
   isPending: boolean;
   modalityRule?: any;
   eventId?: string | null;
+  showModalityInfo?: boolean;
 }
 
 export function ScoreForm({ 
@@ -20,7 +20,8 @@ export function ScoreForm({
   onSubmit, 
   isPending, 
   modalityRule, 
-  eventId 
+  eventId,
+  showModalityInfo = false
 }: ScoreFormProps) {
   const {
     form,
@@ -47,14 +48,13 @@ export function ScoreForm({
   return (
     <Form {...form}>
       <form className="space-y-4 mt-4">
-        <ModalityInfo rule={rule} />
-        
         <ScoreFormFields 
           form={form}
           rule={rule}
           bateriasData={bateriasData}
           onSubmit={onSubmit}
           isPending={isPending}
+          showModalityInfo={showModalityInfo}
         />
       </form>
     </Form>

@@ -8,9 +8,15 @@ import { ModalityRule } from '../../tabs/scores/hooks/useModalityRules';
 interface BateriaInfoProps {
   baterias: Bateria[];
   rule: ModalityRule;
+  showInIndividualCards?: boolean;
 }
 
-export function BateriaInfo({ baterias, rule }: BateriaInfoProps) {
+export function BateriaInfo({ baterias, rule, showInIndividualCards = true }: BateriaInfoProps) {
+  // Don't show in individual cards to avoid repetition
+  if (!showInIndividualCards) {
+    return null;
+  }
+
   const parametros = rule.parametros || {};
   const raiasPorBateria = parametros.raias_por_bateria;
   const numTentativas = parametros.num_tentativas;
