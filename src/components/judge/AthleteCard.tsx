@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Card, 
@@ -98,7 +97,7 @@ export function AthleteCard({
   };
 
   const handleScoreUpdate = (scoreId: number, newValue: string) => {
-    let processedValue = newValue;
+    let processedValue: any = newValue;
     
     // Convert empty string to null
     if (processedValue === '') {
@@ -181,7 +180,6 @@ export function AthleteCard({
             <div className="space-y-2">
               {bateriasData.map((bateria) => {
                 const score = batteriaScores.find(s => s.bateria_id === bateria.id);
-                const displayValue = score ? formatScoreDisplay(score) : '';
                 
                 return (
                   <div key={bateria.id} className="flex items-center justify-between bg-white rounded p-2 border">
@@ -191,7 +189,7 @@ export function AthleteCard({
                         type="number"
                         step={scoreType === 'distancia' ? '0.01' : '1'}
                         placeholder={scoreType === 'distancia' ? '0.00' : '0'}
-                        value={score?.valor_pontuacao || ''}
+                        value={score?.valor_pontuacao?.toString() || ''}
                         onChange={(e) => {
                           if (score) {
                             handleScoreUpdate(score.id, e.target.value);
