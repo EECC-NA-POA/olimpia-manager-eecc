@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -190,60 +191,6 @@ export function ParametrosFields({ currentItem, updateParametros, onResetParamet
               </div>
             </>
           )}
-        </div>
-      );
-    
-    case 'baterias':
-      return (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h4 className="text-sm font-medium">Parâmetros de Baterias</h4>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onResetParameters}
-              className="flex items-center gap-2"
-            >
-              <RotateCcw className="h-4 w-4" />
-              Resetar
-            </Button>
-          </div>
-          
-          <div>
-            <Label>Número de Tentativas</Label>
-            <Input
-              type="number"
-              min="1"
-              value={currentItem.parametros.num_tentativas || 1}
-              onChange={(e) => updateParametros('num_tentativas', parseInt(e.target.value))}
-            />
-          </div>
-          <div>
-            <Label>Número de Raias (opcional)</Label>
-            <Input
-              type="number"
-              min="1"
-              value={currentItem.parametros.num_raias || ''}
-              onChange={(e) => updateParametros('num_raias', e.target.value ? parseInt(e.target.value) : undefined)}
-            />
-          </div>
-          <div>
-            <Label>Unidade</Label>
-            <Select 
-              value={currentItem.parametros.unidade || 'pontos'} 
-              onValueChange={(value) => updateParametros('unidade', value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pontos">Pontos</SelectItem>
-                <SelectItem value="tempo">Tempo</SelectItem>
-                <SelectItem value="metros">Metros</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
       );
     
