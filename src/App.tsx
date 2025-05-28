@@ -10,6 +10,8 @@ import { PUBLIC_ROUTES } from './constants/routes';
 import Index from './pages/Index';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import EventsLandingPage from './pages/EventsLandingPage';
+import EventDetailsPage from './pages/EventDetailsPage';
 import OrganizerDashboard from './components/OrganizerDashboard';
 import DelegationDashboard from './components/DelegationDashboard';
 import JudgeDashboard from './pages/JudgeDashboard';
@@ -73,7 +75,8 @@ function App() {
         <GlobalHeader />
         <div className={`flex-grow ${isHomePage ? 'home-page' : 'mt-8'}`}>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<EventsLandingPage />} />
+            <Route path="/events/:eventId" element={<EventDetailsPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/esqueci-senha" element={<ForgotPassword />} />
             <Route path="/redefinir-senha" element={<ResetPassword />} />
