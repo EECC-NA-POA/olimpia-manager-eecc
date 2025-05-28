@@ -39,13 +39,15 @@ export function EventScheduleSection({ eventId }: { eventId: string | null }) {
       <Card>
         <CardContent className="pt-6">
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
               <h3 className="text-lg font-medium">Cronograma do Evento</h3>
               <Button 
                 onClick={openAddDialog} 
-                className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary"
+                className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:w-auto flex items-center justify-center gap-2 text-sm px-3 py-2"
+                size="sm"
               >
-                <Plus className="h-4 w-4 mr-2" /> Adicionar Atividade
+                <Plus className="h-4 w-4" />
+                <span className="whitespace-nowrap">Adicionar Atividade</span>
               </Button>
             </div>
             
