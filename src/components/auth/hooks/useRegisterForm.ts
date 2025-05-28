@@ -69,29 +69,12 @@ export const useRegisterForm = () => {
       // Prepare user metadata - no longer includes branch ID
       const userMetadata = prepareUserMetadata(values, formattedBirthDate);
 
-      // Sign up user
-      const signUpResult = await signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: userMetadata
-        }
+      // Sign up user with the correct parameters: email, password, userData
+      await signUp(values.email, values.password, {
+        data: userMetadata
       });
 
-      if (signUpResult.error) {
-        console.error('Registration error occurred:', signUpResult.error);
-        toast.error('Erro ao realizar cadastro. Por favor, tente novamente.');
-        return;
-      }
-
-      if (!signUpResult.user) {
-        console.error('No user data returned from registration');
-        toast.error('Erro ao criar usuário. Por favor, tente novamente.');
-        return;
-      }
-
-      // We no longer log privacy policy acceptance here - it will be done in the welcome modal
-
+      // If we reach here, signup was successful
       toast.success('Cadastro realizado com sucesso! Por favor, selecione um evento para continuar.');
       navigate('/event-selection');
 
