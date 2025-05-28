@@ -1,4 +1,3 @@
-
 export interface Event {
   id: string;
   nome: string;
@@ -18,6 +17,7 @@ export interface Event {
   updated_at: string | null;
   status_evento: 'ativo' | 'encerrado' | 'suspenso' | 'em_teste';
   visibilidade_publica: boolean;
+  slug_pagina: string | null;
 }
 
 export interface EventBranch {

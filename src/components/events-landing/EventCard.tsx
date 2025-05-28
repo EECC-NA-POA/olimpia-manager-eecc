@@ -40,7 +40,13 @@ export function EventCard({ event }: EventCardProps) {
   };
 
   const handleEventClick = () => {
-    navigate(`/events/${event.id}`);
+    // Se o evento tem slug, usar a página pública
+    if (event.slug_pagina) {
+      navigate(`/event/${event.slug_pagina}`);
+    } else {
+      // Fallback para a rota antiga
+      navigate(`/events/${event.id}`);
+    }
   };
 
   const getLocationString = () => {

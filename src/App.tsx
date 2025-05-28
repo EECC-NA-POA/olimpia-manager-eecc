@@ -1,109 +1,89 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+
 import { Toaster } from "@/components/ui/toaster";
-import './styles/index.css'; // Updated import path
-import { GlobalHeader } from './components/GlobalHeader';
-import { PUBLIC_ROUTES } from './constants/routes';
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { GlobalHeader } from "@/components/GlobalHeader";
+import { Footer } from "@/components/Footer";
+import { usePrivacyPolicyCheck } from "@/hooks/usePrivacyPolicyCheck";
+import { PrivacyPolicyAcceptanceModal } from "@/components/auth/PrivacyPolicyAcceptanceModal";
 
-// Import pages
-import Index from './pages/Index';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import EventsLandingPage from './pages/EventsLandingPage';
-import EventDetailsPage from './pages/EventDetailsPage';
-import OrganizerDashboard from './components/OrganizerDashboard';
-import DelegationDashboard from './components/DelegationDashboard';
-import JudgeDashboard from './pages/JudgeDashboard';
-import EventSelectionPage from './pages/EventSelectionPage';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import VerifyEmail from './pages/VerifyEmail';
-import RejectedAccess from './pages/RejectedAccess';
-import Scores from './pages/Scores';
-import Cronograma from './pages/Cronograma';
-import Administration from './pages/Administration';
-import EventManagement from './pages/EventManagement';
-import AthleteRegistrations from './components/AthleteRegistrations';
-import EventRegulations from './pages/EventRegulations';
+import Index from "./pages/Index";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import EventSelectionPage from "./pages/EventSelectionPage";
+import EventDetailsPage from "./pages/EventDetailsPage";
+import PublicEventPage from "./pages/PublicEventPage";
+import EventsLandingPage from "./pages/EventsLandingPage";
+import JudgeDashboard from "./pages/JudgeDashboard";
+import Administration from "./pages/Administration";
+import EventManagement from "./pages/EventManagement";
+import EventRegulations from "./pages/EventRegulations";
+import Cronograma from "./pages/Cronograma";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
+import RejectedAccess from "./pages/RejectedAccess";
 
-// Import providers and components
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from './components/providers/AuthProvider';
-import { MobileNavigationLink } from './components/footer/MobileNavigation';
-import Footer from './components/Footer';
-import { MainNavigation } from './components/MainNavigation';
+const queryClient = new QueryClient();
 
-// Create a component to set the current route as a data-attribute on the body
-const RouteObserver = () => {
-  const location = useLocation();
-  React.useEffect(() => {
-    document.body.setAttribute('data-current-route', location.pathname);
-    return () => {
-      document.body.removeAttribute('data-current-route');
-    };
-  }, [location.pathname]);
-  return null;
-};
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5,
-      // 5 minutes
-      retry: 1
-    }
-  }
-});
+function AppContent() {
+  const { showModal, handleAccept, handleReject } = usePrivacyPolicyCheck();
 
-// Conditional Footer component that only appears on public routes
-const ConditionalFooter = () => {
-  const location = useLocation();
-  const isPublicRoute = PUBLIC_ROUTES.includes(location.pathname as any);
-  return isPublicRoute ? <Footer /> : null;
-};
+  return (
+    <div className="min-h-screen flex flex-col">
+      <GlobalHeader />
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/events" element={<EventsLandingPage />} />
+          <Route path="/events/:eventId" element={<EventDetailsPage />} />
+          <Route path="/event/:slug" element={<PublicEventPage />} />
+          <Route path="/event-selection" element={<EventSelectionPage />} />
+          <Route path="/judge" element={<JudgeDashboard />} />
+          <Route path="/administration" element={<Administration />} />
+          <Route path="/event-management" element={<EventManagement />} />
+          <Route path="/event-regulations" element={<EventRegulations />} />
+          <Route path="/cronograma" element={<Cronograma />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/esqueci-senha" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/redefinir-senha" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/verificar-email" element={<VerifyEmail />} />
+          <Route path="/acesso-negado" element={<RejectedAccess />} />
+        </Routes>
+      </main>
+      <Footer />
+      
+      {showModal && (
+        <PrivacyPolicyAcceptanceModal
+          onAccept={handleAccept}
+          onReject={handleReject}
+        />
+      )}
+    </div>
+  );
+}
+
 function App() {
-  const location = useLocation();
-  const isHomePage = location.pathname === "/home";
-  return <QueryClientProvider client={queryClient}>
-      <div className="flex flex-col min-h-screen rounded-sm">
-        <GlobalHeader />
-        <div className="">
-          <Routes>
-            <Route path="/" element={<EventsLandingPage />} />
-            <Route path="/events/:eventId" element={<EventDetailsPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/esqueci-senha" element={<ForgotPassword />} />
-            <Route path="/redefinir-senha" element={<ResetPassword />} />
-            <Route path="/verificar-email" element={<VerifyEmail />} />
-            <Route path="/acesso-negado" element={<RejectedAccess />} />
-            <Route path="/home" element={<Dashboard />} />
-            <Route path="/event-selection" element={<EventSelectionPage />} />
-            
-            {/* Authenticated routes with top navigation */}
-            <Route element={<MainNavigation />}>
-              <Route path="/athlete-profile" element={<Dashboard />} />
-              <Route path="/athlete-registrations" element={<AthleteRegistrations />} />
-              <Route path="/delegation-dashboard" element={<DelegationDashboard />} />
-              <Route path="/organizer-dashboard" element={<OrganizerDashboard />} />
-              <Route path="/scores" element={<Scores />} />
-              <Route path="/cronograma" element={<Cronograma />} />
-              <Route path="/regulamento" element={<EventRegulations />} />
-              <Route path="/administration" element={<Administration />} />
-              <Route path="/event-management" element={<EventManagement />} />
-              <Route path="/judge-dashboard" element={<JudgeDashboard />} />
-            </Route>
-          </Routes>
-        </div>
-        <MobileNavigationLink />
-        <ConditionalFooter />
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
         <Toaster />
-      </div>
-    </QueryClientProvider>;
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
 }
-export default function AppWithRouter() {
-  return <BrowserRouter>
-      <AuthProvider>
-        <RouteObserver />
-        <App />
-      </AuthProvider>
-    </BrowserRouter>;
-}
+
+export default App;
