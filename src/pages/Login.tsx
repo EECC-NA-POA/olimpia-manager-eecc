@@ -8,26 +8,26 @@ import { PhilosopherQuotes } from '@/components/auth/PhilosopherQuotes';
 
 export default function Login() {
   return (
-    <div className="min-h-screen bg-olimpics-background">
-      <div className="container mx-auto p-6">
+    <div className="min-h-screen bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary">
+      <div className="container mx-auto p-6 pt-24">
         <Tabs defaultValue="register" className="w-full max-w-2xl mx-auto">
-          <TabsList className="grid w-full grid-cols-2 bg-olimpics-green-primary/10">
+          <TabsList className="grid w-full grid-cols-2 bg-white/20 backdrop-blur-sm">
             <TabsTrigger 
               value="register"
-              className="data-[state=active]:bg-olimpics-green-primary data-[state=active]:text-white"
+              className="data-[state=active]:bg-white data-[state=active]:text-olimpics-green-primary text-white"
             >
               Inscreva-se
             </TabsTrigger>
             <TabsTrigger 
               value="login"
-              className="data-[state=active]:bg-olimpics-green-primary data-[state=active]:text-white"
+              className="data-[state=active]:bg-white data-[state=active]:text-olimpics-green-primary text-white"
             >
               Login
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="register" className="space-y-4">
-            <Card>
+            <Card className="bg-white/95 backdrop-blur-sm">
               <CardContent className="pt-6">
                 <SignUpForm />
               </CardContent>
@@ -35,7 +35,7 @@ export default function Login() {
           </TabsContent>
 
           <TabsContent value="login" className="space-y-4">
-            <Card>
+            <Card className="bg-white/95 backdrop-blur-sm">
               <CardContent className="pt-6">
                 <LoginForm />
               </CardContent>
