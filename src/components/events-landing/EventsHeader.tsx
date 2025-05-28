@@ -1,14 +1,10 @@
-
 import React from 'react';
 import { Calendar, Users, Trophy, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-
 export function EventsHeader() {
   const navigate = useNavigate();
-
-  return (
-    <div className="relative min-h-screen bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary">
+  return <div className="relative min-h-screen bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary">
       <div className="absolute inset-0 bg-black/40" />
       <div className="container relative z-10 mx-auto px-4 py-8">
         <div className="text-center mb-16">
@@ -107,8 +103,8 @@ export function EventsHeader() {
                 <p className="text-xs text-gray-600">— Cícero, De Officiis</p>
               </div>
 
-              <div className="bg-olimpics-green-primary/5 p-6 rounded-lg border-l-4 border-olimpics-green-primary lg:col-start-2">
-                <h4 className="font-bold text-olimpics-green-primary mb-3">Píndaro (518–438 a.C.)</h4>
+              <div className="bg-olimpics-orange-primary/5 p-6 rounded-lg border-l-4 border-olimpics-orange-primary">
+                <h4 className="font-bold text-olimpics-orange-primary mb-3">Píndaro (518–438 a.C.)</h4>
                 <p className="text-gray-700 italic text-sm leading-relaxed mb-2">
                   "Ó minha alma, não aspire à vida imortal, mas esgote o campo do possível."
                 </p>
@@ -118,6 +114,5 @@ export function EventsHeader() {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 }
