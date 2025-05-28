@@ -34,7 +34,7 @@ export function EventsHeader() {
             </h1>
           </div>
           <p className="text-xl md:text-2xl text-white/90 max-w-4xl mx-auto mb-8">
-            Sistema de gestão de eventos e atividades da Escola do Esporte com Coração
+            Sistema de gestão de eventos e atividades para a Escola do Esporte com Coração
           </p>
 
           {/* Login/Cadastro Section */}

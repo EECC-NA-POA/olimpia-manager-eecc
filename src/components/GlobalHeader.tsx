@@ -35,7 +35,7 @@ export function GlobalHeader() {
                 onClick={handleClick}
                 className="text-olimpics-green-primary hover:text-olimpics-green-secondary"
               >
-                Olimpíadas Nacionais - Escola do Esporte com Coração - EECC
+                Olímpia Manager
               </Button>
             </div>
           </div>
