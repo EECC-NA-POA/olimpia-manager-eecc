@@ -20,15 +20,25 @@ export function EventsLandingContainer() {
   const { data: events, isLoading, error } = useQuery({
     queryKey: ['public-events'],
     queryFn: async () => {
+      console.log('Fetching public events...');
+      
+      // Create a new supabase client without auth requirements for public data
       const { data, error } = await supabase
         .from('eventos')
         .select('*')
         .eq('visibilidade_publica', true)
         .order('data_inicio_inscricao', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching public events:', error);
+        throw error;
+      }
+
+      console.log('Public events fetched:', data?.length || 0);
       return data as Event[];
     },
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   if (isLoading) {
@@ -37,7 +47,7 @@ export function EventsLandingContainer() {
         <EventsHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center h-64">
-            <LoadingImage text="Carregando sistema..." />
+            <LoadingImage text="Carregando eventos..." />
           </div>
         </div>
       </div>
@@ -45,6 +55,7 @@ export function EventsLandingContainer() {
   }
 
   if (error) {
+    console.error('Error loading public events:', error);
     return (
       <div className="min-h-screen bg-olimpics-green-primary">
         <EventsHeader />
@@ -53,11 +64,10 @@ export function EventsLandingContainer() {
             <div className="max-w-md mx-auto">
               <Calendar className="h-16 w-16 text-white/80 mx-auto mb-4" />
               <h3 className="text-2xl font-semibold text-white mb-4">
-                Eventos em Preparação
+                Erro ao Carregar Eventos
               </h3>
               <p className="text-white/90 mb-6 leading-relaxed">
-                No momento não há eventos públicos disponíveis para visualização. 
-                Novos eventos serão publicados em breve.
+                Não foi possível carregar os eventos públicos. Tente novamente mais tarde.
               </p>
             </div>
           </div>

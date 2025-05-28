@@ -1,17 +1,22 @@
 
 -- Adicionar coluna slug_pagina à tabela eventos
 ALTER TABLE eventos 
-ADD COLUMN slug_pagina VARCHAR(255);
+ADD COLUMN IF NOT EXISTS slug_pagina VARCHAR(255);
 
 -- Criar índice único para o slug_pagina quando visibilidade_publica = true
+DROP INDEX IF EXISTS idx_eventos_slug_pagina_publico;
 CREATE UNIQUE INDEX idx_eventos_slug_pagina_publico 
 ON eventos (slug_pagina) 
 WHERE visibilidade_publica = true AND slug_pagina IS NOT NULL;
 
--- Criar policy para permitir acesso público a eventos com visibilidade pública
+-- Remover policy existente se houver
+DROP POLICY IF EXISTS "Permitir acesso público a eventos visíveis" ON eventos;
+
+-- Criar policy para permitir acesso público de leitura a eventos com visibilidade pública
 CREATE POLICY "Permitir acesso público a eventos visíveis" 
 ON eventos 
 FOR SELECT 
+TO anon, authenticated
 USING (visibilidade_publica = true);
 
 -- Função para gerar slug automaticamente baseado no nome do evento
