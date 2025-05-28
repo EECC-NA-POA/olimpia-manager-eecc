@@ -54,16 +54,16 @@ export default function Login() {
         </div>
 
         <Tabs defaultValue="register" className="w-full max-w-2xl mx-auto">
-          <TabsList className="grid w-full grid-cols-2 bg-white/20 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-2 bg-olimpics-green-primary/80 backdrop-blur-sm border border-white/20">
             <TabsTrigger 
               value="register"
-              className="data-[state=active]:bg-white data-[state=active]:text-olimpics-green-primary text-white"
+              className="data-[state=active]:bg-white data-[state=active]:text-olimpics-green-primary text-white hover:bg-white/10"
             >
               Inscreva-se
             </TabsTrigger>
             <TabsTrigger 
               value="login"
-              className="data-[state=active]:bg-white data-[state=active]:text-olimpics-green-primary text-white"
+              className="data-[state=active]:bg-white data-[state=active]:text-olimpics-green-primary text-white hover:bg-white/10"
             >
               Login
             </TabsTrigger>
