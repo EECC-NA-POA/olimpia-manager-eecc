@@ -90,48 +90,54 @@ export default function EventManagement() {
 
         <CardContent className="pt-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full border-b mb-8 bg-background flex justify-start space-x-2 p-0">
+            <TabsList className="w-full border-b mb-8 bg-background grid grid-cols-2 md:flex md:justify-start md:space-x-2 p-0 h-auto gap-1 md:gap-0">
               <TabsTrigger 
                 value="basic-info"
-                className="flex items-center gap-2 px-6 py-3 text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
+                className="flex items-center gap-1 md:gap-2 px-2 md:px-6 py-2 md:py-3 text-xs md:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
               >
-                <FileText className="h-5 w-5" />
-                Informações Básicas
+                <FileText className="h-3 w-3 md:h-5 md:w-5" />
+                <span className="hidden sm:inline">Informações Básicas</span>
+                <span className="sm:hidden">Info</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="branches"
-                className="flex items-center gap-2 px-6 py-3 text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
+                className="flex items-center gap-1 md:gap-2 px-2 md:px-6 py-2 md:py-3 text-xs md:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
               >
-                <Users className="h-5 w-5" />
-                Filiais Vinculadas
+                <Users className="h-3 w-3 md:h-5 md:w-5" />
+                <span className="hidden sm:inline">Filiais Vinculadas</span>
+                <span className="sm:hidden">Filiais</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="schedule"
-                className="flex items-center gap-2 px-6 py-3 text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
+                className="flex items-center gap-1 md:gap-2 px-2 md:px-6 py-2 md:py-3 text-xs md:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
               >
-                <CalendarIcon className="h-5 w-5" />
-                Cronograma
+                <CalendarIcon className="h-3 w-3 md:h-5 md:w-5" />
+                <span className="hidden sm:inline">Cronograma</span>
+                <span className="sm:hidden">Agenda</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="modalities"
-                className="flex items-center gap-2 px-6 py-3 text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
+                className="flex items-center gap-1 md:gap-2 px-2 md:px-6 py-2 md:py-3 text-xs md:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
               >
-                <Calendar className="h-5 w-5" />
-                Modalidades
+                <Calendar className="h-3 w-3 md:h-5 md:w-5" />
+                <span className="hidden sm:inline">Modalidades</span>
+                <span className="sm:hidden">Mod.</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="modality-rules"
-                className="flex items-center gap-2 px-6 py-3 text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
+                className="flex items-center gap-1 md:gap-2 px-2 md:px-6 py-2 md:py-3 text-xs md:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
               >
-                <Settings className="h-5 w-5" />
-                Regras de Pontuação
+                <Settings className="h-3 w-3 md:h-5 md:w-5" />
+                <span className="hidden sm:inline">Regras de Pontuação</span>
+                <span className="sm:hidden">Regras</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="regulations"
-                className="flex items-center gap-2 px-6 py-3 text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
+                className="flex items-center gap-1 md:gap-2 px-2 md:px-6 py-2 md:py-3 text-xs md:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
               >
-                <BookOpen className="h-5 w-5" />
-                Regulamento
+                <BookOpen className="h-3 w-3 md:h-5 md:w-5" />
+                <span className="hidden sm:inline">Regulamento</span>
+                <span className="sm:hidden">Reg.</span>
               </TabsTrigger>
             </TabsList>
 
