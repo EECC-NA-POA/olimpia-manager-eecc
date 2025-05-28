@@ -33,6 +33,7 @@ export function EventsLandingContainer() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-olimpics-background to-white">
         <div className="container mx-auto px-4 py-8">
+          <EventsHeader />
           <div className="flex items-center justify-center h-64">
             <LoadingImage text="Carregando eventos..." />
           </div>
@@ -45,7 +46,8 @@ export function EventsLandingContainer() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-olimpics-background to-white">
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center text-red-600">
+          <EventsHeader />
+          <div className="text-center text-red-600 mt-8">
             Erro ao carregar eventos. Tente novamente mais tarde.
           </div>
         </div>
@@ -53,7 +55,10 @@ export function EventsLandingContainer() {
     );
   }
 
-  const filteredEvents = events?.filter(event => {
+  // Always show the page structure, even if no public events are available
+  const publicEvents = events || [];
+
+  const filteredEvents = publicEvents.filter(event => {
     if (filterStatus === 'all') return true;
     
     const now = new Date();
@@ -70,7 +75,7 @@ export function EventsLandingContainer() {
       default:
         return true;
     }
-  }) || [];
+  });
 
   const sortedEvents = [...filteredEvents].sort((a, b) => {
     if (sortBy === 'name') {
@@ -83,12 +88,14 @@ export function EventsLandingContainer() {
     <div className="min-h-screen bg-gradient-to-b from-olimpics-background to-white">
       <div className="container mx-auto px-4 py-8">
         <EventsHeader />
-        <EventsFilters
-          filterStatus={filterStatus}
-          setFilterStatus={setFilterStatus}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-        />
+        {publicEvents.length > 0 && (
+          <EventsFilters
+            filterStatus={filterStatus}
+            setFilterStatus={setFilterStatus}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+          />
+        )}
         <EventsGrid events={sortedEvents} />
       </div>
     </div>

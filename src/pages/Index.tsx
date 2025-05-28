@@ -9,20 +9,8 @@ const Index = () => {
   console.log('Index component - User auth state:', user ? 'Authenticated' : 'Not authenticated');
   console.log('Index component - Current event ID:', currentEventId);
   
-  // If user is authenticated and has an event selected, go to the event details page
-  if (user && currentEventId) {
-    console.log('User is authenticated with event selected, redirecting to event details');
-    return <Navigate to={`/events/${currentEventId}`} replace />;
-  }
-  
-  // If user is authenticated but no event selected, go to event selection
-  if (user && !currentEventId) {
-    console.log('User is authenticated but no event selected, redirecting to /event-selection');
-    return <Navigate to="/event-selection" replace />;
-  }
-  
-  // If user is not authenticated, show the events landing page
-  console.log('User is not authenticated, displaying events landing page');
+  // Always show the events landing page as the main page
+  // Users can navigate to specific events or login from there
   return <EventsLandingPage />;
 };
 
