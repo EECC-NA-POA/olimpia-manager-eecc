@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
 import { usePrivacyPolicyCheck } from "@/hooks/usePrivacyPolicyCheck";
@@ -63,7 +63,7 @@ function AppContent() {
       {showModal && (
         <PrivacyPolicyAcceptanceModal
           onAccept={handleAccept}
-          onReject={handleReject}
+          onCancel={handleReject}
         />
       )}
     </div>

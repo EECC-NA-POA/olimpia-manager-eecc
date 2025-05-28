@@ -10,6 +10,9 @@ interface UsePrivacyPolicyCheckResult {
   error: Error | null;
   checkCompleted: boolean;
   refetchCheck: () => Promise<void>;
+  showModal: boolean;
+  handleAccept: () => void;
+  handleReject: () => void;
 }
 
 export const usePrivacyPolicyCheck = (): UsePrivacyPolicyCheckResult => {
@@ -17,6 +20,7 @@ export const usePrivacyPolicyCheck = (): UsePrivacyPolicyCheckResult => {
   const [needsAcceptance, setNeedsAcceptance] = useState(false);
   const [checkCompleted, setCheckCompleted] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   const checkLatestAcceptance = async () => {
     if (!user?.id) {
@@ -89,9 +93,20 @@ export const usePrivacyPolicyCheck = (): UsePrivacyPolicyCheckResult => {
   useEffect(() => {
     if (!isLoading && data) {
       setNeedsAcceptance(data.needsAcceptance);
+      setShowModal(data.needsAcceptance);
       setCheckCompleted(true);
     }
   }, [isLoading, data]);
+
+  const handleAccept = () => {
+    setShowModal(false);
+    setNeedsAcceptance(false);
+  };
+
+  const handleReject = () => {
+    setShowModal(false);
+    // Could add logout logic here if needed
+  };
 
   const refetchCheck = async () => {
     try {
@@ -99,6 +114,7 @@ export const usePrivacyPolicyCheck = (): UsePrivacyPolicyCheckResult => {
       const result = await refetch();
       if (result.data) {
         setNeedsAcceptance(result.data.needsAcceptance);
+        setShowModal(result.data.needsAcceptance);
       }
       setCheckCompleted(true);
     } catch (err: any) {
@@ -113,6 +129,9 @@ export const usePrivacyPolicyCheck = (): UsePrivacyPolicyCheckResult => {
     isLoading,
     error,
     checkCompleted,
-    refetchCheck
+    refetchCheck,
+    showModal,
+    handleAccept,
+    handleReject
   };
 };
