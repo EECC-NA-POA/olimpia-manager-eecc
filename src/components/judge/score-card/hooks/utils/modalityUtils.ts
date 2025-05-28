@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 
 export async function getModalityInfo(modalityId: number) {
@@ -49,8 +48,31 @@ export async function getTeamId(athlete: any, modalityId: number, eventId: strin
 export async function getBateriaId(finalScoreData: any, modalityId: number, eventId: string) {
   let bateriaId = finalScoreData.bateria_id;
   
+  // If we have a heat number instead of bateria_id, convert it
+  if (!bateriaId && finalScoreData.heat) {
+    console.log('Converting heat number to bateria ID:', finalScoreData.heat);
+    
+    const { data: bateriaResults, error: bateriaError } = await supabase
+      .from('baterias')
+      .select('id')
+      .eq('modalidade_id', modalityId)
+      .eq('evento_id', eventId)
+      .eq('numero', finalScoreData.heat)
+      .single();
+    
+    if (bateriaError) {
+      console.error('Error fetching bateria by number:', bateriaError);
+      throw new Error(`Erro ao buscar bateria número ${finalScoreData.heat}: ${bateriaError.message}`);
+    }
+    
+    if (bateriaResults) {
+      bateriaId = bateriaResults.id;
+      console.log('Found bateria ID for heat number', finalScoreData.heat, ':', bateriaId);
+    }
+  }
+  
   if (!bateriaId) {
-    console.log('No bateria_id provided, fetching default bateria for modality');
+    console.log('No bateria_id or heat provided, fetching default bateria for modality');
     const { data: bateriaResults, error: bateriaError } = await supabase
       .from('baterias')
       .select('id')

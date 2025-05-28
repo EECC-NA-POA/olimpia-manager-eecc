@@ -21,9 +21,14 @@ export function prepareFinalScoreData(
     equipe_id: athlete.equipe_id || null
   };
 
-  // Add bateria_id if it exists
+  // Add bateria_id if it exists in scoreData
   if (scoreData.bateria_id !== undefined) {
     finalData.bateria_id = scoreData.bateria_id;
+  }
+  
+  // Add heat number if it exists in formData (this will be converted to bateria_id later)
+  if (formData.heat !== undefined) {
+    finalData.heat = formData.heat;
   }
 
   console.log('Final score data prepared:', finalData);
