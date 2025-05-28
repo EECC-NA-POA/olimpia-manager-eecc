@@ -50,36 +50,35 @@ export function useAuthOperations({ setUser, navigate, location }: UseAuthOperat
 
   const signOut = async () => {
     try {
-      console.log('AuthContext - Starting logout process...');
+      console.log('useAuthOperations - Starting logout process...');
       
-      // First clear event data from localStorage
+      // Clear user data first
+      setUser(null);
+      
+      // Clear event data from localStorage
       localStorage.removeItem('currentEventId');
       
       // Then sign out from Supabase API
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error('AuthContext - Error during signOut:', error);
+        console.error('useAuthOperations - Error during signOut:', error);
         if (error.message?.includes('session_not_found')) {
-          console.log('AuthContext - Session already expired, continuing with local cleanup');
+          console.log('useAuthOperations - Session already expired, continuing with local cleanup');
         } else {
-          console.warn('AuthContext - Non-session error during logout:', error);
+          console.warn('useAuthOperations - Non-session error during logout:', error);
         }
       }
 
-      // Always clear user data, even with errors
-      setUser(null);
-      
-      console.log('AuthContext - Logout successful, navigating to landing page');
+      console.log('useAuthOperations - Logout successful, navigating to landing page');
       
       // Navigate to homepage and use replace to prevent back navigation
       navigate('/', { replace: true });
       
-      toast.success('Logout realizado com sucesso!');
       return;
       
     } catch (error: any) {
-      console.error('AuthContext - Unexpected error during signOut:', error);
+      console.error('useAuthOperations - Unexpected error during signOut:', error);
       
       // Even with errors, clear local data
       setUser(null);
@@ -88,7 +87,6 @@ export function useAuthOperations({ setUser, navigate, location }: UseAuthOperat
       // Navigate to homepage
       navigate('/', { replace: true });
       
-      toast.error('Erro ao fazer logout, mas sua sessão foi encerrada localmente.');
       throw error;
     }
   };

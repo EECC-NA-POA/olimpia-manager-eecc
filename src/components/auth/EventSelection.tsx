@@ -93,12 +93,22 @@ export const EventSelection = ({
 
   const handleExit = async () => {
     try {
-      console.log('Logging out from EventSelection component');
+      console.log('EventSelection - Initiating logout process...');
+      
+      // Clear event data first
       localStorage.removeItem('currentEventId');
+      setCurrentEventId(null);
+      
+      // Sign out from auth
       await signOut();
+      
+      console.log('EventSelection - Logout successful, navigating to home');
+      toast.success('Logout realizado com sucesso!');
+      
+      // Navigate to home page
       navigate('/', { replace: true });
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.error('EventSelection - Error during logout:', error);
       toast.error("Erro ao fazer logout. Tente novamente.");
     }
   };

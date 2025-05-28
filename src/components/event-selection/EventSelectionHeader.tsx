@@ -18,13 +18,23 @@ export function EventSelectionHeader({ onLogout }: EventSelectionHeaderProps) {
   const { canCreateEvents, isLoading: permissionLoading } = useCanCreateEvents();
   const [createEventDialogOpen, setCreateEventDialogOpen] = React.useState(false);
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, setCurrentEventId } = useAuth();
 
   const handleLogout = async () => {
     try {
       console.log('EventSelectionHeader - Initiating logout process...');
+      
+      // Clear event data
+      localStorage.removeItem('currentEventId');
+      setCurrentEventId(null);
+      
+      // Sign out
       await signOut();
+      
+      console.log('EventSelectionHeader - Logout successful');
       toast.success('Logout realizado com sucesso!');
+      
+      // Navigate to home
       navigate('/', { replace: true });
     } catch (error) {
       console.error('EventSelectionHeader - Error during logout:', error);

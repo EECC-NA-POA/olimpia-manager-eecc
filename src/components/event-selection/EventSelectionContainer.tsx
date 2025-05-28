@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,7 +12,7 @@ import { supabase } from '@/lib/supabase';
 
 export function EventSelectionContainer() {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, setCurrentEventId } = useAuth();
   const [needsBranchSelection, setNeedsBranchSelection] = useState(false);
   const [existingState, setExistingState] = useState<string | undefined>(undefined);
   const [existingBranchName, setExistingBranchName] = useState<string | undefined>(undefined);
@@ -76,12 +77,22 @@ export function EventSelectionContainer() {
 
   const handleLogout = async () => {
     try {
-      console.log('Handling logout from EventSelectionPage');
+      console.log('EventSelectionContainer - Handling logout...');
+      
+      // Clear event data
       localStorage.removeItem('currentEventId');
+      setCurrentEventId(null);
+      
+      // Sign out
       await signOut();
+      
+      console.log('EventSelectionContainer - Logout successful');
+      toast.success('Logout realizado com sucesso!');
+      
+      // Navigate to home
       navigate('/', { replace: true });
     } catch (error) {
-      console.error('Error during logout:', error);
+      console.error('EventSelectionContainer - Error during logout:', error);
       toast.error("Erro ao fazer logout");
     }
   };
