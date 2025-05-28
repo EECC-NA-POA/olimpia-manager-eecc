@@ -118,57 +118,49 @@ export function EventsHeader() {
             </div>
           </div>
 
-          {/* Philosopher Quotes */}
+          {/* Philosopher Quotes - Reorganized */}
           <div className="bg-white/90 backdrop-blur-sm rounded-xl p-8 max-w-6xl mx-auto shadow-lg">
-            <h3 className="text-2xl md:text-3xl font-bold text-olimpics-green-primary mb-8 text-center">
-              Sabedoria dos Filósofos
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-              <div className="space-y-4">
-                <div className="quote-item">
-                  <h4 className="font-semibold text-olimpics-green-primary">Platão (428–348 a.C.)</h4>
-                  <p className="text-gray-700 mt-2 italic text-sm">
-                    "O homem pode aprender virtudes e disciplina tanto na música quanto na ginástica, pois ambas moldam a alma e o corpo."
-                  </p>
-                </div>
-
-                <div className="quote-item">
-                  <h4 className="font-semibold text-olimpics-green-primary">Aristóteles (384–322 a.C.)</h4>
-                  <p className="text-gray-700 mt-2 italic text-sm">
-                    "Somos o que repetidamente fazemos. A excelência, portanto, não é um feito, mas um hábito."
-                  </p>
-                </div>
-
-                <div className="quote-item">
-                  <h4 className="font-semibold text-olimpics-green-primary">Epicteto (50–135 d.C.)</h4>
-                  <p className="text-gray-700 mt-2 italic text-sm">
-                    "Se você quer vencer nos Jogos Olímpicos, deve se preparar, exercitar-se, comer moderadamente, suportar a fadiga e obedecer ao treinador."
-                  </p>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-olimpics-green-primary/5 p-6 rounded-lg border-l-4 border-olimpics-green-primary">
+                <h4 className="font-bold text-olimpics-green-primary mb-3">Platão (428–348 a.C.)</h4>
+                <p className="text-gray-700 italic text-sm leading-relaxed">
+                  "O homem pode aprender virtudes e disciplina tanto na música quanto na ginástica, pois ambas moldam a alma e o corpo."
+                </p>
               </div>
 
-              <div className="space-y-4">
-                <div className="quote-item">
-                  <h4 className="font-semibold text-olimpics-green-primary">Sêneca (4 a.C.–65 d.C.)</h4>
-                  <p className="text-gray-700 mt-2 italic text-sm">
-                    "A vida é como um gladiador nos jogos: não se trata apenas de sobreviver, mas de lutar bem."
-                  </p>
-                </div>
+              <div className="bg-olimpics-orange-primary/5 p-6 rounded-lg border-l-4 border-olimpics-orange-primary">
+                <h4 className="font-bold text-olimpics-orange-primary mb-3">Aristóteles (384–322 a.C.)</h4>
+                <p className="text-gray-700 italic text-sm leading-relaxed">
+                  "Somos o que repetidamente fazemos. A excelência, portanto, não é um feito, mas um hábito."
+                </p>
+              </div>
 
-                <div className="quote-item">
-                  <h4 className="font-semibold text-olimpics-green-primary">Diógenes de Sinope (412–323 a.C.)</h4>
-                  <p className="text-gray-700 mt-2 italic text-sm">
-                    "Os vencedores dos Jogos Olímpicos recebem apenas uma coroa de louros; mas os que vivem com virtude recebem a verdadeira glória."
-                  </p>
-                </div>
+              <div className="bg-olimpics-green-primary/5 p-6 rounded-lg border-l-4 border-olimpics-green-primary">
+                <h4 className="font-bold text-olimpics-green-primary mb-3">Epicteto (50–135 d.C.)</h4>
+                <p className="text-gray-700 italic text-sm leading-relaxed">
+                  "Se você quer vencer nos Jogos Olímpicos, deve se preparar, exercitar-se, comer moderadamente, suportar a fadiga e obedecer ao treinador."
+                </p>
+              </div>
 
-                <div className="quote-item">
-                  <h4 className="font-semibold text-olimpics-green-primary">Cícero (106–43 a.C.)</h4>
-                  <p className="text-gray-700 mt-2 italic text-sm">
-                    "O esforço e a perseverança sempre superam o talento que não se disciplina."
-                  </p>
-                </div>
+              <div className="bg-olimpics-orange-primary/5 p-6 rounded-lg border-l-4 border-olimpics-orange-primary">
+                <h4 className="font-bold text-olimpics-orange-primary mb-3">Sêneca (4 a.C.–65 d.C.)</h4>
+                <p className="text-gray-700 italic text-sm leading-relaxed">
+                  "A vida é como um gladiador nos jogos: não se trata apenas de sobreviver, mas de lutar bem."
+                </p>
+              </div>
+
+              <div className="bg-olimpics-green-primary/5 p-6 rounded-lg border-l-4 border-olimpics-green-primary">
+                <h4 className="font-bold text-olimpics-green-primary mb-3">Diógenes de Sinope (412–323 a.C.)</h4>
+                <p className="text-gray-700 italic text-sm leading-relaxed">
+                  "Os vencedores dos Jogos Olímpicos recebem apenas uma coroa de louros; mas os que vivem com virtude recebem a verdadeira glória."
+                </p>
+              </div>
+
+              <div className="bg-olimpics-orange-primary/5 p-6 rounded-lg border-l-4 border-olimpics-orange-primary">
+                <h4 className="font-bold text-olimpics-orange-primary mb-3">Cícero (106–43 a.C.)</h4>
+                <p className="text-gray-700 italic text-sm leading-relaxed">
+                  "O esforço e a perseverança sempre superam o talento que não se disciplina."
+                </p>
               </div>
             </div>
           </div>
