@@ -14,6 +14,7 @@ export function processScoreByType(
   
   console.log('Processing score with effective type:', effectiveType);
   console.log('Rule parameters:', rule?.parametros);
+  console.log('Form data in scoreProcessor:', formData);
 
   let scoreData: ScoreData;
 
@@ -47,11 +48,24 @@ export function processScoreByType(
     }
   }
 
-  // Ensure we ALWAYS have a valid valor_pontuacao - NEVER allow null
-  if (scoreData.valor_pontuacao === undefined || scoreData.valor_pontuacao === null || isNaN(scoreData.valor_pontuacao)) {
-    console.log('Invalid valor_pontuacao found, setting to 0');
+  console.log('Score data before validation:', scoreData);
+
+  // CRITICAL: Ensure we ALWAYS have a valid valor_pontuacao - NEVER allow null or undefined
+  if (scoreData.valor_pontuacao === undefined || 
+      scoreData.valor_pontuacao === null || 
+      isNaN(Number(scoreData.valor_pontuacao))) {
+    console.error('CRITICAL: Invalid valor_pontuacao detected:', scoreData.valor_pontuacao);
+    console.error('Original form data:', formData);
+    console.error('Rule used:', rule);
+    
+    // Force a valid number - use 0 as fallback
     scoreData.valor_pontuacao = 0;
+    console.warn('Forced valor_pontuacao to 0 to prevent database constraint violation');
   }
 
+  // Ensure valor_pontuacao is always a number
+  scoreData.valor_pontuacao = Number(scoreData.valor_pontuacao);
+
+  console.log('Final processed score data:', scoreData);
   return scoreData;
 }
