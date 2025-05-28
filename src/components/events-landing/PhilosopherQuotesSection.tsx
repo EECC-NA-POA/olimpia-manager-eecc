@@ -37,7 +37,7 @@ export function PhilosopherQuotesSection() {
               <p className="text-gray-700 italic text-sm leading-relaxed mb-2">
                 "Se você quer vencer nos Jogos Olímpicos, deve se preparar, exercitar-se, comer moderadamente, suportar a fadiga e obedecer ao treinador."
               </p>
-              <p className="text-xs text-gray-600">— Enchirídion" (ou "Manual")</p>
+              <p className="text-xs text-gray-600">— Enchirídion (ou "Manual")</p>
             </div>
 
             <div className="bg-olimpics-orange-primary/5 p-6 rounded-lg border-l-4 border-olimpics-orange-primary">

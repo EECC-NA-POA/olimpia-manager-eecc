@@ -62,7 +62,7 @@ export function EventsLandingContainer() {
         setSortBy={setSortBy}
       />
 
-      {/* Philosopher Quotes Section */}
+      {/* Philosopher Quotes Section - Always render this section */}
       <PhilosopherQuotesSection />
     </div>
   );
