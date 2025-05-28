@@ -8,6 +8,7 @@ import { EventsGrid } from './EventsGrid';
 import { SystemFeaturesSection } from './SystemFeaturesSection';
 import { LoadingImage } from '@/components/ui/loading-image';
 import { Event } from '@/lib/types/database';
+import { Calendar, Clock } from 'lucide-react';
 
 type FilterStatus = 'all' | 'open' | 'closed' | 'upcoming';
 type SortBy = 'date' | 'name';
@@ -48,8 +49,25 @@ export function EventsLandingContainer() {
       <div className="min-h-screen">
         <EventsHeader />
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center text-red-600 mt-8">
-            Erro ao carregar eventos. Tente novamente mais tarde.
+          <div className="bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary py-16">
+            <div className="container mx-auto px-4">
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <Calendar className="h-16 w-16 text-white/80 mx-auto mb-4" />
+                  <h3 className="text-2xl font-semibold text-white mb-4">
+                    Eventos em Preparação
+                  </h3>
+                  <p className="text-white/90 mb-6 leading-relaxed">
+                    No momento não há eventos públicos disponíveis para visualização. 
+                    Novos eventos serão publicados em breve.
+                  </p>
+                  <div className="flex items-center justify-center gap-2 text-white/80">
+                    <Clock className="h-4 w-4" />
+                    <span className="text-sm">Tente novamente mais tarde</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
