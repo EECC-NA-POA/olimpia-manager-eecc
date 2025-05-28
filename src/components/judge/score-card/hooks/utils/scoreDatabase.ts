@@ -28,10 +28,11 @@ export async function saveScoreToDatabase(
     // Get team ID if needed
     const teamId = await getTeamId(athlete, modalityIdInt, eventId, isTeamModality);
     
-    // Get bateria ID
+    // Get bateria ID FIRST - this will process and remove the _heat field
     const bateriaId = await getBateriaId(finalScoreData, modalityIdInt, eventId);
 
     // Prepare the complete record data with explicit type conversion
+    // Note: _heat field should be removed by getBateriaId at this point
     const recordData: ScoreRecordData = {
       evento_id: eventId,
       modalidade_id: modalityIdInt,
