@@ -1,9 +1,9 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { validateScoreSubmission } from './utils/scoreValidation';
 import { prepareScoreData, prepareFinalScoreData } from './utils/scoreDataPreparation';
-import { useModalityRules } from '../../tabs/scores/hooks/useModalityRules';
+import { saveScoreToDatabase } from './utils/scoreDatabase';
 
 interface AthleteData {
   atleta_id: string;
@@ -19,109 +19,77 @@ export function useScoreSubmission(
   modalityRule?: any
 ) {
   const queryClient = useQueryClient();
-  
-  // Get modality rules to determine the actual scoring type if not passed
-  const { data: fetchedModalityRule } = useModalityRules(modalityId);
-  const effectiveModalityRule = modalityRule || fetchedModalityRule;
 
   const submitScoreMutation = useMutation({
     mutationFn: async (formData: any) => {
-      if (!eventId) {
-        throw new Error('Event ID is required');
-      }
-
-      console.log('Submit score mutation - Form data:', formData);
-      console.log('Submit score mutation - Modality rule:', effectiveModalityRule);
-      console.log('Submit score mutation - Score type:', scoreType);
-
-      // Determine the effective score type based on the modality rule
-      let effectiveScoreType = scoreType;
-      if (effectiveModalityRule?.regra_tipo) {
-        switch (effectiveModalityRule.regra_tipo) {
-          case 'tempo':
-            effectiveScoreType = 'tempo';
-            break;
-          case 'distancia':
-            effectiveScoreType = 'distancia';
-            break;
-          case 'pontos':
-          case 'sets':
-          case 'arrows':
-          default:
-            effectiveScoreType = 'pontos';
-            break;
-        }
-      }
-
-      console.log('Effective score type for processing:', effectiveScoreType);
-
-      // Prepare score data
-      const { scoreData } = prepareScoreData(formData, effectiveModalityRule, effectiveScoreType);
+      console.log('=== SCORE SUBMISSION START ===');
+      console.log('Form data:', JSON.stringify(formData, null, 2));
+      console.log('Event ID:', eventId);
+      console.log('Modality ID:', modalityId);
+      console.log('Athlete:', JSON.stringify(athlete, null, 2));
+      console.log('Judge ID:', judgeId);
+      console.log('Score Type:', scoreType);
       
-      // Prepare final data for database
-      const finalData = prepareFinalScoreData(
+      // Validate required fields
+      validateScoreSubmission(eventId, judgeId, athlete);
+      
+      // Prepare score data based on rule type
+      const { scoreData } = prepareScoreData(formData, modalityRule, scoreType);
+      console.log('Prepared score data:', JSON.stringify(scoreData, null, 2));
+      
+      // Prepare final data structure
+      const finalScoreData = prepareFinalScoreData(
         scoreData,
         formData,
         judgeId,
-        eventId,
+        eventId!,
         modalityId,
         athlete
       );
-
-      console.log('Final data to be inserted:', finalData);
-
-      // Check if score already exists
-      const { data: existingScore } = await supabase
-        .from('pontuacoes')
-        .select('id')
-        .eq('evento_id', eventId)
-        .eq('modalidade_id', modalityId)
-        .eq('atleta_id', athlete.atleta_id)
-        .maybeSingle();
-
-      if (existingScore) {
-        // Update existing score
-        const { error } = await supabase
-          .from('pontuacoes')
-          .update(finalData)
-          .eq('id', existingScore.id);
-
-        if (error) {
-          console.error('Error updating score:', error);
-          throw error;
-        }
-      } else {
-        // Insert new score
-        const { error } = await supabase
-          .from('pontuacoes')
-          .insert([finalData]);
-
-        if (error) {
-          console.error('Error inserting score:', error);
-          throw error;
-        }
+      console.log('Final prepared data:', JSON.stringify(finalScoreData, null, 2));
+      
+      // Save to database
+      try {
+        const result = await saveScoreToDatabase(finalScoreData, eventId!, modalityId, athlete);
+        console.log('Database save successful:', JSON.stringify(result, null, 2));
+        console.log('=== SCORE SUBMISSION SUCCESS ===');
+        return result;
+      } catch (dbError: any) {
+        console.error('=== SCORE SUBMISSION FAILED ===');
+        console.error('Database error details:', JSON.stringify(dbError, null, 2));
+        throw dbError;
       }
-
-      return finalData;
     },
     onSuccess: () => {
-      toast.success('Pontuação salva com sucesso!');
+      console.log('Score submission successful, invalidating queries...');
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['scores', modalityId, eventId] });
+      queryClient.invalidateQueries({ queryKey: ['score', athlete.atleta_id, modalityId, eventId] });
+      queryClient.invalidateQueries({ queryKey: ['athletes', modalityId, eventId] });
+      queryClient.invalidateQueries({ queryKey: ['modality-rankings', modalityId, eventId] });
       
-      // Invalidate related queries to refresh data
-      queryClient.invalidateQueries({ 
-        queryKey: ['athlete-scores'] 
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: ['modality-rankings'] 
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: ['score', athlete.atleta_id, modalityId, eventId] 
-      });
+      toast.success("Pontuação registrada com sucesso");
     },
-    onError: (error: Error) => {
-      console.error('Error submitting score:', error);
-      toast.error(`Erro ao salvar pontuação: ${error.message}`);
-    },
+    onError: (error: any) => {
+      console.error('=== SCORE SUBMISSION ERROR ===');
+      console.error('Error object:', JSON.stringify(error, null, 2));
+      console.error('Error message:', error?.message);
+      
+      const errorMessage = error?.message || 'Erro desconhecido ao registrar pontuação';
+      
+      // Show specific error messages
+      if (errorMessage.includes('ON CONFLICT specification')) {
+        toast.error('Erro de configuração do banco de dados. As constraints necessárias não estão configuradas corretamente.');
+      } else if (errorMessage.includes('FROM-clause') || errorMessage.includes('missing FROM-clause entry')) {
+        toast.error('Erro no trigger do banco de dados. Contacte o administrador sobre o erro SQL.');
+      } else if (errorMessage.includes('trigger') || errorMessage.includes('replicação')) {
+        toast.error('Erro no sistema de replicação de pontuações. A configuração do servidor precisa ser corrigida.');
+      } else if (errorMessage.includes('constraint')) {
+        toast.error('Erro de constraint do banco de dados. Verifique se todos os dados estão corretos.');
+      } else {
+        toast.error(`Erro ao registrar pontuação: ${errorMessage}`);
+      }
+    }
   });
 
   return { submitScoreMutation };
