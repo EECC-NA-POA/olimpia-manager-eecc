@@ -8,8 +8,9 @@ export function EventsHeader() {
   const navigate = useNavigate();
 
   return (
-    <div className="relative min-h-screen bg-olimpics-green-primary">
-      <div className="container relative z-10 mx-auto px-4 py-16">
+    <div className="relative min-h-screen bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary">
+      <div className="absolute inset-0 bg-black/40" />
+      <div className="container relative z-10 mx-auto px-4 py-8">
         <div className="text-center mb-16">
           {/* Event Logos */}
           <div className="flex flex-col items-center mb-8">
