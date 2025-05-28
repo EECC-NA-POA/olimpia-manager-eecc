@@ -45,17 +45,6 @@ export async function saveScoreToDatabase(
       bateria_id: bateriaId
     };
 
-    // Add time fields if they exist in finalScoreData
-    if (finalScoreData.tempo_minutos !== undefined && finalScoreData.tempo_minutos !== null) {
-      recordData.tempo_minutos = finalScoreData.tempo_minutos;
-    }
-    if (finalScoreData.tempo_segundos !== undefined && finalScoreData.tempo_segundos !== null) {
-      recordData.tempo_segundos = finalScoreData.tempo_segundos;
-    }
-    if (finalScoreData.tempo_milissegundos !== undefined && finalScoreData.tempo_milissegundos !== null) {
-      recordData.tempo_milissegundos = finalScoreData.tempo_milissegundos;
-    }
-
     console.log('Record data to save:', JSON.stringify(recordData, null, 2));
     
     // Choose the correct approach based on modality type
