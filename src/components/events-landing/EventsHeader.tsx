@@ -56,7 +56,7 @@ export function EventsHeader() {
             </div>
           </div>
 
-          {/* Philosopher Quotes - Updated grid layout with centered last card */}
+          {/* Philosopher Quotes - Updated grid layout */}
           <div className="bg-white/90 backdrop-blur-sm rounded-xl p-8 max-w-6xl mx-auto shadow-lg">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="bg-olimpics-green-primary/5 p-6 rounded-lg border-l-4 border-olimpics-green-primary">
@@ -99,7 +99,7 @@ export function EventsHeader() {
                 <p className="text-xs text-gray-600">— Diógenes, citado por Diógenes Laércio</p>
               </div>
 
-              <div className="bg-olimpics-orange-primary/5 p-6 rounded-lg border-l-4 border-olimpics-orange-primary lg:col-start-2">
+              <div className="bg-olimpics-orange-primary/5 p-6 rounded-lg border-l-4 border-olimpics-orange-primary">
                 <h4 className="font-bold text-olimpics-orange-primary mb-3">Cícero (106–43 a.C.)</h4>
                 <p className="text-gray-700 italic text-sm leading-relaxed mb-2">
                   "O esforço e a perseverança sempre superam o talento que não se disciplina."
@@ -107,8 +107,8 @@ export function EventsHeader() {
                 <p className="text-xs text-gray-600">— Cícero, De Officiis</p>
               </div>
 
-              <div className="bg-olimpics-orange-primary/5 p-6 rounded-lg border-l-4 border-olimpics-orange-primary md:col-start-2 lg:col-start-2">
-                <h4 className="font-bold text-olimpics-orange-primary mb-3">Píndaro (518–438 a.C.)</h4>
+              <div className="bg-olimpics-green-primary/5 p-6 rounded-lg border-l-4 border-olimpics-green-primary lg:col-start-2">
+                <h4 className="font-bold text-olimpics-green-primary mb-3">Píndaro (518–438 a.C.)</h4>
                 <p className="text-gray-700 italic text-sm leading-relaxed mb-2">
                   "Ó minha alma, não aspire à vida imortal, mas esgote o campo do possível."
                 </p>
