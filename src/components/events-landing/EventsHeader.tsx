@@ -1,14 +1,10 @@
-
 import React from 'react';
 import { Calendar, Users, Trophy, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-
 export function EventsHeader() {
   const navigate = useNavigate();
-
-  return (
-    <div className="relative min-h-screen bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary">
+  return <div className="relative min-h-screen bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary">
       <div className="absolute inset-0 bg-black/40" />
       <div className="container relative z-10 mx-auto px-4 py-8">
         <div className="text-center mb-16">
@@ -16,18 +12,10 @@ export function EventsHeader() {
           <div className="flex flex-col items-center mb-8 pt-16">
             <div className="flex items-center justify-center gap-8 mb-6 w-full">
               <div className="relative w-20 h-20 md:w-24 md:h-24">
-                <img 
-                  src="/lovable-uploads/EECC_marca_portugues_cores_RGB.png"
-                  alt="EECC Logo"
-                  className="w-full h-full object-contain"
-                />
+                <img src="/lovable-uploads/EECC_marca_portugues_cores_RGB.png" alt="EECC Logo" className="w-full h-full object-contain" />
               </div>
               <div className="relative w-20 h-20 md:w-24 md:h-24">
-                <img 
-                  src="/lovable-uploads/nova_acropole_logo_redondo_verde.png"
-                  alt="Nova Acrópole Logo"
-                  className="w-full h-full object-contain"
-                />
+                <img src="/lovable-uploads/nova_acropole_logo_redondo_verde.png" alt="Nova Acrópole Logo" className="w-full h-full object-contain" />
               </div>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-olimpics-orange-primary mb-6">
@@ -54,11 +42,7 @@ export function EventsHeader() {
               Faça login ou cadastre-se para participar dos eventos
             </p>
             <div className="space-y-3">
-              <Button 
-                onClick={() => navigate('/login')}
-                className="w-full bg-olimpics-green-primary hover:bg-olimpics-green-primary/90 text-white py-3"
-                size="lg"
-              >
+              <Button onClick={() => navigate('/login')} className="w-full bg-olimpics-green-primary hover:bg-olimpics-green-primary/90 text-white py-3" size="lg">
                 <Users className="h-5 w-5 mr-2" />
                 Entrar / Cadastrar-se
               </Button>
@@ -69,54 +53,7 @@ export function EventsHeader() {
           </div>
           
           {/* About EECC Section */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl p-8 max-w-6xl mx-auto shadow-lg mb-8">
-            <div className="flex justify-center items-center gap-3 mb-6">
-              <Globe className="h-8 w-8 text-olimpics-orange-primary" />
-              <h2 className="text-2xl md:text-3xl font-bold text-olimpics-orange-primary">
-                Escola do Esporte com Coração
-              </h2>
-            </div>
-            
-            <div className="text-gray-700 text-lg leading-relaxed space-y-4">
-              <p>
-                A Escola do Esporte com o Coração de Nova Acrópole é uma <strong>entidade internacional sem fins lucrativos</strong>, 
-                presente em mais de <strong>20 países há 14 anos</strong>, com o objetivo de promover o desenvolvimento humano 
-                através do desenvolvimento de valores morais no esporte.
-              </p>
-              
-              <p>
-                No Brasil, há <strong>10 anos</strong>, tem oferecido a oportunidade de praticar atividades esportivas em mais de 
-                <strong> 30 unidades da Nova Acrópole</strong> pelas principais cidades do país, pois acreditamos que o Esporte, 
-                através de uma abordagem pedagógica e filosófica, é capaz de construir um mundo melhor.
-              </p>
-              
-              <p className="text-olimpics-green-primary font-medium">
-                O esporte fortalece os praticantes por meio das virtudes e valores, ensinando-os a se conhecerem e 
-                superarem a si mesmos, conviverem melhor com os demais e a vivenciarem o verdadeiro espírito da vitória.
-              </p>
-            </div>
-            
-            {/* Key Features */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-              <div className="text-center p-4 bg-olimpics-green-primary/10 rounded-lg">
-                <Users className="h-8 w-8 text-olimpics-green-primary mx-auto mb-3" />
-                <h3 className="font-bold text-olimpics-green-primary mb-2">20+ Países</h3>
-                <p className="text-sm text-gray-600">Presença internacional consolidada</p>
-              </div>
-              
-              <div className="text-center p-4 bg-olimpics-orange-primary/10 rounded-lg">
-                <Calendar className="h-8 w-8 text-olimpics-orange-primary mx-auto mb-3" />
-                <h3 className="font-bold text-olimpics-orange-primary mb-2">14 Anos</h3>
-                <p className="text-sm text-gray-600">De experiência mundial</p>
-              </div>
-              
-              <div className="text-center p-4 bg-olimpics-green-primary/10 rounded-lg">
-                <Trophy className="h-8 w-8 text-olimpics-green-primary mx-auto mb-3" />
-                <h3 className="font-bold text-olimpics-green-primary mb-2">30+ Unidades</h3>
-                <p className="text-sm text-gray-600">No Brasil</p>
-              </div>
-            </div>
-          </div>
+          
 
           {/* Philosopher Quotes - Updated with sources */}
           <div className="bg-white/90 backdrop-blur-sm rounded-xl p-8 max-w-6xl mx-auto shadow-lg">
@@ -180,6 +117,5 @@ export function EventsHeader() {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 }
