@@ -132,54 +132,60 @@ export default function DelegationDashboard() {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6 px-2 sm:px-4">
       <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
 
       <Tabs defaultValue="statistics" className="w-full" onValueChange={setActiveTab} value={activeTab}>
-        <TabsList className="w-full border-b mb-8 bg-background flex justify-start space-x-2 p-0">
-          <TabsTrigger 
-            value="statistics"
-            className="flex items-center gap-2 px-6 py-3 text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
-          >
-            <BarChart className="h-5 w-5" />
-            Estatísticas
-          </TabsTrigger>
-          <TabsTrigger 
-            value="athletes"
-            className="flex items-center gap-2 px-6 py-3 text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
-          >
-            <Users className="h-5 w-5" />
-            Gerenciar Atletas
-          </TabsTrigger>
-          <TabsTrigger 
-            value="enrollments"
-            className="flex items-center gap-2 px-6 py-3 text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
-          >
-            <ListChecks className="h-5 w-5" />
-            Inscrições por Modalidade
-          </TabsTrigger>
-          <TabsTrigger 
-            value="teams"
-            className="flex items-center gap-2 px-6 py-3 text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
-          >
-            <UsersRound className="h-5 w-5" />
-            Equipes
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className="w-full min-w-max border-b mb-6 sm:mb-8 bg-background grid grid-cols-2 sm:flex sm:justify-start sm:space-x-2 p-0 h-auto gap-1 sm:gap-0">
+            <TabsTrigger 
+              value="statistics"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+            >
+              <BarChart className="h-3 w-3 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Estatísticas</span>
+              <span className="sm:hidden">Stats</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="athletes"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+            >
+              <Users className="h-3 w-3 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Gerenciar Atletas</span>
+              <span className="sm:hidden">Atletas</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="enrollments"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+            >
+              <ListChecks className="h-3 w-3 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Inscrições por Modalidade</span>
+              <span className="sm:hidden">Inscrições</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="teams"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+            >
+              <UsersRound className="h-3 w-3 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Equipes</span>
+              <span className="sm:hidden">Equipes</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="statistics" className="mt-6">
+        <TabsContent value="statistics" className="mt-4 sm:mt-6">
           {renderTabContent("statistics")}
         </TabsContent>
 
-        <TabsContent value="athletes" className="mt-6">
+        <TabsContent value="athletes" className="mt-4 sm:mt-6">
           {renderTabContent("athletes")}
         </TabsContent>
 
-        <TabsContent value="enrollments" className="mt-6">
+        <TabsContent value="enrollments" className="mt-4 sm:mt-6">
           {renderTabContent("enrollments")}
         </TabsContent>
         
-        <TabsContent value="teams" className="mt-6">
+        <TabsContent value="teams" className="mt-4 sm:mt-6">
           {renderTabContent("teams")}
         </TabsContent>
       </Tabs>
