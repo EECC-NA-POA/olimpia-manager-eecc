@@ -13,7 +13,8 @@ export default function Login() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-olimpics-green-primary">
+    <div className="min-h-screen bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary">
+      <div className="absolute inset-0 bg-black/40" />
       <div className="container relative z-10 mx-auto p-6 pt-8">
         {/* Header with back button and logos */}
         <div className="text-center mb-8">
