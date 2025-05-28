@@ -68,14 +68,14 @@ export default function EventManagement() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight text-olimpics-text">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-olimpics-text">
           Gerenciamento de Evento
         </h1>
         <Button 
           variant="outline" 
           onClick={() => navigate('/administration')}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 w-full sm:w-auto"
         >
           Voltar para Administração
         </Button>
@@ -83,63 +83,65 @@ export default function EventManagement() {
 
       <Card className="border-olimpics-green-primary/20">
         <CardHeader className="bg-olimpics-green-primary/5">
-          <CardTitle className="text-olimpics-green-primary text-xl">
+          <CardTitle className="text-olimpics-green-primary text-lg sm:text-xl">
             {eventData.nome}
           </CardTitle>
         </CardHeader>
 
         <CardContent className="pt-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full border-b mb-8 bg-background grid grid-cols-2 md:flex md:justify-start md:space-x-2 p-0 h-auto gap-1 md:gap-0">
-              <TabsTrigger 
-                value="basic-info"
-                className="flex items-center gap-1 md:gap-2 px-2 md:px-6 py-2 md:py-3 text-xs md:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
-              >
-                <FileText className="h-3 w-3 md:h-5 md:w-5" />
-                <span className="hidden sm:inline">Informações Básicas</span>
-                <span className="sm:hidden">Info</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="branches"
-                className="flex items-center gap-1 md:gap-2 px-2 md:px-6 py-2 md:py-3 text-xs md:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
-              >
-                <Users className="h-3 w-3 md:h-5 md:w-5" />
-                <span className="hidden sm:inline">Filiais Vinculadas</span>
-                <span className="sm:hidden">Filiais</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="schedule"
-                className="flex items-center gap-1 md:gap-2 px-2 md:px-6 py-2 md:py-3 text-xs md:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
-              >
-                <CalendarIcon className="h-3 w-3 md:h-5 md:w-5" />
-                <span className="hidden sm:inline">Cronograma</span>
-                <span className="sm:hidden">Agenda</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="modalities"
-                className="flex items-center gap-1 md:gap-2 px-2 md:px-6 py-2 md:py-3 text-xs md:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
-              >
-                <Calendar className="h-3 w-3 md:h-5 md:w-5" />
-                <span className="hidden sm:inline">Modalidades</span>
-                <span className="sm:hidden">Mod.</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="modality-rules"
-                className="flex items-center gap-1 md:gap-2 px-2 md:px-6 py-2 md:py-3 text-xs md:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
-              >
-                <Settings className="h-3 w-3 md:h-5 md:w-5" />
-                <span className="hidden sm:inline">Regras de Pontuação</span>
-                <span className="sm:hidden">Regras</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="regulations"
-                className="flex items-center gap-1 md:gap-2 px-2 md:px-6 py-2 md:py-3 text-xs md:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
-              >
-                <BookOpen className="h-3 w-3 md:h-5 md:w-5" />
-                <span className="hidden sm:inline">Regulamento</span>
-                <span className="sm:hidden">Reg.</span>
-              </TabsTrigger>
-            </TabsList>
+            <div className="overflow-x-auto">
+              <TabsList className="w-full min-w-max border-b mb-8 bg-background grid grid-cols-2 md:flex md:justify-start md:space-x-2 p-0 h-auto gap-1 md:gap-0">
+                <TabsTrigger 
+                  value="basic-info"
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                >
+                  <FileText className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Informações Básicas</span>
+                  <span className="sm:hidden">Info</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="branches"
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                >
+                  <Users className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Filiais Vinculadas</span>
+                  <span className="sm:hidden">Filiais</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="schedule"
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                >
+                  <CalendarIcon className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Cronograma</span>
+                  <span className="sm:hidden">Agenda</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="modalities"
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                >
+                  <Calendar className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Modalidades</span>
+                  <span className="sm:hidden">Mod.</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="modality-rules"
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                >
+                  <Settings className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Regras de Pontuação</span>
+                  <span className="sm:hidden">Regras</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="regulations"
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                >
+                  <BookOpen className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Regulamento</span>
+                  <span className="sm:hidden">Reg.</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="basic-info" className="mt-6">
               <EventBasicInfo eventId={currentEventId} eventData={eventData} onUpdate={refetch} />
