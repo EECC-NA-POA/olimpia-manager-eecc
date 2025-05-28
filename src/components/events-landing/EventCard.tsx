@@ -43,7 +43,13 @@ export function EventCard({ event }: EventCardProps) {
     navigate(`/events/${event.id}`);
   };
 
+  const getLocationString = () => {
+    const locationParts = [event.cidade, event.estado, event.pais].filter(Boolean);
+    return locationParts.length > 0 ? locationParts.join(', ') : null;
+  };
+
   const status = getEventStatus();
+  const locationString = getLocationString();
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group" onClick={handleEventClick}>
@@ -83,10 +89,10 @@ export function EventCard({ event }: EventCardProps) {
             Inscrições: {format(new Date(event.data_inicio_inscricao), 'dd/MM/yyyy')} - {format(new Date(event.data_fim_inscricao), 'dd/MM/yyyy')}
           </div>
           
-          {event.local && (
+          {locationString && (
             <div className="flex items-center text-sm text-gray-500">
               <MapPin className="h-4 w-4 mr-2" />
-              {event.local}
+              {locationString}
             </div>
           )}
           
