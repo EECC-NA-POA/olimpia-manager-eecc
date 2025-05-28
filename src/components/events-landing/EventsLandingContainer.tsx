@@ -131,7 +131,7 @@ export function EventsLandingContainer() {
       </div>
 
       {/* Philosopher Quotes Section */}
-      <div className="py-16">
+      <div className="py-16 bg-olimpics-green-primary">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
