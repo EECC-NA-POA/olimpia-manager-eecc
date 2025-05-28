@@ -8,7 +8,7 @@ import { PhilosopherQuotes } from '@/components/auth/PhilosopherQuotes';
 
 export default function Login() {
   return (
-    <div className="min-h-screen bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary">
+    <div className="min-h-screen bg-olimpics-green-primary">
       <div className="container mx-auto p-6 pt-24">
         <Tabs defaultValue="register" className="w-full max-w-2xl mx-auto">
           <TabsList className="grid w-full grid-cols-2 bg-white/20 backdrop-blur-sm">
