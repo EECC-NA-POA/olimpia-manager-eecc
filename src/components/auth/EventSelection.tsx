@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Loader2, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -137,8 +136,8 @@ export const EventSelection = ({
 
   if (!events?.length) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 space-y-4">
-        <div className="text-center text-gray-500">
+      <div className="flex flex-col items-center justify-center p-6 sm:p-8 space-y-4">
+        <div className="text-center text-gray-500 text-sm sm:text-base px-4">
           {mode === 'registration' 
             ? 'Não há eventos com inscrições abertas no momento.'
             : 'Você ainda não está inscrito em nenhum evento.'}
@@ -146,7 +145,8 @@ export const EventSelection = ({
         <Button
           onClick={handleExit}
           variant="outline"
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 w-full sm:w-auto"
+          size="sm"
         >
           <LogOut className="w-4 h-4" />
           Sair
@@ -169,11 +169,12 @@ export const EventSelection = ({
         }}
         isUnderAge={isUnderAge}
       />
-      <div className="flex justify-center">
+      <div className="flex justify-center px-4">
         <Button
           onClick={handleExit}
           variant="outline"
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 w-full sm:w-auto max-w-xs"
+          size="sm"
         >
           <LogOut className="w-4 h-4" />
           Sair

@@ -1,14 +1,12 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 import { DEBUG_MODE } from '@/constants/routes';
-import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
 import { CreateEventDialog } from '@/components/events/CreateEventDialog';
 import { useUserAgeQuery } from './hooks/useUserAgeQuery';
+import { toast } from 'sonner';
 
 interface EventSelectionHeaderProps {
   onLogout: () => Promise<void>;
@@ -17,57 +15,25 @@ interface EventSelectionHeaderProps {
 export function EventSelectionHeader({ onLogout }: EventSelectionHeaderProps) {
   const { canCreateEvents, isLoading: permissionLoading } = useCanCreateEvents();
   const [createEventDialogOpen, setCreateEventDialogOpen] = React.useState(false);
-  const navigate = useNavigate();
-  const { signOut, setCurrentEventId } = useAuth();
-
-  const handleLogout = async () => {
-    try {
-      console.log('EventSelectionHeader - Initiating logout process...');
-      
-      // Clear event data
-      localStorage.removeItem('currentEventId');
-      setCurrentEventId(null);
-      
-      // Sign out
-      await signOut();
-      
-      console.log('EventSelectionHeader - Logout successful');
-      toast.success('Logout realizado com sucesso!');
-      
-      // Navigate to home
-      navigate('/', { replace: true });
-    } catch (error) {
-      console.error('EventSelectionHeader - Error during logout:', error);
-      toast.error('Erro ao fazer logout');
-    }
-  };
   
   return (
-    <div className="flex justify-between items-center mb-8">
-      <h1 className="text-3xl font-bold text-center bg-olimpics-green-primary text-white py-2 px-4 rounded-lg inline-block">
+    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
+      <h1 className="text-2xl sm:text-3xl font-bold text-center sm:text-left bg-olimpics-green-primary text-white py-2 px-4 rounded-lg">
         Selecione um Evento
       </h1>
       
-      <div className="flex gap-2">
+      <div className="flex justify-center sm:justify-end">
         {/* Mostrar o botão independentemente do estado de carregamento durante o desenvolvimento */}
         {(!permissionLoading && canCreateEvents) || (DEBUG_MODE && !permissionLoading) ? (
           <Button 
             onClick={() => setCreateEventDialogOpen(true)}
-            className="bg-olimpics-green-primary hover:bg-olimpics-green-primary/90"
+            className="bg-olimpics-green-primary hover:bg-olimpics-green-primary/90 w-full sm:w-auto"
+            size="sm"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Criar Evento
+            <span className="text-sm">Criar Evento</span>
           </Button>
         ) : null}
-        
-        <Button
-          onClick={handleLogout}
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          <LogOut className="w-4 h-4" />
-          Sair
-        </Button>
       </div>
       
       {createEventDialogOpen && (
@@ -87,7 +53,7 @@ function EventCreationDialogContainer({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { refetch } = useUserAgeQuery(); // Reuse the same query from the content component
+  const { refetch } = useUserAgeQuery();
   
   const handleEventCreated = () => {
     refetch();

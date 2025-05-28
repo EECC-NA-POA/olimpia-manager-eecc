@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -154,7 +153,7 @@ export function EventSelectionContainer() {
 
   return (
     <div 
-      className="min-h-screen event-selection-container bg-cover bg-center bg-no-repeat"
+      className="min-h-screen event-selection-container bg-cover bg-center bg-no-repeat px-4 sm:px-0"
       style={{ 
         backgroundImage: 'url(/lovable-uploads/7f5d4c54-bc15-4310-ac7a-ecd055bda99b.png)',
         backgroundColor: 'rgba(0, 155, 64, 0.05)',
@@ -162,7 +161,7 @@ export function EventSelectionContainer() {
         boxShadow: 'inset 0 0 0 2000px rgba(0, 155, 64, 0.05)'
       }}
     >
-      <div className="container mx-auto py-8 mt-8">
+      <div className="container mx-auto py-6 sm:py-8">
         <EventSelectionHeader onLogout={handleLogout} />
         <EventSelectionContent />
       </div>
