@@ -96,14 +96,14 @@ export function EventsLandingContainer() {
         </div>
       </div>
       
-      {/* Events Section */}
-      <div className="bg-olimpics-background py-16">
+      {/* Events Section - Changed to green background */}
+      <div className="bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary py-16">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-olimpics-green-primary mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               Eventos Disponíveis
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-white/90 max-w-2xl mx-auto">
               Descubra e participe dos eventos esportivos organizados pela EECC
             </p>
           </div>
