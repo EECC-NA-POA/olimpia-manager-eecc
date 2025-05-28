@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
@@ -37,43 +36,37 @@ import { MainNavigation } from './components/MainNavigation';
 // Create a component to set the current route as a data-attribute on the body
 const RouteObserver = () => {
   const location = useLocation();
-  
   React.useEffect(() => {
     document.body.setAttribute('data-current-route', location.pathname);
     return () => {
       document.body.removeAttribute('data-current-route');
     };
   }, [location.pathname]);
-  
   return null;
 };
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
-    },
-  },
+      staleTime: 1000 * 60 * 5,
+      // 5 minutes
+      retry: 1
+    }
+  }
 });
 
 // Conditional Footer component that only appears on public routes
 const ConditionalFooter = () => {
   const location = useLocation();
   const isPublicRoute = PUBLIC_ROUTES.includes(location.pathname as any);
-  
   return isPublicRoute ? <Footer /> : null;
 };
-
 function App() {
   const location = useLocation();
   const isHomePage = location.pathname === "/home";
-  
-  return (
-    <QueryClientProvider client={queryClient}>
+  return <QueryClientProvider client={queryClient}>
       <div className="flex flex-col min-h-screen">
         <GlobalHeader />
-        <div className={`flex-grow ${isHomePage ? 'home-page' : 'mt-8'}`}>
+        <div className="">
           <Routes>
             <Route path="/" element={<EventsLandingPage />} />
             <Route path="/events/:eventId" element={<EventDetailsPage />} />
@@ -104,17 +97,13 @@ function App() {
         <ConditionalFooter />
         <Toaster />
       </div>
-    </QueryClientProvider>
-  );
+    </QueryClientProvider>;
 }
-
 export default function AppWithRouter() {
-  return (
-    <BrowserRouter>
+  return <BrowserRouter>
       <AuthProvider>
         <RouteObserver />
         <App />
       </AuthProvider>
-    </BrowserRouter>
-  );
+    </BrowserRouter>;
 }
