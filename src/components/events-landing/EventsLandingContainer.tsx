@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { EventsHeader } from './EventsHeader';
 import { EventsFilters } from './EventsFilters';
 import { EventsGrid } from './EventsGrid';
+import { SystemFeaturesSection } from './SystemFeaturesSection';
 import { LoadingImage } from '@/components/ui/loading-image';
 import { Event } from '@/lib/types/database';
 
@@ -35,7 +36,7 @@ export function EventsLandingContainer() {
         <div className="container mx-auto px-4 py-8">
           <EventsHeader />
           <div className="flex items-center justify-center h-64">
-            <LoadingImage text="Carregando eventos..." />
+            <LoadingImage text="Carregando sistema..." />
           </div>
         </div>
       </div>
@@ -88,15 +89,31 @@ export function EventsLandingContainer() {
     <div className="min-h-screen bg-gradient-to-b from-olimpics-background to-white">
       <div className="container mx-auto px-4 py-8">
         <EventsHeader />
-        {publicEvents.length > 0 && (
-          <EventsFilters
-            filterStatus={filterStatus}
-            setFilterStatus={setFilterStatus}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-          />
-        )}
-        <EventsGrid events={sortedEvents} />
+        
+        {/* System Features Section */}
+        <SystemFeaturesSection />
+        
+        {/* Events Section */}
+        <div className="mt-16">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-olimpics-green-primary mb-4">
+              Eventos Disponíveis
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Descubra e participe dos eventos esportivos organizados pela EECC
+            </p>
+          </div>
+          
+          {publicEvents.length > 0 && (
+            <EventsFilters
+              filterStatus={filterStatus}
+              setFilterStatus={setFilterStatus}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+            />
+          )}
+          <EventsGrid events={sortedEvents} />
+        </div>
       </div>
     </div>
   );

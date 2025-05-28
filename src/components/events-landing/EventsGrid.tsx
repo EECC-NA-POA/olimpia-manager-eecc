@@ -4,7 +4,7 @@ import { EventCard } from './EventCard';
 import { Event } from '@/lib/types/database';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Users } from 'lucide-react';
+import { Calendar, Users, ArrowRight } from 'lucide-react';
 
 interface EventsGridProps {
   events: Event[];
@@ -65,9 +65,12 @@ export function EventsGrid({ events }: EventsGridProps) {
     <div className="space-y-12">
       {Object.entries(groupedEvents).map(([key, group]) => (
         <div key={key}>
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-olimpics-green-primary pb-2">
-            {group.month} {group.year}
-          </h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 border-b-2 border-olimpics-green-primary pb-2">
+              {group.month} {group.year}
+            </h2>
+            <ArrowRight className="h-6 w-6 text-olimpics-green-primary" />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {group.events.map((event) => (
               <EventCard key={event.id} event={event} />
