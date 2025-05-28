@@ -14,15 +14,14 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary">
-      <div className="absolute inset-0 bg-black/40" />
-      <div className="container relative z-10 mx-auto p-6 pt-8">
+      <div className="container relative mx-auto p-6 pt-8">
         {/* Header with back button and logos */}
         <div className="text-center mb-8">
           <div className="flex justify-between items-start mb-6">
             <Button
               onClick={() => navigate('/')}
               variant="ghost"
-              className="text-white hover:bg-white/20 flex items-center gap-2"
+              className="relative z-[60] text-white hover:bg-white/20 flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
               Voltar à página inicial
