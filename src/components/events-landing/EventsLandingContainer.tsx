@@ -32,9 +32,9 @@ export function EventsLandingContainer() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-olimpics-background to-white">
+      <div className="min-h-screen">
+        <EventsHeader />
         <div className="container mx-auto px-4 py-8">
-          <EventsHeader />
           <div className="flex items-center justify-center h-64">
             <LoadingImage text="Carregando sistema..." />
           </div>
@@ -45,9 +45,9 @@ export function EventsLandingContainer() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-olimpics-background to-white">
+      <div className="min-h-screen">
+        <EventsHeader />
         <div className="container mx-auto px-4 py-8">
-          <EventsHeader />
           <div className="text-center text-red-600 mt-8">
             Erro ao carregar eventos. Tente novamente mais tarde.
           </div>
@@ -86,15 +86,19 @@ export function EventsLandingContainer() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-olimpics-background to-white">
-      <div className="container mx-auto px-4 py-8">
-        <EventsHeader />
-        
-        {/* System Features Section */}
-        <SystemFeaturesSection />
-        
-        {/* Events Section */}
-        <div className="mt-16">
+    <div className="min-h-screen">
+      <EventsHeader />
+      
+      {/* System Features Section */}
+      <div className="bg-gradient-to-b from-white to-olimpics-background py-16">
+        <div className="container mx-auto px-4">
+          <SystemFeaturesSection />
+        </div>
+      </div>
+      
+      {/* Events Section */}
+      <div className="bg-olimpics-background py-16">
+        <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-olimpics-green-primary mb-4">
               Eventos Disponíveis
