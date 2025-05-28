@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Calendar, Users, Trophy, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,7 @@ export function EventsHeader() {
       <div className="container relative z-10 mx-auto px-4 py-8">
         <div className="text-center mb-16">
           {/* Event Logos */}
-          <div className="flex flex-col items-center mb-8">
+          <div className="flex flex-col items-center mb-8 pt-16">
             <div className="flex items-center justify-center gap-8 mb-6 w-full">
               <div className="relative w-20 h-20 md:w-24 md:h-24">
                 <img 
