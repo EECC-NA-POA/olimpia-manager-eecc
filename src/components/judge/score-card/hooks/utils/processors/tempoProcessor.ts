@@ -6,7 +6,15 @@ export function processTempoScore(formData: any, rule?: any): ScoreData {
   
   let scoreData: ScoreData = {
     valor_pontuacao: 0,
-    unidade: 'segundos'
+    unidade: 'tempo'
+  };
+
+  // Function to format time as mm:ss.SSS
+  const formatTimeString = (minutes: number, seconds: number, milliseconds: number): string => {
+    const formattedMinutes = minutes.toString().padStart(2, '0');
+    const formattedSeconds = seconds.toString().padStart(2, '0');
+    const formattedMilliseconds = milliseconds.toString().padStart(3, '0');
+    return `${formattedMinutes}:${formattedSeconds}.${formattedMilliseconds}`;
   };
 
   // Handle baterias with individual time fields (tentativa_1_*)
@@ -15,14 +23,13 @@ export function processTempoScore(formData: any, rule?: any): ScoreData {
     const seconds = Number(formData.tentativa_1_seconds) || 0;
     const milliseconds = Number(formData.tentativa_1_milliseconds) || 0;
     
-    // Convert everything to seconds with decimal precision
-    const totalSeconds = (minutes * 60) + seconds + (milliseconds / 1000);
+    const timeString = formatTimeString(minutes, seconds, milliseconds);
     
-    console.log('Converting bateria time - minutes:', minutes, 'seconds:', seconds, 'milliseconds:', milliseconds, 'total:', totalSeconds);
+    console.log('Converting bateria time - minutes:', minutes, 'seconds:', seconds, 'milliseconds:', milliseconds, 'formatted:', timeString);
     
     scoreData = {
-      valor_pontuacao: totalSeconds,
-      unidade: 'segundos'
+      valor_pontuacao: timeString as any, // Store as formatted string
+      unidade: 'tempo'
     };
   } else if ('minutes' in formData && 'seconds' in formData && 'milliseconds' in formData) {
     // Handle standard time input
@@ -30,25 +37,38 @@ export function processTempoScore(formData: any, rule?: any): ScoreData {
     const seconds = Number(formData.seconds) || 0;
     const milliseconds = Number(formData.milliseconds) || 0;
     
-    // Convert everything to seconds with decimal precision
-    const totalSeconds = (minutes * 60) + seconds + (milliseconds / 1000);
+    const timeString = formatTimeString(minutes, seconds, milliseconds);
     
-    console.log('Converting standard time - minutes:', minutes, 'seconds:', seconds, 'milliseconds:', milliseconds, 'total:', totalSeconds);
+    console.log('Converting standard time - minutes:', minutes, 'seconds:', seconds, 'milliseconds:', milliseconds, 'formatted:', timeString);
     
     scoreData = {
-      valor_pontuacao: totalSeconds,
-      unidade: 'segundos'
+      valor_pontuacao: timeString as any, // Store as formatted string
+      unidade: 'tempo'
     };
     
     if (formData.heat) {
       scoreData.bateria_id = formData.heat;
     }
   } else if ('score' in formData) {
-    // Handle score-based time input
-    scoreData = {
-      valor_pontuacao: Number(formData.score) || 0,
-      unidade: 'segundos'
-    };
+    // Handle score-based time input - assume it's already in correct format or convert if numeric
+    const score = formData.score;
+    if (typeof score === 'number') {
+      // Convert from seconds to mm:ss.SSS format
+      const totalSeconds = score;
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = Math.floor(totalSeconds % 60);
+      const milliseconds = Math.floor((totalSeconds % 1) * 1000);
+      
+      scoreData = {
+        valor_pontuacao: formatTimeString(minutes, seconds, milliseconds) as any,
+        unidade: 'tempo'
+      };
+    } else {
+      scoreData = {
+        valor_pontuacao: score || '00:00.000',
+        unidade: 'tempo'
+      };
+    }
     
     if (formData.heat) {
       scoreData.bateria_id = formData.heat;
@@ -56,9 +76,9 @@ export function processTempoScore(formData: any, rule?: any): ScoreData {
   }
 
   // Ensure we never return null or undefined for valor_pontuacao
-  if (scoreData.valor_pontuacao === null || scoreData.valor_pontuacao === undefined || isNaN(scoreData.valor_pontuacao)) {
-    console.warn('Invalid tempo value detected, setting to 0');
-    scoreData.valor_pontuacao = 0;
+  if (scoreData.valor_pontuacao === null || scoreData.valor_pontuacao === undefined) {
+    console.warn('Invalid tempo value detected, setting to default');
+    scoreData.valor_pontuacao = '00:00.000' as any;
   }
 
   console.log('Final tempo score data:', scoreData);

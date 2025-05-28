@@ -1,27 +1,38 @@
-
 export const formatScoreValue = (
   score: {
-    valor_pontuacao?: number | null;
+    valor_pontuacao?: number | string | null;
     unidade?: string;
   },
   type: 'time' | 'distance' | 'points'
 ): string => {
   if (type === 'time' && score.valor_pontuacao !== undefined) {
-    // Convert total seconds back to mm:ss.SSS format for display
-    const totalSeconds = score.valor_pontuacao || 0;
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = Math.floor(totalSeconds % 60);
-    const milliseconds = Math.floor((totalSeconds % 1) * 1000);
+    // If valor_pontuacao is already a string in mm:ss.SSS format, return it
+    if (typeof score.valor_pontuacao === 'string' && score.valor_pontuacao.includes(':')) {
+      return score.valor_pontuacao;
+    }
     
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
+    // If it's a number (legacy format), convert from total seconds to mm:ss.SSS format
+    if (typeof score.valor_pontuacao === 'number') {
+      const totalSeconds = score.valor_pontuacao || 0;
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = Math.floor(totalSeconds % 60);
+      const milliseconds = Math.floor((totalSeconds % 1) * 1000);
+      
+      return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
+    }
+    
+    // Fallback
+    return '00:00.000';
   }
   
   if (type === 'distance') {
-    return `${score.valor_pontuacao?.toFixed(2) || 0} m`;
+    const numValue = typeof score.valor_pontuacao === 'number' ? score.valor_pontuacao : parseFloat(score.valor_pontuacao as string) || 0;
+    return `${numValue.toFixed(2)} m`;
   }
   
   // Default to points
-  return `${score.valor_pontuacao || 0} pts`;
+  const numValue = typeof score.valor_pontuacao === 'number' ? score.valor_pontuacao : parseFloat(score.valor_pontuacao as string) || 0;
+  return `${numValue} pts`;
 };
 
 export const parseTimeToMilliseconds = (
