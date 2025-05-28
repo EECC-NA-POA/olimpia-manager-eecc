@@ -73,18 +73,19 @@ export default function Administration() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-olimpics-text">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-olimpics-text">
           Administração
         </h1>
         
         {canCreateEvents && (
           <Button 
             onClick={() => navigate('/event-management')}
-            className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary"
+            className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:w-auto flex items-center justify-center gap-2 text-sm px-3 py-2"
+            size="sm"
           >
-            <Calendar className="h-5 w-5 mr-2" />
-            Gerenciar Evento Atual
+            <Calendar className="h-4 w-4" />
+            <span className="whitespace-nowrap">Gerenciar Evento Atual</span>
           </Button>
         )}
       </div>
