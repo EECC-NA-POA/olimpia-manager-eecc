@@ -49,30 +49,34 @@ export async function getBateriaId(finalScoreData: any, modalityId: number, even
   let bateriaId = finalScoreData.bateria_id;
   
   // If we have a heat number instead of bateria_id, convert it
-  if (!bateriaId && finalScoreData.heat) {
-    console.log('Converting heat number to bateria ID:', finalScoreData.heat);
+  if (!bateriaId && finalScoreData._heat) {
+    console.log('Converting heat number to bateria ID:', finalScoreData._heat);
     
     const { data: bateriaResults, error: bateriaError } = await supabase
       .from('baterias')
       .select('id')
       .eq('modalidade_id', modalityId)
       .eq('evento_id', eventId)
-      .eq('numero', finalScoreData.heat)
+      .eq('numero', finalScoreData._heat)
       .single();
     
     if (bateriaError) {
       console.error('Error fetching bateria by number:', bateriaError);
-      throw new Error(`Erro ao buscar bateria número ${finalScoreData.heat}: ${bateriaError.message}`);
+      throw new Error(`Erro ao buscar bateria número ${finalScoreData._heat}: ${bateriaError.message}`);
     }
     
     if (bateriaResults) {
       bateriaId = bateriaResults.id;
-      console.log('Found bateria ID for heat number', finalScoreData.heat, ':', bateriaId);
+      console.log('Found bateria ID for heat number', finalScoreData._heat, ':', bateriaId);
     }
+    
+    // Clean up the temporary field
+    delete finalScoreData._heat;
   }
   
   if (!bateriaId) {
     console.log('No bateria_id or heat provided, fetching default bateria for modality');
+    
     const { data: bateriaResults, error: bateriaError } = await supabase
       .from('baterias')
       .select('id')

@@ -26,9 +26,10 @@ export function prepareFinalScoreData(
     finalData.bateria_id = scoreData.bateria_id;
   }
   
-  // Add heat number if it exists in formData (this will be converted to bateria_id later)
+  // Pass heat number separately for getBateriaId function to handle conversion
+  // but don't add it to finalData as it's not a database column
   if (formData.heat !== undefined) {
-    finalData.heat = formData.heat;
+    finalData._heat = formData.heat; // Use underscore prefix to indicate it's temporary
   }
 
   console.log('Final score data prepared:', finalData);
