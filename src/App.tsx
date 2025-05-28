@@ -64,7 +64,7 @@ function App() {
   const location = useLocation();
   const isHomePage = location.pathname === "/home";
   return <QueryClientProvider client={queryClient}>
-      <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col min-h-screen rounded-sm">
         <GlobalHeader />
         <div className="">
           <Routes>
