@@ -15,10 +15,9 @@ export function EventSelectionContent() {
 
   const handleEventSelect = (eventId: string) => {
     localStorage.setItem('currentEventId', eventId);
-    setCurrentEventId(eventId);
+    setCurrentEventId(eventId); // Add this line to update context state
     toast.success("Evento selecionado com sucesso!");
-    // Navigate to home instead of athlete-profile to ensure proper routing
-    navigate('/home');
+    navigate('/athlete-profile');
   };
 
   const isUnder13 = userAge !== null && userAge < 13;

@@ -107,7 +107,11 @@ const Dashboard = () => {
     );
   }
 
-  return <AthleteProfilePage />;
+  return (
+    <div className="w-full">
+      <AthleteProfilePage />
+    </div>
+  );
 };
 
 export default Dashboard;

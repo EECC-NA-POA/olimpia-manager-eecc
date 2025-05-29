@@ -2,14 +2,10 @@
 import { Outlet } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useState, useEffect } from 'react';
-import { Sidebar, SidebarContent, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { MenuItems } from './navigation/MenuItems';
-import { useIsMobile } from "@/hooks/use-mobile";
 
 export function MainNavigation() {
   const { user } = useNavigation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const isMobile = useIsMobile();
 
   // Restore sidebar state from localStorage if available
   useEffect(() => {
@@ -27,34 +23,13 @@ export function MainNavigation() {
     );
   }
 
-  // Don't show sidebar on mobile
-  if (isMobile) {
-    return (
-      <div className="flex flex-col w-full">
-        <div className="flex min-h-screen w-full">
-          <main className="flex-1 overflow-auto bg-olimpics-background transition-all duration-200">
-            <Outlet />
-          </main>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <SidebarProvider defaultOpen={!sidebarCollapsed}>
-      <div className="flex min-h-screen w-full">
-        <Sidebar>
-          <SidebarContent>
-            <MenuItems collapsed={sidebarCollapsed} />
-          </SidebarContent>
-        </Sidebar>
+    <div className="flex flex-col w-full">
+      <div className="flex min-h-screen w-full mt-8"> {/* Added margin-top for better spacing */}
         <main className="flex-1 overflow-auto bg-olimpics-background transition-all duration-200">
-          <div className="p-4">
-            <SidebarTrigger />
-          </div>
           <Outlet />
         </main>
       </div>
-    </SidebarProvider>
+    </div>
   );
 }
