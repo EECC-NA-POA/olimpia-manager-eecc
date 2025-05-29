@@ -52,9 +52,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-olimpics-green-primary to-olimpics-green-secondary">
+      {/* Global overlay for entire page */}
+      <div className="absolute inset-0 bg-black/20 z-0" />
+      
       {/* Hero Section */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/20" />
         <div className="container relative z-10 mx-auto px-4 py-24">
           <div className="text-center text-white">
             {/* Logos Section */}
@@ -102,7 +104,7 @@ const Index = () => {
       </div>
 
       {/* Active Events Section */}
-      <div className="py-20 bg-white">
+      <div className="relative py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-olimpics-green-primary mb-4">
@@ -181,8 +183,7 @@ const Index = () => {
       </div>
 
       {/* Features Section */}
-      <div className="py-20 bg-gradient-to-b from-olimpics-green-primary to-olimpics-green-secondary">
-        <div className="absolute inset-0 bg-black/20" />
+      <div className="relative py-20">
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">
@@ -216,7 +217,7 @@ const Index = () => {
       </div>
 
       {/* About Section */}
-      <div className="py-20 bg-white">
+      <div className="relative py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <div className="flex justify-center mb-8">
