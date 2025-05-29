@@ -181,7 +181,7 @@ const Index = () => {
       </div>
 
       {/* Features Section */}
-      <div className="py-20 bg-white">
+      <div className="py-20 bg-gradient-to-b from-olimpics-background to-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-olimpics-green-primary mb-4">
@@ -194,7 +194,7 @@ const Index = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
+              <Card key={index} className="hover:shadow-lg transition-shadow duration-300 bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <div className="p-3 rounded-lg bg-olimpics-green-primary/10 text-olimpics-green-primary w-fit mb-4">
                     {feature.icon}
@@ -215,7 +215,7 @@ const Index = () => {
       </div>
 
       {/* About Section */}
-      <div className="py-20 bg-olimpics-background">
+      <div className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <div className="flex justify-center mb-8">
