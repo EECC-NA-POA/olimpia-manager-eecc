@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,9 @@ import {
   FileText,
   ChevronRight,
   Medal,
-  Target
+  Target,
+  MapPin,
+  Clock
 } from 'lucide-react';
 
 const Index = () => {
@@ -102,6 +103,85 @@ const Index = () => {
                 </Button>
               </Link>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Active Events Section */}
+      <div className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-olimpics-green-primary mb-4">
+              Evento Ativo
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Participe do maior evento esportivo da Escola do Esporte com Coração
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto">
+            <Card className="overflow-hidden shadow-xl">
+              <CardHeader className="bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary text-white">
+                <div className="flex items-center justify-center mb-4">
+                  <Trophy className="h-12 w-12 text-olimpics-orange-primary" />
+                </div>
+                <CardTitle className="text-center text-3xl font-bold">
+                  Olimpíadas Nacionais 2025
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-6 w-6 text-olimpics-green-primary" />
+                    <div>
+                      <p className="font-semibold text-gray-800">Data do Evento</p>
+                      <p className="text-gray-600">08 a 13 de Julho de 2025</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <MapPin className="h-6 w-6 text-olimpics-green-primary" />
+                    <div>
+                      <p className="font-semibold text-gray-800">Local</p>
+                      <p className="text-gray-600">São Francisco Xavier, SP</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-6 w-6 text-olimpics-green-primary" />
+                    <div>
+                      <p className="font-semibold text-gray-800">Inscrições</p>
+                      <p className="text-gray-600">Abertas até 30 de Junho</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <Trophy className="h-6 w-6 text-olimpics-green-primary" />
+                    <div>
+                      <p className="font-semibold text-gray-800">Modalidades</p>
+                      <p className="text-gray-600">15+ modalidades disponíveis</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <p className="text-gray-700 mb-6 leading-relaxed">
+                    Junte-se aos atletas de todo o Brasil na maior celebração do esporte educacional. 
+                    Venha viver a experiência única das Olimpíadas Nacionais 2025 da EECC.
+                  </p>
+                  
+                  <Link to="/olimpiadas-nacionais">
+                    <Button 
+                      size="lg"
+                      className="bg-olimpics-orange-primary hover:bg-olimpics-orange-primary/90 text-white px-8 py-3 text-lg"
+                    >
+                      Inscreva-se Agora
+                      <ChevronRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
