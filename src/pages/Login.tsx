@@ -5,29 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { SignUpForm } from '@/components/auth/SignUpForm';
 import { PhilosopherQuotes } from '@/components/auth/PhilosopherQuotes';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-olimpics-background">
       <div className="container relative mx-auto p-6 pt-24">
-        {/* Header with back button and logos */}
+        {/* Header with logos */}
         <div className="text-center mb-8">
-          <div className="flex justify-between items-start mb-6">
-            <Button
-              onClick={() => navigate('/')}
-              variant="ghost"
-              className="fixed top-20 left-4 z-[60] text-olimpics-green-primary hover:bg-olimpics-green-primary/10 flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-olimpics-green-primary/20"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Voltar à página inicial
-            </Button>
-          </div>
-          
           {/* Login page specific logos - only 2 logos */}
           <div className="flex flex-col items-center mb-8">
             <div className="flex items-center justify-center gap-4 mb-4 w-full">
