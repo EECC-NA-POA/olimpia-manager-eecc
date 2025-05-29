@@ -11,6 +11,7 @@ import { usePrivacyPolicyCheck } from "@/hooks/usePrivacyPolicyCheck";
 import { PrivacyPolicyAcceptanceModal } from "@/components/auth/PrivacyPolicyAcceptanceModal";
 
 import Index from "./pages/Index";
+import OlimpiadasNacionais from "./pages/OlimpiadasNacionais";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import EventSelectionPage from "./pages/EventSelectionPage";
@@ -38,6 +39,7 @@ function AppContent() {
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/olimpiadas-nacionais" element={<OlimpiadasNacionais />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/events" element={<EventsLandingPage />} />
