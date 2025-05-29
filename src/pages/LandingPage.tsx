@@ -72,14 +72,19 @@ const LandingPage = () => {
           
           {/* Moved sections below the two columns */}
           <div className="mt-12 space-y-8 animate-fade-in">
-            <SystemInfoSection />
             <ModalitiesSection />
             <VideoSection />
+            
+            {/* Cards lado a lado: Acesso aos Eventos e Sobre o Sistema */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <EventAccessSection />
+              <SystemInfoSection />
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default LandingPage;
