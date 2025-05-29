@@ -183,35 +183,59 @@ const Index = () => {
       </div>
 
       {/* Features Section */}
-      <div className="relative py-20">
+      <div className="relative py-24">
         <div className="container relative z-10 mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl mb-6">
+              <Target className="h-8 w-8 text-white" />
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
               Funcionalidades do Sistema
             </h2>
-            <p className="text-xl text-white/90 max-w-2xl mx-auto">
+            <p className="text-xl text-white/90 max-w-3xl mx-auto leading-relaxed">
               Uma plataforma completa desenvolvida especialmente para a gestão de eventos esportivos olímpicos
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
             {features.map((feature, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow duration-300 bg-white/95 backdrop-blur-sm">
-                <CardHeader>
-                  <div className="p-3 rounded-lg bg-olimpics-orange-primary/20 text-olimpics-orange-primary w-fit mb-4">
+              <Card key={index} className="group relative bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:bg-white">
+                <div className="absolute inset-0 bg-gradient-to-br from-olimpics-orange-primary/5 to-olimpics-green-primary/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <CardHeader className="relative pb-4">
+                  <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-olimpics-orange-primary/20 to-olimpics-orange-primary/10 text-olimpics-orange-primary mb-6 group-hover:scale-110 transition-transform duration-300">
                     {feature.icon}
                   </div>
-                  <CardTitle className="text-xl text-olimpics-green-primary">
+                  <CardTitle className="text-xl font-bold text-olimpics-green-primary group-hover:text-olimpics-orange-primary transition-colors duration-300">
                     {feature.title}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                
+                <CardContent className="relative">
                   <p className="text-gray-600 leading-relaxed">
                     {feature.description}
                   </p>
                 </CardContent>
               </Card>
             ))}
+          </div>
+
+          {/* Call to Action */}
+          <div className="text-center mt-16">
+            <div className="inline-flex flex-col items-center space-y-4">
+              <p className="text-white/80 text-lg">
+                Pronto para começar?
+              </p>
+              <Link to="/login">
+                <Button 
+                  size="lg"
+                  className="bg-olimpics-orange-primary hover:bg-olimpics-orange-primary/90 text-white px-10 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                >
+                  Acessar Sistema
+                  <ChevronRight className="ml-2 h-6 w-6" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
