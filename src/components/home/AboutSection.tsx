@@ -24,30 +24,30 @@ export const AboutSection = () => {
             </span>
           </h2>
           
-          <div className="text-lg text-white/90 leading-relaxed space-y-6">
-            <div className="p-6 rounded-xl bg-gradient-to-r from-white/10 to-white/5 border border-white/20 backdrop-blur-sm">
-              <p>
-                O <strong className="text-white">Olímpia Manager</strong> é uma plataforma digital desenvolvida especificamente 
+          <div className="text-lg leading-relaxed space-y-6">
+            <div className="p-6 rounded-xl bg-white/95 border border-white/40 backdrop-blur-sm">
+              <p className="text-gray-800">
+                O <strong className="text-olimpics-green-primary">Olímpia Manager</strong> é uma plataforma digital desenvolvida especificamente 
                 para atender às necessidades da <strong className="text-olimpics-orange-primary">Escola do Esporte com Coração</strong> e suas 
                 olimpíadas nacionais.
               </p>
             </div>
             
-            <div className="p-6 rounded-xl bg-gradient-to-r from-olimpics-orange-primary/20 to-olimpics-orange-primary/10 border border-olimpics-orange-primary/30 backdrop-blur-sm">
-              <p>
+            <div className="p-6 rounded-xl bg-white/95 border border-white/40 backdrop-blur-sm">
+              <p className="text-gray-800">
                 Nossa missão é proporcionar uma experiência completa de gestão esportiva, onde cada 
                 atleta, juiz e organizador tem acesso às ferramentas necessárias para o sucesso 
                 dos eventos olímpicos.
               </p>
             </div>
             
-            <div className="p-6 rounded-xl bg-gradient-to-r from-white/10 to-white/5 border border-white/20 backdrop-blur-sm">
-              <p>
-                Com foco na <strong className="text-white">filosofia olímpica</strong> e nos valores do esporte educacional, 
+            <div className="p-6 rounded-xl bg-white/95 border border-white/40 backdrop-blur-sm">
+              <p className="text-gray-800">
+                Com foco na <strong className="text-olimpics-green-primary">filosofia olímpica</strong> e nos valores do esporte educacional, 
                 o sistema integra tecnologia moderna com os princípios fundamentais do olimpismo: 
-                <span className="text-white font-semibold"> excelência</span>, 
+                <span className="text-olimpics-green-primary font-semibold"> excelência</span>, 
                 <span className="text-olimpics-orange-primary font-semibold"> amizade</span> e 
-                <span className="text-white font-semibold"> respeito</span>.
+                <span className="text-olimpics-green-primary font-semibold"> respeito</span>.
               </p>
             </div>
           </div>
