@@ -42,7 +42,7 @@ export default function Login() {
               value="register"
               className="data-[state=active]:bg-white data-[state=active]:text-olimpics-green-primary text-white hover:bg-white/10"
             >
-              Inscreva-se
+              Cadastre-se
             </TabsTrigger>
             <TabsTrigger 
               value="login"
