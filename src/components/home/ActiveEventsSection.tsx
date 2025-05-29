@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ export const ActiveEventsSection = () => {
         <div className="text-center mb-12">
           {/* Enhanced section header */}
           <div className="relative inline-block mb-8">
+            <div className="absolute -top-4 -right-4 w-6 h-6 bg-olimpics-orange-primary/40 rounded-full blur-sm animate-pulse"></div>
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-lg rounded-2xl border border-white/20 shadow-xl">
               <Calendar className="h-8 w-8 text-olimpics-orange-primary" />
             </div>

@@ -81,10 +81,11 @@ export const FeaturesSection = () => {
         {/* Enhanced header with floating elements */}
         <div className="text-center mb-24">
           <div className="relative inline-block mb-8">
-            <div className="absolute -bottom-2 -left-2 w-6 h-6 bg-white/20 rounded-full blur-sm"></div>
+            <div className="absolute -top-4 -right-4 w-8 h-8 bg-olimpics-orange-primary/30 rounded-full blur-sm animate-pulse"></div>
+            <div className="absolute -bottom-2 -left-2 w-6 h-6 bg-white/20 rounded-full blur-sm animate-pulse delay-700"></div>
             <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-lg rounded-3xl border border-white/20 shadow-2xl">
               <Target className="h-10 w-10 text-white" />
-              <Sparkles className="absolute -top-2 -right-2 h-5 w-5 text-olimpics-orange-primary" />
+              <Sparkles className="absolute -top-2 -right-2 h-5 w-5 text-olimpics-orange-primary animate-pulse" />
             </div>
           </div>
           
@@ -135,8 +136,8 @@ export const FeaturesSection = () => {
                       <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/20 to-transparent"></div>
                     </div>
                     {/* Floating particles */}
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-olimpics-orange-primary/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-white/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-olimpics-orange-primary/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-pulse"></div>
+                    <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-white/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-pulse delay-200"></div>
                   </div>
                   
                   <CardTitle className="text-2xl font-bold text-olimpics-green-primary group-hover:text-white transition-colors duration-500 leading-tight">
