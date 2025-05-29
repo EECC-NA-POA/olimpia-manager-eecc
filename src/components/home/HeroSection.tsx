@@ -15,21 +15,35 @@ export const HeroSection = () => {
               <div className="relative w-24 h-24 md:w-32 md:h-32 group">
                 {/* Glow effect for first logo */}
                 <div className="absolute inset-0 bg-white/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <img 
-                  src="/lovable-uploads/EECC_marca_portugues_cores_RGB.png"
-                  alt="EECC Logo"
-                  className="w-full h-full object-contain animate-pulse relative z-10 group-hover:scale-110 transition-transform duration-500"
-                />
+                <a 
+                  href="https://www.instagram.com/escola.esporte.coracao"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full h-full"
+                >
+                  <img 
+                    src="/lovable-uploads/EECC_marca_portugues_cores_RGB.png"
+                    alt="EECC Logo"
+                    className="w-full h-full object-contain relative z-10 group-hover:scale-110 transition-transform duration-500 cursor-pointer"
+                  />
+                </a>
                 <div className="absolute -top-2 -right-2 w-4 h-4 bg-olimpics-orange-primary/60 rounded-full blur-sm animate-pulse"></div>
               </div>
               <div className="relative w-24 h-24 md:w-32 md:h-32 group">
                 {/* Glow effect for second logo */}
                 <div className="absolute inset-0 bg-olimpics-orange-primary/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <img 
-                  src="/lovable-uploads/nova_acropole_logo_redondo_verde.png"
-                  alt="Nova Acrópole Logo"
-                  className="w-full h-full object-contain relative z-10 group-hover:scale-110 transition-transform duration-500"
-                />
+                <a 
+                  href="https://www.instagram.com/novaacropolebrasilsul"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full h-full"
+                >
+                  <img 
+                    src="/lovable-uploads/nova_acropole_logo_redondo_verde.png"
+                    alt="Nova Acrópole Logo"
+                    className="w-full h-full object-contain relative z-10 group-hover:scale-110 transition-transform duration-500 cursor-pointer"
+                  />
+                </a>
                 <div className="absolute -bottom-2 -left-2 w-3 h-3 bg-white/40 rounded-full blur-sm animate-pulse delay-500"></div>
               </div>
             </div>
