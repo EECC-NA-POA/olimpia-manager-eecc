@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -173,7 +172,7 @@ const Index = () => {
             <div className="relative inline-block mb-8">
               <div className="absolute -top-4 -right-4 w-6 h-6 bg-olimpics-orange-primary/40 rounded-full blur-sm animate-pulse"></div>
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-lg rounded-2xl border border-white/20 shadow-xl">
-                <Trophy className="h-8 w-8 text-olimpics-orange-primary" />
+                <Calendar className="h-8 w-8 text-olimpics-orange-primary" />
               </div>
             </div>
 
@@ -182,9 +181,6 @@ const Index = () => {
                 Eventos com Inscrições Abertas
               </span>
             </h2>
-            <p className="text-xl text-white/80 max-w-2xl mx-auto">
-              Participe do maior evento esportivo da Escola do Esporte com Coração
-            </p>
           </div>
 
           <div className="max-w-4xl mx-auto">
@@ -290,8 +286,8 @@ const Index = () => {
         </div>
 
         <div className="container relative z-10 mx-auto px-4">
+          {/* Enhanced header with floating elements */}
           <div className="text-center mb-24">
-            {/* Enhanced header with floating elements */}
             <div className="relative inline-block mb-8">
               <div className="absolute -top-4 -right-4 w-8 h-8 bg-olimpics-orange-primary/30 rounded-full blur-sm animate-pulse"></div>
               <div className="absolute -bottom-2 -left-2 w-6 h-6 bg-white/20 rounded-full blur-sm animate-pulse delay-700"></div>
@@ -473,21 +469,6 @@ const Index = () => {
                   <span className="text-blue-600 font-semibold"> respeito</span>.
                 </p>
               </div>
-            </div>
-
-            <div className="mt-12">
-              <Link to="/login">
-                <Button 
-                  size="lg"
-                  className="group relative bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary hover:from-olimpics-green-secondary hover:to-olimpics-green-primary text-white px-10 py-4 text-lg font-bold rounded-xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 border-0"
-                >
-                  <span className="relative flex items-center gap-3">
-                    <Star className="h-5 w-5" />
-                    Acessar Sistema
-                    <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
-                  </span>
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
