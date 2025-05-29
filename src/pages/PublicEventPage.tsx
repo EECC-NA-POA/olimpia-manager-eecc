@@ -1,54 +1,27 @@
 
 import React from 'react';
 import { useParams, Navigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
 import { Event } from '@/lib/types/database';
 import { EventsHeader } from '@/components/events-landing/EventsHeader';
-import { LoadingImage } from '@/components/ui/loading-image';
 import { Calendar, MapPin, Clock, Users, Trophy, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { getEventBySlug } from '@/data/publicEvents';
 
 const PublicEventPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
 
-  const { data: event, isLoading, error } = useQuery({
-    queryKey: ['public-event', slug],
-    queryFn: async () => {
-      if (!slug) throw new Error('Slug não fornecido');
-      
-      const { data, error } = await supabase
-        .from('eventos')
-        .select('*')
-        .eq('slug_pagina', slug)
-        .eq('visibilidade_publica', true)
-        .single();
+  // Buscar evento pelos dados estáticos
+  const event = slug ? getEventBySlug(slug) : null;
+  
+  console.log('Looking for event with slug:', slug);
+  console.log('Found event:', event);
 
-      if (error) throw error;
-      return data as Event;
-    },
-    enabled: !!slug,
-  });
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen">
-        <EventsHeader />
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center h-64">
-            <LoadingImage text="Carregando evento..." />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !event) {
+  if (!slug || !event) {
     return <Navigate to="/" replace />;
   }
 
