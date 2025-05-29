@@ -21,7 +21,6 @@ export const AboutSection = () => {
               <div className="relative flex items-center justify-center w-20 h-20 bg-gradient-to-br from-olimpics-green-primary to-olimpics-green-secondary rounded-2xl shadow-2xl">
                 <Target className="h-10 w-10 text-white" />
               </div>
-              <div className="absolute -top-2 -right-2 w-4 h-4 bg-olimpics-orange-primary/60 rounded-full blur-sm animate-pulse"></div>
             </div>
           </div>
           
