@@ -12,8 +12,7 @@ import {
   FileText,
   ChevronRight,
   Medal,
-  Target,
-  Globe
+  Target
 } from 'lucide-react';
 
 const Index = () => {
@@ -57,6 +56,26 @@ const Index = () => {
         <div className="absolute inset-0 bg-black/20" />
         <div className="container relative z-10 mx-auto px-4 py-24">
           <div className="text-center text-white">
+            {/* Logos Section */}
+            <div className="flex justify-center mb-8">
+              <div className="flex items-center justify-center gap-4 mb-4">
+                <div className="relative w-24 h-24 md:w-32 md:h-32">
+                  <img 
+                    src="/lovable-uploads/EECC_marca_portugues_cores_RGB.png"
+                    alt="EECC Logo"
+                    className="w-full h-full object-contain animate-pulse"
+                  />
+                </div>
+                <div className="relative w-24 h-24 md:w-32 md:h-32">
+                  <img 
+                    src="/lovable-uploads/nova_acropole_logo_redondo_verde.png"
+                    alt="Nova Acrópole Logo"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="flex justify-center mb-8">
               <div className="p-4 rounded-full bg-white/10 backdrop-blur-sm">
                 <Medal className="h-16 w-16 text-olimpics-orange-primary" />
@@ -80,17 +99,6 @@ const Index = () => {
                 >
                   Olimpíadas Nacionais 2025
                   <ChevronRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              
-              <Link to="/events">
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  className="border-white text-white hover:bg-white hover:text-olimpics-green-primary px-8 py-3 text-lg"
-                >
-                  Ver Todos os Eventos
-                  <Globe className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
             </div>
