@@ -181,22 +181,23 @@ const Index = () => {
       </div>
 
       {/* Features Section */}
-      <div className="py-20 bg-gradient-to-b from-olimpics-background to-gray-50">
-        <div className="container mx-auto px-4">
+      <div className="py-20 bg-gradient-to-b from-olimpics-green-primary to-olimpics-green-secondary">
+        <div className="absolute inset-0 bg-black/20" />
+        <div className="container relative z-10 mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-olimpics-green-primary mb-4">
+            <h2 className="text-4xl font-bold text-white mb-4">
               Funcionalidades do Sistema
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-white/90 max-w-2xl mx-auto">
               Uma plataforma completa desenvolvida especialmente para a gestão de eventos esportivos olímpicos
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow duration-300 bg-white/80 backdrop-blur-sm">
+              <Card key={index} className="hover:shadow-lg transition-shadow duration-300 bg-white/95 backdrop-blur-sm">
                 <CardHeader>
-                  <div className="p-3 rounded-lg bg-olimpics-green-primary/10 text-olimpics-green-primary w-fit mb-4">
+                  <div className="p-3 rounded-lg bg-olimpics-orange-primary/20 text-olimpics-orange-primary w-fit mb-4">
                     {feature.icon}
                   </div>
                   <CardTitle className="text-xl text-olimpics-green-primary">
