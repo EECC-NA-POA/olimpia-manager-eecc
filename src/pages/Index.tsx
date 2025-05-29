@@ -15,7 +15,8 @@ import {
   MapPin,
   Clock,
   Sparkles,
-  Zap
+  Zap,
+  Star
 } from 'lucide-react';
 
 const Index = () => {
@@ -71,51 +72,86 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-olimpics-green-primary to-olimpics-green-secondary">
+    <div className="min-h-screen bg-gradient-to-b from-olimpics-green-primary to-olimpics-green-secondary relative overflow-hidden">
       {/* Global overlay for entire page */}
       <div className="absolute inset-0 bg-black/20 z-0" />
+      
+      {/* Decorative background elements for entire page */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-0 left-0 w-96 h-96 bg-olimpics-orange-primary/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-1/4 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-1/3 w-72 h-72 bg-olimpics-orange-primary/15 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
+      </div>
       
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="container relative z-10 mx-auto px-4 py-24">
           <div className="text-center text-white">
-            {/* Logos Section */}
+            {/* Enhanced Logos Section */}
             <div className="flex justify-center mb-8">
               <div className="flex items-center justify-center gap-4 mb-4">
-                <div className="relative w-24 h-24 md:w-32 md:h-32">
+                <div className="relative w-24 h-24 md:w-32 md:h-32 group">
+                  {/* Glow effect for first logo */}
+                  <div className="absolute inset-0 bg-white/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   <img 
                     src="/lovable-uploads/EECC_marca_portugues_cores_RGB.png"
                     alt="EECC Logo"
-                    className="w-full h-full object-contain animate-pulse"
+                    className="w-full h-full object-contain animate-pulse relative z-10 group-hover:scale-110 transition-transform duration-500"
                   />
+                  <div className="absolute -top-2 -right-2 w-4 h-4 bg-olimpics-orange-primary/60 rounded-full blur-sm animate-pulse"></div>
                 </div>
-                <div className="relative w-24 h-24 md:w-32 md:h-32">
+                <div className="relative w-24 h-24 md:w-32 md:h-32 group">
+                  {/* Glow effect for second logo */}
+                  <div className="absolute inset-0 bg-olimpics-orange-primary/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   <img 
                     src="/lovable-uploads/nova_acropole_logo_redondo_verde.png"
                     alt="Nova Acrópole Logo"
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain relative z-10 group-hover:scale-110 transition-transform duration-500"
                   />
+                  <div className="absolute -bottom-2 -left-2 w-3 h-3 bg-white/40 rounded-full blur-sm animate-pulse delay-500"></div>
                 </div>
               </div>
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-bold mb-6">
-              Olímpia Manager
-            </h1>
+            {/* Enhanced Title */}
+            <div className="relative mb-8">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-96 h-32 bg-gradient-to-r from-olimpics-orange-primary/20 to-white/10 rounded-full blur-3xl"></div>
+              </div>
+              <h1 className="text-5xl md:text-7xl font-bold mb-6 relative">
+                <span className="bg-gradient-to-r from-white via-white/95 to-white/90 bg-clip-text text-transparent">
+                  Olímpia Manager
+                </span>
+              </h1>
+            </div>
             
-            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto leading-relaxed">
-              Sistema completo de gestão para eventos esportivos olímpicos. 
-              Gerencie atletas, modalidades, competições e resultados em uma plataforma integrada.
-            </p>
+            {/* Enhanced Description */}
+            <div className="relative max-w-4xl mx-auto mb-8">
+              <p className="text-xl md:text-2xl leading-relaxed text-white/90">
+                Sistema completo de gestão para eventos esportivos olímpicos. 
+                Gerencie atletas, modalidades, competições e resultados em uma plataforma integrada.
+              </p>
+              <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-32 h-1 bg-gradient-to-r from-transparent via-olimpics-orange-primary to-transparent rounded-full"></div>
+            </div>
             
+            {/* Enhanced CTA Button */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/login">
                 <Button 
                   size="lg" 
-                  className="bg-olimpics-orange-primary hover:bg-olimpics-orange-primary/90 text-white px-8 py-3 text-lg"
+                  className="group relative bg-gradient-to-r from-olimpics-orange-primary to-yellow-500 hover:from-yellow-500 hover:to-olimpics-orange-primary text-white px-12 py-6 text-xl font-bold rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 border-0 overflow-hidden"
                 >
-                  Acessar Sistema
-                  <ChevronRight className="ml-2 h-5 w-5" />
+                  {/* Button glow effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-olimpics-orange-primary to-yellow-500 blur-lg opacity-50 group-hover:opacity-75 transition-opacity duration-500"></div>
+                  
+                  <span className="relative flex items-center gap-3">
+                    Acessar Sistema
+                    <ChevronRight className="h-7 w-7 group-hover:translate-x-1 transition-transform duration-300" />
+                  </span>
+                  
+                  {/* Shine effect */}
+                  <div className="absolute inset-0 -top-2 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 group-hover:animate-pulse"></div>
                 </Button>
               </Link>
             </div>
@@ -123,81 +159,123 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Active Events Section */}
-      <div className="relative py-20 bg-white">
-        <div className="container mx-auto px-4">
+      {/* Enhanced Active Events Section */}
+      <div className="relative py-20">
+        {/* Section background elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-10 left-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-10 right-10 w-80 h-80 bg-olimpics-orange-primary/10 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="container relative z-10 mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-olimpics-green-primary mb-4">
-              Eventos com Inscrições Abertas
+            {/* Enhanced section header */}
+            <div className="relative inline-block mb-8">
+              <div className="absolute -top-4 -right-4 w-6 h-6 bg-olimpics-orange-primary/40 rounded-full blur-sm animate-pulse"></div>
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-lg rounded-2xl border border-white/20 shadow-xl">
+                <Trophy className="h-8 w-8 text-olimpics-orange-primary" />
+              </div>
+            </div>
+
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              <span className="bg-gradient-to-r from-white via-white/95 to-white/90 bg-clip-text text-transparent">
+                Eventos com Inscrições Abertas
+              </span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-white/80 max-w-2xl mx-auto">
               Participe do maior evento esportivo da Escola do Esporte com Coração
             </p>
           </div>
 
           <div className="max-w-4xl mx-auto">
-            <Card className="overflow-hidden shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary text-white">
-                <div className="flex items-center justify-center mb-4">
-                  <Trophy className="h-12 w-12 text-olimpics-orange-primary" />
-                </div>
-                <CardTitle className="text-center text-3xl font-bold">
-                  Olimpíadas Nacionais 2025
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-6 w-6 text-olimpics-green-primary" />
-                    <div>
-                      <p className="font-semibold text-gray-800">Data do Evento</p>
-                      <p className="text-gray-600">08 a 13 de Julho de 2025</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <MapPin className="h-6 w-6 text-olimpics-green-primary" />
-                    <div>
-                      <p className="font-semibold text-gray-800">Local</p>
-                      <p className="text-gray-600">São Francisco Xavier, SP</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-6 w-6 text-olimpics-green-primary" />
-                    <div>
-                      <p className="font-semibold text-gray-800">Inscrições</p>
-                      <p className="text-gray-600">Abertas até 30 de Junho</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <Trophy className="h-6 w-6 text-olimpics-green-primary" />
-                    <div>
-                      <p className="font-semibold text-gray-800">Modalidades</p>
-                      <p className="text-gray-600">15+ modalidades disponíveis</p>
-                    </div>
-                  </div>
+            <div className="group relative">
+              {/* Card glow effect */}
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-olimpics-orange-primary/30 to-white/20 rounded-3xl blur opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+              
+              <Card className="relative bg-white/95 backdrop-blur-xl border-0 rounded-3xl shadow-2xl hover:shadow-4xl transition-all duration-700 overflow-hidden">
+                {/* Card background pattern */}
+                <div className="absolute inset-0 opacity-5">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(238,126,1,0.3),transparent_50%)]"></div>
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(0,155,64,0.3),transparent_50%)]"></div>
                 </div>
 
-                <div className="text-center">
-                  <p className="text-gray-700 mb-6 leading-relaxed">
-                    Junte-se aos atletas de todo o Brasil na maior celebração do esporte educacional. 
-                    Venha viver a experiência única das Olimpíadas Nacionais 2025 da EECC.
-                  </p>
-                  
-                  <Link to="/olimpiadas-nacionais">
-                    <Button 
-                      size="lg"
-                      className="bg-olimpics-orange-primary hover:bg-olimpics-orange-primary/90 text-white px-8 py-3 text-lg"
-                    >
-                      Mais informações
-                      <ChevronRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+                <CardHeader className="relative bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary text-white rounded-t-3xl">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-olimpics-orange-primary/30 rounded-2xl blur-xl"></div>
+                      <div className="relative flex items-center justify-center w-16 h-16 bg-gradient-to-br from-olimpics-orange-primary to-yellow-500 rounded-2xl shadow-2xl">
+                        <Trophy className="h-10 w-10 text-white" />
+                      </div>
+                    </div>
+                  </div>
+                  <CardTitle className="text-center text-3xl font-bold">
+                    Olimpíadas Nacionais 2025
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="relative p-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-olimpics-green-primary/5 to-transparent hover:from-olimpics-green-primary/10 transition-all duration-300">
+                      <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-olimpics-green-primary/20 to-olimpics-green-primary/10 rounded-xl">
+                        <Calendar className="h-6 w-6 text-olimpics-green-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800">Data do Evento</p>
+                        <p className="text-gray-600">08 a 13 de Julho de 2025</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-olimpics-orange-primary/5 to-transparent hover:from-olimpics-orange-primary/10 transition-all duration-300">
+                      <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-olimpics-orange-primary/20 to-olimpics-orange-primary/10 rounded-xl">
+                        <MapPin className="h-6 w-6 text-olimpics-orange-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800">Local</p>
+                        <p className="text-gray-600">São Francisco Xavier, SP</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-blue-500/5 to-transparent hover:from-blue-500/10 transition-all duration-300">
+                      <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-500/20 to-blue-500/10 rounded-xl">
+                        <Clock className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800">Inscrições</p>
+                        <p className="text-gray-600">Abertas até 30 de Junho</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-purple-500/5 to-transparent hover:from-purple-500/10 transition-all duration-300">
+                      <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-purple-500/20 to-purple-500/10 rounded-xl">
+                        <Trophy className="h-6 w-6 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800">Modalidades</p>
+                        <p className="text-gray-600">15+ modalidades disponíveis</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-center">
+                    <p className="text-gray-700 mb-6 leading-relaxed text-lg">
+                      Junte-se aos atletas de todo o Brasil na maior celebração do esporte educacional. 
+                      Venha viver a experiência única das Olimpíadas Nacionais 2025 da EECC.
+                    </p>
+                    
+                    <Link to="/olimpiadas-nacionais">
+                      <Button 
+                        size="lg"
+                        className="group relative bg-gradient-to-r from-olimpics-orange-primary to-yellow-500 hover:from-yellow-500 hover:to-olimpics-orange-primary text-white px-10 py-4 text-lg font-bold rounded-xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 border-0"
+                      >
+                        <span className="relative flex items-center gap-3">
+                          Mais informações
+                          <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
+                        </span>
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
@@ -341,46 +419,73 @@ const Index = () => {
         </div>
       </div>
 
-      {/* About Section */}
-      <div className="relative py-20 bg-white">
-        <div className="container mx-auto px-4">
+      {/* Enhanced About Section */}
+      <div className="relative py-20">
+        {/* Section background elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-olimpics-orange-primary/10 rounded-full blur-3xl"></div>
+          <div className="absolute inset-0 bg-white/95 backdrop-blur-sm"></div>
+        </div>
+
+        <div className="container relative z-10 mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
+            {/* Enhanced section icon */}
             <div className="flex justify-center mb-8">
-              <Target className="h-16 w-16 text-olimpics-green-primary" />
+              <div className="relative">
+                <div className="absolute inset-0 bg-olimpics-green-primary/20 rounded-2xl blur-xl"></div>
+                <div className="relative flex items-center justify-center w-20 h-20 bg-gradient-to-br from-olimpics-green-primary to-olimpics-green-secondary rounded-2xl shadow-2xl">
+                  <Target className="h-10 w-10 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-4 h-4 bg-olimpics-orange-primary/60 rounded-full blur-sm animate-pulse"></div>
+              </div>
             </div>
             
-            <h2 className="text-4xl font-bold text-olimpics-green-primary mb-8">
-              Sobre o Olímpia Manager
+            <h2 className="text-4xl md:text-5xl font-bold text-olimpics-green-primary mb-8">
+              <span className="bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary bg-clip-text text-transparent">
+                Sobre o Olímpia Manager
+              </span>
             </h2>
             
             <div className="text-lg text-gray-700 leading-relaxed space-y-6">
-              <p>
-                O <strong>Olímpia Manager</strong> é uma plataforma digital desenvolvida especificamente 
-                para atender às necessidades da <strong>Escola do Esporte com Coração</strong> e suas 
-                olimpíadas nacionais.
-              </p>
+              <div className="p-6 rounded-xl bg-gradient-to-r from-olimpics-green-primary/5 to-transparent border border-olimpics-green-primary/10">
+                <p>
+                  O <strong className="text-olimpics-green-primary">Olímpia Manager</strong> é uma plataforma digital desenvolvida especificamente 
+                  para atender às necessidades da <strong className="text-olimpics-orange-primary">Escola do Esporte com Coração</strong> e suas 
+                  olimpíadas nacionais.
+                </p>
+              </div>
               
-              <p>
-                Nossa missão é proporcionar uma experiência completa de gestão esportiva, onde cada 
-                atleta, juiz e organizador tem acesso às ferramentas necessárias para o sucesso 
-                dos eventos olímpicos.
-              </p>
+              <div className="p-6 rounded-xl bg-gradient-to-r from-olimpics-orange-primary/5 to-transparent border border-olimpics-orange-primary/10">
+                <p>
+                  Nossa missão é proporcionar uma experiência completa de gestão esportiva, onde cada 
+                  atleta, juiz e organizador tem acesso às ferramentas necessárias para o sucesso 
+                  dos eventos olímpicos.
+                </p>
+              </div>
               
-              <p>
-                Com foco na <strong>filosofia olímpica</strong> e nos valores do esporte educacional, 
-                o sistema integra tecnologia moderna com os princípios fundamentais do olimpismo: 
-                excelência, amizade e respeito.
-              </p>
+              <div className="p-6 rounded-xl bg-gradient-to-r from-blue-500/5 to-transparent border border-blue-500/10">
+                <p>
+                  Com foco na <strong className="text-blue-600">filosofia olímpica</strong> e nos valores do esporte educacional, 
+                  o sistema integra tecnologia moderna com os princípios fundamentais do olimpismo: 
+                  <span className="text-olimpics-green-primary font-semibold"> excelência</span>, 
+                  <span className="text-olimpics-orange-primary font-semibold"> amizade</span> e 
+                  <span className="text-blue-600 font-semibold"> respeito</span>.
+                </p>
+              </div>
             </div>
 
             <div className="mt-12">
               <Link to="/login">
                 <Button 
                   size="lg"
-                  className="bg-olimpics-green-primary hover:bg-olimpics-green-primary/90 text-white px-8 py-3 text-lg"
+                  className="group relative bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary hover:from-olimpics-green-secondary hover:to-olimpics-green-primary text-white px-10 py-4 text-lg font-bold rounded-xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 border-0"
                 >
-                  Acessar Sistema
-                  <ChevronRight className="ml-2 h-5 w-5" />
+                  <span className="relative flex items-center gap-3">
+                    <Star className="h-5 w-5" />
+                    Acessar Sistema
+                    <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
+                  </span>
                 </Button>
               </Link>
             </div>
