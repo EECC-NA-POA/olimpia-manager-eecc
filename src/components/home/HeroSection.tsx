@@ -16,8 +16,8 @@ export const HeroSection = () => {
                 {/* Glow effect for first logo */}
                 <div className="absolute inset-0 bg-white/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <img 
-                  src="/lovable-uploads/LOGO_COMITE_PIERRE_COUBERTIN.png"
-                  alt="Comitê Pierre de Coubertin Logo"
+                  src="/lovable-uploads/EECC_marca_portugues_cores_RGB.png"
+                  alt="EECC Logo"
                   className="w-full h-full object-contain relative z-10 group-hover:scale-110 transition-transform duration-500 animate-pulse"
                   onClick={() => window.open('https://www.instagram.com/escola.esporte.coracao', '_blank')}
                 />
