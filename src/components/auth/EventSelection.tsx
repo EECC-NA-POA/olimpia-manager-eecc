@@ -51,7 +51,7 @@ export const EventSelection = ({
       // Store the current event ID
       console.log('Setting current event ID in localStorage:', eventId);
       localStorage.setItem('currentEventId', eventId);
-      setCurrentEventId(eventId); // Add this line to update context state
+      setCurrentEventId(eventId);
 
       // Show appropriate message before redirecting
       if (result.isExisting) {
@@ -60,9 +60,9 @@ export const EventSelection = ({
         toast("Inscrição realizada com sucesso!");
       }
       
-      // Redirect after a short delay to ensure toast is seen and localStorage is updated
+      // Navigate to home instead of athlete-profile to ensure proper routing
       setTimeout(() => {
-        navigate('/athlete-profile');
+        navigate('/home');
       }, 300);
     } catch (error) {
       console.error('Error in handleEventRegistration:', error);
@@ -77,12 +77,12 @@ export const EventSelection = ({
       // If already registered, update both localStorage and context state
       console.log('User is already registered, setting event in context and localStorage:', eventId);
       localStorage.setItem('currentEventId', eventId);
-      setCurrentEventId(eventId); // Update context state
+      setCurrentEventId(eventId);
       toast("Evento selecionado com sucesso!");
       
-      // Short delay to ensure toast is visible
+      // Navigate to home instead of athlete-profile
       setTimeout(() => {
-        navigate('/athlete-profile');
+        navigate('/home');
       }, 300);
     } else {
       // If not registered, proceed with registration
