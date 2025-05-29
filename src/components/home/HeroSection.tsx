@@ -21,7 +21,6 @@ export const HeroSection = () => {
                   className="w-full h-full object-contain relative z-10 group-hover:scale-110 transition-transform duration-500"
                   onClick={() => window.open('https://www.instagram.com/escola.esporte.coracao', '_blank')}
                 />
-                <div className="absolute -top-2 -right-2 w-4 h-4 bg-olimpics-orange-primary/60 rounded-full blur-sm animate-pulse"></div>
               </div>
               <div className="relative w-24 h-24 md:w-32 md:h-32 group cursor-pointer">
                 {/* Glow effect for second logo */}
@@ -32,7 +31,6 @@ export const HeroSection = () => {
                   className="w-full h-full object-contain relative z-10 group-hover:scale-110 transition-transform duration-500"
                   onClick={() => window.open('https://www.instagram.com/novaacropolebrasilsul', '_blank')}
                 />
-                <div className="absolute -bottom-2 -left-2 w-3 h-3 bg-white/40 rounded-full blur-sm animate-pulse delay-500"></div>
               </div>
             </div>
           </div>
