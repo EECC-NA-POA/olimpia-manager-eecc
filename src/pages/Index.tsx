@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,6 @@ import {
   Shield, 
   FileText,
   ChevronRight,
-  Medal,
   Target,
   MapPin,
   Clock
@@ -76,12 +76,6 @@ const Index = () => {
                 </div>
               </div>
             </div>
-
-            <div className="flex justify-center mb-8">
-              <div className="p-4 rounded-full bg-white/10 backdrop-blur-sm">
-                <Medal className="h-16 w-16 text-olimpics-orange-primary" />
-              </div>
-            </div>
             
             <h1 className="text-5xl md:text-7xl font-bold mb-6">
               Olímpia Manager
@@ -93,12 +87,12 @@ const Index = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/olimpiadas-nacionais">
+              <Link to="/login">
                 <Button 
                   size="lg" 
                   className="bg-olimpics-orange-primary hover:bg-olimpics-orange-primary/90 text-white px-8 py-3 text-lg"
                 >
-                  Olimpíadas Nacionais 2025
+                  Acessar Sistema
                   <ChevronRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
@@ -112,7 +106,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-olimpics-green-primary mb-4">
-              Evento Ativo
+              Eventos com Inscrições Abertas
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Participe do maior evento esportivo da Escola do Esporte com Coração
@@ -175,7 +169,7 @@ const Index = () => {
                       size="lg"
                       className="bg-olimpics-orange-primary hover:bg-olimpics-orange-primary/90 text-white px-8 py-3 text-lg"
                     >
-                      Inscreva-se Agora
+                      Mais informações
                       <ChevronRight className="ml-2 h-5 w-5" />
                     </Button>
                   </Link>

@@ -8,7 +8,7 @@ import { PhilosopherQuotes } from '@/components/auth/PhilosopherQuotes';
 
 export default function Login() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-olimpics-background">
+    <div className="min-h-screen bg-gradient-to-b from-olimpics-green-primary to-olimpics-green-secondary">
       <div className="container relative mx-auto p-6 pt-24">
         {/* Header with logos */}
         <div className="text-center mb-8">
@@ -30,14 +30,14 @@ export default function Login() {
                 />
               </div>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-olimpics-orange-primary">
+            <h2 className="text-3xl md:text-4xl font-bold text-white">
               Areté
             </h2>
           </div>
         </div>
 
         <Tabs defaultValue="register" className="w-full max-w-2xl mx-auto">
-          <TabsList className="grid w-full grid-cols-2 bg-olimpics-green-primary/90 backdrop-blur-sm border border-white/20">
+          <TabsList className="grid w-full grid-cols-2 bg-white/20 backdrop-blur-sm border border-white/30">
             <TabsTrigger 
               value="register"
               className="data-[state=active]:bg-white data-[state=active]:text-olimpics-green-primary text-white hover:bg-white/10"
