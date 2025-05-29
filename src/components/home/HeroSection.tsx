@@ -18,7 +18,7 @@ export const HeroSection = () => {
                 <img 
                   src="/lovable-uploads/EECC_marca_portugues_cores_RGB.png"
                   alt="EECC Logo"
-                  className="w-full h-full object-contain animate-pulse relative z-10 group-hover:scale-110 transition-transform duration-500"
+                  className="w-full h-full object-contain relative z-10 group-hover:scale-110 transition-transform duration-500"
                   onClick={() => window.open('https://www.instagram.com/escola.esporte.coracao', '_blank')}
                 />
                 <div className="absolute -top-2 -right-2 w-4 h-4 bg-olimpics-orange-primary/60 rounded-full blur-sm animate-pulse"></div>
