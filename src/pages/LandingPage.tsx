@@ -10,7 +10,6 @@ import { ModalitiesSection } from '@/components/landing/ModalitiesSection';
 import { SocialLinksSection } from '@/components/landing/SocialLinksSection';
 import { VideoSection } from '@/components/landing/VideoSection';
 import { HeaderTitle } from '@/components/landing/HeaderTitle';
-import { SystemInfoSection } from '@/components/landing/SystemInfoSection';
 
 const LandingPage = () => {
   const handleLocationClick = () => {
@@ -36,14 +35,15 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-olimpics-background to-white">
-      {/* Hero Section with Event Info */}
       <div className="relative min-h-screen bg-gradient-to-r from-olimpics-green-primary to-olimpics-green-secondary">
         <div className="absolute inset-0 bg-black/40" />
         <div className="container relative z-10 mx-auto px-4 py-8 mt-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
             <div className="text-white">
               <EventLogos />
+
               <HeaderTitle />
+
               <WelcomeMessage />
               <EventInfoCards 
                 handleLocationClick={handleLocationClick} 
@@ -57,22 +57,14 @@ const LandingPage = () => {
             </div>
           </div>
           
-          {/* Modalidades Section */}
+          {/* Moved ModalitiesSection below the two columns */}
           <div className="mt-8 animate-fade-in">
             <ModalitiesSection />
           </div>
 
-          {/* Video Section */}
           <div className="mt-8">
             <VideoSection />
           </div>
-        </div>
-      </div>
-
-      {/* System Information Section */}
-      <div className="py-16">
-        <div className="container mx-auto px-4">
-          <SystemInfoSection />
         </div>
       </div>
     </div>
