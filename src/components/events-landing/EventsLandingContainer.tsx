@@ -1,5 +1,7 @@
 
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { createClient } from '@supabase/supabase-js';
 import { EventsHeader } from './EventsHeader';
 import { EventsFilters } from './EventsFilters';
 import { EventsGrid } from './EventsGrid';
@@ -7,21 +9,85 @@ import { SystemFeaturesSection } from './SystemFeaturesSection';
 import { LoadingImage } from '@/components/ui/loading-image';
 import { Event } from '@/lib/types/database';
 import { Calendar } from 'lucide-react';
-import { getActivePublicEvents } from '@/data/publicEvents';
 
 type FilterStatus = 'all' | 'open' | 'closed' | 'upcoming';
 type SortBy = 'date' | 'name';
+
+// Create a public-only Supabase client for anonymous access
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://sb.nova-acropole.org.br/';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiLm5vdmEtYWNyb3BvbGUub3JnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTc0NzY4MDAsImV4cCI6MjAxMzA1MjgwMH0.xyz123';
+
+const publicSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  }
+});
 
 export function EventsLandingContainer() {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [sortBy, setSortBy] = useState<SortBy>('date');
 
-  // Usar dados estáticos em vez de query do Supabase
-  const publicEvents = getActivePublicEvents();
-  const isLoading = false;
-  const error = null;
+  const { data: events, isLoading, error } = useQuery({
+    queryKey: ['public-events'],
+    queryFn: async () => {
+      console.log('Fetching public events with anonymous client...');
+      
+      const { data, error } = await publicSupabase
+        .from('eventos')
+        .select('*')
+        .eq('visibilidade_publica', true)
+        .order('data_inicio_inscricao', { ascending: false });
 
-  console.log('Loading public events from static data:', publicEvents.length);
+      if (error) {
+        console.error('Error fetching public events:', error);
+        throw error;
+      }
+
+      console.log('Public events fetched:', data?.length || 0);
+      return data as Event[];
+    },
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        <EventsHeader />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <LoadingImage text="Carregando eventos..." />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error('Error loading public events:', error);
+    return (
+      <div className="min-h-screen bg-olimpics-green-primary">
+        <EventsHeader />
+        <div className="container mx-auto px-4 py-16">
+          <div className="text-center py-12">
+            <div className="max-w-md mx-auto">
+              <Calendar className="h-16 w-16 text-white/80 mx-auto mb-4" />
+              <h3 className="text-2xl font-semibold text-white mb-4">
+                Erro ao Carregar Eventos
+              </h3>
+              <p className="text-white/90 mb-6 leading-relaxed">
+                Não foi possível carregar os eventos públicos. Tente novamente mais tarde.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Always show the page structure, even if no public events are available
+  const publicEvents = events || [];
 
   const filteredEvents = publicEvents.filter(event => {
     if (filterStatus === 'all') return true;

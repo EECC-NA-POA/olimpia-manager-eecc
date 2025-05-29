@@ -5,8 +5,6 @@ import Login from "./Login";
 import { formatToGoogleCalendarDate } from "@/utils/formatters";
 import { EventLogos } from '@/components/landing/EventLogos';
 import { WelcomeMessage } from '@/components/landing/WelcomeMessage';
-import { EventAccessSection } from '@/components/landing/EventAccessSection';
-import { SystemInfoSection } from '@/components/landing/SystemInfoSection';
 import { EventInfoCards } from '@/components/landing/EventInfoCards';
 import { ModalitiesSection } from '@/components/landing/ModalitiesSection';
 import { SocialLinksSection } from '@/components/landing/SocialLinksSection';
@@ -47,9 +45,6 @@ const LandingPage = () => {
               <HeaderTitle />
 
               <WelcomeMessage />
-              
-              <EventAccessSection />
-              
               <EventInfoCards 
                 handleLocationClick={handleLocationClick} 
                 handleCalendarSync={handleCalendarSync} 
@@ -58,33 +53,22 @@ const LandingPage = () => {
             </div>
 
             <div className="backdrop-blur-sm bg-white/95 rounded-lg shadow-xl p-6 lg:sticky lg:top-8 animate-fade-in">
-              <div className="mb-4 text-center">
-                <h3 className="text-2xl font-bold text-olimpics-green-primary mb-2">
-                  Acesso ao Sistema
-                </h3>
-                <p className="text-gray-600">
-                  Faça login para acessar eventos e funcionalidades do sistema
-                </p>
-              </div>
               <Login />
             </div>
           </div>
           
-          {/* Moved sections below the two columns */}
-          <div className="mt-12 space-y-8 animate-fade-in">
+          {/* Moved ModalitiesSection below the two columns */}
+          <div className="mt-8 animate-fade-in">
             <ModalitiesSection />
+          </div>
+
+          <div className="mt-8">
             <VideoSection />
-            
-            {/* Cards lado a lado: Acesso aos Eventos e Sobre o Sistema */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <EventAccessSection />
-              <SystemInfoSection />
-            </div>
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default LandingPage;
