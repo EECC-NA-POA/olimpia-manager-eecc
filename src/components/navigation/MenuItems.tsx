@@ -127,11 +127,11 @@ export const MenuItems = ({ collapsed = false }) => {
                 asChild 
                 isActive={location.pathname === item.path}
                 tooltip={item.tooltip}
-                className="text-white hover:bg-olimpics-green-secondary/20 data-[active=true]:bg-olimpics-green-secondary data-[active=true]:text-white"
+                className="text-white hover:bg-olimpics-green-secondary/20 data-[active=true]:bg-olimpics-green-secondary data-[active=true]:text-white group-data-[collapsible=icon]:justify-center"
               >
                 <Link to={item.path} className="flex items-center">
                   {item.icon}
-                  <span className="ml-3">{item.label}</span>
+                  <span className="ml-3 group-data-[collapsible=icon]:hidden">{item.label}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

@@ -15,7 +15,11 @@ import { LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  isHeaderVisible: boolean;
+}
+
+export function AppSidebar({ isHeaderVisible }: AppSidebarProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -38,6 +42,22 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="bg-olimpics-green-primary text-white border-none mt-16">
+      {/* Logo section that appears when header is hidden */}
+      <div className={`transition-opacity duration-300 bg-olimpics-green-primary border-b border-olimpics-green-secondary/30 ${
+        isHeaderVisible ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-16'
+      }`}>
+        <div className="flex items-center justify-center h-full p-2">
+          <img 
+            src="/lovable-uploads/EECC_marca_portugues_cores_RGB.png"
+            alt="EECC Logo"
+            className="h-10 w-auto object-contain group-data-[collapsible=icon]:h-8"
+          />
+          <span className="ml-2 text-white font-semibold group-data-[collapsible=icon]:hidden">
+            Olímpia Manager
+          </span>
+        </div>
+      </div>
+
       <SidebarHeader className="border-b border-olimpics-green-secondary/30 p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white group-data-[collapsible=icon]:hidden">
@@ -57,9 +77,10 @@ export function AppSidebar() {
           <Button
             onClick={handleLogout}
             variant="ghost"
-            className="w-full justify-start text-red-300 hover:text-red-100 hover:bg-red-500/20"
+            className="w-full justify-start text-red-300 hover:text-red-100 hover:bg-red-500/20 group-data-[collapsible=icon]:justify-center"
+            title="Sair"
           >
-            <LogOut className="h-4 w-4 mr-3" />
+            <LogOut className="h-4 w-4 group-data-[collapsible=icon]:mr-0 mr-3" />
             <span className="group-data-[collapsible=icon]:hidden">Sair</span>
           </Button>
         </div>

@@ -73,3 +73,31 @@
   top: 4rem !important;
   position: fixed !important;
 }
+
+/* Logo transition styling */
+.sidebar-logo-transition {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Tooltip positioning for collapsed sidebar */
+.group-data-\[collapsible=icon\] [data-sidebar="menu-button"] .tooltip {
+  left: 100%;
+  margin-left: 0.5rem;
+}
+
+/* Ensure collapsed sidebar maintains proper width */
+.group-data-\[collapsible=icon\] [data-sidebar="sidebar"] {
+  width: 3rem !important;
+}
+
+/* Center content in collapsed state */
+.group-data-\[collapsible=icon\] [data-sidebar="header"],
+.group-data-\[collapsible=icon\] [data-sidebar="footer"] {
+  padding: 0.5rem !important;
+  display: flex;
+  justify-content: center;
+}
+
+.group-data-\[collapsible=icon\] [data-sidebar="header"] h2 {
+  display: none;
+}
