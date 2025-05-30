@@ -123,21 +123,12 @@
   gap: 0.25rem;
 }
 
-/* Show icon buttons in collapsed state */
-.group-data-\[collapsible=icon\] [data-sidebar="footer"] .hidden {
-  display: flex !important;
-}
-
-.group-data-\[collapsible=icon\] [data-sidebar="footer"] .group-data-\[collapsible=icon\]:hidden {
-  display: none !important;
-}
-
 /* Ensure all sidebar elements have green background */
 [data-sidebar="sidebar"] * {
   background-color: inherit;
 }
 
-/* Fix para garantir que o espaço do logo tenha fundo verde */
-.group-data-\[collapsible=icon\] [data-sidebar="sidebar"] > div:first-child {
+/* Garantir que o logo tenha sempre fundo verde */
+[data-sidebar="sidebar"] > div:first-child {
   background-color: var(--olimpics-green-primary, #009B40) !important;
 }

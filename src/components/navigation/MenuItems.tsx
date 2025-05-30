@@ -2,11 +2,16 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
-import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen } from 'lucide-react';
+import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupContent } from '@/components/ui/sidebar';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 
-export const MenuItems = ({ collapsed = false }) => {
+interface MenuItemsProps {
+  onLogout: () => void;
+  userId: string;
+}
+
+export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
   const location = useLocation();
   const { roles, user } = useNavigation();
   const { canCreateEvents } = useCanCreateEvents();
@@ -117,22 +122,54 @@ export const MenuItems = ({ collapsed = false }) => {
     }
   }
 
+  // 11. Trocar Evento
+  menuItems.push({
+    path: "#",
+    label: "Trocar Evento",
+    icon: <CalendarIcon className="h-5 w-5" />,
+    tooltip: "Trocar Evento",
+    isAction: true,
+    action: () => {
+      // TODO: Implement event switcher functionality
+      console.log('Switch event clicked');
+    }
+  });
+
+  // 12. Sair (Logout)
+  menuItems.push({
+    path: "#",
+    label: "Sair",
+    icon: <LogOut className="h-5 w-5" />,
+    tooltip: "Sair",
+    isAction: true,
+    action: onLogout,
+    className: "text-red-300 hover:text-red-100 hover:bg-red-500/20"
+  });
+
   return (
     <SidebarGroup>
       <SidebarGroupContent>
         <SidebarMenu className="space-y-1">
-          {menuItems.map((item) => (
-            <SidebarMenuItem key={item.path}>
+          {menuItems.map((item, index) => (
+            <SidebarMenuItem key={item.path + index}>
               <SidebarMenuButton 
-                asChild 
-                isActive={location.pathname === item.path}
+                asChild={!item.isAction}
+                isActive={!item.isAction && location.pathname === item.path}
                 tooltip={item.tooltip}
-                className="text-white hover:bg-olimpics-green-secondary/20 data-[active=true]:bg-olimpics-green-secondary data-[active=true]:text-white group-data-[collapsible=icon]:justify-center"
+                className={`text-white hover:bg-olimpics-green-secondary/20 data-[active=true]:bg-olimpics-green-secondary data-[active=true]:text-white group-data-[collapsible=icon]:justify-center ${item.className || ''}`}
+                onClick={item.isAction ? item.action : undefined}
               >
-                <Link to={item.path} className="flex items-center">
-                  {item.icon}
-                  <span className="ml-3 group-data-[collapsible=icon]:hidden">{item.label}</span>
-                </Link>
+                {item.isAction ? (
+                  <div className="flex items-center">
+                    {item.icon}
+                    <span className="ml-3 group-data-[collapsible=icon]:hidden">{item.label}</span>
+                  </div>
+                ) : (
+                  <Link to={item.path} className="flex items-center">
+                    {item.icon}
+                    <span className="ml-3 group-data-[collapsible=icon]:hidden">{item.label}</span>
+                  </Link>
+                )}
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

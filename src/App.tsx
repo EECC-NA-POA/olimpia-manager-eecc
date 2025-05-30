@@ -29,6 +29,7 @@ import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import RejectedAccess from "./pages/RejectedAccess";
 import AthleteProfile from "./pages/AthleteProfile";
+import Scores from "./pages/Scores";
 
 const queryClient = new QueryClient();
 
@@ -67,8 +68,12 @@ function AppContent() {
                 <Route path="/judge-dashboard" element={<JudgeDashboard />} />
                 <Route path="/administration" element={<Administration />} />
                 <Route path="/event-management" element={<EventManagement />} />
-                <Route path="/event-regulations" element={<EventRegulations />} />
+                <Route path="/regulamento" element={<EventRegulations />} />
                 <Route path="/cronograma" element={<Cronograma />} />
+                <Route path="/scores" element={<Scores />} />
+                <Route path="/athlete-registrations" element={<Dashboard />} />
+                <Route path="/organizer-dashboard" element={<Dashboard />} />
+                <Route path="/delegation-dashboard" element={<Dashboard />} />
               </Routes>
             </MainNavigation>
           } />

@@ -11,7 +11,7 @@ import {
 import { MenuItems } from './MenuItems';
 import { EventSwitcher } from './EventSwitcher';
 import { Button } from '@/components/ui/button';
-import { LogOut, Calendar } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -45,10 +45,8 @@ export function AppSidebar({ isHeaderVisible }: AppSidebarProps) {
       className="bg-olimpics-green-primary text-white border-none mt-16"
       collapsible="icon"
     >
-      {/* Logo section that appears when header is hidden - agora com fundo verde */}
-      <div className={`transition-opacity duration-300 bg-olimpics-green-primary border-b border-olimpics-green-secondary/30 ${
-        isHeaderVisible ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-16'
-      }`}>
+      {/* Logo section - sempre visível */}
+      <div className="bg-olimpics-green-primary border-b border-olimpics-green-secondary/30 h-16">
         <div className="flex items-center justify-center h-full p-2 bg-olimpics-green-primary">
           <img 
             src="/lovable-uploads/EECC_marca_portugues_cores_RGB.png"
@@ -71,35 +69,14 @@ export function AppSidebar({ isHeaderVisible }: AppSidebarProps) {
       </SidebarHeader>
       
       <SidebarContent className="bg-olimpics-green-primary">
-        <MenuItems />
+        <MenuItems onLogout={handleLogout} userId={user.id} />
       </SidebarContent>
       
       <SidebarFooter className="border-t border-olimpics-green-secondary/30 p-4 bg-olimpics-green-primary">
         <div className="space-y-2">
-          {/* EventSwitcher como ícone quando recolhido */}
           <div className="group-data-[collapsible=icon]:hidden">
             <EventSwitcher userId={user.id} collapsed={false} />
           </div>
-          
-          {/* Ícone do EventSwitcher quando recolhido */}
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-white hover:text-white hover:bg-olimpics-green-secondary/20 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:block hidden"
-            title="Trocar Evento"
-          >
-            <Calendar className="h-4 w-4 group-data-[collapsible=icon]:mr-0 mr-3" />
-            <span className="group-data-[collapsible=icon]:hidden">Trocar Evento</span>
-          </Button>
-          
-          <Button
-            onClick={handleLogout}
-            variant="ghost"
-            className="w-full justify-start text-red-300 hover:text-red-100 hover:bg-red-500/20 group-data-[collapsible=icon]:justify-center"
-            title="Sair"
-          >
-            <LogOut className="h-4 w-4 group-data-[collapsible=icon]:mr-0 mr-3" />
-            <span className="group-data-[collapsible=icon]:hidden">Sair</span>
-          </Button>
         </div>
       </SidebarFooter>
     </Sidebar>
