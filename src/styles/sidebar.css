@@ -7,6 +7,8 @@
   border: none !important;
   margin-top: 4rem !important; /* 64px - height of header */
   height: calc(100vh - 4rem) !important;
+  /* Ensure sidebar is always visible, even when collapsed */
+  min-width: 3rem !important;
 }
 
 /* Ensure proper sidebar height */
@@ -56,11 +58,26 @@
 /* Collapsed state adjustments */
 .group-data-\[collapsible=icon\] [data-sidebar="menu-button"] {
   justify-content: center !important;
+  padding: 0.5rem !important;
 }
 
-/* Remove any conflicting margins */
-[data-sidebar="sidebar"] * {
-  margin: 0 !important;
+/* Ensure collapsed sidebar maintains proper width and visibility */
+.group-data-\[collapsible=icon\] [data-sidebar="sidebar"] {
+  width: 3rem !important;
+  min-width: 3rem !important;
+}
+
+/* Center content in collapsed state */
+.group-data-\[collapsible=icon\] [data-sidebar="header"],
+.group-data-\[collapsible=icon\] [data-sidebar="footer"] {
+  padding: 0.5rem !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.group-data-\[collapsible=icon\] [data-sidebar="header"] h2 {
+  display: none;
 }
 
 /* Main content area adjustments */
@@ -85,19 +102,23 @@
   margin-left: 0.5rem;
 }
 
-/* Ensure collapsed sidebar maintains proper width */
-.group-data-\[collapsible=icon\] [data-sidebar="sidebar"] {
-  width: 3rem !important;
+/* Ensure trigger button is always visible in collapsed state */
+.group-data-\[collapsible=icon\] [data-sidebar="trigger"] {
+  display: flex !important;
+  justify-content: center !important;
+  width: 100% !important;
 }
 
-/* Center content in collapsed state */
-.group-data-\[collapsible=icon\] [data-sidebar="header"],
-.group-data-\[collapsible=icon\] [data-sidebar="footer"] {
-  padding: 0.5rem !important;
+/* Hide text content but keep icons in collapsed state */
+.group-data-\[collapsible=icon\] span:not([data-sidebar="trigger"] span) {
+  display: none !important;
+}
+
+/* Keep EventSwitcher compact in collapsed state */
+.group-data-\[collapsible=icon\] [data-sidebar="footer"] > div {
+  width: 100%;
   display: flex;
-  justify-content: center;
-}
-
-.group-data-\[collapsible=icon\] [data-sidebar="header"] h2 {
-  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
 }

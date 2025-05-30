@@ -41,7 +41,10 @@ export function AppSidebar({ isHeaderVisible }: AppSidebarProps) {
   }
 
   return (
-    <Sidebar className="bg-olimpics-green-primary text-white border-none mt-16">
+    <Sidebar 
+      className="bg-olimpics-green-primary text-white border-none mt-16"
+      collapsible="icon"
+    >
       {/* Logo section that appears when header is hidden */}
       <div className={`transition-opacity duration-300 bg-olimpics-green-primary border-b border-olimpics-green-secondary/30 ${
         isHeaderVisible ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-16'
