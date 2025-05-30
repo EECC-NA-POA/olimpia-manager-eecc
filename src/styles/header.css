@@ -7,16 +7,6 @@
   z-index: 50;
 }
 
-/* Routes with authenticated menu - reduced padding since sidebar replaces top nav */
-.main-navigation-content {
-  padding-top: 64px !important; /* Only header height needed now */
-}
-
-/* Routes with public access need less padding */
-.public-route-content {
-  padding-top: 64px; /* Account for header only */
-}
-
 /* Special style for event selection page */
 body[data-current-route="/event-selection"] .container {
   padding-top: 0;

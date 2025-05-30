@@ -2,19 +2,11 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from "@/contexts/AuthContext";
-import { TopNavigation } from './navigation/TopNavigation';
-import { useNavigation } from '@/hooks/useNavigation';
-import { useIsMobile } from "@/hooks/use-mobile";
 
 export function GlobalHeader() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { roles } = useNavigation();
   const location = useLocation();
-  const isMobile = useIsMobile();
-  
-  // Don't show top navigation on event selection page
-  const showTopNav = user && location.pathname !== '/event-selection' && !isMobile;
   
   const handleClick = () => {
     // Only navigate to home page if not logged in
@@ -25,24 +17,18 @@ export function GlobalHeader() {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 w-full">
-      <div className="flex flex-col w-full">
-        <header className="w-full h-16 border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-sm">
-          <div className="container flex h-full items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                onClick={handleClick}
-                className="text-olimpics-green-primary hover:text-olimpics-green-secondary"
-              >
-                Olímpia Manager
-              </Button>
-            </div>
-          </div>
-        </header>
-        
-        {showTopNav && <TopNavigation user={user} roles={roles} />}
+    <header className="fixed top-0 left-0 right-0 z-50 w-full h-16 border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-sm">
+      <div className="container flex h-full items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            onClick={handleClick}
+            className="text-olimpics-green-primary hover:text-olimpics-green-secondary"
+          >
+            Olímpia Manager
+          </Button>
+        </div>
       </div>
-    </div>
+    </header>
   );
 }

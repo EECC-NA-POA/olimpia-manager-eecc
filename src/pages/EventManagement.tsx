@@ -51,7 +51,7 @@ export default function EventManagement() {
   // If no event data is found
   if (!eventData) {
     return (
-      <div className="container mx-auto py-6">
+      <div className="space-y-6">
         <Card>
           <CardContent className="pt-6">
             <p className="text-center text-muted-foreground">
@@ -67,7 +67,7 @@ export default function EventManagement() {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-olimpics-text">
           Gerenciamento de Evento

@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
+import { MainNavigation } from "@/components/MainNavigation";
 import { usePrivacyPolicyCheck } from "@/hooks/usePrivacyPolicyCheck";
 import { PrivacyPolicyAcceptanceModal } from "@/components/auth/PrivacyPolicyAcceptanceModal";
 
@@ -39,20 +40,13 @@ function AppContent() {
       <GlobalHeader />
       <main className="flex-1">
         <Routes>
+          {/* Public routes without sidebar */}
           <Route path="/" element={<Index />} />
           <Route path="/olimpiadas-nacionais" element={<OlimpiadasNacionais />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/athlete-profile" element={<AthleteProfile />} />
           <Route path="/events" element={<EventsLandingPage />} />
           <Route path="/events/:eventId" element={<EventDetailsPage />} />
           <Route path="/event/:slug" element={<PublicEventPage />} />
-          <Route path="/event-selection" element={<EventSelectionPage />} />
-          <Route path="/judge-dashboard" element={<JudgeDashboard />} />
-          <Route path="/administration" element={<Administration />} />
-          <Route path="/event-management" element={<EventManagement />} />
-          <Route path="/event-regulations" element={<EventRegulations />} />
-          <Route path="/cronograma" element={<Cronograma />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/esqueci-senha" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
@@ -60,6 +54,24 @@ function AppContent() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/verificar-email" element={<VerifyEmail />} />
           <Route path="/acesso-negado" element={<RejectedAccess />} />
+          
+          {/* Event selection without sidebar */}
+          <Route path="/event-selection" element={<EventSelectionPage />} />
+          
+          {/* Protected routes with sidebar */}
+          <Route path="/*" element={
+            <MainNavigation>
+              <Routes>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/athlete-profile" element={<AthleteProfile />} />
+                <Route path="/judge-dashboard" element={<JudgeDashboard />} />
+                <Route path="/administration" element={<Administration />} />
+                <Route path="/event-management" element={<EventManagement />} />
+                <Route path="/event-regulations" element={<EventRegulations />} />
+                <Route path="/cronograma" element={<Cronograma />} />
+              </Routes>
+            </MainNavigation>
+          } />
         </Routes>
       </main>
       <Footer />

@@ -1,11 +1,14 @@
 
-import { Outlet } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useState, useEffect } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from './navigation/AppSidebar';
 
-export function MainNavigation() {
+interface MainNavigationProps {
+  children: React.ReactNode;
+}
+
+export function MainNavigation({ children }: MainNavigationProps) {
   const { user } = useNavigation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -30,8 +33,8 @@ export function MainNavigation() {
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <SidebarInset className="flex-1">
-          <main className="flex-1 overflow-auto bg-olimpics-background">
-            <Outlet />
+          <main className="flex-1 overflow-auto bg-olimpics-background p-6">
+            {children}
           </main>
         </SidebarInset>
       </div>
