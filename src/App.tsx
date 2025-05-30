@@ -27,6 +27,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import RejectedAccess from "./pages/RejectedAccess";
+import AthleteProfile from "./pages/AthleteProfile";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ function AppContent() {
           <Route path="/olimpiadas-nacionais" element={<OlimpiadasNacionais />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/athlete-profile" element={<AthleteProfile />} />
           <Route path="/events" element={<EventsLandingPage />} />
           <Route path="/events/:eventId" element={<EventDetailsPage />} />
           <Route path="/event/:slug" element={<PublicEventPage />} />
