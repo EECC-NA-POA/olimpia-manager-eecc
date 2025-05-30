@@ -2,6 +2,8 @@
 import { Outlet } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useState, useEffect } from 'react';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { AppSidebar } from './navigation/AppSidebar';
 
 export function MainNavigation() {
   const { user } = useNavigation();
@@ -24,12 +26,15 @@ export function MainNavigation() {
   }
 
   return (
-    <div className="flex flex-col w-full">
-      <div className="flex min-h-screen w-full mt-8"> {/* Added margin-top for better spacing */}
-        <main className="flex-1 overflow-auto bg-olimpics-background transition-all duration-200">
-          <Outlet />
-        </main>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        <AppSidebar />
+        <SidebarInset className="flex-1">
+          <main className="flex-1 overflow-auto bg-olimpics-background">
+            <Outlet />
+          </main>
+        </SidebarInset>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }

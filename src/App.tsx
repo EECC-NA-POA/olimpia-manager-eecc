@@ -48,7 +48,7 @@ function AppContent() {
           <Route path="/events/:eventId" element={<EventDetailsPage />} />
           <Route path="/event/:slug" element={<PublicEventPage />} />
           <Route path="/event-selection" element={<EventSelectionPage />} />
-          <Route path="/judge" element={<JudgeDashboard />} />
+          <Route path="/judge-dashboard" element={<JudgeDashboard />} />
           <Route path="/administration" element={<Administration />} />
           <Route path="/event-management" element={<EventManagement />} />
           <Route path="/event-regulations" element={<EventRegulations />} />

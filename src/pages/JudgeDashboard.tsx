@@ -45,11 +45,13 @@ export default function JudgeDashboard() {
 
   if (isCheckingRole) {
     return (
-      <div className="container mx-auto p-6 space-y-6">
-        <h1 className="text-2xl font-bold">Painel do Juiz</h1>
-        <div className="space-y-2">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-64 w-full" />
+      <div className="main-navigation-content">
+        <div className="container mx-auto p-6 space-y-6">
+          <h1 className="text-2xl font-bold">Painel do Juiz</h1>
+          <div className="space-y-2">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-64 w-full" />
+          </div>
         </div>
       </div>
     );
@@ -60,23 +62,25 @@ export default function JudgeDashboard() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Painel do Juiz</h1>
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-2 w-full max-w-md">
-          <TabsTrigger value="scores">Pontuações Individuais</TabsTrigger>
-          <TabsTrigger value="teams">Equipes</TabsTrigger>
-        </TabsList>
+    <div className="main-navigation-content">
+      <div className="container mx-auto p-6 space-y-6">
+        <h1 className="text-2xl font-bold">Painel do Juiz</h1>
         
-        <TabsContent value="scores" className="mt-6">
-          <ScoresTab userId={user.id} eventId={currentEventId} />
-        </TabsContent>
-        
-        <TabsContent value="teams" className="mt-6">
-          <TeamsTab userId={user.id} eventId={currentEventId} />
-        </TabsContent>
-      </Tabs>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-2 w-full max-w-md">
+            <TabsTrigger value="scores">Pontuações Individuais</TabsTrigger>
+            <TabsTrigger value="teams">Equipes</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="scores" className="mt-6">
+            <ScoresTab userId={user.id} eventId={currentEventId} />
+          </TabsContent>
+          
+          <TabsContent value="teams" className="mt-6">
+            <TeamsTab userId={user.id} eventId={currentEventId} />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

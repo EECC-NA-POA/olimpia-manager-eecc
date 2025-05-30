@@ -7,9 +7,9 @@
   z-index: 50;
 }
 
-/* Routes with authenticated menu need top padding */
+/* Routes with authenticated menu - reduced padding since sidebar replaces top nav */
 .main-navigation-content {
-  padding-top: 140px !important; /* Increased padding to match navigation.css */
+  padding-top: 64px !important; /* Only header height needed now */
 }
 
 /* Routes with public access need less padding */
