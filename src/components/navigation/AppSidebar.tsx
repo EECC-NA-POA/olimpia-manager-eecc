@@ -37,7 +37,7 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar className="bg-olimpics-green-primary text-white border-none">
+    <Sidebar className="bg-olimpics-green-primary text-white border-none mt-16">
       <SidebarHeader className="border-b border-olimpics-green-secondary/30 p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white group-data-[collapsible=icon]:hidden">

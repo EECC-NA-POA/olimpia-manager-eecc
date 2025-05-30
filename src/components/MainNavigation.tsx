@@ -33,7 +33,7 @@ export function MainNavigation({ children }: MainNavigationProps) {
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <SidebarInset className="flex-1">
-          <main className="flex-1 overflow-auto bg-olimpics-background p-6">
+          <main className="flex-1 overflow-auto bg-olimpics-background p-6 pt-20">
             {children}
           </main>
         </SidebarInset>

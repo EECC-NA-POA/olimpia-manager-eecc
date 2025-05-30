@@ -5,6 +5,8 @@
 [data-sidebar="sidebar"] {
   background-color: var(--olimpics-green-primary, #009B40) !important;
   border: none !important;
+  margin-top: 4rem !important; /* 64px - height of header */
+  height: calc(100vh - 4rem) !important;
 }
 
 /* Ensure proper sidebar height */
@@ -64,4 +66,10 @@
 /* Main content area adjustments */
 [data-sidebar="inset"] {
   margin-left: 0 !important;
+}
+
+/* Ensure sidebar starts below header */
+[data-sidebar="sidebar"] {
+  top: 4rem !important;
+  position: fixed !important;
 }
