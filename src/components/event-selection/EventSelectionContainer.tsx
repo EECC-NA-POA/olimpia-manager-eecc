@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -112,7 +111,7 @@ export function EventSelectionContainer() {
   // Limitamos a apenas 1.5 segundos para não confundir o usuário
   if (isPolicyCheckLoading && !checkCompleted) {
     return (
-      <div className="min-h-screen bg-cover bg-center bg-no-repeat pt-16"
+      <div className="min-h-screen bg-cover bg-center bg-no-repeat"
         style={{ 
           backgroundImage: 'url(/lovable-uploads/7f5d4c54-bc15-4310-ac7a-ecd055bda99b.png)',
           backgroundColor: 'rgba(0, 155, 64, 0.05)',
@@ -131,7 +130,7 @@ export function EventSelectionContainer() {
   const showWelcomeModal = needsAcceptance || needsBranchSelection;
   if (showWelcomeModal) {
     return (
-      <div className="min-h-screen bg-cover bg-center bg-no-repeat pt-16"
+      <div className="min-h-screen bg-cover bg-center bg-no-repeat"
         style={{ 
           backgroundImage: 'url(/lovable-uploads/7f5d4c54-bc15-4310-ac7a-ecd055bda99b.png)',
           backgroundColor: 'rgba(0, 155, 64, 0.05)',
@@ -154,7 +153,7 @@ export function EventSelectionContainer() {
 
   return (
     <div 
-      className="min-h-screen bg-cover bg-center bg-no-repeat px-4 sm:px-0 pt-16"
+      className="min-h-screen event-selection-container bg-cover bg-center bg-no-repeat px-4 sm:px-0"
       style={{ 
         backgroundImage: 'url(/lovable-uploads/7f5d4c54-bc15-4310-ac7a-ecd055bda99b.png)',
         backgroundColor: 'rgba(0, 155, 64, 0.05)',
