@@ -5,6 +5,7 @@ import { useNavigation } from '@/hooks/useNavigation';
 import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupContent } from '@/components/ui/sidebar';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface MenuItemsProps {
   onLogout: () => void;
@@ -16,6 +17,7 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
   const navigate = useNavigate();
   const { roles, user } = useNavigation();
   const { canCreateEvents } = useCanCreateEvents();
+  const { setCurrentEventId } = useAuth();
 
   // Check for specific roles
   const isJudge = user?.papeis?.some(role => role.codigo === 'JUZ') || false;
@@ -30,7 +32,8 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
   const handleEventSwitch = () => {
     // Clear current event and redirect to event selection
     localStorage.removeItem('currentEventId');
-    navigate('/event-selection');
+    setCurrentEventId(null);
+    navigate('/event-selection', { replace: true });
   };
 
   const menuItems = [];
