@@ -30,6 +30,9 @@ import VerifyEmail from "./pages/VerifyEmail";
 import RejectedAccess from "./pages/RejectedAccess";
 import AthleteProfile from "./pages/AthleteProfile";
 import Scores from "./pages/Scores";
+import OrganizerDashboard from "./components/OrganizerDashboard";
+import DelegationDashboard from "./components/DelegationDashboard";
+import AthleteRegistrations from "./components/AthleteRegistrations";
 
 const queryClient = new QueryClient();
 
@@ -71,9 +74,9 @@ function AppContent() {
                 <Route path="/regulamento" element={<EventRegulations />} />
                 <Route path="/cronograma" element={<Cronograma />} />
                 <Route path="/scores" element={<Scores />} />
-                <Route path="/athlete-registrations" element={<Dashboard />} />
-                <Route path="/organizer-dashboard" element={<Dashboard />} />
-                <Route path="/delegation-dashboard" element={<Dashboard />} />
+                <Route path="/minhas-inscricoes" element={<AthleteRegistrations />} />
+                <Route path="/organizador" element={<OrganizerDashboard />} />
+                <Route path="/delegacao" element={<DelegationDashboard />} />
               </Routes>
             </MainNavigation>
           } />

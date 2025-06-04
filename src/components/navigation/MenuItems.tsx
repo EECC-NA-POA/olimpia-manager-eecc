@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
 import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupContent } from '@/components/ui/sidebar';
@@ -13,6 +13,7 @@ interface MenuItemsProps {
 
 export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { roles, user } = useNavigation();
   const { canCreateEvents } = useCanCreateEvents();
 
@@ -25,6 +26,12 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
   
   // Check if user can manage events (admin with cadastra_eventos=true)
   const canManageEvents = isAdmin && canCreateEvents;
+
+  const handleEventSwitch = () => {
+    // Clear current event and redirect to event selection
+    localStorage.removeItem('currentEventId');
+    navigate('/event-selection');
+  };
 
   const menuItems = [];
   
@@ -56,9 +63,9 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
     tooltip: "Regulamento"
   });
   
-  // 4. Minhas Inscrições (My Registrations) - for all roles
+  // 4. Minhas Inscrições (My Registrations) - for all roles - FIXED ROUTE
   menuItems.push({
-    path: "/athlete-registrations",
+    path: "/minhas-inscricoes",
     label: "Minhas Inscrições",
     icon: <ClipboardList className="h-5 w-5" />,
     tooltip: "Minhas Inscrições"
@@ -72,20 +79,20 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
     tooltip: "Pontuações"
   });
   
-  // 6. Organizador (Organizer)
+  // 6. Organizador (Organizer) - FIXED ROUTE
   if (isOrganizer) {
     menuItems.push({
-      path: "/organizer-dashboard",
+      path: "/organizador",
       label: "Organizador",
       icon: <Users className="h-5 w-5" />,
       tooltip: "Organizador"
     });
   }
   
-  // 7. Delegação (Delegation)
+  // 7. Delegação (Delegation) - FIXED ROUTE
   if (isDelegationRep) {
     menuItems.push({
-      path: "/delegation-dashboard",
+      path: "/delegacao",
       label: "Delegação",
       icon: <Users className="h-5 w-5" />,
       tooltip: "Delegação"
@@ -122,17 +129,14 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
     }
   }
 
-  // 11. Trocar Evento
+  // 11. Trocar Evento - FIXED FUNCTIONALITY
   menuItems.push({
     path: "#",
     label: "Trocar Evento",
     icon: <CalendarIcon className="h-5 w-5" />,
     tooltip: "Trocar Evento",
     isAction: true,
-    action: () => {
-      // TODO: Implement event switcher functionality
-      console.log('Switch event clicked');
-    }
+    action: handleEventSwitch
   });
 
   // 12. Sair (Logout)
