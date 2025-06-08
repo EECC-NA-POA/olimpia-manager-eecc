@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,6 +38,13 @@ export function DynamicModalityRulesSection({ eventId }: { eventId: string | nul
         .order('nome');
       
       if (error) throw error;
+      
+      // Debug logging to see what we're getting
+      console.log('Modalidades data:', data);
+      data?.forEach(modalidade => {
+        console.log(`Modalidade: ${modalidade.nome}, Categoria: "${modalidade.categoria}"`);
+      });
+      
       return data as Modalidade[];
     },
     enabled: !!eventId
@@ -53,7 +59,7 @@ export function DynamicModalityRulesSection({ eventId }: { eventId: string | nul
 
   const filteredModalidades = modalidades.filter(modalidade =>
     modalidade.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    modalidade.categoria.toLowerCase().includes(searchTerm.toLowerCase())
+    (modalidade.categoria && modalidade.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleCreateModelo = () => {
@@ -119,7 +125,7 @@ export function DynamicModalityRulesSection({ eventId }: { eventId: string | nul
                       <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
                         <span>{modalidade.tipo_modalidade}</span>
                         <span>•</span>
-                        <span>{modalidade.categoria}</span>
+                        <span>{modalidade.categoria || 'Sem categoria'}</span>
                         <span>•</span>
                         <span>{modalidade.tipo_pontuacao}</span>
                       </div>
