@@ -1,10 +1,11 @@
 
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Link, Copy } from 'lucide-react';
 import { ModeloModalidade } from '@/types/dynamicScoring';
-import { useModelosModalidade, useCreateModeloWithFields, useDeleteModelo } from '@/hooks/useDynamicScoring';
+import { useModelosModalidade, useCreateModeloWithFields } from '@/hooks/useDynamicScoring';
 import {
   Select,
   SelectContent,
@@ -59,7 +60,6 @@ export function ModelosList({
   // Get all models from all modalities for reuse
   const { data: allModelos = [] } = useModelosModalidade();
   const createModeloWithFieldsMutation = useCreateModeloWithFields();
-  const deleteModeloMutation = useDeleteModelo();
   
   // Filter out models that are already linked to this modality
   const availableModelsForReuse = allModelos.filter(modelo => 
@@ -86,14 +86,6 @@ export function ModelosList({
       setSelectedModeloToReuse(null);
     } catch (error) {
       console.error('Error reusing model:', error);
-    }
-  };
-
-  const handleDeleteModelo = async (modeloId: number) => {
-    try {
-      await deleteModeloMutation.mutateAsync(modeloId);
-    } catch (error) {
-      console.error('Error deleting model:', error);
     }
   };
 
@@ -215,11 +207,10 @@ export function ModelosList({
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
                           <AlertDialogAction
-                            onClick={() => handleDeleteModelo(modelo.id)}
+                            onClick={() => onDeleteModelo(modelo.id)}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            disabled={deleteModeloMutation.isPending}
                           >
-                            {deleteModeloMutation.isPending ? 'Excluindo...' : 'Excluir'}
+                            Excluir
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -238,3 +229,4 @@ export function ModelosList({
     </div>
   );
 }
+
