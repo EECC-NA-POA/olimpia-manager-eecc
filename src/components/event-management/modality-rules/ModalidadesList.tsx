@@ -28,7 +28,7 @@ export function ModalidadesList({
 }: ModalidadesListProps) {
   const filteredModalidades = modalidades.filter(modalidade =>
     modalidade.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (modalidade.categoria && modalidade.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
+    (modalidade.categoria || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
