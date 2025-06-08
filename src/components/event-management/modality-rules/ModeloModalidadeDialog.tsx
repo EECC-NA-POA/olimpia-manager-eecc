@@ -61,12 +61,14 @@ export function ModeloModalidadeDialog({
       if (editingModelo) {
         await updateModeloMutation.mutateAsync({
           id: editingModelo.id,
-          ...data,
+          codigo_modelo: data.codigo_modelo,
+          descricao: data.descricao || null,
         });
       } else {
         await createModeloMutation.mutateAsync({
           modalidade_id: modalidadeId,
-          ...data,
+          codigo_modelo: data.codigo_modelo,
+          descricao: data.descricao || null,
         });
       }
       
