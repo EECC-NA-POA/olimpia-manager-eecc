@@ -15,6 +15,7 @@ import { CamposModeloManager } from './CamposModeloManager';
 interface Modalidade {
   id: number;
   nome: string;
+  categoria: string;
   tipo_pontuacao: string;
   tipo_modalidade: string;
 }
@@ -33,7 +34,7 @@ export function DynamicModalityRulesSection({ eventId }: { eventId: string | nul
       
       const { data, error } = await supabase
         .from('modalidades')
-        .select('id, nome, tipo_pontuacao, tipo_modalidade')
+        .select('id, nome, categoria, tipo_pontuacao, tipo_modalidade')
         .eq('evento_id', eventId)
         .order('nome');
       
@@ -51,7 +52,8 @@ export function DynamicModalityRulesSection({ eventId }: { eventId: string | nul
   const deleteModeloMutation = useDeleteModelo();
 
   const filteredModalidades = modalidades.filter(modalidade =>
-    modalidade.nome.toLowerCase().includes(searchTerm.toLowerCase())
+    modalidade.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    modalidade.categoria.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleCreateModelo = () => {
@@ -114,8 +116,12 @@ export function DynamicModalityRulesSection({ eventId }: { eventId: string | nul
                       onClick={() => setSelectedModalidadeId(modalidade.id)}
                     >
                       <div className="font-medium">{modalidade.nome}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {modalidade.tipo_modalidade} • {modalidade.tipo_pontuacao}
+                      <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                        <span>{modalidade.tipo_modalidade}</span>
+                        <span>•</span>
+                        <span>{modalidade.categoria}</span>
+                        <span>•</span>
+                        <span>{modalidade.tipo_pontuacao}</span>
                       </div>
                     </div>
                   ))}
