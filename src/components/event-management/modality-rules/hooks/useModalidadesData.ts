@@ -24,10 +24,17 @@ export function useModalidadesData(eventId: string | null) {
       
       if (error) throw error;
       
-      // Debug logging to see what we're getting
-      console.log('Modalidades data:', data);
-      data?.forEach(modalidade => {
-        console.log(`Modalidade: ${modalidade.nome}, Categoria: "${modalidade.categoria}"`);
+      // Debug logging detalhado
+      console.log('Raw modalidades data from database:', data);
+      data?.forEach((modalidade, index) => {
+        console.log(`Modalidade ${index + 1}:`, {
+          id: modalidade.id,
+          nome: modalidade.nome,
+          categoria: modalidade.categoria,
+          categoria_type: typeof modalidade.categoria,
+          categoria_length: modalidade.categoria?.length,
+          raw_object: modalidade
+        });
       });
       
       return data as Modalidade[];
