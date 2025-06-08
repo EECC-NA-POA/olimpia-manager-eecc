@@ -2,7 +2,7 @@
 import React from 'react';
 import { AthleteScoreCard } from '../../../score-card/AthleteScoreCard';
 import { DynamicAthleteScoreCard } from '../../../score-card/DynamicAthleteScoreCard';
-import { useModelosModalidade } from '@/hooks/useDynamicScoring';
+import { useModelosModalidade, useCamposModelo } from '@/hooks/useDynamicScoring';
 import { Athlete } from '../hooks/useAthletes';
 
 interface DynamicAthletesGridProps {
@@ -29,16 +29,26 @@ export function DynamicAthletesGrid({
   // Check if this modality has dynamic scoring configured
   const { data: modelos = [] } = useModelosModalidade(modalityId);
   const hasDynamicScoring = modelos.length > 0;
+  
+  // Get the first model to check if it has fields configured
+  const firstModelo = modelos[0];
+  const { data: campos = [] } = useCamposModelo(firstModelo?.id);
+  const hasConfiguredFields = campos.length > 0;
 
   console.log('DynamicAthletesGrid - modalityId:', modalityId);
   console.log('DynamicAthletesGrid - hasDynamicScoring:', hasDynamicScoring);
+  console.log('DynamicAthletesGrid - hasConfiguredFields:', hasConfiguredFields);
   console.log('DynamicAthletesGrid - modelos:', modelos);
+  console.log('DynamicAthletesGrid - campos:', campos);
+
+  // Only show dynamic scoring if there are models AND configured fields
+  const shouldUseDynamicScoring = hasDynamicScoring && hasConfiguredFields;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {athletes.map((athlete) => (
         <div key={athlete.atleta_id}>
-          {hasDynamicScoring ? (
+          {shouldUseDynamicScoring ? (
             <DynamicAthleteScoreCard
               athlete={athlete}
               modalityId={modalityId}

@@ -97,6 +97,8 @@ export function DynamicScoreForm({
   const handleSubmit = async (data: any) => {
     const { notes, ...formData } = data;
     
+    console.log('Submitting dynamic score form:', { formData, notes });
+    
     try {
       await submissionMutation.mutateAsync({
         eventId,
@@ -124,7 +126,10 @@ export function DynamicScoreForm({
   if (campos.length === 0) {
     return (
       <div className="text-center py-4 text-muted-foreground">
-        Nenhum campo configurado para esta modalidade
+        <p>Nenhum campo configurado para esta modalidade.</p>
+        <p className="text-xs mt-1">
+          Configure os campos do modelo na seção "Modelos de Pontuação" do evento.
+        </p>
       </div>
     );
   }
