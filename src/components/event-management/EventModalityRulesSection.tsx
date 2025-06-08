@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { ModalityRulesSection } from './modality-rules/ModalityRulesSection';
+import { DynamicModalityRulesSection } from './modality-rules/DynamicModalityRulesSection';
 
 export function EventModalityRulesSection({ eventId }: { eventId: string | null }) {
-  return <ModalityRulesSection eventId={eventId} />;
+  return <DynamicModalityRulesSection eventId={eventId} />;
 }

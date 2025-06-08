@@ -3,12 +3,13 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AthleteCard } from '@/components/judge/AthleteCard';
-import { AthletesGrid } from './AthletesGrid';
+import { DynamicAthletesGrid } from './DynamicAthletesGrid';
 import { AthleteFilters } from './AthleteFilters';
 import { useAthletesFiltering } from './hooks/useAthletesFiltering';
 import { useAthletesBranchData } from './hooks/useAthletesBranchData';
 import { useAthletesScoreStatus } from './hooks/useAthletesScoreStatus';
 import { useBateriaData } from '../hooks/useBateriaData';
+import { useModelosModalidade } from '@/hooks/useDynamicScoring';
 import { Athlete } from '../hooks/useAthletes';
 
 interface AthletesListProps {
@@ -31,6 +32,10 @@ export function AthletesList({
   modalityRule
 }: AthletesListProps) {
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
+
+  // Check for dynamic scoring
+  const { data: modelos = [] } = useModelosModalidade(modalityId);
+  const hasDynamicScoring = modelos.length > 0;
 
   // Get branch data for filtering
   const { availableBranches, availableStates, athletesBranchData } = useAthletesBranchData(athletes || []);
@@ -56,7 +61,7 @@ export function AthletesList({
     eventId
   });
 
-  // Fetch baterias data for this modality
+  // Fetch baterias data for this modality (for legacy scoring)
   const { data: bateriasData = [], isLoading: isLoadingBaterias } = useBateriaData(
     modalityId, 
     eventId
@@ -94,7 +99,7 @@ export function AthletesList({
     );
   }
 
-  const showBateriaInfo = modalityRule && (
+  const showBateriaInfo = !hasDynamicScoring && modalityRule && (
     (modalityRule.regra_tipo === 'distancia' && modalityRule.parametros?.baterias) ||
     modalityRule.regra_tipo === 'baterias' ||
     modalityRule.regra_tipo === 'tempo'
@@ -106,7 +111,14 @@ export function AthletesList({
         <CardTitle>Atletas Inscritos</CardTitle>
         <div className="text-center text-sm text-muted-foreground">
           Mostrando {filteredAthletes.length} de {athletes.length} atletas
-          {modalityRule && (
+          {hasDynamicScoring ? (
+            <div className="mt-2 text-xs bg-green-50 text-green-700 p-2 rounded border">
+              <strong>Sistema de Pontuação Dinâmica Ativo</strong>
+              <div className="mt-1">
+                Modelo: {modelos[0]?.descricao || modelos[0]?.codigo_modelo}
+              </div>
+            </div>
+          ) : modalityRule && (
             <div className="mt-2 text-xs bg-blue-50 text-blue-700 p-2 rounded border">
               Modalidade: {modalityRule.regra_tipo} 
               {modalityRule.parametros?.unidade && ` (${modalityRule.parametros.unidade})`}
@@ -140,7 +152,7 @@ export function AthletesList({
           onStatusFilterChange={(value) => setFilters({ ...filters, statusFilter: value })}
         />
         
-        <AthletesGrid
+        <DynamicAthletesGrid
           athletes={filteredAthletes}
           selectedAthleteId={selectedAthleteId}
           onAthleteSelect={setSelectedAthleteId}

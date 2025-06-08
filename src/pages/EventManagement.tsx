@@ -129,8 +129,8 @@ export default function EventManagement() {
                   className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
                 >
                   <Settings className="h-3 w-3 md:h-4 md:w-4" />
-                  <span className="hidden sm:inline">Regras de Pontuação</span>
-                  <span className="sm:hidden">Regras</span>
+                  <span className="hidden sm:inline">Modelos de Pontuação</span>
+                  <span className="sm:hidden">Pontuação</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="regulations"
