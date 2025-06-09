@@ -2,20 +2,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { parseValueByFormat } from '@/components/judge/dynamic-scoring/utils/maskUtils';
-
-interface DynamicSubmissionData {
-  eventId: string;
-  modalityId: number;
-  athleteId: string;
-  equipeId?: number;
-  judgeId: string;
-  modeloId: number;
-  bateriaId?: number;
-  raia?: number;
-  formData: Record<string, any>;
-  notes?: string;
-}
+import { calculateMainScore } from './useDynamicScoringSubmission/scoreCalculation';
+import { prepareTentativasData } from './useDynamicScoringSubmission/tentativasPreparation';
+import { upsertPontuacao, insertTentativas } from './useDynamicScoringSubmission/pontuacaoOperations';
+import type { DynamicSubmissionData } from './useDynamicScoringSubmission/types';
 
 export function useDynamicScoringSubmission() {
   const queryClient = useQueryClient();
@@ -39,173 +29,20 @@ export function useDynamicScoringSubmission() {
         }
 
         // Calcular valor_pontuacao principal a partir dos dados do formulário
-        let valorPontuacao = 0;
-        
-        // Procurar por campos que possam representar o resultado principal
-        const formEntries = Object.entries(data.formData);
-        console.log('Form entries for calculation:', formEntries);
-        
-        // Priorizar campos com nomes específicos para o valor principal
-        const resultField = formEntries.find(([key]) => 
-          ['resultado', 'tempo', 'distancia', 'pontos', 'score'].includes(key.toLowerCase())
-        );
-        
-        if (resultField) {
-          const [fieldKey, fieldValue] = resultField;
-          console.log('Found result field:', fieldKey, 'with value:', fieldValue);
-          
-          // Buscar o campo no modelo para verificar formato
-          const campo = campos.find(c => c.chave_campo === fieldKey);
-          const formato = campo?.metadados?.formato_resultado;
-          
-          if (formato && typeof fieldValue === 'string') {
-            const parsed = parseValueByFormat(fieldValue, formato);
-            valorPontuacao = parsed.numericValue;
-            console.log('Parsed value:', { original: fieldValue, numeric: valorPontuacao, format: formato });
-          } else if (typeof fieldValue === 'number') {
-            valorPontuacao = fieldValue;
-          } else if (typeof fieldValue === 'string' && fieldValue) {
-            // Tentar converter string para número
-            const numericValue = parseFloat(fieldValue.replace(/[^\d.,]/g, '').replace(',', '.'));
-            valorPontuacao = isNaN(numericValue) ? 0 : numericValue;
-          }
-        } else {
-          // Se não encontrar campo específico, usar o primeiro campo numérico
-          const numericField = formEntries.find(([key, value]) => 
-            typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)))
-          );
-          
-          if (numericField) {
-            const [, value] = numericField;
-            valorPontuacao = typeof value === 'number' ? value : parseFloat(value) || 0;
-          }
-        }
-        
+        const valorPontuacao = calculateMainScore(data.formData, campos);
         console.log('Calculated valor_pontuacao:', valorPontuacao);
 
-        // 1. Verificar se já existe pontuação para este atleta
-        const { data: existingScore } = await supabase
-          .from('pontuacoes')
-          .select('id')
-          .eq('evento_id', data.eventId)
-          .eq('modalidade_id', data.modalityId)
-          .eq('atleta_id', data.athleteId)
-          .eq('modelo_id', data.modeloId)
-          .eq('juiz_id', data.judgeId)
-          .maybeSingle();
-
-        let pontuacao;
-
-        if (existingScore) {
-          // Atualizar pontuação existente
-          console.log('=== ATUALIZANDO PONTUAÇÃO EXISTENTE ===');
-          const { data: updatedScore, error: updateError } = await supabase
-            .from('pontuacoes')
-            .update({
-              valor_pontuacao: valorPontuacao,
-              observacoes: data.notes || null,
-              data_registro: new Date().toISOString(),
-              raia: data.raia || null,
-              numero_bateria: data.bateriaId || null
-            })
-            .eq('id', existingScore.id)
-            .select()
-            .single();
-
-          if (updateError) {
-            console.error('Error updating pontuacao:', updateError);
-            throw updateError;
-          }
-
-          pontuacao = updatedScore;
-          
-          // Remover tentativas antigas
-          await supabase
-            .from('tentativas_pontuacao')
-            .delete()
-            .eq('pontuacao_id', existingScore.id);
-
-        } else {
-          // Criar nova pontuação
-          console.log('=== CRIANDO NOVA PONTUAÇÃO ===');
-          const pontuacaoData = {
-            evento_id: data.eventId,
-            modalidade_id: data.modalityId,
-            atleta_id: data.athleteId,
-            equipe_id: data.equipeId || null,
-            juiz_id: data.judgeId,
-            modelo_id: data.modeloId,
-            valor_pontuacao: valorPontuacao,
-            observacoes: data.notes || null,
-            data_registro: new Date().toISOString(),
-            unidade: 'dinâmica',
-            raia: data.raia || null,
-            numero_bateria: data.bateriaId || null
-          };
-
-          const { data: newScore, error: pontuacaoError } = await supabase
-            .from('pontuacoes')
-            .insert([pontuacaoData])
-            .select()
-            .single();
-
-          if (pontuacaoError) {
-            console.error('Error creating pontuacao:', pontuacaoError);
-            throw pontuacaoError;
-          }
-
-          pontuacao = newScore;
-        }
-
+        // Upsert pontuacao
+        const pontuacao = await upsertPontuacao(data, valorPontuacao);
         console.log('=== PONTUAÇÃO SALVA COM SUCESSO ===');
         console.log('Pontuação:', pontuacao);
 
-        // 2. Criar registros na tabela tentativas_pontuacao para cada campo
-        const tentativas = Object.entries(data.formData)
-          .filter(([key, value]) => value !== '' && value !== null && value !== undefined)
-          .map(([chave_campo, valor]) => {
-            // Buscar campo do modelo para verificar formato
-            const campo = campos.find(c => c.chave_campo === chave_campo);
-            const formato = campo?.metadados?.formato_resultado;
-            
-            let valorNumerico = 0;
-            let valorFormatado = '';
-            
-            if (formato && typeof valor === 'string') {
-              const parsed = parseValueByFormat(valor, formato);
-              valorNumerico = parsed.numericValue;
-              valorFormatado = valor; // Manter o valor formatado original
-            } else if (typeof valor === 'number') {
-              valorNumerico = valor;
-              valorFormatado = valor.toString();
-            } else {
-              valorNumerico = parseFloat(valor) || 0;
-              valorFormatado = valor.toString();
-            }
-            
-            return {
-              pontuacao_id: pontuacao.id,
-              chave_campo,
-              valor: valorNumerico,
-              valor_formatado: valorFormatado
-            };
-          });
-
+        // Preparar e inserir tentativas
+        const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
         console.log('=== INSERINDO TENTATIVAS ===');
         console.log('Tentativas a serem inseridas:', tentativas);
 
-        if (tentativas.length > 0) {
-          const { error: tentativasError } = await supabase
-            .from('tentativas_pontuacao')
-            .insert(tentativas);
-
-          if (tentativasError) {
-            console.error('Error creating tentativas:', tentativasError);
-            throw tentativasError;
-          }
-
-          console.log('=== TENTATIVAS CRIADAS COM SUCESSO ===');
-        }
+        await insertTentativas(tentativas);
 
         console.log('=== SUBMISSÃO CONCLUÍDA COM SUCESSO ===');
         return pontuacao;
@@ -239,3 +76,6 @@ export function useDynamicScoringSubmission() {
     }
   });
 }
+
+// Re-export types for convenience
+export type { DynamicSubmissionData } from './useDynamicScoringSubmission/types';
