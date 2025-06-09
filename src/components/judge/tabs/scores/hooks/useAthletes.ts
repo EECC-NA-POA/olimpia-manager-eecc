@@ -72,7 +72,11 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
         // Get unique filial IDs from users who have filial_id
         const filialIds = [...new Set(
           enrollments
-            .map(e => e.usuarios?.filial_id)
+            .map(e => {
+              // Handle both single object and array responses from Supabase
+              const user = Array.isArray(e.usuarios) ? e.usuarios[0] : e.usuarios;
+              return user?.filial_id;
+            })
             .filter(id => id !== null && id !== undefined)
         )] as number[];
 
@@ -96,7 +100,8 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
 
         // Transform the data to match our Athlete interface
         const athletes = enrollments.map((item) => {
-          const user = item.usuarios;
+          // Handle both single object and array responses from Supabase
+          const user = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
           const filial = filiaisData.find(f => f.id === user?.filial_id);
           
           return {
