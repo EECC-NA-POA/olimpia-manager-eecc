@@ -23,9 +23,11 @@ interface AthleteResponse {
     tipo_documento: string;
     numero_documento: string;
   } | null;
-  equipes?: {
-    nome: string;
-  } | null;
+}
+
+interface TeamResponse {
+  id: number;
+  nome: string;
 }
 
 export function useAthletes(modalityId: number | null, eventId: string | null) {
@@ -36,7 +38,9 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
 
       try {
         console.log('Fetching athletes for modality:', modalityId, 'event:', eventId);
-        const { data, error } = await supabase
+        
+        // First, get the enrollments with user data
+        const { data: enrollments, error: enrollmentsError } = await supabase
           .from('inscricoes_modalidades')
           .select(`
             id,
@@ -46,33 +50,65 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
               nome_completo,
               tipo_documento,
               numero_documento
-            ),
-            equipes(
-              nome
             )
           `)
           .eq('modalidade_id', modalityId)
           .eq('evento_id', eventId)
           .eq('status', 'confirmado');
 
-        if (error) {
-          console.error('Error fetching athletes:', error);
+        if (enrollmentsError) {
+          console.error('Error fetching enrollments:', enrollmentsError);
           toast.error('Não foi possível carregar os atletas');
           return [];
         }
 
-        console.log('Raw athlete data:', data);
+        console.log('Raw enrollment data:', enrollments);
+
+        if (!enrollments || enrollments.length === 0) {
+          console.log('No enrollments found');
+          return [];
+        }
+
+        // Get unique team IDs
+        const teamIds = [...new Set(enrollments
+          .map(e => e.equipe_id)
+          .filter(id => id !== null))] as number[];
+
+        // Fetch team data if there are teams
+        let teamsData: TeamResponse[] = [];
+        if (teamIds.length > 0) {
+          const { data: teams, error: teamsError } = await supabase
+            .from('equipes')
+            .select('id, nome')
+            .in('id', teamIds);
+
+          if (teamsError) {
+            console.error('Error fetching teams:', teamsError);
+            // Don't fail the whole query if teams can't be loaded
+          } else {
+            teamsData = teams || [];
+          }
+        }
+
+        console.log('Teams data:', teamsData);
 
         // Transform the data to match our Athlete interface
-        return (data as unknown as AthleteResponse[]).map((item) => ({
-          inscricao_id: item.id,
-          atleta_id: item.atleta_id,
-          atleta_nome: item.usuarios?.nome_completo || 'Atleta',
-          tipo_documento: item.usuarios?.tipo_documento || 'Documento',
-          numero_documento: item.usuarios?.numero_documento || '',
-          equipe_id: item.equipe_id,
-          equipe_nome: item.equipes?.nome || null,
-        }));
+        const athletes = (enrollments as unknown as AthleteResponse[]).map((item) => {
+          const team = teamsData.find(t => t.id === item.equipe_id);
+          
+          return {
+            inscricao_id: item.id,
+            atleta_id: item.atleta_id,
+            atleta_nome: item.usuarios?.nome_completo || 'Atleta',
+            tipo_documento: item.usuarios?.tipo_documento || 'Documento',
+            numero_documento: item.usuarios?.numero_documento || '',
+            equipe_id: item.equipe_id,
+            equipe_nome: team?.nome || null,
+          };
+        });
+
+        console.log('Processed athletes:', athletes);
+        return athletes;
       } catch (error) {
         console.error('Error in athlete query execution:', error);
         toast.error('Erro ao buscar atletas');
