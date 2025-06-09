@@ -17,17 +17,11 @@ export interface Athlete {
 interface AthleteResponse {
   id: number;
   atleta_id: string;
-  equipe_id?: number | null;
   usuarios: {
     nome_completo: string;
     tipo_documento: string;
     numero_documento: string;
   } | null;
-}
-
-interface TeamResponse {
-  id: number;
-  nome: string;
 }
 
 export function useAthletes(modalityId: number | null, eventId: string | null) {
@@ -39,13 +33,12 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
       try {
         console.log('Fetching athletes for modality:', modalityId, 'event:', eventId);
         
-        // First, get the enrollments with user data
+        // Get the enrollments with user data (without team reference for now)
         const { data: enrollments, error: enrollmentsError } = await supabase
           .from('inscricoes_modalidades')
           .select(`
             id,
             atleta_id,
-            equipe_id,
             usuarios(
               nome_completo,
               tipo_documento,
@@ -69,41 +62,16 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
           return [];
         }
 
-        // Get unique team IDs
-        const teamIds = [...new Set(enrollments
-          .map(e => e.equipe_id)
-          .filter(id => id !== null))] as number[];
-
-        // Fetch team data if there are teams
-        let teamsData: TeamResponse[] = [];
-        if (teamIds.length > 0) {
-          const { data: teams, error: teamsError } = await supabase
-            .from('equipes')
-            .select('id, nome')
-            .in('id', teamIds);
-
-          if (teamsError) {
-            console.error('Error fetching teams:', teamsError);
-            // Don't fail the whole query if teams can't be loaded
-          } else {
-            teamsData = teams || [];
-          }
-        }
-
-        console.log('Teams data:', teamsData);
-
         // Transform the data to match our Athlete interface
         const athletes = (enrollments as unknown as AthleteResponse[]).map((item) => {
-          const team = teamsData.find(t => t.id === item.equipe_id);
-          
           return {
             inscricao_id: item.id,
             atleta_id: item.atleta_id,
             atleta_nome: item.usuarios?.nome_completo || 'Atleta',
             tipo_documento: item.usuarios?.tipo_documento || 'Documento',
             numero_documento: item.usuarios?.numero_documento || '',
-            equipe_id: item.equipe_id,
-            equipe_nome: team?.nome || null,
+            equipe_id: null, // For now, set to null since the column doesn't exist
+            equipe_nome: null,
           };
         });
 
