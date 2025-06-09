@@ -109,6 +109,14 @@ export default function EventManagement() {
                   <span className="sm:hidden">Filiais</span>
                 </TabsTrigger>
                 <TabsTrigger 
+                  value="regulations"
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                >
+                  <BookOpen className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Regulamento</span>
+                  <span className="sm:hidden">Reg.</span>
+                </TabsTrigger>
+                <TabsTrigger 
                   value="schedule"
                   className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
                 >
@@ -132,14 +140,6 @@ export default function EventManagement() {
                   <span className="hidden sm:inline">Modelos de Pontuação</span>
                   <span className="sm:hidden">Pontuação</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="regulations"
-                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
-                >
-                  <BookOpen className="h-3 w-3 md:h-4 md:w-4" />
-                  <span className="hidden sm:inline">Regulamento</span>
-                  <span className="sm:hidden">Reg.</span>
-                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -149,6 +149,10 @@ export default function EventManagement() {
 
             <TabsContent value="branches" className="mt-6">
               <EventBranchesSection eventId={currentEventId} />
+            </TabsContent>
+
+            <TabsContent value="regulations" className="mt-6">
+              <EventRegulationsSection eventId={currentEventId} />
             </TabsContent>
 
             <TabsContent value="schedule" className="mt-6">
@@ -161,10 +165,6 @@ export default function EventManagement() {
 
             <TabsContent value="modality-rules" className="mt-6">
               <EventModalityRulesSection eventId={currentEventId} />
-            </TabsContent>
-
-            <TabsContent value="regulations" className="mt-6">
-              <EventRegulationsSection eventId={currentEventId} />
             </TabsContent>
           </Tabs>
         </CardContent>
