@@ -43,7 +43,7 @@ export function TextFormatConfig({ form }: TextFormatConfigProps) {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="tempo">Tempo (HH:MM:SS)</SelectItem>
+                <SelectItem value="tempo">Tempo (MM:SS.mmm)</SelectItem>
                 <SelectItem value="distancia">Distância (metros,cm)</SelectItem>
                 <SelectItem value="pontos">Pontos (###.##)</SelectItem>
               </SelectContent>

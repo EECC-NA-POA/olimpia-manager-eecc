@@ -152,7 +152,7 @@ export function CampoModeloDialog({
         // Definir máscara automaticamente baseada no formato
         switch (data.formato_resultado) {
           case 'tempo':
-            metadados.mascara = 'HH:MM:SS';
+            metadados.mascara = 'MM:SS.mmm';
             break;
           case 'distancia':
             metadados.mascara = '##,## m';
