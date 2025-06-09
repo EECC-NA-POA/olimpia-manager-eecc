@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Calculator, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ScoreEntryRow } from './ScoreEntryRow';
 import { CalculatedFieldsManager } from '@/components/judge/calculated-fields';
 import { useModelosModalidade } from '@/hooks/useDynamicScoring';
 import { Athlete } from '../hooks/useAthletes';
@@ -40,12 +39,10 @@ export function DynamicAthletesTable({
         <CardContent>
           <div className="space-y-2">
             {athletes.map((athlete) => (
-              <ScoreEntryRow
-                key={athlete.atleta_id}
-                athlete={athlete}
-                eventId={eventId}
-                judgeId={judgeId}
-              />
+              <div key={athlete.atleta_id} className="p-4 border rounded-lg">
+                <div className="font-medium">{athlete.atleta_nome}</div>
+                <div className="text-sm text-muted-foreground">{athlete.filial_nome || 'Sem filial'}</div>
+              </div>
             ))}
           </div>
         </CardContent>
