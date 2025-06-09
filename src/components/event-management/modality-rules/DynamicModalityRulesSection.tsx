@@ -1,98 +1,89 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LoadingState } from '@/components/dashboard/components/LoadingState';
-import { useModelosModalidade, useDeleteModelo } from '@/hooks/useDynamicScoring';
-import { ModeloModalidadeDialog } from './ModeloModalidadeDialog';
-import { CamposModeloManager } from './CamposModeloManager';
+import { Button } from '@/components/ui/button';
 import { ModalidadesList } from './ModalidadesList';
 import { ModelosList } from './ModelosList';
+import { CamposModeloManager } from './CamposModeloManager';
+import { ModeloModalidadeDialog } from './ModeloModalidadeDialog';
 import { useModalidadesData } from './hooks/useModalidadesData';
+import { useModelosModalidade, useDeleteModelo } from '@/hooks/useDynamicScoring';
+import { ModeloModalidade } from '@/types/dynamicScoring';
 
-export function DynamicModalityRulesSection({ eventId }: { eventId: string | null }) {
+interface DynamicModalityRulesSectionProps {
+  eventId: string | null;
+}
+
+export function DynamicModalityRulesSection({ eventId }: DynamicModalityRulesSectionProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedModalidadeId, setSelectedModalidadeId] = useState<number | null>(null);
-  const [isModeloDialogOpen, setIsModeloDialogOpen] = useState(false);
-  const [editingModelo, setEditingModelo] = useState<any>(null);
+  const [selectedModeloId, setSelectedModeloId] = useState<number | null>(null);
+  const [isCreateModeloDialogOpen, setIsCreateModeloDialogOpen] = useState(false);
+  const [editingModelo, setEditingModelo] = useState<ModeloModalidade | null>(null);
 
-  // Fetch modalidades for this event
-  const { data: modalidades = [], isLoading: isLoadingModalidades } = useModalidadesData(eventId);
-
-  // Fetch modelos for the selected modalidade
-  const { data: modelos = [], isLoading: isLoadingModelos } = useModelosModalidade(
-    selectedModalidadeId || undefined
-  );
-
+  const { modalidades } = useModalidadesData();
+  const { data: modelos = [], isLoading: isLoadingModelos } = useModelosModalidade(selectedModalidadeId || undefined);
   const deleteModeloMutation = useDeleteModelo();
 
   const handleCreateModelo = () => {
-    if (!selectedModalidadeId) return;
     setEditingModelo(null);
-    setIsModeloDialogOpen(true);
+    setIsCreateModeloDialogOpen(true);
   };
 
-  const handleEditModelo = (modelo: any) => {
+  const handleEditModelo = (modelo: ModeloModalidade) => {
     setEditingModelo(modelo);
-    setIsModeloDialogOpen(true);
+    setIsCreateModeloDialogOpen(true);
   };
 
   const handleDeleteModelo = async (modeloId: number) => {
-    if (!confirm('Tem certeza que deseja excluir este modelo? Todos os campos relacionados também serão excluídos.')) {
-      return;
+    try {
+      await deleteModeloMutation.mutateAsync(modeloId);
+    } catch (error) {
+      console.error('Error deleting modelo:', error);
     }
-    
-    deleteModeloMutation.mutate(modeloId);
   };
 
-  if (isLoadingModalidades) {
-    return <LoadingState />;
-  }
+  const handleCloseModeloDialog = () => {
+    setIsCreateModeloDialogOpen(false);
+    setEditingModelo(null);
+  };
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Modelos de Pontuação Dinâmica</CardTitle>
-          <div className="text-sm text-muted-foreground">
-            Configure modelos de pontuação personalizados para cada modalidade
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <ModalidadesList
-                modalidades={modalidades}
-                selectedModalidadeId={selectedModalidadeId}
-                onModalidadeSelect={setSelectedModalidadeId}
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-              />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ModalidadesList
+          modalidades={modalidades}
+          selectedModalidadeId={selectedModalidadeId}
+          onModalidadeSelect={setSelectedModalidadeId}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+        />
+        
+        <ModelosList
+          modelos={modelos}
+          modalidades={modalidades}
+          selectedModalidadeId={selectedModalidadeId}
+          isLoadingModelos={isLoadingModelos}
+          onCreateModelo={handleCreateModelo}
+          onEditModelo={handleEditModelo}
+          onDeleteModelo={handleDeleteModelo}
+        />
+      </div>
 
-              <ModelosList
-                modelos={modelos}
-                modalidades={modalidades}
-                selectedModalidadeId={selectedModalidadeId}
-                isLoadingModelos={isLoadingModelos}
-                onCreateModelo={handleCreateModelo}
-                onEditModelo={handleEditModelo}
-                onDeleteModelo={handleDeleteModelo}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Campos Management */}
-      {modelos.length > 0 && (
-        <CamposModeloManager modelos={modelos} />
+      {selectedModalidadeId && (
+        <CamposModeloManager
+          modalidadeId={selectedModalidadeId}
+          modelos={modelos}
+          selectedModeloId={selectedModeloId}
+          onModeloSelect={setSelectedModeloId}
+        />
       )}
 
-      {/* Modelo Dialog */}
       <ModeloModalidadeDialog
-        isOpen={isModeloDialogOpen}
-        onClose={() => setIsModeloDialogOpen(false)}
+        open={isCreateModeloDialogOpen}
+        onOpenChange={setIsCreateModeloDialogOpen}
         modalidadeId={selectedModalidadeId}
         editingModelo={editingModelo}
+        onClose={handleCloseModeloDialog}
       />
     </div>
   );
