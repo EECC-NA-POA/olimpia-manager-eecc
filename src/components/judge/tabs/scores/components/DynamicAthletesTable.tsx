@@ -1,10 +1,12 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Calculator, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calculator, ChevronDown, ChevronUp, Table as TableIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalculatedFieldsManager } from '@/components/judge/calculated-fields';
+import { DynamicScoringTable } from './DynamicScoringTable';
 import { useModelosModalidade } from '@/hooks/useDynamicScoring';
 import { Athlete } from '../hooks/useAthletes';
 
@@ -31,20 +33,42 @@ export function DynamicAthletesTable({
 
   return (
     <div className="space-y-6">
-      {/* Athletes scoring table */}
+      {/* Athletes scoring section */}
       <Card>
         <CardHeader>
-          <CardTitle>Registro de Pontuações</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <TableIcon className="h-5 w-5" />
+            Registro de Pontuações
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            {athletes.map((athlete) => (
-              <div key={athlete.atleta_id} className="p-4 border rounded-lg">
-                <div className="font-medium">{athlete.atleta_nome}</div>
-                <div className="text-sm text-muted-foreground">{athlete.filial_nome || 'Sem filial'}</div>
+          <Tabs defaultValue="table" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="table">Tabela de Pontuação</TabsTrigger>
+              <TabsTrigger value="simple">Lista Simples</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="table" className="mt-4">
+              <DynamicScoringTable
+                athletes={athletes}
+                modalityId={modalityId}
+                eventId={eventId}
+                judgeId={judgeId}
+                modelo={modelo}
+              />
+            </TabsContent>
+            
+            <TabsContent value="simple" className="mt-4">
+              <div className="space-y-2">
+                {athletes.map((athlete) => (
+                  <div key={athlete.atleta_id} className="p-4 border rounded-lg">
+                    <div className="font-medium">{athlete.atleta_nome}</div>
+                    <div className="text-sm text-muted-foreground">{athlete.filial_nome || 'Sem filial'}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
