@@ -95,7 +95,7 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
         console.log('Filiais data:', filiaisData);
 
         // Transform the data to match our Athlete interface
-        const athletes = (enrollments as AthleteResponse[]).map((item) => {
+        const athletes = enrollments.map((item) => {
           const filial = filiaisData.find(f => f.id === item.usuarios?.filial_id);
           
           return {

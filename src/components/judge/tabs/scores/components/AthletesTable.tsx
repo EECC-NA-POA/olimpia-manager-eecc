@@ -11,8 +11,6 @@ import { ScoreTableHeader } from './ScoreTableHeader';
 import { ScoreEntryRow } from './ScoreEntryRow';
 import { useScoreEntries } from './hooks/useScoreEntries';
 import { useScoreSubmission } from './hooks/useScoreSubmission';
-import { useModelosModalidade } from '@/hooks/useDynamicScoring';
-import { DynamicAthleteScoreCard } from '@/components/judge/score-card/DynamicAthleteScoreCard';
 
 interface AthletesTableProps {
   athletes: Athlete[];
@@ -31,16 +29,6 @@ export function AthletesTable({
   scoreType,
   modalityRule
 }: AthletesTableProps) {
-  // Check for dynamic scoring models
-  const { data: modelos = [] } = useModelosModalidade(modalityId);
-  const hasDynamicScoring = modelos.length > 0;
-
-  console.log('AthletesTable - Dynamic scoring check:', {
-    modalityId,
-    modelos,
-    hasDynamicScoring
-  });
-
   const {
     scoreEntries,
     startEditing,
@@ -100,34 +88,6 @@ export function AthletesTable({
     }
   };
 
-  // If dynamic scoring is enabled, show dynamic score cards instead of table
-  if (hasDynamicScoring) {
-    console.log('Rendering dynamic scoring interface for athletes:', athletes.length);
-    return (
-      <div className="space-y-4">
-        <div className="grid gap-4">
-          {athletes.map((athlete) => (
-            <DynamicAthleteScoreCard
-              key={athlete.atleta_id}
-              athlete={athlete}
-              modalityId={modalityId}
-              eventId={eventId}
-              judgeId={judgeId}
-              scoreType={scoreType}
-            />
-          ))}
-        </div>
-
-        {athletes.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Nenhum atleta inscrito nesta modalidade</p>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Fallback to traditional table for non-dynamic scoring
   return (
     <div className="space-y-4">
       <div className="border rounded-md">
