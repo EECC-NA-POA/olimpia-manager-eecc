@@ -96,15 +96,16 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
 
         // Transform the data to match our Athlete interface
         const athletes = enrollments.map((item) => {
-          const filial = filiaisData.find(f => f.id === item.usuarios?.filial_id);
+          const user = item.usuarios;
+          const filial = filiaisData.find(f => f.id === user?.filial_id);
           
           return {
             inscricao_id: item.id,
             atleta_id: item.atleta_id,
-            atleta_nome: item.usuarios?.nome_completo || 'Atleta',
-            tipo_documento: item.usuarios?.tipo_documento || 'Documento',
-            numero_documento: item.usuarios?.numero_documento || '',
-            filial_id: item.usuarios?.filial_id,
+            atleta_nome: user?.nome_completo || 'Atleta',
+            tipo_documento: user?.tipo_documento || 'Documento',
+            numero_documento: user?.numero_documento || '',
+            filial_id: user?.filial_id,
             filial_nome: filial?.nome || null,
           };
         });

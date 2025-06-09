@@ -25,6 +25,9 @@ export function useScoreSubmission() {
       const athlete = athletes.find(a => a.atleta_id === athleteId);
       if (!athlete) throw new Error('Athlete not found');
 
+      console.log('=== SCORE SUBMISSION START ===');
+      console.log('Score submission data:', { athleteId, value, notes, modalityId, eventId, judgeId, scoreType });
+
       // Convert value based on score type
       let processedValue: number;
       if (scoreType === 'tempo') {
@@ -41,33 +44,97 @@ export function useScoreSubmission() {
         processedValue = parseFloat(value) || 0;
       }
 
+      // First, ensure we have a bateria for this modality
+      let bateriaId: number;
+      
+      // Try to find existing bateria
+      const { data: existingBaterias, error: bateriaFetchError } = await supabase
+        .from('baterias')
+        .select('id')
+        .eq('modalidade_id', modalityId)
+        .eq('evento_id', eventId)
+        .limit(1);
+
+      if (bateriaFetchError) {
+        console.error('Error fetching baterias:', bateriaFetchError);
+        throw new Error('Erro ao buscar baterias');
+      }
+
+      if (existingBaterias && existingBaterias.length > 0) {
+        bateriaId = existingBaterias[0].id;
+        console.log('Using existing bateria:', bateriaId);
+      } else {
+        // Create a default bateria
+        console.log('Creating default bateria for modality:', modalityId);
+        const { data: newBateria, error: bateriaCreateError } = await supabase
+          .from('baterias')
+          .insert({
+            modalidade_id: modalityId,
+            evento_id: eventId,
+            numero: 1
+          })
+          .select('id')
+          .single();
+
+        if (bateriaCreateError || !newBateria) {
+          console.error('Error creating bateria:', bateriaCreateError);
+          throw new Error('Erro ao criar bateria');
+        }
+
+        bateriaId = newBateria.id;
+        console.log('Created new bateria:', bateriaId);
+      }
+
+      // Prepare the score data according to the pontuacoes table structure
+      const scoreData = {
+        evento_id: eventId,
+        modalidade_id: modalityId,
+        atleta_id: athleteId,
+        equipe_id: null, // For individual scores
+        juiz_id: judgeId,
+        valor_pontuacao: processedValue,
+        unidade: scoreType === 'tempo' ? 'segundos' : scoreType === 'distancia' ? 'metros' : 'pontos',
+        observacoes: notes || null,
+        bateria_id: bateriaId,
+        data_registro: new Date().toISOString()
+      };
+
+      console.log('Inserting score data:', scoreData);
+
       const { data, error } = await supabase
         .from('pontuacoes')
-        .upsert({
-          evento_id: eventId,
-          modalidade_id: modalityId,
-          atleta_id: athleteId,
-          equipe_id: null, // Set to null for individual modalities
-          juiz_id: judgeId,
-          valor_pontuacao: processedValue,
-          observacoes: notes || null,
-          tipo_pontuacao: scoreType,
-        }, {
-          onConflict: 'evento_id,modalidade_id,atleta_id',
+        .upsert(scoreData, {
+          onConflict: 'evento_id,modalidade_id,atleta_id,bateria_id',
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving score:', error);
+        throw error;
+      }
+
+      console.log('Score saved successfully:', data);
+      console.log('=== SCORE SUBMISSION SUCCESS ===');
       return data;
     },
     onSuccess: (_, { modalityId, eventId }) => {
       queryClient.invalidateQueries({ queryKey: ['athlete-scores', modalityId, eventId] });
       toast.success('Pontuação salva com sucesso!');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error saving score:', error);
-      toast.error('Erro ao salvar pontuação');
+      
+      // Handle specific database errors
+      if (error.message?.includes('bateria_id')) {
+        toast.error('Erro: Bateria não encontrada. Verifique a configuração da modalidade.');
+      } else if (error.message?.includes('constraint')) {
+        toast.error('Erro de restrição do banco de dados. Verifique os dados informados.');
+      } else if (error.message?.includes('foreign key')) {
+        toast.error('Erro: Dados de referência inválidos.');
+      } else {
+        toast.error('Erro ao salvar pontuação: ' + (error.message || 'Erro desconhecido'));
+      }
     },
   });
 

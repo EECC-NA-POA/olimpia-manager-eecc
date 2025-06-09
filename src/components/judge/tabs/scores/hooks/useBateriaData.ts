@@ -29,7 +29,8 @@ export function useBateriaData(modalityId: number | null, eventId: string | null
 
       if (error) {
         console.error('useBateriaData: Error fetching baterias:', error);
-        throw error;
+        // Don't throw error, just return empty array to allow auto-creation
+        return [];
       }
 
       console.log('useBateriaData: Raw data from database:', data);
@@ -37,6 +38,7 @@ export function useBateriaData(modalityId: number | null, eventId: string | null
       
       if (!data || data.length === 0) {
         console.warn('useBateriaData: No baterias found in database for modality', modalityId, 'event', eventId);
+        return [];
       }
 
       return data as Bateria[];
