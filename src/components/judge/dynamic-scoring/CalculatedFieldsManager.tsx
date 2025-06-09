@@ -41,10 +41,6 @@ export function CalculatedFieldsManager({
     bateriaId
   });
 
-  if (calculatedFields.length === 0) {
-    return null; // No calculated fields configured
-  }
-
   return (
     <div className="space-y-6">
       {/* Athletes Participation Status */}

@@ -62,22 +62,36 @@ export function useCalculatedFieldsManager({
       return;
     }
 
+    const participatingAthletes = getParticipatingAthletes();
+    if (participatingAthletes.length < 2) {
+      toast.error('É necessário pelo menos 2 atletas participando para calcular colocações');
+      return;
+    }
+
     try {
       const results: CalculationResult[] = [];
       
       for (const fieldKey of selectedFields) {
         const field = calculatedFields.find(f => f.chave_campo === fieldKey);
         if (field && canCalculate(field)) {
+          console.log('Calculating field:', field.chave_campo, 'Type:', field.metadados?.tipo_calculo);
           const fieldResults = await calculateField(field);
           results.push(...fieldResults);
+        } else {
+          console.warn('Cannot calculate field:', fieldKey, 'Field found:', !!field);
         }
       }
       
-      setCalculationResults(results);
-      setShowResults(true);
+      if (results.length > 0) {
+        setCalculationResults(results);
+        setShowResults(true);
+        toast.success(`${results.length} colocações calculadas com sucesso!`);
+      } else {
+        toast.warning('Nenhuma colocação foi calculada. Verifique se os dados estão completos.');
+      }
     } catch (error) {
       console.error('Error calculating fields:', error);
-      toast.error('Erro ao calcular campos');
+      toast.error('Erro ao calcular campos: ' + (error instanceof Error ? error.message : 'Erro desconhecido'));
     }
   };
 
@@ -90,7 +104,7 @@ export function useCalculatedFieldsManager({
       toast.success('Colocações calculadas e salvas com sucesso!');
     } catch (error) {
       console.error('Error confirming calculations:', error);
-      toast.error('Erro ao salvar cálculos');
+      toast.error('Erro ao salvar cálculos: ' + (error instanceof Error ? error.message : 'Erro desconhecido'));
     }
   };
 

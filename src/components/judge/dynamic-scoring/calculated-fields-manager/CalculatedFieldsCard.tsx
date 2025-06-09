@@ -5,25 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertTriangle, Calculator, CheckCircle } from 'lucide-react';
-
-interface CalculatedField {
-  chave_campo: string;
-  rotulo_campo: string;
-  metadados?: {
-    tipo_calculo?: string;
-    campo_referencia?: string;
-  };
-}
+import { CampoModelo } from '@/types/dynamicScoring';
 
 interface CalculatedFieldsCardProps {
-  calculatedFields: CalculatedField[];
+  calculatedFields: CampoModelo[];
   selectedFields: string[];
   canCalculateFields: boolean;
   participatingCount: number;
   isCalculating: boolean;
   onFieldSelection: (fieldKey: string, checked: boolean) => void;
   onCalculateSelected: () => void;
-  canCalculate: (field: CalculatedField) => boolean;
+  canCalculate: (field: CampoModelo) => boolean;
 }
 
 export function CalculatedFieldsCard({
@@ -36,12 +28,34 @@ export function CalculatedFieldsCard({
   onCalculateSelected,
   canCalculate
 }: CalculatedFieldsCardProps) {
+  if (calculatedFields.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calculator className="h-5 w-5" />
+            Gerenciar Colocações
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            <Calculator className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium mb-2">Nenhum campo calculado configurado</p>
+            <p className="text-sm">
+              Configure campos calculados no gerenciamento de modalidades para habilitar o cálculo de colocações.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calculator className="h-5 w-5" />
-          Cálculo de Colocações
+          Gerenciar Colocações
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -58,15 +72,22 @@ export function CalculatedFieldsCard({
         )}
 
         <div className="space-y-3">
-          <h4 className="font-medium">Campos Calculados Disponíveis:</h4>
+          <div className="flex items-center justify-between">
+            <h4 className="font-medium">Campos Calculados Disponíveis:</h4>
+            <Badge variant="outline">
+              {participatingCount} atletas participando
+            </Badge>
+          </div>
           
           {calculatedFields.map((field) => {
             const fieldCanCalculate = canCalculate(field);
+            const isSelected = selectedFields.includes(field.chave_campo);
+            
             return (
               <div key={field.chave_campo} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <Checkbox
-                    checked={selectedFields.includes(field.chave_campo)}
+                    checked={isSelected}
                     onCheckedChange={(checked) => 
                       onFieldSelection(field.chave_campo, checked as boolean)
                     }
@@ -75,8 +96,9 @@ export function CalculatedFieldsCard({
                   <div>
                     <span className="font-medium">{field.rotulo_campo}</span>
                     <div className="text-xs text-muted-foreground">
-                      Tipo: {field.metadados?.tipo_calculo} | 
-                      Referência: {field.metadados?.campo_referencia}
+                      Tipo: {field.metadados?.tipo_calculo || 'Não definido'} | 
+                      Referência: {field.metadados?.campo_referencia || 'Não definida'}
+                      {field.metadados?.contexto && ` | Contexto: ${field.metadados.contexto}`}
                     </div>
                   </div>
                 </div>
@@ -104,9 +126,15 @@ export function CalculatedFieldsCard({
             disabled={!canCalculateFields || selectedFields.length === 0 || isCalculating}
             className="flex-1"
           >
-            {isCalculating ? 'Calculando...' : 'Calcular Colocações Selecionadas'}
+            {isCalculating ? 'Calculando...' : `Calcular ${selectedFields.length > 0 ? `(${selectedFields.length})` : 'Colocações'}`}
           </Button>
         </div>
+
+        {selectedFields.length > 0 && (
+          <div className="text-sm text-muted-foreground">
+            {selectedFields.length} campo(s) selecionado(s) para cálculo
+          </div>
+        )}
       </CardContent>
     </Card>
   );
