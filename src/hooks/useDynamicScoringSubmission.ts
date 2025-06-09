@@ -23,7 +23,7 @@ export function useDynamicScoringSubmission() {
     mutationFn: async (data: DynamicSubmissionData) => {
       console.log('Dynamic scoring submission data:', data);
 
-      // 1. Criar registro na tabela pontuacoes
+      // 1. Criar registro na tabela pontuacoes (sem bateria_id)
       const pontuacaoData = {
         evento_id: data.eventId,
         modalidade_id: data.modalityId,
@@ -31,8 +31,6 @@ export function useDynamicScoringSubmission() {
         equipe_id: data.equipeId || null,
         juiz_id: data.judgeId,
         modelo_id: data.modeloId,
-        bateria_id: data.bateriaId || null,
-        raia: data.raia || null,
         observacoes: data.notes || null,
         data_registro: new Date().toISOString(),
         unidade: 'dinâmica' // Para identificar pontuações dinâmicas
