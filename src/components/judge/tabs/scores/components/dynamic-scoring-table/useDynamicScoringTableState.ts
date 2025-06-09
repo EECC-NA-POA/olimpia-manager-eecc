@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useDynamicScoringSubmission } from '@/hooks/useDynamicScoringSubmission';
 import { CampoModelo } from '@/types/dynamicScoring';
-import { Athlete } from '../hooks/useAthletes';
+import { Athlete } from '../../hooks/useAthletes';
 
 interface AthleteScoreData {
   [athleteId: string]: {
