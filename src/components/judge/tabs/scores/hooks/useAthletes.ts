@@ -9,8 +9,8 @@ export interface Athlete {
   atleta_nome: string;
   tipo_documento: string;
   numero_documento: string;
-  equipe_id?: number | null;
-  equipe_nome?: string | null;
+  filial_id?: number | null;
+  filial_nome?: string | null;
 }
 
 // Interface to type the response from Supabase
@@ -21,7 +21,13 @@ interface AthleteResponse {
     nome_completo: string;
     tipo_documento: string;
     numero_documento: string;
+    filial_id?: number | null;
   } | null;
+}
+
+interface FilialResponse {
+  id: number;
+  nome: string;
 }
 
 export function useAthletes(modalityId: number | null, eventId: string | null) {
@@ -33,7 +39,7 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
       try {
         console.log('Fetching athletes for modality:', modalityId, 'event:', eventId);
         
-        // Get the enrollments with user data (without team reference for now)
+        // Get the enrollments with user data including filial_id
         const { data: enrollments, error: enrollmentsError } = await supabase
           .from('inscricoes_modalidades')
           .select(`
@@ -42,7 +48,8 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
             usuarios(
               nome_completo,
               tipo_documento,
-              numero_documento
+              numero_documento,
+              filial_id
             )
           `)
           .eq('modalidade_id', modalityId)
@@ -62,16 +69,41 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
           return [];
         }
 
+        // Get unique filial IDs
+        const filialIds = [...new Set(enrollments
+          .map(e => e.usuarios?.filial_id)
+          .filter(id => id !== null && id !== undefined))] as number[];
+
+        // Fetch filial data if there are filiais
+        let filiaisData: FilialResponse[] = [];
+        if (filialIds.length > 0) {
+          const { data: filiais, error: filiaisError } = await supabase
+            .from('filiais')
+            .select('id, nome')
+            .in('id', filialIds);
+
+          if (filiaisError) {
+            console.error('Error fetching filiais:', filiaisError);
+            // Don't fail the whole query if filiais can't be loaded
+          } else {
+            filiaisData = filiais || [];
+          }
+        }
+
+        console.log('Filiais data:', filiaisData);
+
         // Transform the data to match our Athlete interface
         const athletes = (enrollments as unknown as AthleteResponse[]).map((item) => {
+          const filial = filiaisData.find(f => f.id === item.usuarios?.filial_id);
+          
           return {
             inscricao_id: item.id,
             atleta_id: item.atleta_id,
             atleta_nome: item.usuarios?.nome_completo || 'Atleta',
             tipo_documento: item.usuarios?.tipo_documento || 'Documento',
             numero_documento: item.usuarios?.numero_documento || '',
-            equipe_id: null, // For now, set to null since the column doesn't exist
-            equipe_nome: null,
+            filial_id: item.usuarios?.filial_id,
+            filial_nome: filial?.nome || null,
           };
         });
 

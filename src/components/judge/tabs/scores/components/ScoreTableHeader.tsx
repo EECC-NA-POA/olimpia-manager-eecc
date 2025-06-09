@@ -27,7 +27,7 @@ export function ScoreTableHeader({ scoreType }: ScoreTableHeaderProps) {
       <TableHeader>
         <TableRow>
           <TableHead>Atleta</TableHead>
-          <TableHead>Equipe</TableHead>
+          <TableHead>Filial</TableHead>
           <TableHead>{getScoreTypeLabel()}</TableHead>
           <TableHead>Observações</TableHead>
           <TableHead>Status</TableHead>

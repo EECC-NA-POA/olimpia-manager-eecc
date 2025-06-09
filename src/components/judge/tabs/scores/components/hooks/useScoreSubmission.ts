@@ -47,7 +47,7 @@ export function useScoreSubmission() {
           evento_id: eventId,
           modalidade_id: modalityId,
           atleta_id: athleteId,
-          equipe_id: athlete.equipe_id,
+          equipe_id: null, // Set to null for individual modalities
           juiz_id: judgeId,
           valor_pontuacao: processedValue,
           observacoes: notes || null,

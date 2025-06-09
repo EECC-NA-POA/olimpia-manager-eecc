@@ -90,8 +90,6 @@ export function AthletesTable({
 
   return (
     <div className="space-y-4">
-      <ScoreTableHeader scoreType={scoreType} />
-
       <div className="border rounded-md">
         <Table>
           <ScoreTableHeader scoreType={scoreType} />

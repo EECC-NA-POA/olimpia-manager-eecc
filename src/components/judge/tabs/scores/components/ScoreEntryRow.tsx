@@ -48,7 +48,7 @@ export function ScoreEntryRow({
         {athlete.atleta_nome}
       </TableCell>
       <TableCell>
-        {athlete.equipe_nome || '-'}
+        {athlete.filial_nome || '-'}
       </TableCell>
       <TableCell>
         {isEditing ? (
