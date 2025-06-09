@@ -101,26 +101,37 @@ export function DynamicScoreForm({
   });
 
   const handleSubmit = async (data: any) => {
+    console.log('=== FORMULÁRIO SUBMETIDO ===');
+    console.log('Form data submitted:', data);
+    
     const { notes, ...formData } = data;
     
-    console.log('Submitting dynamic score form:', { formData, notes });
+    console.log('=== DADOS SEPARADOS ===');
+    console.log('Form data after separation:', { formData, notes });
+    
+    console.log('=== PARÂMETROS DE SUBMISSÃO ===');
+    const submissionParams = {
+      eventId,
+      modalityId,
+      athleteId,
+      equipeId,
+      judgeId,
+      modeloId,
+      bateriaId,
+      raia,
+      formData,
+      notes,
+    };
+    console.log('Submission params:', submissionParams);
     
     try {
-      await submissionMutation.mutateAsync({
-        eventId,
-        modalityId,
-        athleteId,
-        equipeId,
-        judgeId,
-        modeloId,
-        bateriaId,
-        raia,
-        formData,
-        notes,
-      });
+      console.log('=== CHAMANDO MUTAÇÃO ===');
+      await submissionMutation.mutateAsync(submissionParams);
       
+      console.log('=== MUTAÇÃO EXECUTADA COM SUCESSO ===');
       onSuccess?.();
     } catch (error) {
+      console.error('=== ERRO NA SUBMISSÃO DO FORMULÁRIO ===');
       console.error('Error submitting dynamic score:', error);
     }
   };
