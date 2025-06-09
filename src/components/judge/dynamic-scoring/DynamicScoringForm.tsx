@@ -126,20 +126,12 @@ export function DynamicScoringForm({
                   )}
                 </FormLabel>
                 <FormControl>
-                  {campo.metadados?.formato_resultado ? (
-                    <MaskedResultInput
-                      campo={campo}
-                      form={form}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  ) : (
-                    <Input
-                      type="text"
-                      placeholder={`Digite ${campo.rotulo_campo.toLowerCase()}`}
-                      {...field}
-                    />
-                  )}
+                  <MaskedResultInput
+                    campo={campo}
+                    form={form}
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

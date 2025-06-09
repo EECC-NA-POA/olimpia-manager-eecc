@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useDynamicScoringSubmission } from '@/hooks/useDynamicScoringSubmission';
+import { MaskedResultInput } from '@/components/judge/dynamic-scoring/MaskedResultInput';
 import { Athlete } from '../hooks/useAthletes';
 import { CampoModelo } from '@/types/dynamicScoring';
 
@@ -56,15 +57,19 @@ export function DynamicScoringTable({
     enabled: !!modelo.id
   });
 
-  // Fetch existing scores
+  // Fetch existing scores with tentativas
   const { data: existingScores = [] } = useQuery({
-    queryKey: ['athlete-dynamic-scores', modalityId, eventId],
+    queryKey: ['athlete-dynamic-scores', modalityId, eventId, modelo.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pontuacoes')
         .select(`
           *,
-          tentativas_pontuacao(*)
+          tentativas_pontuacao(
+            chave_campo,
+            valor,
+            valor_formatado
+          )
         `)
         .eq('modalidade_id', modalityId)
         .eq('evento_id', eventId)
@@ -87,7 +92,9 @@ export function DynamicScoringTable({
         }
         
         score.tentativas_pontuacao?.forEach((tentativa: any) => {
-          initialData[score.atleta_id][tentativa.chave_campo] = tentativa.valor;
+          // Use valor_formatado if available, otherwise valor
+          const value = tentativa.valor_formatado || tentativa.valor;
+          initialData[score.atleta_id][tentativa.chave_campo] = value;
         });
       });
       
@@ -177,6 +184,16 @@ export function DynamicScoringTable({
         );
       
       case 'text':
+        if (campo.metadados?.formato_resultado) {
+          return (
+            <MaskedResultInput
+              campo={campo}
+              form={null as any} // Not used in this context
+              value={value as string}
+              onChange={(newValue) => handleFieldChange(athleteId, campo.chave_campo, newValue)}
+            />
+          );
+        }
         return (
           <Input
             type="text"
@@ -273,6 +290,11 @@ export function DynamicScoringTable({
                     {campo.obrigatorio && (
                       <Badge variant="outline" className="text-xs w-fit">
                         Obrigatório
+                      </Badge>
+                    )}
+                    {campo.metadados?.formato_resultado && (
+                      <Badge variant="outline" className="text-xs w-fit bg-green-50">
+                        {campo.metadados.formato_resultado}
                       </Badge>
                     )}
                   </div>
