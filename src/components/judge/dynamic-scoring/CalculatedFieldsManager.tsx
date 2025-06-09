@@ -1,89 +1,81 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calculator } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { CalculatedFieldCard } from './calculated-fields/CalculatedFieldCard';
-import { CalculationActions } from './calculated-fields/CalculationActions';
-import { EmptyState } from './calculated-fields/EmptyState';
-import { useCalculatedFieldsData } from './calculated-fields/useCalculatedFieldsData';
-import { useCalculatedFieldsOperations } from './calculated-fields/useCalculatedFieldsOperations';
+import { AthleteParticipationCard } from './calculated-fields-manager/AthleteParticipationCard';
+import { CalculatedFieldsCard } from './calculated-fields-manager/CalculatedFieldsCard';
+import { CalculationResultsCard } from './calculated-fields-manager/CalculationResultsCard';
+import { useCalculatedFieldsManager } from './calculated-fields-manager/hooks/useCalculatedFieldsManager';
 
 interface CalculatedFieldsManagerProps {
   modeloId: number;
   modalityId: number;
   eventId: string;
   bateriaId?: number;
-  onCalculationComplete?: (results: any[]) => void;
 }
 
 export function CalculatedFieldsManager({
   modeloId,
   modalityId,
   eventId,
-  bateriaId,
-  onCalculationComplete
+  bateriaId
 }: CalculatedFieldsManagerProps) {
   const {
+    selectedFields,
+    calculationResults,
+    showResults,
     calculatedFields,
-    scores,
-    isLoading
-  } = useCalculatedFieldsData({
+    athletesWithParticipation,
+    participatingAthletes,
+    canCalculateFields,
+    isCalculating,
+    isLoadingParticipation,
+    canCalculate,
+    toggleAthleteParticipation,
+    handleFieldSelection,
+    handleCalculateSelected,
+    handleConfirmCalculations,
+    handleCancelResults
+  } = useCalculatedFieldsManager({
     modeloId,
     modalityId,
     eventId,
     bateriaId
   });
 
-  const {
-    isCalculating,
-    calculateRankings,
-    isError,
-    isPending
-  } = useCalculatedFieldsOperations({
-    modalityId,
-    eventId,
-    bateriaId,
-    onCalculationComplete
-  });
-
-  const handleCalculateRankings = () => {
-    calculateRankings({ calculatedFields, scores });
-  };
-
-  if (isLoading) {
-    return <EmptyState isLoading />;
-  }
-
   if (calculatedFields.length === 0) {
-    return <EmptyState />;
+    return null; // No calculated fields configured
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calculator className="h-5 w-5" />
-          Gerenciar Colocações
-          <Badge variant="outline">{calculatedFields.length} campo(s)</Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-3">
-          {calculatedFields.map((field) => (
-            <CalculatedFieldCard key={field.id} field={field} />
-          ))}
-        </div>
+    <div className="space-y-6">
+      {/* Athletes Participation Status */}
+      <AthleteParticipationCard
+        athletesWithParticipation={athletesWithParticipation}
+        isLoading={isLoadingParticipation}
+        onToggleParticipation={toggleAthleteParticipation}
+      />
 
-        <CalculationActions
-          scoresCount={scores.length}
+      {/* Calculated Fields Management */}
+      <CalculatedFieldsCard
+        calculatedFields={calculatedFields}
+        selectedFields={selectedFields}
+        canCalculateFields={canCalculateFields}
+        participatingCount={participatingAthletes.length}
+        isCalculating={isCalculating}
+        onFieldSelection={handleFieldSelection}
+        onCalculateSelected={handleCalculateSelected}
+        canCalculate={canCalculate}
+      />
+
+      {/* Calculation Results */}
+      {showResults && (
+        <CalculationResultsCard
+          calculationResults={calculationResults}
+          athletesWithParticipation={athletesWithParticipation}
           isCalculating={isCalculating}
-          isPending={isPending}
-          onCalculate={handleCalculateRankings}
-          hasError={isError}
+          onConfirmCalculations={handleConfirmCalculations}
+          onCancelResults={handleCancelResults}
         />
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }
