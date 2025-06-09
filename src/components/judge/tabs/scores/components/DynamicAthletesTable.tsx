@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calculator, ChevronDown, ChevronUp } from 'lucide-react';
@@ -40,12 +41,10 @@ export function DynamicAthletesTable({
           <div className="space-y-2">
             {athletes.map((athlete) => (
               <ScoreEntryRow
-                key={athlete.id}
+                key={athlete.atleta_id}
                 athlete={athlete}
-                modalityId={modalityId}
                 eventId={eventId}
                 judgeId={judgeId}
-                modelo={modelo}
               />
             ))}
           </div>

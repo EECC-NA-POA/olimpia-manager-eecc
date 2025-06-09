@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -41,10 +40,14 @@ export function useAthleteParticipation({
 
       if (error) throw error;
       
-      return data.map(item => ({
-        atleta_id: item.atleta_id,
-        nome: item.usuarios?.nome_completo || 'Atleta'
-      }));
+      return data.map(item => {
+        // Handle both single object and array responses from Supabase
+        const user = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
+        return {
+          atleta_id: item.atleta_id,
+          nome: user?.nome_completo || 'Atleta'
+        };
+      });
     },
     enabled: !!modalityId && !!eventId
   });
