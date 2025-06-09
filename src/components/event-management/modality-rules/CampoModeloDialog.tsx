@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -68,21 +68,62 @@ export function CampoModeloDialog({
   const form = useForm<CampoFormData>({
     resolver: zodResolver(campoSchema),
     defaultValues: {
-      chave_campo: editingCampo?.chave_campo || '',
-      rotulo_campo: editingCampo?.rotulo_campo || '',
-      tipo_input: editingCampo?.tipo_input || 'number',
-      obrigatorio: editingCampo?.obrigatorio ?? true,
-      ordem_exibicao: editingCampo?.ordem_exibicao || 1,
-      min: editingCampo?.metadados?.min,
-      max: editingCampo?.metadados?.max,
-      step: editingCampo?.metadados?.step,
-      opcoes: editingCampo?.metadados?.opcoes?.join('\n') || '',
-      tipo_calculo: editingCampo?.metadados?.tipo_calculo,
-      campo_referencia: editingCampo?.metadados?.campo_referencia || '',
-      contexto: editingCampo?.metadados?.contexto,
-      ordem_calculo: editingCampo?.metadados?.ordem_calculo || 'asc',
+      chave_campo: '',
+      rotulo_campo: '',
+      tipo_input: 'number',
+      obrigatorio: true,
+      ordem_exibicao: 1,
+      min: undefined,
+      max: undefined,
+      step: undefined,
+      opcoes: '',
+      tipo_calculo: undefined,
+      campo_referencia: '',
+      contexto: undefined,
+      ordem_calculo: 'asc',
     },
   });
+
+  // Reset form when editingCampo changes or dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      if (editingCampo) {
+        // Editing existing campo - populate with current values
+        form.reset({
+          chave_campo: editingCampo.chave_campo || '',
+          rotulo_campo: editingCampo.rotulo_campo || '',
+          tipo_input: editingCampo.tipo_input || 'number',
+          obrigatorio: editingCampo.obrigatorio ?? true,
+          ordem_exibicao: editingCampo.ordem_exibicao || 1,
+          min: editingCampo.metadados?.min,
+          max: editingCampo.metadados?.max,
+          step: editingCampo.metadados?.step,
+          opcoes: editingCampo.metadados?.opcoes?.join('\n') || '',
+          tipo_calculo: editingCampo.metadados?.tipo_calculo,
+          campo_referencia: editingCampo.metadados?.campo_referencia || '',
+          contexto: editingCampo.metadados?.contexto,
+          ordem_calculo: editingCampo.metadados?.ordem_calculo || 'asc',
+        });
+      } else {
+        // Creating new campo - reset to default values
+        form.reset({
+          chave_campo: '',
+          rotulo_campo: '',
+          tipo_input: 'number',
+          obrigatorio: true,
+          ordem_exibicao: 1,
+          min: undefined,
+          max: undefined,
+          step: undefined,
+          opcoes: '',
+          tipo_calculo: undefined,
+          campo_referencia: '',
+          contexto: undefined,
+          ordem_calculo: 'asc',
+        });
+      }
+    }
+  }, [isOpen, editingCampo, form]);
 
   const tipoInput = form.watch('tipo_input');
 
@@ -132,7 +173,6 @@ export function CampoModeloDialog({
   };
 
   const handleClose = () => {
-    form.reset();
     onClose();
   };
 
@@ -189,7 +229,7 @@ export function CampoModeloDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tipo de Input</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o tipo" />
@@ -320,7 +360,7 @@ export function CampoModeloDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Tipo de Cálculo</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione o tipo de cálculo" />
@@ -361,7 +401,7 @@ export function CampoModeloDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Contexto</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione o contexto" />
@@ -384,7 +424,7 @@ export function CampoModeloDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Ordem de Classificação</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Ordem" />
