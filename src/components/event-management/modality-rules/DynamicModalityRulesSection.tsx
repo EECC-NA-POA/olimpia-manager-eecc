@@ -20,7 +20,7 @@ export function DynamicModalityRulesSection({ eventId }: DynamicModalityRulesSec
   const [isCreateModeloDialogOpen, setIsCreateModeloDialogOpen] = useState(false);
   const [editingModelo, setEditingModelo] = useState<ModeloModalidade | null>(null);
 
-  const { modalidades } = useModalidadesData();
+  const { data: modalidades = [] } = useModalidadesData(eventId);
   const { data: modelos = [], isLoading: isLoadingModelos } = useModelosModalidade(selectedModalidadeId || undefined);
   const deleteModeloMutation = useDeleteModelo();
 
@@ -71,19 +71,15 @@ export function DynamicModalityRulesSection({ eventId }: DynamicModalityRulesSec
 
       {selectedModalidadeId && (
         <CamposModeloManager
-          modalidadeId={selectedModalidadeId}
           modelos={modelos}
-          selectedModeloId={selectedModeloId}
-          onModeloSelect={setSelectedModeloId}
         />
       )}
 
       <ModeloModalidadeDialog
-        open={isCreateModeloDialogOpen}
-        onOpenChange={setIsCreateModeloDialogOpen}
+        isOpen={isCreateModeloDialogOpen}
+        onClose={handleCloseModeloDialog}
         modalidadeId={selectedModalidadeId}
         editingModelo={editingModelo}
-        onClose={handleCloseModeloDialog}
       />
     </div>
   );
