@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -33,7 +32,7 @@ import { CampoModelo } from '@/types/dynamicScoring';
 const campoSchema = z.object({
   chave_campo: z.string().min(1, 'Chave é obrigatória'),
   rotulo_campo: z.string().min(1, 'Rótulo é obrigatório'),
-  tipo_input: z.enum(['number', 'text', 'select']),
+  tipo_input: z.enum(['number', 'integer', 'text', 'select']),
   obrigatorio: z.boolean(),
   ordem_exibicao: z.coerce.number().min(1),
   min: z.coerce.number().optional(),
@@ -181,6 +180,7 @@ export function CampoModeloDialog({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="number">Número</SelectItem>
+                      <SelectItem value="integer">Número Inteiro</SelectItem>
                       <SelectItem value="text">Texto</SelectItem>
                       <SelectItem value="select">Seleção</SelectItem>
                     </SelectContent>
@@ -224,7 +224,7 @@ export function CampoModeloDialog({
               />
             </div>
 
-            {tipoInput === 'number' && (
+            {(tipoInput === 'number' || tipoInput === 'integer') && (
               <div className="grid grid-cols-3 gap-2">
                 <FormField
                   control={form.control}
