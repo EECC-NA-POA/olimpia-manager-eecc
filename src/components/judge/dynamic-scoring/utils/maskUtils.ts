@@ -31,22 +31,26 @@ export function parseValueByFormat(value: string, format?: string): ParsedValue 
 }
 
 function parseTimeValue(value: string): ParsedValue {
-  // Formato esperado: HH:MM:SS
-  const timeParts = value.split(':');
-  let totalSeconds = 0;
+  // Formato esperado: MM:SS.mmm
+  let totalMilliseconds = 0;
 
-  if (timeParts.length >= 1) {
-    totalSeconds += (parseInt(timeParts[0]) || 0) * 3600; // horas
-  }
-  if (timeParts.length >= 2) {
-    totalSeconds += (parseInt(timeParts[1]) || 0) * 60; // minutos
-  }
-  if (timeParts.length >= 3) {
-    totalSeconds += parseInt(timeParts[2]) || 0; // segundos
+  if (value.includes(':') && value.includes('.')) {
+    const [minutesSeconds, milliseconds] = value.split('.');
+    const [minutes, seconds] = minutesSeconds.split(':');
+    
+    totalMilliseconds += (parseInt(minutes) || 0) * 60 * 1000; // minutos para ms
+    totalMilliseconds += (parseInt(seconds) || 0) * 1000; // segundos para ms
+    totalMilliseconds += parseInt(milliseconds) || 0; // milissegundos
+  } else if (value.includes(':')) {
+    const [minutes, seconds] = value.split(':');
+    totalMilliseconds += (parseInt(minutes) || 0) * 60 * 1000;
+    totalMilliseconds += (parseInt(seconds) || 0) * 1000;
+  } else {
+    totalMilliseconds = parseInt(value) || 0;
   }
 
   return {
-    numericValue: totalSeconds,
+    numericValue: totalMilliseconds,
     originalValue: value,
     format: 'tempo'
   };
@@ -85,7 +89,7 @@ function parsePointsValue(value: string): ParsedValue {
 export function formatValueForDisplay(numericValue: number, format: string): string {
   switch (format) {
     case 'tempo':
-      return formatTimeFromSeconds(numericValue);
+      return formatTimeFromMilliseconds(numericValue);
     case 'distancia':
       return formatDistanceFromMeters(numericValue);
     case 'pontos':
@@ -95,12 +99,12 @@ export function formatValueForDisplay(numericValue: number, format: string): str
   }
 }
 
-function formatTimeFromSeconds(totalSeconds: number): string {
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
+function formatTimeFromMilliseconds(totalMilliseconds: number): string {
+  const minutes = Math.floor(totalMilliseconds / (60 * 1000));
+  const seconds = Math.floor((totalMilliseconds % (60 * 1000)) / 1000);
+  const milliseconds = totalMilliseconds % 1000;
 
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
 }
 
 function formatDistanceFromMeters(totalMeters: number): string {

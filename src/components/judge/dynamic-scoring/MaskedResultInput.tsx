@@ -25,10 +25,22 @@ export function MaskedResultInput({ campo, form, value, onChange }: MaskedResult
     
     switch (format) {
       case 'tempo':
-        // Formato: HH:MM:SS
+        // Formato: MM:SS.mmm (minutos:segundos.milissegundos)
+        if (numbers.length === 0) return '';
         if (numbers.length <= 2) return numbers;
         if (numbers.length <= 4) return `${numbers.slice(0, 2)}:${numbers.slice(2)}`;
-        return `${numbers.slice(0, 2)}:${numbers.slice(2, 4)}:${numbers.slice(4, 6)}`;
+        if (numbers.length <= 7) {
+          const minutes = numbers.slice(0, 2);
+          const seconds = numbers.slice(2, 4);
+          const milliseconds = numbers.slice(4);
+          return `${minutes}:${seconds}.${milliseconds}`;
+        }
+        // Limita a 7 dígitos (MM:SS.mmm)
+        const limitedNumbers = numbers.slice(0, 7);
+        const minutes = limitedNumbers.slice(0, 2);
+        const seconds = limitedNumbers.slice(2, 4);
+        const milliseconds = limitedNumbers.slice(4, 7);
+        return `${minutes}:${seconds}.${milliseconds}`;
       
       case 'distancia':
         // Formato: ##,## m (metros e centímetros)
@@ -68,7 +80,7 @@ export function MaskedResultInput({ campo, form, value, onChange }: MaskedResult
   const getPlaceholder = (): string => {
     switch (formato) {
       case 'tempo':
-        return 'HH:MM:SS';
+        return 'MM:SS.mmm';
       case 'distancia':
         return '##,## m';
       case 'pontos':
@@ -90,6 +102,7 @@ export function MaskedResultInput({ campo, form, value, onChange }: MaskedResult
         onChange={handleInputChange}
         placeholder={getPlaceholder()}
         className={formato ? 'font-mono' : ''}
+        maxLength={formato === 'tempo' ? 9 : undefined} // MM:SS.mmm = 9 caracteres
       />
       {getDisplayUnit() && (
         <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">
