@@ -55,6 +55,7 @@ export function DynamicScoreForm({
       
       switch (campo.tipo_input) {
         case 'number':
+        case 'integer':
           fieldSchema = z.coerce.number();
           if (campo.metadados?.min !== undefined) {
             fieldSchema = (fieldSchema as z.ZodNumber).min(campo.metadados.min);

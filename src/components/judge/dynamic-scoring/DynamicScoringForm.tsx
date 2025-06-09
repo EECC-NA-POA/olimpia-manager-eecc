@@ -27,6 +27,7 @@ export function DynamicScoringForm({ form, campos }: DynamicScoringFormProps) {
   const renderField = (campo: CampoModelo) => {
     switch (campo.tipo_input) {
       case 'number':
+      case 'integer':
         return (
           <FormField
             key={campo.id}
@@ -41,7 +42,7 @@ export function DynamicScoringForm({ form, campos }: DynamicScoringFormProps) {
                 <FormControl>
                   <Input
                     type="number"
-                    step={campo.metadados?.step || 'any'}
+                    step={campo.tipo_input === 'integer' ? '1' : (campo.metadados?.step || 'any')}
                     min={campo.metadados?.min}
                     max={campo.metadados?.max}
                     placeholder={`Digite ${campo.rotulo_campo.toLowerCase()}`}

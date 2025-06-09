@@ -1,11 +1,13 @@
 
 import React from 'react';
-import { 
-  Card, 
-  CardContent
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AthleteCardHeader } from './components/AthleteCardHeader';
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { DynamicScoreForm } from './components/DynamicScoreForm';
 import { useDynamicAthleteScoreCard } from './hooks/useDynamicAthleteScoreCard';
 import { AthleteScoreCardProps } from './types';
@@ -18,8 +20,6 @@ export function DynamicAthleteScoreCard({
   scoreType
 }: AthleteScoreCardProps) {
   const {
-    isExpanded,
-    setIsExpanded,
     existingScore,
     modelo,
     hasDynamicScoring,
@@ -49,26 +49,25 @@ export function DynamicAthleteScoreCard({
     return null;
   }
 
-  const handleSubmitSuccess = () => {
-    setIsExpanded(false);
-  };
-
   return (
-    <Card className={`
-      overflow-hidden transition-all duration-200
-      ${existingScore ? 'border-blue-300 shadow-blue-100' : ''}
-    `}>
-      <AthleteCardHeader
-        athlete={athlete}
-        existingScore={existingScore}
-        medalInfo={null}
-        scoreType={scoreType}
-        modalityRule={{ regra_tipo: 'dynamic', parametros: {} }}
-      />
-
-      <CardContent className="pt-0 space-y-3">
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button 
+          variant={existingScore ? "outline" : "default"}
+          size="sm"
+        >
+          {existingScore ? "Editar" : "Pontuar"}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>
+            Pontuação - {athlete.atleta_nome}
+          </DialogTitle>
+        </DialogHeader>
+        
         {existingScore && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
             <div className="text-blue-800 text-sm font-medium">
               ✓ Pontuação registrada
             </div>
@@ -78,16 +77,7 @@ export function DynamicAthleteScoreCard({
           </div>
         )}
 
-        <Button 
-          variant={isExpanded ? "outline" : "default"}
-          size="sm" 
-          className="w-full"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          {isExpanded ? "Esconder formulário" : "Registrar pontuação"}
-        </Button>
-
-        {isExpanded && modelo && (
+        {modelo && (
           <DynamicScoreForm
             modeloId={modelo.id}
             modalityId={modalityId}
@@ -96,10 +86,9 @@ export function DynamicAthleteScoreCard({
             eventId={eventId!}
             judgeId={judgeId}
             initialValues={initialFormData}
-            onSuccess={handleSubmitSuccess}
           />
         )}
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }

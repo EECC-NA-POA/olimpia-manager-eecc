@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AthletesTable } from './AthletesTable';
+import { DynamicAthletesTable } from './DynamicAthletesTable';
 import { AthleteFilters } from './AthleteFilters';
 import { useAthletesFiltering } from './hooks/useAthletesFiltering';
 import { useAthletesBranchData } from './hooks/useAthletesBranchData';
@@ -30,7 +31,7 @@ export function AthletesListTabular({
   modalityRule
 }: AthletesListTabularProps) {
   // Check for dynamic scoring
-  const { data: modelos = [] } = useModelosModalidade(modalityId);
+  const { data: modelos = [], isLoading: isLoadingModelos } = useModelosModalidade(modalityId);
   const hasDynamicScoring = modelos.length > 0;
 
   // Get branch data for filtering
@@ -57,7 +58,7 @@ export function AthletesListTabular({
     eventId
   });
 
-  if (isLoading) {
+  if (isLoading || isLoadingModelos) {
     return (
       <Card>
         <CardHeader>
@@ -117,14 +118,24 @@ export function AthletesListTabular({
           onStatusFilterChange={(value) => setFilters({ ...filters, statusFilter: value })}
         />
         
-        <AthletesTable
-          athletes={filteredAthletes}
-          modalityId={modalityId}
-          eventId={eventId}
-          judgeId={judgeId}
-          scoreType={scoreType}
-          modalityRule={modalityRule}
-        />
+        {hasDynamicScoring ? (
+          <DynamicAthletesTable
+            athletes={filteredAthletes}
+            modalityId={modalityId}
+            eventId={eventId}
+            judgeId={judgeId}
+            modelo={modelos[0]}
+          />
+        ) : (
+          <AthletesTable
+            athletes={filteredAthletes}
+            modalityId={modalityId}
+            eventId={eventId}
+            judgeId={judgeId}
+            scoreType={scoreType}
+            modalityRule={modalityRule}
+          />
+        )}
       </CardContent>
     </Card>
   );
