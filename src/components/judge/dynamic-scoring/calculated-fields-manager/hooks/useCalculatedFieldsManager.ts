@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useCalculatedFields } from '@/hooks/useCalculatedFields';
-import { useAthleteParticipation } from '../../calculated-fields/hooks/useAthleteParticipation';
+import { useAthleteParticipation } from '../../../calculated-fields/hooks/useAthleteParticipation';
 import { CalculationResult } from '@/types/dynamicScoring';
 import { toast } from 'sonner';
 

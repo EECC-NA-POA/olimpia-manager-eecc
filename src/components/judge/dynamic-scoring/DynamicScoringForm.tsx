@@ -25,13 +25,6 @@ export function DynamicScoringForm({
   // Separar campos calculados para mostrar o gerenciador apenas se necessário
   const calculatedFields = campos.filter(campo => campo.tipo_input === 'calculated');
 
-  const handleCalculationComplete = (results: any[]) => {
-    // Atualizar os valores dos campos calculados no formulário
-    results.forEach(result => {
-      form.setValue(result.chave_campo, result.valor_calculado);
-    });
-  };
-
   return (
     <div className="space-y-4">
       {/* Gerenciador de campos calculados - mostrar apenas se houver campos calculados */}
@@ -41,7 +34,6 @@ export function DynamicScoringForm({
           modalityId={modalityId}
           eventId={eventId}
           bateriaId={bateriaId}
-          onCalculationComplete={handleCalculationComplete}
         />
       )}
 
