@@ -45,6 +45,9 @@ const campoSchema = z.object({
   campo_referencia: z.string().optional(),
   contexto: z.enum(['bateria', 'modalidade', 'evento']).optional(),
   ordem_calculo: z.enum(['asc', 'desc']).optional(),
+  // Novos campos para máscaras
+  formato_resultado: z.enum(['tempo', 'distancia', 'pontos']).optional(),
+  unidade_display: z.string().optional(),
 });
 
 type CampoFormData = z.infer<typeof campoSchema>;
@@ -81,6 +84,8 @@ export function CampoModeloDialog({
       campo_referencia: '',
       contexto: undefined,
       ordem_calculo: 'asc',
+      formato_resultado: undefined,
+      unidade_display: '',
     },
   });
 
@@ -88,7 +93,6 @@ export function CampoModeloDialog({
   useEffect(() => {
     if (isOpen) {
       if (editingCampo) {
-        // Editing existing campo - populate with current values
         form.reset({
           chave_campo: editingCampo.chave_campo || '',
           rotulo_campo: editingCampo.rotulo_campo || '',
@@ -103,9 +107,10 @@ export function CampoModeloDialog({
           campo_referencia: editingCampo.metadados?.campo_referencia || '',
           contexto: editingCampo.metadados?.contexto,
           ordem_calculo: editingCampo.metadados?.ordem_calculo || 'asc',
+          formato_resultado: editingCampo.metadados?.formato_resultado,
+          unidade_display: editingCampo.metadados?.unidade_display || '',
         });
       } else {
-        // Creating new campo - reset to default values
         form.reset({
           chave_campo: '',
           rotulo_campo: '',
@@ -120,12 +125,15 @@ export function CampoModeloDialog({
           campo_referencia: '',
           contexto: undefined,
           ordem_calculo: 'asc',
+          formato_resultado: undefined,
+          unidade_display: '',
         });
       }
     }
   }, [isOpen, editingCampo, form]);
 
   const tipoInput = form.watch('tipo_input');
+  const formatoResultado = form.watch('formato_resultado');
 
   const onSubmit = async (data: CampoFormData) => {
     try {
@@ -144,6 +152,25 @@ export function CampoModeloDialog({
         metadados.campo_referencia = data.campo_referencia;
         metadados.contexto = data.contexto;
         metadados.ordem_calculo = data.ordem_calculo;
+      }
+
+      // Adicionar metadados de máscara se for campo de texto com formato
+      if (data.tipo_input === 'text' && data.formato_resultado) {
+        metadados.formato_resultado = data.formato_resultado;
+        metadados.unidade_display = data.unidade_display;
+        
+        // Definir máscara automaticamente baseada no formato
+        switch (data.formato_resultado) {
+          case 'tempo':
+            metadados.mascara = 'HH:MM:SS';
+            break;
+          case 'distancia':
+            metadados.mascara = '##,## m';
+            break;
+          case 'pontos':
+            metadados.mascara = '###.##';
+            break;
+        }
       }
 
       const campoData = {
@@ -346,6 +373,60 @@ export function CampoModeloDialog({
                   </FormItem>
                 )}
               />
+            )}
+
+            {tipoInput === 'text' && (
+              <div className="space-y-4 border rounded-lg p-4 bg-blue-50">
+                <div className="text-sm font-medium text-blue-900">
+                  Configurações de Máscara de Resultado
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="formato_resultado"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Formato de Resultado (Opcional)</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o formato" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="tempo">Tempo (HH:MM:SS)</SelectItem>
+                          <SelectItem value="distancia">Distância (metros,cm)</SelectItem>
+                          <SelectItem value="pontos">Pontos (###.##)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {formatoResultado && (
+                  <FormField
+                    control={form.control}
+                    name="unidade_display"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Unidade de Exibição</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder={
+                              formatoResultado === 'tempo' ? 'ex: min' :
+                              formatoResultado === 'distancia' ? 'ex: m' :
+                              'ex: pts'
+                            }
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
             )}
 
             {tipoInput === 'calculated' && (

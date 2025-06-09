@@ -21,12 +21,16 @@ export interface CampoModelo {
     max?: number;
     step?: number;
     opcoes?: string[];
-    // Novos metadados para campos calculados
+    // Metadados para campos calculados
     tipo_calculo?: 'colocacao_bateria' | 'colocacao_final' | 'custom';
-    campo_referencia?: string; // Campo usado como base para o cálculo
+    campo_referencia?: string;
     contexto?: 'bateria' | 'modalidade' | 'evento';
-    formula?: string; // Para cálculos customizados futuros
-    ordem_calculo?: 'asc' | 'desc'; // Para colocações: menor valor = melhor posição ou vice-versa
+    formula?: string;
+    ordem_calculo?: 'asc' | 'desc';
+    // Novos metadados para máscaras de resultado
+    formato_resultado?: 'tempo' | 'distancia' | 'pontos';
+    mascara?: string;
+    unidade_display?: string;
   } | null;
 }
 
@@ -36,7 +40,7 @@ export interface TentativaPontuacao {
   chave_campo: string;
   valor: number;
   criado_em: string;
-  calculado?: boolean; // Flag para indicar se foi calculado automaticamente
+  calculado?: boolean;
 }
 
 export interface SetPartida {
@@ -52,7 +56,6 @@ export interface DynamicFormData {
   [key: string]: any;
 }
 
-// Novos tipos para cálculos
 export interface CalculationResult {
   chave_campo: string;
   atleta_id: string;

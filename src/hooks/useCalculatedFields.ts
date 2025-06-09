@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { CampoModelo, CalculationResult, CalculationContext } from '@/types/dynamicScoring';
 import { useCamposModelo } from './useDynamicScoring';
+import { parseValueByFormat } from '@/components/judge/dynamic-scoring/utils/maskUtils';
 
 interface UseCalculatedFieldsProps {
   modeloId: number;
@@ -71,7 +72,7 @@ export function useCalculatedFields({
     return scoresWithReferenceField.length > 1; // Precisa de pelo menos 2 atletas para calcular colocação
   };
 
-  // Função para calcular colocação
+  // Função para calcular colocação com suporte a valores mascarados
   const calculatePlacement = async (campo: CampoModelo): Promise<CalculationResult[]> => {
     const referenceField = campo.metadados?.campo_referencia;
     const ordemCalculo = campo.metadados?.ordem_calculo || 'asc';
@@ -80,17 +81,28 @@ export function useCalculatedFields({
       throw new Error('Campo de referência não definido');
     }
 
+    // Buscar o campo de referência para saber o formato
+    const referenceCampo = allFields.find(f => f.chave_campo === referenceField);
+    const formatoReferencia = referenceCampo?.metadados?.formato_resultado;
+
     // Buscar todos os valores do campo de referência
     const scoresWithReference = existingScores
       .map(score => {
         const tentativa = score.tentativas_pontuacao?.find(
           (t: any) => t.chave_campo === referenceField
         );
-        return tentativa ? {
+        
+        if (!tentativa) return null;
+
+        // Parse do valor baseado no formato do campo
+        const parsedValue = parseValueByFormat(tentativa.valor.toString(), formatoReferencia);
+        
+        return {
           atleta_id: score.atleta_id,
-          valor: tentativa.valor,
+          valor: parsedValue.numericValue, // Usar valor numérico para comparação
+          valorOriginal: tentativa.valor,
           bateria_id: score.bateria_id
-        } : null;
+        };
       })
       .filter(Boolean)
       .filter(item => item !== null);
@@ -123,7 +135,7 @@ export function useCalculatedFields({
           chave_campo: campo.chave_campo,
           atleta_id: score.atleta_id,
           valor_calculado: currentPosition,
-          metodo_calculo: `${campo.metadados?.tipo_calculo}_${ordemCalculo}`
+          metodo_calculo: `${campo.metadados?.tipo_calculo}_${ordemCalculo}_${formatoReferencia || 'numeric'}`
         });
         
         previousValue = score.valor;

@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { CampoModelo } from '@/types/dynamicScoring';
 import { CalculatedFieldsManager } from './CalculatedFieldsManager';
+import { MaskedResultInput } from './MaskedResultInput';
 
 interface DynamicScoringFormProps {
   form: UseFormReturn<any>;
@@ -118,13 +119,27 @@ export function DynamicScoringForm({
                 <FormLabel>
                   {campo.rotulo_campo}
                   {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
+                  {campo.metadados?.formato_resultado && (
+                    <span className="text-green-600 text-xs ml-2">
+                      ({campo.metadados.formato_resultado})
+                    </span>
+                  )}
                 </FormLabel>
                 <FormControl>
-                  <Input
-                    type="text"
-                    placeholder={`Digite ${campo.rotulo_campo.toLowerCase()}`}
-                    {...field}
-                  />
+                  {campo.metadados?.formato_resultado ? (
+                    <MaskedResultInput
+                      campo={campo}
+                      form={form}
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  ) : (
+                    <Input
+                      type="text"
+                      placeholder={`Digite ${campo.rotulo_campo.toLowerCase()}`}
+                      {...field}
+                    />
+                  )}
                 </FormControl>
                 <FormMessage />
               </FormItem>
