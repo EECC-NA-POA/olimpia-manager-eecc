@@ -73,7 +73,9 @@ export function useDynamicScoringSubmission() {
           valor_pontuacao: valorPontuacao, // Campo obrigatório
           observacoes: data.notes || null,
           data_registro: new Date().toISOString(),
-          unidade: 'dinâmica' // Para identificar pontuações dinâmicas
+          unidade: 'dinâmica', // Para identificar pontuações dinâmicas
+          raia: data.raia || null, // Incluir raia quando disponível
+          numero_bateria: data.bateriaId || null // Incluir número da bateria quando disponível
         };
 
         console.log('=== INSERINDO PONTUAÇÃO ===');
