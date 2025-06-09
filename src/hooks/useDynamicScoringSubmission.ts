@@ -25,7 +25,44 @@ export function useDynamicScoringSubmission() {
       console.log('Dynamic scoring submission data:', data);
 
       try {
-        // 1. Criar registro na tabela pontuacoes (sem bateria_id)
+        // Calcular valor_pontuacao principal a partir dos dados do formulário
+        let valorPontuacao = 0;
+        
+        // Procurar por campos que possam representar o resultado principal
+        const formEntries = Object.entries(data.formData);
+        console.log('Form entries for calculation:', formEntries);
+        
+        // Priorizar campos com nomes específicos para o valor principal
+        const resultField = formEntries.find(([key]) => 
+          ['resultado', 'tempo', 'distancia', 'pontos', 'score'].includes(key.toLowerCase())
+        );
+        
+        if (resultField) {
+          const [fieldKey, fieldValue] = resultField;
+          console.log('Found result field:', fieldKey, 'with value:', fieldValue);
+          
+          if (typeof fieldValue === 'number') {
+            valorPontuacao = fieldValue;
+          } else if (typeof fieldValue === 'string' && fieldValue) {
+            // Tentar converter string para número
+            const numericValue = parseFloat(fieldValue.replace(/[^\d.,]/g, '').replace(',', '.'));
+            valorPontuacao = isNaN(numericValue) ? 0 : numericValue;
+          }
+        } else {
+          // Se não encontrar campo específico, usar o primeiro campo numérico
+          const numericField = formEntries.find(([key, value]) => 
+            typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)))
+          );
+          
+          if (numericField) {
+            const [, value] = numericField;
+            valorPontuacao = typeof value === 'number' ? value : parseFloat(value) || 0;
+          }
+        }
+        
+        console.log('Calculated valor_pontuacao:', valorPontuacao);
+
+        // 1. Criar registro na tabela pontuacoes
         const pontuacaoData = {
           evento_id: data.eventId,
           modalidade_id: data.modalityId,
@@ -33,6 +70,7 @@ export function useDynamicScoringSubmission() {
           equipe_id: data.equipeId || null,
           juiz_id: data.judgeId,
           modelo_id: data.modeloId,
+          valor_pontuacao: valorPontuacao, // Campo obrigatório
           observacoes: data.notes || null,
           data_registro: new Date().toISOString(),
           unidade: 'dinâmica' // Para identificar pontuações dinâmicas
