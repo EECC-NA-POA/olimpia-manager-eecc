@@ -69,10 +69,12 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
           return [];
         }
 
-        // Get unique filial IDs
-        const filialIds = [...new Set(enrollments
-          .map(e => e.usuarios?.filial_id)
-          .filter(id => id !== null && id !== undefined))] as number[];
+        // Get unique filial IDs from users who have filial_id
+        const filialIds = [...new Set(
+          enrollments
+            .map(e => e.usuarios?.filial_id)
+            .filter(id => id !== null && id !== undefined)
+        )] as number[];
 
         // Fetch filial data if there are filiais
         let filiaisData: FilialResponse[] = [];
@@ -93,7 +95,7 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
         console.log('Filiais data:', filiaisData);
 
         // Transform the data to match our Athlete interface
-        const athletes = (enrollments as unknown as AthleteResponse[]).map((item) => {
+        const athletes = (enrollments as AthleteResponse[]).map((item) => {
           const filial = filiaisData.find(f => f.id === item.usuarios?.filial_id);
           
           return {
