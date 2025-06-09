@@ -1,4 +1,3 @@
-
 export interface ModeloModalidade {
   id: number;
   modalidade_id: number;
@@ -68,4 +67,15 @@ export interface CalculationContext {
   bateria_id?: number;
   modalidade_id: number;
   evento_id: string;
+}
+
+export interface AthleteParticipation {
+  id?: number;
+  atleta_id: string;
+  modalidade_id: number;
+  evento_id: string;
+  bateria_id?: number;
+  participando: boolean;
+  criado_em?: string;
+  atualizado_em?: string;
 }
