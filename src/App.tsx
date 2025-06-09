@@ -1,10 +1,10 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { SessionTimeoutProvider } from "@/components/providers/SessionTimeoutProvider";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
 import { MainNavigation } from "@/components/MainNavigation";
@@ -34,7 +34,23 @@ import OrganizerDashboard from "./components/OrganizerDashboard";
 import DelegationDashboard from "./components/DelegationDashboard";
 import AthleteRegistrations from "./components/AthleteRegistrations";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error: any) => {
+        // Não tentar novamente em erros de autenticação
+        if (error?.message?.includes('JWT') || 
+            error?.message?.includes('refresh_token_not_found') || 
+            error?.message?.includes('token') ||
+            error?.message?.includes('invalid session')) {
+          return false;
+        }
+        return failureCount < 3;
+      },
+      staleTime: 5 * 60 * 1000, // 5 minutos
+    },
+  },
+});
 
 function AppContent() {
   const { showModal, handleAccept, handleReject } = usePrivacyPolicyCheck();
@@ -102,7 +118,9 @@ function App() {
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <AppContent />
+            <SessionTimeoutProvider>
+              <AppContent />
+            </SessionTimeoutProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

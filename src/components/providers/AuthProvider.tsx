@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -12,6 +13,7 @@ import { LoadingImage } from '@/components/ui/loading-image';
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [currentEventId, setCurrentEventId] = useState<string | null>(() => {
     return localStorage.getItem('currentEventId');
   });
@@ -60,6 +62,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('Current Event ID in AuthContext:', currentEventId);
   }, [currentEventId]);
 
+  // Função para lidar com erros de sessão
+  const handleSessionError = (error: any) => {
+    console.error('Session error detected:', error);
+    
+    // Verifica se é um erro relacionado à sessão/token
+    const isSessionError = error.message?.includes('JWT') || 
+                          error.message?.includes('refresh_token_not_found') || 
+                          error.message?.includes('token') ||
+                          error.message?.includes('CompactDecodeError') ||
+                          error.message?.includes('invalid session') ||
+                          error.message?.includes('invalid_grant');
+
+    if (isSessionError && !sessionExpired) {
+      setSessionExpired(true);
+      setUser(null);
+      localStorage.removeItem('currentEventId');
+      setCurrentEventId(null);
+      
+      toast.error(
+        'Sua sessão expirou. Por favor, faça login novamente.',
+        { duration: 5000 }
+      );
+      
+      navigate('/login', { replace: true });
+    }
+  };
+
   useEffect(() => {
     console.log('Setting up authentication state...');
     console.log('Current location:', location.pathname);
@@ -68,7 +97,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const setupAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          handleSessionError(error);
+          return;
+        }
+        
         console.log('Session status:', session ? 'Active' : 'No active session');
 
         if (!session?.user && !PUBLIC_ROUTES.includes(location.pathname as PublicRoute) && 
@@ -85,10 +120,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setCurrentEventId(storedEventId);
           }
           
-          const userProfile = await fetchUserProfile(session.user.id);
-          if (mounted) {
-            console.log('Setting user with profile data:', userProfile);
-            setUser({ ...session.user, ...userProfile });
+          try {
+            const userProfile = await fetchUserProfile(session.user.id);
+            if (mounted) {
+              console.log('Setting user with profile data:', userProfile);
+              setUser({ ...session.user, ...userProfile });
+              setSessionExpired(false); // Reset session expired flag
+            }
+          } catch (profileError) {
+            console.error('Error fetching user profile:', profileError);
+            handleSessionError(profileError);
+            return;
           }
         }
 
@@ -100,11 +142,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               if (mounted) {
                 console.log('User signed out, clearing state');
                 setUser(null);
+                setSessionExpired(false);
                 localStorage.removeItem('currentEventId');
                 setCurrentEventId(null);
                 navigate('/', { replace: true });
               }
               return;
+            }
+
+            if (event === 'TOKEN_REFRESHED') {
+              console.log('Token refreshed successfully');
+              setSessionExpired(false);
             }
 
             if (session?.user) {
@@ -114,14 +162,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 if (mounted) {
                   console.log('Setting updated user with profile data');
                   setUser({ ...session.user, ...userProfile });
+                  setSessionExpired(false);
                 }
               } catch (error) {
                 console.error('Error in auth setup:', error);
-                toast.error(handleSupabaseError(error));
-                if (mounted) {
-                  setUser(null);
-                  navigate('/', { replace: true });
-                }
+                handleSessionError(error);
               }
             } else {
               if (mounted) {
@@ -141,12 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
       } catch (error) {
         console.error('Error in auth setup:', error);
-        if (mounted) {
-          setUser(null);
-          if (!PUBLIC_ROUTES.includes(location.pathname as PublicRoute)) {
-            navigate('/', { replace: true });
-          }
-        }
+        handleSessionError(error);
       } finally {
         if (mounted) {
           console.log('Auth setup complete, setting loading to false');
