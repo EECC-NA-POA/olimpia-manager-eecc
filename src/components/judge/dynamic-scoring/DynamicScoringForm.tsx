@@ -17,14 +17,65 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CampoModelo } from '@/types/dynamicScoring';
+import { CalculatedFieldsManager } from './CalculatedFieldsManager';
 
 interface DynamicScoringFormProps {
   form: UseFormReturn<any>;
   campos: CampoModelo[];
+  modeloId?: number;
+  modalityId?: number;
+  eventId?: string;
+  bateriaId?: number;
 }
 
-export function DynamicScoringForm({ form, campos }: DynamicScoringFormProps) {
+export function DynamicScoringForm({ 
+  form, 
+  campos, 
+  modeloId, 
+  modalityId, 
+  eventId,
+  bateriaId 
+}: DynamicScoringFormProps) {
+  // Separar campos manuais e calculados
+  const manualFields = campos.filter(campo => campo.tipo_input !== 'calculated');
+  const calculatedFields = campos.filter(campo => campo.tipo_input === 'calculated');
+
+  const handleCalculationComplete = (results: any[]) => {
+    // Atualizar os valores dos campos calculados no formulário
+    results.forEach(result => {
+      form.setValue(result.chave_campo, result.valor_calculado);
+    });
+  };
+
   const renderField = (campo: CampoModelo) => {
+    if (campo.tipo_input === 'calculated') {
+      // Campos calculados são exibidos como read-only
+      return (
+        <FormField
+          key={campo.id}
+          control={form.control}
+          name={campo.chave_campo}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                {campo.rotulo_campo}
+                <span className="text-blue-600 text-xs ml-2">(Calculado)</span>
+              </FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  readOnly
+                  className="bg-blue-50 border-blue-200"
+                  placeholder="Aguardando cálculo..."
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      );
+    }
+
     switch (campo.tipo_input) {
       case 'number':
       case 'integer':
@@ -120,7 +171,24 @@ export function DynamicScoringForm({ form, campos }: DynamicScoringFormProps) {
 
   return (
     <div className="space-y-4">
-      {campos
+      {/* Gerenciador de campos calculados - mostrar apenas se houver campos calculados */}
+      {calculatedFields.length > 0 && modeloId && modalityId && eventId && (
+        <CalculatedFieldsManager
+          modeloId={modeloId}
+          modalityId={modalityId}
+          eventId={eventId}
+          bateriaId={bateriaId}
+          onCalculationComplete={handleCalculationComplete}
+        />
+      )}
+
+      {/* Campos manuais primeiro */}
+      {manualFields
+        .sort((a, b) => a.ordem_exibicao - b.ordem_exibicao)
+        .map(renderField)}
+
+      {/* Campos calculados por último */}
+      {calculatedFields
         .sort((a, b) => a.ordem_exibicao - b.ordem_exibicao)
         .map(renderField)}
     </div>

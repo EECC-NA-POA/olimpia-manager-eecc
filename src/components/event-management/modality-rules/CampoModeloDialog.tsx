@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,13 +33,18 @@ import { CampoModelo } from '@/types/dynamicScoring';
 const campoSchema = z.object({
   chave_campo: z.string().min(1, 'Chave é obrigatória'),
   rotulo_campo: z.string().min(1, 'Rótulo é obrigatório'),
-  tipo_input: z.enum(['number', 'integer', 'text', 'select']),
+  tipo_input: z.enum(['number', 'integer', 'text', 'select', 'calculated']),
   obrigatorio: z.boolean(),
   ordem_exibicao: z.coerce.number().min(1),
   min: z.coerce.number().optional(),
   max: z.coerce.number().optional(),
   step: z.coerce.number().optional(),
   opcoes: z.string().optional(),
+  // Campos para calculated
+  tipo_calculo: z.enum(['colocacao_bateria', 'colocacao_final', 'custom']).optional(),
+  campo_referencia: z.string().optional(),
+  contexto: z.enum(['bateria', 'modalidade', 'evento']).optional(),
+  ordem_calculo: z.enum(['asc', 'desc']).optional(),
 });
 
 type CampoFormData = z.infer<typeof campoSchema>;
@@ -71,6 +77,10 @@ export function CampoModeloDialog({
       max: editingCampo?.metadados?.max,
       step: editingCampo?.metadados?.step,
       opcoes: editingCampo?.metadados?.opcoes?.join('\n') || '',
+      tipo_calculo: editingCampo?.metadados?.tipo_calculo,
+      campo_referencia: editingCampo?.metadados?.campo_referencia || '',
+      contexto: editingCampo?.metadados?.contexto,
+      ordem_calculo: editingCampo?.metadados?.ordem_calculo || 'asc',
     },
   });
 
@@ -86,6 +96,13 @@ export function CampoModeloDialog({
       
       if (data.tipo_input === 'select' && data.opcoes) {
         metadados.opcoes = data.opcoes.split('\n').filter(opt => opt.trim());
+      }
+
+      if (data.tipo_input === 'calculated') {
+        metadados.tipo_calculo = data.tipo_calculo;
+        metadados.campo_referencia = data.campo_referencia;
+        metadados.contexto = data.contexto;
+        metadados.ordem_calculo = data.ordem_calculo;
       }
 
       const campoData = {
@@ -123,7 +140,7 @@ export function CampoModeloDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {editingCampo ? 'Editar Campo' : 'Novo Campo'}
@@ -140,7 +157,7 @@ export function CampoModeloDialog({
                   <FormLabel>Chave do Campo</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="ex: tentativa_1, pontos_set"
+                      placeholder="ex: tentativa_1, pontos_set, colocacao_bateria"
                       {...field}
                     />
                   </FormControl>
@@ -157,7 +174,7 @@ export function CampoModeloDialog({
                   <FormLabel>Rótulo do Campo</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="ex: Tentativa 1, Pontos do Set"
+                      placeholder="ex: Tentativa 1, Pontos do Set, Colocação na Bateria"
                       {...field}
                     />
                   </FormControl>
@@ -183,6 +200,7 @@ export function CampoModeloDialog({
                       <SelectItem value="integer">Número Inteiro</SelectItem>
                       <SelectItem value="text">Texto</SelectItem>
                       <SelectItem value="select">Seleção</SelectItem>
+                      <SelectItem value="calculated">Campo Calculado</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -288,6 +306,101 @@ export function CampoModeloDialog({
                   </FormItem>
                 )}
               />
+            )}
+
+            {tipoInput === 'calculated' && (
+              <div className="space-y-4 border rounded-lg p-4 bg-blue-50">
+                <div className="text-sm font-medium text-blue-900">
+                  Configurações de Campo Calculado
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="tipo_calculo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Cálculo</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo de cálculo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="colocacao_bateria">Colocação na Bateria</SelectItem>
+                          <SelectItem value="colocacao_final">Colocação Final</SelectItem>
+                          <SelectItem value="custom">Cálculo Customizado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="campo_referencia"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Campo de Referência</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="ex: tempo, pontos, distancia"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="contexto"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contexto</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o contexto" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="bateria">Por Bateria</SelectItem>
+                            <SelectItem value="modalidade">Por Modalidade</SelectItem>
+                            <SelectItem value="evento">Por Evento</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="ordem_calculo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ordem de Classificação</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Ordem" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="asc">Crescente (menor = melhor)</SelectItem>
+                            <SelectItem value="desc">Decrescente (maior = melhor)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
             )}
 
             <div className="flex justify-end gap-2">

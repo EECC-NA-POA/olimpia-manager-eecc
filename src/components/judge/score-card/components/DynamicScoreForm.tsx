@@ -53,27 +53,32 @@ export function DynamicScoreForm({
     campos.forEach(campo => {
       let fieldSchema: z.ZodType;
       
-      switch (campo.tipo_input) {
-        case 'number':
-        case 'integer':
-          fieldSchema = z.coerce.number();
-          if (campo.metadados?.min !== undefined) {
-            fieldSchema = (fieldSchema as z.ZodNumber).min(campo.metadados.min);
-          }
-          if (campo.metadados?.max !== undefined) {
-            fieldSchema = (fieldSchema as z.ZodNumber).max(campo.metadados.max);
-          }
-          break;
-        case 'text':
-        case 'select':
-          fieldSchema = z.string();
-          break;
-        default:
-          fieldSchema = z.any();
-      }
-      
-      if (!campo.obrigatorio) {
-        fieldSchema = fieldSchema.optional();
+      // Campos calculados não precisam de validação obrigatória
+      if (campo.tipo_input === 'calculated') {
+        fieldSchema = z.any().optional();
+      } else {
+        switch (campo.tipo_input) {
+          case 'number':
+          case 'integer':
+            fieldSchema = z.coerce.number();
+            if (campo.metadados?.min !== undefined) {
+              fieldSchema = (fieldSchema as z.ZodNumber).min(campo.metadados.min);
+            }
+            if (campo.metadados?.max !== undefined) {
+              fieldSchema = (fieldSchema as z.ZodNumber).max(campo.metadados.max);
+            }
+            break;
+          case 'text':
+          case 'select':
+            fieldSchema = z.string();
+            break;
+          default:
+            fieldSchema = z.any();
+        }
+        
+        if (!campo.obrigatorio) {
+          fieldSchema = fieldSchema.optional();
+        }
       }
       
       schemaFields[campo.chave_campo] = fieldSchema;
@@ -138,7 +143,14 @@ export function DynamicScoreForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <DynamicScoringForm form={form} campos={campos} />
+        <DynamicScoringForm 
+          form={form} 
+          campos={campos}
+          modeloId={modeloId}
+          modalityId={modalityId}
+          eventId={eventId}
+          bateriaId={bateriaId}
+        />
         
         <FormField
           control={form.control}
