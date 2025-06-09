@@ -36,9 +36,8 @@ export async function calculatePlacement({
         valor: parsedValue.numericValue,
         valorOriginal: tentativa.valor,
         bateria_id: score.bateria_id
-      };
+      } as ScoreWithReference;
     })
-    .filter(Boolean)
     .filter((item): item is ScoreWithReference => item !== null);
 
   if (scoresWithReference.length === 0) {
