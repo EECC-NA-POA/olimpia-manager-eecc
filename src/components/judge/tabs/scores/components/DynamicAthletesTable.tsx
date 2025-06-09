@@ -13,7 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useCamposModelo } from '@/hooks/useDynamicScoring';
-import { DynamicAthleteScoreCard } from '../../score-card/DynamicAthleteScoreCard';
+import { DynamicAthleteScoreCard } from '../../../score-card/DynamicAthleteScoreCard';
 import { Athlete } from '../hooks/useAthletes';
 import { ModeloModalidade } from '@/types/dynamicScoring';
 

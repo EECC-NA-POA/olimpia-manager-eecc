@@ -13,7 +13,7 @@ export interface CampoModelo {
   modelo_id: number;
   chave_campo: string;
   rotulo_campo: string;
-  tipo_input: 'number' | 'text' | 'select';
+  tipo_input: 'number' | 'integer' | 'text' | 'select';
   obrigatorio: boolean;
   ordem_exibicao: number;
   metadados: {
