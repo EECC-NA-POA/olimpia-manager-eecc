@@ -40,7 +40,6 @@ export function useDynamicScoringSubmission() {
 
         // Calcular valor_pontuacao principal a partir dos dados do formulário
         let valorPontuacao = 0;
-        let valorOriginal = '';
         
         // Procurar por campos que possam representar o resultado principal
         const formEntries = Object.entries(data.formData);
@@ -62,16 +61,13 @@ export function useDynamicScoringSubmission() {
           if (formato && typeof fieldValue === 'string') {
             const parsed = parseValueByFormat(fieldValue, formato);
             valorPontuacao = parsed.numericValue;
-            valorOriginal = parsed.originalValue;
-            console.log('Parsed value:', { original: valorOriginal, numeric: valorPontuacao, format: formato });
+            console.log('Parsed value:', { original: fieldValue, numeric: valorPontuacao, format: formato });
           } else if (typeof fieldValue === 'number') {
             valorPontuacao = fieldValue;
-            valorOriginal = fieldValue.toString();
           } else if (typeof fieldValue === 'string' && fieldValue) {
             // Tentar converter string para número
             const numericValue = parseFloat(fieldValue.replace(/[^\d.,]/g, '').replace(',', '.'));
             valorPontuacao = isNaN(numericValue) ? 0 : numericValue;
-            valorOriginal = fieldValue;
           }
         } else {
           // Se não encontrar campo específico, usar o primeiro campo numérico
@@ -82,12 +78,10 @@ export function useDynamicScoringSubmission() {
           if (numericField) {
             const [, value] = numericField;
             valorPontuacao = typeof value === 'number' ? value : parseFloat(value) || 0;
-            valorOriginal = value.toString();
           }
         }
         
         console.log('Calculated valor_pontuacao:', valorPontuacao);
-        console.log('Original value:', valorOriginal);
 
         // 1. Verificar se já existe pontuação para este atleta
         const { data: existingScore } = await supabase
@@ -175,12 +169,12 @@ export function useDynamicScoringSubmission() {
             const formato = campo?.metadados?.formato_resultado;
             
             let valorNumerico = 0;
-            let valorFormatado = valor.toString();
+            let valorFormatado = '';
             
             if (formato && typeof valor === 'string') {
               const parsed = parseValueByFormat(valor, formato);
               valorNumerico = parsed.numericValue;
-              valorFormatado = parsed.originalValue;
+              valorFormatado = valor; // Manter o valor formatado original
             } else if (typeof valor === 'number') {
               valorNumerico = valor;
               valorFormatado = valor.toString();

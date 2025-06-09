@@ -48,7 +48,7 @@ export function DynamicScoringTable({
         .from('campos_modelo')
         .select('*')
         .eq('modelo_id', modelo.id)
-        .neq('tipo_input', 'calculated') // Exclude calculated fields from input
+        .neq('tipo_input', 'calculated')
         .order('ordem_exibicao');
 
       if (error) throw error;
@@ -73,7 +73,8 @@ export function DynamicScoringTable({
         `)
         .eq('modalidade_id', modalityId)
         .eq('evento_id', eventId)
-        .eq('modelo_id', modelo.id);
+        .eq('modelo_id', modelo.id)
+        .eq('juiz_id', judgeId);
 
       if (error) throw error;
       return data;
@@ -92,12 +93,13 @@ export function DynamicScoringTable({
         }
         
         score.tentativas_pontuacao?.forEach((tentativa: any) => {
-          // Use valor_formatado if available, otherwise valor
-          const value = tentativa.valor_formatado || tentativa.valor;
+          // Use valor_formatado se disponível, senão valor
+          const value = tentativa.valor_formatado || tentativa.valor.toString();
           initialData[score.atleta_id][tentativa.chave_campo] = value;
         });
       });
       
+      console.log('Loaded initial data:', initialData);
       setScoreData(initialData);
     }
   }, [existingScores]);
@@ -188,7 +190,7 @@ export function DynamicScoringTable({
           return (
             <MaskedResultInput
               campo={campo}
-              form={null as any} // Not used in this context
+              form={null as any}
               value={value as string}
               onChange={(newValue) => handleFieldChange(athleteId, campo.chave_campo, newValue)}
             />
