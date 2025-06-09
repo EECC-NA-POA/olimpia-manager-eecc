@@ -11,24 +11,15 @@ import {
 } from '@/components/ui/dialog';
 import {
   Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { useCreateCampo, useUpdateCampo } from '@/hooks/useDynamicScoring';
 import { CampoModelo } from '@/types/dynamicScoring';
+import { CampoFormFields } from './campo-dialog/CampoFormFields';
+import { NumericFieldsConfig } from './campo-dialog/NumericFieldsConfig';
+import { SelectOptionsConfig } from './campo-dialog/SelectOptionsConfig';
+import { TextFormatConfig } from './campo-dialog/TextFormatConfig';
+import { CalculatedFieldConfig } from './campo-dialog/CalculatedFieldConfig';
 
 const campoSchema = z.object({
   chave_campo: z.string().min(1, 'Chave é obrigatória'),
@@ -133,7 +124,6 @@ export function CampoModeloDialog({
   }, [isOpen, editingCampo, form]);
 
   const tipoInput = form.watch('tipo_input');
-  const formatoResultado = form.watch('formato_resultado');
 
   const onSubmit = async (data: CampoFormData) => {
     try {
@@ -216,312 +206,22 @@ export function CampoModeloDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="chave_campo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Chave do Campo</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="ex: tentativa_1, pontos_set, colocacao_bateria"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="rotulo_campo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Rótulo do Campo</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="ex: Tentativa 1, Pontos do Set, Colocação na Bateria"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="tipo_input"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tipo de Input</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="number">Número</SelectItem>
-                      <SelectItem value="integer">Número Inteiro</SelectItem>
-                      <SelectItem value="text">Texto</SelectItem>
-                      <SelectItem value="select">Seleção</SelectItem>
-                      <SelectItem value="calculated">Campo Calculado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="ordem_exibicao"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ordem</FormLabel>
-                    <FormControl>
-                      <Input type="number" min="1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="obrigatorio"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                    <div className="space-y-0.5">
-                      <FormLabel>Obrigatório</FormLabel>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
+            <CampoFormFields form={form} />
 
             {(tipoInput === 'number' || tipoInput === 'integer') && (
-              <div className="grid grid-cols-3 gap-2">
-                <FormField
-                  control={form.control}
-                  name="min"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Min</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="any" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="max"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Max</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="any" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="step"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Step</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="any" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <NumericFieldsConfig form={form} />
             )}
 
             {tipoInput === 'select' && (
-              <FormField
-                control={form.control}
-                name="opcoes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Opções (uma por linha)</FormLabel>
-                    <FormControl>
-                      <textarea
-                        className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="Opção 1&#10;Opção 2&#10;Opção 3"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <SelectOptionsConfig form={form} />
             )}
 
             {tipoInput === 'text' && (
-              <div className="space-y-4 border rounded-lg p-4 bg-blue-50">
-                <div className="text-sm font-medium text-blue-900">
-                  Configurações de Máscara de Resultado
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="formato_resultado"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Formato de Resultado (Opcional)</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o formato" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="tempo">Tempo (HH:MM:SS)</SelectItem>
-                          <SelectItem value="distancia">Distância (metros,cm)</SelectItem>
-                          <SelectItem value="pontos">Pontos (###.##)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {formatoResultado && (
-                  <FormField
-                    control={form.control}
-                    name="unidade_display"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Unidade de Exibição</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder={
-                              formatoResultado === 'tempo' ? 'ex: min' :
-                              formatoResultado === 'distancia' ? 'ex: m' :
-                              'ex: pts'
-                            }
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-              </div>
+              <TextFormatConfig form={form} />
             )}
 
             {tipoInput === 'calculated' && (
-              <div className="space-y-4 border rounded-lg p-4 bg-blue-50">
-                <div className="text-sm font-medium text-blue-900">
-                  Configurações de Campo Calculado
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="tipo_calculo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo de Cálculo</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo de cálculo" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="colocacao_bateria">Colocação na Bateria</SelectItem>
-                          <SelectItem value="colocacao_final">Colocação Final</SelectItem>
-                          <SelectItem value="custom">Cálculo Customizado</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="campo_referencia"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Campo de Referência</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="ex: tempo, pontos, distancia"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="contexto"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Contexto</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o contexto" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="bateria">Por Bateria</SelectItem>
-                            <SelectItem value="modalidade">Por Modalidade</SelectItem>
-                            <SelectItem value="evento">Por Evento</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="ordem_calculo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ordem de Classificação</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Ordem" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="asc">Crescente (menor = melhor)</SelectItem>
-                            <SelectItem value="desc">Decrescente (maior = melhor)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
+              <CalculatedFieldConfig form={form} />
             )}
 
             <div className="flex justify-end gap-2">
