@@ -9,16 +9,22 @@ export interface Athlete {
   atleta_nome: string;
   tipo_documento: string;
   numero_documento: string;
+  equipe_id?: number | null;
+  equipe_nome?: string | null;
 }
 
 // Interface to type the response from Supabase
 interface AthleteResponse {
   id: number;
   atleta_id: string;
+  equipe_id?: number | null;
   usuarios: {
     nome_completo: string;
     tipo_documento: string;
     numero_documento: string;
+  } | null;
+  equipes?: {
+    nome: string;
   } | null;
 }
 
@@ -35,10 +41,14 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
           .select(`
             id,
             atleta_id,
+            equipe_id,
             usuarios(
               nome_completo,
               tipo_documento,
               numero_documento
+            ),
+            equipes(
+              nome
             )
           `)
           .eq('modalidade_id', modalityId)
@@ -60,6 +70,8 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
           atleta_nome: item.usuarios?.nome_completo || 'Atleta',
           tipo_documento: item.usuarios?.tipo_documento || 'Documento',
           numero_documento: item.usuarios?.numero_documento || '',
+          equipe_id: item.equipe_id,
+          equipe_nome: item.equipes?.nome || null,
         }));
       } catch (error) {
         console.error('Error in athlete query execution:', error);
