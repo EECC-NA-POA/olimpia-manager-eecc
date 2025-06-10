@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Bateria } from '../../tabs/scores/hooks/useBateriaData';
-import { ModalityRule } from '../../tabs/scores/hooks/useModalityRules';
+import { ModalityRule } from '../../tabs/scores/hooks/useModeloConfiguration';
 
 interface BateriaInfoProps {
   baterias: Bateria[];

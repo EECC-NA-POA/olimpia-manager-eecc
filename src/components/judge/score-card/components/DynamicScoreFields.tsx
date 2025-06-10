@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { ModalityRule } from '../../tabs/scores/hooks/useModalityRules';
+import { ModalityRule } from '../../tabs/scores/hooks/useModeloConfiguration';
 import { TimeScoreFields } from './TimeScoreFields';
 import { DistanceScoreFields } from './DistanceScoreFields';
 import { PointsScoreFields } from './PointsScoreFields';

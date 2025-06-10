@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   FormField,
@@ -12,7 +11,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { UseFormReturn } from 'react-hook-form';
-import { ModalityRule } from '../../tabs/scores/hooks/useModalityRules';
+import { ModalityRule } from '../../tabs/scores/hooks/useModeloConfiguration';
 
 interface SetsScoreFieldsProps {
   form: UseFormReturn<any>;

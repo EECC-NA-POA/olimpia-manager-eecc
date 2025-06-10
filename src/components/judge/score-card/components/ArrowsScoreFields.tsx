@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   FormField,
@@ -10,7 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from 'react-hook-form';
-import { ModalityRule } from '../../tabs/scores/hooks/useModalityRules';
+import { ModalityRule } from '../../tabs/scores/hooks/useModeloConfiguration';
 
 interface ArrowsScoreFieldsProps {
   form: UseFormReturn<any>;

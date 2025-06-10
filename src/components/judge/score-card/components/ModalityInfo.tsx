@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { ModalityRule } from '../../tabs/scores/hooks/useModalityRules';
+import { ModalityRule } from '../../tabs/scores/hooks/useModeloConfiguration';
 
 interface ModalityInfoProps {
   rule: ModalityRule;

@@ -8,7 +8,7 @@ import { useScoreSubmission } from '../score-card/hooks/useScoreSubmission';
 import { ModalityRankings } from '../ModalityRankings';
 import { ModalityHeader } from './ModalityHeader';
 import { TeamMembersDisplay } from './TeamMembersDisplay';
-import { useModalityRules } from '../tabs/scores/hooks/useModalityRules';
+import { useModalityRules } from '../tabs/scores/hooks/useModeloConfiguration';
 import { ScoreRecord, Modality } from '@/lib/types/database';
 
 interface ScoreFormContainerProps {

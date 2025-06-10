@@ -1,5 +1,4 @@
-
-import { ModalityRule } from '../../tabs/scores/hooks/useModalityRules';
+import { ModalityRule } from '../../tabs/scores/hooks/useModeloConfiguration';
 
 export const prepareSubmissionData = (data: any, rule: ModalityRule | null) => {
   // Convert meters and centimeters to decimal value for distance scoring

@@ -2,7 +2,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useModalityRules } from '../../tabs/scores/hooks/useModalityRules';
+import { useModalityRules } from '../../tabs/scores/hooks/useModeloConfiguration';
 import { useBateriaData } from '../../tabs/scores/hooks/useBateriaData';
 import { createDynamicSchema } from '../utils/schemaUtils';
 import { getDefaultValues } from '../utils/defaultValuesUtils';

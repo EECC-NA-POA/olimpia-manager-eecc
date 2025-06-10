@@ -11,7 +11,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { DynamicScoreFields } from './DynamicScoreFields';
-import { ModalityRule } from '../../tabs/scores/hooks/useModalityRules';
+import { ModalityRule } from '../../tabs/scores/hooks/useModeloConfiguration';
 import { Bateria } from '../../tabs/scores/hooks/useBateriaData';
 
 interface ScoreFormFieldsProps {
