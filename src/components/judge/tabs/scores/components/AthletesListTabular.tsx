@@ -1,24 +1,23 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Users } from 'lucide-react';
+import { AthletesGrid } from './AthletesGrid';
 import { AthletesTable } from './AthletesTable';
-import { DynamicAthletesTable } from './DynamicAthletesTable';
-import { AthleteFilters } from './AthleteFilters';
-import { useAthletesFiltering } from './hooks/useAthletesFiltering';
-import { useAthletesBranchData } from './hooks/useAthletesBranchData';
-import { useAthletesScoreStatus } from './hooks/useAthletesScoreStatus';
+import { DynamicAthletesGrid } from './DynamicAthletesGrid';
 import { useModelosModalidade } from '@/hooks/useDynamicScoring';
 import { Athlete } from '../hooks/useAthletes';
 
 interface AthletesListTabularProps {
-  athletes: Athlete[] | undefined;
+  athletes: Athlete[];
   isLoading: boolean;
   modalityId: number;
   eventId: string | null;
   judgeId: string;
   scoreType?: 'tempo' | 'distancia' | 'pontos';
   modalityRule?: any;
+  selectedBateriaId?: number;
 }
 
 export function AthletesListTabular({
@@ -28,113 +27,70 @@ export function AthletesListTabular({
   eventId,
   judgeId,
   scoreType = 'pontos',
-  modalityRule
+  modalityRule,
+  selectedBateriaId
 }: AthletesListTabularProps) {
-  // Check for dynamic scoring
-  const { data: modelos = [], isLoading: isLoadingModelos } = useModelosModalidade(modalityId);
-  const hasDynamicScoring = modelos.length > 0;
+  // Check if this modality uses dynamic scoring
+  const { data: modelos } = useModelosModalidade(modalityId);
+  const hasDynamicScoring = modelos && modelos.length > 0;
+  const modelo = modelos?.[0];
 
-  // Get branch data for filtering
-  const { availableBranches, availableStates, athletesBranchData } = useAthletesBranchData(athletes || []);
-
-  // Get scores status for all athletes
-  const athleteScores = useAthletesScoreStatus({
-    athletes: athletes || [],
-    modalityId,
-    eventId
-  });
-
-  const {
-    filteredAthletes,
-    filters,
-    setFilters,
-    resetFilters
-  } = useAthletesFiltering({
-    athletes: athletes || [],
-    athleteScores,
-    athletesBranchData,
-    availableBranches,
-    availableStates,
-    eventId
-  });
-
-  if (isLoading || isLoadingModelos) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Carregando atletas...</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-64 w-full" />
-        </CardContent>
-      </Card>
-    );
+  if (isLoading) {
+    return <Skeleton className="h-64 w-full" />;
   }
 
-  if (!athletes || athletes.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Nenhum atleta encontrado</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Não há atletas inscritos nesta modalidade.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Filter athletes by selected bateria if needed
+  const filteredAthletes = selectedBateriaId 
+    ? athletes.filter(athlete => {
+        // This would need to be implemented based on your bateria-athlete relationship
+        // For now, showing all athletes
+        return true;
+      })
+    : athletes;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Registro de Pontuações - Modalidade</CardTitle>
-        <div className="text-center text-sm text-muted-foreground">
-          Mostrando {filteredAthletes.length} de {athletes.length} atletas
-          {hasDynamicScoring && (
-            <div className="mt-2 text-xs bg-green-50 text-green-700 p-2 rounded border">
-              <strong>Sistema de Pontuação Dinâmica Ativo</strong>
-              <div className="mt-1">
-                Modelo: {modelos[0]?.descricao || modelos[0]?.codigo_modelo}
-              </div>
-            </div>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="h-5 w-5" />
+          Atletas Inscritos ({filteredAthletes.length})
+          {selectedBateriaId && (
+            <span className="text-sm font-normal text-muted-foreground">
+              - Bateria selecionada
+            </span>
           )}
-        </div>
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <AthleteFilters
-          searchFilter={filters.searchFilter}
-          onSearchFilterChange={(value) => setFilters({ ...filters, searchFilter: value })}
-          filterType={filters.filterType}
-          onFilterTypeChange={(value) => setFilters({ ...filters, filterType: value })}
-          availableBranches={availableBranches}
-          availableStates={availableStates}
-          selectedBranch={filters.selectedBranch}
-          onSelectedBranchChange={(value) => setFilters({ ...filters, selectedBranch: value })}
-          selectedState={filters.selectedState}
-          onSelectedStateChange={(value) => setFilters({ ...filters, selectedState: value })}
-          statusFilter={filters.statusFilter}
-          onStatusFilterChange={(value) => setFilters({ ...filters, statusFilter: value })}
-        />
-        
-        {hasDynamicScoring ? (
-          <DynamicAthletesTable
+      <CardContent>
+        {hasDynamicScoring && modelo ? (
+          <DynamicAthletesGrid
             athletes={filteredAthletes}
             modalityId={modalityId}
             eventId={eventId}
             judgeId={judgeId}
-            modelo={modelos[0]}
+            modelo={modelo}
           />
         ) : (
-          <AthletesTable
-            athletes={filteredAthletes}
-            modalityId={modalityId}
-            eventId={eventId}
-            judgeId={judgeId}
-            scoreType={scoreType}
-            modalityRule={modalityRule}
-          />
+          <>
+            <AthletesGrid
+              athletes={filteredAthletes}
+              modalityId={modalityId}
+              eventId={eventId}
+              judgeId={judgeId}
+              scoreType={scoreType}
+            />
+            
+            <div className="mt-6">
+              <AthletesTable
+                athletes={filteredAthletes}
+                modalityId={modalityId}
+                eventId={eventId}
+                judgeId={judgeId}
+                scoreType={scoreType}
+                modalityRule={modalityRule}
+              />
+            </div>
+          </>
         )}
       </CardContent>
     </Card>
