@@ -104,7 +104,21 @@ export function DynamicAthletesTable({
   if (campos.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-8">
-        Nenhum campo configurado para este modelo de pontuação
+        <div className="mb-4">
+          <h3 className="text-lg font-medium mb-2">Nenhum campo configurado</h3>
+          <p className="text-sm">
+            Este modelo de pontuação não possui campos configurados. 
+            Configure os campos no painel de administração para habilitar a pontuação dinâmica.
+          </p>
+        </div>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-700">
+          <p className="text-sm">
+            <strong>Modelo atual:</strong> {modelo.descricao || modelo.codigo_modelo}
+          </p>
+          <p className="text-xs mt-1">
+            Acesse "Administração → Gestão de Eventos → Regras de Modalidades" para configurar os campos
+          </p>
+        </div>
       </div>
     );
   }
@@ -117,9 +131,12 @@ export function DynamicAthletesTable({
             <TableHead className="w-[200px]">Atleta</TableHead>
             <TableHead className="w-[150px]">Filial</TableHead>
             {campos.map((campo) => (
-              <TableHead key={campo.chave_campo} className="text-center">
-                {campo.rotulo_campo}
-                {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
+              <TableHead key={campo.chave_campo} className="text-center min-w-[120px]">
+                <div className="flex flex-col items-center">
+                  <span className="font-medium">{campo.rotulo_campo}</span>
+                  {campo.obrigatorio && <span className="text-red-500 text-xs">*obrigatório</span>}
+                  <span className="text-xs text-muted-foreground">({campo.tipo_input})</span>
+                </div>
               </TableHead>
             ))}
             <TableHead className="w-[100px]">Status</TableHead>
@@ -162,6 +179,7 @@ export function DynamicAthletesTable({
                             min={campo.metadados?.min}
                             max={campo.metadados?.max}
                             step={campo.metadados?.step || 'any'}
+                            placeholder={`Ex: ${campo.metadados?.min || 0}`}
                           />
                         ) : campo.tipo_input === 'select' ? (
                           <select
@@ -182,6 +200,7 @@ export function DynamicAthletesTable({
                             value={editValues[campo.chave_campo] || ''}
                             onChange={(e) => handleFieldChange(campo.chave_campo, e.target.value)}
                             className="text-center"
+                            placeholder="Digite aqui"
                           />
                         )}
                       </div>
@@ -236,6 +255,13 @@ export function DynamicAthletesTable({
           })}
         </TableBody>
       </Table>
+      
+      {campos.length > 0 && (
+        <div className="bg-muted/50 p-3 text-xs text-muted-foreground">
+          <p><strong>Dica:</strong> Use o botão "Editar" para inserir pontuações. Os campos marcados com * são obrigatórios.</p>
+          <p><strong>Baterias:</strong> Use a seção "Gerenciamento de Baterias" acima para criar/editar baterias.</p>
+        </div>
+      )}
     </div>
   );
 }
