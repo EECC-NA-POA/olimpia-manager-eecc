@@ -144,7 +144,7 @@ export function AthletesList({
           onSearchFilterChange={(value) => setFilters({ ...filters, searchFilter: value })}
           filterType={filters.filterType}
           onFilterTypeChange={(value) => setFilters({ ...filters, filterType: value })}
-          availableBranches={availableBranches}
+          availableBranches={availableBranches.map(branch => branch.name)}
           availableStates={availableStates}
           selectedBranch={filters.selectedBranch}
           onSelectedBranchChange={(value) => setFilters({ ...filters, selectedBranch: value })}
