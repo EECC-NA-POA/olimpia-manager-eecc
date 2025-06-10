@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Check, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { Settings, Check, X, ChevronUp, ChevronDown, Clock, Ruler, Calculator, Target } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -52,6 +52,139 @@ export function ModeloConfigurationTable({
     );
   };
 
+  const getParametersSummary = (modelo: any) => {
+    const parametros = modelo.parametros || {};
+    const summaryItems = [];
+
+    // Tipo de regra de pontuação
+    if (parametros.regra_tipo) {
+      let icon;
+      let label;
+      switch (parametros.regra_tipo) {
+        case 'tempo':
+          icon = <Clock className="h-3 w-3" />;
+          label = 'Tempo';
+          break;
+        case 'distancia':
+          icon = <Ruler className="h-3 w-3" />;
+          label = 'Distância';
+          break;
+        case 'pontos':
+          icon = <Target className="h-3 w-3" />;
+          label = 'Pontos';
+          break;
+        default:
+          icon = <Target className="h-3 w-3" />;
+          label = parametros.regra_tipo;
+      }
+      
+      summaryItems.push(
+        <Badge key="regra_tipo" variant="outline" className="flex items-center gap-1">
+          {icon}
+          {label}
+        </Badge>
+      );
+    }
+
+    // Formato de resultado
+    if (parametros.formato_resultado) {
+      let formatLabel;
+      switch (parametros.formato_resultado) {
+        case 'tempo':
+          formatLabel = 'MM:SS.mmm';
+          break;
+        case 'distancia':
+          formatLabel = 'm,cm';
+          break;
+        case 'pontos':
+          formatLabel = '###.##';
+          break;
+        default:
+          formatLabel = parametros.formato_resultado;
+      }
+      
+      summaryItems.push(
+        <Badge key="formato" variant="secondary" className="text-xs">
+          {formatLabel}
+        </Badge>
+      );
+    }
+
+    // Campo calculado
+    if (parametros.tipo_calculo) {
+      summaryItems.push(
+        <Badge key="calculado" variant="outline" className="flex items-center gap-1 bg-blue-50 text-blue-700">
+          <Calculator className="h-3 w-3" />
+          Calculado
+        </Badge>
+      );
+    }
+
+    // Contexto do cálculo
+    if (parametros.contexto) {
+      summaryItems.push(
+        <Badge key="contexto" variant="secondary" className="text-xs">
+          {parametros.contexto}
+        </Badge>
+      );
+    }
+
+    // Campo de referência
+    if (parametros.campo_referencia) {
+      summaryItems.push(
+        <Badge key="referencia" variant="outline" className="text-xs">
+          ref: {parametros.campo_referencia}
+        </Badge>
+      );
+    }
+
+    // Ordem de cálculo
+    if (parametros.ordem_calculo) {
+      const ordemLabel = parametros.ordem_calculo === 'asc' ? 'menor = melhor' : 'maior = melhor';
+      summaryItems.push(
+        <Badge key="ordem" variant="secondary" className="text-xs">
+          {ordemLabel}
+        </Badge>
+      );
+    }
+
+    // Unidades
+    if (parametros.unidade) {
+      summaryItems.push(
+        <Badge key="unidade" variant="outline" className="text-xs">
+          {parametros.unidade}
+        </Badge>
+      );
+    }
+
+    if (parametros.subunidade) {
+      summaryItems.push(
+        <Badge key="subunidade" variant="secondary" className="text-xs">
+          {parametros.subunidade}
+        </Badge>
+      );
+    }
+
+    // Configurações de bateria
+    if (parametros.num_raias) {
+      summaryItems.push(
+        <Badge key="raias" variant="outline" className="text-xs">
+          {parametros.num_raias} raias
+        </Badge>
+      );
+    }
+
+    if (parametros.permite_final) {
+      summaryItems.push(
+        <Badge key="final" variant="secondary" className="text-xs">
+          Final permitida
+        </Badge>
+      );
+    }
+
+    return summaryItems;
+  };
+
   if (modelos.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -70,7 +203,7 @@ export function ModeloConfigurationTable({
           <SortableHeader sortKey="modalidade">Modalidade</SortableHeader>
           <SortableHeader sortKey="modelo">Modelo</SortableHeader>
           <SortableHeader sortKey="baterias">Usa Baterias</SortableHeader>
-          <TableHead>Parâmetros</TableHead>
+          <TableHead>Configurações</TableHead>
           <TableHead>Ações</TableHead>
         </TableRow>
       </TableHeader>
@@ -79,6 +212,7 @@ export function ModeloConfigurationTable({
           console.log('Rendering modelo:', modelo);
           const parametros = modelo.parametros || {};
           const usaBaterias = parametros.baterias === true;
+          const parametersSummary = getParametersSummary(modelo);
           
           return (
             <TableRow key={modelo.id}>
@@ -107,23 +241,11 @@ export function ModeloConfigurationTable({
                 )}
               </TableCell>
               <TableCell>
-                <div className="text-xs text-muted-foreground space-y-1">
-                  {Object.keys(parametros).length > 0 ? (
-                    <div>
-                      <div>{Object.keys(parametros).length} configuração(ões)</div>
-                      <div className="text-xs">
-                        {Object.entries(parametros).slice(0, 3).map(([key, value]) => (
-                          <div key={key}>
-                            <strong>{key}:</strong> {String(value)}
-                          </div>
-                        ))}
-                        {Object.keys(parametros).length > 3 && (
-                          <div>...</div>
-                        )}
-                      </div>
-                    </div>
+                <div className="flex flex-wrap gap-1 max-w-md">
+                  {parametersSummary.length > 0 ? (
+                    parametersSummary
                   ) : (
-                    <span>Sem configurações</span>
+                    <span className="text-sm text-muted-foreground">Sem configurações</span>
                   )}
                 </div>
               </TableCell>

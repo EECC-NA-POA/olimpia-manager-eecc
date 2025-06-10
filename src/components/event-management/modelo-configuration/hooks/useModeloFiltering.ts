@@ -12,11 +12,15 @@ export function useModeloFiltering(modelos: any[]) {
 
   const filteredAndSortedModelos = useMemo(() => {
     let filtered = modelos.filter((modelo) => {
-      // Search filter
+      // Search filter - expanded to include more parameter fields
       const searchMatch = 
         modelo.codigo_modelo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         modelo.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        modelo.modalidade?.nome?.toLowerCase().includes(searchTerm.toLowerCase());
+        modelo.modalidade?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        modelo.parametros?.regra_tipo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        modelo.parametros?.formato_resultado?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        modelo.parametros?.tipo_calculo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        modelo.parametros?.campo_referencia?.toLowerCase().includes(searchTerm.toLowerCase());
 
       // Modality filter
       const modalityMatch = modalityFilter === 'all' || 
