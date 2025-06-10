@@ -32,8 +32,56 @@ export function useDynamicScoringSubmission() {
         const valorPontuacao = calculateMainScore(data.formData, campos);
         console.log('Calculated valor_pontuacao:', valorPontuacao);
 
+        // Get bateria number if bateriaId is provided
+        let numeroBateria: number | null = null;
+        if (data.bateriaId) {
+          const { data: bateriaData, error: bateriaError } = await supabase
+            .from('baterias')
+            .select('numero')
+            .eq('id', data.bateriaId)
+            .single();
+
+          if (bateriaError) {
+            console.error('Error fetching bateria:', bateriaError);
+            throw new Error('Erro ao buscar dados da bateria');
+          }
+
+          numeroBateria = bateriaData.numero;
+          console.log('Using bateria number:', numeroBateria);
+        }
+
+        // Prepare pontuacao data with correct structure
+        const pontuacaoData = {
+          evento_id: data.eventId,
+          modalidade_id: data.modalityId,
+          atleta_id: data.athleteId,
+          equipe_id: null, // For individual scores
+          juiz_id: data.judgeId,
+          valor_pontuacao: valorPontuacao,
+          unidade: 'pontos', // Default for dynamic scoring
+          observacoes: data.formData.observacoes || null,
+          numero_bateria: numeroBateria,
+          modelo_id: data.modeloId,
+          raia: data.formData.raia || null,
+          data_registro: new Date().toISOString()
+        };
+
+        console.log('Upserting pontuacao data:', pontuacaoData);
+
         // Upsert pontuacao
-        const pontuacao = await upsertPontuacao(data, valorPontuacao);
+        const { data: pontuacao, error: pontuacaoError } = await supabase
+          .from('pontuacoes')
+          .upsert(pontuacaoData, {
+            onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id,modelo_id,numero_bateria',
+          })
+          .select()
+          .single();
+
+        if (pontuacaoError) {
+          console.error('Error upserting pontuacao:', pontuacaoError);
+          throw pontuacaoError;
+        }
+
         console.log('=== PONTUAÇÃO SALVA COM SUCESSO ===');
         console.log('Pontuação:', pontuacao);
 

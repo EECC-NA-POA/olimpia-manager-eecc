@@ -27,7 +27,7 @@ export function useScoreSubmission() {
       if (!athlete) throw new Error('Athlete not found');
 
       console.log('=== SCORE SUBMISSION START ===');
-      console.log('Score submission data:', { athleteId, value, notes, modalityId, eventId, judgeId, scoreType });
+      console.log('Score submission data:', { athleteId, value, notes, modalityId, eventId, judgeId, scoreType, bateriaId });
 
       // Convert value based on score type
       let processedValue: number;
@@ -45,47 +45,22 @@ export function useScoreSubmission() {
         processedValue = parseFloat(value) || 0;
       }
 
-      // First, ensure we have a bateria for this modality
-      let finalBateriaId: number | null = bateriaId;
-
-      // Try to find existing bateria
-      if (!finalBateriaId) {
-        const { data: existingBaterias, error: bateriaFetchError } = await supabase
+      // Get bateria number if bateriaId is provided
+      let numeroBateria: number | null = null;
+      if (bateriaId) {
+        const { data: bateriaData, error: bateriaError } = await supabase
           .from('baterias')
-          .select('id')
-          .eq('modalidade_id', modalityId)
-          .eq('evento_id', eventId)
-          .limit(1);
+          .select('numero')
+          .eq('id', bateriaId)
+          .single();
 
-        if (bateriaFetchError) {
-          console.error('Error fetching baterias:', bateriaFetchError);
-          throw new Error('Erro ao buscar baterias');
+        if (bateriaError) {
+          console.error('Error fetching bateria:', bateriaError);
+          throw new Error('Erro ao buscar dados da bateria');
         }
 
-        if (existingBaterias && existingBaterias.length > 0) {
-          finalBateriaId = existingBaterias[0].id;
-          console.log('Using existing bateria:', finalBateriaId);
-        } else {
-          // Create a default bateria
-          console.log('Creating default bateria for modality:', modalityId);
-          const { data: newBateria, error: bateriaCreateError } = await supabase
-            .from('baterias')
-            .insert({
-              modalidade_id: modalityId,
-              evento_id: eventId,
-              numero: 1
-            })
-            .select('id')
-            .single();
-
-          if (bateriaCreateError || !newBateria) {
-            console.error('Error creating bateria:', bateriaCreateError);
-            throw new Error('Erro ao criar bateria');
-          }
-
-          finalBateriaId = newBateria.id;
-          console.log('Created new bateria:', finalBateriaId);
-        }
+        numeroBateria = bateriaData.numero;
+        console.log('Using bateria number:', numeroBateria);
       }
 
       // Prepare the score data according to the pontuacoes table structure
@@ -98,7 +73,9 @@ export function useScoreSubmission() {
         valor_pontuacao: processedValue,
         unidade: scoreType === 'tempo' ? 'segundos' : scoreType === 'distancia' ? 'metros' : 'pontos',
         observacoes: notes || null,
-        bateria_id: finalBateriaId,
+        numero_bateria: numeroBateria,
+        modelo_id: null, // Will be set for dynamic scoring
+        raia: null, // Could be extended later for swimming/track events
         data_registro: new Date().toISOString()
       };
 
@@ -107,7 +84,7 @@ export function useScoreSubmission() {
       const { data, error } = await supabase
         .from('pontuacoes')
         .upsert(scoreData, {
-          onConflict: 'evento_id,modalidade_id,atleta_id,bateria_id',
+          onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id,modelo_id,numero_bateria',
         })
         .select()
         .single();
@@ -129,8 +106,8 @@ export function useScoreSubmission() {
       console.error('Error saving score:', error);
       
       // Handle specific database errors
-      if (error.message?.includes('bateria_id')) {
-        toast.error('Erro: Bateria não encontrada. Verifique a configuração da modalidade.');
+      if (error.message?.includes('numero_bateria')) {
+        toast.error('Erro: Número da bateria não encontrado. Verifique a configuração da modalidade.');
       } else if (error.message?.includes('constraint')) {
         toast.error('Erro de restrição do banco de dados. Verifique os dados informados.');
       } else if (error.message?.includes('foreign key')) {

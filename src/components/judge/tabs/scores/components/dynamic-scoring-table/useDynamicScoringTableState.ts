@@ -1,16 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import { useCamposModelo } from '@/hooks/useDynamicScoring';
 import { useDynamicScoringSubmission } from '@/hooks/useDynamicScoringSubmission';
-import { CampoModelo } from '@/types/dynamicScoring';
 import { Athlete } from '../../hooks/useAthletes';
-
-interface AthleteScoreData {
-  [athleteId: string]: {
-    [fieldKey: string]: string | number;
-  };
-}
 
 interface UseDynamicScoringTableStateProps {
   athletes: Athlete[];
@@ -18,6 +12,7 @@ interface UseDynamicScoringTableStateProps {
   eventId: string;
   judgeId: string;
   modelo: any;
+  selectedBateriaId?: number | null;
 }
 
 export function useDynamicScoringTableState({
@@ -25,77 +20,82 @@ export function useDynamicScoringTableState({
   modalityId,
   eventId,
   judgeId,
-  modelo
+  modelo,
+  selectedBateriaId
 }: UseDynamicScoringTableStateProps) {
-  const [scoreData, setScoreData] = useState<AthleteScoreData>({});
+  const [scoreData, setScoreData] = useState<Record<string, Record<string, string>>>({});
   const [unsavedChanges, setUnsavedChanges] = useState<Set<string>>(new Set());
+
+  // Get campos for this modelo
+  const { data: campos = [], isLoading: isLoadingCampos } = useCamposModelo(modelo?.id);
   
+  // Get dynamic scoring submission hook
   const dynamicSubmission = useDynamicScoringSubmission();
 
-  // Fetch campos do modelo
-  const { data: campos = [], isLoading: isLoadingCampos } = useQuery({
-    queryKey: ['campos-modelo', modelo.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('campos_modelo')
-        .select('*')
-        .eq('modelo_id', modelo.id)
-        .neq('tipo_input', 'calculated')
-        .order('ordem_exibicao');
-
-      if (error) throw error;
-      return data as CampoModelo[];
-    },
-    enabled: !!modelo.id
-  });
-
-  // Fetch existing scores with tentativas
+  // Fetch existing scores
   const { data: existingScores = [] } = useQuery({
-    queryKey: ['athlete-dynamic-scores', modalityId, eventId, modelo.id],
+    queryKey: ['athlete-dynamic-scores', modalityId, eventId, selectedBateriaId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!eventId) return [];
+      
+      let query = supabase
         .from('pontuacoes')
-        .select(`
-          *,
-          tentativas_pontuacao(
-            chave_campo,
-            valor,
-            valor_formatado
-          )
-        `)
-        .eq('modalidade_id', modalityId)
+        .select('*, tentativas(*)')
         .eq('evento_id', eventId)
-        .eq('modelo_id', modelo.id)
-        .eq('juiz_id', judgeId);
+        .eq('modalidade_id', modalityId)
+        .eq('modelo_id', modelo?.id)
+        .in('atleta_id', athletes.map(a => a.atleta_id));
 
-      if (error) throw error;
-      return data;
+      // Filter by bateria if selected
+      if (selectedBateriaId) {
+        // Get bateria number first
+        const { data: bateriaData } = await supabase
+          .from('baterias')
+          .select('numero')
+          .eq('id', selectedBateriaId)
+          .single();
+        
+        if (bateriaData) {
+          query = query.eq('numero_bateria', bateriaData.numero);
+        }
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Error fetching scores:', error);
+        return [];
+      }
+      
+      return data || [];
     },
-    enabled: !!modalityId && !!eventId && !!modelo.id
+    enabled: !!eventId && !!modelo?.id && athletes.length > 0,
   });
 
   // Initialize score data from existing scores
   useEffect(() => {
-    if (existingScores.length > 0) {
-      const initialData: AthleteScoreData = {};
+    const initialData: Record<string, Record<string, string>> = {};
+    
+    athletes.forEach(athlete => {
+      initialData[athlete.atleta_id] = {};
       
-      existingScores.forEach(score => {
-        if (!initialData[score.atleta_id]) {
-          initialData[score.atleta_id] = {};
-        }
-        
-        score.tentativas_pontuacao?.forEach((tentativa: any) => {
-          const value = tentativa.valor_formatado || tentativa.valor.toString();
-          initialData[score.atleta_id][tentativa.chave_campo] = value;
+      // Find existing score for this athlete
+      const existingScore = existingScores.find(s => s.atleta_id === athlete.atleta_id);
+      
+      if (existingScore && existingScore.tentativas) {
+        // Populate from tentativas
+        existingScore.tentativas.forEach((tentativa: any) => {
+          if (tentativa.campo_chave) {
+            initialData[athlete.atleta_id][tentativa.campo_chave] = tentativa.valor || '';
+          }
         });
-      });
-      
-      console.log('Loaded initial data:', initialData);
-      setScoreData(initialData);
-    }
-  }, [existingScores]);
+      }
+    });
+    
+    setScoreData(initialData);
+  }, [athletes, existingScores]);
 
-  const handleFieldChange = (athleteId: string, fieldKey: string, value: string | number) => {
+  const handleFieldChange = (athleteId: string, fieldKey: string, value: string) => {
     setScoreData(prev => ({
       ...prev,
       [athleteId]: {
@@ -113,42 +113,35 @@ export function useDynamicScoringTableState({
 
     try {
       await dynamicSubmission.mutateAsync({
-        eventId,
-        modalityId,
         athleteId,
+        modalityId,
+        eventId,
         judgeId,
         modeloId: modelo.id,
-        formData: athleteData
+        formData: athleteData,
+        bateriaId: selectedBateriaId
       });
-
+      
       setUnsavedChanges(prev => {
         const newSet = new Set(prev);
         newSet.delete(athleteId);
         return newSet;
       });
-
-      toast.success(`Pontuação salva para ${athletes.find(a => a.atleta_id === athleteId)?.atleta_nome}`);
     } catch (error) {
-      console.error('Error saving score:', error);
-      toast.error('Erro ao salvar pontuação');
+      console.error('Error saving athlete score:', error);
     }
   };
 
   const saveAllScores = async () => {
-    const unsavedAthletes = Array.from(unsavedChanges);
-    
-    for (const athleteId of unsavedAthletes) {
-      await saveAthleteScore(athleteId);
-    }
+    const promises = Array.from(unsavedChanges).map(athleteId => saveAthleteScore(athleteId));
+    await Promise.all(promises);
   };
 
   const getAthleteCompletionStatus = (athleteId: string) => {
     const athleteData = scoreData[athleteId] || {};
     const requiredFields = campos.filter(c => c.obrigatorio);
     const completedRequired = requiredFields.filter(field => 
-      athleteData[field.chave_campo] !== undefined && 
-      athleteData[field.chave_campo] !== '' &&
-      athleteData[field.chave_campo] !== null
+      athleteData[field.chave_campo] && athleteData[field.chave_campo].trim() !== ''
     );
     
     return {
