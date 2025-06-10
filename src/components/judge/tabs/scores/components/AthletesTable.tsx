@@ -19,6 +19,7 @@ interface AthletesTableProps {
   judgeId: string;
   scoreType: 'tempo' | 'distancia' | 'pontos';
   modalityRule?: any;
+  selectedBateriaId?: number | null;
 }
 
 export function AthletesTable({
@@ -27,7 +28,8 @@ export function AthletesTable({
   eventId,
   judgeId,
   scoreType,
-  modalityRule
+  modalityRule,
+  selectedBateriaId
 }: AthletesTableProps) {
   const {
     scoreEntries,
@@ -40,18 +42,25 @@ export function AthletesTable({
 
   const { submitScoreMutation } = useScoreSubmission();
 
-  // Fetch existing scores
+  // Fetch existing scores (filtered by bateria if selected)
   const { data: existingScores = [] } = useQuery({
-    queryKey: ['athlete-scores', modalityId, eventId],
+    queryKey: ['athlete-scores', modalityId, eventId, selectedBateriaId],
     queryFn: async () => {
       if (!eventId) return [];
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('pontuacoes')
         .select('*')
         .eq('evento_id', eventId)
         .eq('modalidade_id', modalityId)
         .in('atleta_id', athletes.map(a => a.atleta_id));
+
+      // Filter by bateria if selected
+      if (selectedBateriaId) {
+        query = query.eq('bateria_id', selectedBateriaId);
+      }
+      
+      const { data, error } = await query;
       
       if (error) {
         console.error('Error fetching scores:', error);
@@ -81,6 +90,7 @@ export function AthletesTable({
         eventId: eventId!,
         judgeId,
         scoreType,
+        bateriaId: selectedBateriaId
       });
       cancelEditing(athleteId);
     } catch (error) {

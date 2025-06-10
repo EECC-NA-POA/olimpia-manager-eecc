@@ -16,6 +16,7 @@ interface DynamicAthletesTableProps {
   eventId: string | null;
   judgeId: string;
   modelo: any;
+  selectedBateriaId?: number | null;
 }
 
 export function DynamicAthletesTable({
@@ -23,7 +24,8 @@ export function DynamicAthletesTable({
   modalityId,
   eventId,
   judgeId,
-  modelo
+  modelo,
+  selectedBateriaId
 }: DynamicAthletesTableProps) {
   const [showCalculatedFields, setShowCalculatedFields] = useState(false);
 
@@ -55,6 +57,7 @@ export function DynamicAthletesTable({
                 eventId={eventId}
                 judgeId={judgeId}
                 modelo={modelo}
+                selectedBateriaId={selectedBateriaId}
               />
             </TabsContent>
             
@@ -97,6 +100,7 @@ export function DynamicAthletesTable({
                 modeloId={modelo.id}
                 modalityId={modalityId}
                 eventId={eventId}
+                bateriaId={selectedBateriaId}
               />
             </CardContent>
           </CollapsibleContent>
