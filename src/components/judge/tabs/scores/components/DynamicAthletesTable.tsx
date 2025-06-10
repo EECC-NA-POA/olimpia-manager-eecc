@@ -7,7 +7,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalculatedFieldsManager } from '@/components/judge/calculated-fields';
 import { DynamicScoringTable } from './DynamicScoringTable';
-import { useModelosModalidade } from '@/hooks/useDynamicScoring';
+import { BateriaNavigationTabs } from './BateriaNavigationTabs';
+import { useDynamicBaterias } from '../hooks/useDynamicBaterias';
 import { Athlete } from '../hooks/useAthletes';
 
 interface DynamicAthletesTableProps {
@@ -16,7 +17,7 @@ interface DynamicAthletesTableProps {
   eventId: string | null;
   judgeId: string;
   modelo: any;
-  selectedBateriaId?: number | null;
+  modalityRule?: any;
 }
 
 export function DynamicAthletesTable({
@@ -25,53 +26,83 @@ export function DynamicAthletesTable({
   eventId,
   judgeId,
   modelo,
-  selectedBateriaId
+  modalityRule
 }: DynamicAthletesTableProps) {
   const [showCalculatedFields, setShowCalculatedFields] = useState(false);
+
+  const {
+    regularBaterias,
+    finalBateria,
+    selectedBateriaId,
+    hasFinalBateria,
+    usesBaterias,
+    isLoading: isLoadingBaterias,
+    setSelectedBateriaId,
+    createNewBateria,
+    createFinalBateria,
+    editBateria,
+    isCreating,
+    isEditing
+  } = useDynamicBaterias({
+    modalityId,
+    eventId,
+    modalityRule
+  });
 
   if (!eventId) {
     return <div>Evento não selecionado</div>;
   }
 
+  if (isLoadingBaterias) {
+    return <div>Carregando configuração de baterias...</div>;
+  }
+
   return (
     <div className="space-y-6">
+      {/* Bateria Management */}
+      {usesBaterias && (
+        <BateriaNavigationTabs
+          regularBaterias={regularBaterias}
+          finalBateria={finalBateria}
+          selectedBateriaId={selectedBateriaId}
+          onSelectBateria={setSelectedBateriaId}
+          onCreateNewBateria={createNewBateria}
+          onCreateFinalBateria={createFinalBateria}
+          onEditBateria={editBateria}
+          hasFinalBateria={hasFinalBateria}
+          isCreating={isCreating}
+          isEditing={isEditing}
+          usesBaterias={usesBaterias}
+        />
+      )}
+
       {/* Athletes scoring section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TableIcon className="h-5 w-5" />
             Registro de Pontuações
+            {usesBaterias && selectedBateriaId && (
+              <span className="text-sm text-muted-foreground">
+                - {regularBaterias.find(b => b.id === selectedBateriaId) 
+                    ? `Bateria ${regularBaterias.find(b => b.id === selectedBateriaId)?.numero}`
+                    : finalBateria?.id === selectedBateriaId 
+                    ? 'Bateria Final'
+                    : 'Bateria Selecionada'
+                  }
+              </span>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="table" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="table">Tabela de Pontuação</TabsTrigger>
-              <TabsTrigger value="simple">Lista Simples</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="table" className="mt-4">
-              <DynamicScoringTable
-                athletes={athletes}
-                modalityId={modalityId}
-                eventId={eventId}
-                judgeId={judgeId}
-                modelo={modelo}
-                selectedBateriaId={selectedBateriaId}
-              />
-            </TabsContent>
-            
-            <TabsContent value="simple" className="mt-4">
-              <div className="space-y-2">
-                {athletes.map((athlete) => (
-                  <div key={athlete.atleta_id} className="p-4 border rounded-lg">
-                    <div className="font-medium">{athlete.atleta_nome}</div>
-                    <div className="text-sm text-muted-foreground">{athlete.filial_nome || 'Sem filial'}</div>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-          </Tabs>
+          <DynamicScoringTable
+            athletes={athletes}
+            modalityId={modalityId}
+            eventId={eventId}
+            judgeId={judgeId}
+            modelo={modelo}
+            selectedBateriaId={selectedBateriaId}
+          />
         </CardContent>
       </Card>
 

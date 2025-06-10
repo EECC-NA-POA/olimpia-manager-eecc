@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trophy, Target } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Plus, Trophy, Target, Edit2, Check, X } from 'lucide-react';
 import { DynamicBateria } from '../hooks/useDynamicBaterias';
 
 interface BateriaNavigationTabsProps {
@@ -13,8 +14,10 @@ interface BateriaNavigationTabsProps {
   onSelectBateria: (id: number) => void;
   onCreateNewBateria: () => void;
   onCreateFinalBateria: () => void;
+  onEditBateria: (bateriaId: number, novoNumero: number) => void;
   hasFinalBateria: boolean;
   isCreating: boolean;
+  isEditing: boolean;
   usesBaterias: boolean;
 }
 
@@ -25,11 +28,37 @@ export function BateriaNavigationTabs({
   onSelectBateria,
   onCreateNewBateria,
   onCreateFinalBateria,
+  onEditBateria,
   hasFinalBateria,
   isCreating,
+  isEditing,
   usesBaterias
 }: BateriaNavigationTabsProps) {
+  const [editingBateriaId, setEditingBateriaId] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
+
   if (!usesBaterias) return null;
+
+  const handleStartEdit = (bateria: DynamicBateria) => {
+    setEditingBateriaId(bateria.id);
+    setEditValue(bateria.numero.toString());
+  };
+
+  const handleSaveEdit = () => {
+    if (editingBateriaId && editValue) {
+      const novoNumero = parseInt(editValue);
+      if (novoNumero > 0) {
+        onEditBateria(editingBateriaId, novoNumero);
+        setEditingBateriaId(null);
+        setEditValue('');
+      }
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingBateriaId(null);
+    setEditValue('');
+  };
 
   return (
     <Card>
@@ -46,14 +75,54 @@ export function BateriaNavigationTabs({
             <div className="text-sm font-medium text-muted-foreground mb-2">Baterias Regulares</div>
             <div className="flex flex-wrap gap-2">
               {regularBaterias.map((bateria) => (
-                <Button
-                  key={bateria.id}
-                  variant={selectedBateriaId === bateria.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onSelectBateria(bateria.id)}
-                >
-                  Bateria {bateria.numero}
-                </Button>
+                <div key={bateria.id} className="flex items-center gap-1">
+                  {editingBateriaId === bateria.id ? (
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        className="w-16 h-8"
+                        min="1"
+                      />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleSaveEdit}
+                        disabled={isEditing}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleCancelEdit}
+                        className="h-8 w-8 p-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <Button
+                        variant={selectedBateriaId === bateria.id ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => onSelectBateria(bateria.id)}
+                      >
+                        Bateria {bateria.numero}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleStartEdit(bateria)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
               ))}
               <Button
                 variant="outline"

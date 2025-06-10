@@ -25,8 +25,9 @@ export function useDynamicScoringTableState({
   modalityId,
   eventId,
   judgeId,
-  modelo
-}: UseDynamicScoringTableStateProps) {
+  modelo,
+  selectedBateriaId
+}: UseDynamicScoringTableStateProps & { selectedBateriaId?: number | null }) {
   const [scoreData, setScoreData] = useState<AthleteScoreData>({});
   const [unsavedChanges, setUnsavedChanges] = useState<Set<string>>(new Set());
   
@@ -49,11 +50,11 @@ export function useDynamicScoringTableState({
     enabled: !!modelo.id
   });
 
-  // Fetch existing scores with tentativas
+  // Fetch existing scores with tentativas, filtered by bateria if selected
   const { data: existingScores = [] } = useQuery({
-    queryKey: ['athlete-dynamic-scores', modalityId, eventId, modelo.id],
+    queryKey: ['athlete-dynamic-scores', modalityId, eventId, modelo.id, selectedBateriaId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('pontuacoes')
         .select(`
           *,
@@ -67,6 +68,13 @@ export function useDynamicScoringTableState({
         .eq('evento_id', eventId)
         .eq('modelo_id', modelo.id)
         .eq('juiz_id', judgeId);
+
+      // Filter by bateria if selected
+      if (selectedBateriaId) {
+        query = query.eq('numero_bateria', selectedBateriaId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data;
@@ -118,7 +126,8 @@ export function useDynamicScoringTableState({
         athleteId,
         judgeId,
         modeloId: modelo.id,
-        formData: athleteData
+        formData: athleteData,
+        bateriaId: selectedBateriaId || undefined
       });
 
       setUnsavedChanges(prev => {

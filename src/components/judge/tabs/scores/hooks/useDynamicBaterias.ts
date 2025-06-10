@@ -29,7 +29,7 @@ export function useDynamicBaterias({ modalityId, eventId, modalityRule }: UseDyn
   const { data: baterias = [], isLoading } = useQuery({
     queryKey: ['dynamic-baterias', modalityId, eventId],
     queryFn: async () => {
-      if (!eventId || !usesBaterias) return [];
+      if (!eventId || !modalityId) return [];
       
       const { data, error } = await supabase
         .from('baterias')
@@ -48,7 +48,7 @@ export function useDynamicBaterias({ modalityId, eventId, modalityRule }: UseDyn
         isFinal: b.numero === 999 // Special number for final bateria
       })) as DynamicBateria[];
     },
-    enabled: !!eventId && !!modalityId && usesBaterias,
+    enabled: !!eventId && !!modalityId,
   });
 
   // Create new bateria mutation
@@ -57,7 +57,8 @@ export function useDynamicBaterias({ modalityId, eventId, modalityRule }: UseDyn
       if (!eventId) throw new Error('Event ID is required');
       
       // Get next number (999 for final, or max + 1 for regular)
-      const nextNumber = isFinal ? 999 : (Math.max(0, ...baterias.filter(b => !b.isFinal).map(b => b.numero)) + 1);
+      const regularBaterias = baterias.filter(b => !b.isFinal);
+      const nextNumber = isFinal ? 999 : (regularBaterias.length + 1);
       
       const { data, error } = await supabase
         .from('baterias')
@@ -80,6 +81,29 @@ export function useDynamicBaterias({ modalityId, eventId, modalityRule }: UseDyn
     onError: (error) => {
       console.error('Error creating bateria:', error);
       toast.error('Erro ao criar bateria');
+    }
+  });
+
+  // Edit bateria mutation
+  const editBateriaMutation = useMutation({
+    mutationFn: async ({ bateriaId, novoNumero }: { bateriaId: number, novoNumero: number }) => {
+      const { data, error } = await supabase
+        .from('baterias')
+        .update({ numero: novoNumero })
+        .eq('id', bateriaId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dynamic-baterias', modalityId, eventId] });
+      toast.success('Bateria editada com sucesso!');
+    },
+    onError: (error) => {
+      console.error('Error editing bateria:', error);
+      toast.error('Erro ao editar bateria');
     }
   });
 
@@ -107,6 +131,8 @@ export function useDynamicBaterias({ modalityId, eventId, modalityRule }: UseDyn
     setSelectedBateriaId,
     createNewBateria: () => createBateriaMutation.mutate({ isFinal: false }),
     createFinalBateria: () => createBateriaMutation.mutate({ isFinal: true }),
-    isCreating: createBateriaMutation.isPending
+    editBateria: (bateriaId: number, novoNumero: number) => editBateriaMutation.mutate({ bateriaId, novoNumero }),
+    isCreating: createBateriaMutation.isPending,
+    isEditing: editBateriaMutation.isPending
   };
 }
