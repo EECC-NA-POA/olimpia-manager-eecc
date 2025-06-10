@@ -8,6 +8,21 @@ export function useModeloConfigurationData(eventId: string | null) {
     queryFn: async () => {
       if (!eventId) return [];
       
+      // First get modalidades for this event
+      const { data: modalidades, error: modalidadesError } = await supabase
+        .from('modalidades')
+        .select('id')
+        .eq('evento_id', eventId);
+      
+      if (modalidadesError) {
+        console.error('Error fetching modalidades:', modalidadesError);
+        throw modalidadesError;
+      }
+      
+      if (!modalidades || modalidades.length === 0) return [];
+      
+      const modalidadeIds = modalidades.map(m => m.id);
+      
       const { data, error } = await supabase
         .from('modelos_modalidade')
         .select(`
@@ -20,9 +35,7 @@ export function useModeloConfigurationData(eventId: string | null) {
             nome
           )
         `)
-        .eq('modalidade_id', 'in', 
-          `(SELECT id FROM modalidades WHERE evento_id = '${eventId}')`
-        );
+        .in('modalidade_id', modalidadeIds);
 
       if (error) {
         console.error('Error fetching modelo configurations:', error);

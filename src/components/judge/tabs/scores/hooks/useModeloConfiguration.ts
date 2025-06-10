@@ -9,6 +9,22 @@ export interface ModeloConfiguration {
     baterias?: boolean;
     num_raias?: number;
     permite_final?: boolean;
+    regra_tipo?: string;
+    unidade?: string;
+    subunidade?: string;
+    [key: string]: any;
+  };
+}
+
+// Legacy type for backward compatibility
+export interface ModalityRule {
+  regra_tipo: string;
+  parametros: {
+    baterias?: boolean;
+    num_raias?: number;
+    permite_final?: boolean;
+    unidade?: string;
+    subunidade?: string;
     [key: string]: any;
   };
 }
@@ -40,4 +56,19 @@ export function useModeloConfiguration(modalidadeId: number | null) {
     },
     enabled: !!modalidadeId,
   });
+}
+
+// Legacy function for backward compatibility
+export function useModalityRules(modalidadeId: number | null) {
+  const { data: config, ...rest } = useModeloConfiguration(modalidadeId);
+  
+  const legacyRule: ModalityRule | null = config ? {
+    regra_tipo: config.parametros.regra_tipo || 'pontos',
+    parametros: config.parametros
+  } : null;
+  
+  return {
+    data: legacyRule,
+    ...rest
+  };
 }
