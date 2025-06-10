@@ -58,35 +58,77 @@ export function useModeloConfigurationData(eventId: string | null) {
       // For each modelo, get its campos_modelo to build parametros
       const enrichedModelos = await Promise.all(
         modelosData.map(async (modelo) => {
+          console.log('Fetching campos for modelo ID:', modelo.id);
+          
           const { data: campos, error: camposError } = await supabase
             .from('campos_modelo')
-            .select('chave_campo, metadados')
-            .eq('modelo_id', modelo.id);
+            .select('*')
+            .eq('modelo_id', modelo.id)
+            .order('ordem_exibicao');
 
           if (camposError) {
             console.error('Error fetching campos for modelo:', modelo.id, camposError);
           }
 
-          // Build parametros from campos metadados
+          console.log('Found campos for modelo', modelo.id, ':', campos);
+
+          // Build parametros from campos
           const parametros: any = {};
-          if (campos) {
+          const camposArray: any[] = [];
+          
+          if (campos && campos.length > 0) {
             campos.forEach(campo => {
+              // Add campo to campos array for form editing
+              camposArray.push({
+                id: campo.id,
+                chave_campo: campo.chave_campo,
+                rotulo_campo: campo.rotulo_campo,
+                tipo_input: campo.tipo_input,
+                obrigatorio: campo.obrigatorio,
+                ordem_exibicao: campo.ordem_exibicao,
+                metadados: campo.metadados || {}
+              });
+
+              // Extract special configuration fields from metadados
+              if (campo.chave_campo === 'baterias' && campo.metadados) {
+                parametros.baterias = campo.metadados.baterias || false;
+                parametros.num_raias = campo.metadados.num_raias || 8;
+                parametros.permite_final = campo.metadados.permite_final || false;
+              }
+              
+              if (campo.chave_campo === 'pontuacao' && campo.metadados) {
+                parametros.regra_tipo = campo.metadados.regra_tipo;
+                parametros.formato_resultado = campo.metadados.formato_resultado;
+                parametros.tipo_calculo = campo.metadados.tipo_calculo;
+                parametros.campo_referencia = campo.metadados.campo_referencia;
+                parametros.contexto = campo.metadados.contexto;
+                parametros.ordem_calculo = campo.metadados.ordem_calculo;
+              }
+
+              // Extract other metadados into parametros
               if (campo.metadados) {
-                // Merge metadados into parametros
-                Object.assign(parametros, campo.metadados);
+                Object.keys(campo.metadados).forEach(key => {
+                  if (!parametros.hasOwnProperty(key)) {
+                    parametros[key] = campo.metadados[key];
+                  }
+                });
               }
             });
           }
 
+          // Add campos array to parametros for editing
+          parametros.campos = camposArray;
+
           // Add some default structure if no campos exist
-          if (Object.keys(parametros).length === 0) {
+          if (Object.keys(parametros).length === 0 || !parametros.regra_tipo) {
             parametros.baterias = false;
             parametros.regra_tipo = 'pontos';
+            parametros.campos = [];
           }
 
           const modalidade = modalidades.find(m => m.id === modelo.modalidade_id);
           
-          return {
+          const enrichedModelo = {
             ...modelo,
             parametros,
             modalidade: {
@@ -94,6 +136,9 @@ export function useModeloConfigurationData(eventId: string | null) {
               categoria: modalidade?.categoria || null
             }
           };
+
+          console.log('Enriched modelo:', enrichedModelo);
+          return enrichedModelo;
         })
       );
 
@@ -102,7 +147,7 @@ export function useModeloConfigurationData(eventId: string | null) {
         a.modalidade.nome.localeCompare(b.modalidade.nome)
       );
 
-      console.log('Enriched and sorted modelos data:', sortedModelos);
+      console.log('Final enriched and sorted modelos data:', sortedModelos);
       return sortedModelos;
     },
     enabled: !!eventId,

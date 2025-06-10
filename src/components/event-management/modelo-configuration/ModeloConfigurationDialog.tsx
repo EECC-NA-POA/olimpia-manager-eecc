@@ -52,7 +52,9 @@ export function ModeloConfigurationDialog({
 
   useEffect(() => {
     if (editingModelo) {
+      console.log('Loading modelo for editing:', editingModelo);
       const parametros = editingModelo.parametros || {};
+      
       setConfig({
         baterias: parametros.baterias || false,
         num_raias: parametros.num_raias || 8,
@@ -65,15 +67,30 @@ export function ModeloConfigurationDialog({
         ordem_calculo: parametros.ordem_calculo || 'asc'
       });
 
-      // Configurar campos existentes ou criar campos padrão
-      const camposExistentes = parametros.campos || [];
-      if (camposExistentes.length === 0) {
-        // Criar campo padrão baseado no tipo de regra
+      // Load existing campos or create default ones
+      let camposToLoad = parametros.campos || [];
+      
+      console.log('Existing campos from parametros:', camposToLoad);
+      
+      if (camposToLoad.length === 0) {
+        // Create default field based on regra_tipo
         const campoDefault = createDefaultField(parametros.regra_tipo || 'pontos');
-        setCampos([campoDefault]);
-      } else {
-        setCampos(camposExistentes);
+        camposToLoad = [campoDefault];
       }
+      
+      // Ensure all campos have proper IDs and structure
+      const processedCampos = camposToLoad.map((campo: any, index: number) => ({
+        id: campo.id || `campo_${Date.now()}_${index}`,
+        chave_campo: campo.chave_campo || '',
+        rotulo_campo: campo.rotulo_campo || '',
+        tipo_input: campo.tipo_input || 'number',
+        obrigatorio: campo.obrigatorio || false,
+        ordem_exibicao: campo.ordem_exibicao || (index + 1),
+        metadados: campo.metadados || {}
+      }));
+      
+      console.log('Processed campos to load:', processedCampos);
+      setCampos(processedCampos);
     }
   }, [editingModelo]);
 
@@ -177,10 +194,14 @@ export function ModeloConfigurationDialog({
   const handleSave = async () => {
     if (!editingModelo) return;
     
+    console.log('Saving configuration with campos:', campos);
+    
     const configWithCampos = {
       ...config,
       campos: campos.sort((a, b) => a.ordem_exibicao - b.ordem_exibicao)
     };
+    
+    console.log('Final config to save:', configWithCampos);
     
     await onSave(editingModelo.id, configWithCampos);
   };
