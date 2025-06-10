@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { AthleteScoreCard } from '../../../score-card/AthleteScoreCard';
 import { DynamicAthleteScoreCard } from '../../../score-card/DynamicAthleteScoreCard';
 import { useModelosModalidade, useCamposModelo } from '@/hooks/useDynamicScoring';
@@ -7,36 +7,42 @@ import { Athlete } from '../hooks/useAthletes';
 
 interface DynamicAthletesGridProps {
   athletes: Athlete[];
+  selectedAthleteId: string | null;
+  onAthleteSelect: (id: string | null) => void;
   modalityId: number;
   scoreType: 'tempo' | 'distancia' | 'pontos';
   eventId: string | null;
   judgeId: string;
   modalityRule?: any;
-  modelo: any;
 }
 
 export function DynamicAthletesGrid({
   athletes,
+  selectedAthleteId,
+  onAthleteSelect,
   modalityId,
   scoreType,
   eventId,
   judgeId,
-  modalityRule,
-  modelo
+  modalityRule
 }: DynamicAthletesGridProps) {
-  const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
-
+  // Check if this modality has dynamic scoring configured
+  const { data: modelos = [] } = useModelosModalidade(modalityId);
+  const hasDynamicScoring = modelos.length > 0;
+  
   // Get the first model to check if it has fields configured
-  const { data: campos = [] } = useCamposModelo(modelo?.id);
+  const firstModelo = modelos[0];
+  const { data: campos = [] } = useCamposModelo(firstModelo?.id);
   const hasConfiguredFields = campos.length > 0;
 
   console.log('DynamicAthletesGrid - modalityId:', modalityId);
+  console.log('DynamicAthletesGrid - hasDynamicScoring:', hasDynamicScoring);
   console.log('DynamicAthletesGrid - hasConfiguredFields:', hasConfiguredFields);
-  console.log('DynamicAthletesGrid - modelo:', modelo);
+  console.log('DynamicAthletesGrid - modelos:', modelos);
   console.log('DynamicAthletesGrid - campos:', campos);
 
-  // Only show dynamic scoring if there are configured fields
-  const shouldUseDynamicScoring = hasConfiguredFields;
+  // Only show dynamic scoring if there are models AND configured fields
+  const shouldUseDynamicScoring = hasDynamicScoring && hasConfiguredFields;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

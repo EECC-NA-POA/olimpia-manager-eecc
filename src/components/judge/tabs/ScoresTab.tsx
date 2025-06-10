@@ -5,7 +5,7 @@ import { useModalities } from './scores/hooks/useModalities';
 import { useAthletes } from './scores/hooks/useAthletes';
 import { ModalityCard } from './scores/components/ModalityCard';
 import { NoModalitiesCard } from './scores/components/NoModalitiesCard';
-import { AthletesListTabularWithBaterias } from './scores/components/AthletesListTabularWithBaterias';
+import { AthletesListTabular } from './scores/components/AthletesListTabular';
 
 interface ScoresTabProps {
   userId: string;
@@ -49,7 +49,7 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
       />
       
       {selectedModalityId && (
-        <AthletesListTabularWithBaterias
+        <AthletesListTabular
           athletes={athletes}
           isLoading={isLoadingAthletes}
           modalityId={selectedModalityId}
