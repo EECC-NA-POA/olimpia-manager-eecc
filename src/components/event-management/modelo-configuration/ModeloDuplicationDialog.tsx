@@ -10,7 +10,7 @@ interface ModeloDuplicationDialogProps {
   onClose: () => void;
   onDuplicate: (targetModalidadeId: string) => Promise<void>;
   modelo: any;
-  modalities: Array<{ id: string; nome: string }>;
+  modalities: Array<{ id: string; nome: string; categoria?: string }>;
   isLoading: boolean;
 }
 
@@ -31,7 +31,10 @@ export function ModeloDuplicationDialog({
     }
   };
 
-  const availableModalities = modalities.filter(mod => mod.id !== modelo?.modalidade_id);
+  // Filter out the current modality and sort alphabetically by name
+  const availableModalities = modalities
+    .filter(mod => mod.id !== modelo?.modalidade_id)
+    .sort((a, b) => a.nome.localeCompare(b.nome));
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -59,7 +62,14 @@ export function ModeloDuplicationDialog({
               <SelectContent>
                 {availableModalities.map((modality) => (
                   <SelectItem key={modality.id} value={modality.id}>
-                    {modality.nome}
+                    <div className="flex flex-col">
+                      <span className="font-medium">{modality.nome}</span>
+                      {modality.categoria && (
+                        <span className="text-xs text-muted-foreground">
+                          {modality.categoria}
+                        </span>
+                      )}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
