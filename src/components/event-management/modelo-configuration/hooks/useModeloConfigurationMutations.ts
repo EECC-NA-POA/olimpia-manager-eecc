@@ -32,6 +32,7 @@ export function useModeloConfigurationMutations(refetch: () => void) {
           console.error('Error deleting existing campos:', deleteError);
           throw deleteError;
         }
+        console.log('Deleted existing campos');
       }
 
       // Create or update campos based on parametros
@@ -60,7 +61,7 @@ export function useModeloConfigurationMutations(refetch: () => void) {
           modelo_id: modeloId,
           chave_campo: 'pontuacao',
           rotulo_campo: 'Configuração de Pontuação',
-          tipo_input: 'select',
+          tipo_input: 'config',
           obrigatorio: true,
           ordem_exibicao: 1001, // High order to put at end
           metadados: { 
@@ -77,15 +78,18 @@ export function useModeloConfigurationMutations(refetch: () => void) {
       // Handle custom campos from the form
       if (parametros.campos && Array.isArray(parametros.campos)) {
         parametros.campos.forEach((campo: any) => {
-          camposToInsert.push({
-            modelo_id: modeloId,
-            chave_campo: campo.chave_campo,
-            rotulo_campo: campo.rotulo_campo,
-            tipo_input: campo.tipo_input,
-            obrigatorio: campo.obrigatorio,
-            ordem_exibicao: campo.ordem_exibicao,
-            metadados: campo.metadados || {}
-          });
+          // Only add campos that have meaningful data
+          if (campo.chave_campo && campo.rotulo_campo) {
+            camposToInsert.push({
+              modelo_id: modeloId,
+              chave_campo: campo.chave_campo,
+              rotulo_campo: campo.rotulo_campo,
+              tipo_input: campo.tipo_input || 'number',
+              obrigatorio: campo.obrigatorio || false,
+              ordem_exibicao: campo.ordem_exibicao || 1,
+              metadados: campo.metadados || {}
+            });
+          }
         });
       }
 
@@ -93,17 +97,21 @@ export function useModeloConfigurationMutations(refetch: () => void) {
 
       // Insert new campos
       if (camposToInsert.length > 0) {
-        const { error: insertError } = await supabase
+        const { data: insertedCampos, error: insertError } = await supabase
           .from('campos_modelo')
-          .insert(camposToInsert);
+          .insert(camposToInsert)
+          .select();
         
         if (insertError) {
           console.error('Error inserting campos:', insertError);
           throw insertError;
         }
+        
+        console.log('Successfully inserted campos:', insertedCampos);
       }
 
       console.log('Configuration saved successfully');
+      return { success: true };
     },
     onSuccess: () => {
       toast.success('Configuração salva com sucesso!');
@@ -172,6 +180,7 @@ export function useModeloConfigurationMutations(refetch: () => void) {
   });
 
   const saveConfiguration = async (modeloId: number, parametros: any) => {
+    console.log('saveConfiguration called with:', { modeloId, parametros });
     await saveConfigurationMutation.mutateAsync({ modeloId, parametros });
   };
 

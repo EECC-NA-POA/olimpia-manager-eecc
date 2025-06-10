@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -53,44 +52,78 @@ export function ModeloConfigurationDialog({
   useEffect(() => {
     if (editingModelo) {
       console.log('Loading modelo for editing:', editingModelo);
-      const parametros = editingModelo.parametros || {};
       
-      setConfig({
-        baterias: parametros.baterias || false,
-        num_raias: parametros.num_raias || 8,
-        permite_final: parametros.permite_final || false,
-        regra_tipo: parametros.regra_tipo || 'pontos',
-        formato_resultado: parametros.formato_resultado || '',
-        tipo_calculo: parametros.tipo_calculo || '',
-        campo_referencia: parametros.campo_referencia || '',
-        contexto: parametros.contexto || '',
-        ordem_calculo: parametros.ordem_calculo || 'asc'
-      });
-
-      // Load existing campos or create default ones
-      let camposToLoad = parametros.campos || [];
+      // Load existing campos from the enriched model data
+      let camposToLoad: any[] = [];
       
-      console.log('Existing campos from parametros:', camposToLoad);
-      
-      if (camposToLoad.length === 0) {
-        // Create default field based on regra_tipo
-        const campoDefault = createDefaultField(parametros.regra_tipo || 'pontos');
-        camposToLoad = [campoDefault];
+      if (editingModelo.campos_modelo && Array.isArray(editingModelo.campos_modelo)) {
+        // Use campos from the enriched data
+        camposToLoad = editingModelo.campos_modelo
+          .filter((campo: any) => campo.chave_campo !== 'baterias' && campo.chave_campo !== 'pontuacao')
+          .map((campo: any) => ({
+            id: campo.id ? String(campo.id) : `campo_${Date.now()}_${Math.random()}`,
+            chave_campo: campo.chave_campo || '',
+            rotulo_campo: campo.rotulo_campo || '',
+            tipo_input: campo.tipo_input || 'number',
+            obrigatorio: campo.obrigatorio || false,
+            ordem_exibicao: campo.ordem_exibicao || 1,
+            metadados: campo.metadados || {}
+          }));
       }
       
-      // Ensure all campos have proper IDs and structure
-      const processedCampos = camposToLoad.map((campo: any, index: number) => ({
-        id: campo.id || `campo_${Date.now()}_${index}`,
-        chave_campo: campo.chave_campo || '',
-        rotulo_campo: campo.rotulo_campo || '',
-        tipo_input: campo.tipo_input || 'number',
-        obrigatorio: campo.obrigatorio || false,
-        ordem_exibicao: campo.ordem_exibicao || (index + 1),
-        metadados: campo.metadados || {}
-      }));
+      console.log('Loaded campos from model:', camposToLoad);
       
-      console.log('Processed campos to load:', processedCampos);
-      setCampos(processedCampos);
+      // If no campos exist, create a default one based on regra_tipo
+      if (camposToLoad.length === 0) {
+        const defaultCampo = createDefaultField(editingModelo.parametros?.regra_tipo || 'pontos');
+        camposToLoad = [defaultCampo];
+      }
+      
+      setCampos(camposToLoad);
+      
+      // Load configuration from existing campos_modelo
+      let loadedConfig = {
+        baterias: false,
+        num_raias: 8,
+        permite_final: false,
+        regra_tipo: 'pontos',
+        formato_resultado: '',
+        tipo_calculo: '',
+        campo_referencia: '',
+        contexto: '',
+        ordem_calculo: 'asc'
+      };
+      
+      if (editingModelo.campos_modelo && Array.isArray(editingModelo.campos_modelo)) {
+        editingModelo.campos_modelo.forEach((campo: any) => {
+          if (campo.chave_campo === 'baterias' && campo.metadados) {
+            loadedConfig.baterias = campo.metadados.baterias || false;
+            loadedConfig.num_raias = campo.metadados.num_raias || 8;
+            loadedConfig.permite_final = campo.metadados.permite_final || false;
+          }
+          
+          if (campo.chave_campo === 'pontuacao' && campo.metadados) {
+            loadedConfig.regra_tipo = campo.metadados.regra_tipo || 'pontos';
+            loadedConfig.formato_resultado = campo.metadados.formato_resultado || '';
+            loadedConfig.tipo_calculo = campo.metadados.tipo_calculo || '';
+            loadedConfig.campo_referencia = campo.metadados.campo_referencia || '';
+            loadedConfig.contexto = campo.metadados.contexto || '';
+            loadedConfig.ordem_calculo = campo.metadados.ordem_calculo || 'asc';
+          }
+        });
+      }
+      
+      // Fallback to parametros if available
+      if (editingModelo.parametros) {
+        Object.keys(loadedConfig).forEach(key => {
+          if (editingModelo.parametros[key] !== undefined && loadedConfig[key as keyof typeof loadedConfig] === (key === 'regra_tipo' ? 'pontos' : key === 'baterias' ? false : key === 'num_raias' ? 8 : key === 'ordem_calculo' ? 'asc' : '')) {
+            (loadedConfig as any)[key] = editingModelo.parametros[key];
+          }
+        });
+      }
+      
+      console.log('Final loaded config:', loadedConfig);
+      setConfig(loadedConfig);
     }
   }, [editingModelo]);
 
@@ -194,7 +227,9 @@ export function ModeloConfigurationDialog({
   const handleSave = async () => {
     if (!editingModelo) return;
     
-    console.log('Saving configuration with campos:', campos);
+    console.log('Saving configuration...');
+    console.log('Current config:', config);
+    console.log('Current campos:', campos);
     
     const configWithCampos = {
       ...config,
@@ -203,7 +238,12 @@ export function ModeloConfigurationDialog({
     
     console.log('Final config to save:', configWithCampos);
     
-    await onSave(editingModelo.id, configWithCampos);
+    try {
+      await onSave(editingModelo.id, configWithCampos);
+      console.log('Save completed successfully');
+    } catch (error) {
+      console.error('Save failed:', error);
+    }
   };
 
   const handleDuplicate = () => {
