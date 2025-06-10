@@ -152,11 +152,9 @@ export function useAthleteParticipation({
       athleteFields.includes(field.chave_campo)
     );
 
-    // Handle the usuarios data properly - it should be a single object due to the specific foreign key reference
-    const usuario = athlete.usuarios;
-    const nomeCompleto = usuario && typeof usuario === 'object' && 'nome_completo' in usuario 
-      ? usuario.nome_completo 
-      : 'Atleta';
+    // Handle the usuarios data properly with correct typing
+    const usuario = athlete.usuarios as { nome_completo: string } | null;
+    const nomeCompleto: string = usuario?.nome_completo || 'Atleta';
 
     return {
       atleta_id: athlete.atleta_id,
