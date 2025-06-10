@@ -2,13 +2,16 @@
 name: Create PR to Fork Repository
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches: [release]
   workflow_dispatch:
 
 jobs:
   create-pr-to-fork:
     runs-on: ubuntu-latest
+    # Only run when PR was merged (not just closed) and came from main branch
+    if: github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'main'
     
     steps:
       - name: Checkout code
@@ -37,7 +40,7 @@ jobs:
           BRANCH_NAME="sync-from-release-$(date +%Y%m%d-%H%M%S)"
           echo "Creating branch: $BRANCH_NAME"
           
-          # Create new branch based on current release
+          # Create new branch based on current release (which now contains merged changes from main)
           git checkout -b $BRANCH_NAME
           
           # Push to fork
@@ -53,30 +56,31 @@ jobs:
         run: |
           echo "Creating PR from $BRANCH_NAME to main in fork repository..."
           
-          # Get commit info for PR description
-          COMMIT_SHA="${{ github.sha }}"
-          COMMIT_MESSAGE=$(git log -1 --pretty=format:"%s")
-          COMMIT_AUTHOR=$(git log -1 --pretty=format:"%an")
+          # Get merged PR info for better description
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          MERGE_COMMIT="${{ github.event.pull_request.merge_commit_sha }}"
           
           # Create PR body
-          PR_BODY="## Sincronização automática da branch release
+          PR_BODY="## Sincronização automática do repositório privado
           
-          **Commit:** \`$COMMIT_SHA\`
-          **Autor:** $COMMIT_AUTHOR
-          **Mensagem:** $COMMIT_MESSAGE
+          **PR Original:** #$PR_NUMBER - $PR_TITLE
+          **Autor:** @$PR_AUTHOR
+          **Merge Commit:** \`$MERGE_COMMIT\`
           
-          Este PR foi criado automaticamente a partir de mudanças na branch \`release\` do repositório principal.
+          Este PR foi criado automaticamente após o merge do PR #$PR_NUMBER da branch \`main\` para \`release\` no repositório privado.
           
           **Repositório origem:** bonanza-ong/olimpia-manager-na
-          **Branch origem:** release
-          **Branch destino:** main"
+          **Fluxo:** main → release (repo privado) → main (repo público)
+          **Branch temporária:** $BRANCH_NAME"
           
           # Try to create the PR
           gh pr create \
             --repo EECC-NA-POA/olimpia-manager-eecc \
             --base main \
             --head $BRANCH_NAME \
-            --title "🔄 Sincronização da branch release" \
+            --title "🔄 Sincronização: $PR_TITLE" \
             --body "$PR_BODY" || {
               echo "Failed to create PR. Checking if it already exists..."
               
@@ -107,3 +111,4 @@ jobs:
           echo "A Pull Request has been created (or updated) in the fork repository."
           echo "Repository: EECC-NA-POA/olimpia-manager-eecc"
           echo "Target branch: main"
+          echo "Triggered by merge of PR #${{ github.event.pull_request.number }}"
