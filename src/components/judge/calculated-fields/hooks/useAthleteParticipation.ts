@@ -152,8 +152,9 @@ export function useAthleteParticipation({
       athleteFields.includes(field.chave_campo)
     );
 
-    // Handle the usuarios data properly with correct typing
-    const usuario = athlete.usuarios as { nome_completo: string } | null;
+    // Handle the usuarios data properly - it's an array, so get the first element
+    const usuariosArray = athlete.usuarios as { nome_completo: string }[] | null;
+    const usuario = usuariosArray && usuariosArray.length > 0 ? usuariosArray[0] : null;
     const nomeCompleto: string = usuario?.nome_completo || 'Atleta';
 
     return {
