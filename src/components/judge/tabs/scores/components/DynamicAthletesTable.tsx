@@ -7,8 +7,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalculatedFieldsManager } from '@/components/judge/calculated-fields';
 import { DynamicScoringTable } from './DynamicScoringTable';
-import { BateriaNavigationTabs } from './BateriaNavigationTabs';
-import { useDynamicBaterias } from '../hooks/useDynamicBaterias';
 import { Athlete } from '../hooks/useAthletes';
 
 interface DynamicAthletesTableProps {
@@ -18,6 +16,7 @@ interface DynamicAthletesTableProps {
   judgeId: string;
   modelo: any;
   modalityRule?: any;
+  selectedBateriaId?: number | null;
 }
 
 export function DynamicAthletesTable({
@@ -26,70 +25,26 @@ export function DynamicAthletesTable({
   eventId,
   judgeId,
   modelo,
-  modalityRule
+  modalityRule,
+  selectedBateriaId
 }: DynamicAthletesTableProps) {
   const [showCalculatedFields, setShowCalculatedFields] = useState(false);
-
-  const {
-    regularBaterias,
-    finalBateria,
-    selectedBateriaId,
-    hasFinalBateria,
-    usesBaterias,
-    isLoading: isLoadingBaterias,
-    setSelectedBateriaId,
-    createNewBateria,
-    createFinalBateria,
-    editBateria,
-    isCreating,
-    isEditing
-  } = useDynamicBaterias({
-    modalityId,
-    eventId,
-    modalityRule
-  });
 
   if (!eventId) {
     return <div>Evento não selecionado</div>;
   }
 
-  if (isLoadingBaterias) {
-    return <div>Carregando configuração de baterias...</div>;
-  }
-
   return (
     <div className="space-y-6">
-      {/* Bateria Management */}
-      {usesBaterias && (
-        <BateriaNavigationTabs
-          regularBaterias={regularBaterias}
-          finalBateria={finalBateria}
-          selectedBateriaId={selectedBateriaId}
-          onSelectBateria={setSelectedBateriaId}
-          onCreateNewBateria={createNewBateria}
-          onCreateFinalBateria={createFinalBateria}
-          onEditBateria={editBateria}
-          hasFinalBateria={hasFinalBateria}
-          isCreating={isCreating}
-          isEditing={isEditing}
-          usesBaterias={usesBaterias}
-        />
-      )}
-
       {/* Athletes scoring section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TableIcon className="h-5 w-5" />
             Registro de Pontuações
-            {usesBaterias && selectedBateriaId && (
+            {selectedBateriaId && (
               <span className="text-sm text-muted-foreground">
-                - {regularBaterias.find(b => b.id === selectedBateriaId) 
-                    ? `Bateria ${regularBaterias.find(b => b.id === selectedBateriaId)?.numero}`
-                    : finalBateria?.id === selectedBateriaId 
-                    ? 'Bateria Final'
-                    : 'Bateria Selecionada'
-                  }
+                - Bateria {selectedBateriaId === 999 ? 'Final' : selectedBateriaId}
               </span>
             )}
           </CardTitle>

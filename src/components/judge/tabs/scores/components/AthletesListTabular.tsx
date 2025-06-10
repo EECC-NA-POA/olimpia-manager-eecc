@@ -177,6 +177,7 @@ export function AthletesListTabular({
               judgeId={judgeId}
               modelo={modelos[0]}
               modalityRule={modalityRule}
+              selectedBateriaId={selectedBateriaId}
             />
           ) : (
             <AthletesTable

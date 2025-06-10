@@ -29,7 +29,7 @@ export function useDynamicBaterias({ modalityId, eventId, modalityRule }: UseDyn
   const { data: baterias = [], isLoading } = useQuery({
     queryKey: ['dynamic-baterias', modalityId, eventId],
     queryFn: async () => {
-      if (!eventId || !modalityId) return [];
+      if (!eventId || !modalityId || !usesBaterias) return [];
       
       const { data, error } = await supabase
         .from('baterias')
@@ -48,7 +48,7 @@ export function useDynamicBaterias({ modalityId, eventId, modalityRule }: UseDyn
         isFinal: b.numero === 999 // Special number for final bateria
       })) as DynamicBateria[];
     },
-    enabled: !!eventId && !!modalityId,
+    enabled: !!eventId && !!modalityId && usesBaterias,
   });
 
   // Create new bateria mutation
@@ -107,12 +107,16 @@ export function useDynamicBaterias({ modalityId, eventId, modalityRule }: UseDyn
     }
   });
 
-  // Auto-select first bateria if none selected
+  // Auto-select first bateria if none selected and baterias exist
   useEffect(() => {
-    if (baterias.length > 0 && !selectedBateriaId) {
+    if (usesBaterias && baterias.length > 0 && !selectedBateriaId) {
       setSelectedBateriaId(baterias[0].id);
     }
-  }, [baterias, selectedBateriaId]);
+    // If no baterias exist and we're using baterias, create the first one
+    else if (usesBaterias && baterias.length === 0 && !createBateriaMutation.isPending) {
+      createBateriaMutation.mutate({ isFinal: false });
+    }
+  }, [baterias, selectedBateriaId, usesBaterias]);
 
   const selectedBateria = baterias.find(b => b.id === selectedBateriaId);
   const hasFinalBateria = baterias.some(b => b.isFinal);

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -18,6 +19,7 @@ interface UseDynamicScoringTableStateProps {
   eventId: string;
   judgeId: string;
   modelo: any;
+  selectedBateriaId?: number | null;
 }
 
 export function useDynamicScoringTableState({
@@ -27,7 +29,7 @@ export function useDynamicScoringTableState({
   judgeId,
   modelo,
   selectedBateriaId
-}: UseDynamicScoringTableStateProps & { selectedBateriaId?: number | null }) {
+}: UseDynamicScoringTableStateProps) {
   const [scoreData, setScoreData] = useState<AthleteScoreData>({});
   const [unsavedChanges, setUnsavedChanges] = useState<Set<string>>(new Set());
   
@@ -72,6 +74,8 @@ export function useDynamicScoringTableState({
       // Filter by bateria if selected
       if (selectedBateriaId) {
         query = query.eq('numero_bateria', selectedBateriaId);
+      } else {
+        query = query.is('numero_bateria', null);
       }
 
       const { data, error } = await query;
@@ -98,10 +102,13 @@ export function useDynamicScoringTableState({
         });
       });
       
-      console.log('Loaded initial data:', initialData);
+      console.log('Loaded initial data for bateria:', selectedBateriaId, initialData);
       setScoreData(initialData);
+    } else {
+      // Clear data when no scores exist for this bateria
+      setScoreData({});
     }
-  }, [existingScores]);
+  }, [existingScores, selectedBateriaId]);
 
   const handleFieldChange = (athleteId: string, fieldKey: string, value: string | number) => {
     setScoreData(prev => ({
