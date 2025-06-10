@@ -1,11 +1,15 @@
 
-import React from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { useDynamicScoringTableState } from './dynamic-scoring-table/useDynamicScoringTableState';
-import { DynamicInputField } from './dynamic-scoring-table/DynamicInputField';
-import { AthleteStatusCell } from './dynamic-scoring-table/AthleteStatusCell';
-import { UnsavedChangesBanner } from './dynamic-scoring-table/UnsavedChangesBanner';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Save, Edit2, X, Check, Trophy } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { useCamposModelo } from '@/hooks/useDynamicScoring';
+import { useDynamicScoringSubmission } from '@/hooks/useDynamicScoringSubmission';
 import { Athlete } from '../hooks/useAthletes';
 
 interface DynamicScoringTableProps {
@@ -14,6 +18,7 @@ interface DynamicScoringTableProps {
   eventId: string;
   judgeId: string;
   modelo: any;
+  selectedBateriaId?: number | null;
 }
 
 export function DynamicScoringTable({
@@ -21,7 +26,8 @@ export function DynamicScoringTable({
   modalityId,
   eventId,
   judgeId,
-  modelo
+  modelo,
+  selectedBateriaId
 }: DynamicScoringTableProps) {
   const {
     scoreData,

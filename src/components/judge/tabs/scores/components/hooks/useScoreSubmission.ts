@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -13,13 +12,14 @@ interface SubmitScoreParams {
   eventId: string;
   judgeId: string;
   scoreType: 'tempo' | 'distancia' | 'pontos';
+  bateriaId?: number | null;
 }
 
 export function useScoreSubmission() {
   const queryClient = useQueryClient();
 
   const submitScoreMutation = useMutation({
-    mutationFn: async ({ athleteId, value, notes, athletes, modalityId, eventId, judgeId, scoreType }: SubmitScoreParams) => {
+    mutationFn: async ({ athleteId, value, notes, athletes, modalityId, eventId, judgeId, scoreType, bateriaId }: SubmitScoreParams) => {
       if (!eventId) throw new Error('Event ID is required');
       
       const athlete = athletes.find(a => a.atleta_id === athleteId);
@@ -45,44 +45,46 @@ export function useScoreSubmission() {
       }
 
       // First, ensure we have a bateria for this modality
-      let bateriaId: number;
-      
+      let bateriaId: number | null = bateriaId;
+
       // Try to find existing bateria
-      const { data: existingBaterias, error: bateriaFetchError } = await supabase
-        .from('baterias')
-        .select('id')
-        .eq('modalidade_id', modalityId)
-        .eq('evento_id', eventId)
-        .limit(1);
-
-      if (bateriaFetchError) {
-        console.error('Error fetching baterias:', bateriaFetchError);
-        throw new Error('Erro ao buscar baterias');
-      }
-
-      if (existingBaterias && existingBaterias.length > 0) {
-        bateriaId = existingBaterias[0].id;
-        console.log('Using existing bateria:', bateriaId);
-      } else {
-        // Create a default bateria
-        console.log('Creating default bateria for modality:', modalityId);
-        const { data: newBateria, error: bateriaCreateError } = await supabase
+      if (!bateriaId) {
+        const { data: existingBaterias, error: bateriaFetchError } = await supabase
           .from('baterias')
-          .insert({
-            modalidade_id: modalityId,
-            evento_id: eventId,
-            numero: 1
-          })
           .select('id')
-          .single();
+          .eq('modalidade_id', modalityId)
+          .eq('evento_id', eventId)
+          .limit(1);
 
-        if (bateriaCreateError || !newBateria) {
-          console.error('Error creating bateria:', bateriaCreateError);
-          throw new Error('Erro ao criar bateria');
+        if (bateriaFetchError) {
+          console.error('Error fetching baterias:', bateriaFetchError);
+          throw new Error('Erro ao buscar baterias');
         }
 
-        bateriaId = newBateria.id;
-        console.log('Created new bateria:', bateriaId);
+        if (existingBaterias && existingBaterias.length > 0) {
+          bateriaId = existingBaterias[0].id;
+          console.log('Using existing bateria:', bateriaId);
+        } else {
+          // Create a default bateria
+          console.log('Creating default bateria for modality:', modalityId);
+          const { data: newBateria, error: bateriaCreateError } = await supabase
+            .from('baterias')
+            .insert({
+              modalidade_id: modalityId,
+              evento_id: eventId,
+              numero: 1
+            })
+            .select('id')
+            .single();
+
+          if (bateriaCreateError || !newBateria) {
+            console.error('Error creating bateria:', bateriaCreateError);
+            throw new Error('Erro ao criar bateria');
+          }
+
+          bateriaId = newBateria.id;
+          console.log('Created new bateria:', bateriaId);
+        }
       }
 
       // Prepare the score data according to the pontuacoes table structure
