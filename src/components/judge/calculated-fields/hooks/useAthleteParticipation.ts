@@ -36,7 +36,7 @@ export function useAthleteParticipation({
         .from('pontuacoes')
         .select(`
           atleta_id,
-          usuarios!inner(nome_completo),
+          usuarios!pontuacoes_atleta_id_fkey(nome_completo),
           tentativas_pontuacao(chave_campo, valor)
         `)
         .eq('evento_id', eventId)
@@ -152,9 +152,15 @@ export function useAthleteParticipation({
       athleteFields.includes(field.chave_campo)
     );
 
+    // Handle the usuarios data properly - it should be a single object due to the specific foreign key reference
+    const usuario = athlete.usuarios;
+    const nomeCompleto = usuario && typeof usuario === 'object' && 'nome_completo' in usuario 
+      ? usuario.nome_completo 
+      : 'Atleta';
+
     return {
       atleta_id: athlete.atleta_id,
-      nome: athlete.usuarios?.nome_completo || 'Atleta',
+      nome: nomeCompleto,
       participando: participation?.participando ?? true, // Default to true if no record
       hasRequiredFields
     };
