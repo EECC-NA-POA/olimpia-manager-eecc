@@ -13,7 +13,7 @@ export function useModeloConfigurationData(eventId: string | null) {
       // First get modalidades for this event, ordered alphabetically
       const { data: modalidades, error: modalidadesError } = await supabase
         .from('modalidades')
-        .select('id, nome')
+        .select('id, nome, categoria')
         .eq('evento_id', eventId)
         .order('nome'); // Order alphabetically by nome
       
@@ -90,7 +90,8 @@ export function useModeloConfigurationData(eventId: string | null) {
             ...modelo,
             parametros,
             modalidade: {
-              nome: modalidade?.nome || 'Modalidade não encontrada'
+              nome: modalidade?.nome || 'Modalidade não encontrada',
+              categoria: modalidade?.categoria || null
             }
           };
         })

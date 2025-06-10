@@ -12,11 +12,12 @@ export function useModeloFiltering(modelos: any[]) {
 
   const filteredAndSortedModelos = useMemo(() => {
     let filtered = modelos.filter((modelo) => {
-      // Search filter - expanded to include more parameter fields
+      // Search filter - expanded to include more parameter fields and categoria
       const searchMatch = 
         modelo.codigo_modelo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         modelo.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         modelo.modalidade?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        modelo.modalidade?.categoria?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         modelo.parametros?.regra_tipo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         modelo.parametros?.formato_resultado?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         modelo.parametros?.tipo_calculo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -43,6 +44,10 @@ export function useModeloFiltering(modelos: any[]) {
           case 'modalidade':
             aValue = a.modalidade?.nome || '';
             bValue = b.modalidade?.nome || '';
+            break;
+          case 'categoria':
+            aValue = a.modalidade?.categoria || '';
+            bValue = b.modalidade?.categoria || '';
             break;
           case 'modelo':
             aValue = a.codigo_modelo || '';

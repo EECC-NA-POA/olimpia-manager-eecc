@@ -201,6 +201,7 @@ export function ModeloConfigurationTable({
       <TableHeader>
         <TableRow>
           <SortableHeader sortKey="modalidade">Modalidade</SortableHeader>
+          <SortableHeader sortKey="categoria">Categoria</SortableHeader>
           <SortableHeader sortKey="modelo">Modelo</SortableHeader>
           <SortableHeader sortKey="baterias">Usa Baterias</SortableHeader>
           <TableHead>Configurações</TableHead>
@@ -218,6 +219,15 @@ export function ModeloConfigurationTable({
             <TableRow key={modelo.id}>
               <TableCell className="font-medium">
                 {modelo.modalidade?.nome || 'N/A'}
+              </TableCell>
+              <TableCell>
+                {modelo.modalidade?.categoria ? (
+                  <Badge variant="outline" className="text-xs">
+                    {modelo.modalidade.categoria}
+                  </Badge>
+                ) : (
+                  <span className="text-sm text-muted-foreground">N/A</span>
+                )}
               </TableCell>
               <TableCell>
                 <div>
