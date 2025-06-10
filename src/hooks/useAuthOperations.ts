@@ -17,7 +17,7 @@ export const useAuthOperations = ({ setUser, navigate, location }: UseAuthOperat
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
-    console.log('Attempting login with email:', email);
+    console.log('Attempting login...');
     
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -26,7 +26,7 @@ export const useAuthOperations = ({ setUser, navigate, location }: UseAuthOperat
       });
 
       if (error) {
-        console.log('Login error:', error);
+        console.log('Login error occurred');
         throw error;
       }
 
@@ -49,7 +49,7 @@ export const useAuthOperations = ({ setUser, navigate, location }: UseAuthOperat
         }
       }
     } catch (error: any) {
-      console.error('Login Error:', error);
+      console.error('Login Error occurred');
       toast.error(handleSupabaseError(error));
     } finally {
       setIsLoading(false);
@@ -65,7 +65,7 @@ export const useAuthOperations = ({ setUser, navigate, location }: UseAuthOperat
       
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('useAuthOperations - Logout error:', error);
+        console.error('useAuthOperations - Logout error occurred');
         throw error;
       }
       
@@ -86,7 +86,7 @@ export const useAuthOperations = ({ setUser, navigate, location }: UseAuthOperat
       }, 100);
       
     } catch (error: any) {
-      console.error('useAuthOperations - Error during logout:', error);
+      console.error('useAuthOperations - Error during logout occurred');
       toast.error(handleSupabaseError(error));
     }
   };
@@ -113,7 +113,7 @@ export const useAuthOperations = ({ setUser, navigate, location }: UseAuthOperat
         navigate('/verificar-email', { replace: true });
       }
     } catch (error: any) {
-      console.error('Sign up error:', error);
+      console.error('Sign up error occurred');
       toast.error(handleSupabaseError(error));
     } finally {
       setIsLoading(false);
@@ -131,7 +131,7 @@ export const useAuthOperations = ({ setUser, navigate, location }: UseAuthOperat
       
       toast.success('Email de verificação reenviado!');
     } catch (error: any) {
-      console.error('Resend verification error:', error);
+      console.error('Resend verification error occurred');
       toast.error(handleSupabaseError(error));
     }
   };

@@ -29,7 +29,7 @@ export const useRegisterForm = () => {
           .single();
           
         if (error) {
-          console.error('Error fetching privacy policy:', error);
+          console.error('Error fetching privacy policy');
           toast.error('Erro ao verificar política de privacidade. Tente novamente.');
           return;
         }
@@ -41,7 +41,7 @@ export const useRegisterForm = () => {
         
         privacyPolicy = data;
       } catch (err) {
-        console.error('Unexpected error fetching privacy policy:', err);
+        console.error('Unexpected error fetching privacy policy');
         toast.error('Erro ao verificar política de privacidade');
         return;
       }
@@ -79,7 +79,7 @@ export const useRegisterForm = () => {
       navigate('/event-selection');
 
     } catch (error: any) {
-      console.error('Registration process error occurred:', error);
+      console.error('Registration process error occurred');
       toast.error('Erro ao realizar cadastro. Por favor, tente novamente.');
     } finally {
       setIsSubmitting(false);

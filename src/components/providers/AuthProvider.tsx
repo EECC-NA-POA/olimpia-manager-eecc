@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleStorageChange = () => {
       const storedEventId = localStorage.getItem('currentEventId');
-      console.log('Storage event detected, event ID:', storedEventId);
+      console.log('Storage event detected');
       if (storedEventId !== currentEventId) {
         setCurrentEventId(storedEventId);
       }
@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const intervalId = setInterval(() => {
       const storedEventId = localStorage.getItem('currentEventId');
       if (storedEventId !== currentEventId) {
-        console.log('Event ID changed in localStorage:', storedEventId);
+        console.log('Event ID changed in localStorage');
         setCurrentEventId(storedEventId);
       }
     }, 1000);
@@ -59,12 +59,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [currentEventId]);
 
   useEffect(() => {
-    console.log('Current Event ID in AuthContext:', currentEventId);
+    console.log('Current Event ID updated in AuthContext');
   }, [currentEventId]);
 
   // Função para lidar com erros de sessão
   const handleSessionError = (error: any) => {
-    console.error('Session error detected:', error);
+    console.error('Session error detected');
     
     // Verifica se é um erro relacionado à sessão/token
     const isSessionError = error.message?.includes('JWT') || 
@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     console.log('Setting up authentication state...');
     console.log('Current location:', location.pathname);
-    console.log('Public routes:', PUBLIC_ROUTES);
+    console.log('Public routes available');
     let mounted = true;
 
     const setupAuth = async () => {
@@ -114,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (session?.user) {
-          console.log('User session found, fetching profile for user ID:', session.user.id);
+          console.log('User session found, fetching profile...');
           const storedEventId = localStorage.getItem('currentEventId');
           if (storedEventId && storedEventId !== currentEventId) {
             setCurrentEventId(storedEventId);
@@ -123,12 +123,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           try {
             const userProfile = await fetchUserProfile(session.user.id);
             if (mounted) {
-              console.log('Setting user with profile data:', userProfile);
+              console.log('Setting user with profile data');
               setUser({ ...session.user, ...userProfile });
               setSessionExpired(false); // Reset session expired flag
             }
           } catch (profileError) {
-            console.error('Error fetching user profile:', profileError);
+            console.error('Error fetching user profile');
             handleSessionError(profileError);
             return;
           }
@@ -165,7 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   setSessionExpired(false);
                 }
               } catch (error) {
-                console.error('Error in auth setup:', error);
+                console.error('Error in auth setup');
                 handleSessionError(error);
               }
             } else {
@@ -185,7 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           subscription.unsubscribe();
         };
       } catch (error) {
-        console.error('Error in auth setup:', error);
+        console.error('Error in auth setup');
         handleSessionError(error);
       } finally {
         if (mounted) {

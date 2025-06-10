@@ -31,10 +31,10 @@ export const LoginForm = () => {
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
       setIsSubmitting(true);
-      console.log('Attempting login with email:', values.email);
+      console.log('Attempting login...');
       await signIn(values.email, values.password);
     } catch (error: any) {
-      console.error("Login Error:", error);
+      console.error("Login Error occurred");
       
       // Clear password field for security
       form.setValue('password', '');
