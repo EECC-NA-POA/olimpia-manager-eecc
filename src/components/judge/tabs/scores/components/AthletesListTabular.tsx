@@ -12,7 +12,10 @@ import { useAthletesScoreStatus } from './hooks/useAthletesScoreStatus';
 import { useModelosModalidade } from '@/hooks/useDynamicScoring';
 import { useDynamicBaterias } from '../hooks/useDynamicBaterias';
 import { useModeloConfiguration } from '../hooks/useModeloConfiguration';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 import { Athlete } from '../hooks/useAthletes';
+import { CampoModelo } from '@/types/dynamicScoring';
 
 interface AthletesListTabularProps {
   athletes: Athlete[] | undefined;
@@ -34,6 +37,24 @@ export function AthletesListTabular({
   // Check for dynamic scoring
   const { data: modelos = [], isLoading: isLoadingModelos } = useModelosModalidade(modalityId);
   const hasDynamicScoring = modelos.length > 0;
+
+  // Get campos for the modelo if it exists
+  const { data: campos = [] } = useQuery({
+    queryKey: ['campos-modelo', modelos[0]?.id],
+    queryFn: async () => {
+      if (!modelos[0]?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('campos_modelo')
+        .select('*')
+        .eq('modelo_id', modelos[0].id)
+        .order('ordem_exibicao');
+
+      if (error) throw error;
+      return data as CampoModelo[];
+    },
+    enabled: !!modelos[0]?.id,
+  });
 
   // Get modelo configuration for battery management
   const { data: modeloConfig } = useModeloConfiguration(modalityId);
@@ -139,7 +160,7 @@ export function AthletesListTabular({
                   Modelo: {modelos[0].descricao || modelos[0].codigo_modelo}
                 </div>
                 <div className="mt-1">
-                  Campos configurados: {modelos[0].campos_modelo?.length || 0}
+                  Campos configurados: {campos.length || 0}
                 </div>
               </div>
             )}

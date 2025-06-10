@@ -6,9 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Save, Edit2 } from 'lucide-react';
 import { useDynamicScoringSubmission } from '@/hooks/useDynamicScoringSubmission';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Athlete } from '../hooks/useAthletes';
-import { ModeloModalidade } from '@/types/dynamicScoring';
+import { ModeloModalidade, CampoModelo } from '@/types/dynamicScoring';
 
 interface DynamicAthletesTableProps {
   athletes: Athlete[];
@@ -30,15 +32,23 @@ export function DynamicAthletesTable({
   const [editingAthleteId, setEditingAthleteId] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Record<string, any>>({});
 
-  const { submitScore, isSubmitting } = useDynamicScoringSubmission({
-    modalityId,
-    eventId: eventId || '',
-    judgeId,
-    modeloId: modelo.id
-  });
+  const mutation = useDynamicScoringSubmission();
 
-  // Get dynamic fields for this modelo
-  const campos = modelo.campos_modelo || [];
+  // Fetch campos for this modelo
+  const { data: campos = [] } = useQuery({
+    queryKey: ['campos-modelo', modelo.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('campos_modelo')
+        .select('*')
+        .eq('modelo_id', modelo.id)
+        .order('ordem_exibicao');
+
+      if (error) throw error;
+      return data as CampoModelo[];
+    },
+    enabled: !!modelo.id,
+  });
 
   const handleEdit = (athleteId: string) => {
     setEditingAthleteId(athleteId);
@@ -52,10 +62,14 @@ export function DynamicAthletesTable({
         notes: editValues.notes || ''
       };
 
-      await submitScore({
-        atleta_id: athlete.atleta_id,
+      await mutation.mutateAsync({
+        athleteId: athlete.atleta_id,
+        modalityId,
+        eventId: eventId || '',
+        judgeId,
+        modeloId: modelo.id,
         formData,
-        bateria_id: selectedBateriaId
+        bateriaId: selectedBateriaId
       });
 
       setEditingAthleteId(null);
@@ -191,7 +205,7 @@ export function DynamicAthletesTable({
                         <Button
                           size="sm"
                           onClick={() => handleSave(athlete)}
-                          disabled={isSubmitting}
+                          disabled={mutation.isPending}
                           className="h-8 w-8 p-0"
                         >
                           <Save className="h-3 w-3" />
