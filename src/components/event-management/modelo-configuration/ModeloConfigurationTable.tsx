@@ -18,10 +18,15 @@ interface ModeloConfigurationTableProps {
 }
 
 export function ModeloConfigurationTable({ modelos, onConfigure }: ModeloConfigurationTableProps) {
+  console.log('ModeloConfigurationTable - modelos received:', modelos);
+
   if (modelos.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         <p>Nenhum modelo de pontuação encontrado para as modalidades deste evento.</p>
+        <p className="text-sm mt-2">
+          Certifique-se de que existem modalidades cadastradas e modelos configurados para elas.
+        </p>
       </div>
     );
   }
@@ -39,6 +44,7 @@ export function ModeloConfigurationTable({ modelos, onConfigure }: ModeloConfigu
       </TableHeader>
       <TableBody>
         {modelos.map((modelo) => {
+          console.log('Rendering modelo:', modelo);
           const parametros = modelo.parametros || {};
           const usaBaterias = parametros.baterias === true;
           
@@ -48,7 +54,12 @@ export function ModeloConfigurationTable({ modelos, onConfigure }: ModeloConfigu
                 {modelo.modalidade?.nome || 'N/A'}
               </TableCell>
               <TableCell>
-                {modelo.codigo_modelo || modelo.descricao}
+                <div>
+                  <div className="font-medium">{modelo.codigo_modelo}</div>
+                  {modelo.descricao && (
+                    <div className="text-sm text-muted-foreground">{modelo.descricao}</div>
+                  )}
+                </div>
               </TableCell>
               <TableCell>
                 {usaBaterias ? (
@@ -64,9 +75,21 @@ export function ModeloConfigurationTable({ modelos, onConfigure }: ModeloConfigu
                 )}
               </TableCell>
               <TableCell>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-muted-foreground space-y-1">
                   {Object.keys(parametros).length > 0 ? (
-                    <span>{Object.keys(parametros).length} configuração(ões)</span>
+                    <div>
+                      <div>{Object.keys(parametros).length} configuração(ões)</div>
+                      <div className="text-xs">
+                        {Object.entries(parametros).slice(0, 3).map(([key, value]) => (
+                          <div key={key}>
+                            <strong>{key}:</strong> {String(value)}
+                          </div>
+                        ))}
+                        {Object.keys(parametros).length > 3 && (
+                          <div>...</div>
+                        )}
+                      </div>
+                    </div>
                   ) : (
                     <span>Sem configurações</span>
                   )}

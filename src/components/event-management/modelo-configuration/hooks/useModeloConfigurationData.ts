@@ -8,10 +8,12 @@ export function useModeloConfigurationData(eventId: string | null) {
     queryFn: async () => {
       if (!eventId) return [];
       
+      console.log('Fetching modelo configurations for event:', eventId);
+      
       // First get modalidades for this event
       const { data: modalidades, error: modalidadesError } = await supabase
         .from('modalidades')
-        .select('id')
+        .select('id, nome')
         .eq('evento_id', eventId);
       
       if (modalidadesError) {
@@ -19,9 +21,15 @@ export function useModeloConfigurationData(eventId: string | null) {
         throw modalidadesError;
       }
       
-      if (!modalidades || modalidades.length === 0) return [];
+      console.log('Found modalidades:', modalidades);
+      
+      if (!modalidades || modalidades.length === 0) {
+        console.log('No modalidades found for event');
+        return [];
+      }
       
       const modalidadeIds = modalidades.map(m => m.id);
+      console.log('Searching for modelos with modalidade_ids:', modalidadeIds);
       
       const { data, error } = await supabase
         .from('modelos_modalidade')
@@ -30,10 +38,7 @@ export function useModeloConfigurationData(eventId: string | null) {
           modalidade_id,
           codigo_modelo,
           descricao,
-          parametros,
-          modalidade:modalidade_id (
-            nome
-          )
+          parametros
         `)
         .in('modalidade_id', modalidadeIds);
 
@@ -42,7 +47,21 @@ export function useModeloConfigurationData(eventId: string | null) {
         throw error;
       }
 
-      return data || [];
+      console.log('Raw modelos data:', data);
+      
+      // Enrich with modalidade names
+      const enrichedData = (data || []).map(modelo => {
+        const modalidade = modalidades.find(m => m.id === modelo.modalidade_id);
+        return {
+          ...modelo,
+          modalidade: {
+            nome: modalidade?.nome || 'Modalidade não encontrada'
+          }
+        };
+      });
+
+      console.log('Enriched modelos data:', enrichedData);
+      return enrichedData;
     },
     enabled: !!eventId,
   });
