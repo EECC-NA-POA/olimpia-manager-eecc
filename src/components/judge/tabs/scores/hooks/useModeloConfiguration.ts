@@ -35,23 +35,31 @@ export function useModeloConfiguration(modalidadeId: number | null) {
     queryFn: async () => {
       if (!modalidadeId) return null;
       
-      const { data, error } = await supabase
+      // First get the modelo basic info
+      const { data: modelo, error: modeloError } = await supabase
         .from('modelos_modalidade')
-        .select('id, modalidade_id, parametros')
+        .select('id, modalidade_id, codigo_modelo, descricao')
         .eq('modalidade_id', modalidadeId)
         .maybeSingle();
       
-      if (error) {
-        console.error('Error fetching modelo configuration:', error);
-        throw error;
+      if (modeloError) {
+        console.error('Error fetching modelo configuration:', modeloError);
+        throw modeloError;
       }
       
-      if (!data) return null;
+      if (!modelo) return null;
       
+      // For now, return a default configuration since parametros column doesn't exist
+      // This should be updated when the proper schema is available
       return {
-        modalidade_id: data.modalidade_id,
-        modelo_id: data.id,
-        parametros: data.parametros || {}
+        modalidade_id: modelo.modalidade_id,
+        modelo_id: modelo.id,
+        parametros: {
+          regra_tipo: 'pontos',
+          baterias: false,
+          num_raias: 0,
+          permite_final: false
+        }
       } as ModeloConfiguration;
     },
     enabled: !!modalidadeId,
