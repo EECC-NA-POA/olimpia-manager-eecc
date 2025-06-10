@@ -1,0 +1,109 @@
+
+name: Create PR to Fork Repository
+
+on:
+  push:
+    branches: [release]
+  workflow_dispatch:
+
+jobs:
+  create-pr-to-fork:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: release
+          fetch-depth: 0
+          token: ${{ secrets.FORK_REPO_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+
+      - name: Add fork remote and fetch
+        run: |
+          echo "Adding fork remote..."
+          git remote add fork https://${{ secrets.FORK_REPO_TOKEN }}@github.com/EECC-NA-POA/olimpia-manager-eecc.git
+          git fetch fork
+          echo "Remotes configured:"
+          git remote -v
+
+      - name: Create and push branch to fork
+        run: |
+          # Create a unique branch name with timestamp
+          BRANCH_NAME="sync-from-release-$(date +%Y%m%d-%H%M%S)"
+          echo "Creating branch: $BRANCH_NAME"
+          
+          # Create new branch based on current release
+          git checkout -b $BRANCH_NAME
+          
+          # Push to fork
+          echo "Pushing branch to fork..."
+          git push fork $BRANCH_NAME
+          
+          # Save branch name for next step
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.FORK_REPO_TOKEN }}
+        run: |
+          echo "Creating PR from $BRANCH_NAME to main in fork repository..."
+          
+          # Get commit info for PR description
+          COMMIT_SHA="${{ github.sha }}"
+          COMMIT_MESSAGE=$(git log -1 --pretty=format:"%s")
+          COMMIT_AUTHOR=$(git log -1 --pretty=format:"%an")
+          
+          # Create PR body
+          PR_BODY="## Sincronização automática da branch release
+          
+          **Commit:** \`$COMMIT_SHA\`
+          **Autor:** $COMMIT_AUTHOR
+          **Mensagem:** $COMMIT_MESSAGE
+          
+          Este PR foi criado automaticamente a partir de mudanças na branch \`release\` do repositório principal.
+          
+          **Repositório origem:** bonanza-ong/olimpia-manager-na
+          **Branch origem:** release
+          **Branch destino:** main"
+          
+          # Try to create the PR
+          gh pr create \
+            --repo EECC-NA-POA/olimpia-manager-eecc \
+            --base main \
+            --head $BRANCH_NAME \
+            --title "🔄 Sincronização da branch release" \
+            --body "$PR_BODY" || {
+              echo "Failed to create PR. Checking if it already exists..."
+              
+              # Check if a PR already exists for this branch
+              existing_pr=$(gh pr list --repo EECC-NA-POA/olimpia-manager-eecc --head $BRANCH_NAME --json number --jq '.[0].number' 2>/dev/null || echo "")
+              
+              if [ -n "$existing_pr" ] && [ "$existing_pr" != "null" ]; then
+                echo "PR already exists: #$existing_pr"
+                echo "Updating existing PR..."
+                gh pr edit $existing_pr --repo EECC-NA-POA/olimpia-manager-eecc --body "$PR_BODY"
+              else
+                echo "Error creating PR and no existing PR found"
+                exit 1
+              fi
+            }
+
+      - name: Clean up
+        if: always()
+        run: |
+          echo "Cleaning up..."
+          # Remove the fork remote
+          git remote remove fork || true
+          echo "Cleanup completed"
+
+      - name: Success notification
+        run: |
+          echo "✅ Workflow completed successfully!"
+          echo "A Pull Request has been created (or updated) in the fork repository."
+          echo "Repository: EECC-NA-POA/olimpia-manager-eecc"
+          echo "Target branch: main"
