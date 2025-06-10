@@ -101,7 +101,7 @@ export const ActiveEventsSection = () => {
 
                 <div className="text-center">
                   <p className="text-gray-700 mb-6 leading-relaxed text-lg">
-                    Junte-se aos atletas de todo o Brasil na maior celebração do esporte educacional. 
+                    Junte-se aos atletas Acropolitanos de todo o Brasil na maior celebração do esporte educacional. 
                     Venha viver a experiência única das Olimpíadas Nacionais 2025 da EECC.
                   </p>
                   

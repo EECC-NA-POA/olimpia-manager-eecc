@@ -29,7 +29,7 @@ export const AboutSection = () => {
               <p className="text-gray-800">
                 O <strong className="text-olimpics-green-primary">Olímpia Manager</strong> é uma plataforma digital desenvolvida especificamente 
                 para atender às necessidades da <strong className="text-olimpics-orange-primary">Escola do Esporte com Coração</strong> e suas 
-                olimpíadas nacionais.
+                olimpíadas.
               </p>
             </div>
             

@@ -181,7 +181,7 @@ export const FeaturesSection = () => {
                 Pronto para começar?
               </h3>
               <p className="text-white/80 text-lg max-w-md">
-                Junte-se a centenas de organizadores que já transformaram seus eventos esportivos
+                Junte-se aos demais organizadores que já se beneficiaram em seus eventos esportivos
               </p>
             </div>
             
