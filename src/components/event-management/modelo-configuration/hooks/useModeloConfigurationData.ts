@@ -10,11 +10,12 @@ export function useModeloConfigurationData(eventId: string | null) {
       
       console.log('Fetching modelo configurations for event:', eventId);
       
-      // First get modalidades for this event
+      // First get modalidades for this event, ordered alphabetically
       const { data: modalidades, error: modalidadesError } = await supabase
         .from('modalidades')
         .select('id, nome')
-        .eq('evento_id', eventId);
+        .eq('evento_id', eventId)
+        .order('nome'); // Order alphabetically by nome
       
       if (modalidadesError) {
         console.error('Error fetching modalidades:', modalidadesError);
@@ -95,8 +96,13 @@ export function useModeloConfigurationData(eventId: string | null) {
         })
       );
 
-      console.log('Enriched modelos data:', enrichedModelos);
-      return enrichedModelos;
+      // Sort the enriched modelos by modalidade name to maintain alphabetical order
+      const sortedModelos = enrichedModelos.sort((a, b) => 
+        a.modalidade.nome.localeCompare(b.modalidade.nome)
+      );
+
+      console.log('Enriched and sorted modelos data:', sortedModelos);
+      return sortedModelos;
     },
     enabled: !!eventId,
   });
