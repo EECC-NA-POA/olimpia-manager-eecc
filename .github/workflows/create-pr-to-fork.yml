@@ -19,7 +19,8 @@ jobs:
         with:
           ref: release
           fetch-depth: 0
-          token: ${{ secrets.FORK_REPO_TOKEN }}
+          # Use default GITHUB_TOKEN for private repo operations
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
         run: |
@@ -29,6 +30,7 @@ jobs:
       - name: Add fork remote and fetch
         run: |
           echo "Adding fork remote..."
+          # Use FORK_REPO_TOKEN only for fork operations
           git remote add fork https://${{ secrets.FORK_REPO_TOKEN }}@github.com/EECC-NA-POA/olimpia-manager-eecc.git
           git fetch fork
           echo "Remotes configured:"
@@ -43,7 +45,7 @@ jobs:
           # Create new branch based on current release (which now contains merged changes from main)
           git checkout -b $BRANCH_NAME
           
-          # Push to fork
+          # Push to fork using FORK_REPO_TOKEN
           echo "Pushing branch to fork..."
           git push fork $BRANCH_NAME
           
@@ -52,6 +54,7 @@ jobs:
 
       - name: Create Pull Request
         env:
+          # Use FORK_REPO_TOKEN for GitHub CLI operations on fork
           GH_TOKEN: ${{ secrets.FORK_REPO_TOKEN }}
         run: |
           echo "Creating PR from $BRANCH_NAME to main in fork repository..."
