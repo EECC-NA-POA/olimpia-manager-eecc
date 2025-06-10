@@ -1,13 +1,23 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
-import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList } from 'lucide-react';
-import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
+import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut } from 'lucide-react';
+import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupContent } from '@/components/ui/sidebar';
+import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
+import { useAuth } from '@/contexts/AuthContext';
 
-export const MenuItems = ({ collapsed = false }) => {
+interface MenuItemsProps {
+  onLogout: () => void;
+  userId: string;
+}
+
+export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { roles, user } = useNavigation();
+  const { canCreateEvents } = useCanCreateEvents();
+  const { setCurrentEventId } = useAuth();
 
   // Check for specific roles
   const isJudge = user?.papeis?.some(role => role.codigo === 'JUZ') || false;
@@ -15,6 +25,16 @@ export const MenuItems = ({ collapsed = false }) => {
   const isOrganizer = roles.isOrganizer;
   const isDelegationRep = roles.isDelegationRep;
   const isAthlete = roles.isAthlete;
+  
+  // Check if user can manage events (admin with cadastra_eventos=true)
+  const canManageEvents = isAdmin && canCreateEvents;
+
+  const handleEventSwitch = () => {
+    // Clear current event and redirect to event selection
+    localStorage.removeItem('currentEventId');
+    setCurrentEventId(null);
+    navigate('/event-selection', { replace: true });
+  };
 
   const menuItems = [];
   
@@ -25,7 +45,7 @@ export const MenuItems = ({ collapsed = false }) => {
     menuItems.push({
       path: "/athlete-profile",
       label: "Perfil",
-      icon: <User className="h-7 w-7" />,
+      icon: <User className="h-5 w-5" />,
       tooltip: "Perfil do Atleta"
     });
   }
@@ -34,83 +54,134 @@ export const MenuItems = ({ collapsed = false }) => {
   menuItems.push({
     path: "/cronograma",
     label: "Cronograma",
-    icon: <Calendar className="h-7 w-7" />,
+    icon: <Calendar className="h-5 w-5" />,
     tooltip: "Cronograma"
   });
   
-  // 3. Minhas Inscrições (My Registrations) - for all roles
+  // 3. Regulamento (Regulations) - for all roles
   menuItems.push({
-    path: "/athlete-registrations",
+    path: "/regulamento",
+    label: "Regulamento",
+    icon: <BookOpen className="h-5 w-5" />,
+    tooltip: "Regulamento"
+  });
+  
+  // 4. Minhas Inscrições (My Registrations) - for all roles - FIXED ROUTE
+  menuItems.push({
+    path: "/minhas-inscricoes",
     label: "Minhas Inscrições",
-    icon: <ClipboardList className="h-7 w-7" />,
+    icon: <ClipboardList className="h-5 w-5" />,
     tooltip: "Minhas Inscrições"
   });
   
-  // 4. Pontuações (Scores) - for all roles
+  // 5. Pontuações (Scores) - for all roles
   menuItems.push({
     path: "/scores",
     label: "Pontuações",
-    icon: <Medal className="h-7 w-7" />,
+    icon: <Medal className="h-5 w-5" />,
     tooltip: "Pontuações"
   });
   
-  // 5. Organizador (Organizer)
+  // 6. Organizador (Organizer) - FIXED ROUTE
   if (isOrganizer) {
     menuItems.push({
-      path: "/organizer-dashboard",
+      path: "/organizador",
       label: "Organizador",
-      icon: <Users className="h-7 w-7" />,
+      icon: <Users className="h-5 w-5" />,
       tooltip: "Organizador"
     });
   }
   
-  // 6. Delegação (Delegation)
+  // 7. Delegação (Delegation) - FIXED ROUTE
   if (isDelegationRep) {
     menuItems.push({
-      path: "/delegation-dashboard",
+      path: "/delegacao",
       label: "Delegação",
-      icon: <Users className="h-7 w-7" />,
+      icon: <Users className="h-5 w-5" />,
       tooltip: "Delegação"
     });
   }
   
-  // 7. Juiz (Judge)
+  // 8. Juiz (Judge)
   if (isJudge) {
     menuItems.push({
       path: "/judge-dashboard",
       label: "Juiz",
-      icon: <Gavel className="h-7 w-7" />,
+      icon: <Gavel className="h-5 w-5" />,
       tooltip: "Juiz"
     });
   }
   
-  // 8. Administração (Administration)
+  // 9. Administração (Administration)
   if (isAdmin) {
     menuItems.push({
       path: "/administration",
       label: "Administração",
-      icon: <Settings2 className="h-7 w-7" />,
+      icon: <Settings2 className="h-5 w-5" />,
       tooltip: "Administração"
     });
+    
+    // 10. Gerenciar Evento (Event Management) - for admins with event creation permission
+    if (canManageEvents) {
+      menuItems.push({
+        path: "/event-management",
+        label: "Gerenciar Evento",
+        icon: <CalendarIcon className="h-5 w-5" />,
+        tooltip: "Gerenciar Evento"
+      });
+    }
   }
 
+  // 11. Trocar Evento - FIXED FUNCTIONALITY
+  menuItems.push({
+    path: "#",
+    label: "Trocar Evento",
+    icon: <CalendarIcon className="h-5 w-5" />,
+    tooltip: "Trocar Evento",
+    isAction: true,
+    action: handleEventSwitch
+  });
+
+  // 12. Sair (Logout)
+  menuItems.push({
+    path: "#",
+    label: "Sair",
+    icon: <LogOut className="h-5 w-5" />,
+    tooltip: "Sair",
+    isAction: true,
+    action: onLogout,
+    className: "text-red-300 hover:text-red-100 hover:bg-red-500/20"
+  });
+
   return (
-    <SidebarMenu className="flex flex-col gap-1 md:gap-2 items-start w-full px-2 py-2">
-      {menuItems.map((item) => (
-        <SidebarMenuItem key={item.path}>
-          <SidebarMenuButton 
-            asChild 
-            isActive={location.pathname === item.path}
-            tooltip={collapsed ? item.tooltip : undefined}
-            className="p-3 text-base hover:bg-olimpics-green-secondary/20"
-          >
-            <Link to={item.path} className="w-full flex items-center text-base">
-              {React.cloneElement(item.icon, { className: "h-7 w-7 mr-3 flex-shrink-0" })}
-              <span className={collapsed ? 'hidden' : 'block text-lg'}>{item.label}</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
-    </SidebarMenu>
+    <SidebarGroup>
+      <SidebarGroupContent>
+        <SidebarMenu className="space-y-1">
+          {menuItems.map((item, index) => (
+            <SidebarMenuItem key={item.path + index}>
+              <SidebarMenuButton 
+                asChild={!item.isAction}
+                isActive={!item.isAction && location.pathname === item.path}
+                tooltip={item.tooltip}
+                className={`text-white hover:bg-olimpics-green-secondary/20 data-[active=true]:bg-olimpics-green-secondary data-[active=true]:text-white group-data-[collapsible=icon]:justify-center ${item.className || ''}`}
+                onClick={item.isAction ? item.action : undefined}
+              >
+                {item.isAction ? (
+                  <div className="flex items-center">
+                    {item.icon}
+                    <span className="ml-3 group-data-[collapsible=icon]:hidden">{item.label}</span>
+                  </div>
+                ) : (
+                  <Link to={item.path} className="flex items-center">
+                    {item.icon}
+                    <span className="ml-3 group-data-[collapsible=icon]:hidden">{item.label}</span>
+                  </Link>
+                )}
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
   );
 };

@@ -17,17 +17,31 @@ export const useRegisterForm = () => {
       console.log('Starting registration process...');
       setIsSubmitting(true);
 
-      // Get the latest privacy policy version
-      const { data: privacyPolicy, error: policyError } = await supabase
-        .from('termos_privacidade')
-        .select('*')
-        .eq('ativo', true)
-        .order('data_criacao', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (policyError || !privacyPolicy) {
-        console.error('Error fetching privacy policy:', policyError);
+      // Get the latest privacy policy version - with improved error handling
+      let privacyPolicy;
+      try {
+        const { data, error } = await supabase
+          .from('termos_privacidade')
+          .select('*')
+          .eq('ativo', true)
+          .order('data_criacao', { ascending: false })
+          .limit(1)
+          .single();
+          
+        if (error) {
+          console.error('Error fetching privacy policy');
+          toast.error('Erro ao verificar política de privacidade. Tente novamente.');
+          return;
+        }
+        
+        if (!data) {
+          toast.error('Política de privacidade não encontrada. Por favor, contate o suporte.');
+          return;
+        }
+        
+        privacyPolicy = data;
+      } catch (err) {
+        console.error('Unexpected error fetching privacy policy');
         toast.error('Erro ao verificar política de privacidade');
         return;
       }
@@ -52,48 +66,15 @@ export const useRegisterForm = () => {
         return;
       }
 
-      // Prepare user metadata
+      // Prepare user metadata - no longer includes branch ID
       const userMetadata = prepareUserMetadata(values, formattedBirthDate);
 
-      // Sign up user
-      const signUpResult = await signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: userMetadata
-        }
+      // Sign up user with the correct parameters: email, password, userData
+      await signUp(values.email, values.password, {
+        data: userMetadata
       });
 
-      if (signUpResult.error) {
-        console.error('Registration error occurred');
-        toast.error('Erro ao realizar cadastro. Por favor, tente novamente.');
-        return;
-      }
-
-      if (!signUpResult.user) {
-        console.error('No user data returned from registration');
-        toast.error('Erro ao criar usuário. Por favor, tente novamente.');
-        return;
-      }
-
-      // Log privacy policy acceptance
-      const { error: acceptanceError } = await supabase
-        .from('logs_aceite_privacidade')
-        .insert({
-          usuario_id: signUpResult.user.id,
-          nome_completo: values.nome,
-          tipo_documento: values.tipo_documento,
-          numero_documento: values.numero_documento,
-          versao_termo: privacyPolicy.versao_termo,
-          termo_texto: privacyPolicy.termo_texto
-        });
-
-      if (acceptanceError) {
-        console.error('Error logging privacy policy acceptance:', acceptanceError);
-        // Don't block registration if logging fails
-        // but log the error for monitoring
-      }
-
+      // If we reach here, signup was successful
       toast.success('Cadastro realizado com sucesso! Por favor, selecione um evento para continuar.');
       navigate('/event-selection');
 

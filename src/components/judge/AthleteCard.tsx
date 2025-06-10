@@ -1,38 +1,44 @@
 
 import React from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { AthleteScoreCard } from './score-card/AthleteScoreCard';
+import { Athlete } from './tabs/scores/hooks/useAthletes';
 
 interface AthleteCardProps {
-  athlete: any;
+  athlete: Athlete;
+  modalityId: number;
+  eventId: string | null;
+  judgeId: string;
+  scoreType: 'tempo' | 'distancia' | 'pontos';
+  modalityRule?: any;
   isSelected?: boolean;
-  onClick?: () => void;
+  onSelect?: () => void;
 }
 
-export function AthleteCard({ athlete, isSelected, onClick }: AthleteCardProps) {
+export function AthleteCard({
+  athlete,
+  modalityId,
+  eventId,
+  judgeId,
+  scoreType,
+  modalityRule,
+  isSelected = false,
+  onSelect
+}: AthleteCardProps) {
   return (
-    <Card 
-      className={`
-        cursor-pointer hover:border-primary/50 transition-colors
-        ${isSelected ? 'border-primary' : ''}
-      `}
-      onClick={onClick}
-    >
-      <CardHeader className="p-4 pb-2">
-        <CardTitle className="text-base">{athlete.atleta_nome}</CardTitle>
-      </CardHeader>
-      <CardContent className="p-4 pt-0">
-        <div className="text-sm text-muted-foreground">
-          <p>{athlete.tipo_documento}: {athlete.numero_documento}</p>
-          {athlete.numero_identificador && (
-            <p>ID: {athlete.numero_identificador}</p>
-          )}
-        </div>
+    <Card className={`cursor-pointer transition-all duration-200 ${
+      isSelected ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md'
+    }`} onClick={onSelect}>
+      <CardContent className="p-0">
+        <AthleteScoreCard
+          athlete={athlete}
+          modalityId={modalityId}
+          eventId={eventId}
+          judgeId={judgeId}
+          scoreType={scoreType}
+          modalityRule={modalityRule}
+        />
       </CardContent>
     </Card>
   );

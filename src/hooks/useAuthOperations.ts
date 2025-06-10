@@ -1,175 +1,138 @@
 
 import { useState } from 'react';
-import { NavigateFunction } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase, handleSupabaseError } from '@/lib/supabase';
+import { fetchUserProfile } from '@/services/authService';
 import { AuthUser } from '@/types/auth';
-import { fetchUserProfile, handleAuthRedirect } from '@/services/authService';
-import { AuthError } from '@supabase/supabase-js';
 
 interface UseAuthOperationsProps {
-  setUser: React.Dispatch<React.SetStateAction<AuthUser | null>>;
-  navigate: NavigateFunction;
-  location: { pathname: string };
+  setUser: (user: AuthUser | null) => void;
+  navigate: ReturnType<typeof useNavigate>;
+  location: ReturnType<typeof useLocation>;
 }
 
-export function useAuthOperations({ setUser, navigate, location }: UseAuthOperationsProps) {
+export const useAuthOperations = ({ setUser, navigate, location }: UseAuthOperationsProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+
   const signIn = async (email: string, password: string) => {
+    setIsLoading(true);
+    console.log('Attempting login...');
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-  
+
       if (error) {
-        // Parse error message from Supabase
-        if (error instanceof AuthError) {
-          const errorMessage = error.message;
-          if (errorMessage.includes('Invalid login credentials')) {
-            throw new Error('Invalid login credentials');
-          }
-          throw new Error(errorMessage);
-        }
+        console.log('Login error occurred');
+        throw error;
+      }
+
+      if (data.user) {
+        console.log('Login successful, fetching user profile...');
+        const userProfile = await fetchUserProfile(data.user.id);
+        setUser({ ...data.user, ...userProfile });
+        console.log('User profile loaded successfully');
         
-        // Fallback error
-        throw new Error('Login failed');
+        toast.success('Login realizado com sucesso!');
+        
+        // Check if user has a current event
+        const storedEventId = localStorage.getItem('currentEventId');
+        if (storedEventId) {
+          console.log('User has stored event, redirecting to /home');
+          navigate('/home', { replace: true });
+        } else {
+          console.log('No stored event, redirecting to event selection');
+          navigate('/event-selection', { replace: true });
+        }
       }
-  
-      if (!data.user) {
-        throw new Error("Login failed");
-      }
-  
-      const profile = await fetchUserProfile(data.user.id);
-      setUser({ ...data.user, ...profile });
-      handleAuthRedirect(profile, location.pathname, navigate);
-      toast.success("Login realizado com sucesso!");
     } catch (error: any) {
-      console.error("Login error:", error);
-      throw error;
+      console.error('Login Error occurred');
+      toast.error(handleSupabaseError(error));
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
-      console.log('AuthContext - Starting logout process...');
-      localStorage.removeItem('currentEventId');
+      console.log('useAuthOperations - Starting logout process...');
+      
+      // Clear any existing toasts first to avoid Link rendering issues
+      // Note: We avoid using toast.success here to prevent Link components in toasts
       
       const { error } = await supabase.auth.signOut();
-      
       if (error) {
-        console.error('AuthContext - Error during signOut:', error);
-        if (error.message?.includes('session_not_found')) {
-          console.log('AuthContext - Session already expired, continuing with local cleanup');
-        } else {
-          console.warn('AuthContext - Non-session error during logout:', error);
-        }
+        console.error('useAuthOperations - Logout error occurred');
+        throw error;
       }
-
+      
+      console.log('useAuthOperations - Logout successful, navigating to landing page');
+      
+      // Clear user state
       setUser(null);
-      console.log('AuthContext - Logout successful, navigating to landing page');
-      navigate('/');
-      toast.success('Logout realizado com sucesso!');
+      
+      // Clear localStorage
+      localStorage.removeItem('currentEventId');
+      
+      // Navigate without using toast that might contain Link components
+      navigate('/', { replace: true });
+      
+      // Show success message after navigation to avoid Router context issues
+      setTimeout(() => {
+        toast.success('Logout realizado com sucesso!');
+      }, 100);
       
     } catch (error: any) {
-      console.error('AuthContext - Unexpected error during signOut:', error);
-      setUser(null);
-      localStorage.removeItem('currentEventId');
-      navigate('/');
-      toast.error('Erro ao fazer logout, mas sua sessão foi encerrada localmente.');
+      console.error('useAuthOperations - Error during logout occurred');
+      toast.error(handleSupabaseError(error));
     }
   };
 
-  const signUp = async (userData: {
-    email: string;
-    password: string;
-    options?: {
-      data?: {
-        nome_completo?: string;
-        telefone?: string;
-        filial_id?: string | null;
-        tipo_documento?: string;
-        numero_documento?: string;
-        genero?: string;
-        data_nascimento?: string;
-      };
-    };
-  }) => {
+  const signUp = async (email: string, password: string, userData: any) => {
+    setIsLoading(true);
+    
     try {
-      console.log('Starting new user registration.');
-      
       const { data, error } = await supabase.auth.signUp({
-        email: userData.email,
-        password: userData.password,
-        options: {
-          data: {
-            nome_completo: userData.options?.data?.nome_completo,
-            telefone: userData.options?.data?.telefone,
-            filial_id: userData.options?.data?.filial_id,
-            tipo_documento: userData.options?.data?.tipo_documento,
-            numero_documento: userData.options?.data?.numero_documento,
-            genero: userData.options?.data?.genero,
-            data_nascimento: userData.options?.data?.data_nascimento
-          }
-        }
+        email,
+        password,
       });
-  
-      if (error) {
-        console.error('Auth Error:', error.message);
-        toast.error('Erro ao criar conta. Tente novamente.');
-        return { user: null, error };
+
+      if (error) throw error;
+
+      if (data.user) {
+        // Store user data temporarily for profile creation after email verification
+        localStorage.setItem('pendingUserData', JSON.stringify({
+          ...userData,
+          userId: data.user.id
+        }));
+        
+        toast.success('Usuário criado! Verifique seu email para confirmar a conta.');
+        navigate('/verificar-email', { replace: true });
       }
-  
-      if (!data.user) {
-        toast.error('Erro ao criar conta. Tente novamente.');
-        return { user: null, error: new Error('User creation failed') };
-      }
-  
-      console.log('User registered successfully!');
-      toast.success('Cadastro realizado com sucesso! Faça login para acessar o sistema.');
-      navigate('/');
-  
-      return { user: data.user, error: null };
     } catch (error: any) {
-      console.error('Registration error:', error);
-      toast.error('Erro ao realizar cadastro.');
-      return { user: null, error };
+      console.error('Sign up error occurred');
+      toast.error(handleSupabaseError(error));
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const resendVerificationEmail = async (email: string) => {
     try {
-      const { data: userData, error: userError } = await supabase
-        .from('usuarios')
-        .select('id, email_confirmed_at')
-        .eq('email', email)
-        .single();
-      
-      if (userError) {
-        console.error('Error checking user:', userError);
-        toast.error('Erro ao verificar status do email.');
-        return;
-      }
-
-      if (userData?.email_confirmed_at) {
-        toast.error('Este e-mail já foi confirmado. Por favor, faça login.');
-        navigate('/login');
-        return;
-      }
-
       const { error } = await supabase.auth.resend({
         type: 'signup',
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/verify-email`,
-        },
+        email: email,
       });
 
       if (error) throw error;
-      toast.success('Email de verificação reenviado com sucesso!');
+      
+      toast.success('Email de verificação reenviado!');
     } catch (error: any) {
-      console.error('Error resending verification email:', error);
-      toast.error('Erro ao reenviar email de verificação.');
-      throw error;
+      console.error('Resend verification error occurred');
+      toast.error(handleSupabaseError(error));
     }
   };
 
@@ -177,6 +140,7 @@ export function useAuthOperations({ setUser, navigate, location }: UseAuthOperat
     signIn,
     signOut,
     signUp,
-    resendVerificationEmail
+    resendVerificationEmail,
+    isLoading
   };
-}
+};

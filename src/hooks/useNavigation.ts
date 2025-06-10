@@ -13,7 +13,7 @@ interface UserRoles {
 }
 
 export const useNavigation = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, currentEventId } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -31,24 +31,8 @@ export const useNavigation = () => {
     isJudge: userRoleCodes.includes('JUZ')
   };
 
-  useEffect(() => {
-    // Only run if we're at the home page (not the root index page)
-    if (user && location.pathname === '/home') {
-      console.log('Navigation - Redirecting based on roles from /home path');
-      
-      if (roles.isAthlete || roles.isPublicGeral) {
-        navigate('/athlete-profile', { replace: true });
-      } else if (roles.isOrganizer) {
-        navigate('/organizer-dashboard', { replace: true });
-      } else if (roles.isDelegationRep) {
-        navigate('/delegation-dashboard', { replace: true });
-      } else if (roles.isAdmin) {
-        navigate('/administration', { replace: true });
-      } else if (roles.isJudge) {
-        navigate('/judge-dashboard', { replace: true });
-      }
-    }
-  }, [roles, location.pathname, navigate, user]);
+  // Remove automatic redirection - let users stay on event selection page
+  // Users will navigate manually after selecting an event
 
   return {
     user,

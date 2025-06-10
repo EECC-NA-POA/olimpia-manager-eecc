@@ -1,0 +1,157 @@
+
+/* Regulation display styles - preserves formatting from rich text editor */
+.regulation-content {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.regulation-content h1,
+.regulation-content h2,
+.regulation-content h3,
+.regulation-content h4,
+.regulation-content h5,
+.regulation-content h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+  font-weight: 600;
+}
+
+.regulation-content h1 {
+  font-size: 2em;
+}
+
+.regulation-content h2 {
+  font-size: 1.5em;
+}
+
+.regulation-content h3 {
+  font-size: 1.17em;
+}
+
+.regulation-content h4 {
+  font-size: 1em;
+}
+
+.regulation-content h5 {
+  font-size: 0.83em;
+}
+
+.regulation-content h6 {
+  font-size: 0.67em;
+}
+
+.regulation-content p {
+  margin-bottom: 1em;
+}
+
+.regulation-content ol,
+.regulation-content ul {
+  padding-left: 2em;
+  margin-bottom: 1em;
+}
+
+.regulation-content li {
+  margin-bottom: 0.5em;
+}
+
+.regulation-content blockquote {
+  border-left: 4px solid #e5e7eb;
+  padding-left: 1em;
+  margin: 1em 0;
+  font-style: italic;
+  color: #6b7280;
+}
+
+.regulation-content code {
+  background-color: #f3f4f6;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+.regulation-content pre {
+  background-color: #f3f4f6;
+  padding: 1em;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.regulation-content pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.regulation-content a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.regulation-content a:hover {
+  color: #1d4ed8;
+}
+
+/* Preserve text alignment from rich text editor */
+.regulation-content .ql-align-left {
+  text-align: left;
+}
+
+.regulation-content .ql-align-center {
+  text-align: center;
+}
+
+.regulation-content .ql-align-right {
+  text-align: right;
+}
+
+.regulation-content .ql-align-justify {
+  text-align: justify;
+}
+
+/* Preserve text colors and backgrounds */
+.regulation-content .ql-color-red {
+  color: #dc2626;
+}
+
+.regulation-content .ql-color-blue {
+  color: #2563eb;
+}
+
+.regulation-content .ql-color-green {
+  color: #16a34a;
+}
+
+.regulation-content .ql-bg-yellow {
+  background-color: #fef3c7;
+}
+
+.regulation-content .ql-bg-red {
+  background-color: #fecaca;
+}
+
+.regulation-content .ql-bg-blue {
+  background-color: #dbeafe;
+}
+
+.regulation-content .ql-bg-green {
+  background-color: #dcfce7;
+}
+
+/* Text formatting */
+.regulation-content strong {
+  font-weight: bold;
+}
+
+.regulation-content em {
+  font-style: italic;
+}
+
+.regulation-content u {
+  text-decoration: underline;
+}
+
+.regulation-content s {
+  text-decoration: line-through;
+}

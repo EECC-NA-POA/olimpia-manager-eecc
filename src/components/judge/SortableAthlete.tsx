@@ -6,16 +6,36 @@ interface SortableAthleteProps {
   athlete: any;
   id: string;
   isSelected?: boolean;
-  onClick?: () => void;
+  onSelect?: () => void;
+  modalityId: number;
+  eventId: string | null;
+  judgeId: string;
+  scoreType: 'tempo' | 'distancia' | 'pontos';
+  modalityRule?: any;
 }
 
-export function SortableAthlete({ athlete, id, isSelected, onClick }: SortableAthleteProps) {
+export function SortableAthlete({ 
+  athlete, 
+  id, 
+  isSelected, 
+  onSelect,
+  modalityId,
+  eventId,
+  judgeId,
+  scoreType,
+  modalityRule
+}: SortableAthleteProps) {
   return (
     <div className="cursor-move">
       <AthleteCard 
         athlete={athlete} 
         isSelected={isSelected} 
-        onClick={onClick} 
+        onSelect={onSelect}
+        modalityId={modalityId}
+        eventId={eventId}
+        judgeId={judgeId}
+        scoreType={scoreType}
+        modalityRule={modalityRule}
       />
     </div>
   );

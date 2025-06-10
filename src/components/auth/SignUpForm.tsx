@@ -5,12 +5,9 @@ import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
-import { useQuery } from '@tanstack/react-query';
-import { fetchBranches } from '@/lib/api';
 import { PersonalInfoSection } from './form-sections/PersonalInfoSection';
 import { ContactSection } from './form-sections/ContactSection';
 import { AuthSection } from './form-sections/AuthSection';
-import { PrivacyPolicySection } from './form-sections/PrivacyPolicySection';
 import { registerSchema, RegisterFormData } from './types/form-types';
 import { useRegisterForm } from './hooks/useRegisterForm';
 
@@ -26,7 +23,6 @@ export const SignUpForm = () => {
       telefone: '',
       password: '',
       confirmPassword: '',
-      branchId: undefined,
       tipo_documento: 'CPF',
       numero_documento: '',
       genero: 'Masculino',
@@ -35,26 +31,13 @@ export const SignUpForm = () => {
     },
   });
 
-  const { data: branches = [], isLoading: isLoadingBranches } = useQuery({
-    queryKey: ['branches'],
-    queryFn: fetchBranches,
-    select: (data) => {
-      return data ? [...data].sort((a, b) => a.nome.localeCompare(b.nome)) : [];
-    }
-  });
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-6">
           <PersonalInfoSection form={form} />
-          <ContactSection 
-            form={form} 
-            branches={branches} 
-            isLoadingBranches={isLoadingBranches} 
-          />
+          <ContactSection form={form} />
           <AuthSection form={form} />
-          <PrivacyPolicySection form={form} />
         </div>
 
         <div className="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg">
@@ -65,7 +48,7 @@ export const SignUpForm = () => {
         <Button
           type="submit"
           className="w-full bg-olimpics-green-primary hover:bg-olimpics-green-secondary text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={isSubmitting || !form.watch('acceptPrivacyPolicy')}
+          disabled={isSubmitting}
         >
           {isSubmitting ? (
             <>

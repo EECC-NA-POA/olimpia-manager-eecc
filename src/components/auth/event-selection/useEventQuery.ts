@@ -1,46 +1,132 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
-export const useEventQuery = (userId: string | undefined) => {
+export const useEventQuery = (userId: string | undefined, enabled: boolean = true) => {
+  // Only fetch events if userId is provided and privacy policy is accepted (enabled)
   return useQuery({
-    queryKey: ['active-events', userId],
+    queryKey: ['events', userId],
     queryFn: async () => {
-      // First get all active events
-      const { data: events, error: eventsError } = await supabase
-        .from('eventos')
-        .select(`
-          *,
-          modalidades (
-            id,
-            nome,
-            categoria,
-            tipo_modalidade,
-            faixa_etaria,
-            limite_vagas,
-            vagas_ocupadas
-          )
-        `)
-        .eq('status_evento', 'ativo');
+      if (!userId) {
+        return [];
+      }
 
-      if (eventsError) throw eventsError;
+      try {
+        console.log('Fetching events for user:', userId);
+        
+        // Get all events
+        const { data: events, error } = await supabase
+          .from('eventos')
+          .select('*')
+          .order('data_inicio_inscricao', { ascending: false });
 
-      if (!userId) return events || [];
+        if (error) {
+          console.error('Error fetching events:', error);
+          throw error;
+        }
 
-      // Then get user's registered events
-      const { data: registeredEvents, error: registeredError } = await supabase
-        .from('inscricoes_eventos')
-        .select('evento_id')
-        .eq('usuario_id', userId);
+        if (!events || events.length === 0) {
+          console.log('No events found');
+          return [];
+        }
 
-      if (registeredError) throw registeredError;
-
-      // Mark events as registered or not
-      return events?.map(event => ({
-        ...event,
-        isRegistered: registeredEvents?.some(reg => reg.evento_id === event.id) || false
-      })) || [];
+        console.log('Events found:', events.length);
+        
+        // First, get user registrations from inscricoes_eventos table
+        const { data: registrations, error: regError } = await supabase
+          .from('inscricoes_eventos')
+          .select('evento_id')
+          .eq('usuario_id', userId);
+        
+        if (regError) {
+          console.error('Error fetching user registrations from inscricoes_eventos table:', regError);
+          // Continue with events but mark them as not registered
+          return events.map(event => ({
+            ...event,
+            isRegistered: false
+          }));
+        }
+        
+        // Get user branch ID to check for branch permissions
+        const { data: userData, error: userError } = await supabase
+          .from('usuarios')
+          .select('filial_id')
+          .eq('id', userId)
+          .single();
+          
+        if (userError) {
+          console.error('Error fetching user branch:', userError);
+        }
+        
+        const userBranchId = userData?.filial_id;
+        console.log('User branch ID:', userBranchId);
+        
+        // Get branch permissions for events if we have a branch ID
+        let branchPermissions = [];
+        if (userBranchId) {
+          const { data: permissions, error: permError } = await supabase
+            .from('eventos_filiais')
+            .select('evento_id')
+            .eq('filial_id', userBranchId);
+            
+          if (permError) {
+            console.error('Error fetching branch permissions:', permError);
+          } else {
+            branchPermissions = permissions || [];
+            console.log('Branch permissions:', branchPermissions);
+          }
+        }
+        
+        // If we have registrations, mark events as registered
+        if (registrations && registrations.length > 0) {
+          console.log('User registrations found:', registrations);
+          const registeredEventIds = registrations.map(reg => reg.evento_id);
+          console.log('User registered in events:', registeredEventIds);
+          
+          // Add isRegistered flag to each event and check branch permission
+          return events.map(event => {
+            // Check if user is registered in this event
+            const isRegistered = registeredEventIds.includes(event.id);
+            
+            // Check if user's branch has permission for this event
+            const hasBranchPermission = !userBranchId || 
+              branchPermissions.some(perm => perm.evento_id === event.id);
+            
+            return {
+              ...event,
+              isRegistered,
+              hasBranchPermission
+            };
+          });
+        }
+        
+        // If no registrations found, return events with isRegistered = false
+        // But still include branch permission info
+        return events.map(event => {
+          const hasBranchPermission = !userBranchId || 
+            branchPermissions.some(perm => perm.evento_id === event.id);
+            
+          return {
+            ...event,
+            isRegistered: false,
+            hasBranchPermission
+          };
+        });
+      } catch (error: any) {
+        console.error('Error in useEventQuery:', error);
+        toast.error('Erro ao carregar eventos');
+        return [];
+      }
     },
-    enabled: true
+    enabled: !!userId && enabled,
+    retry: 1,
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60, // 1 minute
+    meta: {
+      onSuccess: (data: any[]) => {
+        console.log(`Successfully fetched ${data.length} events`);
+      }
+    }
   });
 };

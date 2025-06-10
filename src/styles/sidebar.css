@@ -1,0 +1,134 @@
+
+/* Sidebar styles */
+
+/* Custom styles for Olympics theme */
+[data-sidebar="sidebar"] {
+  background-color: var(--olimpics-green-primary, #009B40) !important;
+  border: none !important;
+  margin-top: 4rem !important; /* 64px - height of header */
+  height: calc(100vh - 4rem) !important;
+  /* Ensure sidebar is always visible, even when collapsed */
+  min-width: 3rem !important;
+}
+
+/* Ensure proper sidebar height */
+.group\/sidebar-wrapper {
+  height: 100vh !important;
+}
+
+/* Sidebar content styling */
+[data-sidebar="content"] {
+  background-color: var(--olimpics-green-primary, #009B40) !important;
+}
+
+/* Header and footer styling */
+[data-sidebar="header"],
+[data-sidebar="footer"] {
+  background-color: var(--olimpics-green-primary, #009B40) !important;
+}
+
+/* Menu button styling */
+[data-sidebar="menu-button"] {
+  color: white !important;
+}
+
+[data-sidebar="menu-button"]:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-sidebar="menu-button"][data-active="true"] {
+  background-color: var(--olimpics-green-secondary, #007A33) !important;
+  color: white !important;
+}
+
+/* Trigger button styling */
+[data-sidebar="trigger"] {
+  color: white !important;
+}
+
+[data-sidebar="trigger"]:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Ensure sidebar icons are visible */
+[data-sidebar="menu-button"] svg {
+  color: white !important;
+}
+
+/* Collapsed state adjustments */
+.group-data-\[collapsible=icon\] [data-sidebar="menu-button"] {
+  justify-content: center !important;
+  padding: 0.5rem !important;
+}
+
+/* Ensure collapsed sidebar maintains proper width and visibility */
+.group-data-\[collapsible=icon\] [data-sidebar="sidebar"] {
+  width: 3rem !important;
+  min-width: 3rem !important;
+}
+
+/* Center content in collapsed state */
+.group-data-\[collapsible=icon\] [data-sidebar="header"],
+.group-data-\[collapsible=icon\] [data-sidebar="footer"] {
+  padding: 0.5rem !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.group-data-\[collapsible=icon\] [data-sidebar="header"] h2 {
+  display: none;
+}
+
+/* Main content area adjustments */
+[data-sidebar="inset"] {
+  margin-left: 0 !important;
+}
+
+/* Ensure sidebar starts below header */
+[data-sidebar="sidebar"] {
+  top: 4rem !important;
+  position: fixed !important;
+}
+
+/* Logo transition styling */
+.sidebar-logo-transition {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Tooltip positioning for collapsed sidebar */
+.group-data-\[collapsible=icon\] [data-sidebar="menu-button"] .tooltip {
+  left: 100%;
+  margin-left: 0.5rem;
+}
+
+/* Ensure trigger button is always visible in collapsed state */
+.group-data-\[collapsible=icon\] [data-sidebar="trigger"] {
+  display: flex !important;
+  justify-content: center !important;
+  width: 100% !important;
+}
+
+/* Hide text content but keep icons in collapsed state */
+.group-data-\[collapsible=icon\] span:not([data-sidebar="trigger"] span) {
+  display: none !important;
+}
+
+/* Keep EventSwitcher compact in collapsed state */
+.group-data-\[collapsible=icon\] [data-sidebar="footer"] > div {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Ensure all sidebar elements have green background */
+[data-sidebar="sidebar"] * {
+  background-color: inherit;
+}
+
+/* Garantir que o logo tenha sempre fundo verde */
+[data-sidebar="sidebar"] > div:first-child {
+  background-color: var(--olimpics-green-primary, #009B40) !important;
+}

@@ -23,7 +23,8 @@ export interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  signUp: (userData: any) => Promise<{ user: AuthUser | null; error: Error | null; }>;
+  signUp: (email: string, password: string, userData: any) => Promise<void>;
   resendVerificationEmail: (email: string) => Promise<void>;
   currentEventId: string | null;
+  setCurrentEventId: (eventId: string | null) => void;
 }

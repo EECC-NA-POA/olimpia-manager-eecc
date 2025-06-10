@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { Event } from "@/types/athlete";
+import { Event } from "@/lib/types/database";
 
 export const useEventData = (currentEventId: string | null) => {
   return useQuery({
@@ -11,7 +11,7 @@ export const useEventData = (currentEventId: string | null) => {
       
       const { data, error } = await supabase
         .from('eventos')
-        .select('id, nome, status_evento')
+        .select('*')
         .eq('id', currentEventId)
         .single();
 

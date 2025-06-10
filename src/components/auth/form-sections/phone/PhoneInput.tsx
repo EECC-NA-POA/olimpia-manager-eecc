@@ -6,18 +6,20 @@ import { Input } from "@/components/ui/input";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { UseFormReturn } from 'react-hook-form';
 import InputMask from 'react-input-mask';
+import { formRow, formColumn } from '@/lib/utils/form-layout';
 
 const countries = [
-  { name: 'Brasil', code: 'BR', ddi: '+55' },
   { name: 'Argentina', code: 'AR', ddi: '+54' },
+  { name: 'Bolívia', code: 'BO', ddi: '+591' },
+  { name: 'Brasil', code: 'BR', ddi: '+55' },
   { name: 'Chile', code: 'CL', ddi: '+56' },
-  { name: 'Uruguai', code: 'UY', ddi: '+598' },
+  { name: 'Colômbia', code: 'CO', ddi: '+57' },
+  { name: 'Equador', code: 'EC', ddi: '+593' },
+  { name: 'Espanha', code: 'ES', ddi: '+34' },
   { name: 'Paraguai', code: 'PY', ddi: '+595' },
   { name: 'Peru', code: 'PE', ddi: '+51' },
-  { name: 'Colômbia', code: 'CO', ddi: '+57' },
+  { name: 'Uruguai', code: 'UY', ddi: '+598' },
   { name: 'Venezuela', code: 'VE', ddi: '+58' },
-  { name: 'Equador', code: 'EC', ddi: '+593' },
-  { name: 'Bolívia', code: 'BO', ddi: '+591' },
 ].sort((a, b) => a.name.localeCompare(b.name));
 
 interface PhoneInputProps {
@@ -26,54 +28,57 @@ interface PhoneInputProps {
 
 export const PhoneInput = ({ form }: PhoneInputProps) => {
   return (
-    <div className="space-y-4">
-      <FormField
-        control={form.control}
-        name="ddi"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>País</FormLabel>
-            <Select 
-              onValueChange={field.onChange} 
-              defaultValue={field.value || '+55'}
-            >
+    <div className="space-y-1">
+      <div className={formRow}>
+        <FormField
+          control={form.control}
+          name="ddi"
+          render={({ field }) => (
+            <FormItem className="w-28">
+              <FormLabel>País</FormLabel>
               <FormControl>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione o país" />
-                </SelectTrigger>
+                <Select 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value || '+55'}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="País" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background">
+                    {countries.map((country) => (
+                      <SelectItem 
+                        key={country.code} 
+                        value={country.ddi}
+                        className="flex items-center gap-2"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Flag className="h-4 w-4" />
+                          <span>{country.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </FormControl>
-              <SelectContent>
-                {countries.map((country) => (
-                  <SelectItem 
-                    key={country.code} 
-                    value={country.ddi}
-                    className="flex items-center gap-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Flag className="h-4 w-4" />
-                      <span>{country.name}</span>
-                      <span className="text-muted-foreground">({country.ddi})</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <FormField
-        control={form.control}
-        name="telefone"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="text-left w-full">Telefone</FormLabel>
-            <FormControl>
-              <div className="flex items-center gap-2">
-                <div className="w-[90px] text-sm text-muted-foreground flex items-center px-3 py-2 border rounded-md">
-                  {form.watch('ddi') || '+55'}
-                </div>
+        <div className="flex-shrink-0 w-20">
+          <FormLabel className="block mb-2">Código</FormLabel>
+          <div className="text-muted-foreground flex items-center h-10 px-3 border rounded-md">
+            {form.watch('ddi') || '+55'}
+          </div>
+        </div>
+
+        <FormField
+          control={form.control}
+          name="telefone"
+          render={({ field }) => (
+            <FormItem className="flex-grow">
+              <FormLabel className="text-left w-full">Telefone</FormLabel>
+              <FormControl>
                 <InputMask
                   mask="(99) 99999-9999"
                   value={field.value}
@@ -85,16 +90,16 @@ export const PhoneInput = ({ form }: PhoneInputProps) => {
                       {...inputProps}
                       type="tel"
                       placeholder="(XX) XXXXX-XXXX"
-                      className="flex-1 border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary"
+                      className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary"
                     />
                   )}
                 </InputMask>
-              </div>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
     </div>
   );
 };
