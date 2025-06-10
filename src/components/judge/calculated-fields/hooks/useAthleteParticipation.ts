@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -25,34 +26,40 @@ export function useAthleteParticipation({
 }: UseAthleteParticipationProps) {
   const queryClient = useQueryClient();
 
-  // Fetch athletes enrolled in the modality
-  const { data: enrolledAthletes = [] } = useQuery({
-    queryKey: ['enrolled-athletes', modalityId, eventId],
+  // Fetch athletes with scores
+  const { data: athletesWithScores = [], isLoading: isLoadingAthletes } = useQuery({
+    queryKey: ['athletes-with-scores', modalityId, eventId, bateriaId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('inscricoes_modalidades')
+      console.log('Fetching athletes with scores:', { modalityId, eventId, bateriaId });
+      
+      let query = supabase
+        .from('pontuacoes')
         .select(`
           atleta_id,
-          usuarios(nome_completo)
+          usuarios!inner(nome_completo),
+          tentativas_pontuacao(chave_campo, valor)
         `)
+        .eq('evento_id', eventId)
         .eq('modalidade_id', modalityId)
-        .eq('evento_id', eventId);
+        .eq('modelo_id', modeloId);
 
-      if (error) throw error;
+      if (bateriaId) {
+        query = query.eq('bateria_id', bateriaId);
+      }
+
+      const { data, error } = await query;
       
-      return data.map(item => {
-        // Handle both single object and array responses from Supabase
-        const user = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
-        return {
-          atleta_id: item.atleta_id,
-          nome: user?.nome_completo || 'Atleta'
-        };
-      });
+      if (error) {
+        console.error('Error fetching athletes with scores:', error);
+        throw error;
+      }
+
+      return data || [];
     },
-    enabled: !!modalityId && !!eventId
+    enabled: !!eventId && !!modalityId && !!modeloId
   });
 
-  // Fetch participation status
+  // Fetch participation data
   const { data: participationData = [], isLoading: isLoadingParticipation } = useQuery({
     queryKey: ['athlete-participation', modalityId, eventId, bateriaId],
     queryFn: async () => {
@@ -67,41 +74,18 @@ export function useAthleteParticipation({
       }
 
       const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!modalityId && !!eventId
-  });
-
-  // Fetch required fields completion status
-  const { data: scoresData = [] } = useQuery({
-    queryKey: ['athletes-scores-completion', modalityId, eventId, bateriaId, modeloId],
-    queryFn: async () => {
-      let query = supabase
-        .from('pontuacoes')
-        .select(`
-          atleta_id,
-          tentativas_pontuacao(
-            chave_campo,
-            valor
-          )
-        `)
-        .eq('modalidade_id', modalityId)
-        .eq('evento_id', eventId)
-        .eq('modelo_id', modeloId);
-
-      if (bateriaId) {
-        query = query.eq('bateria_id', bateriaId);
+      
+      if (error) {
+        console.error('Error fetching participation:', error);
+        return [];
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
       return data || [];
     },
-    enabled: !!modalityId && !!eventId && !!modeloId
+    enabled: !!eventId && !!modalityId
   });
 
-  // Get required fields from the model
+  // Get required fields for validation
   const { data: requiredFields = [] } = useQuery({
     queryKey: ['required-fields', modeloId],
     queryFn: async () => {
@@ -110,77 +94,75 @@ export function useAthleteParticipation({
         .select('chave_campo')
         .eq('modelo_id', modeloId)
         .eq('obrigatorio', true)
-        .neq('tipo_input', 'calculated'); // Exclude calculated fields
+        .neq('tipo_input', 'calculated');
 
       if (error) throw error;
-      return data.map(field => field.chave_campo);
+      return data || [];
     },
     enabled: !!modeloId
   });
 
-  // Toggle participation mutation
-  const toggleParticipationMutation = useMutation({
-    mutationFn: async ({ athleteId, participating }: { athleteId: string; participating: boolean }) => {
-      const participationRecord = {
-        atleta_id: athleteId,
+  const updateParticipationMutation = useMutation({
+    mutationFn: async ({ atletaId, participando }: { atletaId: string; participando: boolean }) => {
+      console.log('Updating participation:', { atletaId, participando, modalityId, eventId, bateriaId });
+      
+      const participationData = {
+        atleta_id: atletaId,
         modalidade_id: modalityId,
         evento_id: eventId,
         bateria_id: bateriaId || null,
-        participando: participating
+        participando
       };
 
-      const { data: existing } = await supabase
+      const { data, error } = await supabase
         .from('participacao_atletas')
-        .select('id')
-        .eq('atleta_id', athleteId)
-        .eq('modalidade_id', modalityId)
-        .eq('evento_id', eventId)
-        .eq('bateria_id', bateriaId || null)
-        .single();
+        .upsert(participationData, {
+          onConflict: bateriaId 
+            ? 'atleta_id,modalidade_id,evento_id,bateria_id'
+            : 'atleta_id,modalidade_id,evento_id'
+        })
+        .select();
 
-      if (existing) {
-        const { error } = await supabase
-          .from('participacao_atletas')
-          .update({ participando: participating })
-          .eq('id', existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('participacao_atletas')
-          .insert([participationRecord]);
-        if (error) throw error;
+      if (error) {
+        console.error('Error updating participation:', error);
+        throw error;
       }
+
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['athlete-participation'] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['athlete-participation', modalityId, eventId, bateriaId] 
+      });
+      toast.success('Participação atualizada com sucesso!');
     },
     onError: (error) => {
       console.error('Error updating participation:', error);
-      toast.error('Erro ao atualizar participação do atleta');
+      toast.error('Erro ao atualizar participação: ' + (error instanceof Error ? error.message : 'Erro desconhecido'));
     }
   });
 
-  // Combine all data
-  const athletesWithParticipation: AthleteWithParticipation[] = enrolledAthletes.map(athlete => {
+  // Process athletes with participation and field completion status
+  const athletesWithParticipation: AthleteWithParticipation[] = athletesWithScores.map(athlete => {
     const participation = participationData.find(p => p.atleta_id === athlete.atleta_id);
-    const scoreData = scoresData.find(s => s.atleta_id === athlete.atleta_id);
     
-    // Check if athlete has all required fields completed
-    const completedFields = scoreData?.tentativas_pontuacao?.map((t: any) => t.chave_campo) || [];
+    // Check if athlete has all required fields
+    const athleteFields = athlete.tentativas_pontuacao?.map((t: any) => t.chave_campo) || [];
     const hasRequiredFields = requiredFields.every(field => 
-      completedFields.includes(field) && 
-      scoreData?.tentativas_pontuacao?.find((t: any) => 
-        t.chave_campo === field && t.valor !== null && t.valor !== ''
-      )
+      athleteFields.includes(field.chave_campo)
     );
 
     return {
       atleta_id: athlete.atleta_id,
-      nome: athlete.nome,
-      participando: participation?.participando ?? true, // Default to participating
+      nome: athlete.usuarios?.nome_completo || 'Atleta',
+      participando: participation?.participando ?? true, // Default to true if no record
       hasRequiredFields
     };
   });
+
+  const toggleAthleteParticipation = (atletaId: string, participando: boolean) => {
+    updateParticipationMutation.mutate({ atletaId, participando });
+  };
 
   const getParticipatingAthletes = () => {
     return athletesWithParticipation.filter(athlete => athlete.participando);
@@ -190,15 +172,11 @@ export function useAthleteParticipation({
     .filter(athlete => athlete.participando)
     .every(athlete => athlete.hasRequiredFields);
 
-  const toggleAthleteParticipation = (athleteId: string, participating: boolean) => {
-    toggleParticipationMutation.mutate({ athleteId, participating });
-  };
-
   return {
     athletesWithParticipation,
     toggleAthleteParticipation,
     getParticipatingAthletes,
     allRequiredFieldsCompleted,
-    isLoadingParticipation
+    isLoadingParticipation: isLoadingAthletes || isLoadingParticipation
   };
 }

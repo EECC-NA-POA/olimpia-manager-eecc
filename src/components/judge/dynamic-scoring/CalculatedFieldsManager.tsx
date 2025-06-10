@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { AthleteParticipationCard } from './calculated-fields-manager/AthleteParticipationCard';
 import { CalculatedFieldsCard } from './calculated-fields-manager/CalculatedFieldsCard';
 import { CalculationResultsCard } from './calculated-fields-manager/CalculationResultsCard';
+import { BateriaSelector } from './BateriaSelector';
 import { useCalculatedFieldsManager } from './calculated-fields-manager/hooks/useCalculatedFieldsManager';
 
 interface CalculatedFieldsManagerProps {
@@ -16,8 +17,10 @@ export function CalculatedFieldsManager({
   modeloId,
   modalityId,
   eventId,
-  bateriaId
+  bateriaId: initialBateriaId
 }: CalculatedFieldsManagerProps) {
+  const [selectedBateriaId, setSelectedBateriaId] = useState<number | undefined>(initialBateriaId);
+  
   const {
     selectedFields,
     calculationResults,
@@ -38,11 +41,23 @@ export function CalculatedFieldsManager({
     modeloId,
     modalityId,
     eventId,
-    bateriaId
+    bateriaId: selectedBateriaId
   });
+
+  const handleBateriaSelect = (bateriaId: number | undefined) => {
+    setSelectedBateriaId(bateriaId);
+  };
 
   return (
     <div className="space-y-6">
+      {/* Bateria Selection */}
+      <BateriaSelector
+        modalityId={modalityId}
+        eventId={eventId}
+        selectedBateriaId={selectedBateriaId}
+        onBateriaSelect={handleBateriaSelect}
+      />
+
       {/* Athletes Participation Status */}
       <AthleteParticipationCard
         athletesWithParticipation={athletesWithParticipation}
