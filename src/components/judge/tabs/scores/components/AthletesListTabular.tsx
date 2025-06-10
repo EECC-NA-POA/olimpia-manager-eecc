@@ -48,7 +48,9 @@ export function AthletesListTabular({
     setSelectedBateriaId,
     createNewBateria,
     createFinalBateria,
-    isCreating
+    editBateria,
+    isCreating,
+    isEditing
   } = useDynamicBaterias({ modalityId, eventId: eventId || '', modalityRule });
 
   // Get branch data for filtering
@@ -114,8 +116,10 @@ export function AthletesListTabular({
           onSelectBateria={setSelectedBateriaId}
           onCreateNewBateria={createNewBateria}
           onCreateFinalBateria={createFinalBateria}
+          onEditBateria={editBateria}
           hasFinalBateria={hasFinalBateria}
           isCreating={isCreating}
+          isEditing={isEditing}
           usesBaterias={usesBaterias}
         />
       )}
@@ -172,7 +176,7 @@ export function AthletesListTabular({
               eventId={eventId}
               judgeId={judgeId}
               modelo={modelos[0]}
-              selectedBateriaId={selectedBateriaId}
+              modalityRule={modalityRule}
             />
           ) : (
             <AthletesTable
