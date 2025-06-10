@@ -11,6 +11,10 @@ import { supabase } from '@/lib/supabase';
 import { useCamposModelo } from '@/hooks/useDynamicScoring';
 import { useDynamicScoringSubmission } from '@/hooks/useDynamicScoringSubmission';
 import { Athlete } from '../hooks/useAthletes';
+import { useDynamicScoringTableState } from './dynamic-scoring-table/useDynamicScoringTableState';
+import { UnsavedChangesBanner } from './dynamic-scoring-table/UnsavedChangesBanner';
+import { DynamicInputField } from './dynamic-scoring-table/DynamicInputField';
+import { AthleteStatusCell } from './dynamic-scoring-table/AthleteStatusCell';
 
 interface DynamicScoringTableProps {
   athletes: Athlete[];

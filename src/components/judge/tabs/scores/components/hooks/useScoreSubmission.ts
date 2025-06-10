@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -45,10 +46,10 @@ export function useScoreSubmission() {
       }
 
       // First, ensure we have a bateria for this modality
-      let bateriaId: number | null = bateriaId;
+      let finalBateriaId: number | null = bateriaId;
 
       // Try to find existing bateria
-      if (!bateriaId) {
+      if (!finalBateriaId) {
         const { data: existingBaterias, error: bateriaFetchError } = await supabase
           .from('baterias')
           .select('id')
@@ -62,8 +63,8 @@ export function useScoreSubmission() {
         }
 
         if (existingBaterias && existingBaterias.length > 0) {
-          bateriaId = existingBaterias[0].id;
-          console.log('Using existing bateria:', bateriaId);
+          finalBateriaId = existingBaterias[0].id;
+          console.log('Using existing bateria:', finalBateriaId);
         } else {
           // Create a default bateria
           console.log('Creating default bateria for modality:', modalityId);
@@ -82,8 +83,8 @@ export function useScoreSubmission() {
             throw new Error('Erro ao criar bateria');
           }
 
-          bateriaId = newBateria.id;
-          console.log('Created new bateria:', bateriaId);
+          finalBateriaId = newBateria.id;
+          console.log('Created new bateria:', finalBateriaId);
         }
       }
 
@@ -97,7 +98,7 @@ export function useScoreSubmission() {
         valor_pontuacao: processedValue,
         unidade: scoreType === 'tempo' ? 'segundos' : scoreType === 'distancia' ? 'metros' : 'pontos',
         observacoes: notes || null,
-        bateria_id: bateriaId,
+        bateria_id: finalBateriaId,
         data_registro: new Date().toISOString()
       };
 
