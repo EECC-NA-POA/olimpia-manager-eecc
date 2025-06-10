@@ -29,7 +29,7 @@ export function AthleteCard({
   return (
     <Card className={`cursor-pointer transition-all duration-200 ${
       isSelected ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md'
-    }`}>
+    }`} onClick={onSelect}>
       <CardContent className="p-0">
         <AthleteScoreCard
           athlete={athlete}

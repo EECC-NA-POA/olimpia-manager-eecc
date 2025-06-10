@@ -11,6 +11,10 @@ export interface Athlete {
   numero_documento: string;
   filial_id?: number | null;
   filial_nome?: string | null;
+  equipe_id?: string | null;
+  equipe_nome?: string | null;
+  origem_uf?: string | null;
+  origem_cidade?: string | null;
 }
 
 // Interface to type the response from Supabase
@@ -112,6 +116,10 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
             numero_documento: user?.numero_documento || '',
             filial_id: user?.filial_id,
             filial_nome: filial?.nome || null,
+            equipe_id: null,
+            equipe_nome: filial?.nome || null,
+            origem_uf: null,
+            origem_cidade: filial?.nome || null,
           };
         });
 
@@ -126,5 +134,5 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
     enabled: !!modalityId && !!eventId,
   });
 
-  return { athletes, isLoadingAthletes };
+  return { data: athletes, isLoading: isLoadingAthletes };
 }

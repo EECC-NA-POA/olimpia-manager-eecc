@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { AthleteCard } from '@/components/judge/AthleteCard';
-import { DynamicAthleteScoreCard } from '../../score-card/DynamicAthleteScoreCard';
+import { DynamicAthleteScoreCard } from '@/components/judge/score-card/DynamicAthleteScoreCard';
 import { useModelosModalidade } from '@/hooks/useDynamicScoring';
 import { Athlete } from '../hooks/useAthletes';
 
@@ -49,11 +49,11 @@ export function DynamicAthletesGrid({
               <div className="bg-card border rounded-lg p-4">
                 <div className="font-medium">{athlete.atleta_nome}</div>
                 <div className="text-sm text-muted-foreground">
-                  {athlete.equipe_nome}
+                  {athlete.equipe_nome || athlete.filial_nome}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
                   {athlete.origem_uf && `${athlete.origem_uf} • `}
-                  {athlete.origem_cidade}
+                  {athlete.origem_cidade || athlete.filial_nome}
                 </div>
               </div>
               

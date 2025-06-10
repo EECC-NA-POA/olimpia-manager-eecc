@@ -11,7 +11,7 @@ interface AthletesGridProps {
   scoreType: 'tempo' | 'distancia' | 'pontos';
   eventId: string | null;
   judgeId: string;
-  modalityRule?: any; // Add modality rule prop
+  modalityRule?: any;
 }
 
 export function AthletesGrid({
@@ -24,7 +24,7 @@ export function AthletesGrid({
   judgeId,
   modalityRule
 }: AthletesGridProps) {
-  const handleAthleteClick = (athleteId: string) => {
+  const handleAthleteSelect = (athleteId: string) => {
     if (selectedAthleteId === athleteId) {
       onAthleteSelect(null);
     } else {
@@ -39,7 +39,7 @@ export function AthletesGrid({
           key={athlete.atleta_id}
           athlete={athlete}
           isSelected={selectedAthleteId === athlete.atleta_id}
-          onClick={() => handleAthleteClick(athlete.atleta_id)}
+          onSelect={() => handleAthleteSelect(athlete.atleta_id)}
           modalityId={modalityId}
           scoreType={scoreType}
           eventId={eventId}
