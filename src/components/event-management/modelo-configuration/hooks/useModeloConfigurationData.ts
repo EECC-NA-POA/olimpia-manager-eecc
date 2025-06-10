@@ -31,37 +31,72 @@ export function useModeloConfigurationData(eventId: string | null) {
       const modalidadeIds = modalidades.map(m => m.id);
       console.log('Searching for modelos with modalidade_ids:', modalidadeIds);
       
-      const { data, error } = await supabase
+      // Get modelos_modalidade data
+      const { data: modelosData, error: modelosError } = await supabase
         .from('modelos_modalidade')
         .select(`
           id,
           modalidade_id,
           codigo_modelo,
-          descricao,
-          parametros
+          descricao
         `)
         .in('modalidade_id', modalidadeIds);
 
-      if (error) {
-        console.error('Error fetching modelo configurations:', error);
-        throw error;
+      if (modelosError) {
+        console.error('Error fetching modelos:', modelosError);
+        throw modelosError;
       }
 
-      console.log('Raw modelos data:', data);
+      console.log('Raw modelos data:', modelosData);
       
-      // Enrich with modalidade names
-      const enrichedData = (data || []).map(modelo => {
-        const modalidade = modalidades.find(m => m.id === modelo.modalidade_id);
-        return {
-          ...modelo,
-          modalidade: {
-            nome: modalidade?.nome || 'Modalidade não encontrada'
-          }
-        };
-      });
+      if (!modelosData || modelosData.length === 0) {
+        console.log('No modelos found for modalidades');
+        return [];
+      }
 
-      console.log('Enriched modelos data:', enrichedData);
-      return enrichedData;
+      // For each modelo, get its campos_modelo to build parametros
+      const enrichedModelos = await Promise.all(
+        modelosData.map(async (modelo) => {
+          const { data: campos, error: camposError } = await supabase
+            .from('campos_modelo')
+            .select('chave_campo, metadados')
+            .eq('modelo_id', modelo.id);
+
+          if (camposError) {
+            console.error('Error fetching campos for modelo:', modelo.id, camposError);
+          }
+
+          // Build parametros from campos metadados
+          const parametros: any = {};
+          if (campos) {
+            campos.forEach(campo => {
+              if (campo.metadados) {
+                // Merge metadados into parametros
+                Object.assign(parametros, campo.metadados);
+              }
+            });
+          }
+
+          // Add some default structure if no campos exist
+          if (Object.keys(parametros).length === 0) {
+            parametros.baterias = false;
+            parametros.regra_tipo = 'pontos';
+          }
+
+          const modalidade = modalidades.find(m => m.id === modelo.modalidade_id);
+          
+          return {
+            ...modelo,
+            parametros,
+            modalidade: {
+              nome: modalidade?.nome || 'Modalidade não encontrada'
+            }
+          };
+        })
+      );
+
+      console.log('Enriched modelos data:', enrichedModelos);
+      return enrichedModelos;
     },
     enabled: !!eventId,
   });
