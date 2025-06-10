@@ -132,11 +132,14 @@ export function AthletesListTabular({
           <CardTitle>Registro de Pontuações - Modalidade</CardTitle>
           <div className="text-center text-sm text-muted-foreground">
             Mostrando {filteredAthletes.length} de {athletes.length} atletas
-            {hasDynamicScoring && (
+            {hasDynamicScoring && modelos[0] && (
               <div className="mt-2 text-xs bg-green-50 text-green-700 p-2 rounded border">
                 <strong>Sistema de Pontuação Dinâmica Ativo</strong>
                 <div className="mt-1">
-                  Modelo: {modelos[0]?.descricao || modelos[0]?.codigo_modelo}
+                  Modelo: {modelos[0].descricao || modelos[0].codigo_modelo}
+                </div>
+                <div className="mt-1">
+                  Campos configurados: {modelos[0].campos_modelo?.length || 0}
                 </div>
               </div>
             )}
@@ -171,7 +174,7 @@ export function AthletesListTabular({
             onStatusFilterChange={(value) => setFilters({ ...filters, statusFilter: value })}
           />
           
-          {hasDynamicScoring ? (
+          {hasDynamicScoring && modelos[0] ? (
             <DynamicAthletesTable
               athletes={filteredAthletes}
               modalityId={modalityId}
