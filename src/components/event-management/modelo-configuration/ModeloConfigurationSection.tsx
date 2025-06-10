@@ -3,9 +3,11 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { ModeloConfigurationTable } from './ModeloConfigurationTable';
+import { ModeloConfigurationFilters } from './ModeloConfigurationFilters';
 import { ModeloConfigurationDialog } from './ModeloConfigurationDialog';
 import { useModeloConfigurationData } from './hooks/useModeloConfigurationData';
 import { useModeloConfigurationMutations } from './hooks/useModeloConfigurationMutations';
+import { useModeloFiltering } from './hooks/useModeloFiltering';
 
 export function ModeloConfigurationSection({ eventId }: { eventId: string | null }) {
   console.log('ModeloConfigurationSection - eventId:', eventId);
@@ -16,8 +18,37 @@ export function ModeloConfigurationSection({ eventId }: { eventId: string | null
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingModelo, setEditingModelo] = useState<any>(null);
 
+  const {
+    searchTerm,
+    setSearchTerm,
+    modalityFilter,
+    setModalityFilter,
+    useBatteryFilter,
+    setUseBatteryFilter,
+    sortConfig,
+    filteredAndSortedModelos,
+    handleSort
+  } = useModeloFiltering(modelos);
+
   console.log('ModeloConfigurationSection - modelos:', modelos);
+  console.log('ModeloConfigurationSection - filteredAndSortedModelos:', filteredAndSortedModelos);
   console.log('ModeloConfigurationSection - isLoading:', isLoading);
+
+  // Extract unique modalities for filter
+  const modalities = React.useMemo(() => {
+    const uniqueModalities = new Map();
+    modelos.forEach(modelo => {
+      if (modelo.modalidade?.nome && modelo.modalidade_id) {
+        uniqueModalities.set(modelo.modalidade_id, {
+          id: modelo.modalidade_id,
+          nome: modelo.modalidade.nome
+        });
+      }
+    });
+    return Array.from(uniqueModalities.values()).sort((a, b) => 
+      a.nome.localeCompare(b.nome)
+    );
+  }, [modelos]);
 
   const openConfigDialog = (modelo: any) => {
     console.log('Opening config dialog for modelo:', modelo);
@@ -43,9 +74,21 @@ export function ModeloConfigurationSection({ eventId }: { eventId: string | null
           <CardTitle>Configuração de Modelos de Pontuação</CardTitle>
         </CardHeader>
         <CardContent>
+          <ModeloConfigurationFilters
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            modalityFilter={modalityFilter}
+            onModalityFilterChange={setModalityFilter}
+            useBatteryFilter={useBatteryFilter}
+            onUseBatteryFilterChange={setUseBatteryFilter}
+            modalities={modalities}
+          />
+          
           <ModeloConfigurationTable 
-            modelos={modelos}
+            modelos={filteredAndSortedModelos}
             onConfigure={openConfigDialog}
+            sortConfig={sortConfig}
+            onSort={handleSort}
           />
         </CardContent>
       </Card>

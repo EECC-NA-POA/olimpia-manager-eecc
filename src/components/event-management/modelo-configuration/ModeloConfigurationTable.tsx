@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Check, X } from 'lucide-react';
+import { Settings, Check, X, ChevronUp, ChevronDown } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -15,17 +15,49 @@ import {
 interface ModeloConfigurationTableProps {
   modelos: any[];
   onConfigure: (modelo: any) => void;
+  sortConfig: { key: string; direction: 'asc' | 'desc' } | null;
+  onSort: (key: string) => void;
 }
 
-export function ModeloConfigurationTable({ modelos, onConfigure }: ModeloConfigurationTableProps) {
+export function ModeloConfigurationTable({ 
+  modelos, 
+  onConfigure, 
+  sortConfig, 
+  onSort 
+}: ModeloConfigurationTableProps) {
   console.log('ModeloConfigurationTable - modelos received:', modelos);
+
+  const SortableHeader = ({ sortKey, children }: { sortKey: string; children: React.ReactNode }) => {
+    const isActive = sortConfig?.key === sortKey;
+    const direction = sortConfig?.direction;
+
+    return (
+      <TableHead 
+        className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+        onClick={() => onSort(sortKey)}
+      >
+        <div className="flex items-center gap-2">
+          {children}
+          {isActive ? (
+            direction === 'asc' ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )
+          ) : (
+            <div className="h-4 w-4" />
+          )}
+        </div>
+      </TableHead>
+    );
+  };
 
   if (modelos.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        <p>Nenhum modelo de pontuação encontrado para as modalidades deste evento.</p>
+        <p>Nenhum modelo de pontuação encontrado para os filtros aplicados.</p>
         <p className="text-sm mt-2">
-          Certifique-se de que existem modalidades cadastradas e modelos configurados para elas.
+          Tente ajustar os filtros ou certifique-se de que existem modelos configurados.
         </p>
       </div>
     );
@@ -35,9 +67,9 @@ export function ModeloConfigurationTable({ modelos, onConfigure }: ModeloConfigu
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Modalidade</TableHead>
-          <TableHead>Modelo</TableHead>
-          <TableHead>Usa Baterias</TableHead>
+          <SortableHeader sortKey="modalidade">Modalidade</SortableHeader>
+          <SortableHeader sortKey="modelo">Modelo</SortableHeader>
+          <SortableHeader sortKey="baterias">Usa Baterias</SortableHeader>
           <TableHead>Parâmetros</TableHead>
           <TableHead>Ações</TableHead>
         </TableRow>
