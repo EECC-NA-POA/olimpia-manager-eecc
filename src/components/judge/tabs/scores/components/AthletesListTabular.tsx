@@ -11,6 +11,7 @@ import { useAthletesBranchData } from './hooks/useAthletesBranchData';
 import { useAthletesScoreStatus } from './hooks/useAthletesScoreStatus';
 import { useModelosModalidade } from '@/hooks/useDynamicScoring';
 import { useDynamicBaterias } from '../hooks/useDynamicBaterias';
+import { useModeloConfiguration } from '../hooks/useModeloConfiguration';
 import { Athlete } from '../hooks/useAthletes';
 
 interface AthletesListTabularProps {
@@ -20,7 +21,6 @@ interface AthletesListTabularProps {
   eventId: string | null;
   judgeId: string;
   scoreType?: 'tempo' | 'distancia' | 'pontos';
-  modalityRule?: any;
 }
 
 export function AthletesListTabular({
@@ -29,12 +29,14 @@ export function AthletesListTabular({
   modalityId,
   eventId,
   judgeId,
-  scoreType = 'pontos',
-  modalityRule
+  scoreType = 'pontos'
 }: AthletesListTabularProps) {
   // Check for dynamic scoring
   const { data: modelos = [], isLoading: isLoadingModelos } = useModelosModalidade(modalityId);
   const hasDynamicScoring = modelos.length > 0;
+
+  // Get modelo configuration for battery management
+  const { data: modeloConfig } = useModeloConfiguration(modalityId);
 
   // Bateria management
   const {
@@ -51,7 +53,7 @@ export function AthletesListTabular({
     editBateria,
     isCreating,
     isEditing
-  } = useDynamicBaterias({ modalityId, eventId: eventId || '', modalityRule });
+  } = useDynamicBaterias({ modalityId, eventId: eventId || '' });
 
   // Get branch data for filtering
   const { availableBranches, availableStates, athletesBranchData } = useAthletesBranchData(athletes || []);
@@ -176,7 +178,6 @@ export function AthletesListTabular({
               eventId={eventId}
               judgeId={judgeId}
               modelo={modelos[0]}
-              modalityRule={modalityRule}
               selectedBateriaId={selectedBateriaId}
             />
           ) : (
@@ -186,7 +187,6 @@ export function AthletesListTabular({
               eventId={eventId}
               judgeId={judgeId}
               scoreType={scoreType}
-              modalityRule={modalityRule}
               selectedBateriaId={selectedBateriaId}
             />
           )}

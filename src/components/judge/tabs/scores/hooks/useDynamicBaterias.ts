@@ -3,27 +3,31 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { useModeloConfiguration } from './useModeloConfiguration';
 
 export interface DynamicBateria {
   id: number;
   numero: number;
   modalidade_id: number;
   evento_id: string;
+  modelo_id?: number;
   isFinal: boolean;
 }
 
 interface UseDynamicBateriasProps {
   modalityId: number;
   eventId: string | null;
-  modalityRule?: any;
 }
 
-export function useDynamicBaterias({ modalityId, eventId, modalityRule }: UseDynamicBateriasProps) {
+export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasProps) {
   const queryClient = useQueryClient();
   const [selectedBateriaId, setSelectedBateriaId] = useState<number | null>(null);
   
+  // Get modelo configuration
+  const { data: modeloConfig } = useModeloConfiguration(modalityId);
+  
   // Check if this modality uses baterias
-  const usesBaterias = modalityRule?.parametros?.baterias === true;
+  const usesBaterias = modeloConfig?.parametros?.baterias === true;
 
   // Fetch existing baterias
   const { data: baterias = [], isLoading } = useQuery({
@@ -65,6 +69,7 @@ export function useDynamicBaterias({ modalityId, eventId, modalityRule }: UseDyn
         .insert({
           modalidade_id: modalityId,
           evento_id: eventId,
+          modelo_id: modeloConfig?.modelo_id,
           numero: nextNumber
         })
         .select()
@@ -113,10 +118,10 @@ export function useDynamicBaterias({ modalityId, eventId, modalityRule }: UseDyn
       setSelectedBateriaId(baterias[0].id);
     }
     // If no baterias exist and we're using baterias, create the first one
-    else if (usesBaterias && baterias.length === 0 && !createBateriaMutation.isPending) {
+    else if (usesBaterias && baterias.length === 0 && !createBateriaMutation.isPending && modeloConfig) {
       createBateriaMutation.mutate({ isFinal: false });
     }
-  }, [baterias, selectedBateriaId, usesBaterias]);
+  }, [baterias, selectedBateriaId, usesBaterias, modeloConfig]);
 
   const selectedBateria = baterias.find(b => b.id === selectedBateriaId);
   const hasFinalBateria = baterias.some(b => b.isFinal);

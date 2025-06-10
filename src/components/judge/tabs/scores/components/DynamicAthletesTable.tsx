@@ -15,7 +15,6 @@ interface DynamicAthletesTableProps {
   eventId: string | null;
   judgeId: string;
   modelo: any;
-  modalityRule?: any;
   selectedBateriaId?: number | null;
 }
 
@@ -25,7 +24,6 @@ export function DynamicAthletesTable({
   eventId,
   judgeId,
   modelo,
-  modalityRule,
   selectedBateriaId
 }: DynamicAthletesTableProps) {
   const [showCalculatedFields, setShowCalculatedFields] = useState(false);

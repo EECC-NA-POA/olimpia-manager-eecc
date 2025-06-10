@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Target } from 'lucide-react';
-import { useBateriaData } from '../tabs/scores/hooks/useBateriaData';
+import { useDynamicBaterias } from '../tabs/scores/hooks/useDynamicBaterias';
 
 interface BateriaSelectorProps {
   modalityId: number;
@@ -19,13 +19,38 @@ export function BateriaSelector({
   selectedBateriaId,
   onBateriaSelect
 }: BateriaSelectorProps) {
-  const { data: baterias = [], isLoading } = useBateriaData(modalityId, eventId);
+  const { baterias, isLoading, usesBaterias } = useDynamicBaterias({ 
+    modalityId, 
+    eventId 
+  });
 
   if (isLoading) {
     return (
       <Card>
         <CardContent className="pt-4">
           <div className="text-center">Carregando baterias...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!usesBaterias) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5" />
+            Seleção de Bateria
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-4 text-muted-foreground">
+            <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium mb-2">Sistema de baterias não configurado</p>
+            <p className="text-sm">
+              Esta modalidade não usa o sistema de baterias. Configure nas opções do modelo para habilitar.
+            </p>
+          </div>
         </CardContent>
       </Card>
     );
@@ -43,9 +68,9 @@ export function BateriaSelector({
         <CardContent>
           <div className="text-center py-4 text-muted-foreground">
             <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg font-medium mb-2">Nenhuma bateria configurada</p>
+            <p className="text-lg font-medium mb-2">Nenhuma bateria criada</p>
             <p className="text-sm">
-              Configure baterias nas regras da modalidade para habilitar o cálculo por bateria.
+              Crie baterias no painel do juiz para começar a pontuar.
             </p>
           </div>
         </CardContent>
