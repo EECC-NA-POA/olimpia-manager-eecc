@@ -28,8 +28,6 @@ export function ModeloConfigurationDialog({
     num_raias: 8,
     permite_final: false,
     regra_tipo: 'pontos',
-    unidade: '',
-    subunidade: '',
     formato_resultado: '',
     tipo_calculo: '',
     campo_referencia: '',
@@ -45,8 +43,6 @@ export function ModeloConfigurationDialog({
         num_raias: parametros.num_raias || 8,
         permite_final: parametros.permite_final || false,
         regra_tipo: parametros.regra_tipo || 'pontos',
-        unidade: parametros.unidade || '',
-        subunidade: parametros.subunidade || '',
         formato_resultado: parametros.formato_resultado || '',
         tipo_calculo: parametros.tipo_calculo || '',
         campo_referencia: parametros.campo_referencia || '',
@@ -55,6 +51,18 @@ export function ModeloConfigurationDialog({
       });
     }
   }, [editingModelo]);
+
+  // Automaticamente define formato e campo de referência quando regra_tipo muda
+  const handleRegraTypeChange = (value: string) => {
+    const newConfig = { ...config, regra_tipo: value };
+    
+    if (value === 'tempo') {
+      newConfig.formato_resultado = 'tempo';
+      newConfig.campo_referencia = 'tempo';
+    }
+    
+    setConfig(newConfig);
+  };
 
   const handleSave = async () => {
     if (!editingModelo) return;
@@ -132,7 +140,7 @@ export function ModeloConfigurationDialog({
                 <Label htmlFor="regra_tipo">Tipo de Regra</Label>
                 <Select
                   value={config.regra_tipo}
-                  onValueChange={(value) => setConfig(prev => ({ ...prev, regra_tipo: value }))}
+                  onValueChange={handleRegraTypeChange}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o tipo de regra" />
@@ -146,32 +154,13 @@ export function ModeloConfigurationDialog({
                   </SelectContent>
                 </Select>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="unidade">Unidade</Label>
-                <Input
-                  id="unidade"
-                  placeholder="Ex: metros, segundos, pontos"
-                  value={config.unidade}
-                  onChange={(e) => setConfig(prev => ({ ...prev, unidade: e.target.value }))}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="subunidade">Subunidade</Label>
-                <Input
-                  id="subunidade"
-                  placeholder="Ex: cm, ms"
-                  value={config.subunidade}
-                  onChange={(e) => setConfig(prev => ({ ...prev, subunidade: e.target.value }))}
-                />
-              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="formato_resultado">Formato de Resultado</Label>
                 <Select
                   value={config.formato_resultado}
                   onValueChange={(value) => setConfig(prev => ({ ...prev, formato_resultado: value }))}
+                  disabled={config.regra_tipo === 'tempo'}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o formato" />
@@ -182,6 +171,11 @@ export function ModeloConfigurationDialog({
                     <SelectItem value="pontos">Pontos (###.##)</SelectItem>
                   </SelectContent>
                 </Select>
+                {config.regra_tipo === 'tempo' && (
+                  <p className="text-sm text-muted-foreground">
+                    Automaticamente definido como "Tempo" quando o tipo de regra é tempo
+                  </p>
+                )}
               </div>
 
               {config.regra_tipo === 'tempo' && (
@@ -212,11 +206,17 @@ export function ModeloConfigurationDialog({
                       placeholder="Ex: tempo, distancia, pontos"
                       value={config.campo_referencia}
                       onChange={(e) => setConfig(prev => ({ ...prev, campo_referencia: e.target.value }))}
+                      disabled={config.regra_tipo === 'tempo'}
                     />
+                    {config.regra_tipo === 'tempo' && (
+                      <p className="text-sm text-muted-foreground">
+                        Automaticamente definido como "tempo" quando o tipo de regra é tempo
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="contexto">Contexto</Label>
+                    <Label htmlFor="contexto">Contexto do Cálculo</Label>
                     <Select
                       value={config.contexto}
                       onValueChange={(value) => setConfig(prev => ({ ...prev, contexto: value }))}
@@ -225,11 +225,16 @@ export function ModeloConfigurationDialog({
                         <SelectValue placeholder="Selecione o contexto" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="bateria">Bateria</SelectItem>
-                        <SelectItem value="modalidade">Modalidade</SelectItem>
-                        <SelectItem value="evento">Evento</SelectItem>
+                        <SelectItem value="bateria">Bateria - Classificação dentro de cada bateria</SelectItem>
+                        <SelectItem value="modalidade">Modalidade - Classificação geral da modalidade</SelectItem>
+                        <SelectItem value="evento">Evento - Classificação em todo o evento</SelectItem>
                       </SelectContent>
                     </Select>
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p><strong>Bateria:</strong> Cada bateria tem seus próprios colocados (1º, 2º, 3º...)</p>
+                      <p><strong>Modalidade:</strong> Todos os resultados da modalidade são comparados</p>
+                      <p><strong>Evento:</strong> Comparação entre modalidades do evento</p>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
