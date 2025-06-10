@@ -1,34 +1,32 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { AthleteCard } from '@/components/judge/AthleteCard';
 import { Athlete } from '../hooks/useAthletes';
 
 interface AthletesGridProps {
   athletes: Athlete[];
-  selectedAthleteId: string | null;
-  onAthleteSelect: (athleteId: string | null) => void;
   modalityId: number;
   scoreType: 'tempo' | 'distancia' | 'pontos';
   eventId: string | null;
   judgeId: string;
-  modalityRule?: any; // Add modality rule prop
+  modalityRule?: any;
 }
 
 export function AthletesGrid({
   athletes,
-  selectedAthleteId,
-  onAthleteSelect,
   modalityId,
   scoreType,
   eventId,
   judgeId,
   modalityRule
 }: AthletesGridProps) {
+  const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
+
   const handleAthleteClick = (athleteId: string) => {
     if (selectedAthleteId === athleteId) {
-      onAthleteSelect(null);
+      setSelectedAthleteId(null);
     } else {
-      onAthleteSelect(athleteId);
+      setSelectedAthleteId(athleteId);
     }
   };
 
