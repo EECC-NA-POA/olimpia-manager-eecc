@@ -15,7 +15,7 @@ export function useModeloConfigurationData(eventId: string | null) {
         .from('modalidades')
         .select('id, nome, categoria')
         .eq('evento_id', eventId)
-        .order('nome'); // Order alphabetically by nome
+        .order('nome');
       
       if (modalidadesError) {
         console.error('Error fetching modalidades:', modalidadesError);
@@ -32,53 +32,111 @@ export function useModeloConfigurationData(eventId: string | null) {
       const modalidadeIds = modalidades.map(m => m.id);
       console.log('Searching for modelos with modalidade_ids:', modalidadeIds);
       
-      // Get modelos_modalidade data
+      // Get modelos_modalidade data with their campos_modelo in one query
       const { data: modelosData, error: modelosError } = await supabase
         .from('modelos_modalidade')
         .select(`
           id,
           modalidade_id,
           codigo_modelo,
-          descricao
+          descricao,
+          campos_modelo!inner (
+            id,
+            chave_campo,
+            rotulo_campo,
+            tipo_input,
+            obrigatorio,
+            ordem_exibicao,
+            metadados
+          )
         `)
         .in('modalidade_id', modalidadeIds);
 
       if (modelosError) {
-        console.error('Error fetching modelos:', modelosError);
+        console.error('Error fetching modelos with campos:', modelosError);
         throw modelosError;
       }
 
-      console.log('Raw modelos data:', modelosData);
+      console.log('Raw modelos data with campos:', modelosData);
       
-      if (!modelosData || modelosData.length === 0) {
+      // Also get modelos without campos to include them in the list
+      const { data: modelosWithoutCampos, error: modelosWithoutCamposError } = await supabase
+        .from('modelos_modalidade')
+        .select('id, modalidade_id, codigo_modelo, descricao')
+        .in('modalidade_id', modalidadeIds)
+        .not('id', 'in', `(${modelosData?.map(m => m.id).join(',') || '0'})`);
+
+      if (modelosWithoutCamposError) {
+        console.error('Error fetching modelos without campos:', modelosWithoutCamposError);
+        // Don't throw, just continue with what we have
+      }
+
+      // Combine both datasets
+      const allModelos = [
+        ...(modelosData || []),
+        ...(modelosWithoutCampos || []).map(modelo => ({ ...modelo, campos_modelo: [] }))
+      ];
+
+      console.log('All modelos combined:', allModelos);
+
+      if (!allModelos || allModelos.length === 0) {
         console.log('No modelos found for modalidades');
         return [];
       }
 
-      // For each modelo, get its campos_modelo to build parametros
-      const enrichedModelos = await Promise.all(
-        modelosData.map(async (modelo) => {
-          console.log('Fetching campos for modelo ID:', modelo.id);
-          
-          const { data: campos, error: camposError } = await supabase
-            .from('campos_modelo')
-            .select('*')
-            .eq('modelo_id', modelo.id)
-            .order('ordem_exibicao');
+      // Process each modelo to build the enriched data structure
+      const enrichedModelos = allModelos.map((modelo) => {
+        console.log('Processing modelo:', modelo.id, modelo.codigo_modelo);
+        
+        const campos = modelo.campos_modelo || [];
+        console.log('Found campos for modelo', modelo.id, ':', campos);
 
-          if (camposError) {
-            console.error('Error fetching campos for modelo:', modelo.id, camposError);
-          }
-
-          console.log('Found campos for modelo', modelo.id, ':', campos);
-
-          // Build parametros from campos
-          const parametros: any = {};
-          const camposArray: any[] = [];
-          
-          if (campos && campos.length > 0) {
-            campos.forEach(campo => {
-              // Add campo to campos array for form editing
+        // Build parametros from campos
+        const parametros: any = {
+          baterias: false,
+          num_raias: 8,
+          permite_final: false,
+          regra_tipo: 'pontos',
+          formato_resultado: '',
+          tipo_calculo: '',
+          campo_referencia: '',
+          contexto: '',
+          ordem_calculo: 'asc'
+        };
+        
+        const camposArray: any[] = [];
+        
+        if (campos && campos.length > 0) {
+          campos.forEach(campo => {
+            console.log('Processing campo:', campo);
+            
+            // Handle special configuration fields
+            if (campo.chave_campo === 'baterias' && campo.metadados) {
+              parametros.baterias = campo.metadados.baterias || false;
+              parametros.num_raias = campo.metadados.num_raias || 8;
+              parametros.permite_final = campo.metadados.permite_final || false;
+              console.log('Found baterias config:', { 
+                baterias: parametros.baterias, 
+                num_raias: parametros.num_raias, 
+                permite_final: parametros.permite_final 
+              });
+            } else if (campo.chave_campo === 'pontuacao' && campo.metadados) {
+              parametros.regra_tipo = campo.metadados.regra_tipo || 'pontos';
+              parametros.formato_resultado = campo.metadados.formato_resultado || '';
+              parametros.tipo_calculo = campo.metadados.tipo_calculo || '';
+              parametros.campo_referencia = campo.metadados.campo_referencia || '';
+              parametros.contexto = campo.metadados.contexto || '';
+              parametros.ordem_calculo = campo.metadados.ordem_calculo || 'asc';
+              console.log('Found pontuacao config:', {
+                regra_tipo: parametros.regra_tipo,
+                formato_resultado: parametros.formato_resultado,
+                tipo_calculo: parametros.tipo_calculo,
+                campo_referencia: parametros.campo_referencia,
+                contexto: parametros.contexto,
+                ordem_calculo: parametros.ordem_calculo
+              });
+            } else {
+              // Regular field - add to campos array
               camposArray.push({
                 id: campo.id,
                 chave_campo: campo.chave_campo,
@@ -88,59 +146,31 @@ export function useModeloConfigurationData(eventId: string | null) {
                 ordem_exibicao: campo.ordem_exibicao,
                 metadados: campo.metadados || {}
               });
-
-              // Extract special configuration fields from metadados
-              if (campo.chave_campo === 'baterias' && campo.metadados) {
-                parametros.baterias = campo.metadados.baterias || false;
-                parametros.num_raias = campo.metadados.num_raias || 8;
-                parametros.permite_final = campo.metadados.permite_final || false;
-              }
-              
-              if (campo.chave_campo === 'pontuacao' && campo.metadados) {
-                parametros.regra_tipo = campo.metadados.regra_tipo;
-                parametros.formato_resultado = campo.metadados.formato_resultado;
-                parametros.tipo_calculo = campo.metadados.tipo_calculo;
-                parametros.campo_referencia = campo.metadados.campo_referencia;
-                parametros.contexto = campo.metadados.contexto;
-                parametros.ordem_calculo = campo.metadados.ordem_calculo;
-              }
-
-              // Extract other metadados into parametros
-              if (campo.metadados) {
-                Object.keys(campo.metadados).forEach(key => {
-                  if (!parametros.hasOwnProperty(key)) {
-                    parametros[key] = campo.metadados[key];
-                  }
-                });
-              }
-            });
-          }
-
-          // Add campos array to parametros for editing
-          parametros.campos = camposArray;
-
-          // Add some default structure if no campos exist
-          if (Object.keys(parametros).length === 0 || !parametros.regra_tipo) {
-            parametros.baterias = false;
-            parametros.regra_tipo = 'pontos';
-            parametros.campos = [];
-          }
-
-          const modalidade = modalidades.find(m => m.id === modelo.modalidade_id);
-          
-          const enrichedModelo = {
-            ...modelo,
-            parametros,
-            modalidade: {
-              nome: modalidade?.nome || 'Modalidade não encontrada',
-              categoria: modalidade?.categoria || null
             }
-          };
+          });
+        }
 
-          console.log('Enriched modelo:', enrichedModelo);
-          return enrichedModelo;
-        })
-      );
+        // Add campos array to parametros for editing
+        parametros.campos = camposArray.sort((a, b) => a.ordem_exibicao - b.ordem_exibicao);
+
+        const modalidade = modalidades.find(m => m.id === modelo.modalidade_id);
+        
+        const enrichedModelo = {
+          id: modelo.id,
+          modalidade_id: modelo.modalidade_id,
+          codigo_modelo: modelo.codigo_modelo,
+          descricao: modelo.descricao,
+          parametros,
+          campos_modelo: campos, // Keep original campos for reference
+          modalidade: {
+            nome: modalidade?.nome || 'Modalidade não encontrada',
+            categoria: modalidade?.categoria || null
+          }
+        };
+
+        console.log('Final enriched modelo:', enrichedModelo);
+        return enrichedModelo;
+      });
 
       // Sort the enriched modelos by modalidade name to maintain alphabetical order
       const sortedModelos = enrichedModelos.sort((a, b) => 
