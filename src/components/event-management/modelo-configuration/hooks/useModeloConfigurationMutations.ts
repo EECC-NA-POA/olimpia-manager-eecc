@@ -19,76 +19,91 @@ export function useModeloConfigurationMutations(refetch: () => void) {
         throw fetchError;
       }
 
+      console.log('Existing campos:', existingCampos);
+
+      // Delete existing campos first
+      if (existingCampos && existingCampos.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('campos_modelo')
+          .delete()
+          .eq('modelo_id', modeloId);
+
+        if (deleteError) {
+          console.error('Error deleting existing campos:', deleteError);
+          throw deleteError;
+        }
+      }
+
       // Create or update campos based on parametros
-      const camposToUpsert = [];
+      const camposToInsert = [];
       
       // Handle baterias configuration
       if (parametros.baterias !== undefined) {
-        const bateriasCampo = existingCampos?.find(c => c.chave_campo === 'baterias');
-        camposToUpsert.push({
-          id: bateriasCampo?.id,
+        camposToInsert.push({
           modelo_id: modeloId,
           chave_campo: 'baterias',
           rotulo_campo: 'Usar Baterias',
           tipo_input: 'checkbox',
           obrigatorio: false,
-          ordem_exibicao: 1,
-          metadados: { baterias: parametros.baterias, num_raias: parametros.num_raias || 8, permite_final: parametros.permite_final || false }
+          ordem_exibicao: 1000, // High order to put at end
+          metadados: { 
+            baterias: parametros.baterias, 
+            num_raias: parametros.num_raias || 8, 
+            permite_final: parametros.permite_final || false 
+          }
         });
       }
 
       // Handle scoring configuration
       if (parametros.regra_tipo) {
-        const scoringCampo = existingCampos?.find(c => c.chave_campo === 'pontuacao');
-        camposToUpsert.push({
-          id: scoringCampo?.id,
+        camposToInsert.push({
           modelo_id: modeloId,
           chave_campo: 'pontuacao',
           rotulo_campo: 'Configuração de Pontuação',
           tipo_input: 'select',
           obrigatorio: true,
-          ordem_exibicao: 2,
+          ordem_exibicao: 1001, // High order to put at end
           metadados: { 
             regra_tipo: parametros.regra_tipo,
-            unidade: parametros.unidade || '',
-            subunidade: parametros.subunidade || ''
+            formato_resultado: parametros.formato_resultado,
+            tipo_calculo: parametros.tipo_calculo,
+            campo_referencia: parametros.campo_referencia,
+            contexto: parametros.contexto,
+            ordem_calculo: parametros.ordem_calculo
           }
         });
       }
 
-      // Upsert campos
-      for (const campo of camposToUpsert) {
-        if (campo.id) {
-          // Update existing
-          const { error: updateError } = await supabase
-            .from('campos_modelo')
-            .update({
-              rotulo_campo: campo.rotulo_campo,
-              tipo_input: campo.tipo_input,
-              obrigatorio: campo.obrigatorio,
-              ordem_exibicao: campo.ordem_exibicao,
-              metadados: campo.metadados
-            })
-            .eq('id', campo.id);
-          
-          if (updateError) throw updateError;
-        } else {
-          // Insert new
-          const { error: insertError } = await supabase
-            .from('campos_modelo')
-            .insert({
-              modelo_id: campo.modelo_id,
-              chave_campo: campo.chave_campo,
-              rotulo_campo: campo.rotulo_campo,
-              tipo_input: campo.tipo_input,
-              obrigatorio: campo.obrigatorio,
-              ordem_exibicao: campo.ordem_exibicao,
-              metadados: campo.metadados
-            });
-          
-          if (insertError) throw insertError;
+      // Handle custom campos from the form
+      if (parametros.campos && Array.isArray(parametros.campos)) {
+        parametros.campos.forEach((campo: any) => {
+          camposToInsert.push({
+            modelo_id: modeloId,
+            chave_campo: campo.chave_campo,
+            rotulo_campo: campo.rotulo_campo,
+            tipo_input: campo.tipo_input,
+            obrigatorio: campo.obrigatorio,
+            ordem_exibicao: campo.ordem_exibicao,
+            metadados: campo.metadados || {}
+          });
+        });
+      }
+
+      console.log('Campos to insert:', camposToInsert);
+
+      // Insert new campos
+      if (camposToInsert.length > 0) {
+        const { error: insertError } = await supabase
+          .from('campos_modelo')
+          .insert(camposToInsert);
+        
+        if (insertError) {
+          console.error('Error inserting campos:', insertError);
+          throw insertError;
         }
       }
+
+      console.log('Configuration saved successfully');
     },
     onSuccess: () => {
       toast.success('Configuração salva com sucesso!');
@@ -96,7 +111,63 @@ export function useModeloConfigurationMutations(refetch: () => void) {
     },
     onError: (error) => {
       console.error('Error saving configuration:', error);
-      toast.error('Erro ao salvar configuração');
+      toast.error('Erro ao salvar configuração: ' + error.message);
+    }
+  });
+
+  const duplicateModeloMutation = useMutation({
+    mutationFn: async ({ originalModelo, targetModalidadeId }: { originalModelo: any, targetModalidadeId: string }) => {
+      console.log('Duplicating modelo:', originalModelo, 'to modalidade:', targetModalidadeId);
+      
+      // Create new modelo_modalidade
+      const { data: newModelo, error: createError } = await supabase
+        .from('modelos_modalidade')
+        .insert({
+          modalidade_id: targetModalidadeId,
+          codigo_modelo: originalModelo.codigo_modelo + '_copy',
+          descricao: originalModelo.descricao + ' (Cópia)'
+        })
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      // Get original campos
+      const { data: originalCampos, error: fetchError } = await supabase
+        .from('campos_modelo')
+        .select('*')
+        .eq('modelo_id', originalModelo.id);
+
+      if (fetchError) throw fetchError;
+
+      // Copy campos to new modelo
+      if (originalCampos && originalCampos.length > 0) {
+        const camposToInsert = originalCampos.map(campo => ({
+          modelo_id: newModelo.id,
+          chave_campo: campo.chave_campo,
+          rotulo_campo: campo.rotulo_campo,
+          tipo_input: campo.tipo_input,
+          obrigatorio: campo.obrigatorio,
+          ordem_exibicao: campo.ordem_exibicao,
+          metadados: campo.metadados
+        }));
+
+        const { error: insertError } = await supabase
+          .from('campos_modelo')
+          .insert(camposToInsert);
+
+        if (insertError) throw insertError;
+      }
+
+      return newModelo;
+    },
+    onSuccess: () => {
+      toast.success('Modelo duplicado com sucesso!');
+      refetch();
+    },
+    onError: (error) => {
+      console.error('Error duplicating modelo:', error);
+      toast.error('Erro ao duplicar modelo: ' + error.message);
     }
   });
 
@@ -104,8 +175,14 @@ export function useModeloConfigurationMutations(refetch: () => void) {
     await saveConfigurationMutation.mutateAsync({ modeloId, parametros });
   };
 
+  const duplicateModelo = async (originalModelo: any, targetModalidadeId: string) => {
+    await duplicateModeloMutation.mutateAsync({ originalModelo, targetModalidadeId });
+  };
+
   return {
     isSaving: saveConfigurationMutation.isPending,
-    saveConfiguration
+    isDuplicating: duplicateModeloMutation.isPending,
+    saveConfiguration,
+    duplicateModelo
   };
 }

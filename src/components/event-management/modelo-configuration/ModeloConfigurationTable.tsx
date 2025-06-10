@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Check, X, ChevronUp, ChevronDown, Clock, Ruler, Calculator, Target } from 'lucide-react';
+import { Settings, Check, X, ChevronUp, ChevronDown, Clock, Ruler, Calculator, Target, Copy } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -15,6 +15,7 @@ import {
 interface ModeloConfigurationTableProps {
   modelos: any[];
   onConfigure: (modelo: any) => void;
+  onDuplicate?: (modelo: any) => void;
   sortConfig: { key: string; direction: 'asc' | 'desc' } | null;
   onSort: (key: string) => void;
 }
@@ -22,6 +23,7 @@ interface ModeloConfigurationTableProps {
 export function ModeloConfigurationTable({ 
   modelos, 
   onConfigure, 
+  onDuplicate,
   sortConfig, 
   onSort 
 }: ModeloConfigurationTableProps) {
@@ -260,14 +262,26 @@ export function ModeloConfigurationTable({
                 </div>
               </TableCell>
               <TableCell>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onConfigure(modelo)}
-                >
-                  <Settings className="h-4 w-4 mr-1" />
-                  Configurar
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onConfigure(modelo)}
+                  >
+                    <Settings className="h-4 w-4 mr-1" />
+                    Configurar
+                  </Button>
+                  {onDuplicate && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onDuplicate(modelo)}
+                    >
+                      <Copy className="h-4 w-4 mr-1" />
+                      Duplicar
+                    </Button>
+                  )}
+                </div>
               </TableCell>
             </TableRow>
           );
@@ -276,3 +290,119 @@ export function ModeloConfigurationTable({
     </Table>
   );
 }
+
+const getParametersSummary = (modelo: any) => {
+  const parametros = modelo.parametros || {};
+  const summaryItems = [];
+
+  // Tipo de regra de pontuação
+  if (parametros.regra_tipo) {
+    let icon;
+    let label;
+    switch (parametros.regra_tipo) {
+      case 'tempo':
+        icon = <Clock className="h-3 w-3" />;
+        label = 'Tempo';
+        break;
+      case 'distancia':
+        icon = <Ruler className="h-3 w-3" />;
+        label = 'Distância';
+        break;
+      case 'pontos':
+        icon = <Target className="h-3 w-3" />;
+        label = 'Pontos';
+        break;
+      default:
+        icon = <Target className="h-3 w-3" />;
+        label = parametros.regra_tipo;
+    }
+    
+    summaryItems.push(
+      <Badge key="regra_tipo" variant="outline" className="flex items-center gap-1">
+        {icon}
+        {label}
+      </Badge>
+    );
+  }
+
+  // Formato de resultado
+  if (parametros.formato_resultado) {
+    let formatLabel;
+    switch (parametros.formato_resultado) {
+      case 'tempo':
+        formatLabel = 'MM:SS.mmm';
+        break;
+      case 'distancia':
+        formatLabel = 'm,cm';
+        break;
+      case 'pontos':
+        formatLabel = '###.##';
+        break;
+      default:
+        formatLabel = parametros.formato_resultado;
+    }
+    
+    summaryItems.push(
+      <Badge key="formato" variant="secondary" className="text-xs">
+        {formatLabel}
+      </Badge>
+    );
+  }
+
+  // Campo calculado
+  if (parametros.tipo_calculo) {
+    summaryItems.push(
+      <Badge key="calculado" variant="outline" className="flex items-center gap-1 bg-blue-50 text-blue-700">
+        <Calculator className="h-3 w-3" />
+        Calculado
+      </Badge>
+    );
+  }
+
+  // Contexto do cálculo
+  if (parametros.contexto) {
+    summaryItems.push(
+      <Badge key="contexto" variant="secondary" className="text-xs">
+        {parametros.contexto}
+      </Badge>
+    );
+  }
+
+  // Campo de referência
+  if (parametros.campo_referencia) {
+    summaryItems.push(
+      <Badge key="referencia" variant="outline" className="text-xs">
+        ref: {parametros.campo_referencia}
+      </Badge>
+    );
+  }
+
+  // Ordem de cálculo
+  if (parametros.ordem_calculo) {
+    const ordemLabel = parametros.ordem_calculo === 'asc' ? 'menor = melhor' : 'maior = melhor';
+    summaryItems.push(
+      <Badge key="ordem" variant="secondary" className="text-xs">
+        {ordemLabel}
+      </Badge>
+    );
+  }
+
+  // Configurações de bateria
+  if (parametros.num_raias) {
+    summaryItems.push(
+      <Badge key="raias" variant="outline" className="text-xs">
+        {parametros.num_raias} raias
+      </Badge>
+    );
+  }
+
+  if (parametros.permite_final) {
+    summaryItems.push(
+      <Badge key="final" variant="secondary" className="text-xs">
+        Final permitida
+      </Badge>
+    );
+  }
+
+  return summaryItems;
+};

@@ -1,10 +1,12 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { ModeloConfigurationTable } from './ModeloConfigurationTable';
 import { ModeloConfigurationFilters } from './ModeloConfigurationFilters';
 import { ModeloConfigurationDialog } from './ModeloConfigurationDialog';
+import { ModeloDuplicationDialog } from './ModeloDuplicationDialog';
 import { useModeloConfigurationData } from './hooks/useModeloConfigurationData';
 import { useModeloConfigurationMutations } from './hooks/useModeloConfigurationMutations';
 import { useModeloFiltering } from './hooks/useModeloFiltering';
@@ -13,10 +15,12 @@ export function ModeloConfigurationSection({ eventId }: { eventId: string | null
   console.log('ModeloConfigurationSection - eventId:', eventId);
   
   const { modelos, isLoading, refetch } = useModeloConfigurationData(eventId);
-  const { isSaving, saveConfiguration } = useModeloConfigurationMutations(refetch);
+  const { isSaving, isDuplicating, saveConfiguration, duplicateModelo } = useModeloConfigurationMutations(refetch);
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDuplicationDialogOpen, setIsDuplicationDialogOpen] = useState(false);
   const [editingModelo, setEditingModelo] = useState<any>(null);
+  const [modeloToDuplicate, setModeloToDuplicate] = useState<any>(null);
 
   const {
     searchTerm,
@@ -56,11 +60,25 @@ export function ModeloConfigurationSection({ eventId }: { eventId: string | null
     setIsDialogOpen(true);
   };
 
+  const openDuplicationDialog = (modelo: any) => {
+    console.log('Opening duplication dialog for modelo:', modelo);
+    setModeloToDuplicate(modelo);
+    setIsDuplicationDialogOpen(true);
+  };
+
   const handleSaveConfiguration = async (modeloId: number, parametros: any) => {
     console.log('Saving configuration for modelo:', modeloId, 'with params:', parametros);
     await saveConfiguration(modeloId, parametros);
     setIsDialogOpen(false);
     setEditingModelo(null);
+  };
+
+  const handleDuplicateModelo = async (targetModalidadeId: string) => {
+    if (modeloToDuplicate) {
+      await duplicateModelo(modeloToDuplicate, targetModalidadeId);
+      setIsDuplicationDialogOpen(false);
+      setModeloToDuplicate(null);
+    }
   };
 
   if (isLoading) {
@@ -87,6 +105,7 @@ export function ModeloConfigurationSection({ eventId }: { eventId: string | null
           <ModeloConfigurationTable 
             modelos={filteredAndSortedModelos}
             onConfigure={openConfigDialog}
+            onDuplicate={openDuplicationDialog}
             sortConfig={sortConfig}
             onSort={handleSort}
           />
@@ -97,8 +116,18 @@ export function ModeloConfigurationSection({ eventId }: { eventId: string | null
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         onSave={handleSaveConfiguration}
+        onDuplicate={() => openDuplicationDialog(editingModelo)}
         editingModelo={editingModelo}
         isSaving={isSaving}
+      />
+
+      <ModeloDuplicationDialog
+        isOpen={isDuplicationDialogOpen}
+        onClose={() => setIsDuplicationDialogOpen(false)}
+        onDuplicate={handleDuplicateModelo}
+        modelo={modeloToDuplicate}
+        modalities={modalities}
+        isLoading={isDuplicating}
       />
     </>
   );

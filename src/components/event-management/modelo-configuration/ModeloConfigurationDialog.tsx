@@ -7,19 +7,32 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, Trash2, Copy } from 'lucide-react';
 
 interface ModeloConfigurationDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (modeloId: number, parametros: any) => Promise<void>;
+  onDuplicate?: (modelo: any) => void;
   editingModelo: any;
   isSaving: boolean;
+}
+
+interface CampoConfig {
+  id: string;
+  chave_campo: string;
+  rotulo_campo: string;
+  tipo_input: string;
+  obrigatorio: boolean;
+  ordem_exibicao: number;
+  metadados: any;
 }
 
 export function ModeloConfigurationDialog({
   isOpen,
   onClose,
   onSave,
+  onDuplicate,
   editingModelo,
   isSaving
 }: ModeloConfigurationDialogProps) {
@@ -35,6 +48,8 @@ export function ModeloConfigurationDialog({
     ordem_calculo: 'asc'
   });
 
+  const [campos, setCampos] = useState<CampoConfig[]>([]);
+
   useEffect(() => {
     if (editingModelo) {
       const parametros = editingModelo.parametros || {};
@@ -49,8 +64,68 @@ export function ModeloConfigurationDialog({
         contexto: parametros.contexto || '',
         ordem_calculo: parametros.ordem_calculo || 'asc'
       });
+
+      // Configurar campos existentes ou criar campos padrão
+      const camposExistentes = parametros.campos || [];
+      if (camposExistentes.length === 0) {
+        // Criar campo padrão baseado no tipo de regra
+        const campoDefault = createDefaultField(parametros.regra_tipo || 'pontos');
+        setCampos([campoDefault]);
+      } else {
+        setCampos(camposExistentes);
+      }
     }
   }, [editingModelo]);
+
+  const createDefaultField = (regraType: string): CampoConfig => {
+    const baseField = {
+      id: 'campo_' + Date.now(),
+      chave_campo: regraType,
+      rotulo_campo: getDefaultLabel(regraType),
+      tipo_input: 'number',
+      obrigatorio: true,
+      ordem_exibicao: 1,
+      metadados: {}
+    };
+
+    switch (regraType) {
+      case 'tempo':
+        return {
+          ...baseField,
+          metadados: {
+            formato_resultado: 'tempo',
+            placeholder: 'MM:SS.mmm'
+          }
+        };
+      case 'distancia':
+        return {
+          ...baseField,
+          metadados: {
+            formato_resultado: 'distancia',
+            placeholder: '##,## m'
+          }
+        };
+      case 'pontos':
+        return {
+          ...baseField,
+          metadados: {
+            formato_resultado: 'pontos',
+            placeholder: '###.##'
+          }
+        };
+      default:
+        return baseField;
+    }
+  };
+
+  const getDefaultLabel = (regraType: string): string => {
+    switch (regraType) {
+      case 'tempo': return 'Tempo';
+      case 'distancia': return 'Distância';
+      case 'pontos': return 'Pontos';
+      default: return 'Resultado';
+    }
+  };
 
   // Automaticamente define formato e campo de referência quando regra_tipo muda
   const handleRegraTypeChange = (value: string) => {
@@ -62,21 +137,75 @@ export function ModeloConfigurationDialog({
     }
     
     setConfig(newConfig);
+
+    // Atualizar campos existentes com o novo tipo
+    const updatedCampos = campos.map(campo => ({
+      ...campo,
+      metadados: {
+        ...campo.metadados,
+        formato_resultado: value === 'tempo' ? 'tempo' : value === 'distancia' ? 'distancia' : 'pontos'
+      }
+    }));
+    setCampos(updatedCampos);
+  };
+
+  const addCampo = () => {
+    const newCampo: CampoConfig = {
+      id: 'campo_' + Date.now(),
+      chave_campo: '',
+      rotulo_campo: '',
+      tipo_input: 'number',
+      obrigatorio: false,
+      ordem_exibicao: campos.length + 1,
+      metadados: {
+        formato_resultado: config.regra_tipo === 'tempo' ? 'tempo' : config.regra_tipo === 'distancia' ? 'distancia' : 'pontos'
+      }
+    };
+    setCampos([...campos, newCampo]);
+  };
+
+  const removeCampo = (id: string) => {
+    setCampos(campos.filter(campo => campo.id !== id));
+  };
+
+  const updateCampo = (id: string, updates: Partial<CampoConfig>) => {
+    setCampos(campos.map(campo => 
+      campo.id === id ? { ...campo, ...updates } : campo
+    ));
   };
 
   const handleSave = async () => {
     if (!editingModelo) return;
     
-    await onSave(editingModelo.id, config);
+    const configWithCampos = {
+      ...config,
+      campos: campos.sort((a, b) => a.ordem_exibicao - b.ordem_exibicao)
+    };
+    
+    await onSave(editingModelo.id, configWithCampos);
+  };
+
+  const handleDuplicate = () => {
+    if (onDuplicate && editingModelo) {
+      onDuplicate(editingModelo);
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            Configurar Modelo: {editingModelo?.codigo_modelo || editingModelo?.descricao}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>
+              Configurar Modelo: {editingModelo?.codigo_modelo || editingModelo?.descricao}
+            </DialogTitle>
+            {onDuplicate && (
+              <Button variant="outline" size="sm" onClick={handleDuplicate}>
+                <Copy className="h-4 w-4 mr-1" />
+                Duplicar
+              </Button>
+            )}
+          </div>
         </DialogHeader>
         
         <div className="space-y-6">
@@ -227,13 +356,11 @@ export function ModeloConfigurationDialog({
                       <SelectContent>
                         <SelectItem value="bateria">Bateria - Classificação dentro de cada bateria</SelectItem>
                         <SelectItem value="modalidade">Modalidade - Classificação geral da modalidade</SelectItem>
-                        <SelectItem value="evento">Evento - Classificação em todo o evento</SelectItem>
                       </SelectContent>
                     </Select>
                     <div className="text-sm text-muted-foreground space-y-1">
                       <p><strong>Bateria:</strong> Cada bateria tem seus próprios colocados (1º, 2º, 3º...)</p>
                       <p><strong>Modalidade:</strong> Todos os resultados da modalidade são comparados</p>
-                      <p><strong>Evento:</strong> Comparação entre modalidades do evento</p>
                     </div>
                   </div>
 
@@ -254,6 +381,94 @@ export function ModeloConfigurationDialog({
                   </div>
                 </>
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Campos do Modelo</CardTitle>
+                <Button onClick={addCampo} size="sm">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Adicionar Campo
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {campos.map((campo, index) => (
+                <div key={campo.id} className="border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium">Campo {index + 1}</h4>
+                    {campos.length > 1 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeCampo(campo.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>Chave do Campo</Label>
+                      <Input
+                        value={campo.chave_campo}
+                        onChange={(e) => updateCampo(campo.id, { chave_campo: e.target.value })}
+                        placeholder="Ex: tempo, pontos, distancia"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Rótulo do Campo</Label>
+                      <Input
+                        value={campo.rotulo_campo}
+                        onChange={(e) => updateCampo(campo.id, { rotulo_campo: e.target.value })}
+                        placeholder="Ex: Tempo Final, Pontuação"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Tipo de Input</Label>
+                      <Select
+                        value={campo.tipo_input}
+                        onValueChange={(value) => updateCampo(campo.id, { tipo_input: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="number">Número</SelectItem>
+                          <SelectItem value="text">Texto</SelectItem>
+                          <SelectItem value="calculated">Calculado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Ordem de Exibição</Label>
+                      <Input
+                        type="number"
+                        value={campo.ordem_exibicao}
+                        onChange={(e) => updateCampo(campo.id, { ordem_exibicao: Number(e.target.value) })}
+                        min="1"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id={`obrigatorio_${campo.id}`}
+                        checked={campo.obrigatorio}
+                        onCheckedChange={(checked) => updateCampo(campo.id, { obrigatorio: checked })}
+                      />
+                      <Label htmlFor={`obrigatorio_${campo.id}`}>Obrigatório</Label>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </CardContent>
           </Card>
           

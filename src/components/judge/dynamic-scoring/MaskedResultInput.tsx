@@ -20,8 +20,8 @@ export function MaskedResultInput({ campo, form, value, onChange }: MaskedResult
   }, [value]);
 
   const applyMask = (rawValue: string, format: string): string => {
-    // Remove todos os caracteres não numéricos
-    const numbers = rawValue.replace(/\D/g, '');
+    // Remove todos os caracteres não numéricos exceto pontos e vírgulas quando apropriado
+    let numbers = rawValue.replace(/[^\d]/g, '');
     
     switch (format) {
       case 'tempo':
@@ -46,16 +46,22 @@ export function MaskedResultInput({ campo, form, value, onChange }: MaskedResult
         // Formato: ##,## m (metros e centímetros)
         if (numbers.length === 0) return '';
         if (numbers.length <= 2) return `${numbers}`;
-        const meters = numbers.slice(0, -2) || '0';
-        const centimeters = numbers.slice(-2);
-        return `${meters},${centimeters} m`;
+        
+        // Permite até 4 dígitos: 2 para metros e 2 para centímetros
+        const limitedDistanceNumbers = numbers.slice(0, 4);
+        const meters = limitedDistanceNumbers.slice(0, -2) || '0';
+        const centimeters = limitedDistanceNumbers.slice(-2);
+        return `${meters},${centimeters.padEnd(2, '0')} m`;
       
       case 'pontos':
-        // Formato: ###.## (pontos com decimais)
+        // Formato: ###.## (pontos com até 2 decimais)
         if (numbers.length === 0) return '';
         if (numbers.length <= 2) return `${numbers}`;
-        const integer = numbers.slice(0, -2) || '0';
-        const decimal = numbers.slice(-2);
+        
+        // Permite até 5 dígitos: 3 para parte inteira e 2 para decimais
+        const limitedPointsNumbers = numbers.slice(0, 5);
+        const integer = limitedPointsNumbers.slice(0, -2) || '0';
+        const decimal = limitedPointsNumbers.slice(-2);
         return `${integer}.${decimal}`;
       
       default:
@@ -90,6 +96,19 @@ export function MaskedResultInput({ campo, form, value, onChange }: MaskedResult
     }
   };
 
+  const getMaxLength = (): number => {
+    switch (formato) {
+      case 'tempo':
+        return 9; // MM:SS.mmm
+      case 'distancia':
+        return 8; // ##,## m (máximo)
+      case 'pontos':
+        return 6; // ###.##
+      default:
+        return undefined;
+    }
+  };
+
   const getDisplayUnit = (): string => {
     return campo.metadados?.unidade_display || '';
   };
@@ -102,7 +121,7 @@ export function MaskedResultInput({ campo, form, value, onChange }: MaskedResult
         onChange={handleInputChange}
         placeholder={getPlaceholder()}
         className={formato ? 'font-mono' : ''}
-        maxLength={formato === 'tempo' ? 9 : undefined} // MM:SS.mmm = 9 caracteres
+        maxLength={getMaxLength()}
       />
       {getDisplayUnit() && (
         <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">
