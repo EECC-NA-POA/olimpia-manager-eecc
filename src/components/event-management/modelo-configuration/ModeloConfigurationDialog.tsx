@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface ModeloConfigurationDialogProps {
@@ -28,7 +29,12 @@ export function ModeloConfigurationDialog({
     permite_final: false,
     regra_tipo: 'pontos',
     unidade: '',
-    subunidade: ''
+    subunidade: '',
+    formato_resultado: '',
+    tipo_calculo: '',
+    campo_referencia: '',
+    contexto: '',
+    ordem_calculo: 'asc'
   });
 
   useEffect(() => {
@@ -40,7 +46,12 @@ export function ModeloConfigurationDialog({
         permite_final: parametros.permite_final || false,
         regra_tipo: parametros.regra_tipo || 'pontos',
         unidade: parametros.unidade || '',
-        subunidade: parametros.subunidade || ''
+        subunidade: parametros.subunidade || '',
+        formato_resultado: parametros.formato_resultado || '',
+        tipo_calculo: parametros.tipo_calculo || '',
+        campo_referencia: parametros.campo_referencia || '',
+        contexto: parametros.contexto || '',
+        ordem_calculo: parametros.ordem_calculo || 'asc'
       });
     }
   }, [editingModelo]);
@@ -119,18 +130,21 @@ export function ModeloConfigurationDialog({
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="regra_tipo">Tipo de Regra</Label>
-                <select
-                  id="regra_tipo"
-                  className="w-full p-2 border rounded-md"
+                <Select
                   value={config.regra_tipo}
-                  onChange={(e) => setConfig(prev => ({ ...prev, regra_tipo: e.target.value }))}
+                  onValueChange={(value) => setConfig(prev => ({ ...prev, regra_tipo: value }))}
                 >
-                  <option value="pontos">Pontos</option>
-                  <option value="tempo">Tempo</option>
-                  <option value="distancia">Distância</option>
-                  <option value="sets">Sets</option>
-                  <option value="arrows">Flechas (Tiro com Arco)</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo de regra" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pontos">Pontos</SelectItem>
+                    <SelectItem value="tempo">Tempo</SelectItem>
+                    <SelectItem value="distancia">Distância</SelectItem>
+                    <SelectItem value="sets">Sets</SelectItem>
+                    <SelectItem value="arrows">Flechas (Tiro com Arco)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="space-y-2">
@@ -152,6 +166,89 @@ export function ModeloConfigurationDialog({
                   onChange={(e) => setConfig(prev => ({ ...prev, subunidade: e.target.value }))}
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="formato_resultado">Formato de Resultado</Label>
+                <Select
+                  value={config.formato_resultado}
+                  onValueChange={(value) => setConfig(prev => ({ ...prev, formato_resultado: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o formato" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="tempo">Tempo (MM:SS.mmm)</SelectItem>
+                    <SelectItem value="distancia">Distância (m,cm)</SelectItem>
+                    <SelectItem value="pontos">Pontos (###.##)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {config.regra_tipo === 'tempo' && (
+                <div className="space-y-2">
+                  <Label htmlFor="tipo_calculo">Tipo de Cálculo</Label>
+                  <Select
+                    value={config.tipo_calculo}
+                    onValueChange={(value) => setConfig(prev => ({ ...prev, tipo_calculo: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo de cálculo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="colocacao_bateria">Colocação por Bateria</SelectItem>
+                      <SelectItem value="colocacao_final">Colocação Final</SelectItem>
+                      <SelectItem value="custom">Personalizado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {config.tipo_calculo && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="campo_referencia">Campo de Referência</Label>
+                    <Input
+                      id="campo_referencia"
+                      placeholder="Ex: tempo, distancia, pontos"
+                      value={config.campo_referencia}
+                      onChange={(e) => setConfig(prev => ({ ...prev, campo_referencia: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="contexto">Contexto</Label>
+                    <Select
+                      value={config.contexto}
+                      onValueChange={(value) => setConfig(prev => ({ ...prev, contexto: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o contexto" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="bateria">Bateria</SelectItem>
+                        <SelectItem value="modalidade">Modalidade</SelectItem>
+                        <SelectItem value="evento">Evento</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="ordem_calculo">Ordem de Cálculo</Label>
+                    <Select
+                      value={config.ordem_calculo}
+                      onValueChange={(value) => setConfig(prev => ({ ...prev, ordem_calculo: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a ordem" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="asc">Crescente (menor = melhor)</SelectItem>
+                        <SelectItem value="desc">Decrescente (maior = melhor)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
           
