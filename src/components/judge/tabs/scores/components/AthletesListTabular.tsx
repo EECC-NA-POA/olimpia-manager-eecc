@@ -16,6 +16,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Athlete } from '../hooks/useAthletes';
 import { CampoModelo } from '@/types/dynamicScoring';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AthletesListTabularProps {
   athletes: Athlete[] | undefined;
@@ -34,6 +35,8 @@ export function AthletesListTabular({
   judgeId,
   scoreType = 'pontos'
 }: AthletesListTabularProps) {
+  const isMobile = useIsMobile();
+
   // Check for dynamic scoring
   const { data: modelos = [], isLoading: isLoadingModelos } = useModelosModalidade(modalityId);
   const hasDynamicScoring = modelos.length > 0;
@@ -104,10 +107,10 @@ export function AthletesListTabular({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Carregando atletas...</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Carregando atletas...</CardTitle>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-48 sm:h-64 w-full" />
         </CardContent>
       </Card>
     );
@@ -117,10 +120,10 @@ export function AthletesListTabular({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Nenhum atleta encontrado</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Nenhum atleta encontrado</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Não há atletas inscritos nesta modalidade.
           </p>
         </CardContent>
@@ -129,7 +132,7 @@ export function AthletesListTabular({
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-4 ${isMobile ? 'space-y-4' : 'space-y-6'}`}>
       {/* Bateria Navigation - only show if modality uses baterias */}
       {usesBaterias && (
         <BateriaNavigationTabs
@@ -149,9 +152,9 @@ export function AthletesListTabular({
 
       {/* Athletes Scoring Section */}
       <Card>
-        <CardHeader>
-          <CardTitle>Registro de Pontuações - Modalidade</CardTitle>
-          <div className="text-center text-sm text-muted-foreground">
+        <CardHeader className={isMobile ? 'pb-4' : ''}>
+          <CardTitle className="text-base sm:text-lg">Registro de Pontuações - Modalidade</CardTitle>
+          <div className="text-center text-xs sm:text-sm text-muted-foreground">
             Mostrando {filteredAthletes.length} de {athletes.length} atletas
             {hasDynamicScoring && modelos[0] && (
               <div className="mt-2 text-xs bg-green-50 text-green-700 p-2 rounded border">
@@ -179,7 +182,7 @@ export function AthletesListTabular({
             )}
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className={`space-y-4 ${isMobile ? 'p-3 space-y-4' : 'space-y-6'}`}>
           <AthleteFilters
             searchFilter={filters.searchFilter}
             onSearchFilterChange={(value) => setFilters({ ...filters, searchFilter: value })}
@@ -195,25 +198,27 @@ export function AthletesListTabular({
             onStatusFilterChange={(value) => setFilters({ ...filters, statusFilter: value })}
           />
           
-          {hasDynamicScoring && modelos[0] ? (
-            <DynamicAthletesTable
-              athletes={filteredAthletes}
-              modalityId={modalityId}
-              eventId={eventId}
-              judgeId={judgeId}
-              modelo={modelos[0]}
-              selectedBateriaId={selectedBateriaId}
-            />
-          ) : (
-            <AthletesTable
-              athletes={filteredAthletes}
-              modalityId={modalityId}
-              eventId={eventId}
-              judgeId={judgeId}
-              scoreType={scoreType}
-              selectedBateriaId={selectedBateriaId}
-            />
-          )}
+          <div className={isMobile ? 'overflow-x-auto -mx-3' : ''}>
+            {hasDynamicScoring && modelos[0] ? (
+              <DynamicAthletesTable
+                athletes={filteredAthletes}
+                modalityId={modalityId}
+                eventId={eventId}
+                judgeId={judgeId}
+                modelo={modelos[0]}
+                selectedBateriaId={selectedBateriaId}
+              />
+            ) : (
+              <AthletesTable
+                athletes={filteredAthletes}
+                modalityId={modalityId}
+                eventId={eventId}
+                judgeId={judgeId}
+                scoreType={scoreType}
+                selectedBateriaId={selectedBateriaId}
+              />
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

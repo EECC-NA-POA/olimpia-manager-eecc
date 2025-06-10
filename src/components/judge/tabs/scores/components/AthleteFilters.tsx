@@ -1,23 +1,24 @@
 
 import React from 'react';
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter } from "lucide-react";
-import { Label } from "@/components/ui/label";
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Search, X } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AthleteFiltersProps {
   searchFilter: string;
   onSearchFilterChange: (value: string) => void;
-  filterType: 'id' | 'name' | 'filial' | 'estado';
-  onFilterTypeChange: (value: 'id' | 'name' | 'filial' | 'estado') => void;
-  availableBranches?: Array<{ name: string; state: string }>;
-  availableStates?: string[];
-  selectedBranch?: string;
-  onSelectedBranchChange?: (value: string) => void;
-  selectedState?: string;
-  onSelectedStateChange?: (value: string) => void;
-  statusFilter?: 'all' | 'avaliado' | 'pendente';
-  onStatusFilterChange?: (value: 'all' | 'avaliado' | 'pendente') => void;
+  filterType: 'all' | 'scored' | 'unscored';
+  onFilterTypeChange: (value: 'all' | 'scored' | 'unscored') => void;
+  availableBranches: string[];
+  availableStates: string[];
+  selectedBranch: string;
+  onSelectedBranchChange: (value: string) => void;
+  selectedState: string;
+  onSelectedStateChange: (value: string) => void;
+  statusFilter: 'all' | 'scored' | 'unscored';
+  onStatusFilterChange: (value: 'all' | 'scored' | 'unscored') => void;
 }
 
 export function AthleteFilters({
@@ -25,132 +26,126 @@ export function AthleteFilters({
   onSearchFilterChange,
   filterType,
   onFilterTypeChange,
-  availableBranches = [],
-  availableStates = [],
+  availableBranches,
+  availableStates,
   selectedBranch,
   onSelectedBranchChange,
   selectedState,
   onSelectedStateChange,
-  statusFilter = 'all',
+  statusFilter,
   onStatusFilterChange
 }: AthleteFiltersProps) {
-  const getPlaceholder = () => {
-    switch (filterType) {
-      case 'id':
-        return 'Buscar por ID (ex: 001, 123)...';
-      case 'name':
-        return 'Buscar por nome...';
-      case 'filial':
-        return 'Selecione uma filial acima...';
-      case 'estado':
-        return 'Selecione um estado acima...';
-      default:
-        return 'Buscar...';
-    }
+  const isMobile = useIsMobile();
+
+  const hasActiveFilters = searchFilter || selectedBranch !== 'all' || selectedState !== 'all' || statusFilter !== 'all';
+
+  const resetFilters = () => {
+    onSearchFilterChange('');
+    onSelectedBranchChange('all');
+    onSelectedStateChange('all');
+    onStatusFilterChange('all');
   };
 
-  const showTextInput = filterType === 'id' || filterType === 'name';
-  const showBranchSelect = filterType === 'filial';
-  const showStateSelect = filterType === 'estado';
-
   return (
-    <div className="space-y-4 mb-6 bg-white p-4 rounded-lg shadow">
-      <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-900">
-        <Filter className="h-5 w-5" />
-        Filtros de Atletas
-      </h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label>Tipo de Busca</Label>
-          <Select
-            value={filterType}
-            onValueChange={onFilterTypeChange}
+    <div className={`space-y-3 ${isMobile ? 'space-y-3' : 'space-y-4'}`}>
+      {/* Search and Reset */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            placeholder="Buscar atleta..."
+            value={searchFilter}
+            onChange={(e) => onSearchFilterChange(e.target.value)}
+            className={`pl-10 ${isMobile ? 'text-sm h-9' : ''}`}
+          />
+        </div>
+        {hasActiveFilters && (
+          <Button
+            variant="outline"
+            size={isMobile ? "sm" : "default"}
+            onClick={resetFilters}
+            className={`flex items-center gap-2 ${isMobile ? 'px-3 h-9' : ''}`}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o tipo de filtro" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="id">ID do Atleta</SelectItem>
-              <SelectItem value="name">Nome do Atleta</SelectItem>
-              <SelectItem value="filial">Filial</SelectItem>
-              <SelectItem value="estado">Estado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="search-filter">Buscar</Label>
-          
-          {showTextInput && (
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="search-filter"
-                placeholder={getPlaceholder()}
-                value={searchFilter}
-                onChange={(e) => onSearchFilterChange(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-          )}
-
-          {showBranchSelect && (
-            <Select
-              value={selectedBranch || "all"}
-              onValueChange={(value) => onSelectedBranchChange?.(value === "all" ? "" : value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione uma filial" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as filiais</SelectItem>
-                {availableBranches.map((branch, index) => (
-                  <SelectItem key={index} value={branch.name}>
-                    {branch.name} - {branch.state}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          {showStateSelect && (
-            <Select
-              value={selectedState || "all"}
-              onValueChange={(value) => onSelectedStateChange?.(value === "all" ? "" : value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os estados</SelectItem>
-                {availableStates.map((state) => (
-                  <SelectItem key={state} value={state}>
-                    {state}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label>Status de Avaliação</Label>
-          <Select
-            value={statusFilter}
-            onValueChange={onStatusFilterChange}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Todos os status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="avaliado">✓ Avaliado</SelectItem>
-              <SelectItem value="pendente">⏳ Pendente</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+            <X className="h-4 w-4" />
+            {!isMobile && <span>Limpar</span>}
+          </Button>
+        )}
       </div>
+
+      {/* Filters Grid */}
+      <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'}`}>
+        {/* Status Filter */}
+        <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+          <SelectTrigger className={isMobile ? 'h-9 text-sm' : ''}>
+            <SelectValue placeholder="Status da pontuação" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os status</SelectItem>
+            <SelectItem value="scored">Já pontuados</SelectItem>
+            <SelectItem value="unscored">Não pontuados</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Branch Filter */}
+        {availableBranches.length > 0 && (
+          <Select value={selectedBranch} onValueChange={onSelectedBranchChange}>
+            <SelectTrigger className={isMobile ? 'h-9 text-sm' : ''}>
+              <SelectValue placeholder="Filial" />
+            </SelectTrigger>
+            <SelectContent className="max-h-[200px] overflow-y-auto">
+              <SelectItem value="all">Todas as filiais</SelectItem>
+              {availableBranches.map((branch) => (
+                <SelectItem key={branch} value={branch}>
+                  {branch}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        {/* State Filter */}
+        {availableStates.length > 0 && (
+          <Select value={selectedState} onValueChange={onSelectedStateChange}>
+            <SelectTrigger className={isMobile ? 'h-9 text-sm' : ''}>
+              <SelectValue placeholder="Estado" />
+            </SelectTrigger>
+            <SelectContent className="max-h-[200px] overflow-y-auto">
+              <SelectItem value="all">Todos os estados</SelectItem>
+              {availableStates.map((state) => (
+                <SelectItem key={state} value={state}>
+                  {state}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+
+      {/* Active Filters Summary (Mobile) */}
+      {isMobile && hasActiveFilters && (
+        <div className="flex flex-wrap gap-2 text-xs">
+          {searchFilter && (
+            <span className="bg-muted px-2 py-1 rounded">
+              Busca: {searchFilter}
+            </span>
+          )}
+          {selectedBranch !== 'all' && (
+            <span className="bg-muted px-2 py-1 rounded">
+              Filial: {selectedBranch}
+            </span>
+          )}
+          {selectedState !== 'all' && (
+            <span className="bg-muted px-2 py-1 rounded">
+              Estado: {selectedState}
+            </span>
+          )}
+          {statusFilter !== 'all' && (
+            <span className="bg-muted px-2 py-1 rounded">
+              Status: {statusFilter === 'scored' ? 'Pontuados' : 'Não pontuados'}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

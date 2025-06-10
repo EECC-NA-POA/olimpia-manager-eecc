@@ -11,6 +11,7 @@ import { useAthletesScoreStatus } from './hooks/useAthletesScoreStatus';
 import { useBateriaData } from '../hooks/useBateriaData';
 import { useModelosModalidade } from '@/hooks/useDynamicScoring';
 import { Athlete } from '../hooks/useAthletes';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AthletesListProps {
   athletes: Athlete[] | undefined;
@@ -32,6 +33,7 @@ export function AthletesList({
   modalityRule
 }: AthletesListProps) {
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   // Check for dynamic scoring
   const { data: modelos = [] } = useModelosModalidade(modalityId);
@@ -71,11 +73,11 @@ export function AthletesList({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Carregando atletas...</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Carregando atletas...</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, index) => (
+          <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
+            {[...Array(isMobile ? 3 : 6)].map((_, index) => (
               <Skeleton key={index} className="h-48 w-full" />
             ))}
           </div>
@@ -88,10 +90,10 @@ export function AthletesList({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Nenhum atleta encontrado</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Nenhum atleta encontrado</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Não há atletas inscritos nesta modalidade.
           </p>
         </CardContent>
@@ -107,9 +109,9 @@ export function AthletesList({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Atletas Inscritos</CardTitle>
-        <div className="text-center text-sm text-muted-foreground">
+      <CardHeader className={isMobile ? 'pb-4' : ''}>
+        <CardTitle className="text-base sm:text-lg">Atletas Inscritos</CardTitle>
+        <div className="text-center text-xs sm:text-sm text-muted-foreground">
           Mostrando {filteredAthletes.length} de {athletes.length} atletas
           {hasDynamicScoring ? (
             <div className="mt-2 text-xs bg-green-50 text-green-700 p-2 rounded border">
@@ -136,7 +138,7 @@ export function AthletesList({
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className={`space-y-4 ${isMobile ? 'p-3' : 'space-y-6'}`}>
         <AthleteFilters
           searchFilter={filters.searchFilter}
           onSearchFilterChange={(value) => setFilters({ ...filters, searchFilter: value })}
