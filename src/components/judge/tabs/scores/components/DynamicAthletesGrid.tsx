@@ -1,14 +1,14 @@
 
 import React from 'react';
-import { AthleteScoreCard } from '../../../score-card/AthleteScoreCard';
-import { DynamicAthleteScoreCard } from '../../../score-card/DynamicAthleteScoreCard';
-import { useModelosModalidade, useCamposModelo } from '@/hooks/useDynamicScoring';
+import { AthleteCard } from '@/components/judge/AthleteCard';
+import { DynamicAthleteScoreCard } from '../../score-card/DynamicAthleteScoreCard';
+import { useModelosModalidade } from '@/hooks/useDynamicScoring';
 import { Athlete } from '../hooks/useAthletes';
 
 interface DynamicAthletesGridProps {
   athletes: Athlete[];
   selectedAthleteId: string | null;
-  onAthleteSelect: (id: string | null) => void;
+  onAthleteSelect: (athleteId: string | null) => void;
   modalityId: number;
   scoreType: 'tempo' | 'distancia' | 'pontos';
   eventId: string | null;
@@ -26,44 +26,59 @@ export function DynamicAthletesGrid({
   judgeId,
   modalityRule
 }: DynamicAthletesGridProps) {
-  // Check if this modality has dynamic scoring configured
+  // Check for dynamic scoring
   const { data: modelos = [] } = useModelosModalidade(modalityId);
   const hasDynamicScoring = modelos.length > 0;
-  
-  // Get the first model to check if it has fields configured
-  const firstModelo = modelos[0];
-  const { data: campos = [] } = useCamposModelo(firstModelo?.id);
-  const hasConfiguredFields = campos.length > 0;
 
-  console.log('DynamicAthletesGrid - modalityId:', modalityId);
-  console.log('DynamicAthletesGrid - hasDynamicScoring:', hasDynamicScoring);
-  console.log('DynamicAthletesGrid - hasConfiguredFields:', hasConfiguredFields);
-  console.log('DynamicAthletesGrid - modelos:', modelos);
-  console.log('DynamicAthletesGrid - campos:', campos);
-
-  // Only show dynamic scoring if there are models AND configured fields
-  const shouldUseDynamicScoring = hasDynamicScoring && hasConfiguredFields;
+  console.log('DynamicAthletesGrid - Debug info:', {
+    modalityId,
+    hasDynamicScoring,
+    modelosCount: modelos.length,
+    modalityRule: modalityRule?.regra_tipo,
+    athletesCount: athletes.length
+  });
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {athletes.map((athlete) => (
-        <div key={athlete.atleta_id}>
-          {shouldUseDynamicScoring ? (
-            <DynamicAthleteScoreCard
-              athlete={athlete}
-              modalityId={modalityId}
-              eventId={eventId}
-              judgeId={judgeId}
-              scoreType={scoreType}
-            />
+        <div key={athlete.atleta_id} className="space-y-2">
+          {/* Show dynamic scoring card if configured, otherwise show legacy card */}
+          {hasDynamicScoring ? (
+            <div className="space-y-2">
+              {/* Basic athlete info */}
+              <div className="bg-card border rounded-lg p-4">
+                <div className="font-medium">{athlete.atleta_nome}</div>
+                <div className="text-sm text-muted-foreground">
+                  {athlete.equipe_nome}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {athlete.origem_uf && `${athlete.origem_uf} • `}
+                  {athlete.origem_cidade}
+                </div>
+              </div>
+              
+              {/* Dynamic scoring component */}
+              <DynamicAthleteScoreCard
+                athlete={athlete}
+                modalityId={modalityId}
+                eventId={eventId}
+                judgeId={judgeId}
+                scoreType={scoreType}
+              />
+            </div>
           ) : (
-            <AthleteScoreCard
+            /* Legacy scoring card */
+            <AthleteCard
               athlete={athlete}
               modalityId={modalityId}
               eventId={eventId}
               judgeId={judgeId}
               scoreType={scoreType}
               modalityRule={modalityRule}
+              isSelected={selectedAthleteId === athlete.atleta_id}
+              onSelect={() => onAthleteSelect(
+                selectedAthleteId === athlete.atleta_id ? null : athlete.atleta_id
+              )}
             />
           )}
         </div>
