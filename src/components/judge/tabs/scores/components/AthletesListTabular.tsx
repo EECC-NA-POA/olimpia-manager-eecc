@@ -78,8 +78,7 @@ export function AthletesListTabular({
     isEditing
   } = useDynamicBaterias({ 
     modalityId, 
-    eventId: eventId || '',
-    enabled: usesBaterias
+    eventId: eventId || ''
   });
 
   // Get branch data for filtering
