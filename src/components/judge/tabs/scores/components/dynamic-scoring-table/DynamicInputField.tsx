@@ -2,6 +2,7 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { MaskedResultInput } from '@/components/judge/dynamic-scoring/MaskedResultInput';
+import { CalculatedFieldCell } from './CalculatedFieldCell';
 import { CampoModelo } from '@/types/dynamicScoring';
 
 interface DynamicInputFieldProps {
@@ -9,9 +10,35 @@ interface DynamicInputFieldProps {
   athleteId: string;
   value: string | number;
   onChange: (athleteId: string, fieldKey: string, value: string | number) => void;
+  needsRecalculation?: boolean;
+  onCalculateField?: (fieldKey: string) => void;
+  isCalculating?: boolean;
 }
 
-export function DynamicInputField({ campo, athleteId, value, onChange }: DynamicInputFieldProps) {
+export function DynamicInputField({ 
+  campo, 
+  athleteId, 
+  value, 
+  onChange,
+  needsRecalculation = false,
+  onCalculateField,
+  isCalculating = false
+}: DynamicInputFieldProps) {
+  
+  // Se é um campo calculado, mostrar componente específico
+  if (campo.tipo_input === 'calculated') {
+    return (
+      <CalculatedFieldCell
+        campo={campo}
+        athleteId={athleteId}
+        value={value}
+        needsRecalculation={needsRecalculation}
+        onCalculate={onCalculateField}
+        isCalculating={isCalculating}
+      />
+    );
+  }
+
   switch (campo.tipo_input) {
     case 'number':
       return (
@@ -42,6 +69,7 @@ export function DynamicInputField({ campo, athleteId, value, onChange }: Dynamic
       );
     
     case 'text':
+      // Usar máscara se tiver formato específico
       if (campo.metadados?.formato_resultado) {
         return (
           <MaskedResultInput

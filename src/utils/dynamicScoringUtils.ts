@@ -42,6 +42,13 @@ export function isConfigurationField(campo: CampoModelo): boolean {
 }
 
 /**
+ * Verifica se um campo é calculado (colocação, ranking, etc.)
+ */
+export function isCalculatedField(campo: CampoModelo): boolean {
+  return campo.tipo_input === 'calculated';
+}
+
+/**
  * Filtra campos removendo configurações, mantendo apenas campos de pontuação
  */
 export function filterScoringFields(campos: CampoModelo[]): CampoModelo[] {
@@ -53,6 +60,20 @@ export function filterScoringFields(campos: CampoModelo[]): CampoModelo[] {
  */
 export function filterConfigurationFields(campos: CampoModelo[]): CampoModelo[] {
   return campos.filter(campo => isConfigurationField(campo));
+}
+
+/**
+ * Filtra campos calculados
+ */
+export function filterCalculatedFields(campos: CampoModelo[]): CampoModelo[] {
+  return campos.filter(campo => isCalculatedField(campo));
+}
+
+/**
+ * Filtra campos manuais (não calculados nem de configuração)
+ */
+export function filterManualFields(campos: CampoModelo[]): CampoModelo[] {
+  return campos.filter(campo => !isConfigurationField(campo) && !isCalculatedField(campo));
 }
 
 /**

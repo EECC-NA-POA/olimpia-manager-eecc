@@ -2,20 +2,23 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Save, Edit2, X, Check, Trophy } from 'lucide-react';
+import { Calculator, AlertTriangle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { useCamposModelo } from '@/hooks/useDynamicScoring';
-import { useDynamicScoringSubmission } from '@/hooks/useDynamicScoringSubmission';
 import { Athlete } from '../hooks/useAthletes';
 import { useDynamicScoringTableState } from './dynamic-scoring-table/useDynamicScoringTableState';
 import { UnsavedChangesBanner } from './dynamic-scoring-table/UnsavedChangesBanner';
 import { DynamicInputField } from './dynamic-scoring-table/DynamicInputField';
 import { AthleteStatusCell } from './dynamic-scoring-table/AthleteStatusCell';
-import { filterScoringFields, modelUsesBaterias } from '@/utils/dynamicScoringUtils';
+import { usePlacementCalculation } from '@/hooks/usePlacementCalculation';
+import { 
+  filterScoringFields, 
+  filterCalculatedFields,
+  filterManualFields,
+  modelUsesBaterias 
+} from '@/utils/dynamicScoringUtils';
 
 interface DynamicScoringTableProps {
   athletes: Athlete[];
@@ -50,9 +53,25 @@ export function DynamicScoringTable({
     enabled: !!modelo.id,
   });
 
-  // Filter to only scoring fields (remove configuration fields)
-  const campos = filterScoringFields(allCampos);
+  // Separar campos por tipo
+  const allScoringFields = filterScoringFields(allCampos);
+  const manualFields = filterManualFields(allCampos);
+  const calculatedFields = filterCalculatedFields(allCampos);
   const usesBaterias = modelUsesBaterias(allCampos);
+
+  // Hook para cálculos de colocação
+  const {
+    isCalculating,
+    needsRecalculation,
+    calculatePlacements,
+    markNeedsRecalculation
+  } = usePlacementCalculation({
+    modalityId,
+    eventId,
+    judgeId,
+    modeloId: modelo.id,
+    bateriaId: selectedBateriaId || undefined
+  });
 
   const {
     scoreData,
@@ -68,18 +87,43 @@ export function DynamicScoringTable({
     eventId,
     judgeId,
     modelo,
-    campos: campos // Pass filtered campos
+    selectedBateriaId,
+    campos: allScoringFields
   });
 
-  console.log('DynamicScoringTable - All campos:', allCampos);
-  console.log('DynamicScoringTable - Filtered scoring campos:', campos);
-  console.log('DynamicScoringTable - Uses baterias:', usesBaterias);
+  // Modificar handleFieldChange para detectar mudanças que afetam cálculos
+  const handleFieldChangeWithRecalculation = (athleteId: string, fieldKey: string, value: string | number) => {
+    handleFieldChange(athleteId, fieldKey, value);
+    
+    // Verificar se algum campo calculado depende deste campo
+    calculatedFields.forEach(calculatedField => {
+      if (calculatedField.metadados?.campo_referencia === fieldKey) {
+        markNeedsRecalculation(calculatedField.chave_campo);
+      }
+    });
+  };
+
+  const handleCalculateField = async (fieldKey: string) => {
+    const campo = calculatedFields.find(c => c.chave_campo === fieldKey);
+    if (!campo) return;
+
+    // Preparar dados dos atletas para cálculo
+    const athleteScores: Record<string, any> = {};
+    athletes.forEach(athlete => {
+      athleteScores[athlete.atleta_id] = {
+        athleteName: athlete.atleta_nome,
+        ...scoreData[athlete.atleta_id]
+      };
+    });
+
+    await calculatePlacements(campo, athleteScores);
+  };
 
   if (isLoadingCampos) {
     return <div>Carregando campos...</div>;
   }
 
-  if (campos.length === 0) {
+  if (allScoringFields.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-8">
         <div className="mb-4">
@@ -111,6 +155,21 @@ export function DynamicScoringTable({
         isSaving={dynamicSubmission.isPending}
       />
 
+      {/* Alertas para campos calculados */}
+      {needsRecalculation.size > 0 && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+          <div className="flex items-center gap-2 text-orange-800">
+            <AlertTriangle className="h-4 w-4" />
+            <span className="text-sm font-medium">
+              Recálculo necessário para campos calculados
+            </span>
+          </div>
+          <div className="text-orange-700 text-xs mt-1">
+            Dados foram alterados. Use os botões de calculadora para recalcular as colocações.
+          </div>
+        </div>
+      )}
+
       {usesBaterias && selectedBateriaId && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <div className="text-blue-800 text-sm font-medium">
@@ -128,7 +187,7 @@ export function DynamicScoringTable({
             <TableRow>
               <TableHead className="min-w-[200px] sticky left-0 bg-background">Atleta</TableHead>
               <TableHead className="min-w-[150px]">Filial</TableHead>
-              {campos.map((campo) => (
+              {allScoringFields.map((campo) => (
                 <TableHead key={campo.chave_campo} className="min-w-[120px]">
                   <div className="flex flex-col">
                     <span>{campo.rotulo_campo}</span>
@@ -137,9 +196,15 @@ export function DynamicScoringTable({
                         Obrigatório
                       </Badge>
                     )}
+                    {campo.tipo_input === 'calculated' && (
+                      <Badge variant="outline" className="text-xs w-fit bg-blue-50 text-blue-700">
+                        Calculado
+                      </Badge>
+                    )}
                     {campo.metadados?.formato_resultado && (
                       <Badge variant="outline" className="text-xs w-fit bg-green-50">
-                        {campo.metadados.formato_resultado}
+                        {campo.metadados.formato_resultado === 'tempo' ? 'Tempo' :
+                         campo.metadados.formato_resultado === 'distancia' ? 'Distância' : 'Pontos'}
                       </Badge>
                     )}
                   </div>
@@ -162,30 +227,63 @@ export function DynamicScoringTable({
                   <TableCell>
                     {athlete.filial_nome || '-'}
                   </TableCell>
-                  {campos.map((campo) => (
+                  {allScoringFields.map((campo) => (
                     <TableCell key={campo.chave_campo}>
                       <DynamicInputField
                         campo={campo}
                         athleteId={athlete.atleta_id}
                         value={scoreData[athlete.atleta_id]?.[campo.chave_campo] || ''}
-                        onChange={handleFieldChange}
+                        onChange={handleFieldChangeWithRecalculation}
+                        needsRecalculation={needsRecalculation.has(campo.chave_campo)}
+                        onCalculateField={handleCalculateField}
+                        isCalculating={isCalculating}
                       />
                     </TableCell>
                   ))}
-                  <AthleteStatusCell
-                    athleteId={athlete.atleta_id}
-                    athleteName={athlete.atleta_nome}
-                    completionStatus={status}
-                    hasUnsavedChanges={hasUnsavedChanges}
-                    onSave={saveAthleteScore}
-                    isSaving={dynamicSubmission.isPending}
-                  />
+                  <TableCell>
+                    <AthleteStatusCell
+                      athleteId={athlete.atleta_id}
+                      athleteName={athlete.atleta_nome}
+                      completionStatus={status}
+                      hasUnsavedChanges={hasUnsavedChanges}
+                      onSave={saveAthleteScore}
+                      isSaving={dynamicSubmission.isPending}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {/* Ações específicas do atleta podem ser adicionadas aqui */}
+                  </TableCell>
                 </TableRow>
               );
             })}
           </TableBody>
         </Table>
       </div>
+
+      {/* Botões de ação para campos calculados */}
+      {calculatedFields.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h4 className="text-sm font-medium text-blue-800 mb-2">Cálculos Disponíveis</h4>
+          <div className="flex flex-wrap gap-2">
+            {calculatedFields.map(campo => (
+              <Button
+                key={campo.chave_campo}
+                variant="outline"
+                size="sm"
+                onClick={() => handleCalculateField(campo.chave_campo)}
+                disabled={isCalculating}
+                className={needsRecalculation.has(campo.chave_campo) ? 'border-orange-300 bg-orange-50' : ''}
+              >
+                <Calculator className="h-3 w-3 mr-1" />
+                {campo.rotulo_campo}
+                {needsRecalculation.has(campo.chave_campo) && (
+                  <AlertTriangle className="h-3 w-3 ml-1 text-orange-600" />
+                )}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

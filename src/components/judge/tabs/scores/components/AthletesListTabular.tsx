@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AthletesTable } from './AthletesTable';
-import { DynamicAthletesTable } from './DynamicAthletesTable';
+import { DynamicScoringTable } from './DynamicScoringTable';
 import { AthleteFilters } from './AthleteFilters';
 import { BateriaNavigationTabs } from './BateriaNavigationTabs';
 import { useAthletesFiltering } from './hooks/useAthletesFiltering';
@@ -11,11 +11,11 @@ import { useAthletesBranchData } from './hooks/useAthletesBranchData';
 import { useAthletesScoreStatus } from './hooks/useAthletesScoreStatus';
 import { useModelosModalidade } from '@/hooks/useDynamicScoring';
 import { useDynamicBaterias } from '../hooks/useDynamicBaterias';
-import { useModeloConfiguration } from '../hooks/useModeloConfiguration';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Athlete } from '../hooks/useAthletes';
 import { CampoModelo } from '@/types/dynamicScoring';
+import { modelUsesBaterias } from '@/utils/dynamicScoringUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AthletesListTabularProps {
@@ -59,10 +59,10 @@ export function AthletesListTabular({
     enabled: !!modelos[0]?.id,
   });
 
-  // Get modelo configuration for battery management
-  const { data: modeloConfig } = useModeloConfiguration(modalityId);
+  // Verificar se o modelo usa baterias
+  const usesBaterias = modelUsesBaterias(campos);
 
-  // Bateria management
+  // Bateria management - only initialize if the model uses baterias
   const {
     baterias,
     selectedBateriaId,
@@ -70,14 +70,17 @@ export function AthletesListTabular({
     regularBaterias,
     finalBateria,
     hasFinalBateria,
-    usesBaterias,
     setSelectedBateriaId,
     createNewBateria,
     createFinalBateria,
     editBateria,
     isCreating,
     isEditing
-  } = useDynamicBaterias({ modalityId, eventId: eventId || '' });
+  } = useDynamicBaterias({ 
+    modalityId, 
+    eventId: eventId || '',
+    enabled: usesBaterias
+  });
 
   // Get branch data for filtering
   const { availableBranches, availableStates, athletesBranchData } = useAthletesBranchData(athletes || []);
@@ -163,7 +166,7 @@ export function AthletesListTabular({
                   Modelo: {modelos[0].descricao || modelos[0].codigo_modelo}
                 </div>
                 <div className="mt-1">
-                  Campos configurados: {campos.length || 0}
+                  {usesBaterias ? 'Sistema de baterias: Ativo' : 'Sistema de baterias: Inativo'}
                 </div>
               </div>
             )}
@@ -200,7 +203,7 @@ export function AthletesListTabular({
           
           <div className={isMobile ? 'overflow-x-auto -mx-3' : ''}>
             {hasDynamicScoring && modelos[0] ? (
-              <DynamicAthletesTable
+              <DynamicScoringTable
                 athletes={filteredAthletes}
                 modalityId={modalityId}
                 eventId={eventId}
