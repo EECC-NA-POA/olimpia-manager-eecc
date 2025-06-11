@@ -17,6 +17,7 @@ import { DynamicScoringForm } from '../../dynamic-scoring/DynamicScoringForm';
 import { useCamposModelo } from '@/hooks/useDynamicScoring';
 import { useDynamicScoringSubmission } from '@/hooks/useDynamicScoringSubmission';
 import { CampoModelo } from '@/types/dynamicScoring';
+import { filterScoringFields } from '@/utils/dynamicScoringUtils';
 
 interface DynamicScoreFormProps {
   modeloId: number;
@@ -43,10 +44,16 @@ export function DynamicScoreForm({
   initialValues,
   onSuccess
 }: DynamicScoreFormProps) {
-  const { data: campos = [], isLoading } = useCamposModelo(modeloId);
+  const { data: allCampos = [], isLoading } = useCamposModelo(modeloId);
   const submissionMutation = useDynamicScoringSubmission();
 
-  // Create dynamic schema based on campos
+  // Filter to only scoring fields (remove configuration fields)
+  const campos = filterScoringFields(allCampos);
+
+  console.log('DynamicScoreForm - All campos:', allCampos);
+  console.log('DynamicScoreForm - Filtered scoring campos:', campos);
+
+  // Create dynamic schema based on scoring campos only
   const createSchema = (campos: CampoModelo[]) => {
     const schemaFields: Record<string, z.ZodType> = {};
     
@@ -143,10 +150,15 @@ export function DynamicScoreForm({
   if (campos.length === 0) {
     return (
       <div className="text-center py-4 text-muted-foreground">
-        <p>Nenhum campo configurado para esta modalidade.</p>
+        <p>Nenhum campo de pontuação configurado para esta modalidade.</p>
         <p className="text-xs mt-1">
-          Configure os campos do modelo na seção "Modelos de Pontuação" do evento.
+          Configure os campos de pontuação no painel de administração para habilitar a pontuação dinâmica.
         </p>
+        {allCampos.length > 0 && (
+          <p className="text-xs mt-2 text-blue-600">
+            Este modelo possui {allCampos.length} campo(s) de configuração, mas nenhum campo de pontuação.
+          </p>
+        )}
       </div>
     );
   }

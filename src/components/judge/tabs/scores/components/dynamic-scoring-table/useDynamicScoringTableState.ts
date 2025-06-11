@@ -20,6 +20,7 @@ interface UseDynamicScoringTableStateProps {
   judgeId: string;
   modelo: any;
   selectedBateriaId?: number | null;
+  campos?: CampoModelo[]; // Accept pre-filtered campos
 }
 
 export function useDynamicScoringTableState({
@@ -28,15 +29,16 @@ export function useDynamicScoringTableState({
   eventId,
   judgeId,
   modelo,
-  selectedBateriaId
+  selectedBateriaId,
+  campos: providedCampos
 }: UseDynamicScoringTableStateProps) {
   const [scoreData, setScoreData] = useState<AthleteScoreData>({});
   const [unsavedChanges, setUnsavedChanges] = useState<Set<string>>(new Set());
   
   const dynamicSubmission = useDynamicScoringSubmission();
 
-  // Fetch campos do modelo
-  const { data: campos = [], isLoading: isLoadingCampos } = useQuery({
+  // Use provided campos or fetch from database (for backward compatibility)
+  const { data: fetchedCampos = [], isLoading: isLoadingCampos } = useQuery({
     queryKey: ['campos-modelo', modelo.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -49,8 +51,10 @@ export function useDynamicScoringTableState({
       if (error) throw error;
       return data as CampoModelo[];
     },
-    enabled: !!modelo.id
+    enabled: !!modelo.id && !providedCampos,
   });
+
+  const campos = providedCampos || fetchedCampos;
 
   // Fetch existing scores with tentativas, filtered by bateria if selected
   const { data: existingScores = [] } = useQuery({
@@ -178,7 +182,7 @@ export function useDynamicScoringTableState({
     scoreData,
     unsavedChanges,
     campos,
-    isLoadingCampos,
+    isLoadingCampos: !providedCampos && isLoadingCampos,
     dynamicSubmission,
     handleFieldChange,
     saveAthleteScore,

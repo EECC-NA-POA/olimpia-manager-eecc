@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Athlete } from '../hooks/useAthletes';
 import { ModeloModalidade, CampoModelo } from '@/types/dynamicScoring';
+import { filterScoringFields, modelUsesBaterias } from '@/utils/dynamicScoringUtils';
 
 interface DynamicAthletesTableProps {
   athletes: Athlete[];
@@ -35,7 +36,7 @@ export function DynamicAthletesTable({
   const mutation = useDynamicScoringSubmission();
 
   // Fetch campos for this modelo
-  const { data: campos = [] } = useQuery({
+  const { data: allCampos = [] } = useQuery({
     queryKey: ['campos-modelo', modelo.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -49,6 +50,15 @@ export function DynamicAthletesTable({
     },
     enabled: !!modelo.id,
   });
+
+  // Filter to only scoring fields (remove configuration fields)
+  const campos = filterScoringFields(allCampos);
+  const usesBaterias = modelUsesBaterias(allCampos);
+
+  console.log('DynamicAthletesTable - All campos:', allCampos);
+  console.log('DynamicAthletesTable - Filtered scoring campos:', campos);
+  console.log('DynamicAthletesTable - Uses baterias:', usesBaterias);
+  console.log('DynamicAthletesTable - Selected bateria:', selectedBateriaId);
 
   const handleEdit = (athleteId: string) => {
     setEditingAthleteId(athleteId);
@@ -105,16 +115,21 @@ export function DynamicAthletesTable({
     return (
       <div className="text-center text-muted-foreground py-8">
         <div className="mb-4">
-          <h3 className="text-lg font-medium mb-2">Nenhum campo configurado</h3>
+          <h3 className="text-lg font-medium mb-2">Nenhum campo de pontuação configurado</h3>
           <p className="text-sm">
-            Este modelo de pontuação não possui campos configurados. 
-            Configure os campos no painel de administração para habilitar a pontuação dinâmica.
+            Este modelo possui apenas campos de configuração. 
+            Configure campos de pontuação no painel de administração para habilitar a pontuação dinâmica.
           </p>
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-700">
           <p className="text-sm">
             <strong>Modelo atual:</strong> {modelo.descricao || modelo.codigo_modelo}
           </p>
+          {usesBaterias && (
+            <p className="text-xs mt-1">
+              <strong>Sistema de baterias:</strong> Ativo
+            </p>
+          )}
           <p className="text-xs mt-1">
             Acesse "Administração → Gestão de Eventos → Regras de Modalidades" para configurar os campos
           </p>
@@ -125,6 +140,17 @@ export function DynamicAthletesTable({
 
   return (
     <div className="border rounded-lg overflow-hidden">
+      {usesBaterias && selectedBateriaId && (
+        <div className="bg-blue-50 border-b border-blue-200 p-3">
+          <div className="text-blue-800 text-sm font-medium">
+            Sistema de Baterias Ativo - Bateria {selectedBateriaId}
+          </div>
+          <div className="text-blue-700 text-xs mt-1">
+            Pontuações serão registradas para a bateria selecionada
+          </div>
+        </div>
+      )}
+      
       <Table>
         <TableHeader>
           <TableRow>
@@ -259,7 +285,9 @@ export function DynamicAthletesTable({
       {campos.length > 0 && (
         <div className="bg-muted/50 p-3 text-xs text-muted-foreground">
           <p><strong>Dica:</strong> Use o botão "Editar" para inserir pontuações. Os campos marcados com * são obrigatórios.</p>
-          <p><strong>Baterias:</strong> Use a seção "Gerenciamento de Baterias" acima para criar/editar baterias.</p>
+          {usesBaterias && (
+            <p><strong>Baterias:</strong> Use a seção "Gerenciamento de Baterias" acima para criar/editar baterias.</p>
+          )}
         </div>
       )}
     </div>

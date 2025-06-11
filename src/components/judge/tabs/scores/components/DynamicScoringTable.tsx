@@ -15,6 +15,7 @@ import { useDynamicScoringTableState } from './dynamic-scoring-table/useDynamicS
 import { UnsavedChangesBanner } from './dynamic-scoring-table/UnsavedChangesBanner';
 import { DynamicInputField } from './dynamic-scoring-table/DynamicInputField';
 import { AthleteStatusCell } from './dynamic-scoring-table/AthleteStatusCell';
+import { filterScoringFields, modelUsesBaterias } from '@/utils/dynamicScoringUtils';
 
 interface DynamicScoringTableProps {
   athletes: Athlete[];
@@ -33,11 +34,29 @@ export function DynamicScoringTable({
   modelo,
   selectedBateriaId
 }: DynamicScoringTableProps) {
+  // Fetch all campos for this modelo
+  const { data: allCampos = [], isLoading: isLoadingCampos } = useQuery({
+    queryKey: ['campos-modelo', modelo.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('campos_modelo')
+        .select('*')
+        .eq('modelo_id', modelo.id)
+        .order('ordem_exibicao');
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!modelo.id,
+  });
+
+  // Filter to only scoring fields (remove configuration fields)
+  const campos = filterScoringFields(allCampos);
+  const usesBaterias = modelUsesBaterias(allCampos);
+
   const {
     scoreData,
     unsavedChanges,
-    campos,
-    isLoadingCampos,
     dynamicSubmission,
     handleFieldChange,
     saveAthleteScore,
@@ -48,15 +67,40 @@ export function DynamicScoringTable({
     modalityId,
     eventId,
     judgeId,
-    modelo
+    modelo,
+    campos: campos // Pass filtered campos
   });
+
+  console.log('DynamicScoringTable - All campos:', allCampos);
+  console.log('DynamicScoringTable - Filtered scoring campos:', campos);
+  console.log('DynamicScoringTable - Uses baterias:', usesBaterias);
 
   if (isLoadingCampos) {
     return <div>Carregando campos...</div>;
   }
 
   if (campos.length === 0) {
-    return <div>Nenhum campo configurado para este modelo.</div>;
+    return (
+      <div className="text-center text-muted-foreground py-8">
+        <div className="mb-4">
+          <h3 className="text-lg font-medium mb-2">Nenhum campo de pontuação configurado</h3>
+          <p className="text-sm">
+            Este modelo possui apenas campos de configuração. 
+            Configure campos de pontuação no painel de administração.
+          </p>
+        </div>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-700">
+          <p className="text-sm">
+            <strong>Modelo atual:</strong> {modelo.descricao || modelo.codigo_modelo}
+          </p>
+          {usesBaterias && (
+            <p className="text-xs mt-1">
+              <strong>Sistema de baterias:</strong> Ativo
+            </p>
+          )}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -66,6 +110,17 @@ export function DynamicScoringTable({
         onSaveAll={saveAllScores}
         isSaving={dynamicSubmission.isPending}
       />
+
+      {usesBaterias && selectedBateriaId && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <div className="text-blue-800 text-sm font-medium">
+            Sistema de Baterias Ativo - Bateria {selectedBateriaId}
+          </div>
+          <div className="text-blue-700 text-xs mt-1">
+            Pontuações serão registradas para a bateria selecionada
+          </div>
+        </div>
+      )}
 
       <div className="border rounded-md overflow-x-auto">
         <Table>
