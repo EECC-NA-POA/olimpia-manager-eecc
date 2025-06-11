@@ -37,17 +37,31 @@ export function DynamicScoringTable({
   modelo,
   selectedBateriaId
 }: DynamicScoringTableProps) {
+  console.log('DynamicScoringTable - Renderizando com:', {
+    athletesCount: athletes.length,
+    modalityId,
+    modeloId: modelo?.id,
+    selectedBateriaId
+  });
+
   // Fetch all campos for this modelo
   const { data: allCampos = [], isLoading: isLoadingCampos } = useQuery({
     queryKey: ['campos-modelo', modelo.id],
     queryFn: async () => {
+      console.log('Buscando campos para modelo:', modelo.id);
+      
       const { data, error } = await supabase
         .from('campos_modelo')
         .select('*')
         .eq('modelo_id', modelo.id)
         .order('ordem_exibicao');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar campos:', error);
+        throw error;
+      }
+      
+      console.log('Campos encontrados:', data?.length || 0);
       return data;
     },
     enabled: !!modelo.id,
@@ -58,6 +72,14 @@ export function DynamicScoringTable({
   const manualFields = filterManualFields(allCampos);
   const calculatedFields = filterCalculatedFields(allCampos);
   const usesBaterias = modelUsesBaterias(allCampos);
+
+  console.log('DynamicScoringTable - Campos separados:', {
+    total: allCampos.length,
+    scoring: allScoringFields.length,
+    manual: manualFields.length,
+    calculated: calculatedFields.length,
+    usesBaterias
+  });
 
   // Hook para cálculos de colocação em lote
   const {
@@ -90,8 +112,15 @@ export function DynamicScoringTable({
   });
 
   const handleCalculateBatchPlacements = async (fieldKey: string) => {
+    console.log('Calculando colocações para campo:', fieldKey);
+    
     const campo = calculatedFields.find(c => c.chave_campo === fieldKey);
-    if (!campo) return;
+    if (!campo) {
+      console.error('Campo calculado não encontrado:', fieldKey);
+      return;
+    }
+
+    console.log('Campo encontrado:', campo);
 
     // Preparar dados dos atletas para cálculo
     const athleteScores: Record<string, any> = {};
@@ -101,6 +130,8 @@ export function DynamicScoringTable({
         ...scoreData[athlete.atleta_id]
       };
     });
+
+    console.log('Dados preparados para cálculo:', athleteScores);
 
     await calculateBatchPlacements(campo, athleteScores);
   };
@@ -176,7 +207,6 @@ export function DynamicScoringTable({
                 </TableHead>
               ))}
               <TableHead className="min-w-[100px]">Status</TableHead>
-              <TableHead className="min-w-[100px]">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -212,9 +242,6 @@ export function DynamicScoringTable({
                       isSaving={dynamicSubmission.isPending}
                     />
                   </TableCell>
-                  <TableCell>
-                    {/* Ações específicas do atleta podem ser adicionadas aqui */}
-                  </TableCell>
                 </TableRow>
               );
             })}
@@ -235,7 +262,10 @@ export function DynamicScoringTable({
                 key={campo.chave_campo}
                 variant="outline"
                 size="sm"
-                onClick={() => handleCalculateBatchPlacements(campo.chave_campo)}
+                onClick={() => {
+                  console.log('Botão de colocação clicado para campo:', campo.chave_campo);
+                  handleCalculateBatchPlacements(campo.chave_campo);
+                }}
                 disabled={isCalculating}
               >
                 <Calculator className="h-3 w-3 mr-1" />
@@ -243,6 +273,11 @@ export function DynamicScoringTable({
               </Button>
             ))}
           </div>
+          {isCalculating && (
+            <div className="text-xs text-blue-600 mt-2">
+              Calculando colocações...
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -24,16 +24,24 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
   const [selectedBateriaId, setSelectedBateriaId] = useState<number | null>(null);
   
   // Get modelo configuration
-  const { data: modeloConfig } = useModeloConfiguration(modalityId);
+  const { data: modeloConfig, isLoading: isLoadingConfig } = useModeloConfiguration(modalityId);
+  
+  console.log('useDynamicBaterias - modeloConfig:', modeloConfig);
   
   // Check if this modality uses baterias
   const usesBaterias = modeloConfig?.parametros?.baterias === true;
+  console.log('useDynamicBaterias - usesBaterias:', usesBaterias);
 
   // Fetch existing baterias
   const { data: baterias = [], isLoading } = useQuery({
     queryKey: ['dynamic-baterias', modalityId, eventId],
     queryFn: async () => {
-      if (!eventId || !modalityId || !usesBaterias) return [];
+      if (!eventId || !modalityId) {
+        console.log('Parâmetros faltando para buscar baterias:', { modalityId, eventId });
+        return [];
+      }
+      
+      console.log('Buscando baterias para modalidade:', modalityId, 'evento:', eventId);
       
       const { data, error } = await supabase
         .from('baterias')
@@ -43,26 +51,33 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
         .order('numero');
 
       if (error) {
-        console.error('Error fetching baterias:', error);
+        console.error('Erro ao buscar baterias:', error);
         return [];
       }
 
+      console.log('Baterias encontradas:', data?.length || 0);
+      
       return (data || []).map(b => ({
         ...b,
         isFinal: b.numero === 999 // Special number for final bateria
       })) as DynamicBateria[];
     },
-    enabled: !!eventId && !!modalityId && usesBaterias,
+    enabled: !!eventId && !!modalityId,
   });
 
   // Create new bateria mutation
   const createBateriaMutation = useMutation({
     mutationFn: async ({ isFinal = false }: { isFinal?: boolean }) => {
-      if (!eventId) throw new Error('Event ID is required');
+      if (!eventId) throw new Error('ID do evento é obrigatório');
+      
+      console.log('Criando nova bateria. Final?', isFinal);
+      console.log('Baterias existentes:', baterias.length);
       
       // Get next number - para bateria regular, sempre use número sequencial começando em 1
       const regularBaterias = baterias.filter(b => !b.isFinal);
       const nextNumber = isFinal ? 999 : (regularBaterias.length + 1);
+      
+      console.log('Próximo número de bateria:', nextNumber);
       
       const { data, error } = await supabase
         .from('baterias')
@@ -75,7 +90,12 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao criar bateria:', error);
+        throw error;
+      }
+      
+      console.log('Bateria criada com sucesso:', data);
       return { ...data, isFinal };
     },
     onSuccess: (newBateria) => {
@@ -84,7 +104,7 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
       toast.success(`${newBateria.isFinal ? 'Bateria Final' : `Bateria ${newBateria.numero}`} criada com sucesso!`);
     },
     onError: (error) => {
-      console.error('Error creating bateria:', error);
+      console.error('Erro ao criar bateria:', error);
       toast.error('Erro ao criar bateria');
     }
   });
@@ -114,19 +134,24 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
 
   // Auto-create first bateria and select it when model uses baterias
   useEffect(() => {
-    if (usesBaterias && modeloConfig && eventId) {
+    console.log('useEffect - usesBaterias:', usesBaterias, 'modeloConfig:', !!modeloConfig, 'eventId:', eventId);
+    console.log('useEffect - baterias.length:', baterias.length, 'isCreating:', createBateriaMutation.isPending);
+    
+    if (usesBaterias && modeloConfig && eventId && !isLoadingConfig) {
       if (baterias.length === 0 && !createBateriaMutation.isPending) {
+        console.log('Criando primeira bateria automaticamente...');
         // Create first bateria automatically
         createBateriaMutation.mutate({ isFinal: false });
       } else if (baterias.length > 0 && !selectedBateriaId) {
         // Select first regular bateria
         const firstRegularBateria = baterias.find(b => !b.isFinal);
         if (firstRegularBateria) {
+          console.log('Selecionando primeira bateria regular:', firstRegularBateria.id);
           setSelectedBateriaId(firstRegularBateria.id);
         }
       }
     }
-  }, [baterias, selectedBateriaId, usesBaterias, modeloConfig, eventId]);
+  }, [baterias, selectedBateriaId, usesBaterias, modeloConfig, eventId, isLoadingConfig]);
 
   const selectedBateria = baterias.find(b => b.id === selectedBateriaId);
   const hasFinalBateria = baterias.some(b => b.isFinal);
@@ -141,10 +166,16 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
     finalBateria,
     hasFinalBateria,
     usesBaterias,
-    isLoading,
+    isLoading: isLoading || isLoadingConfig,
     setSelectedBateriaId,
-    createNewBateria: () => createBateriaMutation.mutate({ isFinal: false }),
-    createFinalBateria: () => createBateriaMutation.mutate({ isFinal: true }),
+    createNewBateria: () => {
+      console.log('Botão Nova Bateria clicado');
+      createBateriaMutation.mutate({ isFinal: false });
+    },
+    createFinalBateria: () => {
+      console.log('Botão Bateria Final clicado');
+      createBateriaMutation.mutate({ isFinal: true });
+    },
     editBateria: (bateriaId: number, novoNumero: number) => editBateriaMutation.mutate({ bateriaId, novoNumero }),
     isCreating: createBateriaMutation.isPending,
     isEditing: editBateriaMutation.isPending

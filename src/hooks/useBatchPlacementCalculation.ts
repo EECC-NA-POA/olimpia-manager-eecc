@@ -37,27 +37,63 @@ export function useBatchPlacementCalculation({
     setIsCalculating(true);
     
     try {
-      const referenceField = calculatedField.metadados?.campo_referencia;
+      console.log('Iniciando cálculo de colocações para campo:', calculatedField.chave_campo);
+      console.log('Dados dos atletas recebidos:', athleteScores);
+      
+      let referenceField = calculatedField.metadados?.campo_referencia;
+      console.log('Campo de referência configurado:', referenceField);
+      
+      // Se não há campo de referência configurado, tentar encontrar um campo numérico
       if (!referenceField) {
-        throw new Error('Campo de referência não configurado para cálculo de colocação');
+        console.log('Campo de referência não configurado, buscando campo numérico...');
+        
+        // Pegar o primeiro atleta para ver quais campos estão disponíveis
+        const firstAthleteData = Object.values(athleteScores)[0];
+        if (firstAthleteData) {
+          const availableFields = Object.keys(firstAthleteData).filter(key => 
+            key !== 'athleteName' && 
+            !isNaN(parseFloat(firstAthleteData[key])) &&
+            firstAthleteData[key] !== '' &&
+            firstAthleteData[key] !== null &&
+            firstAthleteData[key] !== undefined
+          );
+          
+          console.log('Campos numéricos disponíveis:', availableFields);
+          
+          if (availableFields.length > 0) {
+            referenceField = availableFields[0];
+            console.log('Usando campo de referência automático:', referenceField);
+          }
+        }
+      }
+      
+      if (!referenceField) {
+        throw new Error('Nenhum campo de referência disponível para cálculo de colocação. Configure um campo de referência no campo calculado ou insira pontuações numéricas.');
       }
 
       // Extrair pontuações dos atletas para o campo de referência
       const scores: AthleteScore[] = Object.entries(athleteScores)
-        .map(([athleteId, data]) => ({
-          athleteId,
-          athleteName: data.athleteName || athleteId,
-          score: parseFloat(data[referenceField]) || 0
-        }))
+        .map(([athleteId, data]) => {
+          const score = parseFloat(data[referenceField]) || 0;
+          console.log(`Atleta ${data.athleteName || athleteId}: ${referenceField} = ${score}`);
+          return {
+            athleteId,
+            athleteName: data.athleteName || athleteId,
+            score
+          };
+        })
         .filter(item => !isNaN(item.score) && item.score > 0);
 
+      console.log('Pontuações válidas encontradas:', scores.length);
+
       if (scores.length === 0) {
-        toast.error('Nenhuma pontuação válida encontrada para calcular colocações');
-        return;
+        throw new Error(`Nenhuma pontuação válida encontrada no campo "${referenceField}". Insira pontuações numéricas maiores que zero para calcular colocações.`);
       }
 
       // Ordenar baseado no tipo de ordenação configurado
       const ordem = calculatedField.metadados?.ordem_calculo || 'desc';
+      console.log('Ordem de cálculo:', ordem);
+      
       scores.sort((a, b) => {
         if (ordem === 'asc') {
           return a.score - b.score; // Menor pontuação = melhor colocação
@@ -73,9 +109,11 @@ export function useBatchPlacementCalculation({
           currentPlacement = i + 1;
         }
         scores[i].placement = currentPlacement;
+        console.log(`${scores[i].athleteName}: ${scores[i].score} pontos = ${currentPlacement}º lugar`);
       }
 
       // Salvar colocações no banco de dados em lote
+      console.log('Salvando colocações no banco de dados...');
       const placementPromises = scores.map(athlete => 
         saveCalculatedPlacement({
           athleteId: athlete.athleteId,
@@ -92,11 +130,11 @@ export function useBatchPlacementCalculation({
         queryKey: ['athlete-dynamic-scores', modalityId, eventId, modeloId, bateriaId]
       });
 
-      toast.success(`Colocações calculadas para ${scores.length} atletas`);
+      toast.success(`Colocações calculadas para ${scores.length} atletas com base no campo "${referenceField}"`);
       
     } catch (error) {
       console.error('Erro ao calcular colocações:', error);
-      toast.error('Erro ao calcular colocações');
+      toast.error(error instanceof Error ? error.message : 'Erro ao calcular colocações');
     } finally {
       setIsCalculating(false);
     }
@@ -113,6 +151,8 @@ export function useBatchPlacementCalculation({
     placement: number;
     bateriaId?: number;
   }) => {
+    console.log(`Salvando colocação para atleta ${athleteId}: ${fieldKey} = ${placement}`);
+    
     // Buscar pontuação existente
     let query = supabase
       .from('pontuacoes')

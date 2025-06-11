@@ -36,6 +36,8 @@ export function useModeloConfiguration(modalidadeId: number | null) {
     queryFn: async () => {
       if (!modalidadeId) return null;
       
+      console.log('Buscando configuração do modelo para modalidade:', modalidadeId);
+      
       // First get the modelo basic info
       const { data: modelo, error: modeloError } = await supabase
         .from('modelos_modalidade')
@@ -48,7 +50,12 @@ export function useModeloConfiguration(modalidadeId: number | null) {
         throw modeloError;
       }
       
-      if (!modelo) return null;
+      if (!modelo) {
+        console.log('Nenhum modelo encontrado para modalidade:', modalidadeId);
+        return null;
+      }
+      
+      console.log('Modelo encontrado:', modelo);
       
       // Get campos to check if baterias are used
       const { data: campos, error: camposError } = await supabase
@@ -61,8 +68,11 @@ export function useModeloConfiguration(modalidadeId: number | null) {
         // Continue with default values if campos can't be fetched
       }
       
+      console.log('Campos encontrados:', campos?.length || 0);
+      
       // Check if model uses baterias based on campos
       const usesBaterias = campos ? modelUsesBaterias(campos) : false;
+      console.log('Modelo usa baterias:', usesBaterias);
       
       return {
         modalidade_id: modelo.modalidade_id,
