@@ -60,7 +60,7 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
     mutationFn: async ({ isFinal = false }: { isFinal?: boolean }) => {
       if (!eventId) throw new Error('Event ID is required');
       
-      // Get next number (999 for final, or max + 1 for regular)
+      // Get next number - para bateria regular, sempre use número sequencial começando em 1
       const regularBaterias = baterias.filter(b => !b.isFinal);
       const nextNumber = isFinal ? 999 : (regularBaterias.length + 1);
       
@@ -112,16 +112,21 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
     }
   });
 
-  // Auto-select first bateria if none selected and baterias exist
+  // Auto-create first bateria and select it when model uses baterias
   useEffect(() => {
-    if (usesBaterias && baterias.length > 0 && !selectedBateriaId) {
-      setSelectedBateriaId(baterias[0].id);
+    if (usesBaterias && modeloConfig && eventId) {
+      if (baterias.length === 0 && !createBateriaMutation.isPending) {
+        // Create first bateria automatically
+        createBateriaMutation.mutate({ isFinal: false });
+      } else if (baterias.length > 0 && !selectedBateriaId) {
+        // Select first regular bateria
+        const firstRegularBateria = baterias.find(b => !b.isFinal);
+        if (firstRegularBateria) {
+          setSelectedBateriaId(firstRegularBateria.id);
+        }
+      }
     }
-    // If no baterias exist and we're using baterias, create the first one
-    else if (usesBaterias && baterias.length === 0 && !createBateriaMutation.isPending && modeloConfig) {
-      createBateriaMutation.mutate({ isFinal: false });
-    }
-  }, [baterias, selectedBateriaId, usesBaterias, modeloConfig]);
+  }, [baterias, selectedBateriaId, usesBaterias, modeloConfig, eventId]);
 
   const selectedBateria = baterias.find(b => b.id === selectedBateriaId);
   const hasFinalBateria = baterias.some(b => b.isFinal);

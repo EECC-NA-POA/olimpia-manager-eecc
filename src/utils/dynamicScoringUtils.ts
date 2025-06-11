@@ -9,7 +9,8 @@ export const CONFIG_FIELD_KEYS = [
   'configuracao',
   'config',
   'usar_baterias',
-  'configuracao_pontuacao'
+  'configuracao_pontuacao',
+  'pontuacao_configuracao'
 ];
 
 /**
@@ -23,8 +24,17 @@ export const CONFIG_INPUT_TYPES = [
  * Verifica se um campo é de configuração do modelo
  */
 export function isConfigurationField(campo: CampoModelo): boolean {
-  // Verificar por chave do campo
-  if (CONFIG_FIELD_KEYS.includes(campo.chave_campo.toLowerCase())) {
+  // Verificar por chave do campo (case insensitive)
+  const chaveNormalizada = campo.chave_campo.toLowerCase();
+  if (CONFIG_FIELD_KEYS.some(key => chaveNormalizada.includes(key))) {
+    return true;
+  }
+  
+  // Verificar por rótulo do campo (case insensitive)
+  const rotuloNormalizado = campo.rotulo_campo.toLowerCase();
+  if (rotuloNormalizado.includes('configuração') || 
+      rotuloNormalizado.includes('config') ||
+      rotuloNormalizado.includes('bateria')) {
     return true;
   }
   
@@ -82,7 +92,8 @@ export function filterManualFields(campos: CampoModelo[]): CampoModelo[] {
 export function modelUsesBaterias(campos: CampoModelo[]): boolean {
   const configFields = filterConfigurationFields(campos);
   return configFields.some(campo => 
-    campo.chave_campo.toLowerCase().includes('bateria') && 
-    campo.metadados?.baterias === true
+    (campo.chave_campo.toLowerCase().includes('bateria') || 
+     campo.rotulo_campo.toLowerCase().includes('bateria')) && 
+    (campo.metadados?.baterias === true || campo.tipo_input === 'checkbox')
   );
 }

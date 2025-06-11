@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { MaskedResultInput } from '@/components/judge/dynamic-scoring/MaskedResultInput';
-import { CalculatedFieldCell } from './CalculatedFieldCell';
 import { CampoModelo } from '@/types/dynamicScoring';
 
 interface DynamicInputFieldProps {
@@ -10,32 +10,22 @@ interface DynamicInputFieldProps {
   athleteId: string;
   value: string | number;
   onChange: (athleteId: string, fieldKey: string, value: string | number) => void;
-  needsRecalculation?: boolean;
-  onCalculateField?: (fieldKey: string) => void;
-  isCalculating?: boolean;
 }
 
 export function DynamicInputField({ 
   campo, 
   athleteId, 
   value, 
-  onChange,
-  needsRecalculation = false,
-  onCalculateField,
-  isCalculating = false
+  onChange
 }: DynamicInputFieldProps) {
   
-  // Se é um campo calculado, mostrar componente específico
+  // Se é um campo calculado, mostrar apenas o valor sem botão de calcular individual
   if (campo.tipo_input === 'calculated') {
+    const displayValue = value || '-';
     return (
-      <CalculatedFieldCell
-        campo={campo}
-        athleteId={athleteId}
-        value={value}
-        needsRecalculation={needsRecalculation}
-        onCalculate={onCalculateField}
-        isCalculating={isCalculating}
-      />
+      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+        {displayValue}
+      </Badge>
     );
   }
 

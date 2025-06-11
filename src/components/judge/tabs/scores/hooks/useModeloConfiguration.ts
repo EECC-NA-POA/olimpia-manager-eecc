@@ -1,6 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { modelUsesBaterias, filterConfigurationFields } from '@/utils/dynamicScoringUtils';
 
 export interface ModeloConfiguration {
   modalidade_id: number;
@@ -49,16 +50,28 @@ export function useModeloConfiguration(modalidadeId: number | null) {
       
       if (!modelo) return null;
       
-      // For now, return a default configuration since parametros column doesn't exist
-      // This should be updated when the proper schema is available
+      // Get campos to check if baterias are used
+      const { data: campos, error: camposError } = await supabase
+        .from('campos_modelo')
+        .select('*')
+        .eq('modelo_id', modelo.id);
+      
+      if (camposError) {
+        console.error('Error fetching campos:', camposError);
+        // Continue with default values if campos can't be fetched
+      }
+      
+      // Check if model uses baterias based on campos
+      const usesBaterias = campos ? modelUsesBaterias(campos) : false;
+      
       return {
         modalidade_id: modelo.modalidade_id,
         modelo_id: modelo.id,
         parametros: {
           regra_tipo: 'pontos',
-          baterias: false,
+          baterias: usesBaterias,
           num_raias: 0,
-          permite_final: false
+          permite_final: usesBaterias
         }
       } as ModeloConfiguration;
     },

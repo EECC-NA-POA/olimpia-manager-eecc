@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Calculator, AlertTriangle } from 'lucide-react';
+import { Calculator } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Athlete } from '../hooks/useAthletes';
@@ -12,7 +12,7 @@ import { useDynamicScoringTableState } from './dynamic-scoring-table/useDynamicS
 import { UnsavedChangesBanner } from './dynamic-scoring-table/UnsavedChangesBanner';
 import { DynamicInputField } from './dynamic-scoring-table/DynamicInputField';
 import { AthleteStatusCell } from './dynamic-scoring-table/AthleteStatusCell';
-import { usePlacementCalculation } from '@/hooks/usePlacementCalculation';
+import { useBatchPlacementCalculation } from '@/hooks/useBatchPlacementCalculation';
 import { 
   filterScoringFields, 
   filterCalculatedFields,
@@ -59,13 +59,11 @@ export function DynamicScoringTable({
   const calculatedFields = filterCalculatedFields(allCampos);
   const usesBaterias = modelUsesBaterias(allCampos);
 
-  // Hook para cálculos de colocação
+  // Hook para cálculos de colocação em lote
   const {
     isCalculating,
-    needsRecalculation,
-    calculatePlacements,
-    markNeedsRecalculation
-  } = usePlacementCalculation({
+    calculateBatchPlacements
+  } = useBatchPlacementCalculation({
     modalityId,
     eventId,
     judgeId,
@@ -91,19 +89,7 @@ export function DynamicScoringTable({
     campos: allScoringFields
   });
 
-  // Modificar handleFieldChange para detectar mudanças que afetam cálculos
-  const handleFieldChangeWithRecalculation = (athleteId: string, fieldKey: string, value: string | number) => {
-    handleFieldChange(athleteId, fieldKey, value);
-    
-    // Verificar se algum campo calculado depende deste campo
-    calculatedFields.forEach(calculatedField => {
-      if (calculatedField.metadados?.campo_referencia === fieldKey) {
-        markNeedsRecalculation(calculatedField.chave_campo);
-      }
-    });
-  };
-
-  const handleCalculateField = async (fieldKey: string) => {
+  const handleCalculateBatchPlacements = async (fieldKey: string) => {
     const campo = calculatedFields.find(c => c.chave_campo === fieldKey);
     if (!campo) return;
 
@@ -116,7 +102,7 @@ export function DynamicScoringTable({
       };
     });
 
-    await calculatePlacements(campo, athleteScores);
+    await calculateBatchPlacements(campo, athleteScores);
   };
 
   if (isLoadingCampos) {
@@ -155,21 +141,6 @@ export function DynamicScoringTable({
         isSaving={dynamicSubmission.isPending}
       />
 
-      {/* Alertas para campos calculados */}
-      {needsRecalculation.size > 0 && (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-          <div className="flex items-center gap-2 text-orange-800">
-            <AlertTriangle className="h-4 w-4" />
-            <span className="text-sm font-medium">
-              Recálculo necessário para campos calculados
-            </span>
-          </div>
-          <div className="text-orange-700 text-xs mt-1">
-            Dados foram alterados. Use os botões de calculadora para recalcular as colocações.
-          </div>
-        </div>
-      )}
-
       {usesBaterias && selectedBateriaId && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <div className="text-blue-800 text-sm font-medium">
@@ -201,12 +172,6 @@ export function DynamicScoringTable({
                         Calculado
                       </Badge>
                     )}
-                    {campo.metadados?.formato_resultado && (
-                      <Badge variant="outline" className="text-xs w-fit bg-green-50">
-                        {campo.metadados.formato_resultado === 'tempo' ? 'Tempo' :
-                         campo.metadados.formato_resultado === 'distancia' ? 'Distância' : 'Pontos'}
-                      </Badge>
-                    )}
                   </div>
                 </TableHead>
               ))}
@@ -233,10 +198,7 @@ export function DynamicScoringTable({
                         campo={campo}
                         athleteId={athlete.atleta_id}
                         value={scoreData[athlete.atleta_id]?.[campo.chave_campo] || ''}
-                        onChange={handleFieldChangeWithRecalculation}
-                        needsRecalculation={needsRecalculation.has(campo.chave_campo)}
-                        onCalculateField={handleCalculateField}
-                        isCalculating={isCalculating}
+                        onChange={handleFieldChange}
                       />
                     </TableCell>
                   ))}
@@ -260,25 +222,24 @@ export function DynamicScoringTable({
         </Table>
       </div>
 
-      {/* Botões de ação para campos calculados */}
+      {/* Botões para cálculo de colocações em lote */}
       {calculatedFields.length > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-blue-800 mb-2">Cálculos Disponíveis</h4>
+          <h4 className="text-sm font-medium text-blue-800 mb-2">Calcular Colocações na Bateria</h4>
+          <div className="text-xs text-blue-700 mb-3">
+            Após inserir todas as pontuações, use os botões abaixo para calcular as colocações de todos os atletas.
+          </div>
           <div className="flex flex-wrap gap-2">
             {calculatedFields.map(campo => (
               <Button
                 key={campo.chave_campo}
                 variant="outline"
                 size="sm"
-                onClick={() => handleCalculateField(campo.chave_campo)}
+                onClick={() => handleCalculateBatchPlacements(campo.chave_campo)}
                 disabled={isCalculating}
-                className={needsRecalculation.has(campo.chave_campo) ? 'border-orange-300 bg-orange-50' : ''}
               >
                 <Calculator className="h-3 w-3 mr-1" />
                 {campo.rotulo_campo}
-                {needsRecalculation.has(campo.chave_campo) && (
-                  <AlertTriangle className="h-3 w-3 ml-1 text-orange-600" />
-                )}
               </Button>
             ))}
           </div>
