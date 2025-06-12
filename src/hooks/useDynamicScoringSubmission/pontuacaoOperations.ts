@@ -10,18 +10,6 @@ export async function upsertPontuacao(
   console.log('Data received:', data);
   console.log('Valor pontuacao:', valorPontuacao);
 
-  // 1. Verificar se já existe pontuação para este atleta
-  const { data: existingScore } = await supabase
-    .from('pontuacoes')
-    .select('id')
-    .eq('evento_id', data.eventId)
-    .eq('modalidade_id', data.modalityId)
-    .eq('atleta_id', data.athleteId)
-    .eq('modelo_id', data.modeloId)
-    .eq('juiz_id', data.judgeId)
-    .eq('numero_bateria', data.bateriaId || null)
-    .maybeSingle();
-
   // Preparar dados completos da pontuação
   const pontuacaoData = {
     evento_id: data.eventId,
@@ -38,64 +26,45 @@ export async function upsertPontuacao(
     numero_bateria: data.bateriaId || null
   };
 
-  console.log('Pontuacao data to save:', pontuacaoData);
+  console.log('Pontuacao data to upsert:', pontuacaoData);
 
-  if (existingScore) {
-    // Atualizar pontuação existente
-    console.log('=== ATUALIZANDO PONTUAÇÃO EXISTENTE ===');
-    const { data: updatedScore, error: updateError } = await supabase
-      .from('pontuacoes')
-      .update(pontuacaoData)
-      .eq('id', existingScore.id)
-      .select()
-      .single();
+  // Use upsert com a constraint única para evitar duplicatas
+  const { data: upsertedScore, error: upsertError } = await supabase
+    .from('pontuacoes')
+    .upsert(pontuacaoData, {
+      onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id,modelo_id,numero_bateria',
+      ignoreDuplicates: false
+    })
+    .select()
+    .single();
 
-    if (updateError) {
-      console.error('Error updating pontuacao:', updateError);
-      throw updateError;
-    }
-
-    // Remover tentativas antigas
-    await supabase
-      .from('tentativas_pontuacao')
-      .delete()
-      .eq('pontuacao_id', existingScore.id);
-
-    console.log('Updated pontuacao:', updatedScore);
-    return updatedScore;
-  } else {
-    // Criar nova pontuação
-    console.log('=== CRIANDO NOVA PONTUAÇÃO ===');
-    const { data: newScore, error: pontuacaoError } = await supabase
-      .from('pontuacoes')
-      .insert([pontuacaoData])
-      .select()
-      .single();
-
-    if (pontuacaoError) {
-      console.error('Error creating pontuacao:', pontuacaoError);
-      throw pontuacaoError;
-    }
-
-    console.log('Created pontuacao:', newScore);
-    return newScore;
+  if (upsertError) {
+    console.error('Error upserting pontuacao:', upsertError);
+    throw upsertError;
   }
+
+  console.log('Upserted pontuacao:', upsertedScore);
+  return upsertedScore;
 }
 
 export async function insertTentativas(tentativas: any[]) {
   if (tentativas.length > 0) {
-    console.log('=== INSERINDO TENTATIVAS ===');
-    console.log('Tentativas to insert:', tentativas);
+    console.log('=== INSERINDO/ATUALIZANDO TENTATIVAS ===');
+    console.log('Tentativas to upsert:', tentativas);
     
+    // Use upsert para tentativas também para evitar duplicatas
     const { error: tentativasError } = await supabase
       .from('tentativas_pontuacao')
-      .insert(tentativas);
+      .upsert(tentativas, {
+        onConflict: 'pontuacao_id,chave_campo',
+        ignoreDuplicates: false
+      });
 
     if (tentativasError) {
-      console.error('Error creating tentativas:', tentativasError);
+      console.error('Error upserting tentativas:', tentativasError);
       throw tentativasError;
     }
 
-    console.log('=== TENTATIVAS CRIADAS COM SUCESSO ===');
+    console.log('=== TENTATIVAS CRIADAS/ATUALIZADAS COM SUCESSO ===');
   }
 }

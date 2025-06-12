@@ -24,77 +24,55 @@ export async function saveCalculatedPlacement({
 }: SavePlacementParams): Promise<void> {
   console.log(`Salvando colocação para atleta ${athleteId}: ${fieldKey} = ${placement}`);
   
-  // Buscar pontuação existente - corrigir a query para null values
-  let query = supabase
+  // Preparar dados da pontuação usando a constraint única
+  const pontuacaoData = {
+    evento_id: eventId,
+    modalidade_id: modalityId,
+    atleta_id: athleteId,
+    juiz_id: judgeId,
+    modelo_id: modeloId,
+    numero_bateria: bateriaId || null,
+    valor_pontuacao: 0, // Valor padrão para campos calculados
+    unidade: 'calculado',
+    data_registro: new Date().toISOString()
+  };
+
+  console.log('Dados da pontuação para upsert:', pontuacaoData);
+
+  // Usar upsert para a pontuação para evitar duplicatas
+  const { data: pontuacao, error: pontuacaoError } = await supabase
     .from('pontuacoes')
+    .upsert(pontuacaoData, {
+      onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id,modelo_id,numero_bateria',
+      ignoreDuplicates: false
+    })
     .select('id')
-    .eq('atleta_id', athleteId)
-    .eq('modalidade_id', modalityId)
-    .eq('evento_id', eventId)
-    .eq('modelo_id', modeloId)
-    .eq('juiz_id', judgeId);
+    .single();
 
-  // Corrigir o tratamento de numero_bateria null
-  if (bateriaId) {
-    query = query.eq('numero_bateria', bateriaId);
-  } else {
-    query = query.is('numero_bateria', null);
+  if (pontuacaoError) {
+    console.error('Erro ao fazer upsert da pontuação:', pontuacaoError);
+    throw pontuacaoError;
   }
 
-  const { data: existingScore, error: scoreError } = await query.single();
+  console.log(`Pontuação upserted com ID: ${pontuacao.id}`);
 
-  if (scoreError && scoreError.code !== 'PGRST116') {
-    console.error('Erro ao buscar pontuação existente:', scoreError);
-    throw scoreError;
-  }
-
-  let pontuacaoId: number;
-
-  if (existingScore) {
-    pontuacaoId = existingScore.id;
-    console.log(`Pontuação existente encontrada: ${pontuacaoId}`);
-  } else {
-    // Criar nova pontuação se não existir
-    console.log('Criando nova pontuação...');
-    const { data: newScore, error: newScoreError } = await supabase
-      .from('pontuacoes')
-      .insert({
-        atleta_id: athleteId,
-        modalidade_id: modalityId,
-        evento_id: eventId,
-        modelo_id: modeloId,
-        juiz_id: judgeId,
-        numero_bateria: bateriaId || null,
-        valor_pontuacao: 0, // Valor padrão para campos calculados
-        unidade: 'calculado'
-      })
-      .select('id')
-      .single();
-
-    if (newScoreError) {
-      console.error('Erro ao criar nova pontuação:', newScoreError);
-      throw newScoreError;
-    }
-    pontuacaoId = newScore.id;
-    console.log(`Nova pontuação criada: ${pontuacaoId}`);
-  }
-
-  // Salvar/atualizar tentativa calculada usando upsert para evitar duplicatas
-  console.log(`Salvando tentativa: pontuacao_id=${pontuacaoId}, chave_campo=${fieldKey}, valor=${placement}`);
+  // Usar upsert para a tentativa calculada também
+  console.log(`Fazendo upsert da tentativa: pontuacao_id=${pontuacao.id}, chave_campo=${fieldKey}, valor=${placement}`);
   
   const { error: tentativaError } = await supabase
     .from('tentativas_pontuacao')
     .upsert({
-      pontuacao_id: pontuacaoId,
+      pontuacao_id: pontuacao.id,
       chave_campo: fieldKey,
       valor: placement,
       valor_formatado: placement.toString()
     }, {
-      onConflict: 'pontuacao_id,chave_campo'
+      onConflict: 'pontuacao_id,chave_campo',
+      ignoreDuplicates: false
     });
 
   if (tentativaError) {
-    console.error('Erro ao salvar tentativa:', tentativaError);
+    console.error('Erro ao fazer upsert da tentativa:', tentativaError);
     throw tentativaError;
   }
   

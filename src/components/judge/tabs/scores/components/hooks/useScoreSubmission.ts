@@ -32,7 +32,6 @@ export function useScoreSubmission() {
       // Convert value based on score type
       let processedValue: number;
       if (scoreType === 'tempo') {
-        // Assuming time format MM:SS.mmm
         const timeParts = value.split(':');
         if (timeParts.length === 2) {
           const minutes = parseInt(timeParts[0]) || 0;
@@ -45,49 +44,6 @@ export function useScoreSubmission() {
         processedValue = parseFloat(value) || 0;
       }
 
-      // First, ensure we have a bateria for this modality
-      let finalBateriaId: number | null = bateriaId;
-
-      // Try to find existing bateria
-      if (!finalBateriaId) {
-        const { data: existingBaterias, error: bateriaFetchError } = await supabase
-          .from('baterias')
-          .select('id')
-          .eq('modalidade_id', modalityId)
-          .eq('evento_id', eventId)
-          .limit(1);
-
-        if (bateriaFetchError) {
-          console.error('Error fetching baterias:', bateriaFetchError);
-          throw new Error('Erro ao buscar baterias');
-        }
-
-        if (existingBaterias && existingBaterias.length > 0) {
-          finalBateriaId = existingBaterias[0].id;
-          console.log('Using existing bateria:', finalBateriaId);
-        } else {
-          // Create a default bateria
-          console.log('Creating default bateria for modality:', modalityId);
-          const { data: newBateria, error: bateriaCreateError } = await supabase
-            .from('baterias')
-            .insert({
-              modalidade_id: modalityId,
-              evento_id: eventId,
-              numero: 1
-            })
-            .select('id')
-            .single();
-
-          if (bateriaCreateError || !newBateria) {
-            console.error('Error creating bateria:', bateriaCreateError);
-            throw new Error('Erro ao criar bateria');
-          }
-
-          finalBateriaId = newBateria.id;
-          console.log('Created new bateria:', finalBateriaId);
-        }
-      }
-
       // Prepare the score data according to the pontuacoes table structure
       const scoreData = {
         evento_id: eventId,
@@ -98,16 +54,18 @@ export function useScoreSubmission() {
         valor_pontuacao: processedValue,
         unidade: scoreType === 'tempo' ? 'segundos' : scoreType === 'distancia' ? 'metros' : 'pontos',
         observacoes: notes || null,
-        bateria_id: finalBateriaId,
+        numero_bateria: bateriaId,
         data_registro: new Date().toISOString()
       };
 
-      console.log('Inserting score data:', scoreData);
+      console.log('Upserting score data:', scoreData);
 
+      // Use upsert to avoid duplicates based on the unique constraint
       const { data, error } = await supabase
         .from('pontuacoes')
         .upsert(scoreData, {
-          onConflict: 'evento_id,modalidade_id,atleta_id,bateria_id',
+          onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id,modelo_id,numero_bateria',
+          ignoreDuplicates: false
         })
         .select()
         .single();
@@ -123,15 +81,14 @@ export function useScoreSubmission() {
     },
     onSuccess: (_, { modalityId, eventId }) => {
       queryClient.invalidateQueries({ queryKey: ['athlete-scores', modalityId, eventId] });
+      queryClient.invalidateQueries({ queryKey: ['dynamic-baterias', modalityId, eventId] });
       toast.success('Pontuação salva com sucesso!');
     },
     onError: (error: any) => {
       console.error('Error saving score:', error);
       
       // Handle specific database errors
-      if (error.message?.includes('bateria_id')) {
-        toast.error('Erro: Bateria não encontrada. Verifique a configuração da modalidade.');
-      } else if (error.message?.includes('constraint')) {
+      if (error.message?.includes('constraint')) {
         toast.error('Erro de restrição do banco de dados. Verifique os dados informados.');
       } else if (error.message?.includes('foreign key')) {
         toast.error('Erro: Dados de referência inválidos.');
