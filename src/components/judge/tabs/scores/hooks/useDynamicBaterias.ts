@@ -107,24 +107,16 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
         .single();
 
       if (error) {
-        console.error('Erro detalhado ao criar bateria:', error);
-        console.error('Tipo do erro:', typeof error);
-        console.error('Estrutura do erro:', JSON.stringify(error, null, 2));
+        console.error('Erro detalhado do Supabase:', error);
         
-        // Handle different error structures
-        let errorMessage = 'Erro desconhecido ao criar bateria';
-        
-        if (typeof error === 'object' && error !== null) {
-          if ('message' in error && error.message) {
-            errorMessage = String(error.message);
-          } else if ('details' in error && error.details) {
-            errorMessage = String(error.details);
-          } else if ('hint' in error && error.hint) {
-            errorMessage = String(error.hint);
-          }
+        // Se for erro 404, a tabela não existe
+        if (error.code === 'PGRST116' || error.message?.includes('404')) {
+          throw new Error('A tabela "baterias" não existe no banco de dados. Verifique se a estrutura do banco está correta.');
         }
         
-        throw new Error(`Erro ao criar bateria: ${errorMessage}`);
+        // Para outros erros, usar a mensagem original do Supabase
+        const errorMessage = error.message || error.details || error.hint || 'Erro desconhecido';
+        throw new Error(`Erro do banco de dados: ${errorMessage}`);
       }
       
       if (!data) {
@@ -146,11 +138,9 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
     onError: (error) => {
       console.error('=== ERRO NA CRIAÇÃO DA BATERIA ===');
       console.error('Erro completo:', error);
-      console.error('Tipo do erro:', typeof error);
-      console.error('Stack trace:', error instanceof Error ? error.stack : 'Não disponível');
       
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao criar bateria';
-      toast.error(`Erro ao criar bateria: ${errorMessage}`);
+      toast.error(errorMessage);
     }
   });
 
