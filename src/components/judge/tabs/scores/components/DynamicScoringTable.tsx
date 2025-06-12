@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calculator } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -138,10 +137,6 @@ export function DynamicScoringTable({
     await calculateBatchPlacements(campo, athleteScores);
   };
 
-  const handleBateriaChange = (athleteId: string, newBateriaId: string) => {
-    handleFieldChange(athleteId, 'bateria', newBateriaId);
-  };
-
   if (isLoadingCampos) {
     return <div>Carregando campos...</div>;
   }
@@ -222,6 +217,7 @@ export function DynamicScoringTable({
             {athletes.map((athlete) => {
               const status = getAthleteCompletionStatus(athlete.atleta_id);
               const hasUnsavedChanges = unsavedChanges.has(athlete.atleta_id);
+              const athleteBateriaId = scoreData[athlete.atleta_id]?.bateria || selectedBateriaId;
 
               return (
                 <TableRow key={athlete.atleta_id}>
@@ -233,14 +229,9 @@ export function DynamicScoringTable({
                   </TableCell>
                   {usesBaterias && (
                     <TableCell>
-                      <Input
-                        type="number"
-                        value={scoreData[athlete.atleta_id]?.bateria || selectedBateriaId || ''}
-                        onChange={(e) => handleBateriaChange(athlete.atleta_id, e.target.value)}
-                        className="w-20"
-                        min="1"
-                        placeholder="Bateria"
-                      />
+                      <Badge variant="outline" className="text-xs">
+                        {athleteBateriaId || '-'}
+                      </Badge>
                     </TableCell>
                   )}
                   {allScoringFields.map((campo) => (
