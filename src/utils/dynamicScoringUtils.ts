@@ -34,7 +34,7 @@ export function isConfigurationField(campo: CampoModelo): boolean {
   }
   
   // PRIMEIRA PRIORIDADE: Verificar explicitamente por "Usar Baterias" - este campo NUNCA deve aparecer na tabela
-  if (rotuloNormalizada === 'usar baterias' || 
+  if (rotuloNormalizado === 'usar baterias' || 
       chaveNormalizada === 'usar_baterias' ||
       rotuloNormalizado.includes('usar baterias') ||
       chaveNormalizada.includes('usar_baterias')) {
