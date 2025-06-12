@@ -146,31 +146,50 @@ export function modelUsesBaterias(campos: CampoModelo[]): boolean {
 export function parseTimeToMilliseconds(timeValue: string): number {
   if (!timeValue || typeof timeValue !== 'string') return 0;
   
-  // Formato esperado: MM:SS.mmm ou SS.mmm
+  // Limpar o valor de caracteres não numéricos, exceto pontos e dois pontos
+  const cleanValue = timeValue.trim();
   let totalMilliseconds = 0;
   
   try {
-    if (timeValue.includes(':') && timeValue.includes('.')) {
+    if (cleanValue.includes(':') && cleanValue.includes('.')) {
       // Formato MM:SS.mmm
-      const [minutesSeconds, milliseconds] = timeValue.split('.');
+      const [minutesSeconds, milliseconds] = cleanValue.split('.');
       const [minutes, seconds] = minutesSeconds.split(':');
       
       totalMilliseconds += (parseInt(minutes) || 0) * 60 * 1000;
       totalMilliseconds += (parseInt(seconds) || 0) * 1000;
-      totalMilliseconds += parseInt(milliseconds) || 0;
-    } else if (timeValue.includes(':')) {
+      
+      // Normalizar millisegundos para 3 dígitos
+      const ms = parseInt(milliseconds) || 0;
+      if (milliseconds.length === 1) {
+        totalMilliseconds += ms * 100;
+      } else if (milliseconds.length === 2) {
+        totalMilliseconds += ms * 10;
+      } else {
+        totalMilliseconds += ms;
+      }
+    } else if (cleanValue.includes(':')) {
       // Formato MM:SS
-      const [minutes, seconds] = timeValue.split(':');
+      const [minutes, seconds] = cleanValue.split(':');
       totalMilliseconds += (parseInt(minutes) || 0) * 60 * 1000;
       totalMilliseconds += (parseInt(seconds) || 0) * 1000;
-    } else if (timeValue.includes('.')) {
+    } else if (cleanValue.includes('.')) {
       // Formato SS.mmm
-      const [seconds, milliseconds] = timeValue.split('.');
+      const [seconds, milliseconds] = cleanValue.split('.');
       totalMilliseconds += (parseInt(seconds) || 0) * 1000;
-      totalMilliseconds += parseInt(milliseconds) || 0;
+      
+      // Normalizar millisegundos para 3 dígitos
+      const ms = parseInt(milliseconds) || 0;
+      if (milliseconds.length === 1) {
+        totalMilliseconds += ms * 100;
+      } else if (milliseconds.length === 2) {
+        totalMilliseconds += ms * 10;
+      } else {
+        totalMilliseconds += ms;
+      }
     } else {
-      // Apenas número
-      totalMilliseconds = parseFloat(timeValue) * 1000 || 0;
+      // Apenas número (interpretado como segundos)
+      totalMilliseconds = parseFloat(cleanValue) * 1000 || 0;
     }
   } catch (error) {
     console.error('Erro ao converter tempo para milissegundos:', error);
@@ -186,12 +205,15 @@ export function parseTimeToMilliseconds(timeValue: string): number {
 export function isTimeValue(value: string): boolean {
   if (!value || typeof value !== 'string') return false;
   
+  // Limpar espaços
+  const cleanValue = value.trim();
+  
   // Padrões de tempo: MM:SS.mmm, MM:SS, SS.mmm
   const timePatterns = [
-    /^\d{1,2}:\d{2}\.\d{1,3}$/, // MM:SS.mmm
-    /^\d{1,2}:\d{2}$/, // MM:SS
+    /^\d{1,2}:\d{1,2}\.\d{1,3}$/, // MM:SS.mmm
+    /^\d{1,2}:\d{1,2}$/, // MM:SS
     /^\d{1,2}\.\d{1,3}$/ // SS.mmm
   ];
   
-  return timePatterns.some(pattern => pattern.test(value.trim()));
+  return timePatterns.some(pattern => pattern.test(cleanValue));
 }

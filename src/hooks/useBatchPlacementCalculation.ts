@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -42,38 +41,69 @@ export function useBatchPlacementCalculation({
       console.log('Iniciando cálculo de colocações para campo:', calculatedField.chave_campo);
       console.log('Dados dos atletas recebidos:', athleteScores);
       
+      // Obter o campo de referência configurado ou detectar automaticamente
       let referenceField = calculatedField.metadados?.campo_referencia;
       console.log('Campo de referência configurado:', referenceField);
       
-      // Se não há campo de referência configurado, tentar encontrar um campo válido
+      // Se não há campo de referência configurado ou o campo configurado não existe nos dados,
+      // tentar encontrar um campo válido
+      const firstAthleteData = Object.values(athleteScores)[0] || {};
+      const availableFields = Object.keys(firstAthleteData).filter(key => 
+        key !== 'athleteName' && 
+        key !== 'athleteId' && 
+        firstAthleteData[key] !== '' && 
+        firstAthleteData[key] !== null && 
+        firstAthleteData[key] !== undefined
+      );
+      
+      console.log('Campos disponíveis nos dados:', availableFields);
+      
+      // Verificar se o campo de referência configurado realmente existe nos dados
+      if (referenceField && !availableFields.includes(referenceField)) {
+        console.warn(`Campo de referência configurado "${referenceField}" não encontrado nos dados. Tentando detectar automaticamente.`);
+        referenceField = null; // Forçar detecção automática
+      }
+      
+      // Detectar automaticamente se necessário
       if (!referenceField) {
-        console.log('Campo de referência não configurado, buscando campo válido...');
+        console.log('Realizando detecção automática do campo de referência...');
         
-        const firstAthleteData = Object.values(athleteScores)[0];
-        if (firstAthleteData) {
-          const availableFields = Object.keys(firstAthleteData).filter(key => {
-            if (key === 'athleteName') return false;
-            
-            const value = firstAthleteData[key];
-            if (value === '' || value === null || value === undefined) return false;
-            
-            console.log(`Verificando campo ${key} com valor:`, value, 'tipo:', typeof value);
-            
-            // Verificar se é um valor numérico ou de tempo
-            if (typeof value === 'string' && isTimeValue(value)) return true;
-            if (!isNaN(parseFloat(value)) && parseFloat(value) > 0) return true;
-            
-            return false;
-          });
+        // Filtrar campos válidos que contêm valores numéricos ou de tempo
+        const validFields = availableFields.filter(key => {
+          const value = firstAthleteData[key];
+          console.log(`Verificando campo ${key} com valor:`, value, 'tipo:', typeof value);
           
-          console.log('Campos válidos disponíveis:', availableFields);
+          // Verificar se é um valor numérico ou de tempo
+          if (typeof value === 'string' && isTimeValue(value)) return true;
+          if (!isNaN(parseFloat(String(value))) && parseFloat(String(value)) > 0) return true;
           
-          if (availableFields.length > 0) {
-            // Priorizar campos com nomes específicos
-            referenceField = availableFields.find(field => 
-              ['resultado', 'tempo', 'distancia', 'pontos', 'score'].includes(field.toLowerCase())
-            ) || availableFields[0];
-            console.log('Usando campo de referência automático:', referenceField);
+          return false;
+        });
+        
+        console.log('Campos válidos disponíveis para cálculo:', validFields);
+        
+        if (validFields.length > 0) {
+          // Lista ordenada de campos prioritários para pontuações
+          const priorityFields = ['resultado', 'tempo', 'time', 'distancia', 'distance', 'pontos', 'score', 'points'];
+          
+          // Tentar encontrar um campo prioritário primeiro
+          for (const priority of priorityFields) {
+            const match = validFields.find(field => 
+              field.toLowerCase() === priority || 
+              field.toLowerCase().includes(priority)
+            );
+            
+            if (match) {
+              referenceField = match;
+              console.log(`Campo prioritário encontrado: ${referenceField}`);
+              break;
+            }
+          }
+          
+          // Se não encontrou campo prioritário, usar o primeiro campo válido
+          if (!referenceField) {
+            referenceField = validFields[0];
+            console.log(`Nenhum campo prioritário encontrado. Usando primeiro campo válido: ${referenceField}`);
           }
         }
       }
@@ -86,20 +116,26 @@ export function useBatchPlacementCalculation({
       const scores: AthleteScore[] = [];
       
       for (const [athleteId, data] of Object.entries(athleteScores)) {
-        const rawValue = data[referenceField];
-        const originalValue = String(rawValue || '');
+        if (!data || typeof data !== 'object') {
+          console.log(`Dados inválidos para atleta ${athleteId}`);
+          continue;
+        }
         
-        console.log(`Processando atleta ${data.athleteName || athleteId}:`);
+        const rawValue = data[referenceField];
+        const athleteName = data.athleteName || athleteId;
+        
+        console.log(`Processando atleta ${athleteName}:`);
         console.log(`  Campo: ${referenceField}`);
         console.log(`  Valor bruto:`, rawValue);
         console.log(`  Tipo do valor:`, typeof rawValue);
         
-        if (!rawValue || rawValue === '' || rawValue === null || rawValue === undefined) {
+        if (rawValue === '' || rawValue === null || rawValue === undefined) {
           console.log(`  Pulando atleta - valor vazio`);
           continue;
         }
         
         let numericScore = 0;
+        let originalValue = String(rawValue || '');
         
         // Processar diferentes tipos de valores
         if (typeof rawValue === 'string') {
@@ -121,7 +157,7 @@ export function useBatchPlacementCalculation({
         if (numericScore > 0) {
           scores.push({
             athleteId,
-            athleteName: data.athleteName || athleteId,
+            athleteName,
             score: numericScore,
             originalValue
           });
