@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -291,15 +292,14 @@ export function useBatchPlacementCalculation({
       pontuacaoId = newScore.id;
     }
 
-    // Salvar/atualizar tentativa calculada
+    // Salvar/atualizar tentativa calculada - REMOVIDO o campo 'calculado'
     const { error: tentativaError } = await supabase
       .from('tentativas_pontuacao')
       .upsert({
         pontuacao_id: pontuacaoId,
         chave_campo: fieldKey,
         valor: placement,
-        valor_formatado: placement.toString(),
-        calculado: true
+        valor_formatado: placement.toString()
       }, {
         onConflict: 'pontuacao_id,chave_campo'
       });
