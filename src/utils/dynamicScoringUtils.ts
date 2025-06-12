@@ -23,21 +23,16 @@ export const CONFIG_INPUT_TYPES = [
  * Verifica se um campo é de configuração do modelo
  */
 export function isConfigurationField(campo: CampoModelo): boolean {
-  // Não filtrar campos importantes como colocação e bateria
-  const importantFields = ['colocacao', 'bateria', 'numero_bateria', 'placement', 'rank', 'raia'];
   const chaveNormalizada = campo.chave_campo.toLowerCase();
   const rotuloNormalizado = campo.rotulo_campo.toLowerCase();
-  
-  if (importantFields.some(field => chaveNormalizada.includes(field))) {
-    console.log(`Campo ${campo.chave_campo} identificado como importante - não será filtrado`);
-    return false;
-  }
   
   // PRIMEIRA PRIORIDADE: Verificar explicitamente por "Usar Baterias" - este campo NUNCA deve aparecer na tabela
   if (rotuloNormalizado === 'usar baterias' || 
       chaveNormalizada === 'usar_baterias' ||
       rotuloNormalizado.includes('usar baterias') ||
-      chaveNormalizada.includes('usar_baterias')) {
+      chaveNormalizada.includes('usar_baterias') ||
+      rotuloNormalizado === 'usar bateria' ||
+      chaveNormalizada === 'usar_bateria') {
     console.log(`Campo ${campo.chave_campo} identificado como configuração "Usar Baterias" - será filtrado`);
     return true;
   }
@@ -65,6 +60,13 @@ export function isConfigurationField(campo: CampoModelo): boolean {
        rotuloNormalizado.includes('usar baterias'))) {
     console.log(`Campo ${campo.chave_campo} identificado como configuração de bateria`);
     return true;
+  }
+  
+  // Não filtrar campos importantes como colocação e bateria (apenas de exibição)
+  const importantFields = ['colocacao', 'bateria', 'numero_bateria', 'placement', 'rank', 'raia'];
+  if (importantFields.some(field => chaveNormalizada.includes(field))) {
+    console.log(`Campo ${campo.chave_campo} identificado como importante - não será filtrado`);
+    return false;
   }
   
   return false;
