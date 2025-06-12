@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -225,7 +226,7 @@ export function DynamicScoringTable({
       {usesBaterias && selectedBateriaId && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <div className="text-blue-800 text-sm font-medium">
-            Sistema de Baterias Ativo - Bateria {selectedBateriaId}
+            Sistema de Baterias Ativo - {selectedBateriaId === 999 ? 'Bateria Final' : `Bateria ${selectedBateriaId}`}
           </div>
           <div className="text-blue-700 text-xs mt-1">
             Pontuações serão registradas para a bateria selecionada
@@ -252,9 +253,6 @@ export function DynamicScoringTable({
             <TableRow>
               <TableHead className="min-w-[200px] sticky left-0 bg-background">Atleta</TableHead>
               <TableHead className="min-w-[150px]">Filial</TableHead>
-              {usesBaterias && (
-                <TableHead className="min-w-[100px]">Bateria</TableHead>
-              )}
               {allScoringFields.map((campo) => (
                 <TableHead key={campo.chave_campo} className="min-w-[120px]">
                   <div className="flex flex-col">
@@ -279,7 +277,6 @@ export function DynamicScoringTable({
             {athletes.map((athlete) => {
               const status = getAthleteCompletionStatus(athlete.atleta_id);
               const hasUnsavedChanges = unsavedChanges.has(athlete.atleta_id);
-              const athleteBateriaId = scoreData[athlete.atleta_id]?.bateria || selectedBateriaId;
 
               return (
                 <TableRow key={athlete.atleta_id}>
@@ -289,13 +286,6 @@ export function DynamicScoringTable({
                   <TableCell>
                     {athlete.filial_nome || '-'}
                   </TableCell>
-                  {usesBaterias && (
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {athleteBateriaId || '-'}
-                      </Badge>
-                    </TableCell>
-                  )}
                   {allScoringFields.map((campo) => (
                     <TableCell key={campo.chave_campo}>
                       <DynamicInputField
