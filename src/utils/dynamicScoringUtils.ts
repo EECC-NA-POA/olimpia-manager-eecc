@@ -5,14 +5,11 @@ import { CampoModelo } from '@/types/dynamicScoring';
  * Campos que são configurações do modelo, não dados de pontuação por atleta
  */
 export const CONFIG_FIELD_KEYS = [
-  'baterias',
-  'configuracao',
-  'config',
   'usar_baterias',
   'configuracao_pontuacao',
   'pontuacao_configuracao',
-  'bateria',
-  'configuracao_de_pontuacao'
+  'configuracao_de_pontuacao',
+  'config'
 ];
 
 /**
@@ -26,32 +23,34 @@ export const CONFIG_INPUT_TYPES = [
  * Verifica se um campo é de configuração do modelo
  */
 export function isConfigurationField(campo: CampoModelo): boolean {
-  // Verificar por chave do campo (case insensitive)
+  // Não filtrar campos importantes como colocação e bateria
+  const importantFields = ['colocacao', 'bateria', 'numero_bateria', 'placement', 'rank'];
   const chaveNormalizada = campo.chave_campo.toLowerCase();
-  if (CONFIG_FIELD_KEYS.some(key => chaveNormalizada.includes(key))) {
+  
+  if (importantFields.some(field => chaveNormalizada.includes(field))) {
+    console.log(`Campo ${campo.chave_campo} identificado como importante - não será filtrado`);
+    return false;
+  }
+  
+  // Verificar por chave do campo (case insensitive) - mais restritivo
+  if (CONFIG_FIELD_KEYS.some(key => chaveNormalizada === key || chaveNormalizada.includes(`_${key}`) || chaveNormalizada.includes(`${key}_`))) {
     console.log(`Campo ${campo.chave_campo} identificado como configuração por chave`);
     return true;
   }
   
-  // Verificar por rótulo do campo (case insensitive)
+  // Verificar por rótulo do campo - apenas configurações explícitas
   const rotuloNormalizado = campo.rotulo_campo.toLowerCase();
-  if (rotuloNormalizado.includes('configuração') || 
-      rotuloNormalizado.includes('config') ||
-      rotuloNormalizado.includes('bateria') ||
-      rotuloNormalizado.includes('configuracao')) {
+  if (rotuloNormalizado === 'configuração' || 
+      rotuloNormalizado === 'config' ||
+      rotuloNormalizado.startsWith('usar ') ||
+      rotuloNormalizado.startsWith('configurar ')) {
     console.log(`Campo ${campo.chave_campo} identificado como configuração por rótulo`);
     return true;
   }
   
-  // Verificar por tipo de input
-  if (CONFIG_INPUT_TYPES.includes(campo.tipo_input)) {
-    console.log(`Campo ${campo.chave_campo} identificado como configuração por tipo de input`);
-    return true;
-  }
-  
-  // Verificar por metadados que indicam configuração
-  if (campo.metadados?.baterias === true && campo.tipo_input === 'checkbox') {
-    console.log(`Campo ${campo.chave_campo} identificado como configuração por metadados`);
+  // Verificar por tipo de input e metadados específicos para baterias
+  if (campo.tipo_input === 'checkbox' && campo.metadados?.baterias === true) {
+    console.log(`Campo ${campo.chave_campo} identificado como configuração de bateria`);
     return true;
   }
   
@@ -115,4 +114,60 @@ export function modelUsesBaterias(campos: CampoModelo[]): boolean {
   
   console.log('Resultado final - modelo usa baterias:', usesBaterias);
   return usesBaterias;
+}
+
+/**
+ * Converte valor mascarado de tempo para milissegundos
+ */
+export function parseTimeToMilliseconds(timeValue: string): number {
+  if (!timeValue || typeof timeValue !== 'string') return 0;
+  
+  // Formato esperado: MM:SS.mmm ou SS.mmm
+  let totalMilliseconds = 0;
+  
+  try {
+    if (timeValue.includes(':') && timeValue.includes('.')) {
+      // Formato MM:SS.mmm
+      const [minutesSeconds, milliseconds] = timeValue.split('.');
+      const [minutes, seconds] = minutesSeconds.split(':');
+      
+      totalMilliseconds += (parseInt(minutes) || 0) * 60 * 1000;
+      totalMilliseconds += (parseInt(seconds) || 0) * 1000;
+      totalMilliseconds += parseInt(milliseconds) || 0;
+    } else if (timeValue.includes(':')) {
+      // Formato MM:SS
+      const [minutes, seconds] = timeValue.split(':');
+      totalMilliseconds += (parseInt(minutes) || 0) * 60 * 1000;
+      totalMilliseconds += (parseInt(seconds) || 0) * 1000;
+    } else if (timeValue.includes('.')) {
+      // Formato SS.mmm
+      const [seconds, milliseconds] = timeValue.split('.');
+      totalMilliseconds += (parseInt(seconds) || 0) * 1000;
+      totalMilliseconds += parseInt(milliseconds) || 0;
+    } else {
+      // Apenas número
+      totalMilliseconds = parseFloat(timeValue) * 1000 || 0;
+    }
+  } catch (error) {
+    console.error('Erro ao converter tempo para milissegundos:', error);
+    return 0;
+  }
+  
+  return totalMilliseconds;
+}
+
+/**
+ * Detecta se um valor é um tempo formatado
+ */
+export function isTimeValue(value: string): boolean {
+  if (!value || typeof value !== 'string') return false;
+  
+  // Padrões de tempo: MM:SS.mmm, MM:SS, SS.mmm
+  const timePatterns = [
+    /^\d{1,2}:\d{2}\.\d{1,3}$/, // MM:SS.mmm
+    /^\d{1,2}:\d{2}$/, // MM:SS
+    /^\d{1,2}\.\d{1,3}$/ // SS.mmm
+  ];
+  
+  return timePatterns.some(pattern => pattern.test(value.trim()));
 }

@@ -4,11 +4,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { CampoModelo } from '@/types/dynamicScoring';
+import { parseTimeToMilliseconds, isTimeValue } from '@/utils/dynamicScoringUtils';
 
 interface AthleteScore {
   athleteId: string;
   athleteName: string;
   score: number;
+  originalValue: string;
   placement?: number;
 }
 
@@ -43,22 +45,26 @@ export function useBatchPlacementCalculation({
       let referenceField = calculatedField.metadados?.campo_referencia;
       console.log('Campo de referência configurado:', referenceField);
       
-      // Se não há campo de referência configurado, tentar encontrar um campo numérico
+      // Se não há campo de referência configurado, tentar encontrar um campo válido
       if (!referenceField) {
-        console.log('Campo de referência não configurado, buscando campo numérico...');
+        console.log('Campo de referência não configurado, buscando campo válido...');
         
-        // Pegar o primeiro atleta para ver quais campos estão disponíveis
         const firstAthleteData = Object.values(athleteScores)[0];
         if (firstAthleteData) {
-          const availableFields = Object.keys(firstAthleteData).filter(key => 
-            key !== 'athleteName' && 
-            !isNaN(parseFloat(firstAthleteData[key])) &&
-            firstAthleteData[key] !== '' &&
-            firstAthleteData[key] !== null &&
-            firstAthleteData[key] !== undefined
-          );
+          const availableFields = Object.keys(firstAthleteData).filter(key => {
+            if (key === 'athleteName') return false;
+            
+            const value = firstAthleteData[key];
+            if (value === '' || value === null || value === undefined) return false;
+            
+            // Verificar se é um valor numérico ou de tempo
+            if (typeof value === 'string' && isTimeValue(value)) return true;
+            if (!isNaN(parseFloat(value)) && parseFloat(value) > 0) return true;
+            
+            return false;
+          });
           
-          console.log('Campos numéricos disponíveis:', availableFields);
+          console.log('Campos válidos disponíveis:', availableFields);
           
           if (availableFields.length > 0) {
             referenceField = availableFields[0];
@@ -68,37 +74,59 @@ export function useBatchPlacementCalculation({
       }
       
       if (!referenceField) {
-        throw new Error('Nenhum campo de referência disponível para cálculo de colocação. Configure um campo de referência no campo calculado ou insira pontuações numéricas.');
+        throw new Error('Nenhum campo de referência disponível para cálculo de colocação. Configure um campo de referência no campo calculado ou insira pontuações válidas.');
       }
 
-      // Extrair pontuações dos atletas para o campo de referência
+      // Extrair e processar pontuações dos atletas
       const scores: AthleteScore[] = Object.entries(athleteScores)
         .map(([athleteId, data]) => {
-          const score = parseFloat(data[referenceField]) || 0;
-          console.log(`Atleta ${data.athleteName || athleteId}: ${referenceField} = ${score}`);
+          const rawValue = data[referenceField];
+          const originalValue = String(rawValue || '');
+          
+          let numericScore = 0;
+          
+          // Processar diferentes tipos de valores
+          if (typeof rawValue === 'string' && isTimeValue(rawValue)) {
+            // Converter tempo para milissegundos para comparação
+            numericScore = parseTimeToMilliseconds(rawValue);
+            console.log(`Atleta ${data.athleteName || athleteId}: ${referenceField} = ${rawValue} (${numericScore}ms)`);
+          } else {
+            // Valor numérico direto
+            numericScore = parseFloat(rawValue) || 0;
+            console.log(`Atleta ${data.athleteName || athleteId}: ${referenceField} = ${numericScore}`);
+          }
+          
           return {
             athleteId,
             athleteName: data.athleteName || athleteId,
-            score
+            score: numericScore,
+            originalValue
           };
         })
-        .filter(item => !isNaN(item.score) && item.score > 0);
+        .filter(item => item.score > 0);
 
       console.log('Pontuações válidas encontradas:', scores.length);
 
       if (scores.length === 0) {
-        throw new Error(`Nenhuma pontuação válida encontrada no campo "${referenceField}". Insira pontuações numéricas maiores que zero para calcular colocações.`);
+        throw new Error(`Nenhuma pontuação válida encontrada no campo "${referenceField}". Insira pontuações válidas (números ou tempos no formato MM:SS.mmm) para calcular colocações.`);
       }
 
       // Ordenar baseado no tipo de ordenação configurado
       const ordem = calculatedField.metadados?.ordem_calculo || 'desc';
       console.log('Ordem de cálculo:', ordem);
       
+      // Para tempos, geralmente queremos ordem crescente (menor tempo = melhor)
+      // Para pontos, geralmente queremos ordem decrescente (maior pontos = melhor)
+      const isTimeField = scores.some(s => isTimeValue(s.originalValue));
+      const effectiveOrder = isTimeField ? 'asc' : ordem;
+      
+      console.log('Ordem efetiva (considerando se é tempo):', effectiveOrder);
+      
       scores.sort((a, b) => {
-        if (ordem === 'asc') {
-          return a.score - b.score; // Menor pontuação = melhor colocação
+        if (effectiveOrder === 'asc') {
+          return a.score - b.score; // Menor valor = melhor colocação
         } else {
-          return b.score - a.score; // Maior pontuação = melhor colocação
+          return b.score - a.score; // Maior valor = melhor colocação
         }
       });
 
@@ -109,7 +137,7 @@ export function useBatchPlacementCalculation({
           currentPlacement = i + 1;
         }
         scores[i].placement = currentPlacement;
-        console.log(`${scores[i].athleteName}: ${scores[i].score} pontos = ${currentPlacement}º lugar`);
+        console.log(`${scores[i].athleteName}: ${scores[i].originalValue} = ${currentPlacement}º lugar`);
       }
 
       // Salvar colocações no banco de dados em lote

@@ -189,6 +189,9 @@ export function DynamicScoringTable({
             <TableRow>
               <TableHead className="min-w-[200px] sticky left-0 bg-background">Atleta</TableHead>
               <TableHead className="min-w-[150px]">Filial</TableHead>
+              {usesBaterias && (
+                <TableHead className="min-w-[100px]">Bateria</TableHead>
+              )}
               {allScoringFields.map((campo) => (
                 <TableHead key={campo.chave_campo} className="min-w-[120px]">
                   <div className="flex flex-col">
@@ -222,6 +225,17 @@ export function DynamicScoringTable({
                   <TableCell>
                     {athlete.filial_nome || '-'}
                   </TableCell>
+                  {usesBaterias && (
+                    <TableCell>
+                      {selectedBateriaId ? (
+                        <Badge variant="outline" className="text-xs">
+                          {selectedBateriaId}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                  )}
                   {allScoringFields.map((campo) => (
                     <TableCell key={campo.chave_campo}>
                       <DynamicInputField

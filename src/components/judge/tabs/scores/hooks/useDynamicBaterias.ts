@@ -132,21 +132,17 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
     }
   });
 
-  // Auto-create first bateria and select it when model uses baterias
+  // Auto-select first bateria when model uses baterias (but don't auto-create)
   useEffect(() => {
     console.log('useEffect - usesBaterias:', usesBaterias, 'modeloConfig:', !!modeloConfig, 'eventId:', eventId);
-    console.log('useEffect - baterias.length:', baterias.length, 'isCreating:', createBateriaMutation.isPending);
+    console.log('useEffect - baterias.length:', baterias.length, 'selectedBateriaId:', selectedBateriaId);
     
     if (usesBaterias && modeloConfig && eventId && !isLoadingConfig) {
-      if (baterias.length === 0 && !createBateriaMutation.isPending) {
-        console.log('Criando primeira bateria automaticamente...');
-        // Create first bateria automatically
-        createBateriaMutation.mutate({ isFinal: false });
-      } else if (baterias.length > 0 && !selectedBateriaId) {
-        // Select first regular bateria
+      // Only auto-select if we have baterias and no bateria is selected
+      if (baterias.length > 0 && !selectedBateriaId) {
         const firstRegularBateria = baterias.find(b => !b.isFinal);
         if (firstRegularBateria) {
-          console.log('Selecionando primeira bateria regular:', firstRegularBateria.id);
+          console.log('Selecionando primeira bateria regular automaticamente:', firstRegularBateria.id);
           setSelectedBateriaId(firstRegularBateria.id);
         }
       }
