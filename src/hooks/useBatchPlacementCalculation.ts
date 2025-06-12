@@ -57,6 +57,8 @@ export function useBatchPlacementCalculation({
             const value = firstAthleteData[key];
             if (value === '' || value === null || value === undefined) return false;
             
+            console.log(`Verificando campo ${key} com valor:`, value, 'tipo:', typeof value);
+            
             // Verificar se é um valor numérico ou de tempo
             if (typeof value === 'string' && isTimeValue(value)) return true;
             if (!isNaN(parseFloat(value)) && parseFloat(value) > 0) return true;
@@ -67,7 +69,10 @@ export function useBatchPlacementCalculation({
           console.log('Campos válidos disponíveis:', availableFields);
           
           if (availableFields.length > 0) {
-            referenceField = availableFields[0];
+            // Priorizar campos com nomes específicos
+            referenceField = availableFields.find(field => 
+              ['resultado', 'tempo', 'distancia', 'pontos', 'score'].includes(field.toLowerCase())
+            ) || availableFields[0];
             console.log('Usando campo de referência automático:', referenceField);
           }
         }
@@ -78,32 +83,53 @@ export function useBatchPlacementCalculation({
       }
 
       // Extrair e processar pontuações dos atletas
-      const scores: AthleteScore[] = Object.entries(athleteScores)
-        .map(([athleteId, data]) => {
-          const rawValue = data[referenceField];
-          const originalValue = String(rawValue || '');
-          
-          let numericScore = 0;
-          
-          // Processar diferentes tipos de valores
-          if (typeof rawValue === 'string' && isTimeValue(rawValue)) {
-            // Converter tempo para milissegundos para comparação
+      const scores: AthleteScore[] = [];
+      
+      for (const [athleteId, data] of Object.entries(athleteScores)) {
+        const rawValue = data[referenceField];
+        const originalValue = String(rawValue || '');
+        
+        console.log(`Processando atleta ${data.athleteName || athleteId}:`);
+        console.log(`  Campo: ${referenceField}`);
+        console.log(`  Valor bruto:`, rawValue);
+        console.log(`  Tipo do valor:`, typeof rawValue);
+        
+        if (!rawValue || rawValue === '' || rawValue === null || rawValue === undefined) {
+          console.log(`  Pulando atleta - valor vazio`);
+          continue;
+        }
+        
+        let numericScore = 0;
+        
+        // Processar diferentes tipos de valores
+        if (typeof rawValue === 'string') {
+          // Verificar se é um tempo formatado
+          if (isTimeValue(rawValue)) {
             numericScore = parseTimeToMilliseconds(rawValue);
-            console.log(`Atleta ${data.athleteName || athleteId}: ${referenceField} = ${rawValue} (${numericScore}ms)`);
+            console.log(`  Tempo convertido: ${rawValue} -> ${numericScore}ms`);
           } else {
-            // Valor numérico direto
-            numericScore = parseFloat(rawValue) || 0;
-            console.log(`Atleta ${data.athleteName || athleteId}: ${referenceField} = ${numericScore}`);
+            // Tentar converter string para número
+            const cleanValue = rawValue.replace(/[^\d.,]/g, '').replace(',', '.');
+            numericScore = parseFloat(cleanValue) || 0;
+            console.log(`  String convertida: ${rawValue} -> ${numericScore}`);
           }
-          
-          return {
+        } else if (typeof rawValue === 'number') {
+          numericScore = rawValue;
+          console.log(`  Número direto: ${numericScore}`);
+        }
+        
+        if (numericScore > 0) {
+          scores.push({
             athleteId,
             athleteName: data.athleteName || athleteId,
             score: numericScore,
             originalValue
-          };
-        })
-        .filter(item => item.score > 0);
+          });
+          console.log(`  ✓ Adicionado: ${numericScore}`);
+        } else {
+          console.log(`  ✗ Valor inválido: ${numericScore}`);
+        }
+      }
 
       console.log('Pontuações válidas encontradas:', scores.length);
 
@@ -113,7 +139,7 @@ export function useBatchPlacementCalculation({
 
       // Ordenar baseado no tipo de ordenação configurado
       const ordem = calculatedField.metadados?.ordem_calculo || 'desc';
-      console.log('Ordem de cálculo:', ordem);
+      console.log('Ordem de cálculo configurada:', ordem);
       
       // Para tempos, geralmente queremos ordem crescente (menor tempo = melhor)
       // Para pontos, geralmente queremos ordem decrescente (maior pontos = melhor)
@@ -129,6 +155,9 @@ export function useBatchPlacementCalculation({
           return b.score - a.score; // Maior valor = melhor colocação
         }
       });
+
+      console.log('Pontuações ordenadas:');
+      scores.forEach((s, i) => console.log(`${i + 1}. ${s.athleteName}: ${s.originalValue} (${s.score})`));
 
       // Atribuir colocações (tratando empates)
       let currentPlacement = 1;
