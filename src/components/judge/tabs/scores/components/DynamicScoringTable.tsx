@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Calculator } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Calculator, RefreshCw } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Athlete } from '../hooks/useAthletes';
 import { useDynamicScoringTableState } from './dynamic-scoring-table/useDynamicScoringTableState';
@@ -37,6 +36,7 @@ export function DynamicScoringTable({
   modelo,
   selectedBateriaId
 }: DynamicScoringTableProps) {
+  const queryClient = useQueryClient();
   console.log('DynamicScoringTable - Renderizando com:', {
     athletesCount: athletes.length,
     modalityId,
@@ -135,6 +135,21 @@ export function DynamicScoringTable({
     console.log('Dados preparados para cálculo:', athleteScores);
 
     await calculateBatchPlacements(campo, athleteScores);
+    
+    // Após o cálculo, forçar um refresh manual dos dados
+    console.log('Forçando refresh dos dados após cálculo...');
+    setTimeout(() => {
+      queryClient.invalidateQueries({ 
+        queryKey: ['athlete-dynamic-scores', modalityId, eventId, modelo.id, selectedBateriaId] 
+      });
+    }, 1000);
+  };
+
+  const handleRefreshData = () => {
+    console.log('Atualizando dados da tabela...');
+    queryClient.invalidateQueries({ 
+      queryKey: ['athlete-dynamic-scores', modalityId, eventId, modelo.id, selectedBateriaId] 
+    });
   };
 
   if (isLoadingCampos) {
@@ -183,6 +198,19 @@ export function DynamicScoringTable({
           </div>
         </div>
       )}
+
+      {/* Botão para atualizar dados */}
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefreshData}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className="h-3 w-3" />
+          Atualizar Dados
+        </Button>
+      </div>
 
       <div className="border rounded-md overflow-x-auto">
         <Table>
@@ -266,7 +294,8 @@ export function DynamicScoringTable({
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h4 className="text-sm font-medium text-blue-800 mb-2">Calcular Colocações na Bateria</h4>
           <div className="text-xs text-blue-700 mb-3">
-            Após inserir todas as pontuações, use os botões abaixo para calcular as colocações de todos os atletas.
+            Após inserir todas as pontuações, use os botões abaixo para calcular as colocações de todos os atletas. 
+            As colocações aparecerão automaticamente na tabela após o cálculo.
           </div>
           <div className="flex flex-wrap gap-2">
             {calculatedFields.map(campo => (
@@ -286,7 +315,8 @@ export function DynamicScoringTable({
             ))}
           </div>
           {isCalculating && (
-            <div className="text-xs text-blue-600 mt-2">
+            <div className="text-xs text-blue-600 mt-2 flex items-center gap-2">
+              <RefreshCw className="h-3 w-3 animate-spin" />
               Calculando colocações...
             </div>
           )}

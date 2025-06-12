@@ -75,12 +75,26 @@ export function useBatchPlacementCalculation({
 
       await Promise.all(placementPromises);
 
-      // Invalidar queries para recarregar dados
-      queryClient.invalidateQueries({
+      // Invalidar queries ESPECÍFICAS para garantir que os dados sejam recarregados
+      console.log('Invalidando queries para recarregar dados...');
+      
+      // Invalidar query principal de pontuações dos atletas
+      await queryClient.invalidateQueries({
+        queryKey: ['athlete-dynamic-scores', modalityId, eventId, modeloId, bateriaId]
+      });
+      
+      // Invalidar também queries relacionadas
+      await queryClient.invalidateQueries({
+        queryKey: ['athlete-dynamic-scores']
+      });
+      
+      // Forçar refetch das queries principais
+      await queryClient.refetchQueries({
         queryKey: ['athlete-dynamic-scores', modalityId, eventId, modeloId, bateriaId]
       });
 
-      toast.success(`Colocações calculadas para ${scoredAthletes.length} atletas com base no campo "${referenceField}"`);
+      console.log('Cálculo de colocações concluído com sucesso');
+      toast.success(`Colocações calculadas para ${scoredAthletes.length} atletas com base no campo "${referenceField}". As colocações foram atualizadas na tabela.`);
       
     } catch (error) {
       console.error('Erro ao calcular colocações:', error);
