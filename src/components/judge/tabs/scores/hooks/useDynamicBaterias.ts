@@ -68,7 +68,19 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
   // Create new bateria mutation
   const createBateriaMutation = useMutation({
     mutationFn: async ({ isFinal = false }: { isFinal?: boolean }) => {
-      if (!eventId) throw new Error('ID do evento é obrigatório');
+      console.log('=== INICIANDO CRIAÇÃO DE BATERIA ===');
+      console.log('Parâmetros:', { modalityId, eventId, isFinal });
+      console.log('Modelo config:', modeloConfig);
+      
+      if (!eventId) {
+        console.error('ID do evento é obrigatório');
+        throw new Error('ID do evento é obrigatório');
+      }
+      
+      if (!modalityId) {
+        console.error('ID da modalidade é obrigatório');
+        throw new Error('ID da modalidade é obrigatório');
+      }
       
       console.log('Criando nova bateria. Final?', isFinal);
       console.log('Baterias existentes:', baterias.length);
@@ -79,33 +91,53 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
       
       console.log('Próximo número de bateria:', nextNumber);
       
+      const insertData = {
+        modalidade_id: modalityId,
+        evento_id: eventId,
+        numero: nextNumber,
+        ...(modeloConfig?.modelo_id && { modelo_id: modeloConfig.modelo_id })
+      };
+      
+      console.log('Dados para inserção:', insertData);
+      
       const { data, error } = await supabase
         .from('baterias')
-        .insert({
-          modalidade_id: modalityId,
-          evento_id: eventId,
-          modelo_id: modeloConfig?.modelo_id,
-          numero: nextNumber
-        })
+        .insert(insertData)
         .select()
         .single();
 
       if (error) {
-        console.error('Erro ao criar bateria:', error);
-        throw error;
+        console.error('Erro detalhado ao criar bateria:', error);
+        console.error('Código do erro:', error.code);
+        console.error('Mensagem do erro:', error.message);
+        console.error('Detalhes do erro:', error.details);
+        throw new Error(`Erro ao criar bateria: ${error.message}`);
+      }
+      
+      if (!data) {
+        console.error('Nenhum dado retornado após inserção');
+        throw new Error('Nenhum dado retornado após criar bateria');
       }
       
       console.log('Bateria criada com sucesso:', data);
       return { ...data, isFinal };
     },
     onSuccess: (newBateria) => {
+      console.log('=== SUCESSO NA CRIAÇÃO DA BATERIA ===');
+      console.log('Nova bateria:', newBateria);
+      
       queryClient.invalidateQueries({ queryKey: ['dynamic-baterias', modalityId, eventId] });
       setSelectedBateriaId(newBateria.id);
       toast.success(`${newBateria.isFinal ? 'Bateria Final' : `Bateria ${newBateria.numero}`} criada com sucesso!`);
     },
     onError: (error) => {
-      console.error('Erro ao criar bateria:', error);
-      toast.error('Erro ao criar bateria');
+      console.error('=== ERRO NA CRIAÇÃO DA BATERIA ===');
+      console.error('Erro completo:', error);
+      console.error('Tipo do erro:', typeof error);
+      console.error('Stack trace:', error instanceof Error ? error.stack : 'Não disponível');
+      
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao criar bateria';
+      toast.error(`Erro ao criar bateria: ${errorMessage}`);
     }
   });
 
@@ -165,11 +197,13 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
     isLoading: isLoading || isLoadingConfig,
     setSelectedBateriaId,
     createNewBateria: () => {
-      console.log('Botão Nova Bateria clicado');
+      console.log('=== BOTÃO NOVA BATERIA CLICADO ===');
+      console.log('Estado atual:', { modalityId, eventId, modeloConfig });
       createBateriaMutation.mutate({ isFinal: false });
     },
     createFinalBateria: () => {
-      console.log('Botão Bateria Final clicado');
+      console.log('=== BOTÃO BATERIA FINAL CLICADO ===');
+      console.log('Estado atual:', { modalityId, eventId, modeloConfig });
       createBateriaMutation.mutate({ isFinal: true });
     },
     editBateria: (bateriaId: number, novoNumero: number) => editBateriaMutation.mutate({ bateriaId, novoNumero }),
