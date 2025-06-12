@@ -60,6 +60,8 @@ export function useDynamicScoringTableState({
   const { data: existingScores = [] } = useQuery({
     queryKey: ['athlete-dynamic-scores', modalityId, eventId, modelo.id, selectedBateriaId],
     queryFn: async () => {
+      console.log('Carregando scores existentes com query key:', ['athlete-dynamic-scores', modalityId, eventId, modelo.id, selectedBateriaId]);
+      
       let query = supabase
         .from('pontuacoes')
         .select(`
@@ -84,7 +86,12 @@ export function useDynamicScoringTableState({
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao carregar scores:', error);
+        throw error;
+      }
+      
+      console.log('Scores carregados:', data?.length || 0);
       return data;
     },
     enabled: !!modalityId && !!eventId && !!modelo.id

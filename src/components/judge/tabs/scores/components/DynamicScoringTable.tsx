@@ -136,25 +136,43 @@ export function DynamicScoringTable({
 
     await calculateBatchPlacements(campo, athleteScores);
     
-    // Após o cálculo, forçar um refresh adicional com a query key correta
-    console.log('Forçando refresh dos dados após cálculo...');
-    setTimeout(() => {
-      // Usar a mesma query key que a tabela usa para carregar os dados
-      queryClient.invalidateQueries({ 
-        queryKey: ['pontuacoes', modalityId, eventId, modelo.id, selectedBateriaId] 
+    // Após o cálculo, forçar um refresh adicional dos dados da tabela
+    console.log('Forçando refresh adicional dos dados após cálculo...');
+    
+    // Usar setTimeout para garantir que o banco de dados tenha processado as mudanças
+    setTimeout(async () => {
+      const athleteScoresQueryKey = ['athlete-dynamic-scores', modalityId, eventId, modelo.id, selectedBateriaId];
+      console.log('Refresh tardio - invalidando query key:', athleteScoresQueryKey);
+      
+      await queryClient.invalidateQueries({ 
+        queryKey: athleteScoresQueryKey
       });
-    }, 500);
+      
+      await queryClient.refetchQueries({ 
+        queryKey: athleteScoresQueryKey
+      });
+    }, 1000);
   };
 
-  const handleRefreshData = () => {
-    console.log('Atualizando dados da tabela...');
-    // Invalidar todas as queries relacionadas aos dados da tabela
-    queryClient.invalidateQueries({ 
-      queryKey: ['pontuacoes'] 
+  const handleRefreshData = async () => {
+    console.log('Atualizando dados da tabela manualmente...');
+    
+    // Invalidar todas as queries relacionadas aos dados da tabela usando as keys corretas
+    const athleteScoresQueryKey = ['athlete-dynamic-scores', modalityId, eventId, modelo.id, selectedBateriaId];
+    
+    await queryClient.invalidateQueries({ 
+      queryKey: athleteScoresQueryKey
     });
-    queryClient.invalidateQueries({ 
+    
+    await queryClient.invalidateQueries({ 
       queryKey: ['campos-modelo', modelo.id] 
     });
+    
+    await queryClient.refetchQueries({ 
+      queryKey: athleteScoresQueryKey
+    });
+    
+    toast.success('Dados atualizados com sucesso');
   };
 
   if (isLoadingCampos) {
@@ -316,13 +334,14 @@ export function DynamicScoringTable({
               >
                 <Calculator className="h-3 w-3 mr-1" />
                 {campo.rotulo_campo}
+                {isCalculating && <RefreshCw className="h-3 w-3 ml-1 animate-spin" />}
               </Button>
             ))}
           </div>
           {isCalculating && (
             <div className="text-xs text-blue-600 mt-2 flex items-center gap-2">
               <RefreshCw className="h-3 w-3 animate-spin" />
-              Calculando colocações...
+              Calculando colocações e atualizando dados...
             </div>
           )}
         </div>
