@@ -75,22 +75,24 @@ export function useBatchPlacementCalculation({
 
       await Promise.all(placementPromises);
 
-      // Invalidar queries ESPECÍFICAS para garantir que os dados sejam recarregados
-      console.log('Invalidando queries para recarregar dados...');
+      // Invalidar as queries corretas para recarregar os dados da tabela
+      console.log('Invalidando queries para recarregar dados da tabela...');
       
-      // Invalidar query principal de pontuações dos atletas
+      // Query key correta que carrega os dados da tabela DynamicScoringTable
+      const queryKey = ['pontuacoes', modalityId, eventId, modeloId, bateriaId];
+      
       await queryClient.invalidateQueries({
-        queryKey: ['athlete-dynamic-scores', modalityId, eventId, modeloId, bateriaId]
+        queryKey: queryKey
       });
       
-      // Invalidar também queries relacionadas
-      await queryClient.invalidateQueries({
-        queryKey: ['athlete-dynamic-scores']
-      });
-      
-      // Forçar refetch das queries principais
+      // Forçar refetch para garantir que os dados sejam recarregados imediatamente
       await queryClient.refetchQueries({
-        queryKey: ['athlete-dynamic-scores', modalityId, eventId, modeloId, bateriaId]
+        queryKey: queryKey
+      });
+      
+      // Também invalidar queries relacionadas que podem existir
+      await queryClient.invalidateQueries({
+        queryKey: ['pontuacoes']
       });
 
       console.log('Cálculo de colocações concluído com sucesso');

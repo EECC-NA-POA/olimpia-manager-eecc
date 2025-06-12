@@ -136,19 +136,24 @@ export function DynamicScoringTable({
 
     await calculateBatchPlacements(campo, athleteScores);
     
-    // Após o cálculo, forçar um refresh manual dos dados
+    // Após o cálculo, forçar um refresh adicional com a query key correta
     console.log('Forçando refresh dos dados após cálculo...');
     setTimeout(() => {
+      // Usar a mesma query key que a tabela usa para carregar os dados
       queryClient.invalidateQueries({ 
-        queryKey: ['athlete-dynamic-scores', modalityId, eventId, modelo.id, selectedBateriaId] 
+        queryKey: ['pontuacoes', modalityId, eventId, modelo.id, selectedBateriaId] 
       });
-    }, 1000);
+    }, 500);
   };
 
   const handleRefreshData = () => {
     console.log('Atualizando dados da tabela...');
+    // Invalidar todas as queries relacionadas aos dados da tabela
     queryClient.invalidateQueries({ 
-      queryKey: ['athlete-dynamic-scores', modalityId, eventId, modelo.id, selectedBateriaId] 
+      queryKey: ['pontuacoes'] 
+    });
+    queryClient.invalidateQueries({ 
+      queryKey: ['campos-modelo', modelo.id] 
     });
   };
 
