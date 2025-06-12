@@ -114,37 +114,46 @@ export function DynamicScoringTable({
   });
 
   const handleCalculateBatchPlacements = async (fieldKey: string) => {
-    console.log('Calculando colocações para campo:', fieldKey);
+    console.log('=== BOTÃO DE CÁLCULO PRESSIONADO ===');
+    console.log('Campo selecionado:', fieldKey);
     
     const campo = calculatedFields.find(c => c.chave_campo === fieldKey);
     if (!campo) {
       console.error('Campo calculado não encontrado:', fieldKey);
+      toast.error('Campo calculado não encontrado');
       return;
     }
 
     console.log('Campo encontrado:', campo);
 
-    // Preparar dados dos atletas para cálculo
+    // Preparar dados dos atletas para cálculo - usar SEMPRE dados atualizados
+    console.log('Preparando dados dos atletas...');
+    console.log('Dados atuais da tabela (scoreData):', scoreData);
+    
     const athleteScores: Record<string, any> = {};
     athletes.forEach(athlete => {
+      const athleteData = scoreData[athlete.atleta_id] || {};
       athleteScores[athlete.atleta_id] = {
         athleteName: athlete.atleta_nome,
-        ...scoreData[athlete.atleta_id]
+        ...athleteData
       };
+      
+      console.log(`Atleta ${athlete.atleta_nome}:`, athleteData);
     });
 
     console.log('Dados preparados para cálculo:', athleteScores);
 
+    // Executar cálculo
     await calculateBatchPlacements(campo, athleteScores);
     
-    // Após o cálculo, forçar um refresh adicional dos dados da tabela
-    console.log('Forçando refresh adicional dos dados após cálculo...');
+    // Após o cálculo, forçar reload completo dos dados
+    console.log('Forçando reload completo após cálculo...');
     
-    // Usar setTimeout para garantir que o banco de dados tenha processado as mudanças
+    const athleteScoresQueryKey = ['athlete-dynamic-scores', modalityId, eventId, modelo.id, selectedBateriaId];
+    
+    // Aguardar um momento para o banco processar, então recarregar
     setTimeout(async () => {
-      const athleteScoresQueryKey = ['athlete-dynamic-scores', modalityId, eventId, modelo.id, selectedBateriaId];
-      console.log('Refresh tardio - invalidando query key:', athleteScoresQueryKey);
-      
+      console.log('Executando reload tardio...');
       await queryClient.invalidateQueries({ 
         queryKey: athleteScoresQueryKey
       });
@@ -152,13 +161,14 @@ export function DynamicScoringTable({
       await queryClient.refetchQueries({ 
         queryKey: athleteScoresQueryKey
       });
+      
+      toast.success('Dados atualizados na tabela');
     }, 1000);
   };
 
   const handleRefreshData = async () => {
     console.log('Atualizando dados da tabela manualmente...');
     
-    // Invalidar todas as queries relacionadas aos dados da tabela usando as keys corretas
     const athleteScoresQueryKey = ['athlete-dynamic-scores', modalityId, eventId, modelo.id, selectedBateriaId];
     
     await queryClient.invalidateQueries({ 
@@ -320,6 +330,8 @@ export function DynamicScoringTable({
           <div className="text-xs text-blue-700 mb-3">
             Após inserir todas as pontuações, use os botões abaixo para calcular as colocações de todos os atletas. 
             As colocações aparecerão automaticamente na tabela após o cálculo.
+            <br />
+            <strong>Empates:</strong> Apenas atletas com resultados exatamente iguais receberão a mesma colocação.
           </div>
           <div className="flex flex-wrap gap-2">
             {calculatedFields.map(campo => (
@@ -328,7 +340,8 @@ export function DynamicScoringTable({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  console.log('Botão de colocação clicado para campo:', campo.chave_campo);
+                  console.log('=== INICIANDO CÁLCULO PELO BOTÃO ===');
+                  console.log('Campo selecionado:', campo.chave_campo);
                   handleCalculateBatchPlacements(campo.chave_campo);
                 }}
                 disabled={isCalculating}

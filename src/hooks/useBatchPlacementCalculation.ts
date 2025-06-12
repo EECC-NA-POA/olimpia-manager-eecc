@@ -33,8 +33,9 @@ export function useBatchPlacementCalculation({
     setIsCalculating(true);
     
     try {
-      console.log('Iniciando cálculo de colocações para campo:', calculatedField.chave_campo);
-      console.log('Dados dos atletas recebidos:', athleteScores);
+      console.log('=== INICIANDO CÁLCULO DE COLOCAÇÕES EM LOTE ===');
+      console.log('Campo calculado:', calculatedField.chave_campo);
+      console.log('Dados dos atletas recebidos:', Object.keys(athleteScores).length, 'atletas');
       
       // Detectar campo de referência
       const referenceField = detectReferenceField(
@@ -45,6 +46,8 @@ export function useBatchPlacementCalculation({
       if (!referenceField) {
         throw new Error('Nenhum campo de referência disponível para cálculo de colocação. Configure um campo de referência no campo calculado ou insira pontuações válidas.');
       }
+
+      console.log('Campo de referência detectado:', referenceField);
 
       // Extrair pontuações dos atletas
       const scores = extractAthleteScores(athleteScores, referenceField);
@@ -75,35 +78,36 @@ export function useBatchPlacementCalculation({
 
       await Promise.all(placementPromises);
 
-      // Invalidar as queries corretas para recarregar os dados da tabela
-      console.log('Invalidando queries para recarregar dados da tabela...');
-      
-      // Query key correta usada pela tabela DynamicScoringTable
+      // Query key correta - DEVE ser exatamente igual à usada pela tabela
       const athleteScoresQueryKey = ['athlete-dynamic-scores', modalityId, eventId, modeloId, bateriaId];
       
-      console.log('Invalidando query key:', athleteScoresQueryKey);
+      console.log('=== INVALIDANDO QUERIES PARA ATUALIZAR UI ===');
+      console.log('Query key principal:', athleteScoresQueryKey);
       
+      // Invalidar a query principal da tabela
       await queryClient.invalidateQueries({
         queryKey: athleteScoresQueryKey
       });
       
-      // Forçar refetch para garantir que os dados sejam recarregados imediatamente
+      // Forçar refetch imediato
       await queryClient.refetchQueries({
         queryKey: athleteScoresQueryKey
       });
       
-      // Também invalidar queries relacionadas para garantir consistência
-      await queryClient.invalidateQueries({
-        queryKey: ['pontuacoes']
-      });
-
-      // Invalidar query de campos do modelo para atualizar dados calculados
+      // Invalidar queries relacionadas
       await queryClient.invalidateQueries({
         queryKey: ['campos-modelo', modeloId]
       });
 
-      console.log('Cálculo de colocações concluído com sucesso');
-      console.log('Queries invalidadas e dados devem ser recarregados automaticamente');
+      // Aguardar um momento e fazer outro refetch para garantir
+      setTimeout(async () => {
+        console.log('Refetch tardio para garantir atualização...');
+        await queryClient.refetchQueries({
+          queryKey: athleteScoresQueryKey
+        });
+      }, 500);
+
+      console.log('=== CÁLCULO DE COLOCAÇÕES CONCLUÍDO COM SUCESSO ===');
       
       toast.success(`Colocações calculadas para ${scoredAthletes.length} atletas com base no campo "${referenceField}". As colocações foram atualizadas na tabela.`);
       
