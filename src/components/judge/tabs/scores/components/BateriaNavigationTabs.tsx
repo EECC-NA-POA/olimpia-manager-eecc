@@ -3,21 +3,18 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Plus, Trophy, Target, Edit2, Check, X } from 'lucide-react';
+import { Plus, Trophy, Target } from 'lucide-react';
 import { DynamicBateria } from '../hooks/useDynamicBaterias';
 
 interface BateriaNavigationTabsProps {
   regularBaterias: DynamicBateria[];
   finalBateria?: DynamicBateria;
   selectedBateriaId: number | null;
-  onSelectBateria: (id: number) => void;
+  onSelectBateria: (numero: number) => void;
   onCreateNewBateria: () => void;
   onCreateFinalBateria: () => void;
-  onEditBateria: (bateriaId: number, novoNumero: number) => void;
   hasFinalBateria: boolean;
   isCreating: boolean;
-  isEditing: boolean;
   usesBaterias: boolean;
 }
 
@@ -28,37 +25,11 @@ export function BateriaNavigationTabs({
   onSelectBateria,
   onCreateNewBateria,
   onCreateFinalBateria,
-  onEditBateria,
   hasFinalBateria,
   isCreating,
-  isEditing,
   usesBaterias
 }: BateriaNavigationTabsProps) {
-  const [editingBateriaId, setEditingBateriaId] = useState<number | null>(null);
-  const [editValue, setEditValue] = useState<string>('');
-
   if (!usesBaterias) return null;
-
-  const handleStartEdit = (bateria: DynamicBateria) => {
-    setEditingBateriaId(bateria.id);
-    setEditValue(bateria.numero.toString());
-  };
-
-  const handleSaveEdit = () => {
-    if (editingBateriaId && editValue) {
-      const novoNumero = parseInt(editValue);
-      if (novoNumero > 0) {
-        onEditBateria(editingBateriaId, novoNumero);
-        setEditingBateriaId(null);
-        setEditValue('');
-      }
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingBateriaId(null);
-    setEditValue('');
-  };
 
   return (
     <Card>
@@ -75,54 +46,19 @@ export function BateriaNavigationTabs({
             <div className="text-sm font-medium text-muted-foreground mb-2">Baterias Regulares</div>
             <div className="flex flex-wrap gap-2">
               {regularBaterias.map((bateria) => (
-                <div key={bateria.id} className="flex items-center gap-1">
-                  {editingBateriaId === bateria.id ? (
-                    <div className="flex items-center gap-1">
-                      <Input
-                        type="number"
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        className="w-16 h-8"
-                        min="1"
-                      />
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={handleSaveEdit}
-                        disabled={isEditing}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Check className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={handleCancelEdit}
-                        className="h-8 w-8 p-0"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <Button
-                        variant={selectedBateriaId === bateria.id ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => onSelectBateria(bateria.id)}
-                      >
-                        Bateria {bateria.numero}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleStartEdit(bateria)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                    </>
+                <Button
+                  key={bateria.numero}
+                  variant={selectedBateriaId === bateria.numero ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onSelectBateria(bateria.numero)}
+                >
+                  Bateria {bateria.numero}
+                  {bateria.atletasCount !== undefined && (
+                    <Badge variant="secondary" className="ml-2">
+                      {bateria.atletasCount}
+                    </Badge>
                   )}
-                </div>
+                </Button>
               ))}
               <Button
                 variant="outline"
@@ -143,13 +79,18 @@ export function BateriaNavigationTabs({
             <div className="flex gap-2">
               {finalBateria ? (
                 <Button
-                  variant={selectedBateriaId === finalBateria.id ? "default" : "outline"}
+                  variant={selectedBateriaId === finalBateria.numero ? "default" : "outline"}
                   size="sm"
-                  onClick={() => onSelectBateria(finalBateria.id)}
+                  onClick={() => onSelectBateria(finalBateria.numero)}
                   className="bg-gold/10 border-gold text-gold-foreground"
                 >
                   <Trophy className="h-4 w-4 mr-1" />
                   Bateria Final
+                  {finalBateria.atletasCount !== undefined && (
+                    <Badge variant="secondary" className="ml-2">
+                      {finalBateria.atletasCount}
+                    </Badge>
+                  )}
                 </Button>
               ) : (
                 <Button
@@ -176,15 +117,15 @@ export function BateriaNavigationTabs({
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">
-                  {regularBaterias.find(b => b.id === selectedBateriaId) 
-                    ? `Bateria ${regularBaterias.find(b => b.id === selectedBateriaId)?.numero}`
-                    : finalBateria?.id === selectedBateriaId 
+                  {regularBaterias.find(b => b.numero === selectedBateriaId) 
+                    ? `Bateria ${selectedBateriaId}`
+                    : finalBateria?.numero === selectedBateriaId 
                     ? 'Bateria Final'
                     : 'Bateria Selecionada'
                   }
                 </Badge>
                 <span className="text-sm text-blue-700">
-                  {finalBateria?.id === selectedBateriaId 
+                  {finalBateria?.numero === selectedBateriaId 
                     ? 'Determine os ganhadores finais'
                     : 'Registre as pontuações desta bateria'
                   }

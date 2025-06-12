@@ -73,9 +73,7 @@ export function AthletesListTabular({
     setSelectedBateriaId,
     createNewBateria,
     createFinalBateria,
-    editBateria,
-    isCreating,
-    isEditing
+    isCreating
   } = useDynamicBaterias({ 
     modalityId, 
     eventId: eventId || ''
@@ -144,10 +142,8 @@ export function AthletesListTabular({
           onSelectBateria={setSelectedBateriaId}
           onCreateNewBateria={createNewBateria}
           onCreateFinalBateria={createFinalBateria}
-          onEditBateria={editBateria}
           hasFinalBateria={hasFinalBateria}
           isCreating={isCreating}
-          isEditing={isEditing}
           usesBaterias={usesBaterias}
         />
       )}
