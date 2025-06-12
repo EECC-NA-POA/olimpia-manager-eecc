@@ -108,10 +108,23 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
 
       if (error) {
         console.error('Erro detalhado ao criar bateria:', error);
-        console.error('Código do erro:', error.code);
-        console.error('Mensagem do erro:', error.message);
-        console.error('Detalhes do erro:', error.details);
-        throw new Error(`Erro ao criar bateria: ${error.message}`);
+        console.error('Tipo do erro:', typeof error);
+        console.error('Estrutura do erro:', JSON.stringify(error, null, 2));
+        
+        // Handle different error structures
+        let errorMessage = 'Erro desconhecido ao criar bateria';
+        
+        if (typeof error === 'object' && error !== null) {
+          if ('message' in error && error.message) {
+            errorMessage = String(error.message);
+          } else if ('details' in error && error.details) {
+            errorMessage = String(error.details);
+          } else if ('hint' in error && error.hint) {
+            errorMessage = String(error.hint);
+          }
+        }
+        
+        throw new Error(`Erro ao criar bateria: ${errorMessage}`);
       }
       
       if (!data) {
