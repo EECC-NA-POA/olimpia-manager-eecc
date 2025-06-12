@@ -24,12 +24,21 @@ export const CONFIG_INPUT_TYPES = [
  */
 export function isConfigurationField(campo: CampoModelo): boolean {
   // Não filtrar campos importantes como colocação e bateria
-  const importantFields = ['colocacao', 'bateria', 'numero_bateria', 'placement', 'rank'];
+  const importantFields = ['colocacao', 'bateria', 'numero_bateria', 'placement', 'rank', 'raia'];
   const chaveNormalizada = campo.chave_campo.toLowerCase();
+  const rotuloNormalizado = campo.rotulo_campo.toLowerCase();
   
   if (importantFields.some(field => chaveNormalizada.includes(field))) {
     console.log(`Campo ${campo.chave_campo} identificado como importante - não será filtrado`);
     return false;
+  }
+  
+  // Verificar explicitamente por "Usar Baterias" - este campo NUNCA deve aparecer na tabela
+  if (rotuloNormalizado === 'usar baterias' || 
+      chaveNormalizada === 'usar_baterias' ||
+      rotuloNormalizado.includes('usar baterias')) {
+    console.log(`Campo ${campo.chave_campo} identificado como configuração "Usar Baterias" - será filtrado`);
+    return true;
   }
   
   // Verificar por chave do campo (case insensitive) - mais restritivo
@@ -39,11 +48,9 @@ export function isConfigurationField(campo: CampoModelo): boolean {
   }
   
   // Verificar por rótulo do campo - apenas configurações explícitas
-  const rotuloNormalizado = campo.rotulo_campo.toLowerCase();
   if (rotuloNormalizado === 'configuração' || 
       rotuloNormalizado === 'config' ||
       rotuloNormalizado === 'configuração de pontuação' ||
-      rotuloNormalizado === 'usar baterias' ||
       rotuloNormalizado.startsWith('usar ') ||
       rotuloNormalizado.startsWith('configurar ')) {
     console.log(`Campo ${campo.chave_campo} identificado como configuração por rótulo`);
@@ -73,7 +80,11 @@ export function isCalculatedField(campo: CampoModelo): boolean {
  * Filtra campos removendo configurações, mantendo apenas campos de pontuação
  */
 export function filterScoringFields(campos: CampoModelo[]): CampoModelo[] {
-  return campos.filter(campo => !isConfigurationField(campo));
+  const filtered = campos.filter(campo => !isConfigurationField(campo));
+  console.log('Filtragem de campos de pontuação:');
+  console.log('- Campos originais:', campos.map(c => c.rotulo_campo));
+  console.log('- Campos filtrados:', filtered.map(c => c.rotulo_campo));
+  return filtered;
 }
 
 /**
