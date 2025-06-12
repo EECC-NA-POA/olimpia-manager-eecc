@@ -42,6 +42,8 @@ export function isConfigurationField(campo: CampoModelo): boolean {
   const rotuloNormalizado = campo.rotulo_campo.toLowerCase();
   if (rotuloNormalizado === 'configuração' || 
       rotuloNormalizado === 'config' ||
+      rotuloNormalizado === 'configuração de pontuação' ||
+      rotuloNormalizado === 'usar baterias' ||
       rotuloNormalizado.startsWith('usar ') ||
       rotuloNormalizado.startsWith('configurar ')) {
     console.log(`Campo ${campo.chave_campo} identificado como configuração por rótulo`);
@@ -49,7 +51,10 @@ export function isConfigurationField(campo: CampoModelo): boolean {
   }
   
   // Verificar por tipo de input e metadados específicos para baterias
-  if (campo.tipo_input === 'checkbox' && campo.metadados?.baterias === true) {
+  if (campo.tipo_input === 'checkbox' && 
+      (campo.metadados?.baterias === true || 
+       chaveNormalizada.includes('usar_baterias') ||
+       rotuloNormalizado.includes('usar baterias'))) {
     console.log(`Campo ${campo.chave_campo} identificado como configuração de bateria`);
     return true;
   }

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calculator } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -62,6 +63,7 @@ export function DynamicScoringTable({
       }
       
       console.log('Campos encontrados:', data?.length || 0);
+      console.log('Detalhes dos campos:', data?.map(c => ({ chave: c.chave_campo, rotulo: c.rotulo_campo, tipo: c.tipo_input })));
       return data;
     },
     enabled: !!modelo.id,
@@ -134,6 +136,10 @@ export function DynamicScoringTable({
     console.log('Dados preparados para cálculo:', athleteScores);
 
     await calculateBatchPlacements(campo, athleteScores);
+  };
+
+  const handleBateriaChange = (athleteId: string, newBateriaId: string) => {
+    handleFieldChange(athleteId, 'bateria', newBateriaId);
   };
 
   if (isLoadingCampos) {
@@ -227,13 +233,14 @@ export function DynamicScoringTable({
                   </TableCell>
                   {usesBaterias && (
                     <TableCell>
-                      {selectedBateriaId ? (
-                        <Badge variant="outline" className="text-xs">
-                          {selectedBateriaId}
-                        </Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">-</span>
-                      )}
+                      <Input
+                        type="number"
+                        value={scoreData[athlete.atleta_id]?.bateria || selectedBateriaId || ''}
+                        onChange={(e) => handleBateriaChange(athlete.atleta_id, e.target.value)}
+                        className="w-20"
+                        min="1"
+                        placeholder="Bateria"
+                      />
                     </TableCell>
                   )}
                   {allScoringFields.map((campo) => (
