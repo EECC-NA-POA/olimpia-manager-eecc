@@ -10,13 +10,15 @@ interface DynamicInputFieldProps {
   athleteId: string;
   value: string | number;
   onChange: (athleteId: string, fieldKey: string, value: string | number) => void;
+  selectedBateriaId?: number | null;
 }
 
 export function DynamicInputField({ 
   campo, 
   athleteId, 
   value, 
-  onChange
+  onChange,
+  selectedBateriaId
 }: DynamicInputFieldProps) {
   
   // Se é um campo calculado, mostrar apenas o valor sem botão de calcular individual
@@ -25,6 +27,21 @@ export function DynamicInputField({
     return (
       <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
         {displayValue}
+      </Badge>
+    );
+  }
+
+  // Lógica especial para o campo "Bateria"
+  if (campo.chave_campo === 'bateria' || campo.chave_campo === 'numero_bateria') {
+    // Se não há valor salvo e há uma bateria selecionada, usar o número da bateria selecionada
+    const displayValue = value || (selectedBateriaId === 999 ? 'Final' : selectedBateriaId?.toString()) || '';
+    
+    // Se há valor salvo, formatá-lo corretamente
+    const formattedValue = value ? (value === '999' || value === 999 ? 'Final' : value.toString()) : displayValue;
+    
+    return (
+      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+        {formattedValue}
       </Badge>
     );
   }

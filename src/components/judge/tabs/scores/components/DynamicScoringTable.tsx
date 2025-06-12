@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -113,6 +112,11 @@ export function DynamicScoringTable({
     selectedBateriaId,
     campos: allScoringFields
   });
+
+  // Função personalizada para lidar com mudanças de campo que inclui auto-preenchimento da bateria
+  const handleFieldChangeWithBateria = (athleteId: string, fieldKey: string, value: string | number) => {
+    handleFieldChange(athleteId, fieldKey, value);
+  };
 
   const handleCalculateBatchPlacements = async (fieldKey: string) => {
     console.log('=== BOTÃO DE CÁLCULO PRESSIONADO ===');
@@ -286,16 +290,27 @@ export function DynamicScoringTable({
                   <TableCell>
                     {athlete.filial_nome || '-'}
                   </TableCell>
-                  {allScoringFields.map((campo) => (
-                    <TableCell key={campo.chave_campo}>
-                      <DynamicInputField
-                        campo={campo}
-                        athleteId={athlete.atleta_id}
-                        value={scoreData[athlete.atleta_id]?.[campo.chave_campo] || ''}
-                        onChange={handleFieldChange}
-                      />
-                    </TableCell>
-                  ))}
+                  {allScoringFields.map((campo) => {
+                    // Para o campo bateria, usar o valor pré-preenchido se não houver valor salvo
+                    let fieldValue = scoreData[athlete.atleta_id]?.[campo.chave_campo] || '';
+                    
+                    // Se é campo de bateria e não há valor salvo, usar o selectedBateriaId
+                    if ((campo.chave_campo === 'bateria' || campo.chave_campo === 'numero_bateria') && !fieldValue && selectedBateriaId) {
+                      fieldValue = selectedBateriaId;
+                    }
+
+                    return (
+                      <TableCell key={campo.chave_campo}>
+                        <DynamicInputField
+                          campo={campo}
+                          athleteId={athlete.atleta_id}
+                          value={fieldValue}
+                          onChange={handleFieldChangeWithBateria}
+                          selectedBateriaId={selectedBateriaId}
+                        />
+                      </TableCell>
+                    );
+                  })}
                   <TableCell>
                     <AthleteStatusCell
                       athleteId={athlete.atleta_id}
