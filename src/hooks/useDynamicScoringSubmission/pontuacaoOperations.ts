@@ -28,22 +28,66 @@ export async function upsertPontuacao(
 
   console.log('Pontuacao data to upsert:', pontuacaoData);
 
-  // Use upsert com a constraint única para evitar duplicatas
-  const { data: upsertedScore, error: upsertError } = await supabase
+  // First, check if there's an existing score for this athlete, modality, event, judge, and modelo
+  const { data: existingScore, error: fetchError } = await supabase
     .from('pontuacoes')
-    .upsert(pontuacaoData, {
-      onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id,modelo_id,numero_bateria',
-      ignoreDuplicates: false
-    })
-    .select()
-    .single();
+    .select('id')
+    .eq('atleta_id', data.athleteId)
+    .eq('modalidade_id', data.modalityId)
+    .eq('evento_id', data.eventId)
+    .eq('juiz_id', data.judgeId)
+    .eq('modelo_id', data.modeloId)
+    .eq('numero_bateria', data.bateriaId || null)
+    .maybeSingle();
 
-  if (upsertError) {
-    console.error('Error upserting pontuacao:', upsertError);
-    throw upsertError;
+  if (fetchError) {
+    console.error('Error checking for existing score:', fetchError);
+    throw fetchError;
   }
 
-  console.log('Upserted pontuacao:', upsertedScore);
+  let upsertedScore;
+
+  if (existingScore) {
+    // Update existing score
+    console.log('Updating existing pontuacao with id:', existingScore.id);
+    const { data: updatedScore, error: updateError } = await supabase
+      .from('pontuacoes')
+      .update({
+        valor_pontuacao: valorPontuacao,
+        unidade: 'dinâmica',
+        observacoes: data.notes || null,
+        data_registro: new Date().toISOString(),
+        raia: data.raia || null
+      })
+      .eq('id', existingScore.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Error updating pontuacao:', updateError);
+      throw updateError;
+    }
+
+    upsertedScore = updatedScore;
+    console.log('Updated existing pontuacao:', upsertedScore);
+  } else {
+    // Insert new score
+    console.log('Creating new pontuacao');
+    const { data: insertedScore, error: insertError } = await supabase
+      .from('pontuacoes')
+      .insert([pontuacaoData])
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Error inserting pontuacao:', insertError);
+      throw insertError;
+    }
+
+    upsertedScore = insertedScore;
+    console.log('Inserted new pontuacao:', upsertedScore);
+  }
+
   return upsertedScore;
 }
 

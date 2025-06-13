@@ -183,12 +183,14 @@ export function DynamicScoringTable({
   };
 
   const getFieldValue = (athleteId: string, fieldKey: string) => {
+    // Always check edit values first (for when user is editing)
     const editValue = editValues[athleteId]?.[fieldKey];
     if (editValue !== undefined) {
       console.log(`Getting field value for ${athleteId}.${fieldKey}: ${editValue} (from edit values)`);
       return editValue;
     }
     
+    // Then check existing scores (for display when not editing)
     const existingScore = existingScores.find(s => s.atleta_id === athleteId);
     const tentativa = existingScore?.tentativas?.[fieldKey];
     const existingValue = tentativa?.valor_formatado || tentativa?.valor || '';
@@ -279,6 +281,7 @@ export function DynamicScoringTable({
           {selectedBateriaId && (
             <p><strong>Baterias:</strong> Use a navegação de baterias acima para alternar entre diferentes baterias.</p>
           )}
+          <p><strong>Edição:</strong> Clique em "Editar" para modificar pontuações já lançadas.</p>
         </div>
       )}
     </div>
