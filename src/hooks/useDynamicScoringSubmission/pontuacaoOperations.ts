@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 
 export async function upsertPontuacao(data: any, valorPontuacao: number) {
@@ -18,7 +19,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     unidade: 'pontos', // Default for dynamic scoring
     observacoes: data.observacoes || null, // Ensure observacoes is included
     data_registro: new Date().toISOString(),
-    bateria_id: data.bateriaId || null,
+    numero_bateria: data.bateriaId || null, // Changed from bateria_id to numero_bateria
     numero_raia: data.raia || null
   };
 
@@ -28,7 +29,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
   const { data: pontuacao, error } = await supabase
     .from('pontuacoes')
     .upsert(pontuacaoData, {
-      onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id,modelo_id,bateria_id',
+      onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id,modelo_id,numero_bateria',
       ignoreDuplicates: false
     })
     .select()
