@@ -65,16 +65,13 @@ export function AthletesListTabular({
   // Verificar se o modelo usa baterias usando a configuração do modelo
   const usesBaterias = modeloConfig?.parametros?.baterias === true;
 
-  console.log('AthletesListTabular - Debug info:', {
-    modalityId,
-    modeloConfig,
-    usesBaterias,
-    hasDynamicScoring,
-    modelosCount: modelos.length,
-    camposCount: campos.length
+  // Bateria management - only initialize if the model uses baterias
+  const bateriasHook = useDynamicBaterias({ 
+    modalityId, 
+    eventId: eventId || ''
   });
 
-  // Bateria management - only initialize if the model uses baterias
+  // Only use baterias if the model actually uses them
   const {
     baterias,
     selectedBateriaId,
@@ -86,10 +83,18 @@ export function AthletesListTabular({
     createNewBateria,
     createFinalBateria,
     isCreating
-  } = useDynamicBaterias({ 
-    modalityId, 
-    eventId: eventId || ''
-  });
+  } = usesBaterias ? bateriasHook : {
+    baterias: [],
+    selectedBateriaId: null,
+    selectedBateria: undefined,
+    regularBaterias: [],
+    finalBateria: undefined,
+    hasFinalBateria: false,
+    setSelectedBateriaId: () => {},
+    createNewBateria: () => {},
+    createFinalBateria: () => {},
+    isCreating: false
+  };
 
   // Get branch data for filtering
   const { availableBranches, availableStates, athletesBranchData } = useAthletesBranchData(athletes || []);

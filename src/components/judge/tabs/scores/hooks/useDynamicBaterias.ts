@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -22,26 +22,21 @@ interface UseDynamicBateriasProps {
 export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasProps) {
   const queryClient = useQueryClient();
   const [selectedBateriaId, setSelectedBateriaId] = useState<number | null>(null);
+  const hasCreatedFirstBateria = useRef(false);
   
   // Get modelo configuration
   const { data: modeloConfig, isLoading: isLoadingConfig } = useModeloConfiguration(modalityId);
   
-  console.log('useDynamicBaterias - modeloConfig:', modeloConfig);
-  
   // Check if this modality uses baterias
   const usesBaterias = modeloConfig?.parametros?.baterias === true;
-  console.log('useDynamicBaterias - usesBaterias:', usesBaterias);
 
   // Fetch existing baterias from pontuacoes table
   const { data: baterias = [], isLoading } = useQuery({
     queryKey: ['dynamic-baterias', modalityId, eventId],
     queryFn: async () => {
       if (!eventId || !modalityId) {
-        console.log('Parâmetros faltando para buscar baterias:', { modalityId, eventId });
         return [];
       }
-      
-      console.log('Buscando baterias para modalidade:', modalityId, 'evento:', eventId);
       
       const { data, error } = await supabase
         .from('pontuacoes')
@@ -55,8 +50,6 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
         console.error('Erro ao buscar baterias:', error);
         return [];
       }
-
-      console.log('Pontuações com bateria encontradas:', data?.length || 0);
       
       // Group by numero_bateria and create bateria objects
       const bateriasMap = new Map<number, DynamicBateria>();
@@ -85,22 +78,13 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
   // Create new bateria mutation
   const createBateriaMutation = useMutation({
     mutationFn: async ({ isFinal = false }: { isFinal?: boolean }) => {
-      console.log('=== CRIANDO NOVA BATERIA ===');
-      console.log('Parâmetros:', { modalityId, eventId, isFinal });
-      
-      if (!eventId) {
-        throw new Error('ID do evento é obrigatório');
-      }
-      
-      if (!modalityId) {
-        throw new Error('ID da modalidade é obrigatório');
+      if (!eventId || !modalityId) {
+        throw new Error('ID do evento e modalidade são obrigatórios');
       }
       
       // Get next number
       const regularBaterias = baterias.filter(b => !b.isFinal);
       const nextNumber = isFinal ? 999 : (regularBaterias.length + 1);
-      
-      console.log('Próximo número de bateria:', nextNumber);
       
       // Create a new bateria object (no database insert needed)
       const newBateria: DynamicBateria = {
@@ -112,21 +96,14 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
         atletasCount: 0
       };
       
-      console.log('Nova bateria criada:', newBateria);
       return newBateria;
     },
     onSuccess: (newBateria) => {
-      console.log('=== SUCESSO NA CRIAÇÃO DA BATERIA ===');
-      console.log('Nova bateria:', newBateria);
-      
       queryClient.invalidateQueries({ queryKey: ['dynamic-baterias', modalityId, eventId] });
       setSelectedBateriaId(newBateria.numero);
       toast.success(`${newBateria.isFinal ? 'Bateria Final' : `Bateria ${newBateria.numero}`} criada com sucesso!`);
     },
     onError: (error) => {
-      console.error('=== ERRO NA CRIAÇÃO DA BATERIA ===');
-      console.error('Erro completo:', error);
-      
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao criar bateria';
       toast.error(errorMessage);
     }
@@ -134,25 +111,20 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
 
   // Auto-create first bateria and auto-select when model uses baterias
   useEffect(() => {
-    console.log('useEffect - usesBaterias:', usesBaterias, 'modeloConfig:', !!modeloConfig, 'eventId:', eventId);
-    console.log('useEffect - baterias.length:', baterias.length, 'selectedBateriaId:', selectedBateriaId);
-    console.log('useEffect - isLoadingConfig:', isLoadingConfig, 'isCreating:', createBateriaMutation.isPending);
-    
-    if (usesBaterias && modeloConfig && eventId && !isLoadingConfig && !createBateriaMutation.isPending) {
-      // Se não há baterias, criar a primeira automaticamente
-      if (baterias.length === 0) {
-        console.log('Criando primeira bateria automaticamente');
+    if (usesBaterias && modeloConfig && eventId && !isLoadingConfig) {
+      // Se não há baterias e ainda não criamos a primeira
+      if (baterias.length === 0 && !hasCreatedFirstBateria.current && !createBateriaMutation.isPending) {
+        hasCreatedFirstBateria.current = true;
         createBateriaMutation.mutate({ isFinal: false });
-      } else if (!selectedBateriaId) {
+      } else if (baterias.length > 0 && !selectedBateriaId) {
         // Se há baterias mas nenhuma selecionada, selecionar a primeira regular
         const firstRegularBateria = baterias.find(b => !b.isFinal);
         if (firstRegularBateria) {
-          console.log('Selecionando primeira bateria regular automaticamente:', firstRegularBateria.numero);
           setSelectedBateriaId(firstRegularBateria.numero);
         }
       }
     }
-  }, [baterias, selectedBateriaId, usesBaterias, modeloConfig, eventId, isLoadingConfig]);
+  }, [usesBaterias, modeloConfig, eventId, isLoadingConfig, baterias.length, selectedBateriaId]);
 
   const selectedBateria = baterias.find(b => b.numero === selectedBateriaId);
   const hasFinalBateria = baterias.some(b => b.isFinal);
@@ -170,11 +142,9 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
     isLoading: isLoading || isLoadingConfig,
     setSelectedBateriaId,
     createNewBateria: () => {
-      console.log('=== BOTÃO NOVA BATERIA CLICADO ===');
       createBateriaMutation.mutate({ isFinal: false });
     },
     createFinalBateria: () => {
-      console.log('=== BOTÃO BATERIA FINAL CLICADO ===');
       createBateriaMutation.mutate({ isFinal: true });
     },
     isCreating: createBateriaMutation.isPending
