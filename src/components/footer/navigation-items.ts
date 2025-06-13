@@ -1,5 +1,5 @@
 
-import { Settings, User, Calendar, Medal, ClipboardList, Users, Settings2 } from "lucide-react";
+import { Settings, User, Calendar, ClipboardList, Users, Settings2 } from "lucide-react";
 import { UserRole } from "@/types/auth";
 
 export interface NavigationItem {
@@ -34,18 +34,6 @@ export const getNavigationItems = (userRoles: UserRole[]) => {
 
   // Only add role-specific items if we have valid roles
   if (userRoles && userRoles.length > 0) {
-    // Add athlete-specific items
-    if (userRoles.some(role => role.codigo === "ATL")) {
-      navigationItems.push(
-        {
-          icon: Medal,
-          label: "Minhas Pontuações",
-          path: "/scores",
-          roles: ["ATL"],
-        }
-      );
-    }
-
     // Add organizer-specific items
     if (userRoles.some(role => role.codigo === "ORE")) {
       navigationItems.push({

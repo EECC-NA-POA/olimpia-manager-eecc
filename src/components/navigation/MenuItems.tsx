@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
-import { User, Users, Calendar, Medal, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut } from 'lucide-react';
+import { User, Users, Calendar, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupContent } from '@/components/ui/sidebar';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 import { useAuth } from '@/contexts/AuthContext';
@@ -72,14 +72,6 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
     label: "Minhas Inscrições",
     icon: <ClipboardList className="h-5 w-5" />,
     tooltip: "Minhas Inscrições"
-  });
-  
-  // 5. Pontuações (Scores) - for all roles
-  menuItems.push({
-    path: "/scores",
-    label: "Pontuações",
-    icon: <Medal className="h-5 w-5" />,
-    tooltip: "Pontuações"
   });
   
   // 6. Organizador (Organizer) - FIXED ROUTE
