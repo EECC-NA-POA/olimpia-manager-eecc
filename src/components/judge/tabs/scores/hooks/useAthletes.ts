@@ -9,6 +9,7 @@ export interface Athlete {
   atleta_nome: string;
   tipo_documento: string;
   numero_documento: string;
+  numero_identificador?: string; // Added missing property
   filial_id?: number | null;
   filial_nome?: string | null;
   equipe_id?: number | null; // Changed from string to number to match component expectations
