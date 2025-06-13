@@ -9,8 +9,13 @@ export function useSchemaCreation(campos: CampoModelo[]) {
     campos.forEach(campo => {
       let fieldSchema: z.ZodType;
       
-      // Campos calculados não precisam de validação obrigatória
-      if (campo.tipo_input === 'calculated') {
+      // Campos calculados ou com metadados de cálculo não precisam de validação obrigatória
+      const isCalculatedField = campo.tipo_input === 'calculated' || 
+                               campo.metadados?.tipo_calculo || 
+                               campo.chave_campo.toLowerCase().includes('colocação') ||
+                               campo.chave_campo.toLowerCase().includes('colocacao');
+      
+      if (isCalculatedField) {
         fieldSchema = z.any().optional();
       } else {
         switch (campo.tipo_input) {
@@ -28,11 +33,14 @@ export function useSchemaCreation(campos: CampoModelo[]) {
           case 'select':
             fieldSchema = z.string();
             break;
+          case 'checkbox':
+            fieldSchema = z.boolean().optional();
+            break;
           default:
             fieldSchema = z.any();
         }
         
-        if (!campo.obrigatorio) {
+        if (!campo.obrigatorio || isCalculatedField) {
           fieldSchema = fieldSchema.optional();
         }
       }
