@@ -57,8 +57,8 @@ export function prepareTentativasData(
         pontuacao_id: pontuacaoId,
         chave_campo: campo.chave_campo,
         valor: processedValue,
-        valor_formatado: valorFormatado,
-        ordem_tentativa: 1
+        valor_formatado: valorFormatado
+        // Removido ordem_tentativa pois não existe na tabela
       };
 
       console.log(`Tentativa criada para ${campo.chave_campo}:`, tentativa);
