@@ -2,22 +2,11 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AthletesTable } from './AthletesTable';
-import { DynamicScoringTable } from './DynamicScoringTable';
-import { AthleteFilters } from './AthleteFilters';
 import { BateriaNavigationTabs } from './BateriaNavigationTabs';
 import { BateriaAthleteSelector } from './BateriaAthleteSelector';
-import { useAthletesFiltering } from './hooks/useAthletesFiltering';
-import { useAthletesBranchData } from './hooks/useAthletesBranchData';
-import { useAthletesScoreStatus } from './hooks/useAthletesScoreStatus';
-import { useBateriaAthleteSelection } from '../hooks/useBateriaAthleteSelection';
-import { useModelosModalidade } from '@/hooks/useDynamicScoring';
-import { useDynamicBaterias } from '../hooks/useDynamicBaterias';
-import { useModeloConfiguration } from '../hooks/useModeloConfiguration';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { TabularContentSection } from './TabularContentSection';
+import { useAthletesListTabularLogic } from './hooks/useAthletesListTabularLogic';
 import { Athlete } from '../hooks/useAthletes';
-import { CampoModelo } from '@/types/dynamicScoring';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AthletesListTabularProps {
@@ -39,41 +28,13 @@ export function AthletesListTabular({
 }: AthletesListTabularProps) {
   const isMobile = useIsMobile();
 
-  // Check for dynamic scoring
-  const { data: modelos = [], isLoading: isLoadingModelos } = useModelosModalidade(modalityId);
-  const hasDynamicScoring = modelos.length > 0;
-
-  // Get modelo configuration to check if it uses baterias
-  const { data: modeloConfig, isLoading: isLoadingConfig } = useModeloConfiguration(modalityId);
-
-  // Get campos for the modelo if it exists
-  const { data: campos = [] } = useQuery({
-    queryKey: ['campos-modelo', modelos[0]?.id],
-    queryFn: async () => {
-      if (!modelos[0]?.id) return [];
-      
-      const { data, error } = await supabase
-        .from('campos_modelo')
-        .select('*')
-        .eq('modelo_id', modelos[0].id)
-        .order('ordem_exibicao');
-
-      if (error) throw error;
-      return data as CampoModelo[];
-    },
-    enabled: !!modelos[0]?.id,
-  });
-
-  const usesBaterias = modeloConfig?.parametros?.baterias === true;
-
-  // Bateria management
-  const bateriasHook = useDynamicBaterias({ 
-    modalityId, 
-    eventId: eventId || ''
-  });
-
+  // Use the extracted logic hook
   const {
-    baterias,
+    modelos,
+    isLoadingModelos,
+    isLoadingConfig,
+    hasDynamicScoring,
+    usesBaterias,
     selectedBateriaId,
     selectedBateria,
     regularBaterias,
@@ -82,59 +43,21 @@ export function AthletesListTabular({
     setSelectedBateriaId,
     createNewBateria,
     createFinalBateria,
-    isCreating
-  } = usesBaterias ? bateriasHook : {
-    baterias: [],
-    selectedBateriaId: null,
-    selectedBateria: undefined,
-    regularBaterias: [],
-    finalBateria: undefined,
-    hasFinalBateria: false,
-    setSelectedBateriaId: () => {},
-    createNewBateria: () => {},
-    createFinalBateria: () => {},
-    isCreating: false
-  };
-
-  // Bateria athlete selection
-  const {
+    isCreating,
     selectedAthletes,
-    selectedAthletesList,
     handleAthleteToggle,
     handleSelectAll,
     handleClearAll,
-    getFilteredAthletes
-  } = useBateriaAthleteSelection({
-    athletes: athletes || [],
-    selectedBateriaId
-  });
-
-  // Get branch data for filtering
-  const { availableBranches, availableStates, athletesBranchData } = useAthletesBranchData(athletes || []);
-
-  // Get scores status for all athletes
-  const athleteScores = useAthletesScoreStatus({
-    athletes: athletes || [],
+    availableBranches,
+    availableStates,
+    filters,
+    setFilters,
+    athletesToShow
+  } = useAthletesListTabularLogic({
+    athletes,
     modalityId,
     eventId
   });
-
-  const {
-    filteredAthletes,
-    filters,
-    setFilters,
-    resetFilters
-  } = useAthletesFiltering({
-    athletes: athletes || [],
-    athleteScores,
-    athletesBranchData,
-    availableBranches,
-    availableStates,
-    eventId
-  });
-
-  // Apply bateria filtering
-  const athletesToShow = getFilteredAthletes(filteredAthletes);
 
   if (isLoading || isLoadingModelos || isLoadingConfig) {
     return (
@@ -194,81 +117,24 @@ export function AthletesListTabular({
       )}
 
       {/* Athletes Scoring Section */}
-      <Card>
-        <CardHeader className={isMobile ? 'pb-4' : ''}>
-          <CardTitle className="text-base sm:text-lg">Registro de Pontuações - Modalidade</CardTitle>
-          <div className="text-center text-xs sm:text-sm text-muted-foreground">
-            Mostrando {athletesToShow.length} de {athletes.length} atletas
-            {usesBaterias && selectedBateriaId && selectedAthletes.size > 0 && (
-              <div className="mt-1 text-blue-700">
-                ({selectedAthletes.size} selecionados para a bateria)
-              </div>
-            )}
-            {hasDynamicScoring && modelos[0] && (
-              <div className="mt-2 text-xs bg-green-50 text-green-700 p-2 rounded border">
-                <strong>Sistema de Pontuação Dinâmica Ativo</strong>
-                <div className="mt-1">
-                  Modelo: {modelos[0].descricao || modelos[0].codigo_modelo}
-                </div>
-                <div className="mt-1">
-                  {usesBaterias ? 'Sistema de baterias: Ativo' : 'Sistema de baterias: Inativo'}
-                </div>
-              </div>
-            )}
-            {selectedBateria && (
-              <div className="mt-2 text-xs bg-blue-50 text-blue-700 p-2 rounded border">
-                <strong>
-                  {selectedBateria.isFinal ? 'Bateria Final' : `Bateria ${selectedBateria.numero}`} Selecionada
-                </strong>
-                <div className="mt-1">
-                  {selectedBateria.isFinal 
-                    ? 'Determine os ganhadores finais desta modalidade'
-                    : 'Registre as pontuações para esta bateria'
-                  }
-                </div>
-              </div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className={`space-y-4 ${isMobile ? 'p-3 space-y-4' : 'space-y-6'}`}>
-          <AthleteFilters
-            searchFilter={filters.searchFilter}
-            onSearchFilterChange={(value) => setFilters({ ...filters, searchFilter: value })}
-            filterType={filters.filterType}
-            onFilterTypeChange={(value) => setFilters({ ...filters, filterType: value })}
-            availableBranches={availableBranches.map(branch => branch.name)}
-            availableStates={availableStates}
-            selectedBranch={filters.selectedBranch}
-            onSelectedBranchChange={(value) => setFilters({ ...filters, selectedBranch: value })}
-            selectedState={filters.selectedState}
-            onSelectedStateChange={(value) => setFilters({ ...filters, selectedState: value })}
-            statusFilter={filters.statusFilter}
-            onStatusFilterChange={(value) => setFilters({ ...filters, statusFilter: value })}
-          />
-          
-          <div className={isMobile ? 'overflow-x-auto -mx-3' : ''}>
-            {hasDynamicScoring && modelos[0] && eventId ? (
-              <DynamicScoringTable
-                athletes={athletesToShow}
-                modalityId={modalityId}
-                eventId={eventId}
-                judgeId={judgeId}
-                modelo={modelos[0]}
-                selectedBateriaId={selectedBateriaId}
-              />
-            ) : (
-              <AthletesTable
-                athletes={athletesToShow}
-                modalityId={modalityId}
-                eventId={eventId}
-                judgeId={judgeId}
-                scoreType={scoreType}
-                selectedBateriaId={selectedBateriaId}
-              />
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <TabularContentSection
+        athletesToShow={athletesToShow}
+        totalAthletes={athletes.length}
+        usesBaterias={usesBaterias}
+        selectedBateriaId={selectedBateriaId}
+        selectedAthletesCount={selectedAthletes.size}
+        hasDynamicScoring={hasDynamicScoring}
+        modelos={modelos}
+        selectedBateria={selectedBateria}
+        filters={filters}
+        setFilters={setFilters}
+        availableBranches={availableBranches}
+        availableStates={availableStates}
+        modalityId={modalityId}
+        eventId={eventId}
+        judgeId={judgeId}
+        scoreType={scoreType}
+      />
     </div>
   );
 }
