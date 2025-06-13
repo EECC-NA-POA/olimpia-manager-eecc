@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -125,6 +126,7 @@ export function DynamicScoreForm({
     
     console.log('=== DADOS SEPARADOS (DynamicScoreForm) ===');
     console.log('Form data after separation:', { formData, notes });
+    console.log('Notes will be mapped to observacoes:', notes);
     
     console.log('=== PARÂMETROS DE SUBMISSÃO (DynamicScoreForm) ===');
     const submissionParams = {
@@ -137,7 +139,7 @@ export function DynamicScoreForm({
       bateriaId,
       raia,
       formData,
-      notes,
+      notes: notes || null, // Ensure notes is properly passed
     };
     console.log('Submission params:', submissionParams);
     
