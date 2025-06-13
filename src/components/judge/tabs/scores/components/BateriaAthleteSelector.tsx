@@ -7,96 +7,45 @@ import { Badge } from '@/components/ui/badge';
 import { Users, Search, Check, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Athlete } from '../hooks/useAthletes';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
 
 interface BateriaAthleteSelectorProps {
   athletes: Athlete[];
   selectedBateriaId: number | null;
   modalityId: number;
   eventId: string;
+  onAthleteSelectionChange?: (selectedAthletes: Athlete[]) => void;
 }
 
 export function BateriaAthleteSelector({
   athletes,
   selectedBateriaId,
   modalityId,
-  eventId
+  eventId,
+  onAthleteSelectionChange
 }: BateriaAthleteSelectorProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAthletes, setSelectedAthletes] = useState<Set<string>>(new Set());
   const [isExpanded, setIsExpanded] = useState(false);
-  const queryClient = useQueryClient();
 
-  // Fetch current bateria participants
+  // Reset selection when bateria changes
   useEffect(() => {
     if (selectedBateriaId) {
-      fetchBateriaParticipants();
-    }
-  }, [selectedBateriaId]);
-
-  const fetchBateriaParticipants = async () => {
-    if (!selectedBateriaId) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('atletas_bateria')
-        .select('atleta_id')
-        .eq('numero_bateria', selectedBateriaId)
-        .eq('modalidade_id', modalityId)
-        .eq('evento_id', eventId);
-
-      if (error) throw error;
-
-      const participantIds = new Set(data.map(item => item.atleta_id));
-      setSelectedAthletes(participantIds);
-    } catch (error) {
-      console.error('Error fetching bateria participants:', error);
-    }
-  };
-
-  const saveParticipantsMutation = useMutation({
-    mutationFn: async (athleteIds: string[]) => {
-      if (!selectedBateriaId) throw new Error('No bateria selected');
-
-      // First, remove existing participants
-      const { error: deleteError } = await supabase
-        .from('atletas_bateria')
-        .delete()
-        .eq('numero_bateria', selectedBateriaId)
-        .eq('modalidade_id', modalityId)
-        .eq('evento_id', eventId);
-
-      if (deleteError) throw deleteError;
-
-      // Then, add new participants
-      if (athleteIds.length > 0) {
-        const participantsData = athleteIds.map(athleteId => ({
-          atleta_id: athleteId,
-          numero_bateria: selectedBateriaId,
-          modalidade_id: modalityId,
-          evento_id: eventId
-        }));
-
-        const { error: insertError } = await supabase
-          .from('atletas_bateria')
-          .insert(participantsData);
-
-        if (insertError) throw insertError;
+      setSelectedAthletes(new Set());
+      if (onAthleteSelectionChange) {
+        onAthleteSelectionChange([]);
       }
-
-      return athleteIds;
-    },
-    onSuccess: () => {
-      toast.success('Participantes da bateria salvos com sucesso!');
-      queryClient.invalidateQueries({ queryKey: ['dynamic-baterias'] });
-    },
-    onError: (error) => {
-      console.error('Error saving participants:', error);
-      toast.error('Erro ao salvar participantes da bateria');
     }
-  });
+  }, [selectedBateriaId, onAthleteSelectionChange]);
+
+  // Notify parent component when selection changes
+  useEffect(() => {
+    if (onAthleteSelectionChange) {
+      const selectedAthletesList = athletes.filter(athlete => 
+        selectedAthletes.has(athlete.atleta_id)
+      );
+      onAthleteSelectionChange(selectedAthletesList);
+    }
+  }, [selectedAthletes, athletes, onAthleteSelectionChange]);
 
   const filteredAthletes = athletes.filter(athlete =>
     athlete.atleta_nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -113,10 +62,6 @@ export function BateriaAthleteSelector({
     setSelectedAthletes(newSelected);
   };
 
-  const handleSave = () => {
-    saveParticipantsMutation.mutate(Array.from(selectedAthletes));
-  };
-
   const handleSelectAll = () => {
     setSelectedAthletes(new Set(filteredAthletes.map(a => a.atleta_id)));
   };
@@ -131,7 +76,7 @@ export function BateriaAthleteSelector({
         <CardContent className="text-center py-8">
           <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-muted-foreground">
-            Selecione uma bateria para gerenciar os participantes
+            Selecione uma bateria para escolher os participantes
           </p>
         </CardContent>
       </Card>
@@ -144,7 +89,7 @@ export function BateriaAthleteSelector({
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Participantes da Bateria {selectedBateriaId === 999 ? 'Final' : selectedBateriaId}
+            Selecionar Participantes - Bateria {selectedBateriaId === 999 ? 'Final' : selectedBateriaId}
           </CardTitle>
           <Button
             variant="outline"
@@ -158,6 +103,11 @@ export function BateriaAthleteSelector({
           <Badge variant="secondary">
             {selectedAthletes.size} de {athletes.length} selecionados
           </Badge>
+          {selectedAthletes.size > 0 && (
+            <Badge variant="outline" className="bg-blue-50 text-blue-700">
+              Aparecerão na tabela e grade
+            </Badge>
+          )}
         </div>
       </CardHeader>
       {isExpanded && (
@@ -203,21 +153,26 @@ export function BateriaAthleteSelector({
                       #{athlete.numero_identificador}
                     </div>
                   )}
+                  {athlete.filial_nome && (
+                    <div className="text-xs text-muted-foreground">
+                      {athlete.filial_nome}
+                    </div>
+                  )}
                 </div>
+                {selectedAthletes.has(athlete.atleta_id) && (
+                  <Badge variant="default" size="sm">
+                    Selecionado
+                  </Badge>
+                )}
               </div>
             ))}
           </div>
 
-          {/* Save button */}
-          <div className="flex justify-end">
-            <Button
-              onClick={handleSave}
-              disabled={saveParticipantsMutation.isPending}
-              className="min-w-32"
-            >
-              {saveParticipantsMutation.isPending ? 'Salvando...' : 'Salvar Participantes'}
-            </Button>
-          </div>
+          {filteredAthletes.length === 0 && (
+            <div className="text-center py-4 text-muted-foreground">
+              Nenhum atleta encontrado com o termo "{searchTerm}"
+            </div>
+          )}
         </CardContent>
       )}
     </Card>

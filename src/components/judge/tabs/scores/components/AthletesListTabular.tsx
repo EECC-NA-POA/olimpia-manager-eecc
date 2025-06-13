@@ -37,6 +37,7 @@ export function AthletesListTabular({
   scoreType = 'pontos'
 }: AthletesListTabularProps) {
   const isMobile = useIsMobile();
+  const [selectedBateriaAthletes, setSelectedBateriaAthletes] = useState<Athlete[]>([]);
 
   // Check for dynamic scoring
   const { data: modelos = [], isLoading: isLoadingModelos } = useModelosModalidade(modalityId);
@@ -121,6 +122,17 @@ export function AthletesListTabular({
     eventId
   });
 
+  // Filter athletes based on bateria selection
+  const athletesToShow = usesBaterias && selectedBateriaId && selectedBateriaAthletes.length > 0 
+    ? filteredAthletes.filter(athlete => 
+        selectedBateriaAthletes.some(selected => selected.atleta_id === athlete.atleta_id)
+      )
+    : filteredAthletes;
+
+  const handleAthleteSelectionChange = (selectedAthletes: Athlete[]) => {
+    setSelectedBateriaAthletes(selectedAthletes);
+  };
+
   if (isLoading || isLoadingModelos || isLoadingConfig) {
     return (
       <Card>
@@ -173,6 +185,7 @@ export function AthletesListTabular({
           selectedBateriaId={selectedBateriaId}
           modalityId={modalityId}
           eventId={eventId}
+          onAthleteSelectionChange={handleAthleteSelectionChange}
         />
       )}
 
@@ -181,7 +194,12 @@ export function AthletesListTabular({
         <CardHeader className={isMobile ? 'pb-4' : ''}>
           <CardTitle className="text-base sm:text-lg">Registro de Pontuações - Modalidade</CardTitle>
           <div className="text-center text-xs sm:text-sm text-muted-foreground">
-            Mostrando {filteredAthletes.length} de {athletes.length} atletas
+            Mostrando {athletesToShow.length} de {athletes.length} atletas
+            {usesBaterias && selectedBateriaId && selectedBateriaAthletes.length > 0 && (
+              <div className="mt-1 text-blue-700">
+                ({selectedBateriaAthletes.length} selecionados para a bateria)
+              </div>
+            )}
             {hasDynamicScoring && modelos[0] && (
               <div className="mt-2 text-xs bg-green-50 text-green-700 p-2 rounded border">
                 <strong>Sistema de Pontuação Dinâmica Ativo</strong>
@@ -227,7 +245,7 @@ export function AthletesListTabular({
           <div className={isMobile ? 'overflow-x-auto -mx-3' : ''}>
             {hasDynamicScoring && modelos[0] && eventId ? (
               <DynamicScoringTable
-                athletes={filteredAthletes}
+                athletes={athletesToShow}
                 modalityId={modalityId}
                 eventId={eventId}
                 judgeId={judgeId}
@@ -236,7 +254,7 @@ export function AthletesListTabular({
               />
             ) : (
               <AthletesTable
-                athletes={filteredAthletes}
+                athletes={athletesToShow}
                 modalityId={modalityId}
                 eventId={eventId}
                 judgeId={judgeId}
