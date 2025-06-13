@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -122,10 +121,13 @@ export function DynamicScoringTable({
       
       console.log('Raw fetched scores:', data);
       
-      // Transform data
+      // Transform data to include both valor and valor_formatado
       const transformedData = (data || []).map(pontuacao => {
         const tentativas = pontuacao.tentativas_pontuacao?.reduce((acc: any, tentativa: any) => {
-          acc[tentativa.chave_campo] = tentativa.valor;
+          acc[tentativa.chave_campo] = {
+            valor: tentativa.valor,
+            valor_formatado: tentativa.valor_formatado || tentativa.valor
+          };
           return acc;
         }, {}) || {};
         
@@ -148,7 +150,17 @@ export function DynamicScoringTable({
     console.log('Athlete ID:', athleteId);
     const existingScore = existingScores.find(s => s.atleta_id === athleteId);
     console.log('Existing score for athlete:', existingScore);
-    startEditing(athleteId, existingScore, campos);
+    
+    // Initialize edit values with valor_formatado for display
+    const initialValues: Record<string, any> = {};
+    if (existingScore?.tentativas) {
+      Object.keys(existingScore.tentativas).forEach(fieldKey => {
+        const tentativa = existingScore.tentativas[fieldKey];
+        initialValues[fieldKey] = tentativa.valor_formatado || tentativa.valor || '';
+      });
+    }
+    
+    startEditing(athleteId, { tentativas: initialValues }, campos);
   };
 
   const handleSave = async (athleteId: string) => {
@@ -195,9 +207,16 @@ export function DynamicScoringTable({
     }
     
     const existingScore = existingScores.find(s => s.atleta_id === athleteId);
-    const existingValue = existingScore?.tentativas?.[fieldKey] || '';
+    const tentativa = existingScore?.tentativas?.[fieldKey];
+    const existingValue = tentativa?.valor_formatado || tentativa?.valor || '';
     console.log(`Getting field value for ${athleteId}.${fieldKey}: ${existingValue} (from existing scores)`);
     return existingValue;
+  };
+
+  const getDisplayValue = (athleteId: string, fieldKey: string) => {
+    const existingScore = existingScores.find(s => s.atleta_id === athleteId);
+    const tentativa = existingScore?.tentativas?.[fieldKey];
+    return tentativa?.valor_formatado || tentativa?.valor || '-';
   };
 
   const hasExistingScore = (athleteId: string) => {
@@ -334,7 +353,7 @@ export function DynamicScoringTable({
                           />
                         ) : (
                           <span className="text-sm">
-                            {getFieldValue(athlete.atleta_id, campo.chave_campo) || '-'}
+                            {getDisplayValue(athlete.atleta_id, campo.chave_campo)}
                           </span>
                         )}
                       </TableCell>
