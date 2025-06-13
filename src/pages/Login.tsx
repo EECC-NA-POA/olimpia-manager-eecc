@@ -47,29 +47,21 @@ export default function Login() {
           </div>
         </div>
 
-        <Tabs defaultValue="register" className="w-full max-w-2xl mx-auto">
+        <Tabs defaultValue="login" className="w-full max-w-2xl mx-auto">
           <TabsList className="grid w-full grid-cols-2 bg-white/90 backdrop-blur-sm border border-white/20">
-            <TabsTrigger 
-              value="register"
-              className="data-[state=active]:bg-olimpics-green-primary data-[state=active]:text-white text-olimpics-green-primary hover:bg-olimpics-green-primary/10"
-            >
-              Cadastre-se
-            </TabsTrigger>
             <TabsTrigger 
               value="login"
               className="data-[state=active]:bg-olimpics-green-primary data-[state=active]:text-white text-olimpics-green-primary hover:bg-olimpics-green-primary/10"
             >
               Login
             </TabsTrigger>
+            <TabsTrigger 
+              value="register"
+              className="data-[state=active]:bg-olimpics-green-primary data-[state=active]:text-white text-olimpics-green-primary hover:bg-olimpics-green-primary/10"
+            >
+              Cadastre-se
+            </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="register" className="space-y-4">
-            <Card className="bg-white/95 backdrop-blur-sm border border-white/20 shadow-lg">
-              <CardContent className="pt-6">
-                <SignUpForm />
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="login" className="space-y-4">
             <Card className="bg-white/95 backdrop-blur-sm border border-white/20 shadow-lg">
@@ -78,6 +70,14 @@ export default function Login() {
               </CardContent>
             </Card>
             <PhilosopherQuotes />
+          </TabsContent>
+
+          <TabsContent value="register" className="space-y-4">
+            <Card className="bg-white/95 backdrop-blur-sm border border-white/20 shadow-lg">
+              <CardContent className="pt-6">
+                <SignUpForm />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
