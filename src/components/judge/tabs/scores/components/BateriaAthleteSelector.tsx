@@ -160,7 +160,7 @@ export function BateriaAthleteSelector({
                   )}
                 </div>
                 {selectedAthletes.has(athlete.atleta_id) && (
-                  <Badge variant="default" size="sm">
+                  <Badge variant="default">
                     Selecionado
                   </Badge>
                 )}
