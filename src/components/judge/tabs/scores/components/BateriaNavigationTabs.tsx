@@ -97,7 +97,7 @@ export function BateriaNavigationTabs({
                   variant="outline"
                   size="sm"
                   onClick={onCreateFinalBateria}
-                  disabled={isCreating || regularBaterias.length === 0}
+                  disabled={isCreating}
                   className="border-dashed border-gold text-gold"
                 >
                   <Trophy className="h-4 w-4 mr-1" />
@@ -105,11 +105,6 @@ export function BateriaNavigationTabs({
                 </Button>
               )}
             </div>
-            {regularBaterias.length === 0 && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Crie pelo menos uma bateria regular antes da final
-              </p>
-            )}
           </div>
 
           {/* Current Selection Info */}
