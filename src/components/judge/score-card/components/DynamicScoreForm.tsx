@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -108,15 +107,26 @@ export function DynamicScoreForm({
   });
 
   const handleSubmit = async (data: any) => {
-    console.log('=== FORMULÁRIO SUBMETIDO ===');
+    console.log('=== FORMULÁRIO SUBMETIDO (DynamicScoreForm) ===');
     console.log('Form data submitted:', data);
     
-    const { notes, ...formData } = data;
+    // Extract notes but keep everything else in formData
+    const { notes, ...formDataFields } = data;
     
-    console.log('=== DADOS SEPARADOS ===');
+    // Ensure we include the raia in formData if it exists
+    const formData = {
+      ...formDataFields
+    };
+
+    // Add raia to formData if available
+    if (raia !== undefined) {
+      formData.raia = raia;
+    }
+    
+    console.log('=== DADOS SEPARADOS (DynamicScoreForm) ===');
     console.log('Form data after separation:', { formData, notes });
     
-    console.log('=== PARÂMETROS DE SUBMISSÃO ===');
+    console.log('=== PARÂMETROS DE SUBMISSÃO (DynamicScoreForm) ===');
     const submissionParams = {
       eventId,
       modalityId,
@@ -132,13 +142,13 @@ export function DynamicScoreForm({
     console.log('Submission params:', submissionParams);
     
     try {
-      console.log('=== CHAMANDO MUTAÇÃO ===');
+      console.log('=== CHAMANDO MUTAÇÃO (DynamicScoreForm) ===');
       await submissionMutation.mutateAsync(submissionParams);
       
-      console.log('=== MUTAÇÃO EXECUTADA COM SUCESSO ===');
+      console.log('=== MUTAÇÃO EXECUTADA COM SUCESSO (DynamicScoreForm) ===');
       onSuccess?.();
     } catch (error) {
-      console.error('=== ERRO NA SUBMISSÃO DO FORMULÁRIO ===');
+      console.error('=== ERRO NA SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm) ===');
       console.error('Error submitting dynamic score:', error);
     }
   };
