@@ -19,7 +19,7 @@ export function useDynamicScoringSubmission() {
     mutationFn: async (data: ExtendedDynamicSubmissionData) => {
       console.log('=== INICIANDO SUBMISSÃO DE PONTUAÇÃO DINÂMICA ===');
       console.log('Dynamic scoring submission data:', data);
-      console.log('Observacoes received:', data.observacoes);
+      console.log('Observacoes received in mutation:', data.observacoes);
 
       try {
         // Buscar campos do modelo para determinar o campo principal
@@ -42,14 +42,15 @@ export function useDynamicScoringSubmission() {
         const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
         console.log('Extracted raia:', raia);
 
-        // Prepare enhanced data with raia and observacoes
+        // Prepare enhanced data with raia and observacoes - ensure observacoes is preserved
         const enhancedData = {
           ...data,
           raia: raia,
-          observacoes: data.observacoes || null
+          observacoes: data.observacoes // Keep the observacoes from the submission data
         };
 
-        console.log('Enhanced data with observacoes:', enhancedData);
+        console.log('Enhanced data with observacoes for pontuacao:', enhancedData);
+        console.log('Final observacoes value:', enhancedData.observacoes);
 
         // Upsert pontuacao
         const pontuacao = await upsertPontuacao(enhancedData, valorPontuacao);

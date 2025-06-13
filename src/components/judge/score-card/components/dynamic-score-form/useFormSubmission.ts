@@ -1,3 +1,4 @@
+
 import { useDynamicScoringSubmission } from '@/hooks/useDynamicScoringSubmission';
 
 interface UseFormSubmissionProps {
@@ -55,7 +56,7 @@ export function useFormSubmission({
       modeloId,
       formData,
       bateriaId,
-      // Pass notes directly as observacoes to match the expected parameter name
+      // Ensure observacoes is properly passed with the notes value
       observacoes: notes || null,
     };
     console.log('Submission params:', submissionParams);
@@ -69,6 +70,7 @@ export function useFormSubmission({
     } catch (error) {
       console.error('=== ERRO NA SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm) ===');
       console.error('Error submitting dynamic score:', error);
+      throw error;
     }
   };
 
