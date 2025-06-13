@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -302,6 +301,7 @@ export function DynamicScoringTable({
                             campo={campo}
                             value={getFieldValue(athlete.atleta_id, campo.chave_campo)}
                             onChange={(value) => updateFieldValue(athlete.atleta_id, campo.chave_campo, value)}
+                            selectedBateriaId={selectedBateriaId}
                           />
                         ) : (
                           <span className="text-sm">

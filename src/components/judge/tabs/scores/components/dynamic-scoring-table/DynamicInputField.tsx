@@ -9,7 +9,7 @@ interface DynamicInputFieldProps {
   campo: CampoModelo;
   athleteId: string;
   value: string | number;
-  onChange: (athleteId: string, fieldKey: string, value: string | number) => void;
+  onChange: (value: string | number) => void;
   selectedBateriaId?: number | null;
 }
 
@@ -52,7 +52,7 @@ export function DynamicInputField({
         <Input
           type="number"
           value={value}
-          onChange={(e) => onChange(athleteId, campo.chave_campo, parseFloat(e.target.value) || 0)}
+          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
           placeholder={`${campo.metadados?.min || 0} - ${campo.metadados?.max || 100}`}
           min={campo.metadados?.min}
           max={campo.metadados?.max}
@@ -66,7 +66,7 @@ export function DynamicInputField({
         <Input
           type="number"
           value={value}
-          onChange={(e) => onChange(athleteId, campo.chave_campo, parseInt(e.target.value) || 0)}
+          onChange={(e) => onChange(parseInt(e.target.value) || 0)}
           placeholder={`${campo.metadados?.min || 0} - ${campo.metadados?.max || 100}`}
           min={campo.metadados?.min}
           max={campo.metadados?.max}
@@ -83,7 +83,7 @@ export function DynamicInputField({
             campo={campo}
             form={null as any}
             value={value as string}
-            onChange={(newValue) => onChange(athleteId, campo.chave_campo, newValue)}
+            onChange={(newValue) => onChange(newValue)}
           />
         );
       }
@@ -91,7 +91,7 @@ export function DynamicInputField({
         <Input
           type="text"
           value={value}
-          onChange={(e) => onChange(athleteId, campo.chave_campo, e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           placeholder={campo.rotulo_campo}
           className="w-full"
         />
@@ -101,7 +101,7 @@ export function DynamicInputField({
       return (
         <select
           value={value}
-          onChange={(e) => onChange(athleteId, campo.chave_campo, e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           className="w-full h-10 px-3 py-2 border border-input rounded-md bg-background text-sm"
         >
           <option value="">Selecione...</option>
@@ -118,7 +118,7 @@ export function DynamicInputField({
         <Input
           type="text"
           value={value}
-          onChange={(e) => onChange(athleteId, campo.chave_campo, e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           placeholder={campo.rotulo_campo}
           className="w-full"
         />
