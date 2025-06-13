@@ -47,24 +47,32 @@ export async function upsertPontuacao(
   return upsertedScore;
 }
 
-export async function insertTentativas(tentativas: any[]) {
+export async function insertTentativas(tentativas: any[], pontuacaoId: number) {
   if (tentativas.length > 0) {
     console.log('=== INSERINDO/ATUALIZANDO TENTATIVAS ===');
-    console.log('Tentativas to upsert:', tentativas);
+    console.log('Tentativas to insert:', tentativas);
     
-    // Use upsert para tentativas também para evitar duplicatas
-    const { error: tentativasError } = await supabase
+    // First, delete existing tentativas for this pontuacao_id
+    const { error: deleteError } = await supabase
       .from('tentativas_pontuacao')
-      .upsert(tentativas, {
-        onConflict: 'pontuacao_id,chave_campo',
-        ignoreDuplicates: false
-      });
+      .delete()
+      .eq('pontuacao_id', pontuacaoId);
 
-    if (tentativasError) {
-      console.error('Error upserting tentativas:', tentativasError);
-      throw tentativasError;
+    if (deleteError) {
+      console.error('Error deleting existing tentativas:', deleteError);
+      throw deleteError;
     }
 
-    console.log('=== TENTATIVAS CRIADAS/ATUALIZADAS COM SUCESSO ===');
+    // Then insert new tentativas
+    const { error: insertError } = await supabase
+      .from('tentativas_pontuacao')
+      .insert(tentativas);
+
+    if (insertError) {
+      console.error('Error inserting tentativas:', insertError);
+      throw insertError;
+    }
+
+    console.log('=== TENTATIVAS CRIADAS COM SUCESSO ===');
   }
 }

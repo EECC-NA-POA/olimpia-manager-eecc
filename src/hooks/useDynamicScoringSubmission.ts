@@ -42,7 +42,7 @@ export function useDynamicScoringSubmission() {
         console.log('=== INSERINDO TENTATIVAS ===');
         console.log('Tentativas a serem inseridas:', tentativas);
 
-        await insertTentativas(tentativas);
+        await insertTentativas(tentativas, pontuacao.id);
 
         console.log('=== SUBMISSÃO CONCLUÍDA COM SUCESSO ===');
         return pontuacao;
@@ -64,7 +64,7 @@ export function useDynamicScoringSubmission() {
         queryKey: ['modality-scores', variables.modalityId] 
       });
       queryClient.invalidateQueries({ 
-        queryKey: ['athlete-dynamic-scores', variables.modalityId, variables.eventId] 
+        queryKey: ['dynamic-scores', variables.modalityId, variables.eventId, variables.bateriaId] 
       });
       
       toast.success('Pontuação registrada com sucesso!');
