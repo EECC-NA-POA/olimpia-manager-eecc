@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { Athlete } from '../hooks/useAthletes';
 import { ScoreTableHeader } from './ScoreTableHeader';
 import { ScoreEntryRow } from './ScoreEntryRow';
+import { AthleteNotesDialog } from './AthleteNotesDialog';
 import { useScoreEntries } from './hooks/useScoreEntries';
 import { useScoreSubmission } from './hooks/useScoreSubmission';
 
@@ -31,6 +32,9 @@ export function AthletesTable({
   modalityRule,
   selectedBateriaId
 }: AthletesTableProps) {
+  const [notesDialogOpen, setNotesDialogOpen] = useState(false);
+  const [selectedAthleteForNotes, setSelectedAthleteForNotes] = useState<Athlete | null>(null);
+
   const {
     scoreEntries,
     startEditing,
@@ -98,41 +102,67 @@ export function AthletesTable({
     }
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="border rounded-md">
-        <Table>
-          <ScoreTableHeader scoreType={scoreType} />
-          <TableBody>
-            {athletes.map((athlete) => {
-              const existingScore = existingScores.find(s => s.atleta_id === athlete.atleta_id);
-              const entry = scoreEntries[athlete.atleta_id];
+  const handleOpenNotesDialog = (athlete: Athlete) => {
+    setSelectedAthleteForNotes(athlete);
+    setNotesDialogOpen(true);
+  };
 
-              return (
-                <ScoreEntryRow
-                  key={athlete.atleta_id}
-                  athlete={athlete}
-                  existingScore={existingScore}
-                  scoreEntry={entry}
-                  scoreType={scoreType}
-                  isSubmitting={submitScoreMutation.isPending}
-                  onStartEditing={handleStartEditing}
-                  onCancelEditing={cancelEditing}
-                  onSaveScore={handleSaveScore}
-                  onUpdateEntry={updateEntry}
-                  formatScoreValue={formatScoreValue}
-                />
-              );
-            })}
-          </TableBody>
-        </Table>
+  const getAthleteNotes = (athleteId: string) => {
+    const score = existingScores.find(s => s.atleta_id === athleteId);
+    return score?.observacoes || '';
+  };
+
+  return (
+    <>
+      <div className="space-y-4">
+        <div className="border rounded-md">
+          <Table>
+            <ScoreTableHeader scoreType={scoreType} showNotesColumn />
+            <TableBody>
+              {athletes.map((athlete) => {
+                const existingScore = existingScores.find(s => s.atleta_id === athlete.atleta_id);
+                const entry = scoreEntries[athlete.atleta_id];
+
+                return (
+                  <ScoreEntryRow
+                    key={athlete.atleta_id}
+                    athlete={athlete}
+                    existingScore={existingScore}
+                    scoreEntry={entry}
+                    scoreType={scoreType}
+                    isSubmitting={submitScoreMutation.isPending}
+                    onStartEditing={handleStartEditing}
+                    onCancelEditing={cancelEditing}
+                    onSaveScore={handleSaveScore}
+                    onUpdateEntry={updateEntry}
+                    onOpenNotesDialog={handleOpenNotesDialog}
+                    formatScoreValue={formatScoreValue}
+                  />
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+
+        {athletes.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Nenhum atleta inscrito nesta modalidade</p>
+          </div>
+        )}
       </div>
 
-      {athletes.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">Nenhum atleta inscrito nesta modalidade</p>
-        </div>
+      {/* Notes Dialog */}
+      {selectedAthleteForNotes && (
+        <AthleteNotesDialog
+          athleteId={selectedAthleteForNotes.atleta_id}
+          athleteName={selectedAthleteForNotes.atleta_nome}
+          modalityId={modalityId}
+          eventId={eventId!}
+          currentNotes={getAthleteNotes(selectedAthleteForNotes.atleta_id)}
+          open={notesDialogOpen}
+          onOpenChange={setNotesDialogOpen}
+        />
       )}
-    </div>
+    </>
   );
 }

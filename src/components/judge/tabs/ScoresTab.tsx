@@ -1,12 +1,10 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { LayoutGrid, Table } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/lib/supabase';
-import { AthletesList } from './scores/components/AthletesList';
 import { AthletesListTabular } from './scores/components/AthletesListTabular';
 import { useAthletes } from './scores/hooks/useAthletes';
 import { useModalityWithModelo } from './scores/hooks/useModalityWithModelo';
@@ -19,15 +17,7 @@ interface ScoresTabProps {
 
 export function ScoresTab({ userId, eventId }: ScoresTabProps) {
   const [selectedModalityId, setSelectedModalityId] = useState<number | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table'); // Changed default to 'table'
   const isMobile = useIsMobile();
-
-  // On mobile, force table view for better usability (changed from grid to table)
-  React.useEffect(() => {
-    if (isMobile && viewMode === 'grid') {
-      setViewMode('table');
-    }
-  }, [isMobile, viewMode]);
 
   // Fetch available modalities for this event
   const { data: modalities, isLoading: isLoadingModalities } = useQuery({
@@ -116,52 +106,27 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
           <CardTitle className="text-base sm:text-lg">Selecionar Modalidade</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className={`flex ${isMobile ? 'flex-col' : 'flex-col sm:flex-row'} gap-4`}>
-            <div className="flex-1">
-              <Select
-                value={selectedModalityId?.toString() || ''}
-                onValueChange={(value) => setSelectedModalityId(Number(value))}
-              >
-                <SelectTrigger className="h-10 text-sm">
-                  <SelectValue placeholder="Selecione uma modalidade" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[200px] overflow-y-auto">
-                  {modalities.map((modality) => (
-                    <SelectItem key={modality.id} value={modality.id.toString()}>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{modality.nome}</span>
-                        {modality.categoria && (
-                          <span className="text-xs text-muted-foreground">{modality.categoria}</span>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {!isMobile && (
-              <div className="flex gap-2">
-                <Button
-                  variant={viewMode === 'table' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('table')}
-                  className="flex items-center gap-2"
-                >
-                  <Table className="h-4 w-4" />
-                  <span className="hidden sm:inline">Tabela</span>
-                </Button>
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className="flex items-center gap-2"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                  <span className="hidden sm:inline">Grade</span>
-                </Button>
-              </div>
-            )}
+          <div className="flex-1">
+            <Select
+              value={selectedModalityId?.toString() || ''}
+              onValueChange={(value) => setSelectedModalityId(Number(value))}
+            >
+              <SelectTrigger className="h-10 text-sm">
+                <SelectValue placeholder="Selecione uma modalidade" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[200px] overflow-y-auto">
+                {modalities.map((modality) => (
+                  <SelectItem key={modality.id} value={modality.id.toString()}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{modality.nome}</span>
+                      {modality.categoria && (
+                        <span className="text-xs text-muted-foreground">{modality.categoria}</span>
+                      )}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Show modality information */}
@@ -230,26 +195,14 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
             </CardContent>
           </Card>
         ) : (
-          viewMode === 'table' ? (
-            <AthletesListTabular
-              athletes={athletes}
-              isLoading={isLoadingAthletes}
-              modalityId={selectedModalityId}
-              eventId={eventId}
-              judgeId={userId}
-              scoreType={mappedScoreType}
-            />
-          ) : (
-            <AthletesList
-              athletes={athletes}
-              isLoading={isLoadingAthletes}
-              modalityId={selectedModalityId}
-              eventId={eventId}
-              judgeId={userId}
-              scoreType={mappedScoreType}
-              modalityRule={modalityRule}
-            />
-          )
+          <AthletesListTabular
+            athletes={athletes}
+            isLoading={isLoadingAthletes}
+            modalityId={selectedModalityId}
+            eventId={eventId}
+            judgeId={userId}
+            scoreType={mappedScoreType}
+          />
         )
       )}
     </div>
