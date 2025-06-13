@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
-import { Athlete } from '../../../hooks/useAthletes';
+import { Athlete } from '../../hooks/useAthletes';
 import { CampoModelo } from '@/types/dynamicScoring';
 import { DynamicInputField } from './DynamicInputField';
 import { AthleteStatusCell } from './AthleteStatusCell';
