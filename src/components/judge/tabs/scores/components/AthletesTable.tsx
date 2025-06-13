@@ -77,29 +77,50 @@ export function AthletesTable({
     enabled: !!eventId && athletes.length > 0,
   });
 
-  // Filter athletes based on bateria selection
-  const filteredAthletes = React.useMemo(() => {
-    if (!selectedBateriaId) {
-      return athletes;
+  // Filter and sort athletes based on bateria selection and scores
+  const filteredAndSortedAthletes = React.useMemo(() => {
+    let filtered = athletes;
+    
+    if (selectedBateriaId) {
+      // For bateria system, only show athletes who have scores in this bateria
+      // OR athletes who don't have any scores yet (so they can be scored for this bateria)
+      filtered = athletes.filter(athlete => {
+        const hasScoreInThisBateria = existingScores.some(score => 
+          score.atleta_id === athlete.atleta_id && score.numero_bateria === selectedBateriaId
+        );
+        
+        const hasScoreInAnyBateria = existingScores.some(score => 
+          score.atleta_id === athlete.atleta_id
+        );
+
+        // Show athlete if they have a score in this bateria OR they don't have any scores yet
+        return hasScoreInThisBateria || !hasScoreInAnyBateria;
+      });
     }
 
-    // For bateria system, only show athletes who have scores in this bateria
-    // OR athletes who don't have any scores yet (so they can be scored for this bateria)
-    return athletes.filter(athlete => {
-      const hasScoreInThisBateria = existingScores.some(score => 
-        score.atleta_id === athlete.atleta_id && score.numero_bateria === selectedBateriaId
-      );
-      
-      const hasScoreInAnyBateria = existingScores.some(score => 
-        score.atleta_id === athlete.atleta_id
-      );
+    // Sort athletes: scored ones first, then alphabetically
+    const scoredAthletes = filtered.filter(athlete => 
+      existingScores.some(score => score.atleta_id === athlete.atleta_id)
+    );
+    
+    const unscoredAthletes = filtered.filter(athlete => 
+      !existingScores.some(score => score.atleta_id === athlete.atleta_id)
+    );
 
-      // Show athlete if they have a score in this bateria OR they don't have any scores yet
-      return hasScoreInThisBateria || !hasScoreInAnyBateria;
-    });
+    // Sort each group alphabetically by name
+    scoredAthletes.sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome));
+    unscoredAthletes.sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome));
+
+    // If there are scores in this bateria, put scored athletes first
+    if (scoredAthletes.length > 0) {
+      return [...scoredAthletes, ...unscoredAthletes];
+    } else {
+      // If no scores yet, just return alphabetically sorted
+      return [...unscoredAthletes];
+    }
   }, [athletes, selectedBateriaId, existingScores]);
 
-  console.log('Filtered athletes for bateria', selectedBateriaId, ':', filteredAthletes.length);
+  console.log('Filtered athletes for bateria', selectedBateriaId, ':', filteredAndSortedAthletes.length);
 
   const handleStartEditing = (athleteId: string) => {
     startEditing(athleteId, existingScores);
@@ -144,7 +165,7 @@ export function AthletesTable({
           <Table>
             <ScoreTableHeader scoreType={scoreType} />
             <TableBody>
-              {filteredAthletes.map((athlete) => {
+              {filteredAndSortedAthletes.map((athlete) => {
                 const existingScore = existingScores.find(s => s.atleta_id === athlete.atleta_id);
                 const entry = scoreEntries[athlete.atleta_id];
 
@@ -170,7 +191,7 @@ export function AthletesTable({
           </Table>
         </div>
 
-        {filteredAthletes.length === 0 && (
+        {filteredAndSortedAthletes.length === 0 && (
           <div className="text-center py-8">
             <p className="text-muted-foreground">
               {selectedBateriaId 
