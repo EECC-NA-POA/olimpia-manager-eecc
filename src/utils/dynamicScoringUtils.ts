@@ -1,219 +1,55 @@
 
 import { CampoModelo } from '@/types/dynamicScoring';
 
-/**
- * Campos que são configurações do modelo, não dados de pontuação por atleta
- */
-export const CONFIG_FIELD_KEYS = [
-  'usar_baterias',
-  'configuracao_pontuacao',
-  'pontuacao_configuracao',
-  'configuracao_de_pontuacao',
-  'config'
-];
+export function filterScoringFields(campos: CampoModelo[]): CampoModelo[] {
+  return campos.filter(campo => 
+    !['configuracao', 'config'].includes(campo.categoria?.toLowerCase() || '')
+  );
+}
 
-/**
- * Tipos de input que geralmente são configurações
- */
-export const CONFIG_INPUT_TYPES = [
-  'checkbox'
-];
+export function filterCalculatedFields(campos: CampoModelo[]): CampoModelo[] {
+  return campos.filter(campo => campo.tipo_input === 'calculated');
+}
 
-/**
- * Verifica se um campo é de configuração do modelo
- */
-export function isConfigurationField(campo: CampoModelo): boolean {
-  const chaveNormalizada = campo.chave_campo.toLowerCase();
-  const rotuloNormalizado = campo.rotulo_campo.toLowerCase();
+export function filterManualFields(campos: CampoModelo[]): CampoModelo[] {
+  return campos.filter(campo => 
+    campo.tipo_input !== 'calculated' && 
+    !['configuracao', 'config'].includes(campo.categoria?.toLowerCase() || '')
+  );
+}
+
+// Esta função agora aceita a configuração do modelo em vez de apenas campos
+export function modelUsesBaterias(modeloConfig?: { parametros?: { baterias?: boolean } }): boolean {
+  console.log('Verificando se modelo usa baterias. Config recebida:', modeloConfig);
   
-  // PRIMEIRA PRIORIDADE: Verificar explicitamente por "Usar Baterias" - este campo NUNCA deve aparecer na tabela
-  if (rotuloNormalizado === 'usar baterias' || 
-      chaveNormalizada === 'usar_baterias' ||
-      rotuloNormalizado.includes('usar baterias') ||
-      chaveNormalizada.includes('usar_baterias') ||
-      rotuloNormalizado === 'usar bateria' ||
-      chaveNormalizada === 'usar_bateria') {
-    console.log(`Campo ${campo.chave_campo} identificado como configuração "Usar Baterias" - será filtrado`);
-    return true;
-  }
-  
-  // SEGUNDA PRIORIDADE: Verificar por chave do campo (case insensitive) - mais restritivo
-  if (CONFIG_FIELD_KEYS.some(key => chaveNormalizada === key || chaveNormalizada.includes(`_${key}`) || chaveNormalizada.includes(`${key}_`))) {
-    console.log(`Campo ${campo.chave_campo} identificado como configuração por chave`);
-    return true;
-  }
-  
-  // TERCEIRA PRIORIDADE: Verificar por rótulo do campo - apenas configurações explícitas
-  if (rotuloNormalizado === 'configuração' || 
-      rotuloNormalizado === 'config' ||
-      rotuloNormalizado === 'configuração de pontuação' ||
-      rotuloNormalizado.startsWith('usar ') ||
-      rotuloNormalizado.startsWith('configurar ')) {
-    console.log(`Campo ${campo.chave_campo} identificado como configuração por rótulo`);
-    return true;
-  }
-  
-  // QUARTA PRIORIDADE: Verificar por tipo de input e metadados específicos para baterias
-  if (campo.tipo_input === 'checkbox' && 
-      (campo.metadados?.baterias === true || 
-       chaveNormalizada.includes('usar_baterias') ||
-       rotuloNormalizado.includes('usar baterias'))) {
-    console.log(`Campo ${campo.chave_campo} identificado como configuração de bateria`);
-    return true;
-  }
-  
-  // Não filtrar campos importantes como colocação e bateria (apenas de exibição)
-  const importantFields = ['colocacao', 'bateria', 'numero_bateria', 'placement', 'rank', 'raia'];
-  if (importantFields.some(field => chaveNormalizada.includes(field))) {
-    console.log(`Campo ${campo.chave_campo} identificado como importante - não será filtrado`);
+  if (!modeloConfig?.parametros) {
+    console.log('Sem configuração de parâmetros, retornando false');
     return false;
   }
   
-  return false;
-}
-
-/**
- * Verifica se um campo é calculado (colocação, ranking, etc.)
- */
-export function isCalculatedField(campo: CampoModelo): boolean {
-  return campo.tipo_input === 'calculated';
-}
-
-/**
- * Filtra campos removendo configurações, mantendo apenas campos de pontuação
- */
-export function filterScoringFields(campos: CampoModelo[]): CampoModelo[] {
-  const filtered = campos.filter(campo => {
-    const isConfig = isConfigurationField(campo);
-    console.log(`Campo ${campo.chave_campo} (${campo.rotulo_campo}): isConfiguration=${isConfig}`);
-    return !isConfig;
-  });
-  
-  console.log('Filtragem de campos de pontuação:');
-  console.log('- Campos originais:', campos.map(c => `${c.rotulo_campo} (${c.chave_campo})`));
-  console.log('- Campos filtrados:', filtered.map(c => `${c.rotulo_campo} (${c.chave_campo})`));
-  return filtered;
-}
-
-/**
- * Filtra campos mantendo apenas configurações
- */
-export function filterConfigurationFields(campos: CampoModelo[]): CampoModelo[] {
-  return campos.filter(campo => isConfigurationField(campo));
-}
-
-/**
- * Filtra campos calculados
- */
-export function filterCalculatedFields(campos: CampoModelo[]): CampoModelo[] {
-  return campos.filter(campo => isCalculatedField(campo));
-}
-
-/**
- * Filtra campos manuais (não calculados nem de configuração)
- */
-export function filterManualFields(campos: CampoModelo[]): CampoModelo[] {
-  return campos.filter(campo => !isConfigurationField(campo) && !isCalculatedField(campo));
-}
-
-/**
- * Verifica se o modelo usa baterias baseado nos campos de configuração
- */
-export function modelUsesBaterias(campos: CampoModelo[]): boolean {
-  console.log('Verificando se modelo usa baterias. Campos recebidos:', campos.length);
-  
-  const configFields = filterConfigurationFields(campos);
-  console.log('Campos de configuração encontrados:', configFields.map(c => c.chave_campo));
-  
-  const usesBaterias = configFields.some(campo => {
-    const hasKeyword = campo.chave_campo.toLowerCase().includes('bateria') || 
-                      campo.rotulo_campo.toLowerCase().includes('bateria');
-    const hasMetadata = campo.metadados?.baterias === true;
-    const isCheckbox = campo.tipo_input === 'checkbox';
-    
-    console.log(`Campo ${campo.chave_campo}: hasKeyword=${hasKeyword}, hasMetadata=${hasMetadata}, isCheckbox=${isCheckbox}`);
-    
-    return (hasKeyword || hasMetadata) && isCheckbox;
-  });
-  
+  const usesBaterias = modeloConfig.parametros.baterias === true;
   console.log('Resultado final - modelo usa baterias:', usesBaterias);
+  
   return usesBaterias;
 }
 
-/**
- * Converte valor mascarado de tempo para milissegundos
- */
-export function parseTimeToMilliseconds(timeValue: string): number {
-  if (!timeValue || typeof timeValue !== 'string') return 0;
+// Função legacy para compatibilidade (deprecated)
+export function modelUsesBateriasByFields(campos: CampoModelo[]): boolean {
+  console.log('Verificando se modelo usa baterias. Campos recebidos:', campos.length);
   
-  // Limpar o valor de caracteres não numéricos, exceto pontos e dois pontos
-  const cleanValue = timeValue.trim();
-  let totalMilliseconds = 0;
+  // Procurar por campos relacionados a baterias ou configuração
+  const configFields = campos.filter(campo => 
+    ['configuracao', 'config'].includes(campo.categoria?.toLowerCase() || '') ||
+    ['bateria', 'numero_bateria'].includes(campo.chave_campo?.toLowerCase() || '')
+  );
   
-  try {
-    if (cleanValue.includes(':') && cleanValue.includes('.')) {
-      // Formato MM:SS.mmm
-      const [minutesSeconds, milliseconds] = cleanValue.split('.');
-      const [minutes, seconds] = minutesSeconds.split(':');
-      
-      totalMilliseconds += (parseInt(minutes) || 0) * 60 * 1000;
-      totalMilliseconds += (parseInt(seconds) || 0) * 1000;
-      
-      // Normalizar millisegundos para 3 dígitos
-      const ms = parseInt(milliseconds) || 0;
-      if (milliseconds.length === 1) {
-        totalMilliseconds += ms * 100;
-      } else if (milliseconds.length === 2) {
-        totalMilliseconds += ms * 10;
-      } else {
-        totalMilliseconds += ms;
-      }
-    } else if (cleanValue.includes(':')) {
-      // Formato MM:SS
-      const [minutes, seconds] = cleanValue.split(':');
-      totalMilliseconds += (parseInt(minutes) || 0) * 60 * 1000;
-      totalMilliseconds += (parseInt(seconds) || 0) * 1000;
-    } else if (cleanValue.includes('.')) {
-      // Formato SS.mmm
-      const [seconds, milliseconds] = cleanValue.split('.');
-      totalMilliseconds += (parseInt(seconds) || 0) * 1000;
-      
-      // Normalizar millisegundos para 3 dígitos
-      const ms = parseInt(milliseconds) || 0;
-      if (milliseconds.length === 1) {
-        totalMilliseconds += ms * 100;
-      } else if (milliseconds.length === 2) {
-        totalMilliseconds += ms * 10;
-      } else {
-        totalMilliseconds += ms;
-      }
-    } else {
-      // Apenas número (interpretado como segundos)
-      totalMilliseconds = parseFloat(cleanValue) * 1000 || 0;
-    }
-  } catch (error) {
-    console.error('Erro ao converter tempo para milissegundos:', error);
-    return 0;
-  }
+  console.log('Campos de configuração encontrados:', configFields.map(c => c.chave_campo));
   
-  return totalMilliseconds;
-}
-
-/**
- * Detecta se um valor é um tempo formatado
- */
-export function isTimeValue(value: string): boolean {
-  if (!value || typeof value !== 'string') return false;
+  const usesBaterias = configFields.some(campo => 
+    ['bateria', 'numero_bateria'].includes(campo.chave_campo?.toLowerCase() || '') ||
+    campo.metadados?.baterias === true
+  );
   
-  // Limpar espaços
-  const cleanValue = value.trim();
-  
-  // Padrões de tempo: MM:SS.mmm, MM:SS, SS.mmm
-  const timePatterns = [
-    /^\d{1,2}:\d{1,2}\.\d{1,3}$/, // MM:SS.mmm
-    /^\d{1,2}:\d{1,2}$/, // MM:SS
-    /^\d{1,2}\.\d{1,3}$/ // SS.mmm
-  ];
-  
-  return timePatterns.some(pattern => pattern.test(cleanValue));
+  console.log('Resultado final - modelo usa baterias:', usesBaterias);
+  return usesBaterias;
 }

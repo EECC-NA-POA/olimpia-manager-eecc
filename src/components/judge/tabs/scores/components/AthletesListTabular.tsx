@@ -11,6 +11,7 @@ import { useAthletesBranchData } from './hooks/useAthletesBranchData';
 import { useAthletesScoreStatus } from './hooks/useAthletesScoreStatus';
 import { useModelosModalidade } from '@/hooks/useDynamicScoring';
 import { useDynamicBaterias } from '../hooks/useDynamicBaterias';
+import { useModeloConfiguration } from '../hooks/useModeloConfiguration';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Athlete } from '../hooks/useAthletes';
@@ -41,6 +42,9 @@ export function AthletesListTabular({
   const { data: modelos = [], isLoading: isLoadingModelos } = useModelosModalidade(modalityId);
   const hasDynamicScoring = modelos.length > 0;
 
+  // Get modelo configuration to check if it uses baterias
+  const { data: modeloConfig, isLoading: isLoadingConfig } = useModeloConfiguration(modalityId);
+
   // Get campos for the modelo if it exists
   const { data: campos = [] } = useQuery({
     queryKey: ['campos-modelo', modelos[0]?.id],
@@ -59,8 +63,17 @@ export function AthletesListTabular({
     enabled: !!modelos[0]?.id,
   });
 
-  // Verificar se o modelo usa baterias
-  const usesBaterias = modelUsesBaterias(campos);
+  // Verificar se o modelo usa baterias usando a configuração do modelo
+  const usesBaterias = modelUsesBaterias(modeloConfig);
+
+  console.log('AthletesListTabular - Debug info:', {
+    modalityId,
+    modeloConfig,
+    usesBaterias,
+    hasDynamicScoring,
+    modelosCount: modelos.length,
+    camposCount: campos.length
+  });
 
   // Bateria management - only initialize if the model uses baterias
   const {
@@ -103,7 +116,7 @@ export function AthletesListTabular({
     eventId
   });
 
-  if (isLoading || isLoadingModelos) {
+  if (isLoading || isLoadingModelos || isLoadingConfig) {
     return (
       <Card>
         <CardHeader>
