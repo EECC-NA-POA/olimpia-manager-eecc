@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,13 +19,13 @@ interface ScoresTabProps {
 
 export function ScoresTab({ userId, eventId }: ScoresTabProps) {
   const [selectedModalityId, setSelectedModalityId] = useState<number | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table'); // Changed default to 'table'
   const isMobile = useIsMobile();
 
-  // On mobile, force grid view for better usability
+  // On mobile, force table view for better usability (changed from grid to table)
   React.useEffect(() => {
-    if (isMobile && viewMode === 'table') {
-      setViewMode('grid');
+    if (isMobile && viewMode === 'grid') {
+      setViewMode('table');
     }
   }, [isMobile, viewMode]);
 
@@ -144,15 +143,6 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
             {!isMobile && (
               <div className="flex gap-2">
                 <Button
-                  variant={viewMode === 'grid' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className="flex items-center gap-2"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                  <span className="hidden sm:inline">Grade</span>
-                </Button>
-                <Button
                   variant={viewMode === 'table' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('table')}
@@ -160,6 +150,15 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
                 >
                   <Table className="h-4 w-4" />
                   <span className="hidden sm:inline">Tabela</span>
+                </Button>
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className="flex items-center gap-2"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                  <span className="hidden sm:inline">Grade</span>
                 </Button>
               </div>
             )}
@@ -231,7 +230,16 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
             </CardContent>
           </Card>
         ) : (
-          viewMode === 'grid' ? (
+          viewMode === 'table' ? (
+            <AthletesListTabular
+              athletes={athletes}
+              isLoading={isLoadingAthletes}
+              modalityId={selectedModalityId}
+              eventId={eventId}
+              judgeId={userId}
+              scoreType={mappedScoreType}
+            />
+          ) : (
             <AthletesList
               athletes={athletes}
               isLoading={isLoadingAthletes}
@@ -240,15 +248,6 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
               judgeId={userId}
               scoreType={mappedScoreType}
               modalityRule={modalityRule}
-            />
-          ) : (
-            <AthletesListTabular
-              athletes={athletes}
-              isLoading={isLoadingAthletes}
-              modalityId={selectedModalityId}
-              eventId={eventId}
-              judgeId={userId}
-              scoreType={mappedScoreType}
             />
           )
         )
