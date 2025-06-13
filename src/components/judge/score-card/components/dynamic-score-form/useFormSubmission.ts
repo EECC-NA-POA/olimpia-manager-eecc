@@ -48,16 +48,15 @@ export function useFormSubmission({
     
     console.log('=== PARÂMETROS DE SUBMISSÃO (DynamicScoreForm) ===');
     const submissionParams = {
-      eventId,
-      modalityId,
       athleteId,
-      equipeId,
+      modalityId,
+      eventId,
       judgeId,
       modeloId,
-      bateriaId,
-      raia,
       formData,
-      notes: notes || null, // Ensure notes is properly passed
+      bateriaId,
+      // Pass notes directly as observacoes to match the expected parameter name
+      observacoes: notes || null,
     };
     console.log('Submission params:', submissionParams);
     

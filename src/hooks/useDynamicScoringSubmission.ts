@@ -7,13 +7,19 @@ import { prepareTentativasData } from './useDynamicScoringSubmission/tentativasP
 import { upsertPontuacao, insertTentativas } from './useDynamicScoringSubmission/pontuacaoOperations';
 import type { DynamicSubmissionData } from './useDynamicScoringSubmission/types';
 
+// Update the interface to include observacoes
+interface ExtendedDynamicSubmissionData extends DynamicSubmissionData {
+  observacoes?: string | null;
+}
+
 export function useDynamicScoringSubmission() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: DynamicSubmissionData) => {
+    mutationFn: async (data: ExtendedDynamicSubmissionData) => {
       console.log('=== INICIANDO SUBMISSÃO DE PONTUAÇÃO DINÂMICA ===');
       console.log('Dynamic scoring submission data:', data);
+      console.log('Observacoes received:', data.observacoes);
 
       try {
         // Buscar campos do modelo para determinar o campo principal
@@ -36,11 +42,14 @@ export function useDynamicScoringSubmission() {
         const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
         console.log('Extracted raia:', raia);
 
-        // Prepare enhanced data with raia
+        // Prepare enhanced data with raia and observacoes
         const enhancedData = {
           ...data,
-          raia: raia
+          raia: raia,
+          observacoes: data.observacoes || null
         };
+
+        console.log('Enhanced data with observacoes:', enhancedData);
 
         // Upsert pontuacao
         const pontuacao = await upsertPontuacao(enhancedData, valorPontuacao);
