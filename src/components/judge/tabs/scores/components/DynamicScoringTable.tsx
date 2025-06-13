@@ -61,32 +61,41 @@ export function DynamicScoringTable({
     enabled: !!modelo.id,
   });
 
-  // Filter campos to remove configuration fields and fields not relevant for judges
+  // Filter campos to remove only pure configuration fields
   const campos = allCampos.filter(campo => {
     const chaveField = campo.chave_campo?.toLowerCase() || '';
     const rotuloField = campo.rotulo_campo?.toLowerCase() || '';
     
-    // Remove configuration fields that judges shouldn't fill
-    const configFields = [
-      'bateria', 
-      'numero_bateria', 
+    // Remove only pure configuration fields that judges shouldn't fill
+    const pureConfigFields = [
       'config',
       'usar_baterias',
       'configuracao_pontuacao',
-      'usar_bateria',
       'configuracao_de_pontuacao',
       'usar baterias',
       'configuração de pontuação',
       'configuração_de_pontuação'
     ];
     
-    // Check both chave_campo and rotulo_campo
-    const isConfigField = configFields.some(configField => 
+    // Check both chave_campo and rotulo_campo for pure config fields
+    const isPureConfigField = pureConfigFields.some(configField => 
       chaveField.includes(configField) || rotuloField.includes(configField)
     );
     
-    return !isConfigField;
+    console.log('Campo filter check:', {
+      chave: campo.chave_campo,
+      rotulo: campo.rotulo_campo,
+      isPureConfigField,
+      shouldShow: !isPureConfigField
+    });
+    
+    return !isPureConfigField;
   });
+
+  console.log('=== CAMPOS DEBUG ===');
+  console.log('All campos fetched:', allCampos);
+  console.log('Filtered campos for table:', campos);
+  console.log('Total campos to show:', campos.length);
 
   // Fetch existing scores for all athletes in this bateria
   const { data: existingScores = [], refetch: refetchScores } = useQuery({
