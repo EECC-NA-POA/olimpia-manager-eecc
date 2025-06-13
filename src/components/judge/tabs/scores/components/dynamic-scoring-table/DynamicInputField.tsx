@@ -21,6 +21,13 @@ export function DynamicInputField({
   selectedBateriaId
 }: DynamicInputFieldProps) {
   
+  console.log(`DynamicInputField - ${campo.chave_campo}:`, {
+    athleteId,
+    campo: campo.chave_campo,
+    currentValue: value,
+    tipo: campo.tipo_input
+  });
+
   // Se é um campo calculado, mostrar apenas o valor sem botão de calcular individual
   if (campo.tipo_input === 'calculated') {
     const displayValue = value || '-';
@@ -46,13 +53,26 @@ export function DynamicInputField({
     );
   }
 
+  const handleChange = (newValue: string | number) => {
+    console.log(`DynamicInputField - onChange for ${campo.chave_campo}:`, {
+      athleteId,
+      campo: campo.chave_campo,
+      oldValue: value,
+      newValue
+    });
+    onChange(newValue);
+  };
+
   switch (campo.tipo_input) {
     case 'number':
       return (
         <Input
           type="number"
-          value={value}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          value={value || ''}
+          onChange={(e) => {
+            const numValue = parseFloat(e.target.value) || 0;
+            handleChange(numValue);
+          }}
           placeholder={`${campo.metadados?.min || 0} - ${campo.metadados?.max || 100}`}
           min={campo.metadados?.min}
           max={campo.metadados?.max}
@@ -65,8 +85,11 @@ export function DynamicInputField({
       return (
         <Input
           type="number"
-          value={value}
-          onChange={(e) => onChange(parseInt(e.target.value) || 0)}
+          value={value || ''}
+          onChange={(e) => {
+            const intValue = parseInt(e.target.value) || 0;
+            handleChange(intValue);
+          }}
           placeholder={`${campo.metadados?.min || 0} - ${campo.metadados?.max || 100}`}
           min={campo.metadados?.min}
           max={campo.metadados?.max}
@@ -82,16 +105,16 @@ export function DynamicInputField({
           <MaskedResultInput
             campo={campo}
             form={null as any}
-            value={value as string}
-            onChange={(newValue) => onChange(newValue)}
+            value={value as string || ''}
+            onChange={(newValue) => handleChange(newValue)}
           />
         );
       }
       return (
         <Input
           type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={value || ''}
+          onChange={(e) => handleChange(e.target.value)}
           placeholder={campo.rotulo_campo}
           className="w-full"
         />
@@ -100,8 +123,8 @@ export function DynamicInputField({
     case 'select':
       return (
         <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={value || ''}
+          onChange={(e) => handleChange(e.target.value)}
           className="w-full h-10 px-3 py-2 border border-input rounded-md bg-background text-sm"
         >
           <option value="">Selecione...</option>
@@ -117,8 +140,8 @@ export function DynamicInputField({
       return (
         <Input
           type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={value || ''}
+          onChange={(e) => handleChange(e.target.value)}
           placeholder={campo.rotulo_campo}
           className="w-full"
         />

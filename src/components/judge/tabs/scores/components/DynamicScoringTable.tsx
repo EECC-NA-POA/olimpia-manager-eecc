@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -88,13 +89,15 @@ export function DynamicScoringTable({
     return !isConfigField;
   });
 
-  // Fetch existing scores for all athletes in this bateria - CORREÇÃO AQUI
+  // Fetch existing scores for all athletes in this bateria
   const { data: existingScores = [], refetch: refetchScores } = useQuery({
     queryKey: ['dynamic-scores', modalityId, eventId, selectedBateriaId],
     queryFn: async () => {
       if (!eventId || !modalityId) return [];
       
-      // Buscar pontuações com as tentativas relacionadas
+      console.log('=== FETCHING EXISTING SCORES ===');
+      console.log('Params:', { modalityId, eventId, selectedBateriaId, judgeId });
+      
       let query = supabase
         .from('pontuacoes')
         .select(`
@@ -117,28 +120,44 @@ export function DynamicScoringTable({
         return [];
       }
       
-      console.log('Fetched dynamic scores:', data);
+      console.log('Raw fetched scores:', data);
       
-      // Transformar os dados para o formato esperado
-      return (data || []).map(pontuacao => ({
-        ...pontuacao,
-        tentativas: pontuacao.tentativas_pontuacao?.reduce((acc: any, tentativa: any) => {
+      // Transform data
+      const transformedData = (data || []).map(pontuacao => {
+        const tentativas = pontuacao.tentativas_pontuacao?.reduce((acc: any, tentativa: any) => {
           acc[tentativa.chave_campo] = tentativa.valor;
           return acc;
-        }, {}) || {}
-      }));
+        }, {}) || {};
+        
+        console.log(`Atleta ${pontuacao.atleta_id} tentativas:`, tentativas);
+        
+        return {
+          ...pontuacao,
+          tentativas
+        };
+      });
+      
+      console.log('Transformed scores:', transformedData);
+      return transformedData;
     },
     enabled: !!eventId && !!modalityId && athletes.length > 0,
   });
 
   const handleEdit = (athleteId: string) => {
+    console.log('=== STARTING EDIT ===');
+    console.log('Athlete ID:', athleteId);
     const existingScore = existingScores.find(s => s.atleta_id === athleteId);
+    console.log('Existing score for athlete:', existingScore);
     startEditing(athleteId, existingScore, campos);
   };
 
   const handleSave = async (athleteId: string) => {
     const athleteEditValues = editValues[athleteId];
     if (!athleteEditValues) return;
+
+    console.log('=== SAVING SCORE ===');
+    console.log('Athlete ID:', athleteId);
+    console.log('Values to save:', athleteEditValues);
 
     try {
       const formData = { ...athleteEditValues };
@@ -170,15 +189,22 @@ export function DynamicScoringTable({
 
   const getFieldValue = (athleteId: string, fieldKey: string) => {
     const editValue = editValues[athleteId]?.[fieldKey];
-    if (editValue !== undefined) return editValue;
+    if (editValue !== undefined) {
+      console.log(`Getting field value for ${athleteId}.${fieldKey}: ${editValue} (from edit values)`);
+      return editValue;
+    }
     
     const existingScore = existingScores.find(s => s.atleta_id === athleteId);
-    return existingScore?.tentativas?.[fieldKey] || '';
+    const existingValue = existingScore?.tentativas?.[fieldKey] || '';
+    console.log(`Getting field value for ${athleteId}.${fieldKey}: ${existingValue} (from existing scores)`);
+    return existingValue;
   };
 
   const hasExistingScore = (athleteId: string) => {
     const existingScore = existingScores.find(s => s.atleta_id === athleteId);
-    return existingScore && Object.keys(existingScore.tentativas || {}).length > 0;
+    const hasScore = existingScore && Object.keys(existingScore.tentativas || {}).length > 0;
+    console.log(`Athlete ${athleteId} has existing score:`, hasScore);
+    return hasScore;
   };
 
   if (isLoadingCampos) {
@@ -300,7 +326,10 @@ export function DynamicScoringTable({
                             athleteId={athlete.atleta_id}
                             campo={campo}
                             value={getFieldValue(athlete.atleta_id, campo.chave_campo)}
-                            onChange={(value) => updateFieldValue(athlete.atleta_id, campo.chave_campo, value)}
+                            onChange={(value) => {
+                              console.log(`Field change: ${athlete.atleta_id}.${campo.chave_campo} = ${value}`);
+                              updateFieldValue(athlete.atleta_id, campo.chave_campo, value);
+                            }}
                             selectedBateriaId={selectedBateriaId}
                           />
                         ) : (
