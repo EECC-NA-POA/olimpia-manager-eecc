@@ -1,32 +1,29 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Calculator, RefreshCw } from 'lucide-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Save, Edit2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { useDynamicScoringSubmission } from '@/hooks/useDynamicScoringSubmission';
 import { Athlete } from '../hooks/useAthletes';
-import { useDynamicScoringTableState } from './dynamic-scoring-table/useDynamicScoringTableState';
-import { UnsavedChangesBanner } from './dynamic-scoring-table/UnsavedChangesBanner';
+import { ModeloModalidade, CampoModelo } from '@/types/dynamicScoring';
+import { filterScoringFields } from '@/utils/dynamicScoringUtils';
 import { DynamicInputField } from './dynamic-scoring-table/DynamicInputField';
 import { AthleteStatusCell } from './dynamic-scoring-table/AthleteStatusCell';
-import { useBatchPlacementCalculation } from '@/hooks/useBatchPlacementCalculation';
-import { 
-  filterScoringFields, 
-  filterCalculatedFields,
-  filterManualFields,
-  modelUsesBateriasByFields 
-} from '@/utils/dynamicScoringUtils';
+import { CalculatedFieldCell } from './dynamic-scoring-table/CalculatedFieldCell';
+import { UnsavedChangesBanner } from './dynamic-scoring-table/UnsavedChangesBanner';
+import { useDynamicScoringTableState } from './dynamic-scoring-table/useDynamicScoringTableState';
 
 interface DynamicScoringTableProps {
   athletes: Athlete[];
   modalityId: number;
   eventId: string;
   judgeId: string;
-  modelo: any;
+  modelo: ModeloModalidade;
   selectedBateriaId?: number | null;
 }
 
@@ -39,182 +36,149 @@ export function DynamicScoringTable({
   selectedBateriaId
 }: DynamicScoringTableProps) {
   const queryClient = useQueryClient();
-  console.log('DynamicScoringTable - Renderizando com:', {
-    athletesCount: athletes.length,
-    modalityId,
-    modeloId: modelo?.id,
-    selectedBateriaId
-  });
+  const mutation = useDynamicScoringSubmission();
 
-  // Fetch all campos for this modelo
+  const {
+    editingAthletes,
+    editValues,
+    unsavedChanges,
+    startEditing,
+    stopEditing,
+    updateFieldValue,
+    hasUnsavedChanges,
+    clearUnsavedChanges
+  } = useDynamicScoringTableState();
+
+  // Fetch campos for this modelo
   const { data: allCampos = [], isLoading: isLoadingCampos } = useQuery({
     queryKey: ['campos-modelo', modelo.id],
     queryFn: async () => {
-      console.log('Buscando campos para modelo:', modelo.id);
-      
       const { data, error } = await supabase
         .from('campos_modelo')
         .select('*')
         .eq('modelo_id', modelo.id)
         .order('ordem_exibicao');
 
-      if (error) {
-        console.error('Erro ao buscar campos:', error);
-        throw error;
-      }
-      
-      console.log('Campos encontrados:', data?.length || 0);
-      console.log('Detalhes dos campos:', data?.map(c => ({ chave: c.chave_campo, rotulo: c.rotulo_campo, tipo: c.tipo_input })));
-      return data;
+      if (error) throw error;
+      return data as CampoModelo[];
     },
     enabled: !!modelo.id,
   });
 
-  // Separar campos por tipo
-  const allScoringFields = filterScoringFields(allCampos);
-  const manualFields = filterManualFields(allCampos);
-  const calculatedFields = filterCalculatedFields(allCampos);
-  const usesBaterias = modelUsesBateriasByFields(allCampos);
-
-  console.log('DynamicScoringTable - Campos separados:', {
-    total: allCampos.length,
-    scoring: allScoringFields.length,
-    manual: manualFields.length,
-    calculated: calculatedFields.length,
-    usesBaterias
+  // Filter campos to remove configuration fields and fields not relevant for judges
+  const campos = allCampos.filter(campo => {
+    const chaveField = campo.chave_campo?.toLowerCase() || '';
+    
+    // Remove configuration fields that judges shouldn't fill
+    const configFields = [
+      'bateria', 
+      'numero_bateria', 
+      'config',
+      'usar_baterias',
+      'configuracao_pontuacao',
+      'usar_bateria',
+      'configuracao_de_pontuacao'
+    ];
+    
+    return !configFields.includes(chaveField);
   });
 
-  // Hook para cálculos de colocação em lote
-  const {
-    isCalculating,
-    calculateBatchPlacements
-  } = useBatchPlacementCalculation({
-    modalityId,
-    eventId,
-    judgeId,
-    modeloId: modelo.id,
-    bateriaId: selectedBateriaId || undefined
+  // Fetch existing scores for all athletes in this bateria
+  const { data: existingScores = [], refetch: refetchScores } = useQuery({
+    queryKey: ['dynamic-scores', modalityId, eventId, selectedBateriaId],
+    queryFn: async () => {
+      if (!eventId || !modalityId) return [];
+      
+      let query = supabase
+        .from('pontuacoes_detalhadas')
+        .select('*')
+        .eq('evento_id', eventId)
+        .eq('modalidade_id', modalityId)
+        .in('atleta_id', athletes.map(a => a.atleta_id));
+
+      if (selectedBateriaId) {
+        query = query.eq('numero_bateria', selectedBateriaId);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Error fetching scores:', error);
+        return [];
+      }
+      
+      return data || [];
+    },
+    enabled: !!eventId && !!modalityId && athletes.length > 0,
   });
 
-  const {
-    scoreData,
-    unsavedChanges,
-    dynamicSubmission,
-    handleFieldChange,
-    saveAthleteScore,
-    saveAllScores,
-    getAthleteCompletionStatus
-  } = useDynamicScoringTableState({
-    athletes,
-    modalityId,
-    eventId,
-    judgeId,
-    modelo,
-    selectedBateriaId,
-    campos: allScoringFields
-  });
-
-  // Função personalizada para lidar com mudanças de campo que inclui auto-preenchimento da bateria
-  const handleFieldChangeWithBateria = (athleteId: string, fieldKey: string, value: string | number) => {
-    handleFieldChange(athleteId, fieldKey, value);
+  const handleEdit = (athleteId: string) => {
+    const existingScore = existingScores.find(s => s.atleta_id === athleteId);
+    startEditing(athleteId, existingScore, campos);
   };
 
-  const handleCalculateBatchPlacements = async (fieldKey: string) => {
-    console.log('=== BOTÃO DE CÁLCULO PRESSIONADO ===');
-    console.log('Campo selecionado:', fieldKey);
-    
-    const campo = calculatedFields.find(c => c.chave_campo === fieldKey);
-    if (!campo) {
-      console.error('Campo calculado não encontrado:', fieldKey);
-      toast.error('Campo calculado não encontrado');
-      return;
+  const handleSave = async (athleteId: string) => {
+    const athleteEditValues = editValues[athleteId];
+    if (!athleteEditValues) return;
+
+    try {
+      const formData = { ...athleteEditValues };
+
+      await mutation.mutateAsync({
+        athleteId,
+        modalityId,
+        eventId,
+        judgeId,
+        modeloId: modelo.id,
+        formData,
+        bateriaId: selectedBateriaId
+      });
+
+      stopEditing(athleteId);
+      clearUnsavedChanges(athleteId);
+      await refetchScores();
+      toast.success('Pontuação salva com sucesso!');
+    } catch (error) {
+      console.error('Error saving score:', error);
+      toast.error('Erro ao salvar pontuação');
     }
-
-    console.log('Campo encontrado:', campo);
-
-    // Preparar dados dos atletas para cálculo - usar SEMPRE dados atualizados
-    console.log('Preparando dados dos atletas...');
-    console.log('Dados atuais da tabela (scoreData):', scoreData);
-    
-    const athleteScores: Record<string, any> = {};
-    athletes.forEach(athlete => {
-      const athleteData = scoreData[athlete.atleta_id] || {};
-      athleteScores[athlete.atleta_id] = {
-        athleteName: athlete.atleta_nome,
-        ...athleteData
-      };
-      
-      console.log(`Atleta ${athlete.atleta_nome}:`, athleteData);
-    });
-
-    console.log('Dados preparados para cálculo:', athleteScores);
-
-    // Executar cálculo
-    await calculateBatchPlacements(campo, athleteScores);
-    
-    // Após o cálculo, forçar reload completo dos dados
-    console.log('Forçando reload completo após cálculo...');
-    
-    const athleteScoresQueryKey = ['athlete-dynamic-scores', modalityId, eventId, modelo.id, selectedBateriaId];
-    
-    // Aguardar um momento para o banco processar, então recarregar
-    setTimeout(async () => {
-      console.log('Executando reload tardio...');
-      await queryClient.invalidateQueries({ 
-        queryKey: athleteScoresQueryKey
-      });
-      
-      await queryClient.refetchQueries({ 
-        queryKey: athleteScoresQueryKey
-      });
-      
-      toast.success('Dados atualizados na tabela');
-    }, 1000);
   };
 
-  const handleRefreshData = async () => {
-    console.log('Atualizando dados da tabela manualmente...');
+  const handleCancel = (athleteId: string) => {
+    stopEditing(athleteId);
+    clearUnsavedChanges(athleteId);
+  };
+
+  const getFieldValue = (athleteId: string, fieldKey: string) => {
+    const editValue = editValues[athleteId]?.[fieldKey];
+    if (editValue !== undefined) return editValue;
     
-    const athleteScoresQueryKey = ['athlete-dynamic-scores', modalityId, eventId, modelo.id, selectedBateriaId];
-    
-    await queryClient.invalidateQueries({ 
-      queryKey: athleteScoresQueryKey
-    });
-    
-    await queryClient.invalidateQueries({ 
-      queryKey: ['campos-modelo', modelo.id] 
-    });
-    
-    await queryClient.refetchQueries({ 
-      queryKey: athleteScoresQueryKey
-    });
-    
-    toast.success('Dados atualizados com sucesso');
+    const existingScore = existingScores.find(s => s.atleta_id === athleteId);
+    return existingScore?.tentativas?.[fieldKey] || '';
   };
 
   if (isLoadingCampos) {
-    return <div>Carregando campos...</div>;
+    return (
+      <div className="flex items-center justify-center py-8">
+        <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+        <span>Carregando campos...</span>
+      </div>
+    );
   }
 
-  if (allScoringFields.length === 0) {
+  if (campos.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-8">
         <div className="mb-4">
           <h3 className="text-lg font-medium mb-2">Nenhum campo de pontuação configurado</h3>
           <p className="text-sm">
-            Este modelo possui apenas campos de configuração. 
-            Configure campos de pontuação no painel de administração.
+            Este modelo não possui campos de pontuação configurados para os juízes preencherem.
           </p>
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-700">
           <p className="text-sm">
             <strong>Modelo atual:</strong> {modelo.descricao || modelo.codigo_modelo}
           </p>
-          {usesBaterias && (
-            <p className="text-xs mt-1">
-              <strong>Sistema de baterias:</strong> Ativo
-            </p>
-          )}
         </div>
       </div>
     );
@@ -222,105 +186,129 @@ export function DynamicScoringTable({
 
   return (
     <div className="space-y-4">
-      <UnsavedChangesBanner
-        unsavedCount={unsavedChanges.size}
-        onSaveAll={saveAllScores}
-        isSaving={dynamicSubmission.isPending}
+      <UnsavedChangesBanner 
+        hasUnsavedChanges={hasUnsavedChanges()}
+        onRefresh={() => window.location.reload()}
       />
-
-      {usesBaterias && selectedBateriaId && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <div className="text-blue-800 text-sm font-medium">
-            Sistema de Baterias Ativo - {selectedBateriaId === 999 ? 'Bateria Final' : `Bateria ${selectedBateriaId}`}
+      
+      <div className="border rounded-lg overflow-hidden">
+        {selectedBateriaId && (
+          <div className="bg-blue-50 border-b border-blue-200 p-3">
+            <div className="text-blue-800 text-sm font-medium">
+              Sistema de Baterias Ativo - Bateria {selectedBateriaId === 999 ? 'Final' : selectedBateriaId}
+            </div>
+            <div className="text-blue-700 text-xs mt-1">
+              Pontuações serão registradas para a bateria selecionada
+            </div>
           </div>
-          <div className="text-blue-700 text-xs mt-1">
-            Pontuações serão registradas para a bateria selecionada
-          </div>
-        </div>
-      )}
-
-      {/* Botão para atualizar dados */}
-      <div className="flex justify-end">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefreshData}
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className="h-3 w-3" />
-          Atualizar Dados
-        </Button>
-      </div>
-
-      <div className="border rounded-md overflow-x-auto">
+        )}
+        
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-[200px] sticky left-0 bg-background">Atleta</TableHead>
-              <TableHead className="min-w-[150px]">Filial</TableHead>
-              {allScoringFields.map((campo) => (
-                <TableHead key={campo.chave_campo} className="min-w-[120px]">
-                  <div className="flex flex-col">
-                    <span>{campo.rotulo_campo}</span>
-                    {campo.obrigatorio && (
-                      <Badge variant="outline" className="text-xs w-fit">
-                        Obrigatório
-                      </Badge>
-                    )}
-                    {campo.tipo_input === 'calculated' && (
-                      <Badge variant="outline" className="text-xs w-fit bg-blue-50 text-blue-700">
-                        Calculado
-                      </Badge>
-                    )}
+              <TableHead className="w-[200px]">Atleta</TableHead>
+              <TableHead className="w-[150px]">Filial</TableHead>
+              {campos.map((campo) => (
+                <TableHead key={campo.chave_campo} className="text-center min-w-[120px]">
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium">{campo.rotulo_campo}</span>
+                    {campo.obrigatorio && <span className="text-red-500 text-xs">*obrigatório</span>}
+                    <span className="text-xs text-muted-foreground">({campo.tipo_input})</span>
                   </div>
                 </TableHead>
               ))}
-              <TableHead className="min-w-[100px]">Status</TableHead>
+              <TableHead className="w-[100px]">Status</TableHead>
+              <TableHead className="w-[120px]">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {athletes.map((athlete) => {
-              const status = getAthleteCompletionStatus(athlete.atleta_id);
-              const hasUnsavedChanges = unsavedChanges.has(athlete.atleta_id);
-
+              const isEditing = editingAthletes.has(athlete.atleta_id);
+              const existingScore = existingScores.find(s => s.atleta_id === athlete.atleta_id);
+              
               return (
                 <TableRow key={athlete.atleta_id}>
-                  <TableCell className="font-medium sticky left-0 bg-background">
-                    {athlete.atleta_nome}
+                  <TableCell>
+                    <div className="font-medium">{athlete.atleta_nome}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {athlete.tipo_documento}: {athlete.numero_documento}
+                    </div>
                   </TableCell>
                   <TableCell>
-                    {athlete.filial_nome || '-'}
+                    <div className="text-sm">
+                      {athlete.filial_nome || athlete.equipe_nome || 'N/A'}
+                    </div>
+                    {athlete.origem_cidade && (
+                      <div className="text-xs text-muted-foreground">
+                        {athlete.origem_cidade}
+                        {athlete.origem_uf && ` - ${athlete.origem_uf}`}
+                      </div>
+                    )}
                   </TableCell>
-                  {allScoringFields.map((campo) => {
-                    // Para o campo bateria, usar o valor pré-preenchido se não houver valor salvo
-                    let fieldValue = scoreData[athlete.atleta_id]?.[campo.chave_campo] || '';
-                    
-                    // Se é campo de bateria e não há valor salvo, usar o selectedBateriaId
-                    if ((campo.chave_campo === 'bateria' || campo.chave_campo === 'numero_bateria') && !fieldValue && selectedBateriaId) {
-                      fieldValue = selectedBateriaId;
-                    }
-
-                    return (
-                      <TableCell key={campo.chave_campo}>
-                        <DynamicInputField
-                          campo={campo}
+                  {campos.map((campo) => {
+                    if (campo.tipo_input === 'calculated') {
+                      return (
+                        <CalculatedFieldCell
+                          key={campo.chave_campo}
                           athleteId={athlete.atleta_id}
-                          value={fieldValue}
-                          onChange={handleFieldChangeWithBateria}
-                          selectedBateriaId={selectedBateriaId}
+                          campo={campo}
+                          existingScore={existingScore}
                         />
+                      );
+                    }
+                    
+                    return (
+                      <TableCell key={campo.chave_campo} className="text-center">
+                        {isEditing ? (
+                          <DynamicInputField
+                            campo={campo}
+                            value={getFieldValue(athlete.atleta_id, campo.chave_campo)}
+                            onChange={(value) => updateFieldValue(athlete.atleta_id, campo.chave_campo, value)}
+                          />
+                        ) : (
+                          <span className="text-sm">
+                            {getFieldValue(athlete.atleta_id, campo.chave_campo) || '-'}
+                          </span>
+                        )}
                       </TableCell>
                     );
                   })}
+                  <AthleteStatusCell 
+                    existingScore={existingScore}
+                    hasUnsavedChanges={unsavedChanges.has(athlete.atleta_id)}
+                  />
                   <TableCell>
-                    <AthleteStatusCell
-                      athleteId={athlete.atleta_id}
-                      athleteName={athlete.atleta_nome}
-                      completionStatus={status}
-                      hasUnsavedChanges={hasUnsavedChanges}
-                      onSave={saveAthleteScore}
-                      isSaving={dynamicSubmission.isPending}
-                    />
+                    <div className="flex gap-1">
+                      {isEditing ? (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => handleSave(athlete.atleta_id)}
+                            disabled={mutation.isPending}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Save className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCancel(athlete.atleta_id)}
+                            className="h-8 w-8 p-0"
+                          >
+                            ×
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(athlete.atleta_id)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               );
@@ -328,41 +316,12 @@ export function DynamicScoringTable({
           </TableBody>
         </Table>
       </div>
-
-      {/* Botões para cálculo de colocações em lote */}
-      {calculatedFields.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-blue-800 mb-2">Calcular Colocações na Bateria</h4>
-          <div className="text-xs text-blue-700 mb-3">
-            Após inserir todas as pontuações, use os botões abaixo para calcular as colocações de todos os atletas. 
-            As colocações aparecerão automaticamente na tabela após o cálculo.
-            <br />
-            <strong>Empates:</strong> Apenas atletas com resultados exatamente iguais receberão a mesma colocação.
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {calculatedFields.map(campo => (
-              <Button
-                key={campo.chave_campo}
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  console.log('=== INICIANDO CÁLCULO PELO BOTÃO ===');
-                  console.log('Campo selecionado:', campo.chave_campo);
-                  handleCalculateBatchPlacements(campo.chave_campo);
-                }}
-                disabled={isCalculating}
-              >
-                <Calculator className="h-3 w-3 mr-1" />
-                {campo.rotulo_campo}
-                {isCalculating && <RefreshCw className="h-3 w-3 ml-1 animate-spin" />}
-              </Button>
-            ))}
-          </div>
-          {isCalculating && (
-            <div className="text-xs text-blue-600 mt-2 flex items-center gap-2">
-              <RefreshCw className="h-3 w-3 animate-spin" />
-              Calculando colocações e atualizando dados...
-            </div>
+      
+      {campos.length > 0 && (
+        <div className="bg-muted/50 p-3 text-xs text-muted-foreground">
+          <p><strong>Dica:</strong> Use o botão "Editar" para inserir pontuações. Os campos marcados com * são obrigatórios.</p>
+          {selectedBateriaId && (
+            <p><strong>Baterias:</strong> Use a navegação de baterias acima para alternar entre diferentes baterias.</p>
           )}
         </div>
       )}
