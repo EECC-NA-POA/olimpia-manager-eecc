@@ -29,7 +29,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
   const { data: pontuacao, error } = await supabase
     .from('pontuacoes')
     .upsert(pontuacaoData, {
-      onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id,modelo_id,numero_bateria',
+      onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id,modelo_id',
       ignoreDuplicates: false
     })
     .select()
