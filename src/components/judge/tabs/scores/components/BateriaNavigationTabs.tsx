@@ -31,6 +31,13 @@ export function BateriaNavigationTabs({
 }: BateriaNavigationTabsProps) {
   if (!usesBaterias) return null;
 
+  console.log('BateriaNavigationTabs render:', {
+    regularBaterias,
+    finalBateria,
+    hasFinalBateria,
+    selectedBateriaId
+  });
+
   return (
     <Card>
       <CardHeader>
@@ -64,7 +71,7 @@ export function BateriaNavigationTabs({
                 variant="outline"
                 size="sm"
                 onClick={onCreateNewBateria}
-                disabled={false}
+                disabled={isCreating}
                 className="border-dashed"
               >
                 <Plus className="h-4 w-4 mr-1" />
@@ -82,7 +89,7 @@ export function BateriaNavigationTabs({
                   variant={selectedBateriaId === finalBateria.numero ? "default" : "outline"}
                   size="sm"
                   onClick={() => onSelectBateria(finalBateria.numero)}
-                  className="bg-gold/10 border-gold text-gold-foreground"
+                  className="bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100"
                 >
                   <Trophy className="h-4 w-4 mr-1" />
                   Bateria Final
@@ -97,8 +104,8 @@ export function BateriaNavigationTabs({
                   variant="outline"
                   size="sm"
                   onClick={onCreateFinalBateria}
-                  disabled={false}
-                  className="border-dashed border-gold text-gold"
+                  disabled={isCreating}
+                  className="border-dashed border-amber-400 text-amber-700 hover:bg-amber-50"
                 >
                   <Trophy className="h-4 w-4 mr-1" />
                   Criar Bateria Final
