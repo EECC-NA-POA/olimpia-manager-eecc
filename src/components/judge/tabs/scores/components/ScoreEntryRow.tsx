@@ -27,6 +27,7 @@ interface ScoreEntryRowProps {
   onUpdateEntry: (athleteId: string, field: keyof ScoreEntry, value: string) => void;
   onOpenNotesDialog: (athlete: Athlete) => void;
   formatScoreValue: (value: number, type: string) => string;
+  selectedBateriaId?: number | null;
 }
 
 export function ScoreEntryRow({
@@ -40,9 +41,21 @@ export function ScoreEntryRow({
   onSaveScore,
   onUpdateEntry,
   onOpenNotesDialog,
-  formatScoreValue
+  formatScoreValue,
+  selectedBateriaId
 }: ScoreEntryRowProps) {
   const isEditing = scoreEntry?.isEditing || false;
+
+  // Determine the bateria display
+  const getBateriaDisplay = () => {
+    if (!selectedBateriaId) return '-';
+    
+    if (selectedBateriaId === 999) {
+      return 'Final';
+    }
+    
+    return selectedBateriaId.toString();
+  };
 
   return (
     <TableRow key={athlete.atleta_id}>
@@ -51,6 +64,11 @@ export function ScoreEntryRow({
       </TableCell>
       <TableCell>
         {athlete.filial_nome || '-'}
+      </TableCell>
+      <TableCell>
+        <Badge variant={selectedBateriaId === 999 ? "default" : "secondary"}>
+          {getBateriaDisplay()}
+        </Badge>
       </TableCell>
       <TableCell>
         {isEditing ? (

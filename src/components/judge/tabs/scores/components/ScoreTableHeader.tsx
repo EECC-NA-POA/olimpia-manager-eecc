@@ -25,11 +25,11 @@ export function ScoreTableHeader({ scoreType, showNotesColumn = false }: ScoreTa
       <TableRow>
         <TableHead>Atleta</TableHead>
         <TableHead>Filial</TableHead>
+        <TableHead>Bateria</TableHead>
         <TableHead>{getScoreColumnName()}</TableHead>
         <TableHead>Observações</TableHead>
         <TableHead>Status</TableHead>
         <TableHead>Ações</TableHead>
-        {showNotesColumn && <TableHead className="w-[100px]">Notas</TableHead>}
       </TableRow>
     </TableHeader>
   );

@@ -61,7 +61,7 @@ export function AthletesTable({
 
       // Filter by bateria if selected
       if (selectedBateriaId) {
-        query = query.eq('bateria_id', selectedBateriaId);
+        query = query.eq('numero_bateria', selectedBateriaId);
       }
       
       const { data, error } = await query;
@@ -71,10 +71,35 @@ export function AthletesTable({
         return [];
       }
       
+      console.log('Existing scores for bateria', selectedBateriaId, ':', data);
       return data || [];
     },
     enabled: !!eventId && athletes.length > 0,
   });
+
+  // Filter athletes based on bateria selection
+  const filteredAthletes = React.useMemo(() => {
+    if (!selectedBateriaId) {
+      return athletes;
+    }
+
+    // For bateria system, only show athletes who have scores in this bateria
+    // OR athletes who don't have any scores yet (so they can be scored for this bateria)
+    return athletes.filter(athlete => {
+      const hasScoreInThisBateria = existingScores.some(score => 
+        score.atleta_id === athlete.atleta_id && score.numero_bateria === selectedBateriaId
+      );
+      
+      const hasScoreInAnyBateria = existingScores.some(score => 
+        score.atleta_id === athlete.atleta_id
+      );
+
+      // Show athlete if they have a score in this bateria OR they don't have any scores yet
+      return hasScoreInThisBateria || !hasScoreInAnyBateria;
+    });
+  }, [athletes, selectedBateriaId, existingScores]);
+
+  console.log('Filtered athletes for bateria', selectedBateriaId, ':', filteredAthletes.length);
 
   const handleStartEditing = (athleteId: string) => {
     startEditing(athleteId, existingScores);
@@ -117,9 +142,9 @@ export function AthletesTable({
       <div className="space-y-4">
         <div className="border rounded-md">
           <Table>
-            <ScoreTableHeader scoreType={scoreType} showNotesColumn />
+            <ScoreTableHeader scoreType={scoreType} />
             <TableBody>
-              {athletes.map((athlete) => {
+              {filteredAthletes.map((athlete) => {
                 const existingScore = existingScores.find(s => s.atleta_id === athlete.atleta_id);
                 const entry = scoreEntries[athlete.atleta_id];
 
@@ -137,6 +162,7 @@ export function AthletesTable({
                     onUpdateEntry={updateEntry}
                     onOpenNotesDialog={handleOpenNotesDialog}
                     formatScoreValue={formatScoreValue}
+                    selectedBateriaId={selectedBateriaId}
                   />
                 );
               })}
@@ -144,9 +170,14 @@ export function AthletesTable({
           </Table>
         </div>
 
-        {athletes.length === 0 && (
+        {filteredAthletes.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-muted-foreground">Nenhum atleta inscrito nesta modalidade</p>
+            <p className="text-muted-foreground">
+              {selectedBateriaId 
+                ? 'Nenhum atleta disponível para esta bateria'
+                : 'Nenhum atleta inscrito nesta modalidade'
+              }
+            </p>
           </div>
         )}
       </div>
