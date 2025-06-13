@@ -53,20 +53,27 @@ export function BateriaAthleteSelector({
   );
 
   const handleAthleteToggle = (athleteId: string) => {
+    console.log('Toggling athlete:', athleteId);
     const newSelected = new Set(selectedAthletes);
     if (newSelected.has(athleteId)) {
       newSelected.delete(athleteId);
+      console.log('Removed athlete from selection');
     } else {
       newSelected.add(athleteId);
+      console.log('Added athlete to selection');
     }
     setSelectedAthletes(newSelected);
+    console.log('New selected athletes:', Array.from(newSelected));
   };
 
   const handleSelectAll = () => {
-    setSelectedAthletes(new Set(filteredAthletes.map(a => a.atleta_id)));
+    console.log('Selecting all filtered athletes');
+    const allIds = new Set(filteredAthletes.map(a => a.atleta_id));
+    setSelectedAthletes(allIds);
   };
 
   const handleClearAll = () => {
+    console.log('Clearing all selections');
     setSelectedAthletes(new Set());
   };
 
@@ -140,7 +147,8 @@ export function BateriaAthleteSelector({
             {filteredAthletes.map((athlete) => (
               <div
                 key={athlete.atleta_id}
-                className="flex items-center space-x-3 p-3 border-b last:border-b-0 hover:bg-muted/50"
+                className="flex items-center space-x-3 p-3 border-b last:border-b-0 hover:bg-muted/50 cursor-pointer"
+                onClick={() => handleAthleteToggle(athlete.atleta_id)}
               >
                 <Checkbox
                   checked={selectedAthletes.has(athlete.atleta_id)}
