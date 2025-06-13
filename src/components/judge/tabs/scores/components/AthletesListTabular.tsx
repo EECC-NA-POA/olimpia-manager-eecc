@@ -6,6 +6,7 @@ import { AthletesTable } from './AthletesTable';
 import { DynamicScoringTable } from './DynamicScoringTable';
 import { AthleteFilters } from './AthleteFilters';
 import { BateriaNavigationTabs } from './BateriaNavigationTabs';
+import { BateriaAthleteSelector } from './BateriaAthleteSelector';
 import { useAthletesFiltering } from './hooks/useAthletesFiltering';
 import { useAthletesBranchData } from './hooks/useAthletesBranchData';
 import { useAthletesScoreStatus } from './hooks/useAthletesScoreStatus';
@@ -162,6 +163,16 @@ export function AthletesListTabular({
           hasFinalBateria={hasFinalBateria}
           isCreating={isCreating}
           usesBaterias={usesBaterias}
+        />
+      )}
+
+      {/* Bateria Athlete Selector - only show if modality uses baterias */}
+      {usesBaterias && eventId && (
+        <BateriaAthleteSelector
+          athletes={athletes}
+          selectedBateriaId={selectedBateriaId}
+          modalityId={modalityId}
+          eventId={eventId}
         />
       )}
 
