@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -11,71 +11,27 @@ import { Athlete } from '../hooks/useAthletes';
 interface BateriaAthleteSelectorProps {
   athletes: Athlete[];
   selectedBateriaId: number | null;
-  modalityId: number;
-  eventId: string;
-  onAthleteSelectionChange?: (selectedAthletes: Athlete[]) => void;
+  selectedAthletes: Set<string>;
+  onAthleteToggle: (athleteId: string) => void;
+  onSelectAll: (filteredAthletes: Athlete[]) => void;
+  onClearAll: () => void;
 }
 
 export function BateriaAthleteSelector({
   athletes,
   selectedBateriaId,
-  modalityId,
-  eventId,
-  onAthleteSelectionChange
+  selectedAthletes,
+  onAthleteToggle,
+  onSelectAll,
+  onClearAll
 }: BateriaAthleteSelectorProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedAthletes, setSelectedAthletes] = useState<Set<string>>(new Set());
   const [isExpanded, setIsExpanded] = useState(false);
-
-  // Reset selection when bateria changes
-  useEffect(() => {
-    if (selectedBateriaId) {
-      setSelectedAthletes(new Set());
-      if (onAthleteSelectionChange) {
-        onAthleteSelectionChange([]);
-      }
-    }
-  }, [selectedBateriaId, onAthleteSelectionChange]);
-
-  // Notify parent component when selection changes
-  useEffect(() => {
-    if (onAthleteSelectionChange) {
-      const selectedAthletesList = athletes.filter(athlete => 
-        selectedAthletes.has(athlete.atleta_id)
-      );
-      onAthleteSelectionChange(selectedAthletesList);
-    }
-  }, [selectedAthletes, athletes, onAthleteSelectionChange]);
 
   const filteredAthletes = athletes.filter(athlete =>
     athlete.atleta_nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     athlete.numero_identificador?.includes(searchTerm)
   );
-
-  const handleAthleteToggle = (athleteId: string) => {
-    console.log('Toggling athlete:', athleteId);
-    const newSelected = new Set(selectedAthletes);
-    if (newSelected.has(athleteId)) {
-      newSelected.delete(athleteId);
-      console.log('Removed athlete from selection');
-    } else {
-      newSelected.add(athleteId);
-      console.log('Added athlete to selection');
-    }
-    setSelectedAthletes(newSelected);
-    console.log('New selected athletes:', Array.from(newSelected));
-  };
-
-  const handleSelectAll = () => {
-    console.log('Selecting all filtered athletes');
-    const allIds = new Set(filteredAthletes.map(a => a.atleta_id));
-    setSelectedAthletes(allIds);
-  };
-
-  const handleClearAll = () => {
-    console.log('Clearing all selections');
-    setSelectedAthletes(new Set());
-  };
 
   if (!selectedBateriaId) {
     return (
@@ -131,11 +87,11 @@ export function BateriaAthleteSelector({
               />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleSelectAll}>
+              <Button variant="outline" size="sm" onClick={() => onSelectAll(filteredAthletes)}>
                 <Check className="h-4 w-4 mr-1" />
                 Todos
               </Button>
-              <Button variant="outline" size="sm" onClick={handleClearAll}>
+              <Button variant="outline" size="sm" onClick={onClearAll}>
                 <X className="h-4 w-4 mr-1" />
                 Limpar
               </Button>
@@ -148,11 +104,11 @@ export function BateriaAthleteSelector({
               <div
                 key={athlete.atleta_id}
                 className="flex items-center space-x-3 p-3 border-b last:border-b-0 hover:bg-muted/50 cursor-pointer"
-                onClick={() => handleAthleteToggle(athlete.atleta_id)}
+                onClick={() => onAthleteToggle(athlete.atleta_id)}
               >
                 <Checkbox
                   checked={selectedAthletes.has(athlete.atleta_id)}
-                  onCheckedChange={() => handleAthleteToggle(athlete.atleta_id)}
+                  onChange={() => {}} // Controlled by parent click
                 />
                 <div className="flex-1">
                   <div className="font-medium">{athlete.atleta_nome}</div>

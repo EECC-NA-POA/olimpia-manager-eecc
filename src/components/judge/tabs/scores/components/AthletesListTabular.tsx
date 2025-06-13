@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AthletesTable } from './AthletesTable';
@@ -10,6 +10,7 @@ import { BateriaAthleteSelector } from './BateriaAthleteSelector';
 import { useAthletesFiltering } from './hooks/useAthletesFiltering';
 import { useAthletesBranchData } from './hooks/useAthletesBranchData';
 import { useAthletesScoreStatus } from './hooks/useAthletesScoreStatus';
+import { useBateriaAthleteSelection } from '../hooks/useBateriaAthleteSelection';
 import { useModelosModalidade } from '@/hooks/useDynamicScoring';
 import { useDynamicBaterias } from '../hooks/useDynamicBaterias';
 import { useModeloConfiguration } from '../hooks/useModeloConfiguration';
@@ -37,7 +38,6 @@ export function AthletesListTabular({
   scoreType = 'pontos'
 }: AthletesListTabularProps) {
   const isMobile = useIsMobile();
-  const [selectedBateriaAthletes, setSelectedBateriaAthletes] = useState<Athlete[]>([]);
 
   // Check for dynamic scoring
   const { data: modelos = [], isLoading: isLoadingModelos } = useModelosModalidade(modalityId);
@@ -64,16 +64,14 @@ export function AthletesListTabular({
     enabled: !!modelos[0]?.id,
   });
 
-  // Verificar se o modelo usa baterias usando a configuração do modelo
   const usesBaterias = modeloConfig?.parametros?.baterias === true;
 
-  // Bateria management - only initialize if the model uses baterias
+  // Bateria management
   const bateriasHook = useDynamicBaterias({ 
     modalityId, 
     eventId: eventId || ''
   });
 
-  // Only use baterias if the model actually uses them
   const {
     baterias,
     selectedBateriaId,
@@ -97,6 +95,19 @@ export function AthletesListTabular({
     createFinalBateria: () => {},
     isCreating: false
   };
+
+  // Bateria athlete selection
+  const {
+    selectedAthletes,
+    selectedAthletesList,
+    handleAthleteToggle,
+    handleSelectAll,
+    handleClearAll,
+    getFilteredAthletes
+  } = useBateriaAthleteSelection({
+    athletes: athletes || [],
+    selectedBateriaId
+  });
 
   // Get branch data for filtering
   const { availableBranches, availableStates, athletesBranchData } = useAthletesBranchData(athletes || []);
@@ -122,16 +133,8 @@ export function AthletesListTabular({
     eventId
   });
 
-  // Filter athletes based on bateria selection
-  const athletesToShow = usesBaterias && selectedBateriaId && selectedBateriaAthletes.length > 0 
-    ? filteredAthletes.filter(athlete => 
-        selectedBateriaAthletes.some(selected => selected.atleta_id === athlete.atleta_id)
-      )
-    : filteredAthletes;
-
-  const handleAthleteSelectionChange = (selectedAthletes: Athlete[]) => {
-    setSelectedBateriaAthletes(selectedAthletes);
-  };
+  // Apply bateria filtering
+  const athletesToShow = getFilteredAthletes(filteredAthletes);
 
   if (isLoading || isLoadingModelos || isLoadingConfig) {
     return (
@@ -183,9 +186,10 @@ export function AthletesListTabular({
         <BateriaAthleteSelector
           athletes={athletes}
           selectedBateriaId={selectedBateriaId}
-          modalityId={modalityId}
-          eventId={eventId}
-          onAthleteSelectionChange={handleAthleteSelectionChange}
+          selectedAthletes={selectedAthletes}
+          onAthleteToggle={handleAthleteToggle}
+          onSelectAll={handleSelectAll}
+          onClearAll={handleClearAll}
         />
       )}
 
@@ -195,9 +199,9 @@ export function AthletesListTabular({
           <CardTitle className="text-base sm:text-lg">Registro de Pontuações - Modalidade</CardTitle>
           <div className="text-center text-xs sm:text-sm text-muted-foreground">
             Mostrando {athletesToShow.length} de {athletes.length} atletas
-            {usesBaterias && selectedBateriaId && selectedBateriaAthletes.length > 0 && (
+            {usesBaterias && selectedBateriaId && selectedAthletes.size > 0 && (
               <div className="mt-1 text-blue-700">
-                ({selectedBateriaAthletes.length} selecionados para a bateria)
+                ({selectedAthletes.size} selecionados para a bateria)
               </div>
             )}
             {hasDynamicScoring && modelos[0] && (
