@@ -26,10 +26,11 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
   console.log('Final pontuacao data for database:', pontuacaoData);
   console.log('Final observacoes value for database:', pontuacaoData.observacoes);
 
+  // Use a simple constraint that definitely exists - just the basic unique fields
   const { data: pontuacao, error } = await supabase
     .from('pontuacoes')
     .upsert(pontuacaoData, {
-      onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id,modelo_id',
+      onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id',
       ignoreDuplicates: false
     })
     .select()
