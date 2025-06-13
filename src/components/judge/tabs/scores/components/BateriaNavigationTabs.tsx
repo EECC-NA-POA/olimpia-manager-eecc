@@ -64,7 +64,7 @@ export function BateriaNavigationTabs({
                 variant="outline"
                 size="sm"
                 onClick={onCreateNewBateria}
-                disabled={isCreating}
+                disabled={false}
                 className="border-dashed"
               >
                 <Plus className="h-4 w-4 mr-1" />
@@ -97,7 +97,7 @@ export function BateriaNavigationTabs({
                   variant="outline"
                   size="sm"
                   onClick={onCreateFinalBateria}
-                  disabled={isCreating}
+                  disabled={false}
                   className="border-dashed border-gold text-gold"
                 >
                   <Trophy className="h-4 w-4 mr-1" />
