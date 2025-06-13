@@ -2,22 +2,12 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Form } from '@/components/ui/form';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from '@/components/ui/form';
-import { DynamicScoringForm } from '../../dynamic-scoring/DynamicScoringForm';
 import { useCamposModelo } from '@/hooks/useDynamicScoring';
-import { useDynamicScoringSubmission } from '@/hooks/useDynamicScoringSubmission';
-import { CampoModelo } from '@/types/dynamicScoring';
 import { filterScoringFields } from '@/utils/dynamicScoringUtils';
+import { useSchemaCreation } from './dynamic-score-form/useSchemaCreation';
+import { useFormSubmission } from './dynamic-score-form/useFormSubmission';
+import { DynamicScoreFormContent } from './dynamic-score-form/DynamicScoreFormContent';
 
 interface DynamicScoreFormProps {
   modeloId: number;
@@ -45,57 +35,13 @@ export function DynamicScoreForm({
   onSuccess
 }: DynamicScoreFormProps) {
   const { data: allCampos = [], isLoading } = useCamposModelo(modeloId);
-  const submissionMutation = useDynamicScoringSubmission();
+  const { createSchema } = useSchemaCreation([]);
 
   // Filter to only scoring fields (remove configuration fields)
   const campos = filterScoringFields(allCampos);
 
   console.log('DynamicScoreForm - All campos:', allCampos);
   console.log('DynamicScoreForm - Filtered scoring campos:', campos);
-
-  // Create dynamic schema based on scoring campos only
-  const createSchema = (campos: CampoModelo[]) => {
-    const schemaFields: Record<string, z.ZodType> = {};
-    
-    campos.forEach(campo => {
-      let fieldSchema: z.ZodType;
-      
-      // Campos calculados não precisam de validação obrigatória
-      if (campo.tipo_input === 'calculated') {
-        fieldSchema = z.any().optional();
-      } else {
-        switch (campo.tipo_input) {
-          case 'number':
-          case 'integer':
-            fieldSchema = z.coerce.number();
-            if (campo.metadados?.min !== undefined) {
-              fieldSchema = (fieldSchema as z.ZodNumber).min(campo.metadados.min);
-            }
-            if (campo.metadados?.max !== undefined) {
-              fieldSchema = (fieldSchema as z.ZodNumber).max(campo.metadados.max);
-            }
-            break;
-          case 'text':
-          case 'select':
-            fieldSchema = z.string();
-            break;
-          default:
-            fieldSchema = z.any();
-        }
-        
-        if (!campo.obrigatorio) {
-          fieldSchema = fieldSchema.optional();
-        }
-      }
-      
-      schemaFields[campo.chave_campo] = fieldSchema;
-    });
-
-    // Add notes field
-    schemaFields.notes = z.string().optional();
-    
-    return z.object(schemaFields);
-  };
 
   const schema = createSchema(campos);
   
@@ -107,53 +53,17 @@ export function DynamicScoreForm({
     },
   });
 
-  const handleSubmit = async (data: any) => {
-    console.log('=== FORMULÁRIO SUBMETIDO (DynamicScoreForm) ===');
-    console.log('Form data submitted:', data);
-    
-    // Extract notes but keep everything else in formData
-    const { notes, ...formDataFields } = data;
-    
-    // Ensure we include the raia in formData if it exists
-    const formData = {
-      ...formDataFields
-    };
-
-    // Add raia to formData if available
-    if (raia !== undefined) {
-      formData.raia = raia;
-    }
-    
-    console.log('=== DADOS SEPARADOS (DynamicScoreForm) ===');
-    console.log('Form data after separation:', { formData, notes });
-    console.log('Notes will be mapped to observacoes:', notes);
-    
-    console.log('=== PARÂMETROS DE SUBMISSÃO (DynamicScoreForm) ===');
-    const submissionParams = {
-      eventId,
-      modalityId,
-      athleteId,
-      equipeId,
-      judgeId,
-      modeloId,
-      bateriaId,
-      raia,
-      formData,
-      notes: notes || null, // Ensure notes is properly passed
-    };
-    console.log('Submission params:', submissionParams);
-    
-    try {
-      console.log('=== CHAMANDO MUTAÇÃO (DynamicScoreForm) ===');
-      await submissionMutation.mutateAsync(submissionParams);
-      
-      console.log('=== MUTAÇÃO EXECUTADA COM SUCESSO (DynamicScoreForm) ===');
-      onSuccess?.();
-    } catch (error) {
-      console.error('=== ERRO NA SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm) ===');
-      console.error('Error submitting dynamic score:', error);
-    }
-  };
+  const { handleSubmit, isSubmitting } = useFormSubmission({
+    eventId,
+    modalityId,
+    athleteId,
+    equipeId,
+    judgeId,
+    modeloId,
+    bateriaId,
+    raia,
+    onSuccess
+  });
 
   if (isLoading) {
     return <div>Carregando configuração da modalidade...</div>;
@@ -177,43 +87,16 @@ export function DynamicScoreForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <DynamicScoringForm 
-          form={form} 
-          campos={campos}
-          modeloId={modeloId}
-          modalityId={modalityId}
-          eventId={eventId}
-          bateriaId={bateriaId}
-        />
-        
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Observações</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Observações adicionais"
-                  className="resize-none"
-                  rows={2}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <Button 
-          type="submit"
-          disabled={submissionMutation.isPending}
-          className="w-full"
-        >
-          {submissionMutation.isPending ? 'Enviando...' : 'Salvar Pontuação'}
-        </Button>
-      </form>
+      <DynamicScoreFormContent
+        form={form}
+        campos={campos}
+        modeloId={modeloId}
+        modalityId={modalityId}
+        eventId={eventId}
+        bateriaId={bateriaId}
+        isSubmitting={isSubmitting}
+        onSubmit={handleSubmit}
+      />
     </Form>
   );
 }
