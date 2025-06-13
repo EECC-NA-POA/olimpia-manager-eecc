@@ -23,18 +23,32 @@ export function prepareTentativasData(
 
       // Se o campo tem formato específico, processar adequadamente
       if (campo.metadados?.formato_resultado) {
-        const parsed = parseValueByFormat(value.toString(), campo.metadados.formato_resultado);
-        processedValue = parsed.numericValue;
-        valorFormatado = value; // Manter o valor formatado como foi inserido
-        
-        console.log(`Campo ${campo.chave_campo} com formato ${campo.metadados.formato_resultado}:`, {
-          originalValue: value,
-          processedValue,
-          valorFormatado
-        });
+        try {
+          const parsed = parseValueByFormat(value.toString(), campo.metadados.formato_resultado);
+          processedValue = parsed.numericValue;
+          valorFormatado = value; // Manter o valor formatado como foi inserido
+          
+          console.log(`Campo ${campo.chave_campo} com formato ${campo.metadados.formato_resultado}:`, {
+            originalValue: value,
+            processedValue,
+            valorFormatado
+          });
+        } catch (error) {
+          console.error(`Error parsing value for campo ${campo.chave_campo}:`, error);
+          // Se houver erro no parsing, usar o valor original
+          processedValue = value;
+          valorFormatado = value.toString();
+        }
       } else if (campo.tipo_input === 'number' || campo.tipo_input === 'integer') {
-        processedValue = Number(value);
-        valorFormatado = value.toString();
+        const numValue = Number(value);
+        if (!isNaN(numValue)) {
+          processedValue = numValue;
+          valorFormatado = value.toString();
+        } else {
+          console.warn(`Invalid number value for campo ${campo.chave_campo}:`, value);
+          processedValue = 0;
+          valorFormatado = '0';
+        }
       } else {
         valorFormatado = value.toString();
       }
@@ -49,6 +63,8 @@ export function prepareTentativasData(
 
       console.log(`Tentativa criada para ${campo.chave_campo}:`, tentativa);
       tentativas.push(tentativa);
+    } else {
+      console.log(`Skipping campo ${campo.chave_campo} - empty value`);
     }
   });
 
