@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -76,7 +77,8 @@ export function DynamicScoringTable({
       'usar_bateria',
       'configuracao_de_pontuacao',
       'usar baterias',
-      'configuração de pontuação'
+      'configuração de pontuação',
+      'configuração_de_pontuação'
     ];
     
     // Check both chave_campo and rotulo_campo
@@ -87,17 +89,22 @@ export function DynamicScoringTable({
     return !isConfigField;
   });
 
-  // Fetch existing scores for all athletes in this bateria
+  // Fetch existing scores for all athletes in this bateria - CORREÇÃO AQUI
   const { data: existingScores = [], refetch: refetchScores } = useQuery({
     queryKey: ['dynamic-scores', modalityId, eventId, selectedBateriaId],
     queryFn: async () => {
       if (!eventId || !modalityId) return [];
       
+      // Buscar pontuações com as tentativas relacionadas
       let query = supabase
-        .from('pontuacoes_detalhadas')
-        .select('*')
+        .from('pontuacoes')
+        .select(`
+          *,
+          tentativas_pontuacao(*)
+        `)
         .eq('evento_id', eventId)
         .eq('modalidade_id', modalityId)
+        .eq('juiz_id', judgeId)
         .in('atleta_id', athletes.map(a => a.atleta_id));
 
       if (selectedBateriaId) {
@@ -111,7 +118,16 @@ export function DynamicScoringTable({
         return [];
       }
       
-      return data || [];
+      console.log('Fetched dynamic scores:', data);
+      
+      // Transformar os dados para o formato esperado
+      return (data || []).map(pontuacao => ({
+        ...pontuacao,
+        tentativas: pontuacao.tentativas_pontuacao?.reduce((acc: any, tentativa: any) => {
+          acc[tentativa.chave_campo] = tentativa.valor;
+          return acc;
+        }, {}) || {}
+      }));
     },
     enabled: !!eventId && !!modalityId && athletes.length > 0,
   });
@@ -159,6 +175,11 @@ export function DynamicScoringTable({
     
     const existingScore = existingScores.find(s => s.atleta_id === athleteId);
     return existingScore?.tentativas?.[fieldKey] || '';
+  };
+
+  const hasExistingScore = (athleteId: string) => {
+    const existingScore = existingScores.find(s => s.atleta_id === athleteId);
+    return existingScore && Object.keys(existingScore.tentativas || {}).length > 0;
   };
 
   if (isLoadingCampos) {
@@ -241,6 +262,7 @@ export function DynamicScoringTable({
             {athletes.map((athlete) => {
               const isEditing = editingAthletes.has(athlete.atleta_id);
               const existingScore = existingScores.find(s => s.atleta_id === athlete.atleta_id);
+              const athleteHasScore = hasExistingScore(athlete.atleta_id);
               
               return (
                 <TableRow key={athlete.atleta_id}>
@@ -274,7 +296,7 @@ export function DynamicScoringTable({
                     
                     return (
                       <TableCell key={campo.chave_campo} className="text-center">
-                        {isEditing ? (
+                        {(isEditing || !athleteHasScore) ? (
                           <DynamicInputField
                             athleteId={athlete.atleta_id}
                             campo={campo}
@@ -294,7 +316,7 @@ export function DynamicScoringTable({
                   />
                   <TableCell>
                     <div className="flex gap-1">
-                      {isEditing ? (
+                      {(isEditing || !athleteHasScore) ? (
                         <>
                           <Button
                             size="sm"
@@ -304,14 +326,16 @@ export function DynamicScoringTable({
                           >
                             <Save className="h-3 w-3" />
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleCancel(athlete.atleta_id)}
-                            className="h-8 w-8 p-0"
-                          >
-                            ×
-                          </Button>
+                          {athleteHasScore && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleCancel(athlete.atleta_id)}
+                              className="h-8 w-8 p-0"
+                            >
+                              ×
+                            </Button>
+                          )}
                         </>
                       ) : (
                         <Button
