@@ -1,20 +1,15 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AthleteCard } from '@/components/judge/AthleteCard';
 import { DynamicAthletesGrid } from './DynamicAthletesGrid';
 import { AthleteFilters } from './AthleteFilters';
-import { BateriaNavigationTabs } from './BateriaNavigationTabs';
-import { BateriaAthleteSelector } from './BateriaAthleteSelector';
+import { BateriaControlsSection } from './BateriaControlsSection';
+import { AthletesStatusInfo } from './AthletesStatusInfo';
 import { useAthletesFiltering } from './hooks/useAthletesFiltering';
 import { useAthletesBranchData } from './hooks/useAthletesBranchData';
 import { useAthletesScoreStatus } from './hooks/useAthletesScoreStatus';
-import { useBateriaAthleteSelection } from '../hooks/useBateriaAthleteSelection';
-import { useBateriaData } from '../hooks/useBateriaData';
-import { useDynamicBaterias } from '../hooks/useDynamicBaterias';
-import { useModeloConfiguration } from '../hooks/useModeloConfiguration';
-import { useModelosModalidade } from '@/hooks/useDynamicScoring';
+import { useAthletesListLogic } from './hooks/useAthletesListLogic';
 import { Athlete } from '../hooks/useAthletes';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -37,58 +32,33 @@ export function AthletesList({
   scoreType = 'pontos',
   modalityRule
 }: AthletesListProps) {
-  const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
-  // Check for dynamic scoring
-  const { data: modelos = [] } = useModelosModalidade(modalityId);
-  const hasDynamicScoring = modelos.length > 0;
-
-  // Get modelo configuration to check if it uses baterias
-  const { data: modeloConfig } = useModeloConfiguration(modalityId);
-  const usesBaterias = modeloConfig?.parametros?.baterias === true;
-
-  // Bateria management - only if uses baterias
-  const bateriasHook = useDynamicBaterias({ 
-    modalityId, 
-    eventId: eventId || ''
-  });
-
+  // Use the extracted logic hook
   const {
-    baterias,
-    selectedBateriaId,
-    selectedBateria,
+    selectedAthleteId,
+    setSelectedAthleteId,
+    hasDynamicScoring,
+    modelos,
+    usesBaterias,
     regularBaterias,
     finalBateria,
-    hasFinalBateria,
+    selectedBateriaId,
     setSelectedBateriaId,
     createNewBateria,
     createFinalBateria,
-    isCreating
-  } = usesBaterias ? bateriasHook : {
-    baterias: [],
-    selectedBateriaId: null,
-    selectedBateria: undefined,
-    regularBaterias: [],
-    finalBateria: undefined,
-    hasFinalBateria: false,
-    setSelectedBateriaId: () => {},
-    createNewBateria: () => {},
-    createFinalBateria: () => {},
-    isCreating: false
-  };
-
-  // Bateria athlete selection
-  const {
+    hasFinalBateria,
+    isCreating,
     selectedAthletes,
-    selectedAthletesList,
     handleAthleteToggle,
     handleSelectAll,
     handleClearAll,
-    getFilteredAthletes
-  } = useBateriaAthleteSelection({
-    athletes: athletes || [],
-    selectedBateriaId
+    getFilteredAthletes,
+    bateriasData
+  } = useAthletesListLogic({
+    modalityId,
+    eventId,
+    athletes
   });
 
   // Get branch data for filtering
@@ -117,12 +87,6 @@ export function AthletesList({
 
   // Apply bateria filtering
   const athletesToShow = getFilteredAthletes(filteredAthletes);
-
-  // Fetch baterias data for legacy scoring
-  const { data: bateriasData = [], isLoading: isLoadingBaterias } = useBateriaData(
-    modalityId, 
-    eventId
-  );
 
   if (isLoading) {
     return (
@@ -156,78 +120,41 @@ export function AthletesList({
     );
   }
 
-  const showBateriaInfo = !hasDynamicScoring && modalityRule && (
-    (modalityRule.regra_tipo === 'distancia' && modalityRule.parametros?.baterias) ||
-    modalityRule.regra_tipo === 'baterias' ||
-    modalityRule.regra_tipo === 'tempo'
-  );
-
   return (
     <div className={`space-y-4 ${isMobile ? 'space-y-4' : 'space-y-6'}`}>
-      {/* Bateria Navigation - only show if modality uses baterias */}
-      {usesBaterias && (
-        <BateriaNavigationTabs
-          regularBaterias={regularBaterias}
-          finalBateria={finalBateria}
-          selectedBateriaId={selectedBateriaId}
-          onSelectBateria={setSelectedBateriaId}
-          onCreateNewBateria={createNewBateria}
-          onCreateFinalBateria={createFinalBateria}
-          hasFinalBateria={hasFinalBateria}
-          isCreating={isCreating}
-          usesBaterias={usesBaterias}
-        />
-      )}
-
-      {/* Bateria Athlete Selector - only show if modality uses baterias */}
-      {usesBaterias && eventId && (
-        <BateriaAthleteSelector
-          athletes={athletes}
-          selectedBateriaId={selectedBateriaId}
-          selectedAthletes={selectedAthletes}
-          onAthleteToggle={handleAthleteToggle}
-          onSelectAll={handleSelectAll}
-          onClearAll={handleClearAll}
-        />
-      )}
+      {/* Bateria Controls Section */}
+      <BateriaControlsSection
+        usesBaterias={usesBaterias}
+        eventId={eventId}
+        regularBaterias={regularBaterias}
+        finalBateria={finalBateria}
+        selectedBateriaId={selectedBateriaId}
+        onSelectBateria={setSelectedBateriaId}
+        onCreateNewBateria={createNewBateria}
+        onCreateFinalBateria={createFinalBateria}
+        hasFinalBateria={hasFinalBateria}
+        isCreating={isCreating}
+        athletes={athletes}
+        selectedAthletes={selectedAthletes}
+        onAthleteToggle={handleAthleteToggle}
+        onSelectAll={handleSelectAll}
+        onClearAll={handleClearAll}
+      />
 
       <Card>
         <CardHeader className={isMobile ? 'pb-4' : ''}>
           <CardTitle className="text-base sm:text-lg">Atletas Inscritos</CardTitle>
-          <div className="text-center text-xs sm:text-sm text-muted-foreground">
-            Mostrando {athletesToShow.length} de {athletes.length} atletas
-            {usesBaterias && selectedBateriaId && selectedAthletes.size > 0 && (
-              <div className="mt-1 text-blue-700">
-                ({selectedAthletes.size} selecionados para a bateria)
-              </div>
-            )}
-            {hasDynamicScoring ? (
-              <div className="mt-2 text-xs bg-green-50 text-green-700 p-2 rounded border">
-                <strong>Sistema de Pontuação Dinâmica Ativo</strong>
-                <div className="mt-1">
-                  Modelo: {modelos[0]?.descricao || modelos[0]?.codigo_modelo}
-                </div>
-                <div className="mt-1">
-                  {usesBaterias ? 'Sistema de baterias: Ativo' : 'Sistema de baterias: Inativo'}
-                </div>
-              </div>
-            ) : modalityRule && (
-              <div className="mt-2 text-xs bg-blue-50 text-blue-700 p-2 rounded border">
-                Modalidade: {modalityRule.regra_tipo} 
-                {modalityRule.parametros?.unidade && ` (${modalityRule.parametros.unidade})`}
-                {showBateriaInfo && bateriasData.length > 0 && (
-                  <div className="mt-1">
-                    Baterias disponíveis: {bateriasData.map(b => `Bateria ${b.numero}`).join(', ')}
-                  </div>
-                )}
-                {showBateriaInfo && bateriasData.length === 0 && (
-                  <div className="mt-1 text-amber-600">
-                    ⚠️ Nenhuma bateria configurada - configure nas regras da modalidade
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <AthletesStatusInfo
+            athletesToShow={athletesToShow.length}
+            totalAthletes={athletes.length}
+            usesBaterias={usesBaterias}
+            selectedBateriaId={selectedBateriaId}
+            selectedAthletesCount={selectedAthletes.size}
+            hasDynamicScoring={hasDynamicScoring}
+            modelos={modelos}
+            modalityRule={modalityRule}
+            bateriasData={bateriasData}
+          />
         </CardHeader>
         <CardContent className={`space-y-4 ${isMobile ? 'p-3' : 'space-y-6'}`}>
           <AthleteFilters
