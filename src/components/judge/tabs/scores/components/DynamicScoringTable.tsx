@@ -11,11 +11,8 @@ import { supabase } from '@/lib/supabase';
 import { useDynamicScoringSubmission } from '@/hooks/useDynamicScoringSubmission';
 import { Athlete } from '../hooks/useAthletes';
 import { ModeloModalidade, CampoModelo } from '@/types/dynamicScoring';
-import { filterScoringFields } from '@/utils/dynamicScoringUtils';
 import { DynamicInputField } from './dynamic-scoring-table/DynamicInputField';
 import { AthleteStatusCell } from './dynamic-scoring-table/AthleteStatusCell';
-import { CalculatedFieldCell } from './dynamic-scoring-table/CalculatedFieldCell';
-import { UnsavedChangesBanner } from './dynamic-scoring-table/UnsavedChangesBanner';
 import { useDynamicScoringTableState } from './dynamic-scoring-table/useDynamicScoringTableState';
 
 interface DynamicScoringTableProps {
@@ -260,11 +257,11 @@ export function DynamicScoringTable({
                   {campos.map((campo) => {
                     if (campo.tipo_input === 'calculated') {
                       return (
-                        <CalculatedFieldCell
-                          key={campo.chave_campo}
-                          athleteId={athlete.atleta_id}
-                          campo={campo}
-                        />
+                        <TableCell key={campo.chave_campo} className="text-center">
+                          <span className="text-sm text-muted-foreground">
+                            Calculado automaticamente
+                          </span>
+                        </TableCell>
                       );
                     }
                     
