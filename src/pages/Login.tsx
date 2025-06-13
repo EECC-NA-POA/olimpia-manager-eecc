@@ -8,8 +8,19 @@ import { PhilosopherQuotes } from '@/components/auth/PhilosopherQuotes';
 
 export default function Login() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-olimpics-background">
-      <div className="container relative mx-auto p-6 pt-24">
+    <div 
+      className="min-h-screen relative"
+      style={{
+        backgroundImage: 'url(/lovable-uploads/0e072ceb-03f9-4f0f-a6d1-7fbea0938c7a.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Overlay para melhor legibilidade */}
+      <div className="absolute inset-0 bg-black/30"></div>
+      
+      <div className="container relative mx-auto p-6 pt-24 z-10">
         {/* Header with logos */}
         <div className="text-center mb-8">
           {/* Login page specific logos - only 2 logos */}
@@ -30,30 +41,30 @@ export default function Login() {
                 />
               </div>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-olimpics-green-primary">
+            <h2 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg">
               Areté
             </h2>
           </div>
         </div>
 
         <Tabs defaultValue="register" className="w-full max-w-2xl mx-auto">
-          <TabsList className="grid w-full grid-cols-2 bg-olimpics-green-primary/90 backdrop-blur-sm border border-white/20">
+          <TabsList className="grid w-full grid-cols-2 bg-white/90 backdrop-blur-sm border border-white/20">
             <TabsTrigger 
               value="register"
-              className="data-[state=active]:bg-white data-[state=active]:text-olimpics-green-primary text-white hover:bg-white/10"
+              className="data-[state=active]:bg-olimpics-green-primary data-[state=active]:text-white text-olimpics-green-primary hover:bg-olimpics-green-primary/10"
             >
               Cadastre-se
             </TabsTrigger>
             <TabsTrigger 
               value="login"
-              className="data-[state=active]:bg-white data-[state=active]:text-olimpics-green-primary text-white hover:bg-white/10"
+              className="data-[state=active]:bg-olimpics-green-primary data-[state=active]:text-white text-olimpics-green-primary hover:bg-olimpics-green-primary/10"
             >
               Login
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="register" className="space-y-4">
-            <Card className="bg-white/95 backdrop-blur-sm">
+            <Card className="bg-white/95 backdrop-blur-sm border border-white/20 shadow-lg">
               <CardContent className="pt-6">
                 <SignUpForm />
               </CardContent>
@@ -61,7 +72,7 @@ export default function Login() {
           </TabsContent>
 
           <TabsContent value="login" className="space-y-4">
-            <Card className="bg-white/95 backdrop-blur-sm">
+            <Card className="bg-white/95 backdrop-blur-sm border border-white/20 shadow-lg">
               <CardContent className="pt-6">
                 <LoginForm />
               </CardContent>
