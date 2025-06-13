@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { Athlete } from '../hooks/useAthletes';
+import { Athlete } from '../../hooks/useAthletes';
 import { ModeloModalidade, CampoModelo } from '@/types/dynamicScoring';
 import { useDynamicScoringTableState } from './useDynamicScoringTableState';
 import { useDynamicScoreData } from './hooks/useDynamicScoreData';

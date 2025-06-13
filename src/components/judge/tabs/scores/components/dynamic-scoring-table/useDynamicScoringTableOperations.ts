@@ -2,7 +2,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useDynamicScoringSubmission } from '@/hooks/useDynamicScoringSubmission';
-import { Athlete } from '../hooks/useAthletes';
+import { Athlete } from '../../hooks/useAthletes';
 import { CampoModelo, ModeloModalidade } from '@/types/dynamicScoring';
 
 interface UseDynamicScoringTableOperationsProps {
