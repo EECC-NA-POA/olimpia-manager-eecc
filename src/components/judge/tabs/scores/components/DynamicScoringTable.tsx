@@ -186,10 +186,22 @@ export function DynamicScoringTable({
 
   return (
     <div className="space-y-4">
-      <UnsavedChangesBanner 
-        hasUnsavedChanges={hasUnsavedChanges()}
-        onRefresh={() => window.location.reload()}
-      />
+      {hasUnsavedChanges() && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+          <div className="flex items-center justify-between">
+            <div className="text-yellow-800 text-sm">
+              <strong>Alterações não salvas!</strong> Você tem alterações pendentes.
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.location.reload()}
+            >
+              Atualizar página
+            </Button>
+          </div>
+        </div>
+      )}
       
       <div className="border rounded-lg overflow-hidden">
         {selectedBateriaId && (
@@ -252,7 +264,6 @@ export function DynamicScoringTable({
                           key={campo.chave_campo}
                           athleteId={athlete.atleta_id}
                           campo={campo}
-                          existingScore={existingScore}
                         />
                       );
                     }
@@ -261,6 +272,7 @@ export function DynamicScoringTable({
                       <TableCell key={campo.chave_campo} className="text-center">
                         {isEditing ? (
                           <DynamicInputField
+                            athleteId={athlete.atleta_id}
                             campo={campo}
                             value={getFieldValue(athlete.atleta_id, campo.chave_campo)}
                             onChange={(value) => updateFieldValue(athlete.atleta_id, campo.chave_campo, value)}
@@ -274,7 +286,6 @@ export function DynamicScoringTable({
                     );
                   })}
                   <AthleteStatusCell 
-                    existingScore={existingScore}
                     hasUnsavedChanges={unsavedChanges.has(athlete.atleta_id)}
                   />
                   <TableCell>
