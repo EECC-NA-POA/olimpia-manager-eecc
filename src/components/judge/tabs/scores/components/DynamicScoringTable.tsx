@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -65,6 +64,7 @@ export function DynamicScoringTable({
   // Filter campos to remove configuration fields and fields not relevant for judges
   const campos = allCampos.filter(campo => {
     const chaveField = campo.chave_campo?.toLowerCase() || '';
+    const rotuloField = campo.rotulo_campo?.toLowerCase() || '';
     
     // Remove configuration fields that judges shouldn't fill
     const configFields = [
@@ -74,10 +74,17 @@ export function DynamicScoringTable({
       'usar_baterias',
       'configuracao_pontuacao',
       'usar_bateria',
-      'configuracao_de_pontuacao'
+      'configuracao_de_pontuacao',
+      'usar baterias',
+      'configuração de pontuação'
     ];
     
-    return !configFields.includes(chaveField);
+    // Check both chave_campo and rotulo_campo
+    const isConfigField = configFields.some(configField => 
+      chaveField.includes(configField) || rotuloField.includes(configField)
+    );
+    
+    return !isConfigField;
   });
 
   // Fetch existing scores for all athletes in this bateria
