@@ -1,11 +1,11 @@
-
 import { supabase } from '@/lib/supabase';
 
 export async function upsertPontuacao(data: any, valorPontuacao: number) {
   console.log('=== UPSERT PONTUAÇÃO ===');
   console.log('Data for upsert:', data);
   console.log('Valor pontuacao:', valorPontuacao);
-  console.log('Observacoes to save:', data.observacoes);
+  console.log('Observacoes received in upsertPontuacao:', data.observacoes);
+  console.log('Observacoes type in upsertPontuacao:', typeof data.observacoes);
 
   const pontuacaoData = {
     evento_id: data.eventId,
@@ -23,6 +23,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
   };
 
   console.log('Final pontuacao data for database:', pontuacaoData);
+  console.log('Final observacoes value for database:', pontuacaoData.observacoes);
 
   const { data: pontuacao, error } = await supabase
     .from('pontuacoes')
@@ -35,10 +36,13 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
 
   if (error) {
     console.error('Error upserting pontuacao:', error);
+    console.error('Error details:', JSON.stringify(error, null, 2));
+    console.error('Data that failed to save:', pontuacaoData);
     throw error;
   }
 
   console.log('Pontuacao upserted successfully:', pontuacao);
+  console.log('Saved observacoes value:', pontuacao.observacoes);
   return pontuacao;
 }
 
