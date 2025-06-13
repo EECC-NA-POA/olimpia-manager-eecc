@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 
 export async function upsertPontuacao(data: any, valorPontuacao: number) {
@@ -20,7 +19,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     observacoes: data.observacoes || null, // Ensure observacoes is included
     data_registro: new Date().toISOString(),
     numero_bateria: data.bateriaId || null, // Changed from bateria_id to numero_bateria
-    numero_raia: data.raia || null
+    raia: data.raia || null // Changed from numero_raia to raia
   };
 
   console.log('Final pontuacao data for database:', pontuacaoData);
