@@ -16,7 +16,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Athlete } from '../hooks/useAthletes';
 import { CampoModelo } from '@/types/dynamicScoring';
-import { modelUsesBaterias } from '@/utils/dynamicScoringUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AthletesListTabularProps {
@@ -64,7 +63,7 @@ export function AthletesListTabular({
   });
 
   // Verificar se o modelo usa baterias usando a configuração do modelo
-  const usesBaterias = modelUsesBaterias(modeloConfig);
+  const usesBaterias = modeloConfig?.parametros?.baterias === true;
 
   console.log('AthletesListTabular - Debug info:', {
     modalityId,
@@ -210,7 +209,7 @@ export function AthletesListTabular({
           />
           
           <div className={isMobile ? 'overflow-x-auto -mx-3' : ''}>
-            {hasDynamicScoring && modelos[0] ? (
+            {hasDynamicScoring && modelos[0] && eventId ? (
               <DynamicScoringTable
                 athletes={filteredAthletes}
                 modalityId={modalityId}

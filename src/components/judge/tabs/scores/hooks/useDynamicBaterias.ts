@@ -136,6 +136,7 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
   useEffect(() => {
     console.log('useEffect - usesBaterias:', usesBaterias, 'modeloConfig:', !!modeloConfig, 'eventId:', eventId);
     console.log('useEffect - baterias.length:', baterias.length, 'selectedBateriaId:', selectedBateriaId);
+    console.log('useEffect - isLoadingConfig:', isLoadingConfig, 'isCreating:', createBateriaMutation.isPending);
     
     if (usesBaterias && modeloConfig && eventId && !isLoadingConfig && !createBateriaMutation.isPending) {
       // Se não há baterias, criar a primeira automaticamente
@@ -151,7 +152,7 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
         }
       }
     }
-  }, [baterias, selectedBateriaId, usesBaterias, modeloConfig, eventId, isLoadingConfig, createBateriaMutation]);
+  }, [baterias, selectedBateriaId, usesBaterias, modeloConfig, eventId, isLoadingConfig]);
 
   const selectedBateria = baterias.find(b => b.numero === selectedBateriaId);
   const hasFinalBateria = baterias.some(b => b.isFinal);
