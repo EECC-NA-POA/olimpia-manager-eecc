@@ -23,7 +23,8 @@ export async function upsertPontuacao(
     observacoes: data.notes || null,
     data_registro: new Date().toISOString(),
     raia: data.raia || null,
-    numero_bateria: data.bateriaId || null
+    numero_bateria: data.bateriaId || null,
+    posicao_final: null // Will be calculated later by ranking system
   };
 
   console.log('Pontuacao data to upsert:', pontuacaoData);
@@ -57,7 +58,8 @@ export async function upsertPontuacao(
         unidade: 'dinâmica',
         observacoes: data.notes || null,
         data_registro: new Date().toISOString(),
-        raia: data.raia || null
+        raia: data.raia || null,
+        posicao_final: null // Reset position when score is updated
       })
       .eq('id', existingScore.id)
       .select()

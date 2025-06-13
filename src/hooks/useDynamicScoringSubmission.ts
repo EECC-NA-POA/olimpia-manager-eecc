@@ -32,8 +32,18 @@ export function useDynamicScoringSubmission() {
         const valorPontuacao = calculateMainScore(data.formData, campos);
         console.log('Calculated valor_pontuacao:', valorPontuacao);
 
+        // Extract raia from formData if present
+        const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
+        console.log('Extracted raia:', raia);
+
+        // Prepare enhanced data with raia
+        const enhancedData = {
+          ...data,
+          raia: raia
+        };
+
         // Upsert pontuacao
-        const pontuacao = await upsertPontuacao(data, valorPontuacao);
+        const pontuacao = await upsertPontuacao(enhancedData, valorPontuacao);
         console.log('=== PONTUAÇÃO SALVA COM SUCESSO ===');
         console.log('Pontuação:', pontuacao);
 
@@ -65,6 +75,9 @@ export function useDynamicScoringSubmission() {
       });
       queryClient.invalidateQueries({ 
         queryKey: ['dynamic-scores', variables.modalityId, variables.eventId, variables.bateriaId] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['dynamic-score', variables.athleteId, variables.modalityId, variables.eventId, variables.judgeId, variables.modeloId] 
       });
       
       toast.success('Pontuação registrada com sucesso!');
