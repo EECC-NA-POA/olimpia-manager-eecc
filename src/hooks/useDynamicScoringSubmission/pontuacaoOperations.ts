@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 
 export async function upsertPontuacao(data: any, valorPontuacao: number) {
@@ -55,9 +56,9 @@ export async function insertTentativas(tentativas: any[], pontuacaoId: string) {
   console.log('=== INSERINDO TENTATIVAS ===');
   console.log('Tentativas to insert:', tentativas);
 
-  // Delete existing tentativas for this pontuacao
+  // Delete existing tentativas for this pontuacao - using correct table name
   const { error: deleteError } = await supabase
-    .from('tentativas')
+    .from('tentativas_pontuacao')
     .delete()
     .eq('pontuacao_id', pontuacaoId);
 
@@ -66,9 +67,9 @@ export async function insertTentativas(tentativas: any[], pontuacaoId: string) {
     throw deleteError;
   }
 
-  // Insert new tentativas
+  // Insert new tentativas - using correct table name
   const { data, error } = await supabase
-    .from('tentativas')
+    .from('tentativas_pontuacao')
     .insert(tentativas)
     .select();
 
