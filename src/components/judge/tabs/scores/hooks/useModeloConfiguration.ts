@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { modelUsesBaterias, filterConfigurationFields } from '@/utils/dynamicScoringUtils';
+import { modelUsesBateriasByFields } from '@/utils/dynamicScoringUtils';
 
 export interface ModeloConfiguration {
   modalidade_id: number;
@@ -71,7 +71,7 @@ export function useModeloConfiguration(modalidadeId: number | null) {
       console.log('Campos encontrados:', campos?.length || 0);
       
       // Check if model uses baterias based on campos
-      const usesBaterias = campos ? modelUsesBaterias(campos) : false;
+      const usesBaterias = campos ? modelUsesBateriasByFields(campos) : false;
       console.log('Modelo usa baterias:', usesBaterias);
       
       return {

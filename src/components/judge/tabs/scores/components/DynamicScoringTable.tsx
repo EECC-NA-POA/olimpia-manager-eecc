@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,7 @@ import {
   filterScoringFields, 
   filterCalculatedFields,
   filterManualFields,
-  modelUsesBaterias 
+  modelUsesBateriasByFields 
 } from '@/utils/dynamicScoringUtils';
 
 interface DynamicScoringTableProps {
@@ -73,7 +74,7 @@ export function DynamicScoringTable({
   const allScoringFields = filterScoringFields(allCampos);
   const manualFields = filterManualFields(allCampos);
   const calculatedFields = filterCalculatedFields(allCampos);
-  const usesBaterias = modelUsesBaterias(allCampos);
+  const usesBaterias = modelUsesBateriasByFields(allCampos);
 
   console.log('DynamicScoringTable - Campos separados:', {
     total: allCampos.length,

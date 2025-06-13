@@ -4,7 +4,7 @@ import { UseFormReturn } from 'react-hook-form';
 import { CampoModelo } from '@/types/dynamicScoring';
 import { CalculatedFieldsManager } from './CalculatedFieldsManager';
 import { FieldsManager } from './form-fields/FieldsManager';
-import { filterScoringFields, filterConfigurationFields } from '@/utils/dynamicScoringUtils';
+import { filterScoringFields } from '@/utils/dynamicScoringUtils';
 
 interface DynamicScoringFormProps {
   form: UseFormReturn<any>;

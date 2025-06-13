@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Athlete } from '../hooks/useAthletes';
 import { ModeloModalidade, CampoModelo } from '@/types/dynamicScoring';
-import { filterScoringFields, modelUsesBaterias } from '@/utils/dynamicScoringUtils';
+import { filterScoringFields, modelUsesBateriasByFields } from '@/utils/dynamicScoringUtils';
 
 interface DynamicAthletesTableProps {
   athletes: Athlete[];
@@ -53,7 +53,7 @@ export function DynamicAthletesTable({
 
   // Filter to only scoring fields (remove configuration fields)
   const campos = filterScoringFields(allCampos);
-  const usesBaterias = modelUsesBaterias(allCampos);
+  const usesBaterias = modelUsesBateriasByFields(allCampos);
 
   console.log('DynamicAthletesTable - All campos:', allCampos);
   console.log('DynamicAthletesTable - Filtered scoring campos:', campos);
