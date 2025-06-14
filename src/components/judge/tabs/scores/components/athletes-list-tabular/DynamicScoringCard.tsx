@@ -58,6 +58,7 @@ export function DynamicScoringCard({
   console.log('=== SHOWING DYNAMIC SCORING TABLE ===');
   console.log('Athletes for dynamic table:', athletes);
   console.log('Modelo formatted:', modeloFormatted);
+  console.log('Uses baterias:', usesBaterias);
 
   return (
     <Card>
@@ -79,11 +80,9 @@ export function DynamicScoringCard({
           <div className="text-green-700 text-xs mt-1">
             Modelo: {modalityData.modelo.descricao || modalityData.modelo.codigo_modelo}
           </div>
-          {usesBaterias && (
-            <div className="text-green-700 text-xs">
-              Sistema de baterias: {usesBaterias ? 'Ativo' : 'Inativo'}
-            </div>
-          )}
+          <div className="text-green-700 text-xs">
+            Sistema de baterias: {usesBaterias ? 'Ativo' : 'Inativo'}
+          </div>
         </div>
       </CardHeader>
       
@@ -112,6 +111,7 @@ export function DynamicScoringCard({
           selectedBateriaId={selectedBateriaId}
           existingScores={existingScores}
           refetchScores={refetchScores}
+          usesBaterias={usesBaterias}
         />
       </CardContent>
     </Card>

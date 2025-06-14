@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Athlete } from '../../hooks/useAthletes';
 import { CampoModelo } from '@/types/dynamicScoring';
@@ -21,6 +22,7 @@ interface DynamicScoringTableContentProps {
   modalityId: number;
   eventId: string;
   modalityName?: string;
+  usesBaterias: boolean;
   onEdit: (athleteId: string) => void;
   onSave: (athleteId: string) => void;
   onCancel: (athleteId: string) => void;
@@ -42,6 +44,7 @@ export function DynamicScoringTableContent({
   modalityId,
   eventId,
   modalityName,
+  usesBaterias,
   onEdit,
   onSave,
   onCancel,
@@ -68,14 +71,16 @@ export function DynamicScoringTableContent({
     selectedBateriaId,
     existingScores,
     hasExistingScore,
-    selectedUnscored
+    selectedUnscored,
+    usesBaterias
   });
 
   console.log('DynamicScoringTableContent - Debug info:', {
     totalAthletes: athletes.length,
     mainTableAthletes: mainTableAthletes.length,
     unscoredSectionAthletes: unscoredSectionAthletes.length,
-    selectedBateriaId
+    selectedBateriaId,
+    usesBaterias
   });
 
   const handleDeleteScores = async (athleteId: string) => {
@@ -93,7 +98,7 @@ export function DynamicScoringTableContent({
         athleteId: athleteToDelete.atleta_id,
         modalityId,
         eventId,
-        bateriaId: selectedBateriaId
+        bateriaId: usesBaterias ? selectedBateriaId : null
       });
       setAthleteToDelete(null);
     } catch (error) {
@@ -126,16 +131,18 @@ export function DynamicScoringTableContent({
         selectedUnscored={selectedUnscored}
       />
 
-      {/* Unscored athletes section */}
-      <UnscoredAthletesSection
-        athletes={unscoredSectionAthletes}
-        selectedBateriaId={selectedBateriaId}
-        selectedUnscored={selectedUnscored}
-        onUnscoredSelection={handleUnscoredSelection}
-        onSelectAllUnscored={() => handleSelectAllUnscored(unscoredSectionAthletes.map(a => a.atleta_id))}
-        onDeselectAllUnscored={handleDeselectAllUnscored}
-        onAddSelectedToTable={handleAddSelectedToTable}
-      />
+      {/* Unscored athletes section - only show for bateria system */}
+      {usesBaterias && (
+        <UnscoredAthletesSection
+          athletes={unscoredSectionAthletes}
+          selectedBateriaId={selectedBateriaId}
+          selectedUnscored={selectedUnscored}
+          onUnscoredSelection={handleUnscoredSelection}
+          onSelectAllUnscored={() => handleSelectAllUnscored(unscoredSectionAthletes.map(a => a.atleta_id))}
+          onDeselectAllUnscored={handleDeselectAllUnscored}
+          onAddSelectedToTable={handleAddSelectedToTable}
+        />
+      )}
 
       <AthleteScoreDeletionDialog
         isOpen={!!athleteToDelete}
@@ -143,13 +150,14 @@ export function DynamicScoringTableContent({
         onConfirm={confirmDeleteScores}
         athlete={athleteToDelete}
         modalityName={modalityName}
-        bateriaId={selectedBateriaId}
+        bateriaId={usesBaterias ? selectedBateriaId : null}
         isDeleting={isDeleting}
       />
 
       <EmptyStateMessage 
         hasAthletes={totalVisibleAthletes > 0}
-        selectedBateriaId={selectedBateriaId}
+        selectedBateriaId={usesBaterias ? selectedBateriaId : null}
+        usesBaterias={usesBaterias}
       />
     </div>
   );

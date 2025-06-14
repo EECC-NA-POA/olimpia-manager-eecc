@@ -18,6 +18,7 @@ interface DynamicScoringTableMainProps {
   existingScores: any[];
   refetchScores: () => Promise<any>;
   modalityName?: string;
+  usesBaterias?: boolean;
 }
 
 export function DynamicScoringTableMain({
@@ -30,7 +31,8 @@ export function DynamicScoringTableMain({
   selectedBateriaId,
   existingScores,
   refetchScores,
-  modalityName
+  modalityName,
+  usesBaterias = false
 }: DynamicScoringTableMainProps) {
   const {
     editingAthletes,
@@ -92,6 +94,7 @@ export function DynamicScoringTableMain({
       modalityId={modalityId}
       eventId={eventId}
       modalityName={modalityName}
+      usesBaterias={usesBaterias}
       onEdit={onEdit}
       onSave={handleSave}
       onCancel={handleCancel}

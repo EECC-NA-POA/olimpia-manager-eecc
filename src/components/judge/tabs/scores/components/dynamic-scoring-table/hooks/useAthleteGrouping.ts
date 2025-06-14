@@ -8,6 +8,7 @@ interface UseAthleteGroupingProps {
   existingScores: any[];
   hasExistingScore: (athleteId: string) => boolean;
   selectedUnscored: Set<string>;
+  usesBaterias: boolean;
 }
 
 export function useAthleteGrouping({
@@ -15,16 +16,18 @@ export function useAthleteGrouping({
   selectedBateriaId,
   existingScores,
   hasExistingScore,
-  selectedUnscored
+  selectedUnscored,
+  usesBaterias
 }: UseAthleteGroupingProps) {
   const athleteGroups = React.useMemo(() => {
     console.log('=== ATHLETE GROUPING DEBUG ===');
     console.log('Total athletes received:', athletes.length);
     console.log('Selected bateria ID:', selectedBateriaId);
     console.log('Existing scores:', existingScores.length);
+    console.log('Uses baterias:', usesBaterias);
     
-    if (!selectedBateriaId) {
-      // If no bateria selected, show all athletes normally
+    if (!usesBaterias) {
+      // For non-bateria modalities, group by global scores
       const scored = athletes.filter(athlete => {
         const hasScore = hasExistingScore(athlete.atleta_id);
         console.log(`Athlete ${athlete.atleta_nome} has score:`, hasScore);
@@ -37,8 +40,31 @@ export function useAthleteGrouping({
         return !hasScore;
       });
       
-      console.log('No bateria - Scored athletes:', scored.length);
-      console.log('No bateria - Unscored athletes:', unscored.length);
+      console.log('No bateria mode - Scored athletes:', scored.length);
+      console.log('No bateria mode - Unscored athletes:', unscored.length);
+      
+      return {
+        scoredAthletes: [...scored.sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome))],
+        unscoredAthletes: [...unscored.sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome))]
+      };
+    }
+
+    if (!selectedBateriaId) {
+      // If no bateria selected in bateria mode, show all athletes normally
+      const scored = athletes.filter(athlete => {
+        const hasScore = hasExistingScore(athlete.atleta_id);
+        console.log(`Athlete ${athlete.atleta_nome} has score:`, hasScore);
+        return hasScore;
+      });
+      
+      const unscored = athletes.filter(athlete => {
+        const hasScore = hasExistingScore(athlete.atleta_id);
+        console.log(`Athlete ${athlete.atleta_nome} unscored:`, !hasScore);
+        return !hasScore;
+      });
+      
+      console.log('No bateria selected - Scored athletes:', scored.length);
+      console.log('No bateria selected - Unscored athletes:', unscored.length);
       
       return {
         scoredAthletes: [...scored.sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome))],
@@ -71,7 +97,7 @@ export function useAthleteGrouping({
       scoredAthletes: scored.sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome)),
       unscoredAthletes: unscored.sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome))
     };
-  }, [athletes, selectedBateriaId, existingScores, hasExistingScore]);
+  }, [athletes, selectedBateriaId, existingScores, hasExistingScore, usesBaterias]);
 
   // Athletes to show in the main table (scored + selected unscored)
   const mainTableAthletes = React.useMemo(() => {
