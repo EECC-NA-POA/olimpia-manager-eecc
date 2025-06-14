@@ -178,7 +178,9 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
     },
     enabled: !!modalityId && !!eventId,
     retry: 1,
-    staleTime: 30000, // 30 seconds
+    staleTime: 0, // Força refresh sempre
+    refetchOnWindowFocus: true,
+    refetchOnMount: true
   });
 
   console.log('=== useAthletes HOOK FINAL RESULT ===');

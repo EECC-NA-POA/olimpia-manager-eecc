@@ -15,7 +15,7 @@ import { ScoreEntryRow } from './ScoreEntryRow';
 import { AthleteNotesDialog } from './AthleteNotesDialog';
 import { useScoreEntries } from './hooks/useScoreEntries';
 import { useScoreSubmission } from './hooks/useScoreSubmission';
-import { Plus } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
 
 interface AthletesTableProps {
   athletes: Athlete[];
@@ -164,6 +164,15 @@ export function AthletesTable({
     setSelectedUnscored(newSelected);
   };
 
+  const handleSelectAllUnscored = () => {
+    const newSelected = new Set(unscoredSectionAthletes.map(athlete => athlete.atleta_id));
+    setSelectedUnscored(newSelected);
+  };
+
+  const handleDeselectAllUnscored = () => {
+    setSelectedUnscored(new Set());
+  };
+
   const handleAddSelectedToTable = () => {
     // The selected athletes will now appear in the main table
     // Clear the selection
@@ -245,6 +254,28 @@ export function AthletesTable({
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
+                {/* Bulk selection controls */}
+                <div className="flex gap-2 pb-3 border-b">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSelectAllUnscored}
+                    className="flex items-center gap-2"
+                  >
+                    <Users className="h-4 w-4" />
+                    Selecionar todos ({unscoredSectionAthletes.length})
+                  </Button>
+                  {selectedUnscored.size > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDeselectAllUnscored}
+                    >
+                      Desmarcar todos
+                    </Button>
+                  )}
+                </div>
+
                 {unscoredSectionAthletes.map((athlete) => (
                   <div key={athlete.atleta_id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50">
                     <Checkbox

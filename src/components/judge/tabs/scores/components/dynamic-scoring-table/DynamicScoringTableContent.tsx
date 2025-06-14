@@ -4,7 +4,7 @@ import { Table, TableBody } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus } from 'lucide-react';
+import { Plus, UserMinus, Users } from 'lucide-react';
 import { Athlete } from '../../hooks/useAthletes';
 import { CampoModelo } from '@/types/dynamicScoring';
 import { DynamicTableHeader } from './DynamicTableHeader';
@@ -89,9 +89,25 @@ export function DynamicScoringTableContent({
     setSelectedUnscored(newSelected);
   };
 
+  const handleSelectAllUnscored = () => {
+    const newSelected = new Set(unscoredSectionAthletes.map(athlete => athlete.atleta_id));
+    setSelectedUnscored(newSelected);
+  };
+
+  const handleDeselectAllUnscored = () => {
+    setSelectedUnscored(new Set());
+  };
+
   const handleAddSelectedToTable = () => {
     // Clear the selection - the athletes will now appear in the main table
     setSelectedUnscored(new Set());
+  };
+
+  const handleRemoveAthleteFromTable = (athleteId: string) => {
+    // Remove athlete from main table by deselecting them
+    const newSelected = new Set(selectedUnscored);
+    newSelected.delete(athleteId);
+    setSelectedUnscored(newSelected);
   };
 
   const getBateriaDisplayName = (bateriaId: number | null) => {
@@ -126,11 +142,12 @@ export function DynamicScoringTableContent({
         )}
         
         <Table>
-          <DynamicTableHeader campos={campos} />
+          <DynamicTableHeader campos={campos} showRemoveColumn={mainTableAthletes.length > 0} />
           <TableBody>
             {mainTableAthletes.map((athlete) => {
               const isEditing = editingAthletes.has(athlete.atleta_id);
               const athleteHasScore = hasExistingScore(athlete.atleta_id);
+              const canRemove = !athleteHasScore && selectedUnscored.has(athlete.atleta_id);
               
               return (
                 <AthleteTableRow
@@ -149,6 +166,8 @@ export function DynamicScoringTableContent({
                   getFieldValue={getFieldValue}
                   getDisplayValue={getDisplayValue}
                   isSaving={isSaving}
+                  canRemove={canRemove}
+                  onRemove={handleRemoveAthleteFromTable}
                 />
               );
             })}
@@ -170,6 +189,28 @@ export function DynamicScoringTableContent({
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
+              {/* Bulk selection controls */}
+              <div className="flex gap-2 pb-3 border-b">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSelectAllUnscored}
+                  className="flex items-center gap-2"
+                >
+                  <Users className="h-4 w-4" />
+                  Selecionar todos ({unscoredSectionAthletes.length})
+                </Button>
+                {selectedUnscored.size > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDeselectAllUnscored}
+                  >
+                    Desmarcar todos
+                  </Button>
+                )}
+              </div>
+
               {unscoredSectionAthletes.map((athlete) => (
                 <div key={athlete.atleta_id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50">
                   <Checkbox

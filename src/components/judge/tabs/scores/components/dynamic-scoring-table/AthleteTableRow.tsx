@@ -1,10 +1,13 @@
+
 import React from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Save, X, Edit, UserMinus } from 'lucide-react';
 import { Athlete } from '../../hooks/useAthletes';
 import { CampoModelo } from '@/types/dynamicScoring';
-import { DynamicInputField } from './DynamicInputField';
-import { AthleteStatusCell } from './AthleteStatusCell';
-import { AthleteActionButtons } from './AthleteActionButtons';
 
 interface AthleteTableRowProps {
   athlete: Athlete;
@@ -21,6 +24,8 @@ interface AthleteTableRowProps {
   getFieldValue: (athleteId: string, fieldKey: string) => string | number;
   getDisplayValue: (athleteId: string, fieldKey: string) => string;
   isSaving: boolean;
+  canRemove?: boolean;
+  onRemove?: (athleteId: string) => void;
 }
 
 export function AthleteTableRow({
@@ -29,6 +34,7 @@ export function AthleteTableRow({
   isEditing,
   athleteHasScore,
   hasUnsavedChanges,
+  editValues,
   selectedBateriaId,
   onEdit,
   onSave,
@@ -36,71 +42,139 @@ export function AthleteTableRow({
   onFieldChange,
   getFieldValue,
   getDisplayValue,
-  isSaving
+  isSaving,
+  canRemove = false,
+  onRemove
 }: AthleteTableRowProps) {
+  const renderFieldInput = (campo: CampoModelo) => {
+    const fieldKey = campo.chave_campo;
+    const currentValue = getFieldValue(athlete.atleta_id, fieldKey);
+
+    if (campo.tipo_campo === 'select' && campo.opcoes_select) {
+      const options = campo.opcoes_select.split(',').map(opt => opt.trim());
+      
+      return (
+        <Select
+          value={currentValue?.toString() || ''}
+          onValueChange={(value) => onFieldChange(athlete.atleta_id, fieldKey, value)}
+        >
+          <SelectTrigger className="h-8">
+            <SelectValue placeholder="Selecione..." />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      );
+    }
+
+    return (
+      <Input
+        type={campo.tipo_campo === 'number' ? 'number' : 'text'}
+        value={currentValue?.toString() || ''}
+        onChange={(e) => {
+          const value = campo.tipo_campo === 'number' ? 
+            (e.target.value === '' ? '' : Number(e.target.value)) : 
+            e.target.value;
+          onFieldChange(athlete.atleta_id, fieldKey, value);
+        }}
+        className="h-8"
+        placeholder={campo.placeholder || `Digite ${campo.rotulo_campo.toLowerCase()}`}
+        step={campo.tipo_campo === 'number' ? 'any' : undefined}
+      />
+    );
+  };
+
   return (
-    <TableRow key={athlete.atleta_id}>
+    <TableRow className={hasUnsavedChanges ? 'bg-yellow-50' : ''}>
       <TableCell>
-        <div className="font-medium">{athlete.atleta_nome}</div>
-        <div className="text-sm text-muted-foreground">
-          {athlete.tipo_documento}: {athlete.numero_documento}
+        <div className="space-y-1">
+          <div className="font-medium text-sm">{athlete.atleta_nome}</div>
+          <div className="text-xs text-muted-foreground">
+            {athlete.tipo_documento}: {athlete.numero_documento}
+          </div>
         </div>
       </TableCell>
+      
       <TableCell>
-        <div className="text-sm">
-          {athlete.filial_nome || athlete.equipe_nome || 'N/A'}
-        </div>
-        {athlete.origem_cidade && (
-          <div className="text-xs text-muted-foreground">
-            {athlete.origem_cidade}
-            {athlete.origem_uf && ` - ${athlete.origem_uf}`}
-          </div>
+        <div className="text-sm">{athlete.filial_nome || 'N/A'}</div>
+        {athlete.origem_uf && (
+          <div className="text-xs text-muted-foreground">{athlete.origem_uf}</div>
         )}
       </TableCell>
-      {campos.map((campo) => {
-        if (campo.tipo_input === 'calculated') {
-          return (
-            <TableCell key={campo.chave_campo} className="text-center">
-              <span className="text-sm text-muted-foreground">
-                Calculado automaticamente
-              </span>
-            </TableCell>
-          );
-        }
-        
-        return (
-          <TableCell key={campo.chave_campo} className="text-center">
-            {(isEditing || !athleteHasScore) ? (
-              <DynamicInputField
-                athleteId={athlete.atleta_id}
-                campo={campo}
-                value={getFieldValue(athlete.atleta_id, campo.chave_campo)}
-                onChange={(value) => {
-                  console.log(`Field change: ${athlete.atleta_id}.${campo.chave_campo} = ${value}`);
-                  onFieldChange(athlete.atleta_id, campo.chave_campo, value);
-                }}
-                selectedBateriaId={selectedBateriaId}
-              />
-            ) : (
-              <span className="text-sm">
-                {getDisplayValue(athlete.atleta_id, campo.chave_campo)}
-              </span>
-            )}
-          </TableCell>
-        );
-      })}
-      <AthleteStatusCell hasUnsavedChanges={hasUnsavedChanges} />
-      <TableCell>
-        <AthleteActionButtons
-          athleteId={athlete.atleta_id}
-          isEditing={isEditing}
-          athleteHasScore={athleteHasScore}
-          isSaving={isSaving}
-          onEdit={onEdit}
-          onSave={onSave}
-          onCancel={onCancel}
-        />
+      
+      {campos.map((campo) => (
+        <TableCell key={campo.id} className="text-center">
+          {isEditing ? (
+            renderFieldInput(campo)
+          ) : (
+            <div className="text-sm">
+              {getDisplayValue(athlete.atleta_id, campo.chave_campo) || '-'}
+            </div>
+          )}
+        </TableCell>
+      ))}
+      
+      <TableCell className="text-center">
+        <div className="flex items-center justify-center gap-2">
+          {isEditing ? (
+            <>
+              <Button
+                size="sm"
+                onClick={() => onSave(athlete.atleta_id)}
+                disabled={isSaving}
+                className="h-8 w-8 p-0"
+              >
+                <Save className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onCancel(athlete.atleta_id)}
+                disabled={isSaving}
+                className="h-8 w-8 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant={athleteHasScore ? "outline" : "default"}
+                onClick={() => onEdit(athlete.atleta_id)}
+                className="h-8 px-3"
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                {athleteHasScore ? 'Editar' : 'Pontuar'}
+              </Button>
+              {athleteHasScore && (
+                <Badge variant="outline" className="bg-green-50 text-green-800 border-green-200">
+                  Avaliado
+                </Badge>
+              )}
+            </div>
+          )}
+        </div>
       </TableCell>
+      
+      {canRemove && onRemove && (
+        <TableCell className="text-center">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onRemove(athlete.atleta_id)}
+            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+            title="Remover atleta da tabela"
+          >
+            <UserMinus className="h-4 w-4" />
+          </Button>
+        </TableCell>
+      )}
     </TableRow>
   );
 }
