@@ -43,6 +43,7 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
         
         if (modalityError || !modalityCheck) {
           console.error('Modality not found or error:', modalityError);
+          // Return empty array instead of throwing error to prevent infinite loading
           return [];
         }
 
@@ -59,6 +60,11 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
           data: allEnrollments,
           error: allEnrollmentsError 
         });
+
+        if (allEnrollmentsError) {
+          console.error('Error fetching enrollments:', allEnrollmentsError);
+          return [];
+        }
 
         // Step 3: Filter confirmed enrollments
         const confirmedEnrollments = allEnrollments?.filter(e => e.status === 'confirmado') || [];
@@ -97,7 +103,6 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
 
         if (usersError) {
           console.error('Error fetching users:', usersError);
-          toast.error('Erro ao buscar dados dos atletas');
           return [];
         }
 
@@ -124,7 +129,11 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
             error: filiaisError
           });
 
-          filiaisData = filiaisResult || [];
+          if (filiaisError) {
+            console.error('Error fetching filiais:', filiaisError);
+          } else {
+            filiaisData = filiaisResult || [];
+          }
         }
 
         // Step 7: Build athletes array
@@ -172,14 +181,25 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
         console.error('Complete error object:', error);
         console.error('Error message:', error.message);
         console.error('Error stack:', error.stack);
-        toast.error('Erro ao buscar atletas: ' + error.message);
+        
+        // Don't show toast error for empty results, only for actual errors
+        if (error.message && !error.message.includes('not found')) {
+          toast.error('Erro ao buscar atletas: ' + error.message);
+        }
+        
         return [];
       }
     },
     enabled: !!modalityId && !!eventId,
-    retry: 1,
-    staleTime: 0, // Força refresh sempre
-    refetchOnWindowFocus: true,
+    retry: (failureCount, error) => {
+      // Don't retry if it's a "not found" error
+      if (error?.message?.includes('not found')) {
+        return false;
+      }
+      return failureCount < 1;
+    },
+    staleTime: 30000, // Cache for 30 seconds
+    refetchOnWindowFocus: false,
     refetchOnMount: true
   });
 

@@ -5,10 +5,9 @@ import { CampoModelo } from '@/types/dynamicScoring';
 
 interface DynamicTableHeaderProps {
   campos: CampoModelo[];
-  showRemoveColumn?: boolean;
 }
 
-export function DynamicTableHeader({ campos, showRemoveColumn = false }: DynamicTableHeaderProps) {
+export function DynamicTableHeader({ campos }: DynamicTableHeaderProps) {
   return (
     <TableHeader>
       <TableRow>
@@ -23,10 +22,6 @@ export function DynamicTableHeader({ campos, showRemoveColumn = false }: Dynamic
         ))}
         
         <TableHead className="w-[120px] text-center">Ações</TableHead>
-        
-        {showRemoveColumn && (
-          <TableHead className="w-[80px] text-center">Remover</TableHead>
-        )}
       </TableRow>
     </TableHeader>
   );

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Table, TableBody } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -175,7 +176,7 @@ export function DynamicScoringTableContent({
         )}
         
         <Table>
-          <DynamicTableHeader campos={campos} showRemoveColumn={mainTableAthletes.length > 0} />
+          <DynamicTableHeader campos={campos} />
           <TableBody>
             {mainTableAthletes.map((athlete) => {
               const isEditing = editingAthletes.has(athlete.atleta_id);
