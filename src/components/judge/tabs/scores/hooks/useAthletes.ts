@@ -28,49 +28,56 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
       }
 
       try {
-        console.log('=== ATHLETES QUERY START ===');
-        console.log('Fetching athletes for modality:', modalityId, 'event:', eventId);
+        console.log('=== COMPLETE ATHLETES QUERY DEBUG START ===');
+        console.log('Parameters:', { modalityId, eventId });
         
-        // First, let's check what modality this is
-        const { data: modalityInfo } = await supabase
+        // Step 1: Check if modality exists
+        console.log('Step 1: Checking modality existence...');
+        const { data: modalityCheck, error: modalityError } = await supabase
           .from('modalidades')
           .select('id, nome, categoria, tipo_pontuacao')
           .eq('id', modalityId)
           .single();
         
-        console.log('Modality info:', modalityInfo);
+        console.log('Modality check result:', { modalityCheck, modalityError });
         
-        // Let's also check if there are any enrollments at all for this modality
-        const { data: enrollmentCheck } = await supabase
-          .from('inscricoes_modalidades')
-          .select('id, atleta_id, status')
-          .eq('modalidade_id', modalityId)
-          .eq('evento_id', eventId);
-        
-        console.log('Raw enrollments found:', enrollmentCheck?.length || 0);
-        console.log('Enrollments data:', enrollmentCheck);
-        
-        // Check confirmed enrollments specifically
-        const { data: confirmedCheck } = await supabase
-          .from('inscricoes_modalidades')
-          .select('id, atleta_id, status')
-          .eq('modalidade_id', modalityId)
-          .eq('evento_id', eventId)
-          .eq('status', 'confirmado');
-        
-        console.log('Confirmed enrollments found:', confirmedCheck?.length || 0);
-        console.log('Confirmed enrollments:', confirmedCheck);
-
-        if (!confirmedCheck || confirmedCheck.length === 0) {
-          console.log('No confirmed enrollments found for this modality');
+        if (modalityError || !modalityCheck) {
+          console.error('Modality not found or error:', modalityError);
           return [];
         }
 
-        // Get athlete IDs from confirmed enrollments
-        const athleteIds = confirmedCheck.map(enrollment => enrollment.atleta_id);
+        // Step 2: Get all enrollments for this modality and event
+        console.log('Step 2: Fetching all enrollments...');
+        const { data: allEnrollments, error: allEnrollmentsError } = await supabase
+          .from('inscricoes_modalidades')
+          .select('*')
+          .eq('modalidade_id', modalityId)
+          .eq('evento_id', eventId);
+        
+        console.log('All enrollments:', { 
+          count: allEnrollments?.length || 0, 
+          data: allEnrollments,
+          error: allEnrollmentsError 
+        });
+
+        // Step 3: Filter confirmed enrollments
+        const confirmedEnrollments = allEnrollments?.filter(e => e.status === 'confirmado') || [];
+        console.log('Confirmed enrollments:', {
+          count: confirmedEnrollments.length,
+          data: confirmedEnrollments
+        });
+
+        if (confirmedEnrollments.length === 0) {
+          console.log('No confirmed enrollments found');
+          return [];
+        }
+
+        // Step 4: Get athlete IDs
+        const athleteIds = confirmedEnrollments.map(e => e.atleta_id);
         console.log('Athlete IDs to fetch:', athleteIds);
 
-        // Fetch user data for these athletes
+        // Step 5: Fetch user data for these athletes
+        console.log('Step 5: Fetching user data...');
         const { data: usersData, error: usersError } = await supabase
           .from('usuarios')
           .select(`
@@ -78,17 +85,15 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
             nome_completo,
             tipo_documento,
             numero_documento,
-            filial_id,
-            filiais (
-              id,
-              nome
-            )
+            filial_id
           `)
           .in('id', athleteIds);
 
-        console.log('Users data fetched:', usersData?.length || 0);
-        console.log('Users data:', usersData);
-        console.log('Users error:', usersError);
+        console.log('Users data result:', {
+          count: usersData?.length || 0,
+          data: usersData,
+          error: usersError
+        });
 
         if (usersError) {
           console.error('Error fetching users:', usersError);
@@ -101,60 +106,73 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
           return [];
         }
 
-        // Transform the data to match our Athlete interface
+        // Step 6: Fetch filiais data separately
+        console.log('Step 6: Fetching filiais data...');
+        const filialIds = usersData.map(u => u.filial_id).filter(Boolean);
+        console.log('Filial IDs to fetch:', filialIds);
+
+        let filiaisData = [];
+        if (filialIds.length > 0) {
+          const { data: filiaisResult, error: filiaisError } = await supabase
+            .from('filiais')
+            .select('id, nome, estado')
+            .in('id', filialIds);
+
+          console.log('Filiais data result:', {
+            count: filiaisResult?.length || 0,
+            data: filiaisResult,
+            error: filiaisError
+          });
+
+          filiaisData = filiaisResult || [];
+        }
+
+        // Step 7: Build athletes array
+        console.log('Step 7: Building athletes array...');
         const athletes = usersData.map((user: any) => {
           console.log('Processing user:', user);
           
           // Find the corresponding enrollment
-          const enrollment = confirmedCheck.find(e => e.atleta_id === user.id);
+          const enrollment = confirmedEnrollments.find(e => e.atleta_id === user.id);
           if (!enrollment) {
             console.warn('No enrollment found for user:', user.id);
             return null;
           }
 
-          console.log('User data:', user);
-          console.log('Enrollment data:', enrollment);
-          
-          // Access filiais - handle both array and object cases
-          let filialNome = null;
-          if (user.filiais) {
-            if (Array.isArray(user.filiais)) {
-              filialNome = user.filiais[0]?.nome || null;
-            } else {
-              filialNome = user.filiais.nome || null;
-            }
-          }
-          
-          console.log('Filial nome:', filialNome);
+          // Find filial data
+          const filial = filiaisData.find(f => f.id === user.filial_id);
+          console.log('Filial for user:', { userId: user.id, filialId: user.filial_id, filial });
           
           const athlete: Athlete = {
             inscricao_id: enrollment.id,
             atleta_id: user.id,
-            atleta_nome: user.nome_completo || 'Atleta',
-            tipo_documento: user.tipo_documento || 'Documento',
+            atleta_nome: user.nome_completo || 'Nome não informado',
+            tipo_documento: user.tipo_documento || 'CPF',
             numero_documento: user.numero_documento || '',
             filial_id: user.filial_id,
-            filial_nome: filialNome,
+            filial_nome: filial?.nome || null,
             equipe_id: null,
-            equipe_nome: filialNome,
-            origem_uf: null,
-            origem_cidade: filialNome,
+            equipe_nome: filial?.nome || null,
+            origem_uf: filial?.estado || null,
+            origem_cidade: filial?.nome || null,
           };
 
-          console.log('Processed athlete:', athlete);
+          console.log('Built athlete:', athlete);
           return athlete;
         }).filter(Boolean) as Athlete[];
 
-        console.log('=== FINAL ATHLETES RESULT ===');
-        console.log('Total athletes processed:', athletes.length);
-        console.log('Athletes:', athletes);
-        console.log('Modality name:', modalityInfo?.nome);
-        console.log('=== END ATHLETES QUERY ===');
+        console.log('=== FINAL RESULT ===');
+        console.log('Total athletes built:', athletes.length);
+        console.log('Athletes array:', athletes);
+        console.log('=== COMPLETE ATHLETES QUERY DEBUG END ===');
         
         return athletes;
       } catch (error) {
-        console.error('Error in athlete query execution:', error);
-        toast.error('Erro ao buscar atletas');
+        console.error('=== ATHLETES QUERY ERROR ===');
+        console.error('Complete error object:', error);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        toast.error('Erro ao buscar atletas: ' + error.message);
         return [];
       }
     },
@@ -163,11 +181,13 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
     staleTime: 30000, // 30 seconds
   });
 
-  console.log('useAthletes hook result:', { 
-    athletes: athletes?.length || 0, 
+  console.log('=== useAthletes HOOK FINAL RESULT ===');
+  console.log('Hook result:', { 
+    athletesCount: athletes?.length || 0, 
     isLoading: isLoadingAthletes,
     modalityId,
-    eventId 
+    eventId,
+    athletes
   });
 
   return { data: athletes, isLoading: isLoadingAthletes };
