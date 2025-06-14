@@ -50,8 +50,8 @@ export function AthleteTableRow({
     const fieldKey = campo.chave_campo;
     const currentValue = getFieldValue(athlete.atleta_id, fieldKey);
 
-    if (campo.tipo_campo === 'select' && campo.opcoes_select) {
-      const options = campo.opcoes_select.split(',').map(opt => opt.trim());
+    if (campo.tipo_input === 'select' && campo.metadados?.opcoes) {
+      const options = campo.metadados.opcoes;
       
       return (
         <Select
@@ -74,17 +74,17 @@ export function AthleteTableRow({
 
     return (
       <Input
-        type={campo.tipo_campo === 'number' ? 'number' : 'text'}
+        type={campo.tipo_input === 'number' || campo.tipo_input === 'integer' ? 'number' : 'text'}
         value={currentValue?.toString() || ''}
         onChange={(e) => {
-          const value = campo.tipo_campo === 'number' ? 
+          const value = (campo.tipo_input === 'number' || campo.tipo_input === 'integer') ? 
             (e.target.value === '' ? '' : Number(e.target.value)) : 
             e.target.value;
           onFieldChange(athlete.atleta_id, fieldKey, value);
         }}
         className="h-8"
-        placeholder={campo.placeholder || `Digite ${campo.rotulo_campo.toLowerCase()}`}
-        step={campo.tipo_campo === 'number' ? 'any' : undefined}
+        placeholder={`Digite ${campo.rotulo_campo.toLowerCase()}`}
+        step={campo.tipo_input === 'number' ? 'any' : undefined}
       />
     );
   };
