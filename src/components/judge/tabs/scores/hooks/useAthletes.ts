@@ -69,7 +69,7 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
         }
 
         // Transform the data to match our Athlete interface
-        const athletes = athletesData.map((enrollment) => {
+        const athletes = athletesData.map((enrollment: any) => {
           // Access the user object directly since it's joined with !inner
           const user = enrollment.usuarios;
           // Access filiais - it could be an object or null
