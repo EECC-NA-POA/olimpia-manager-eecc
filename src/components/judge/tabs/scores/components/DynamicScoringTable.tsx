@@ -25,7 +25,10 @@ export function DynamicScoringTable({
   const { campos, existingScores, refetchScores } = useDynamicScoreData({
     modalityId,
     eventId,
-    modeloId: modelo.id
+    modeloId: modelo.id,
+    selectedBateriaId,
+    judgeId,
+    athletes
   });
 
   return (

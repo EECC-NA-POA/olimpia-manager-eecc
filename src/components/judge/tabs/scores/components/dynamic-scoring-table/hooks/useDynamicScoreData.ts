@@ -1,27 +1,55 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { CampoModelo } from '@/types/dynamicScoring';
 import { Athlete } from '../../../hooks/useAthletes';
 
 interface UseDynamicScoreDataProps {
   modalityId: number;
   eventId: string;
+  modeloId?: number;
   selectedBateriaId?: number | null;
-  judgeId: string;
-  athletes: Athlete[];
+  judgeId?: string;
+  athletes?: Athlete[];
+  enabled?: boolean;
 }
 
 export function useDynamicScoreData({
   modalityId,
   eventId,
+  modeloId,
   selectedBateriaId,
   judgeId,
-  athletes
+  athletes = [],
+  enabled = true
 }: UseDynamicScoreDataProps) {
-  return useQuery({
-    queryKey: ['dynamic-scores', modalityId, eventId, selectedBateriaId],
+  // Fetch campos from the modelo
+  const { data: campos = [], isLoading: isLoadingCampos } = useQuery({
+    queryKey: ['modelo-campos', modeloId],
     queryFn: async () => {
-      if (!eventId || !modalityId) return [];
+      if (!modeloId) return [];
+      
+      const { data, error } = await supabase
+        .from('campos_modelo')
+        .select('*')
+        .eq('modelo_id', modeloId)
+        .order('ordem_exibicao');
+      
+      if (error) {
+        console.error('Error fetching campos:', error);
+        return [];
+      }
+      
+      return data as CampoModelo[];
+    },
+    enabled: enabled && !!modeloId,
+  });
+
+  // Fetch existing scores
+  const { data: existingScores = [], isLoading: isLoadingScores, refetch: refetchScores } = useQuery({
+    queryKey: ['dynamic-scores', modalityId, eventId, selectedBateriaId, judgeId],
+    queryFn: async () => {
+      if (!eventId || !modalityId || !judgeId || athletes.length === 0) return [];
       
       console.log('=== FETCHING EXISTING SCORES ===');
       console.log('Params:', { modalityId, eventId, selectedBateriaId, judgeId });
@@ -71,6 +99,13 @@ export function useDynamicScoreData({
       console.log('Transformed scores:', transformedData);
       return transformedData;
     },
-    enabled: !!eventId && !!modalityId && athletes.length > 0,
+    enabled: enabled && !!eventId && !!modalityId && !!judgeId && athletes.length > 0,
   });
+
+  return {
+    campos,
+    existingScores,
+    refetchScores,
+    isLoading: isLoadingCampos || isLoadingScores
+  };
 }

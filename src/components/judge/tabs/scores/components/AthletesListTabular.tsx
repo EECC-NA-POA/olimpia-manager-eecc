@@ -61,6 +61,9 @@ export function AthletesListTabular({
     modalityId,
     eventId: eventId || '',
     modeloId: modalityData?.modelo?.id,
+    selectedBateriaId,
+    judgeId,
+    athletes: athletes || [],
     enabled: hasModelo && !!modalityData?.modelo?.id
   });
 
