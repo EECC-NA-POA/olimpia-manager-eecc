@@ -31,6 +31,36 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
         console.log('=== ATHLETES QUERY START ===');
         console.log('Fetching athletes for modality:', modalityId, 'event:', eventId);
         
+        // First, let's check what modality this is
+        const { data: modalityInfo } = await supabase
+          .from('modalidades')
+          .select('id, nome, categoria, tipo_pontuacao')
+          .eq('id', modalityId)
+          .single();
+        
+        console.log('Modality info:', modalityInfo);
+        
+        // Let's also check if there are any enrollments at all for this modality
+        const { data: enrollmentCheck } = await supabase
+          .from('inscricoes_modalidades')
+          .select('id, atleta_id, status')
+          .eq('modalidade_id', modalityId)
+          .eq('evento_id', eventId);
+        
+        console.log('Raw enrollments found:', enrollmentCheck?.length || 0);
+        console.log('Enrollments data:', enrollmentCheck);
+        
+        // Check confirmed enrollments specifically
+        const { data: confirmedCheck } = await supabase
+          .from('inscricoes_modalidades')
+          .select('id, atleta_id, status')
+          .eq('modalidade_id', modalityId)
+          .eq('evento_id', eventId)
+          .eq('status', 'confirmado');
+        
+        console.log('Confirmed enrollments found:', confirmedCheck?.length || 0);
+        console.log('Confirmed enrollments:', confirmedCheck);
+        
         // Use a more direct approach with a single query joining the tables
         const { data: athletesData, error } = await supabase
           .from('inscricoes_modalidades')
@@ -55,7 +85,8 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
           .eq('status', 'confirmado');
 
         console.log('Direct query result:', athletesData);
-        console.log('Query error:', error);
+        console.log('Direct query error:', error);
+        console.log('Athletes data length:', athletesData?.length || 0);
 
         if (error) {
           console.error('Error fetching athletes:', error);
@@ -64,12 +95,28 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
         }
 
         if (!athletesData || athletesData.length === 0) {
-          console.log('No athletes found with direct query');
+          console.log('No athletes found with direct query for modality:', modalityInfo?.nome);
+          
+          // Let's check if there are users with these athlete IDs
+          if (confirmedCheck && confirmedCheck.length > 0) {
+            console.log('Checking if users exist for athlete IDs...');
+            const athleteIds = confirmedCheck.map(e => e.atleta_id);
+            const { data: usersCheck } = await supabase
+              .from('usuarios')
+              .select('id, nome_completo')
+              .in('id', athleteIds);
+            
+            console.log('Users found for athlete IDs:', usersCheck?.length || 0);
+            console.log('Users data:', usersCheck);
+          }
+          
           return [];
         }
 
         // Transform the data to match our Athlete interface
         const athletes = athletesData.map((enrollment: any) => {
+          console.log('Processing enrollment:', enrollment);
+          
           // Access the user object directly since it's joined with !inner
           const user = enrollment.usuarios;
           
@@ -78,8 +125,11 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
             return null;
           }
           
+          console.log('User data:', user);
+          
           // Access filiais - it should be an object, not an array
           const filial = user.filiais;
+          console.log('Filial data:', filial);
           
           const athlete: Athlete = {
             inscricao_id: enrollment.id,
@@ -102,6 +152,7 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
         console.log('=== FINAL ATHLETES RESULT ===');
         console.log('Total athletes processed:', athletes.length);
         console.log('Athletes:', athletes);
+        console.log('Modality name:', modalityInfo?.nome);
         console.log('=== END ATHLETES QUERY ===');
         
         return athletes;
