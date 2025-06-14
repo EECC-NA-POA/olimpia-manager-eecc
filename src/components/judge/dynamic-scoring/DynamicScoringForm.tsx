@@ -26,12 +26,13 @@ export function DynamicScoringForm({
   // Separar campos calculados para mostrar o gerenciador apenas se necessário
   const calculatedFields = campos.filter(campo => campo.tipo_input === 'calculated');
   
-  // Filter out configuration fields from the main form (they should already be filtered at this point)
+  // Filter out configuration fields from the main form - these should NEVER appear in scoring forms
   const scoringFields = filterScoringFields(campos);
   
-  console.log('DynamicScoringForm - All campos:', campos);
-  console.log('DynamicScoringForm - Scoring fields:', scoringFields);
-  console.log('DynamicScoringForm - Calculated fields:', calculatedFields);
+  console.log('DynamicScoringForm - All campos:', campos.length);
+  console.log('DynamicScoringForm - Scoring fields after filtering:', scoringFields.length);
+  console.log('DynamicScoringForm - Calculated fields:', calculatedFields.length);
+  console.log('DynamicScoringForm - Filtered out configuration fields:', campos.filter(c => !scoringFields.includes(c)).map(c => c.chave_campo));
 
   return (
     <div className="space-y-4">
@@ -45,7 +46,7 @@ export function DynamicScoringForm({
         />
       )}
 
-      {/* Gerenciador de campos - usar apenas campos de pontuação */}
+      {/* Gerenciador de campos - usar apenas campos de pontuação (sem configuração) */}
       <FieldsManager campos={scoringFields} form={form} />
     </div>
   );

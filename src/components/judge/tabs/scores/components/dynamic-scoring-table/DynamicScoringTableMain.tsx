@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Athlete } from '../../hooks/useAthletes';
 import { CampoModelo, ModeloModalidade } from '@/types/dynamicScoring';
@@ -6,6 +5,7 @@ import { DynamicScoringTableContent } from './DynamicScoringTableContent';
 import { useDynamicScoringTableState } from './useDynamicScoringTableState';
 import { useDynamicScoringTableOperations } from './useDynamicScoringTableOperations';
 import { useDynamicScoringFieldValues } from './useDynamicScoringFieldValues';
+import { filterScoringFields } from '@/utils/dynamicScoringUtils';
 
 interface DynamicScoringTableMainProps {
   athletes: Athlete[];
@@ -34,6 +34,13 @@ export function DynamicScoringTableMain({
   modalityName,
   usesBaterias = false
 }: DynamicScoringTableMainProps) {
+  // Filter out configuration fields - these should NEVER appear in scoring tables
+  const scoringFields = filterScoringFields(campos);
+  
+  console.log('DynamicScoringTableMain - Original campos count:', campos.length);
+  console.log('DynamicScoringTableMain - Filtered scoring fields count:', scoringFields.length);
+  console.log('DynamicScoringTableMain - Filtered out fields:', campos.filter(c => !scoringFields.includes(c)).map(c => c.chave_campo));
+
   const {
     editingAthletes,
     editValues,
@@ -84,7 +91,7 @@ export function DynamicScoringTableMain({
   return (
     <DynamicScoringTableContent
       athletes={athletes}
-      campos={campos}
+      campos={scoringFields}
       selectedBateriaId={selectedBateriaId}
       editingAthletes={editingAthletes}
       editValues={editValues}
