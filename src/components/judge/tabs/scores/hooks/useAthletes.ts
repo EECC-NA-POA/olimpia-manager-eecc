@@ -71,7 +71,7 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
         // Transform the data to match our Athlete interface
         const athletes = athletesData.map((enrollment) => {
           const user = enrollment.usuarios;
-          const filial = user?.filiais;
+          const filial = user?.filiais?.[0]; // Access first filial from array
           
           if (!user) {
             console.warn('User not found for enrollment:', enrollment.id);
