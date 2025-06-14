@@ -12,6 +12,8 @@ export function EmptyStateMessage({ hasAthletes, selectedBateriaId }: EmptyState
     return bateriaId?.toString() || '';
   };
 
+  console.log('EmptyStateMessage - hasAthletes:', hasAthletes, 'selectedBateriaId:', selectedBateriaId);
+
   if (hasAthletes) {
     return null;
   }

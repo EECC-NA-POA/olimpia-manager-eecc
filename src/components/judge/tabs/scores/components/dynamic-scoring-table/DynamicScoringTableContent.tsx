@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Athlete } from '../../hooks/useAthletes';
 import { CampoModelo } from '@/types/dynamicScoring';
@@ -72,6 +71,13 @@ export function DynamicScoringTableContent({
     selectedUnscored
   });
 
+  console.log('DynamicScoringTableContent - Debug info:', {
+    totalAthletes: athletes.length,
+    mainTableAthletes: mainTableAthletes.length,
+    unscoredSectionAthletes: unscoredSectionAthletes.length,
+    selectedBateriaId
+  });
+
   const handleDeleteScores = async (athleteId: string) => {
     const athlete = athletes.find(a => a.atleta_id === athleteId);
     if (athlete) {
@@ -94,6 +100,8 @@ export function DynamicScoringTableContent({
       console.error('Failed to delete scores:', error);
     }
   };
+
+  const totalVisibleAthletes = mainTableAthletes.length + unscoredSectionAthletes.length;
 
   return (
     <div className="space-y-4">
@@ -140,7 +148,7 @@ export function DynamicScoringTableContent({
       />
 
       <EmptyStateMessage 
-        hasAthletes={mainTableAthletes.length > 0 || unscoredSectionAthletes.length > 0}
+        hasAthletes={totalVisibleAthletes > 0}
         selectedBateriaId={selectedBateriaId}
       />
     </div>
