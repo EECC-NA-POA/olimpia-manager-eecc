@@ -107,6 +107,15 @@ export function DynamicScoringTableContent({
   };
 
   const totalVisibleAthletes = mainTableAthletes.length + unscoredSectionAthletes.length;
+  const hasAnyAthletes = athletes.length > 0;
+
+  console.log('Rendering decision:', {
+    hasAnyAthletes,
+    totalVisibleAthletes,
+    athletesLength: athletes.length,
+    mainTableAthletesLength: mainTableAthletes.length,
+    unscoredSectionAthletesLength: unscoredSectionAthletes.length
+  });
 
   return (
     <div className="space-y-4">
@@ -155,7 +164,7 @@ export function DynamicScoringTableContent({
       />
 
       <EmptyStateMessage 
-        hasAthletes={totalVisibleAthletes > 0}
+        hasAthletes={hasAnyAthletes}
         selectedBateriaId={usesBaterias ? selectedBateriaId : null}
         usesBaterias={usesBaterias}
       />
