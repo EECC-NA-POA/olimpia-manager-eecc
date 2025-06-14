@@ -4,6 +4,9 @@ import {
   Table,
   TableBody,
 } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Athlete } from '../hooks/useAthletes';
@@ -12,6 +15,7 @@ import { ScoreEntryRow } from './ScoreEntryRow';
 import { AthleteNotesDialog } from './AthleteNotesDialog';
 import { useScoreEntries } from './hooks/useScoreEntries';
 import { useScoreSubmission } from './hooks/useScoreSubmission';
+import { Plus } from 'lucide-react';
 
 interface AthletesTableProps {
   athletes: Athlete[];
@@ -34,6 +38,7 @@ export function AthletesTable({
 }: AthletesTableProps) {
   const [notesDialogOpen, setNotesDialogOpen] = useState(false);
   const [selectedAthleteForNotes, setSelectedAthleteForNotes] = useState<Athlete | null>(null);
+  const [selectedUnscored, setSelectedUnscored] = useState<Set<string>>(new Set());
 
   const {
     scoreEntries,
@@ -77,50 +82,41 @@ export function AthletesTable({
     enabled: !!eventId && athletes.length > 0,
   });
 
-  // Filter and sort athletes based on bateria selection and scores
-  const filteredAndSortedAthletes = React.useMemo(() => {
-    let filtered = athletes;
-    
-    if (selectedBateriaId) {
-      // For bateria system, only show athletes who have scores in this bateria
-      // OR athletes who don't have any scores yet (so they can be scored for this bateria)
-      filtered = athletes.filter(athlete => {
-        const hasScoreInThisBateria = existingScores.some(score => 
-          score.atleta_id === athlete.atleta_id && score.numero_bateria === selectedBateriaId
-        );
-        
-        const hasScoreInAnyBateria = existingScores.some(score => 
-          score.atleta_id === athlete.atleta_id
-        );
-
-        // Show athlete if they have a score in this bateria OR they don't have any scores yet
-        return hasScoreInThisBateria || !hasScoreInAnyBateria;
-      });
+  // Separate athletes into scored and unscored for the selected bateria
+  const { scoredAthletes, unscoredAthletes } = React.useMemo(() => {
+    if (!selectedBateriaId) {
+      // If no bateria selected, show all athletes normally
+      const scored = athletes.filter(athlete => 
+        existingScores.some(score => score.atleta_id === athlete.atleta_id)
+      );
+      const unscored = athletes.filter(athlete => 
+        !existingScores.some(score => score.atleta_id === athlete.atleta_id)
+      );
+      
+      return {
+        scoredAthletes: [...scored.sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome))],
+        unscoredAthletes: [...unscored.sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome))]
+      };
     }
 
-    // Sort athletes: scored ones first, then alphabetically
-    const scoredAthletes = filtered.filter(athlete => 
-      existingScores.some(score => score.atleta_id === athlete.atleta_id)
+    // For bateria system, separate based on scores in this specific bateria
+    const scored = athletes.filter(athlete => 
+      existingScores.some(score => 
+        score.atleta_id === athlete.atleta_id && score.numero_bateria === selectedBateriaId
+      )
     );
     
-    const unscoredAthletes = filtered.filter(athlete => 
-      !existingScores.some(score => score.atleta_id === athlete.atleta_id)
+    const unscored = athletes.filter(athlete => 
+      !existingScores.some(score => 
+        score.atleta_id === athlete.atleta_id && score.numero_bateria === selectedBateriaId
+      )
     );
 
-    // Sort each group alphabetically by name
-    scoredAthletes.sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome));
-    unscoredAthletes.sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome));
-
-    // If there are scores in this bateria, put scored athletes first
-    if (scoredAthletes.length > 0) {
-      return [...scoredAthletes, ...unscoredAthletes];
-    } else {
-      // If no scores yet, just return alphabetically sorted
-      return [...unscoredAthletes];
-    }
+    return {
+      scoredAthletes: scored.sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome)),
+      unscoredAthletes: unscored.sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome))
+    };
   }, [athletes, selectedBateriaId, existingScores]);
-
-  console.log('Filtered athletes for bateria', selectedBateriaId, ':', filteredAndSortedAthletes.length);
 
   const handleStartEditing = (athleteId: string) => {
     startEditing(athleteId, existingScores);
@@ -158,14 +154,47 @@ export function AthletesTable({
     return score?.observacoes || '';
   };
 
+  const handleUnscoredSelection = (athleteId: string, checked: boolean) => {
+    const newSelected = new Set(selectedUnscored);
+    if (checked) {
+      newSelected.add(athleteId);
+    } else {
+      newSelected.delete(athleteId);
+    }
+    setSelectedUnscored(newSelected);
+  };
+
+  const handleAddSelectedToTable = () => {
+    // The selected athletes will now appear in the main table
+    // Clear the selection
+    setSelectedUnscored(new Set());
+  };
+
+  const getBateriaDisplayName = (bateriaId: number | null) => {
+    if (bateriaId === 999) return 'Final';
+    return bateriaId?.toString() || '';
+  };
+
+  // Athletes to show in the main table (scored + selected unscored)
+  const mainTableAthletes = [
+    ...scoredAthletes,
+    ...unscoredAthletes.filter(athlete => selectedUnscored.has(athlete.atleta_id))
+  ];
+
+  // Athletes to show in the unscored section (unscored - selected)
+  const unscoredSectionAthletes = unscoredAthletes.filter(
+    athlete => !selectedUnscored.has(athlete.atleta_id)
+  );
+
   return (
     <>
       <div className="space-y-4">
+        {/* Main scoring table */}
         <div className="border rounded-md">
           <Table>
             <ScoreTableHeader scoreType={scoreType} />
             <TableBody>
-              {filteredAndSortedAthletes.map((athlete) => {
+              {mainTableAthletes.map((athlete) => {
                 const existingScore = existingScores.find(s => s.atleta_id === athlete.atleta_id);
                 const entry = scoreEntries[athlete.atleta_id];
 
@@ -191,15 +220,61 @@ export function AthletesTable({
           </Table>
         </div>
 
-        {filteredAndSortedAthletes.length === 0 && (
+        {mainTableAthletes.length === 0 && unscoredSectionAthletes.length === 0 && (
           <div className="text-center py-8">
             <p className="text-muted-foreground">
               {selectedBateriaId 
-                ? 'Nenhum atleta disponível para esta bateria'
+                ? `Nenhum atleta disponível para a bateria ${getBateriaDisplayName(selectedBateriaId)}`
                 : 'Nenhum atleta inscrito nesta modalidade'
               }
             </p>
           </div>
+        )}
+
+        {/* Unscored athletes section - only show if there are unscored athletes and a bateria is selected */}
+        {selectedBateriaId && unscoredSectionAthletes.length > 0 && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Plus className="h-5 w-5" />
+                Atletas sem pontuação na bateria {getBateriaDisplayName(selectedBateriaId)}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Selecione os atletas que deseja adicionar à tabela de pontuação:
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {unscoredSectionAthletes.map((athlete) => (
+                  <div key={athlete.atleta_id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50">
+                    <Checkbox
+                      checked={selectedUnscored.has(athlete.atleta_id)}
+                      onCheckedChange={(checked) => 
+                        handleUnscoredSelection(athlete.atleta_id, checked as boolean)
+                      }
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium">{athlete.atleta_nome}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {athlete.tipo_documento}: {athlete.numero_documento} | {athlete.filial_nome || 'N/A'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {selectedUnscored.size > 0 && (
+                  <div className="pt-3 border-t">
+                    <Button 
+                      onClick={handleAddSelectedToTable}
+                      className="w-full"
+                    >
+                      Adicionar {selectedUnscored.size} atleta(s) à tabela de pontuação
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
 

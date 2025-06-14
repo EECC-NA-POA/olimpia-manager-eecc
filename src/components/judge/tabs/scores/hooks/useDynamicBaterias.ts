@@ -75,7 +75,12 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
         bateria.atletasCount = (bateria.atletasCount || 0) + 1;
       });
       
-      const bateriasArray = Array.from(bateriasMap.values()).sort((a, b) => a.numero - b.numero);
+      const bateriasArray = Array.from(bateriasMap.values()).sort((a, b) => {
+        // Put final bateria (999) at the end
+        if (a.numero === 999) return 1;
+        if (b.numero === 999) return -1;
+        return a.numero - b.numero;
+      });
       console.log('useDynamicBaterias: Processed baterias:', bateriasArray);
       
       return bateriasArray;
@@ -116,7 +121,9 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
       console.log('Bateria created successfully:', newBateria);
       queryClient.invalidateQueries({ queryKey: ['dynamic-baterias', modalityId, eventId] });
       setSelectedBateriaId(newBateria.numero);
-      toast.success(`${newBateria.isFinal ? 'Bateria Final' : `Bateria ${newBateria.numero}`} criada com sucesso!`);
+      
+      const bateriaName = newBateria.isFinal ? 'Bateria Final' : `Bateria ${newBateria.numero}`;
+      toast.success(`${bateriaName} criada com sucesso!`);
     },
     onError: (error) => {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao criar bateria';
