@@ -63,7 +63,8 @@ export function AthletesListTabular({
     usesBaterias,
     selectedBateriaId,
     isLoading,
-    isLoadingModalityData
+    isLoadingModalityData,
+    modalityData
   });
 
   if (isLoading || isLoadingModalityData) {
@@ -122,6 +123,17 @@ export function AthletesListTabular({
 
   // Show dynamic scoring table if modelo is configured
   if (hasModelo && modalityData?.modelo) {
+    // Create a properly typed modelo object
+    const modeloFormatted = {
+      id: modalityData.modelo.id,
+      modalidade_id: modalityId,
+      codigo_modelo: modalityData.modelo.codigo_modelo,
+      descricao: modalityData.modelo.descricao,
+      criado_em: new Date().toISOString(),
+      atualizado_em: new Date().toISOString(),
+      campos_modelo: modalityData.modelo.campos_modelo || []
+    };
+
     return (
       <Card>
         <CardHeader className="pb-4">
@@ -170,7 +182,7 @@ export function AthletesListTabular({
             modalityId={modalityId}
             eventId={eventId}
             judgeId={judgeId}
-            modelo={modalityData.modelo}
+            modelo={modeloFormatted}
             selectedBateriaId={selectedBateriaId}
           />
         </CardContent>
