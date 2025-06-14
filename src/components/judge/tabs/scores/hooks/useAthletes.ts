@@ -60,89 +60,85 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
         
         console.log('Confirmed enrollments found:', confirmedCheck?.length || 0);
         console.log('Confirmed enrollments:', confirmedCheck);
-        
-        // Use a more direct approach with a single query joining the tables
-        const { data: athletesData, error } = await supabase
-          .from('inscricoes_modalidades')
-          .select(`
-            id,
-            atleta_id,
-            status,
-            usuarios!inner (
-              id,
-              nome_completo,
-              tipo_documento,
-              numero_documento,
-              filial_id,
-              filiais (
-                id,
-                nome
-              )
-            )
-          `)
-          .eq('modalidade_id', modalityId)
-          .eq('evento_id', eventId)
-          .eq('status', 'confirmado');
 
-        console.log('Direct query result:', athletesData);
-        console.log('Direct query error:', error);
-        console.log('Athletes data length:', athletesData?.length || 0);
-
-        if (error) {
-          console.error('Error fetching athletes:', error);
-          toast.error('Não foi possível carregar os atletas');
+        if (!confirmedCheck || confirmedCheck.length === 0) {
+          console.log('No confirmed enrollments found for this modality');
           return [];
         }
 
-        if (!athletesData || athletesData.length === 0) {
-          console.log('No athletes found with direct query for modality:', modalityInfo?.nome);
-          
-          // Let's check if there are users with these athlete IDs
-          if (confirmedCheck && confirmedCheck.length > 0) {
-            console.log('Checking if users exist for athlete IDs...');
-            const athleteIds = confirmedCheck.map(e => e.atleta_id);
-            const { data: usersCheck } = await supabase
-              .from('usuarios')
-              .select('id, nome_completo')
-              .in('id', athleteIds);
-            
-            console.log('Users found for athlete IDs:', usersCheck?.length || 0);
-            console.log('Users data:', usersCheck);
-          }
-          
+        // Get athlete IDs from confirmed enrollments
+        const athleteIds = confirmedCheck.map(enrollment => enrollment.atleta_id);
+        console.log('Athlete IDs to fetch:', athleteIds);
+
+        // Fetch user data for these athletes
+        const { data: usersData, error: usersError } = await supabase
+          .from('usuarios')
+          .select(`
+            id,
+            nome_completo,
+            tipo_documento,
+            numero_documento,
+            filial_id,
+            filiais (
+              id,
+              nome
+            )
+          `)
+          .in('id', athleteIds);
+
+        console.log('Users data fetched:', usersData?.length || 0);
+        console.log('Users data:', usersData);
+        console.log('Users error:', usersError);
+
+        if (usersError) {
+          console.error('Error fetching users:', usersError);
+          toast.error('Erro ao buscar dados dos atletas');
+          return [];
+        }
+
+        if (!usersData || usersData.length === 0) {
+          console.log('No users found for athlete IDs');
           return [];
         }
 
         // Transform the data to match our Athlete interface
-        const athletes = athletesData.map((enrollment: any) => {
-          console.log('Processing enrollment:', enrollment);
+        const athletes = usersData.map((user: any) => {
+          console.log('Processing user:', user);
           
-          // Access the user object directly since it's joined with !inner
-          const user = enrollment.usuarios;
-          
-          if (!user) {
-            console.warn('User not found for enrollment:', enrollment.id);
+          // Find the corresponding enrollment
+          const enrollment = confirmedCheck.find(e => e.atleta_id === user.id);
+          if (!enrollment) {
+            console.warn('No enrollment found for user:', user.id);
             return null;
           }
-          
+
           console.log('User data:', user);
+          console.log('Enrollment data:', enrollment);
           
-          // Access filiais - it should be an object, not an array
-          const filial = user.filiais;
-          console.log('Filial data:', filial);
+          // Access filiais - handle both array and object cases
+          let filialNome = null;
+          if (user.filiais) {
+            if (Array.isArray(user.filiais)) {
+              filialNome = user.filiais[0]?.nome || null;
+            } else {
+              filialNome = user.filiais.nome || null;
+            }
+          }
+          
+          console.log('Filial nome:', filialNome);
           
           const athlete: Athlete = {
             inscricao_id: enrollment.id,
-            atleta_id: enrollment.atleta_id,
+            atleta_id: user.id,
             atleta_nome: user.nome_completo || 'Atleta',
             tipo_documento: user.tipo_documento || 'Documento',
             numero_documento: user.numero_documento || '',
             filial_id: user.filial_id,
-            filial_nome: filial?.nome || null,
+            filial_nome: filialNome,
             equipe_id: null,
-            equipe_nome: filial?.nome || null,
+            equipe_nome: filialNome,
             origem_uf: null,
-            origem_cidade: filial?.nome || null,
+            origem_cidade: filialNome,
           };
 
           console.log('Processed athlete:', athlete);
