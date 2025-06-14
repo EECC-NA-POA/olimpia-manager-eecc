@@ -30,7 +30,8 @@ export function useDynamicScoringFieldValues({
     );
 
     if (existingScore?.tentativas) {
-      const tentativa = existingScore.tentativas.find((t: any) => t.chave_campo === fieldKey);
+      // tentativas is an object, not an array, so we access it directly by key
+      const tentativa = existingScore.tentativas[fieldKey];
       if (tentativa) {
         return tentativa.valor;
       }
