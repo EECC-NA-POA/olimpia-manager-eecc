@@ -31,8 +31,17 @@ export const useNavigation = () => {
     isJudge: userRoleCodes.includes('JUZ')
   };
 
-  // Remove automatic redirection - let users stay on event selection page
-  // Users will navigate manually after selecting an event
+  // Redirect authenticated users without an event to event selection
+  useEffect(() => {
+    if (user && !currentEventId && 
+        location.pathname !== '/event-selection' && 
+        !location.pathname.startsWith('/event') &&
+        location.pathname !== '/verificar-email' &&
+        location.pathname !== '/reset-password') {
+      console.log('User logged in but no event selected, redirecting to event selection');
+      navigate('/event-selection', { replace: true });
+    }
+  }, [user, currentEventId, location.pathname, navigate]);
 
   return {
     user,

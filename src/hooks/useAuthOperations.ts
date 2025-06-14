@@ -38,15 +38,9 @@ export const useAuthOperations = ({ setUser, navigate, location }: UseAuthOperat
         
         toast.success('Login realizado com sucesso!');
         
-        // Check if user has a current event
-        const storedEventId = localStorage.getItem('currentEventId');
-        if (storedEventId) {
-          console.log('User has stored event, redirecting to /home');
-          navigate('/home', { replace: true });
-        } else {
-          console.log('No stored event, redirecting to event selection');
-          navigate('/event-selection', { replace: true });
-        }
+        // Always redirect to event selection after login - user must select an event
+        console.log('Redirecting to event selection - user must select an event');
+        navigate('/event-selection', { replace: true });
       }
     } catch (error: any) {
       console.error('Login Error occurred');
