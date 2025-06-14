@@ -1,12 +1,15 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BateriaNavigationTabs } from './BateriaNavigationTabs';
-import { BateriaAthleteSelector } from './BateriaAthleteSelector';
-import { TabularContentSection } from './TabularContentSection';
-import { useAthletesListTabularLogic } from './hooks/useAthletesListTabularLogic';
+import { RefreshCw } from 'lucide-react';
 import { Athlete } from '../hooks/useAthletes';
+import { useModalityWithModelo } from '../hooks/useModalityWithModelo';
+import { useDynamicBaterias } from '../hooks/useDynamicBaterias';
+import { AthletesTable } from './AthletesTable';
+import { DynamicScoringTableMain } from './dynamic-scoring-table/DynamicScoringTableMain';
+import { BateriaNavigation } from './BateriaNavigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AthletesListTabularProps {
@@ -15,7 +18,7 @@ interface AthletesListTabularProps {
   modalityId: number;
   eventId: string | null;
   judgeId: string;
-  scoreType?: 'tempo' | 'distancia' | 'pontos';
+  scoreType: 'tempo' | 'distancia' | 'pontos';
 }
 
 export function AthletesListTabular({
@@ -24,117 +27,182 @@ export function AthletesListTabular({
   modalityId,
   eventId,
   judgeId,
-  scoreType = 'pontos'
+  scoreType
 }: AthletesListTabularProps) {
   const isMobile = useIsMobile();
+  
+  // Get modality data with modelo configuration
+  const { 
+    data: modalityData, 
+    modalityRule, 
+    isLoading: isLoadingModalityData,
+    hasModelo
+  } = useModalityWithModelo(modalityId);
 
-  // Use the extracted logic hook
+  // Get bateria data for this modality
   const {
-    modelos,
-    isLoadingModelos,
-    isLoadingConfig,
-    hasDynamicScoring,
-    usesBaterias,
+    baterias,
     selectedBateriaId,
     selectedBateria,
-    regularBaterias,
-    finalBateria,
-    hasFinalBateria,
+    usesBaterias,
+    isLoading: isLoadingBaterias,
     setSelectedBateriaId,
     createNewBateria,
     createFinalBateria,
-    isCreating,
-    selectedAthletes,
-    handleAthleteToggle,
-    handleSelectAll,
-    handleClearAll,
-    availableBranches,
-    availableStates,
-    filters,
-    setFilters,
-    athletesToShow
-  } = useAthletesListTabularLogic({
-    athletes,
+    isCreating
+  } = useDynamicBaterias({
     modalityId,
     eventId
   });
 
-  if (isLoading || isLoadingModelos || isLoadingConfig) {
+  console.log('AthletesListTabular - Debug info:', {
+    modalityId,
+    eventId,
+    athletesCount: athletes?.length || 0,
+    hasModelo,
+    usesBaterias,
+    selectedBateriaId,
+    isLoading,
+    isLoadingModalityData
+  });
+
+  if (isLoading || isLoadingModalityData) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base sm:text-lg">Carregando atletas...</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-48 sm:h-64 w-full" />
+        <CardContent className="py-8">
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-64 w-full" />
+          </div>
         </CardContent>
       </Card>
     );
   }
 
-  if (!athletes || athletes.length === 0) {
+  if (!eventId) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base sm:text-lg">Nenhum atleta encontrado</CardTitle>
+          <CardTitle className="text-base sm:text-lg text-red-600">Evento não selecionado</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-sm">
-            Não há atletas inscritos nesta modalidade.
+            Selecione um evento para visualizar os atletas.
           </p>
         </CardContent>
       </Card>
     );
   }
 
+  const safeAthletes = athletes || [];
+  console.log('Safe athletes count:', safeAthletes.length);
+
+  if (safeAthletes.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base sm:text-lg">Nenhum atleta inscrito</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-sm">
+            Não há atletas inscritos nesta modalidade ou suas inscrições não estão confirmadas.
+          </p>
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h4 className="font-medium text-blue-800">Dica para resolução:</h4>
+            <ul className="text-sm text-blue-700 mt-2 space-y-1">
+              <li>• Verifique se há atletas inscritos na modalidade</li>
+              <li>• Confirme se as inscrições estão com status "confirmado"</li>
+              <li>• Verifique se a modalidade está corretamente associada ao evento</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show dynamic scoring table if modelo is configured
+  if (hasModelo && modalityData?.modelo) {
+    return (
+      <Card>
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle className="text-base sm:text-lg">
+              Registro de Pontuações - Modalidade
+            </CardTitle>
+            <div className="text-sm text-muted-foreground">
+              Mostrando {safeAthletes.length} de {safeAthletes.length} atletas
+            </div>
+          </div>
+          
+          {/* Sistema de Pontuação Dinâmica Info */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-4">
+            <div className="text-green-800 text-sm font-medium">
+              ✓ Sistema de Pontuação Dinâmica Ativo
+            </div>
+            <div className="text-green-700 text-xs mt-1">
+              Modelo: {modalityData.modelo.descricao || modalityData.modelo.codigo_modelo}
+            </div>
+            {usesBaterias && (
+              <div className="text-green-700 text-xs">
+                Sistema de baterias: {usesBaterias ? 'Ativo' : 'Inativo'}
+              </div>
+            )}
+          </div>
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
+          {/* Bateria Navigation - only show if using baterias */}
+          {usesBaterias && (
+            <BateriaNavigation
+              baterias={baterias}
+              selectedBateriaId={selectedBateriaId}
+              onSelectBateria={setSelectedBateriaId}
+              onCreateBateria={createNewBateria}
+              onCreateFinalBateria={createFinalBateria}
+              isCreating={isCreating}
+              isLoading={isLoadingBaterias}
+            />
+          )}
+          
+          {/* Dynamic Scoring Table */}
+          <DynamicScoringTableMain
+            athletes={safeAthletes}
+            modalityId={modalityId}
+            eventId={eventId}
+            judgeId={judgeId}
+            modelo={modalityData.modelo}
+            selectedBateriaId={selectedBateriaId}
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Fallback to regular scoring table for modalities without modelo
   return (
-    <div className={`space-y-4 ${isMobile ? 'space-y-4' : 'space-y-6'}`}>
-      {/* Bateria Navigation - only show if modality uses baterias */}
-      {usesBaterias && (
-        <BateriaNavigationTabs
-          regularBaterias={regularBaterias}
-          finalBateria={finalBateria}
+    <Card>
+      <CardHeader className="pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <CardTitle className="text-base sm:text-lg">
+            Lista de Atletas
+          </CardTitle>
+          <div className="text-sm text-muted-foreground">
+            Mostrando {safeAthletes.length} de {safeAthletes.length} atletas
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent>
+        <AthletesTable
+          athletes={safeAthletes}
+          modalityId={modalityId}
+          eventId={eventId}
+          judgeId={judgeId}
+          scoreType={scoreType}
+          modalityRule={modalityRule}
           selectedBateriaId={selectedBateriaId}
-          onSelectBateria={setSelectedBateriaId}
-          onCreateNewBateria={createNewBateria}
-          onCreateFinalBateria={createFinalBateria}
-          hasFinalBateria={hasFinalBateria}
-          isCreating={isCreating}
-          usesBaterias={usesBaterias}
         />
-      )}
-
-      {/* Bateria Athlete Selector - only show if modality uses baterias */}
-      {usesBaterias && eventId && (
-        <BateriaAthleteSelector
-          athletes={athletes}
-          selectedBateriaId={selectedBateriaId}
-          selectedAthletes={selectedAthletes}
-          onAthleteToggle={handleAthleteToggle}
-          onSelectAll={handleSelectAll}
-          onClearAll={handleClearAll}
-        />
-      )}
-
-      {/* Athletes Scoring Section */}
-      <TabularContentSection
-        athletesToShow={athletesToShow}
-        totalAthletes={athletes.length}
-        usesBaterias={usesBaterias}
-        selectedBateriaId={selectedBateriaId}
-        selectedAthletesCount={selectedAthletes.size}
-        hasDynamicScoring={hasDynamicScoring}
-        modelos={modelos}
-        selectedBateria={selectedBateria}
-        filters={filters}
-        setFilters={setFilters}
-        availableBranches={availableBranches}
-        availableStates={availableStates}
-        modalityId={modalityId}
-        eventId={eventId}
-        judgeId={judgeId}
-        scoreType={scoreType}
-      />
-    </div>
+      </CardContent>
+    </Card>
   );
 }

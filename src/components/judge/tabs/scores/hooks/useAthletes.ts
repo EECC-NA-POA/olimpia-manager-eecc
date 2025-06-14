@@ -9,30 +9,13 @@ export interface Athlete {
   atleta_nome: string;
   tipo_documento: string;
   numero_documento: string;
-  numero_identificador?: string; // Added missing property
+  numero_identificador?: string;
   filial_id?: number | null;
   filial_nome?: string | null;
-  equipe_id?: number | null; // Changed from string to number to match component expectations
+  equipe_id?: number | null;
   equipe_nome?: string | null;
   origem_uf?: string | null;
   origem_cidade?: string | null;
-}
-
-// Interface to type the response from Supabase
-interface AthleteResponse {
-  id: number;
-  atleta_id: string;
-  usuarios: {
-    nome_completo: string;
-    tipo_documento: string;
-    numero_documento: string;
-    filial_id?: number | null;
-  } | null;
-}
-
-interface FilialResponse {
-  id: number;
-  nome: string;
 }
 
 export function useAthletes(modalityId: number | null, eventId: string | null) {
@@ -44,49 +27,56 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
       try {
         console.log('Fetching athletes for modality:', modalityId, 'event:', eventId);
         
-        // Get the enrollments with user data including filial_id
+        // First, get the enrollments
         const { data: enrollments, error: enrollmentsError } = await supabase
           .from('inscricoes_modalidades')
-          .select(`
-            id,
-            atleta_id,
-            usuarios(
-              nome_completo,
-              tipo_documento,
-              numero_documento,
-              filial_id
-            )
-          `)
+          .select('id, atleta_id')
           .eq('modalidade_id', modalityId)
           .eq('evento_id', eventId)
           .eq('status', 'confirmado');
 
         if (enrollmentsError) {
           console.error('Error fetching enrollments:', enrollmentsError);
-          toast.error('Não foi possível carregar os atletas');
+          toast.error('Não foi possível carregar as inscrições');
           return [];
         }
 
         console.log('Raw enrollment data:', enrollments);
 
         if (!enrollments || enrollments.length === 0) {
-          console.log('No enrollments found');
+          console.log('No enrollments found for this modality');
           return [];
         }
 
-        // Get unique filial IDs from users who have filial_id
+        // Get athlete IDs from enrollments
+        const athleteIds = enrollments.map(e => e.atleta_id);
+        console.log('Athlete IDs from enrollments:', athleteIds);
+
+        // Now get user data for these athletes
+        const { data: users, error: usersError } = await supabase
+          .from('usuarios')
+          .select('id, nome_completo, tipo_documento, numero_documento, filial_id')
+          .in('id', athleteIds);
+
+        if (usersError) {
+          console.error('Error fetching users:', usersError);
+          toast.error('Não foi possível carregar os dados dos atletas');
+          return [];
+        }
+
+        console.log('Users data:', users);
+
+        // Get unique filial IDs from users
         const filialIds = [...new Set(
-          enrollments
-            .map(e => {
-              // Handle both single object and array responses from Supabase
-              const user = Array.isArray(e.usuarios) ? e.usuarios[0] : e.usuarios;
-              return user?.filial_id;
-            })
+          users
+            .map(user => user.filial_id)
             .filter(id => id !== null && id !== undefined)
         )] as number[];
 
+        console.log('Filial IDs to fetch:', filialIds);
+
         // Fetch filial data if there are filiais
-        let filiaisData: FilialResponse[] = [];
+        let filiaisData: any[] = [];
         if (filialIds.length > 0) {
           const { data: filiais, error: filiaisError } = await supabase
             .from('filiais')
@@ -95,7 +85,6 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
 
           if (filiaisError) {
             console.error('Error fetching filiais:', filiaisError);
-            // Don't fail the whole query if filiais can't be loaded
           } else {
             filiaisData = filiais || [];
           }
@@ -104,27 +93,31 @@ export function useAthletes(modalityId: number | null, eventId: string | null) {
         console.log('Filiais data:', filiaisData);
 
         // Transform the data to match our Athlete interface
-        const athletes = enrollments.map((item) => {
-          // Handle both single object and array responses from Supabase
-          const user = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
+        const athletes = enrollments.map((enrollment) => {
+          const user = users.find(u => u.id === enrollment.atleta_id);
           const filial = filiaisData.find(f => f.id === user?.filial_id);
           
+          if (!user) {
+            console.warn('User not found for athlete ID:', enrollment.atleta_id);
+            return null;
+          }
+          
           return {
-            inscricao_id: item.id,
-            atleta_id: item.atleta_id,
-            atleta_nome: user?.nome_completo || 'Atleta',
-            tipo_documento: user?.tipo_documento || 'Documento',
-            numero_documento: user?.numero_documento || '',
-            filial_id: user?.filial_id,
+            inscricao_id: enrollment.id,
+            atleta_id: enrollment.atleta_id,
+            atleta_nome: user.nome_completo || 'Atleta',
+            tipo_documento: user.tipo_documento || 'Documento',
+            numero_documento: user.numero_documento || '',
+            filial_id: user.filial_id,
             filial_nome: filial?.nome || null,
-            equipe_id: null, // Set as null (number | null) instead of string
+            equipe_id: null,
             equipe_nome: filial?.nome || null,
             origem_uf: null,
             origem_cidade: filial?.nome || null,
           };
-        });
+        }).filter(Boolean); // Remove null entries
 
-        console.log('Processed athletes:', athletes);
+        console.log('Final processed athletes:', athletes);
         return athletes;
       } catch (error) {
         console.error('Error in athlete query execution:', error);
