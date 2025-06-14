@@ -55,17 +55,22 @@ export function AthletesListTabular({
     eventId
   });
 
-  console.log('AthletesListTabular - Debug info:', {
+  console.log('=== ATHLETES LIST TABULAR DEBUG ===');
+  console.log('Props received:', {
     modalityId,
     eventId,
     athletesCount: athletes?.length || 0,
+    isLoading,
+    athletes: athletes
+  });
+  console.log('Modality data:', {
     hasModelo,
     usesBaterias,
     selectedBateriaId,
-    isLoading,
     isLoadingModalityData,
     modalityData
   });
+  console.log('=== END DEBUG ===');
 
   if (isLoading || isLoadingModalityData) {
     return (
@@ -96,7 +101,11 @@ export function AthletesListTabular({
   }
 
   const safeAthletes = athletes || [];
-  console.log('Safe athletes count:', safeAthletes.length);
+  console.log('=== SAFE ATHLETES CHECK ===');
+  console.log('Athletes array:', safeAthletes);
+  console.log('Athletes count:', safeAthletes.length);
+  console.log('First athlete:', safeAthletes[0]);
+  console.log('=== END SAFE ATHLETES CHECK ===');
 
   if (safeAthletes.length === 0) {
     return (
@@ -133,6 +142,10 @@ export function AthletesListTabular({
       atualizado_em: new Date().toISOString(),
       campos_modelo: modalityData.modelo.campos_modelo || []
     };
+
+    console.log('=== SHOWING DYNAMIC SCORING TABLE ===');
+    console.log('Athletes for dynamic table:', safeAthletes);
+    console.log('Modelo formatted:', modeloFormatted);
 
     return (
       <Card>
@@ -189,6 +202,9 @@ export function AthletesListTabular({
       </Card>
     );
   }
+
+  console.log('=== SHOWING REGULAR ATHLETES TABLE ===');
+  console.log('Athletes for regular table:', safeAthletes);
 
   // Fallback to regular scoring table for modalities without modelo
   return (
