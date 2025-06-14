@@ -39,8 +39,8 @@ export function DynamicScoringTableMain({
     startEditing,
     stopEditing,
     clearUnsavedChanges,
-    updateEditValue,
-    addUnsavedChange
+    updateFieldValue,
+    hasUnsavedChanges
   } = useDynamicScoringTableState();
 
   const {
@@ -71,8 +71,8 @@ export function DynamicScoringTableMain({
     editValues,
     existingScores,
     selectedBateriaId,
-    updateEditValue,
-    addUnsavedChange
+    updateFieldValue,
+    hasUnsavedChanges
   });
 
   const onEdit = (athleteId: string) => {

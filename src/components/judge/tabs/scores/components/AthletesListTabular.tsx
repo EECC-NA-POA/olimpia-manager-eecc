@@ -7,6 +7,7 @@ import { RefreshCw } from 'lucide-react';
 import { Athlete } from '../hooks/useAthletes';
 import { useModalityWithModelo } from '../hooks/useModalityWithModelo';
 import { useDynamicBaterias } from '../hooks/useDynamicBaterias';
+import { useDynamicScoreData } from './dynamic-scoring-table/hooks/useDynamicScoreData';
 import { AthletesTable } from './AthletesTable';
 import { DynamicScoringTableMain } from './dynamic-scoring-table/DynamicScoringTableMain';
 import { BateriaNavigation } from './BateriaNavigation';
@@ -53,6 +54,14 @@ export function AthletesListTabular({
   } = useDynamicBaterias({
     modalityId,
     eventId
+  });
+
+  // Get dynamic scoring data when hasModelo is true
+  const { campos, existingScores, refetchScores } = useDynamicScoreData({
+    modalityId,
+    eventId: eventId || '',
+    modeloId: modalityData?.modelo?.id,
+    enabled: hasModelo && !!modalityData?.modelo?.id
   });
 
   console.log('=== ATHLETES LIST TABULAR DEBUG ===');
@@ -196,7 +205,10 @@ export function AthletesListTabular({
             eventId={eventId}
             judgeId={judgeId}
             modelo={modeloFormatted}
+            campos={campos}
             selectedBateriaId={selectedBateriaId}
+            existingScores={existingScores}
+            refetchScores={refetchScores}
           />
         </CardContent>
       </Card>

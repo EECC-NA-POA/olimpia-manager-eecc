@@ -1,40 +1,64 @@
 
-export function useDynamicScoringFieldValues(
-  existingScores: any[],
-  editValues: Record<string, any>
-) {
-  const getFieldValue = (athleteId: string, fieldKey: string) => {
-    // Always check edit values first (for when user is editing)
-    const editValue = editValues[athleteId]?.[fieldKey];
-    if (editValue !== undefined) {
-      console.log(`Getting field value for ${athleteId}.${fieldKey}: ${editValue} (from edit values)`);
-      return editValue;
+import { useMemo } from 'react';
+
+interface UseDynamicScoringFieldValuesProps {
+  editValues: Record<string, any>;
+  existingScores: any[];
+  selectedBateriaId?: number | null;
+  updateFieldValue: (athleteId: string, fieldKey: string, value: string | number) => void;
+  hasUnsavedChanges: (athleteId: string) => boolean;
+}
+
+export function useDynamicScoringFieldValues({
+  editValues,
+  existingScores,
+  selectedBateriaId,
+  updateFieldValue,
+  hasUnsavedChanges
+}: UseDynamicScoringFieldValuesProps) {
+  
+  const getFieldValue = (athleteId: string, fieldKey: string): string | number => {
+    // First check if there's an edit value
+    if (editValues[athleteId]?.[fieldKey] !== undefined) {
+      return editValues[athleteId][fieldKey];
     }
-    
-    // Then check existing scores (for display when not editing)
-    const existingScore = existingScores.find(s => s.atleta_id === athleteId);
-    const tentativa = existingScore?.tentativas?.[fieldKey];
-    const existingValue = tentativa?.valor_formatado || tentativa?.valor || '';
-    console.log(`Getting field value for ${athleteId}.${fieldKey}: ${existingValue} (from existing scores)`);
-    return existingValue;
+
+    // Then check existing scores for this bateria
+    const existingScore = existingScores.find(score => 
+      score.atleta_id === athleteId && 
+      (selectedBateriaId ? score.numero_bateria === selectedBateriaId : true)
+    );
+
+    if (existingScore?.tentativas) {
+      const tentativa = existingScore.tentativas.find((t: any) => t.chave_campo === fieldKey);
+      if (tentativa) {
+        return tentativa.valor;
+      }
+    }
+
+    return '';
   };
 
-  const getDisplayValue = (athleteId: string, fieldKey: string) => {
-    const existingScore = existingScores.find(s => s.atleta_id === athleteId);
-    const tentativa = existingScore?.tentativas?.[fieldKey];
-    return tentativa?.valor_formatado || tentativa?.valor || '-';
+  const getDisplayValue = (athleteId: string, fieldKey: string): string => {
+    const value = getFieldValue(athleteId, fieldKey);
+    return value?.toString() || '';
   };
 
-  const hasExistingScore = (athleteId: string) => {
-    const existingScore = existingScores.find(s => s.atleta_id === athleteId);
-    const hasScore = existingScore && Object.keys(existingScore.tentativas || {}).length > 0;
-    console.log(`Athlete ${athleteId} has existing score:`, hasScore);
-    return hasScore;
+  const hasExistingScore = (athleteId: string): boolean => {
+    return existingScores.some(score => 
+      score.atleta_id === athleteId && 
+      (selectedBateriaId ? score.numero_bateria === selectedBateriaId : true)
+    );
+  };
+
+  const handleFieldChange = (athleteId: string, fieldKey: string, value: string | number) => {
+    updateFieldValue(athleteId, fieldKey, value);
   };
 
   return {
     getFieldValue,
     getDisplayValue,
-    hasExistingScore
+    hasExistingScore,
+    handleFieldChange
   };
 }
