@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Save, X, Edit, UserMinus } from 'lucide-react';
+import { Save, X, Edit, Trash2 } from 'lucide-react';
 import { Athlete } from '../../hooks/useAthletes';
 import { CampoModelo } from '@/types/dynamicScoring';
 
@@ -26,6 +26,7 @@ interface AthleteTableRowProps {
   isSaving: boolean;
   canRemove?: boolean;
   onRemove?: (athleteId: string) => void;
+  onDeleteScores?: (athleteId: string) => void;
 }
 
 export function AthleteTableRow({
@@ -44,7 +45,8 @@ export function AthleteTableRow({
   getDisplayValue,
   isSaving,
   canRemove = false,
-  onRemove
+  onRemove,
+  onDeleteScores
 }: AthleteTableRowProps) {
   const renderFieldInput = (campo: CampoModelo) => {
     const fieldKey = campo.chave_campo;
@@ -153,9 +155,22 @@ export function AthleteTableRow({
                 {athleteHasScore ? 'Editar' : 'Pontuar'}
               </Button>
               {athleteHasScore && (
-                <Badge variant="outline" className="bg-green-50 text-green-800 border-green-200">
-                  Avaliado
-                </Badge>
+                <>
+                  <Badge variant="outline" className="bg-green-50 text-green-800 border-green-200">
+                    Avaliado
+                  </Badge>
+                  {onDeleteScores && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onDeleteScores(athlete.atleta_id)}
+                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      title="Remover pontuações do atleta"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -171,7 +186,7 @@ export function AthleteTableRow({
             className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
             title="Remover atleta da tabela"
           >
-            <UserMinus className="h-4 w-4" />
+            <X className="h-4 w-4" />
           </Button>
         </TableCell>
       )}

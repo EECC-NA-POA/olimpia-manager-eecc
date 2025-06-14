@@ -1,14 +1,15 @@
-
 import React from 'react';
 import { Table, TableBody } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, UserMinus, Users } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
 import { Athlete } from '../../hooks/useAthletes';
 import { CampoModelo } from '@/types/dynamicScoring';
 import { DynamicTableHeader } from './DynamicTableHeader';
 import { AthleteTableRow } from './AthleteTableRow';
+import { AthleteScoreDeletionDialog } from './AthleteScoreDeletionDialog';
+import { useAthleteScoreDeletion } from './hooks/useAthleteScoreDeletion';
 
 interface DynamicScoringTableContentProps {
   athletes: Athlete[];
@@ -19,6 +20,9 @@ interface DynamicScoringTableContentProps {
   unsavedChanges: Set<string>;
   existingScores: any[];
   isSaving: boolean;
+  modalityId: number;
+  eventId: string;
+  modalityName?: string;
   onEdit: (athleteId: string) => void;
   onSave: (athleteId: string) => void;
   onCancel: (athleteId: string) => void;
@@ -37,6 +41,9 @@ export function DynamicScoringTableContent({
   unsavedChanges,
   existingScores,
   isSaving,
+  modalityId,
+  eventId,
+  modalityName,
   onEdit,
   onSave,
   onCancel,
@@ -46,6 +53,9 @@ export function DynamicScoringTableContent({
   hasExistingScore
 }: DynamicScoringTableContentProps) {
   const [selectedUnscored, setSelectedUnscored] = React.useState<Set<string>>(new Set());
+  const [athleteToDelete, setAthleteToDelete] = React.useState<Athlete | null>(null);
+  
+  const { deleteScores, isDeleting } = useAthleteScoreDeletion();
 
   // Separate athletes into scored and unscored for the selected bateria
   const { scoredAthletes, unscoredAthletes } = React.useMemo(() => {
@@ -110,6 +120,29 @@ export function DynamicScoringTableContent({
     setSelectedUnscored(newSelected);
   };
 
+  const handleDeleteScores = async (athleteId: string) => {
+    const athlete = athletes.find(a => a.atleta_id === athleteId);
+    if (athlete) {
+      setAthleteToDelete(athlete);
+    }
+  };
+
+  const confirmDeleteScores = async () => {
+    if (!athleteToDelete) return;
+
+    try {
+      await deleteScores({
+        athleteId: athleteToDelete.atleta_id,
+        modalityId,
+        eventId,
+        bateriaId: selectedBateriaId
+      });
+      setAthleteToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete scores:', error);
+    }
+  };
+
   const getBateriaDisplayName = (bateriaId: number | null) => {
     if (bateriaId === 999) return 'Final';
     return bateriaId?.toString() || '';
@@ -168,6 +201,7 @@ export function DynamicScoringTableContent({
                   isSaving={isSaving}
                   canRemove={canRemove}
                   onRemove={handleRemoveAthleteFromTable}
+                  onDeleteScores={handleDeleteScores}
                 />
               );
             })}
@@ -242,6 +276,16 @@ export function DynamicScoringTableContent({
           </CardContent>
         </Card>
       )}
+
+      <AthleteScoreDeletionDialog
+        isOpen={!!athleteToDelete}
+        onClose={() => setAthleteToDelete(null)}
+        onConfirm={confirmDeleteScores}
+        athlete={athleteToDelete}
+        modalityName={modalityName}
+        bateriaId={selectedBateriaId}
+        isDeleting={isDeleting}
+      />
 
       {mainTableAthletes.length === 0 && unscoredSectionAthletes.length === 0 && (
         <div className="text-center py-8">
