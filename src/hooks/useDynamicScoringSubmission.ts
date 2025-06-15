@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -44,18 +45,49 @@ export function useDynamicScoringSubmission() {
         if (data.equipeId) {
           console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
           
+          // For team submissions, we get the team members from inscricoes_modalidades
+          // where the equipe_id matches and the modalidade/evento are the same
           const { data: teamMembers, error: membersError } = await supabase
-            .from('equipes_atletas')
+            .from('inscricoes_modalidades')
             .select('atleta_id')
-            .eq('equipe_id', data.equipeId);
+            .eq('evento_id', data.eventId)
+            .eq('modalidade_id', data.modalityId)
+            .not('atleta_id', 'is', null);
 
           if (membersError) {
-            console.error('Error fetching team members from equipes_atletas:', membersError);
+            console.error('Error fetching enrolled athletes:', membersError);
             throw membersError;
           }
 
-          const membersToScore = (teamMembers && teamMembers.length > 0) 
-            ? teamMembers 
+          // Filter to only team members that belong to the same team as the current athlete
+          const { data: athleteTeamInfo, error: teamInfoError } = await supabase
+            .from('inscricoes_modalidades')
+            .select('equipe_id')
+            .eq('evento_id', data.eventId)
+            .eq('modalidade_id', data.modalityId)
+            .eq('atleta_id', data.athleteId)
+            .single();
+
+          if (teamInfoError || !athleteTeamInfo?.equipe_id) {
+            console.error('Error fetching athlete team info:', teamInfoError);
+            throw new Error('Atleta não está associado a uma equipe nesta modalidade');
+          }
+
+          // Now get all athletes that belong to the same team
+          const { data: sameTeamMembers, error: sameTeamError } = await supabase
+            .from('inscricoes_modalidades')
+            .select('atleta_id')
+            .eq('evento_id', data.eventId)
+            .eq('modalidade_id', data.modalityId)
+            .eq('equipe_id', athleteTeamInfo.equipe_id);
+
+          if (sameTeamError) {
+            console.error('Error fetching same team members:', sameTeamError);
+            throw sameTeamError;
+          }
+
+          const membersToScore = (sameTeamMembers && sameTeamMembers.length > 0) 
+            ? sameTeamMembers 
             : [{ atleta_id: data.athleteId }]; // Fallback to representative if team has no members
 
           const scoresPayload = membersToScore.map(member => ({
