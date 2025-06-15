@@ -57,12 +57,15 @@ export function useDynamicScoringSubmission() {
           judgeId: data.judgeId,
           modeloId: data.modeloId,
           raia,
-          observacoes,
-          // Only include numero_bateria if the modality actually uses baterias
-          ...(usesBaterias && { numero_bateria: data.bateriaId ?? null })
+          observacoes
         };
 
-        console.log('Clean data for DB (bateria fields only if needed):', cleanDataForDb);
+        // ONLY include numero_bateria if the modality actually uses baterias
+        if (usesBaterias) {
+          cleanDataForDb.numero_bateria = data.bateriaId ?? null;
+        }
+
+        console.log('Clean data for DB (conditional bateria fields):', cleanDataForDb);
         console.log('Uses baterias:', usesBaterias, '- numero_bateria included:', 'numero_bateria' in cleanDataForDb);
 
         // Handle team scoring
@@ -77,7 +80,7 @@ export function useDynamicScoringSubmission() {
 
           console.log('Team data for DB (conditional bateria fields):', teamDataForDb);
 
-          const pontuacao = await upsertPontuacao(teamDataForDb, valorPontuacao);
+          const pontuacao = await upsertPontuacao(teamDataForDb, valorPontuacao, usesBaterias);
           console.log('=== TEAM SCORE SAVED ===');
 
           const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
@@ -98,7 +101,7 @@ export function useDynamicScoringSubmission() {
 
         console.log('Individual data for DB (conditional bateria fields):', individualDataForDb);
 
-        const pontuacao = await upsertPontuacao(individualDataForDb, valorPontuacao);
+        const pontuacao = await upsertPontuacao(individualDataForDb, valorPontuacao, usesBaterias);
         console.log('=== INDIVIDUAL SCORE SAVED ===');
 
         const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);

@@ -1,21 +1,17 @@
-
 import { supabase } from '@/lib/supabase';
 
-export async function upsertPontuacao(data: any, valorPontuacao: number) {
+export async function upsertPontuacao(data: any, valorPontuacao: number, usesBaterias: boolean = false) {
   console.log('=== UPSERT PONTUAÇÃO ===');
   console.log('Data for upsert:', data);
   console.log('Valor pontuacao:', valorPontuacao);
+  console.log('Uses baterias:', usesBaterias);
   console.log('Observacoes received in upsertPontuacao:', data.observacoes);
   
-  // Check if numero_bateria should be included based on data
-  const includesBaterias = 'numero_bateria' in data;
-  console.log('Should include numero_bateria fields?', includesBaterias);
-  
-  if (includesBaterias) {
+  if (usesBaterias && 'numero_bateria' in data) {
     console.log('Numero bateria received:', data.numero_bateria);
   }
 
-  // CRITICAL: Build pontuacao data dynamically based on what fields are provided
+  // Build pontuacao data with ONLY the fields that should exist for this modality
   const pontuacaoData: any = {
     evento_id: data.eventId,
     modalidade_id: data.modalityId,
@@ -30,12 +26,13 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     raia: data.raia || null
   };
 
-  // Only add numero_bateria if it's supposed to be included
-  if (includesBaterias) {
+  // CRITICAL: Only add numero_bateria if the modality actually uses baterias
+  if (usesBaterias && 'numero_bateria' in data) {
     pontuacaoData.numero_bateria = data.numero_bateria || null;
   }
 
-  console.log('Final pontuacao data for database (conditional bateria fields):', pontuacaoData);
+  console.log('Final pontuacao data for database:', pontuacaoData);
+  console.log('Fields included:', Object.keys(pontuacaoData));
 
   // Build the search query with proper NULL handling
   let searchQuery = supabase
@@ -54,8 +51,8 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     searchQuery = searchQuery.eq('equipe_id', pontuacaoData.equipe_id);
   }
 
-  // Only add numero_bateria to search if the modality uses baterias
-  if (includesBaterias) {
+  // CRITICAL: Only add numero_bateria to search if the modality uses baterias
+  if (usesBaterias && 'numero_bateria' in pontuacaoData) {
     if (pontuacaoData.numero_bateria === null) {
       searchQuery = searchQuery.is('numero_bateria', null);
     } else {
@@ -77,7 +74,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     const existingId = existingRecords[0].id;
     console.log('Updating existing record with ID:', existingId);
     
-    // CRITICAL: Create a clean update object based on what fields should be included
+    // Create clean update data - NEVER include fields that don't exist for this modality
     const updateData: any = {
       evento_id: pontuacaoData.evento_id,
       modalidade_id: pontuacaoData.modalidade_id,
@@ -92,12 +89,13 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
       raia: pontuacaoData.raia
     };
 
-    // Only include numero_bateria if the modality uses baterias
-    if (includesBaterias) {
+    // CRITICAL: Only include numero_bateria if the modality uses baterias
+    if (usesBaterias && 'numero_bateria' in pontuacaoData) {
       updateData.numero_bateria = pontuacaoData.numero_bateria;
     }
     
-    console.log('Clean update data (conditional bateria fields):', updateData);
+    console.log('Clean update data:', updateData);
+    console.log('Update fields included:', Object.keys(updateData));
     
     const { data: updatedRecord, error } = await supabase
       .from('pontuacoes')
@@ -115,7 +113,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     // Inserir novo registro
     console.log('Inserting new record');
     
-    // CRITICAL: Create a clean insert object based on what fields should be included
+    // Create clean insert data - NEVER include fields that don't exist for this modality
     const insertData: any = {
       evento_id: pontuacaoData.evento_id,
       modalidade_id: pontuacaoData.modalidade_id,
@@ -130,12 +128,13 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
       raia: pontuacaoData.raia
     };
 
-    // Only include numero_bateria if the modality uses baterias
-    if (includesBaterias) {
+    // CRITICAL: Only include numero_bateria if the modality uses baterias
+    if (usesBaterias && 'numero_bateria' in pontuacaoData) {
       insertData.numero_bateria = pontuacaoData.numero_bateria;
     }
     
-    console.log('Clean insert data (conditional bateria fields):', insertData);
+    console.log('Clean insert data:', insertData);
+    console.log('Insert fields included:', Object.keys(insertData));
     
     const { data: newRecord, error } = await supabase
       .from('pontuacoes')
