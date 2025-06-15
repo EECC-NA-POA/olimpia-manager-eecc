@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTeamManager } from './teams/hooks/useTeamManager';
 import { useAllTeamsData } from './teams/hooks/useAllTeamsData';
+import { JudgeTeamsScoringTab } from './teams/components/JudgeTeamsScoringTab';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useTeamManager } from './teams/hooks/useTeamManager';
 import { TeamsTabHeader } from './teams/components/TeamsTabHeader';
 import { ManageTeamsTab } from './teams/components/ManageTeamsTab';
 import { ViewAllTeamsTab } from './teams/components/ViewAllTeamsTab';
-import { JudgeTeamsScoringTab } from './teams/components/JudgeTeamsScoringTab';
-import { NoModalitiesMessage } from './teams/components/NoModalitiesMessage';
-import { LoadingTeamsState } from './teams/components/LoadingTeamsState';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users } from 'lucide-react';
 
 interface TeamsTabProps {
   userId: string;
@@ -26,31 +24,31 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     && !user?.papeis?.some(role => role.codigo === 'RDD')
     && !user?.papeis?.some(role => role.codigo === 'ORE');
 
-  // Define se o usuário é representante de delegação APENAS
+    // Define se o usuário é representante de delegação APENAS
   const isDelegationRepOnly = user?.papeis?.some(role => role.codigo === 'RDD')
-    && !user?.papeis?.some(role => role.codigo === 'ORE');
+  && !user?.papeis?.some(role => role.codigo === 'ORE');
 
-  // Filtros e estados da aba de visualização de equipes (usados por juiz e organizador)
+  // Filtros e estados para visualização dos times
   const [modalityFilter, setModalityFilter] = useState<number | null>(null);
   const [branchFilter, setBranchFilter] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Data para tela de pontuação e visualização (usado por juiz e organizador)
+  // Dados de equipes/modalidades/filiais (para pontuação de juiz)
   const {
     teams: allTeams,
     modalities: allModalities,
     branches,
     isLoading: isLoadingAllTeams,
-    error: allTeamsError
+    error: allTeamsError,
   } = useAllTeamsData(
     eventId,
     modalityFilter,
     branchFilter,
     searchTerm,
-    (isOrganizer || isJudgeOnly) ? undefined : user?.filial_id
+    (isOrganizer || isJudgeOnly) ? undefined : user?.filial_id // Juiz vê todas da sua filial por lógica backend
   );
 
-  // Transforma os dados para o formato esperado pelo componente de pontuação
+  // Transforma os dados para o formato de pontuação
   const transformedTeams = allTeams?.map(team => ({
     equipe_id: team.id,
     equipe_nome: team.nome,
@@ -70,7 +68,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     modalidade_nome: modality.nome
   })) || [];
 
-  // EXCLUSIVO: Juiz só vê a tela de pontuação de equipes
+  // Exclusivo para Juiz: Só exibe pontuação de equipes, sem abas nem gerenciamento
   if (isJudgeOnly) {
     return (
       <div className="space-y-6">
