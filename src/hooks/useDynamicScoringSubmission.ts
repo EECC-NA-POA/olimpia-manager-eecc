@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -35,20 +36,71 @@ export function useDynamicScoringSubmission() {
         // Calcular valor_pontuacao principal a partir dos dados do formulário
         const valorPontuacao = calculateMainScore(data.formData, campos);
         console.log('Calculated valor_pontuacao:', valorPontuacao);
-
+        
         const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
         const observacoes = data.formData.notes || data.observacoes || null;
 
-        // UNIFIED SCORING LOGIC FOR INDIVIDUAL AND TEAM
-        // The upsertPontuacao function handles both cases correctly based on presence of equipeId
+        // For teams, we handle score replication on the client-side
+        // to avoid relying on a potentially faulty database trigger.
         if (data.equipeId) {
           console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
-        } else {
-          console.log('--- Submissão Individual ---');
+          
+          const { data: teamMembers, error: membersError } = await supabase
+            .from('inscricoes_modalidades')
+            .select('atleta_id')
+            .eq('evento_id', data.eventId)
+            .eq('modalidade_id', data.modalityId)
+            .eq('equipe_id', data.equipeId);
+
+          if (membersError) throw membersError;
+
+          const membersToScore = (teamMembers && teamMembers.length > 0) 
+            ? teamMembers 
+            : [{ atleta_id: data.athleteId }]; // Fallback to representative if team has no members
+
+          const scoresPayload = membersToScore.map(member => ({
+            evento_id: data.eventId,
+            modalidade_id: data.modalityId,
+            atleta_id: member.atleta_id,
+            equipe_id: data.equipeId,
+            juiz_id: data.judgeId,
+            modelo_id: data.modeloId,
+            valor_pontuacao: valorPontuacao,
+            unidade: 'pontos',
+            observacoes: observacoes,
+            data_registro: new Date().toISOString(),
+            numero_bateria: data.bateriaId || null,
+            raia: raia,
+          }));
+
+          console.log('Batch upserting scores for team:', scoresPayload);
+
+          const { data: pontuacoes, error: upsertError } = await supabase
+            .from('pontuacoes')
+            .upsert(scoresPayload, {
+              onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id,modelo_id,numero_bateria',
+            })
+            .select();
+
+          if (upsertError) {
+            console.error('Error batch upserting team scores:', upsertError);
+            throw upsertError;
+          }
+
+          const representativeScore = pontuacoes?.find(p => p.atleta_id === data.athleteId);
+          if (!representativeScore) {
+            throw new Error('Falha ao encontrar a pontuação do atleta representante após o salvamento.');
+          }
+
+          const tentativas = prepareTentativasData(data.formData, campos, representativeScore.id);
+          await insertTentativas(tentativas, representativeScore.id);
+
+          console.log('=== SUBMISSÃO DE EQUIPE CONCLUÍDA ===');
+          return representativeScore;
         }
 
-        // The underlying pontuacaoOperations.ts seems to incorrectly map `bateriaId` to `bateria_id`.
-        // We will rename it here to `numero_bateria` which is the correct column name in the database.
+        // --- Individual submission logic (existing logic) ---
+        console.log('--- Submissão Individual ---');
         const { bateriaId, ...restOfData } = data;
         const dataForDb = {
           ...restOfData,
