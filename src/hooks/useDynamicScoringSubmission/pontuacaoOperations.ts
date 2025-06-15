@@ -64,9 +64,27 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     const existingId = existingRecords[0].id;
     console.log('Updating existing record with ID:', existingId);
     
+    // CRITICAL: Create a clean update object without any bateria_id references
+    const updateData = {
+      evento_id: pontuacaoData.evento_id,
+      modalidade_id: pontuacaoData.modalidade_id,
+      atleta_id: pontuacaoData.atleta_id,
+      equipe_id: pontuacaoData.equipe_id,
+      juiz_id: pontuacaoData.juiz_id,
+      modelo_id: pontuacaoData.modelo_id,
+      valor_pontuacao: pontuacaoData.valor_pontuacao,
+      unidade: pontuacaoData.unidade,
+      observacoes: pontuacaoData.observacoes,
+      data_registro: pontuacaoData.data_registro,
+      numero_bateria: pontuacaoData.numero_bateria,
+      raia: pontuacaoData.raia
+    };
+    
+    console.log('Clean update data (NO bateria_id):', updateData);
+    
     const { data: updatedRecord, error } = await supabase
       .from('pontuacoes')
-      .update(pontuacaoData)
+      .update(updateData)
       .eq('id', existingId)
       .select()
       .single();
@@ -79,9 +97,28 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
   } else {
     // Inserir novo registro
     console.log('Inserting new record');
+    
+    // CRITICAL: Create a clean insert object without any bateria_id references
+    const insertData = {
+      evento_id: pontuacaoData.evento_id,
+      modalidade_id: pontuacaoData.modalidade_id,
+      atleta_id: pontuacaoData.atleta_id,
+      equipe_id: pontuacaoData.equipe_id,
+      juiz_id: pontuacaoData.juiz_id,
+      modelo_id: pontuacaoData.modelo_id,
+      valor_pontuacao: pontuacaoData.valor_pontuacao,
+      unidade: pontuacaoData.unidade,
+      observacoes: pontuacaoData.observacoes,
+      data_registro: pontuacaoData.data_registro,
+      numero_bateria: pontuacaoData.numero_bateria,
+      raia: pontuacaoData.raia
+    };
+    
+    console.log('Clean insert data (NO bateria_id):', insertData);
+    
     const { data: newRecord, error } = await supabase
       .from('pontuacoes')
-      .insert(pontuacaoData)
+      .insert(insertData)
       .select()
       .single();
     
