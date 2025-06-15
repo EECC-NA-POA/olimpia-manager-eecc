@@ -20,87 +20,57 @@ interface TeamsTabProps {
 
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
   const { user } = useAuth();
-  
-  // Check if user is ONLY a judge (judges should only view and score, not manage)
-  // Representatives can manage their teams, organizers can manage all teams
-  const isJudgeOnly = user?.papeis?.some(role => role.codigo === 'JUZ') && 
-                      !user?.papeis?.some(role => role.codigo === 'RDD') &&
-                      !user?.papeis?.some(role => role.codigo === 'ORE');
-  
-  // Check if user is delegation representative (but not organizer)
-  const isDelegationRepOnly = user?.papeis?.some(role => role.codigo === 'RDD') && 
-                              !user?.papeis?.some(role => role.codigo === 'ORE');
-  
-  // States for "Visualizar Todas" tab
+
+  // Define se o usuário é apenas juiz (não pode gerenciar equipes)
+  const isJudgeOnly = user?.papeis?.some(role => role.codigo === 'JUZ')
+    && !user?.papeis?.some(role => role.codigo === 'RDD')
+    && !user?.papeis?.some(role => role.codigo === 'ORE');
+
+  // Define se o usuário é representante de delegação APENAS
+  const isDelegationRepOnly = user?.papeis?.some(role => role.codigo === 'RDD')
+    && !user?.papeis?.some(role => role.codigo === 'ORE');
+
+  // Filtros e estados da aba de visualização de equipes (usados por juiz e organizador)
   const [modalityFilter, setModalityFilter] = useState<number | null>(null);
   const [branchFilter, setBranchFilter] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const {
-    modalities,
-    teams,
-    availableAthletes,
-    selectedModalityId,
-    setSelectedModalityId,
-    isLoading,
-    createTeam,
-    deleteTeam,
-    addAthlete,
-    removeAthlete,
-    updateAthletePosition,
-    isCreatingTeam,
-    isDeletingTeam,
-    isAddingAthlete,
-    isRemovingAthlete,
-    isUpdatingAthlete,
-    teamToDelete,
-    isDeleteDialogOpen,
-    setIsDeleteDialogOpen,
-    confirmDeleteTeam,
-    cancelDeleteTeam
-  } = useTeamManager(eventId, isOrganizer);
-
-  // Data for viewing all teams - for organizers and judges, don't filter by branch
+  // Data para tela de pontuação e visualização (usado por juiz e organizador)
   const {
     teams: allTeams,
     modalities: allModalities,
     branches,
     isLoading: isLoadingAllTeams,
     error: allTeamsError
-  } = useAllTeamsData(eventId, modalityFilter, branchFilter, searchTerm, (isOrganizer || isJudgeOnly) ? undefined : user?.filial_id);
+  } = useAllTeamsData(
+    eventId,
+    modalityFilter,
+    branchFilter,
+    searchTerm,
+    (isOrganizer || isJudgeOnly) ? undefined : user?.filial_id
+  );
 
-  if (isLoading && !selectedModalityId) {
-    return <LoadingTeamsState />;
-  }
+  // Transforma os dados para o formato esperado pelo componente de pontuação
+  const transformedTeams = allTeams?.map(team => ({
+    equipe_id: team.id,
+    equipe_nome: team.nome,
+    modalidade_id: team.modalidade_id,
+    modalidade_nome: team.modalidade_info?.nome || '',
+    tipo_pontuacao: 'pontos',
+    filial_nome: team.filial_id || '',
+    members: team.atletas?.map(athlete => ({
+      atleta_id: athlete.atleta_id,
+      atleta_nome: athlete.atleta_nome || '',
+      numero_identificador: athlete.numero_identificador || ''
+    })) || []
+  })) || [];
 
-  if (!modalities || modalities.length === 0) {
-    return <NoModalitiesMessage />;
-  }
-
-  // Transform teams data to match expected interface
-  const transformedTeams = allTeams?.map(team => {
-    return {
-      equipe_id: team.id,
-      equipe_nome: team.nome,
-      modalidade_id: team.modalidade_id,
-      modalidade_nome: team.modalidade_info?.nome || '',
-      tipo_pontuacao: 'pontos', // Default to 'pontos' since we can't reliably get this from the current data structure
-      filial_nome: team.filial_id || '', // Use filial_id since filial_info doesn't exist
-      members: team.atletas?.map(athlete => ({
-        atleta_id: athlete.atleta_id,
-        atleta_nome: athlete.atleta_nome || '',
-        numero_identificador: athlete.numero_identificador || ''
-      })) || []
-    };
-  }) || [];
-
-  // Transform modalities data to match expected interface
   const transformedModalities = allModalities?.map(modality => ({
     modalidade_id: modality.id,
     modalidade_nome: modality.nome
   })) || [];
 
-  // Se for juiz, exibe apenas a tela exclusiva de pontuação
+  // Caso seja juiz, renderiza somente a tela de pontuação (NÃO GERENCIA equipes)
   if (isJudgeOnly) {
     return (
       <div className="space-y-6">
@@ -111,7 +81,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
               Pontuação de Equipes
             </CardTitle>
             <CardDescription>
-              Visualize e pontue as equipes das modalidades coletivas.
+              Visualize as equipes das modalidades coletivas e registre apenas as pontuações. Juízes não podem criar, editar ou excluir equipes e atletas.
             </CardDescription>
           </CardHeader>
           <CardContent>
