@@ -51,8 +51,13 @@ export function MainScoringTable({
     return bateriaId?.toString() || '';
   };
 
-  // Garante que só campos de pontuação são passados para o cabeçalho e linhas
-  const filteredCampos = filterScoringFields(campos);
+  // DOUBLE CHECK: Apply additional filtering as a safety measure
+  const finalScoringFields = filterScoringFields(campos);
+  
+  console.log('=== MAIN SCORING TABLE FIELD VERIFICATION ===');
+  console.log('MainScoringTable - Received campos count:', campos.length);
+  console.log('MainScoringTable - Final scoring fields count:', finalScoringFields.length);
+  console.log('MainScoringTable - Final scoring fields:', finalScoringFields.map(c => ({ key: c.chave_campo, label: c.rotulo_campo })));
 
   return (
     <div className="border rounded-lg overflow-hidden">
@@ -68,7 +73,7 @@ export function MainScoringTable({
       )}
       
       <Table>
-        <DynamicTableHeader campos={filteredCampos} />
+        <DynamicTableHeader campos={finalScoringFields} />
         <TableBody>
           {athletes.map((athlete) => {
             const isEditing = editingAthletes.has(athlete.atleta_id);
@@ -79,7 +84,7 @@ export function MainScoringTable({
               <AthleteTableRow
                 key={athlete.atleta_id}
                 athlete={athlete}
-                campos={filteredCampos}
+                campos={finalScoringFields}
                 isEditing={isEditing}
                 athleteHasScore={athleteHasScore}
                 hasUnsavedChanges={unsavedChanges.has(athlete.atleta_id)}
@@ -103,4 +108,3 @@ export function MainScoringTable({
     </div>
   );
 }
-

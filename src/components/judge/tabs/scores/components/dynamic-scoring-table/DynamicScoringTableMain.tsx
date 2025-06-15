@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Athlete } from '../../hooks/useAthletes';
 import { CampoModelo, ModeloModalidade } from '@/types/dynamicScoring';
@@ -34,12 +35,15 @@ export function DynamicScoringTableMain({
   modalityName,
   usesBaterias = false
 }: DynamicScoringTableMainProps) {
-  // Sempre filtrar para garantir que não vão para a tabela!
+  // CRITICAL: Always filter to ensure configuration fields NEVER reach the table components
   const scoringFields = filterScoringFields(campos);
   
+  console.log('=== DYNAMIC SCORING TABLE MAIN FIELD FILTERING ===');
   console.log('DynamicScoringTableMain - Original campos count:', campos.length);
   console.log('DynamicScoringTableMain - Filtered scoring fields count:', scoringFields.length);
-  console.log('DynamicScoringTableMain - Filtered out fields:', campos.filter(c => !scoringFields.includes(c)).map(c => c.chave_campo));
+  console.log('DynamicScoringTableMain - All original fields:', campos.map(c => ({ key: c.chave_campo, label: c.rotulo_campo })));
+  console.log('DynamicScoringTableMain - Filtered fields:', scoringFields.map(c => ({ key: c.chave_campo, label: c.rotulo_campo })));
+  console.log('DynamicScoringTableMain - Filtered out fields:', campos.filter(c => !scoringFields.includes(c)).map(c => ({ key: c.chave_campo, label: c.rotulo_campo })));
 
   const {
     editingAthletes,
@@ -63,7 +67,7 @@ export function DynamicScoringTableMain({
     judgeId,
     modelo,
     selectedBateriaId,
-    campos, // não filtra aqui pois pode ser necessário a lista cheia para operações internas
+    campos: scoringFields, // Pass only scoring fields to operations
     existingScores,
     editValues,
     refetchScores,
@@ -91,7 +95,6 @@ export function DynamicScoringTableMain({
   return (
     <DynamicScoringTableContent
       athletes={athletes}
-      // SOMENTE CAMPOS DE PONTUAÇÃO
       campos={scoringFields}
       selectedBateriaId={selectedBateriaId}
       editingAthletes={editingAthletes}

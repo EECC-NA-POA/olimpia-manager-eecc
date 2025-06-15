@@ -10,14 +10,38 @@ export function filterScoringFields(campos: CampoModelo[]): CampoModelo[] {
     'sistema_baterias',
     'usar_bateria',
     'configuracao_de_pontuacao',
-    'config_pontuacao'
+    'config_pontuacao',
+    'configuracao_pontos',
+    'config_pontos',
+    'sistema_pontuacao',
+    'config_sistema',
+    'bateria_sistema',
+    'pontuacao_config'
   ];
   
   return campos.filter(campo => {
-    // Filter out configuration fields by exact key match (case insensitive)
     const lowerKey = campo.chave_campo.toLowerCase();
+    const lowerLabel = campo.rotulo_campo.toLowerCase();
+    
+    // Filter out configuration fields by exact key match (case insensitive)
     if (configurationFieldKeys.includes(lowerKey)) {
-      console.log('Filtering out configuration field:', campo.chave_campo);
+      console.log('Filtering out configuration field by key:', campo.chave_campo);
+      return false;
+    }
+    
+    // Filter out by label content (case insensitive)
+    if (lowerLabel.includes('usar bateria') || lowerLabel.includes('usar baterias')) {
+      console.log('Filtering out "Usar Baterias" field by label:', campo.rotulo_campo);
+      return false;
+    }
+    
+    if (lowerLabel.includes('configuração') && lowerLabel.includes('pontuação')) {
+      console.log('Filtering out "Configuração de Pontuação" field by label:', campo.rotulo_campo);
+      return false;
+    }
+    
+    if (lowerLabel.includes('configuração') && lowerLabel.includes('pontos')) {
+      console.log('Filtering out configuration field by label:', campo.rotulo_campo);
       return false;
     }
     
@@ -27,8 +51,8 @@ export function filterScoringFields(campos: CampoModelo[]): CampoModelo[] {
       return false;
     }
     
-    // Filter out any field that contains "usar_bateria" in the key (case insensitive)
-    if (lowerKey.includes('usar_bateria')) {
+    // Filter out any field that contains "usar" AND "bateria" in the key (case insensitive)
+    if (lowerKey.includes('usar') && lowerKey.includes('bateria')) {
       console.log('Filtering out usar_bateria field:', campo.chave_campo);
       return false;
     }
@@ -39,9 +63,15 @@ export function filterScoringFields(campos: CampoModelo[]): CampoModelo[] {
       return false;
     }
     
-    // Additional specific patterns for configuration fields
+    // Filter out any field that contains "config" AND ("pont" OR "score") in the key (case insensitive)
     if (lowerKey.includes('config') && (lowerKey.includes('pont') || lowerKey.includes('score'))) {
       console.log('Filtering out config scoring field:', campo.chave_campo);
+      return false;
+    }
+    
+    // Filter out any field that contains "sistema" AND ("bateria" OR "pontuacao") in the key (case insensitive)
+    if (lowerKey.includes('sistema') && (lowerKey.includes('bateria') || lowerKey.includes('pontuacao'))) {
+      console.log('Filtering out sistema field:', campo.chave_campo);
       return false;
     }
     
