@@ -28,7 +28,6 @@ interface TeamScoreCardProps {
     equipe_id: number;
     equipe_nome: string;
     members: TeamMember[];
-    // categoria: string; <-- No longer direct, pulled from modality info below.
   };
   modalityId: number;
   eventId: string | null;
@@ -46,27 +45,51 @@ function TeamScoreCardContent({
 }: TeamScoreCardProps & { representativeAthlete: TeamMember }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Fetch all required modality details including categoria!
+  // Fetch comprehensive modality details including modelo_modalidade_id and categoria
   const { data: modalityDetails, isLoading: isLoadingModality } = useQuery({
-    queryKey: ['modality-details', modalityId],
+    queryKey: ['modality-details-complete', modalityId],
     queryFn: async () => {
+      console.log('Fetching modality details for ID:', modalityId);
+      
       const { data, error } = await supabase
         .from('modalidades')
-        .select('modelo_modalidade_id, tipo_pontuacao, categoria')
+        .select(`
+          id,
+          nome,
+          modelo_modalidade_id,
+          tipo_pontuacao,
+          categoria,
+          modelos_modalidades (
+            id,
+            codigo_modelo,
+            descricao
+          )
+        `)
         .eq('id', modalityId)
         .maybeSingle();
+      
       if (error) {
         console.error('Error fetching modality details:', error);
         throw new Error('Erro ao buscar detalhes da modalidade');
       }
+      
+      console.log('Modality details fetched:', data);
       return data;
     },
     enabled: !!modalityId,
   });
 
   const modeloId = modalityDetails?.modelo_modalidade_id;
-  const tipoPontuacao = modalityDetails?.tipo_pontuacao || scoreType; // Prefer tipo from modalidade
-  const modalidadeCategoria = modalityDetails?.categoria || null; // New: Fetch modalidade category
+  const tipoPontuacao = modalityDetails?.tipo_pontuacao || scoreType;
+  const modalidadeCategoria = modalityDetails?.categoria || null;
+
+  console.log('TeamScoreCard - Modality details:', {
+    modalityId,
+    modeloId,
+    tipoPontuacao,
+    modalidadeCategoria,
+    modalityDetails
+  });
 
   // Team scoring with support for the correct model
   const { submitScoreMutation } = useScoreSubmission(
@@ -134,6 +157,21 @@ function TeamScoreCardContent({
     refetchScore();
   };
 
+  const getCategoryDisplayName = (categoria: string | null) => {
+    if (!categoria) return null;
+    
+    // Map the categories to their proper display names
+    const categoryMap: { [key: string]: string } = {
+      'masculino': 'Masculino',
+      'feminino': 'Feminino',
+      'misto': 'Misto',
+      // Keep backward compatibility
+      'livre': 'Livre'
+    };
+    
+    return categoryMap[categoria.toLowerCase()] || categoria;
+  };
+
   return (
     <Card
       className={`
@@ -152,7 +190,7 @@ function TeamScoreCardContent({
               {/* Show category if available */}
               {modalidadeCategoria && (
                 <Badge variant="secondary" className="bg-violet-50 text-violet-700 border-violet-200">
-                  {modalidadeCategoria}
+                  {getCategoryDisplayName(modalidadeCategoria)}
                 </Badge>
               )}
             </CardTitle>
@@ -200,7 +238,11 @@ function TeamScoreCardContent({
                 <strong>Pontuação de equipe:</strong> A pontuação será registrada para todos os membros da equipe automaticamente.
               </p>
             </div>
-            {!!modeloId ? (
+            
+            {console.log('Rendering scoring form - modeloId:', modeloId, 'tipoPontuacao:', tipoPontuacao)}
+            
+            {/* Priority: Use dynamic form if modelo exists, otherwise fallback to basic form */}
+            {modeloId ? (
               <DynamicScoreForm
                 modeloId={modeloId}
                 modalityId={modalityId}
@@ -260,6 +302,21 @@ export function TeamScoreCard(props: TeamScoreCardProps) {
     return () => { ignore = true; };
   }, [modalityId, representativeAthlete]);
 
+  const getCategoryDisplayName = (categoria: string | null) => {
+    if (!categoria) return null;
+    
+    // Map the categories to their proper display names
+    const categoryMap: { [key: string]: string } = {
+      'masculino': 'Masculino',
+      'feminino': 'Feminino',
+      'misto': 'Misto',
+      // Keep backward compatibility
+      'livre': 'Livre'
+    };
+    
+    return categoryMap[categoria.toLowerCase()] || categoria;
+  };
+
   if (!representativeAthlete) {
     return (
       <Card className="opacity-80">
@@ -271,7 +328,7 @@ export function TeamScoreCard(props: TeamScoreCardProps) {
             </Badge>
             {category && (
               <Badge variant="secondary" className="bg-violet-50 text-violet-700 border-violet-200">
-                {category}
+                {getCategoryDisplayName(category)}
               </Badge>
             )}
           </CardTitle>
@@ -285,5 +342,3 @@ export function TeamScoreCard(props: TeamScoreCardProps) {
 
   return <TeamScoreCardContent {...props} representativeAthlete={representativeAthlete} />;
 }
-
-// FIM DO ARQUIVO
