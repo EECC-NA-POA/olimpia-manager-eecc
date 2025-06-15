@@ -34,7 +34,7 @@ export function DynamicScoringTableMain({
   modalityName,
   usesBaterias = false
 }: DynamicScoringTableMainProps) {
-  // Filter out configuration fields - these should NEVER appear in scoring tables
+  // O filtro central está aqui, garantindo que SÓ passe para todos os componentes necessários os campos corretos.
   const scoringFields = filterScoringFields(campos);
   
   console.log('DynamicScoringTableMain - Original campos count:', campos.length);

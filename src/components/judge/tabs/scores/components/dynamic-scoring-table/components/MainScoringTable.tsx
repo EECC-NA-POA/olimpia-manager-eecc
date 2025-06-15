@@ -5,6 +5,7 @@ import { Athlete } from '../../../hooks/useAthletes';
 import { CampoModelo } from '@/types/dynamicScoring';
 import { DynamicTableHeader } from '../DynamicTableHeader';
 import { AthleteTableRow } from '../AthleteTableRow';
+import { filterScoringFields } from '@/utils/dynamicScoringUtils';
 
 interface MainScoringTableProps {
   athletes: Athlete[];
@@ -50,6 +51,9 @@ export function MainScoringTable({
     return bateriaId?.toString() || '';
   };
 
+  // Garante que só campos de pontuação são passados para o cabeçalho e linhas
+  const filteredCampos = filterScoringFields(campos);
+
   return (
     <div className="border rounded-lg overflow-hidden">
       {selectedBateriaId && (
@@ -64,7 +68,7 @@ export function MainScoringTable({
       )}
       
       <Table>
-        <DynamicTableHeader campos={campos} />
+        <DynamicTableHeader campos={filteredCampos} />
         <TableBody>
           {athletes.map((athlete) => {
             const isEditing = editingAthletes.has(athlete.atleta_id);
@@ -75,7 +79,7 @@ export function MainScoringTable({
               <AthleteTableRow
                 key={athlete.atleta_id}
                 athlete={athlete}
-                campos={campos}
+                campos={filteredCampos}
                 isEditing={isEditing}
                 athleteHasScore={athleteHasScore}
                 hasUnsavedChanges={unsavedChanges.has(athlete.atleta_id)}
@@ -99,3 +103,4 @@ export function MainScoringTable({
     </div>
   );
 }
+
