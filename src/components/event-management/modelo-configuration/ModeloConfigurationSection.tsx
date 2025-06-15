@@ -48,7 +48,8 @@ export function ModeloConfigurationSection({ eventId }: { eventId: string | null
       if (modelo.modalidade?.nome && modelo.modalidade_id) {
         uniqueModalities.set(modelo.modalidade_id, {
           id: modelo.modalidade_id,
-          nome: modelo.modalidade.nome
+          nome: modelo.modalidade.nome,
+          categoria: modelo.modalidade.categoria
         });
       }
       if (modelo.modalidade?.categoria) {
@@ -57,9 +58,12 @@ export function ModeloConfigurationSection({ eventId }: { eventId: string | null
     });
     
     return {
-      modalities: Array.from(uniqueModalities.values()).sort((a, b) => 
-        a.nome.localeCompare(b.nome)
-      ),
+      modalities: Array.from(uniqueModalities.values()).sort((a, b) => {
+        // Sort by name first, then by category
+        const nameCompare = a.nome.localeCompare(b.nome);
+        if (nameCompare !== 0) return nameCompare;
+        return (a.categoria || '').localeCompare(b.categoria || '');
+      }),
       categories: Array.from(uniqueCategories).sort()
     };
   }, [modelos]);

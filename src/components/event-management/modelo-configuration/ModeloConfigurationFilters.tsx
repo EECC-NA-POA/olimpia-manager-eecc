@@ -13,7 +13,7 @@ interface ModeloConfigurationFiltersProps {
   onCategoryFilterChange: (value: string) => void;
   useBatteryFilter: string;
   onUseBatteryFilterChange: (value: string) => void;
-  modalities: Array<{ id: number; nome: string }>;
+  modalities: Array<{ id: number; nome: string; categoria?: string }>;
   categories: Array<string>;
 }
 
@@ -42,7 +42,7 @@ export function ModeloConfigurationFilters({
       </div>
       
       <Select value={modalityFilter} onValueChange={onModalityFilterChange}>
-        <SelectTrigger className="w-full md:w-[220px]">
+        <SelectTrigger className="w-full md:w-[280px]">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
             <SelectValue placeholder="Filtrar por modalidade" />
@@ -52,7 +52,7 @@ export function ModeloConfigurationFilters({
           <SelectItem value="all">Todas as modalidades</SelectItem>
           {modalities.map((modality) => (
             <SelectItem key={modality.id} value={modality.id.toString()}>
-              {modality.nome}
+              {modality.nome}{modality.categoria ? ` - ${modality.categoria}` : ''}
             </SelectItem>
           ))}
         </SelectContent>
