@@ -140,25 +140,27 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
             />
           </div>
 
-          {/* Grouped Modalities */}
-          <div className="space-y-4 max-h-96 overflow-y-auto">
+          {/* Grouped Modalities in Columns Layout */}
+          <div className={`grid gap-4 max-h-96 overflow-y-auto ${
+            isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-3'
+          }`}>
             {Object.entries(groupedModalities).map(([category, modalitiesInCategory]) => (
-              <div key={category} className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-medium text-sm">{category}</h4>
+              <div key={category} className="space-y-3">
+                <div className="flex items-center gap-2 border-b pb-2">
+                  <h4 className="font-medium text-sm text-primary">{category}</h4>
                   <Badge variant="secondary" className="text-xs">
                     {modalitiesInCategory.length}
                   </Badge>
                 </div>
-                <div className="grid gap-2">
+                <div className="space-y-2">
                   {modalitiesInCategory.map((modality) => (
                     <button
                       key={modality.id}
                       onClick={() => setSelectedModalityId(modality.id)}
-                      className={`p-3 rounded-lg border text-left transition-colors ${
+                      className={`w-full p-3 rounded-lg border text-left transition-all duration-200 ${
                         selectedModalityId === modality.id
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'bg-card hover:bg-accent border-border'
+                          ? 'bg-primary text-primary-foreground border-primary shadow-md scale-[1.02]'
+                          : 'bg-card hover:bg-accent border-border hover:border-primary/50 hover:scale-[1.01]'
                       }`}
                     >
                       <div className="font-medium text-sm">{modality.nome}</div>
@@ -175,7 +177,7 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
 
           {/* Show modality information */}
           {currentModality && (
-            <div className="bg-muted/50 rounded-lg p-3 sm:p-4 space-y-2">
+            <div className="bg-muted/50 rounded-lg p-3 sm:p-4 space-y-2 border-t mt-4">
               <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'} gap-2 sm:gap-4 text-xs sm:text-sm`}>
                 <div className="flex flex-col sm:flex-row sm:items-center">
                   <span className="font-medium">Modalidade:</span> 
