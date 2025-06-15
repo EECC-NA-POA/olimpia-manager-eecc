@@ -8,8 +8,7 @@ import { filterScoringFields } from '@/utils/dynamicScoringUtils';
 import { useSchemaCreation } from './dynamic-score-form/useSchemaCreation';
 import { useFormSubmission } from './dynamic-score-form/useFormSubmission';
 import { DynamicScoreFormContent } from './dynamic-score-form/DynamicScoreFormContent';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { useModeloConfiguration } from '../../tabs/scores/hooks/useModeloConfiguration';
 import { CampoModelo } from '@/types/dynamicScoring';
 
 interface DynamicScoreFormProps {
@@ -38,22 +37,7 @@ export function DynamicScoreForm({
   onSuccess
 }: DynamicScoreFormProps) {
   const { data: allCampos = [], isLoading: isLoadingCampos } = useCamposModelo(modeloId);
-  const { data: modalityData, isLoading: isLoadingModalityData } = useQuery({
-    queryKey: ['modality-params-for-form', modalityId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('modalidades')
-        .select('parametros')
-        .eq('id', modalityId)
-        .single();
-      if (error) {
-        console.error("Error fetching modality params for dynamic form", error);
-        return null;
-      };
-      return data;
-    },
-    enabled: !!modalityId,
-  });
+  const { data: modeloConfig, isLoading: isLoadingModeloConfig } = useModeloConfiguration(modalityId);
 
   const { createSchema } = useSchemaCreation([]);
 
@@ -66,7 +50,7 @@ export function DynamicScoreForm({
     campos = campos.filter(campo => campo.chave_campo !== 'equipe_id' && campo.chave_campo !== 'equipe');
   }
 
-  const parametros = modalityData?.parametros as any || {};
+  const parametros = modeloConfig?.parametros as any || {};
   const hasRaiaParam = parametros.num_raias && parametros.num_raias > 0;
   const usesBaterias = parametros.baterias === true;
   const raiaFieldExists = campos.some(c => c.chave_campo === 'raia' || c.chave_campo === 'lane');
@@ -115,7 +99,7 @@ export function DynamicScoreForm({
     onSuccess
   });
 
-  if (isLoadingCampos || isLoadingModalityData) {
+  if (isLoadingCampos || isLoadingModeloConfig) {
     return <div>Carregando configuração da modalidade...</div>;
   }
 

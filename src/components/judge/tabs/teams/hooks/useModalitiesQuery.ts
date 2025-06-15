@@ -15,7 +15,7 @@ export function useModalitiesQuery(eventId: string | null) {
         .from('modalidades')
         .select('id, nome, categoria, tipo_modalidade')
         .eq('evento_id', eventId)
-        .eq('tipo_modalidade', 'coletiva')
+        .eq('tipo_modalidade', 'coletivo')
         .order('nome');
 
       console.log('Team modalities query result:', { data, error });

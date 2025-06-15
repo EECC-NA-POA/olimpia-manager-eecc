@@ -40,7 +40,14 @@ export function TeamMembersDisplay({ modalityId, athleteId, eventId, isTeamModal
           return [];
         }
 
-        const teamId = teamEnrollment.equipes.id;
+        const equipeInfo = Array.isArray(teamEnrollment.equipes) ? teamEnrollment.equipes[0] : teamEnrollment.equipes;
+
+        if (!equipeInfo) {
+          console.error('Team info not found for athlete in this context:', teamEnrollment);
+          return [];
+        }
+
+        const teamId = equipeInfo.id;
         
         // Then get all athletes in that team
         const { data: members, error: membersError } = await supabase
