@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -211,8 +210,6 @@ function TeamScoreCardContent({
                 judgeId={judgeId}
                 initialValues={existingScore?.dados_pontuacao || {}}
                 onSuccess={handleDynamicSuccess}
-                // Extra props below for robust support as new requirements arise:
-                representativeAthleteId={representativeAthlete?.atleta_id}
               />
             ) : tipoPontuacao === 'pontos' || tipoPontuacao === 'tempo' || tipoPontuacao === 'distancia' ? (
               <ScoreForm
