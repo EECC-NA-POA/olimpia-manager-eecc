@@ -2,8 +2,10 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Search } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { AthletesListTabular } from './scores/components/AthletesListTabular';
 import { useAthletes } from './scores/hooks/useAthletes';
@@ -17,6 +19,7 @@ interface ScoresTabProps {
 
 export function ScoresTab({ userId, eventId }: ScoresTabProps) {
   const [selectedModalityId, setSelectedModalityId] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const isMobile = useIsMobile();
 
   // Fetch available modalities for this event
@@ -29,6 +32,7 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
         .from('modalidades')
         .select('id, nome, categoria, tipo_pontuacao, tipo_modalidade')
         .eq('evento_id', eventId)
+        .order('categoria')
         .order('nome');
       
       if (error) throw error;
@@ -58,6 +62,25 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
       setSelectedModalityId(modalities[0].id);
     }
   }, [modalities, selectedModalityId]);
+
+  // Group modalities by category and filter by search
+  const groupedModalities = React.useMemo(() => {
+    if (!modalities) return {};
+    
+    const filtered = modalities.filter(modality =>
+      modality.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (modality.categoria || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    return filtered.reduce((groups, modality) => {
+      const category = modality.categoria || 'Sem categoria';
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push(modality);
+      return groups;
+    }, {} as Record<string, typeof modalities>);
+  }, [modalities, searchTerm]);
 
   const currentModality = modalityData?.modality;
   const scoreType = currentModality?.tipo_pontuacao || 'pontos';
@@ -106,27 +129,48 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
           <CardTitle className="text-base sm:text-lg">Selecionar Modalidade</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex-1">
-            <Select
-              value={selectedModalityId?.toString() || ''}
-              onValueChange={(value) => setSelectedModalityId(Number(value))}
-            >
-              <SelectTrigger className="h-10 text-sm">
-                <SelectValue placeholder="Selecione uma modalidade" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[200px] overflow-y-auto">
-                {modalities.map((modality) => (
-                  <SelectItem key={modality.id} value={modality.id.toString()}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{modality.nome}</span>
-                      {modality.categoria && (
-                        <span className="text-xs text-muted-foreground">{modality.categoria}</span>
-                      )}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar modalidade..."
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          {/* Grouped Modalities */}
+          <div className="space-y-4 max-h-96 overflow-y-auto">
+            {Object.entries(groupedModalities).map(([category, modalitiesInCategory]) => (
+              <div key={category} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-medium text-sm">{category}</h4>
+                  <Badge variant="secondary" className="text-xs">
+                    {modalitiesInCategory.length}
+                  </Badge>
+                </div>
+                <div className="grid gap-2">
+                  {modalitiesInCategory.map((modality) => (
+                    <button
+                      key={modality.id}
+                      onClick={() => setSelectedModalityId(modality.id)}
+                      className={`p-3 rounded-lg border text-left transition-colors ${
+                        selectedModalityId === modality.id
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-card hover:bg-accent border-border'
+                      }`}
+                    >
+                      <div className="font-medium text-sm">{modality.nome}</div>
+                      <div className="text-xs opacity-70 mt-1">
+                        {modality.tipo_pontuacao === 'tempo' ? 'Tempo' : 
+                         modality.tipo_pontuacao === 'distancia' ? 'Distância' : 'Pontos'}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Show modality information */}
