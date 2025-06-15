@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -44,13 +45,40 @@ export function useDynamicScoringSubmission() {
         if (data.equipeId) {
           console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
           
-          // Fetch team members directly from 'inscricoes_modalidades' using 'equipe_id'
-          const { data: teamMembers, error: teamError } = await supabase
+          // Try to fetch team members using different possible column names
+          let teamMembers = null;
+          let teamError = null;
+          
+          // First try with 'time_id' column
+          const { data: teamMembersTimeId, error: errorTimeId } = await supabase
             .from('inscricoes_modalidades')
             .select('atleta_id')
-            .eq('equipe_id', data.equipeId)
+            .eq('time_id', data.equipeId)
             .eq('evento_id', data.eventId)
             .eq('modalidade_id', data.modalityId);
+
+          if (!errorTimeId && teamMembersTimeId && teamMembersTimeId.length > 0) {
+            teamMembers = teamMembersTimeId;
+            console.log('Found team members using time_id:', teamMembers.length);
+          } else {
+            console.log('time_id approach failed, trying equipe_id');
+            
+            // Try with 'equipe_id' column
+            const { data: teamMembersEquipeId, error: errorEquipeId } = await supabase
+              .from('inscricoes_modalidades')
+              .select('atleta_id')
+              .eq('equipe_id', data.equipeId)
+              .eq('evento_id', data.eventId)
+              .eq('modalidade_id', data.modalityId);
+
+            if (!errorEquipeId && teamMembersEquipeId && teamMembersEquipeId.length > 0) {
+              teamMembers = teamMembersEquipeId;
+              console.log('Found team members using equipe_id:', teamMembers.length);
+            } else {
+              teamError = errorTimeId || errorEquipeId;
+              console.error('Both approaches failed:', { errorTimeId, errorEquipeId });
+            }
+          }
 
           if (teamError || !teamMembers || teamMembers.length === 0) {
             console.error('Error fetching team members or no members found:', teamError);
