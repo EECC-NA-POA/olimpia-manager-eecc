@@ -7,6 +7,7 @@ import { useAllTeamsData } from './teams/hooks/useAllTeamsData';
 import { TeamsTabHeader } from './teams/components/TeamsTabHeader';
 import { ManageTeamsTab } from './teams/components/ManageTeamsTab';
 import { ViewAllTeamsTab } from './teams/components/ViewAllTeamsTab';
+import { JudgeTeamsScoringTab } from './teams/components/JudgeTeamsScoringTab';
 import { NoModalitiesMessage } from './teams/components/NoModalitiesMessage';
 import { LoadingTeamsState } from './teams/components/LoadingTeamsState';
 
@@ -98,7 +99,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     modalidade_nome: modality.nome
   })) || [];
 
-  // For judges only, show only the team scoring interface
+  // For judges only, show only the team scoring interface - using dedicated component
   if (isJudgeOnly) {
     return (
       <div className="space-y-6">
@@ -107,7 +108,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
             <h2 className="text-xl font-semibold text-primary mb-2">Pontuação de Equipes</h2>
             <p className="text-muted-foreground">Visualize e pontue as equipes das modalidades coletivas</p>
           </div>
-          <ViewAllTeamsTab
+          <JudgeTeamsScoringTab
             allTeams={transformedTeams}
             allModalities={transformedModalities}
             branches={branches}
@@ -119,9 +120,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
             setModalityFilter={setModalityFilter}
             setBranchFilter={setBranchFilter}
             setSearchTerm={setSearchTerm}
-            isOrganizer={false}
             eventId={eventId}
-            isReadOnly={false}
             judgeId={userId}
           />
         </TeamsTabHeader>
