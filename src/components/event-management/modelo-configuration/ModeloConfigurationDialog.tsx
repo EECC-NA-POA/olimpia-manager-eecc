@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -164,7 +163,47 @@ export function ModeloConfigurationDialog({
     }
   };
 
-  // Automaticamente define formato e campo de referência quando regra_tipo muda
+  const createBateriaField = (): CampoConfig => {
+    return {
+      id: 'campo_bateria_' + Date.now(),
+      chave_campo: 'bateria',
+      rotulo_campo: 'Bateria',
+      tipo_input: 'integer',
+      obrigatorio: true,
+      ordem_exibicao: campos.length + 1,
+      metadados: {
+        min: 1,
+        max: 999,
+        readonly: true // Campo será preenchido automaticamente
+      }
+    };
+  };
+
+  const handleBateriasChange = (checked: boolean) => {
+    const newConfig = { ...config, baterias: checked };
+    setConfig(newConfig);
+
+    if (checked) {
+      // Check if bateria field already exists
+      const bateriaFieldExists = campos.some(campo => 
+        campo.chave_campo === 'bateria' || campo.chave_campo === 'numero_bateria'
+      );
+
+      if (!bateriaFieldExists) {
+        // Add bateria field automatically
+        const bateriaField = createBateriaField();
+        setCampos(prevCampos => [...prevCampos, bateriaField]);
+      }
+    } else {
+      // Remove bateria field when baterias is disabled
+      setCampos(prevCampos => 
+        prevCampos.filter(campo => 
+          campo.chave_campo !== 'bateria' && campo.chave_campo !== 'numero_bateria'
+        )
+      );
+    }
+  };
+
   const handleRegraTypeChange = (value: string) => {
     const newConfig = { ...config, regra_tipo: value };
     
@@ -273,7 +312,7 @@ export function ModeloConfigurationDialog({
                 <Switch
                   id="baterias"
                   checked={config.baterias}
-                  onCheckedChange={(checked) => setConfig(prev => ({ ...prev, baterias: checked }))}
+                  onCheckedChange={handleBateriasChange}
                 />
               </div>
               
@@ -292,6 +331,7 @@ export function ModeloConfigurationDialog({
                     />
                   </div>
               )}
+              
               <div className="space-y-2">
                 <Label htmlFor="num_raias">Número de Raias</Label>
                 <Input
@@ -447,8 +487,15 @@ export function ModeloConfigurationDialog({
               {campos.map((campo, index) => (
                 <div key={campo.id} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-medium">Campo {index + 1}</h4>
-                    {campos.length > 1 && (
+                    <h4 className="font-medium">
+                      Campo {index + 1}
+                      {campo.chave_campo === 'bateria' && (
+                        <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                          Auto-adicionado
+                        </span>
+                      )}
+                    </h4>
+                    {campos.length > 1 && campo.chave_campo !== 'bateria' && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -466,6 +513,7 @@ export function ModeloConfigurationDialog({
                         value={campo.chave_campo}
                         onChange={(e) => updateCampo(campo.id, { chave_campo: e.target.value })}
                         placeholder="Ex: tempo, pontos, distancia"
+                        disabled={campo.chave_campo === 'bateria'}
                       />
                     </div>
                     
@@ -475,6 +523,7 @@ export function ModeloConfigurationDialog({
                         value={campo.rotulo_campo}
                         onChange={(e) => updateCampo(campo.id, { rotulo_campo: e.target.value })}
                         placeholder="Ex: Tempo Final, Pontuação"
+                        disabled={campo.chave_campo === 'bateria'}
                       />
                     </div>
                     
@@ -483,12 +532,14 @@ export function ModeloConfigurationDialog({
                       <Select
                         value={campo.tipo_input}
                         onValueChange={(value) => updateCampo(campo.id, { tipo_input: value })}
+                        disabled={campo.chave_campo === 'bateria'}
                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="number">Número</SelectItem>
+                          <SelectItem value="integer">Inteiro</SelectItem>
                           <SelectItem value="text">Texto</SelectItem>
                           <SelectItem value="calculated">Calculado</SelectItem>
                         </SelectContent>
@@ -502,6 +553,7 @@ export function ModeloConfigurationDialog({
                         value={campo.ordem_exibicao}
                         onChange={(e) => updateCampo(campo.id, { ordem_exibicao: Number(e.target.value) })}
                         min="1"
+                        disabled={campo.chave_campo === 'bateria'}
                       />
                     </div>
                   </div>
@@ -512,6 +564,7 @@ export function ModeloConfigurationDialog({
                         id={`obrigatorio_${campo.id}`}
                         checked={campo.obrigatorio}
                         onCheckedChange={(checked) => updateCampo(campo.id, { obrigatorio: checked })}
+                        disabled={campo.chave_campo === 'bateria'}
                       />
                       <Label htmlFor={`obrigatorio_${campo.id}`}>Obrigatório</Label>
                     </div>
@@ -534,4 +587,3 @@ export function ModeloConfigurationDialog({
     </Dialog>
   );
 }
-
