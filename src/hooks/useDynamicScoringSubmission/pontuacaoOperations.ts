@@ -36,6 +36,13 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     .eq('juiz_id', pontuacaoData.juiz_id)
     .eq('modelo_id', pontuacaoData.modelo_id);
 
+  // Handle equipe_id correctly - use is() for NULL values
+  if (pontuacaoData.equipe_id === null) {
+    searchQuery = searchQuery.is('equipe_id', null);
+  } else {
+    searchQuery = searchQuery.eq('equipe_id', pontuacaoData.equipe_id);
+  }
+
   // Handle numero_bateria correctly - use is() for NULL values
   if (pontuacaoData.numero_bateria === null) {
     searchQuery = searchQuery.is('numero_bateria', null);
