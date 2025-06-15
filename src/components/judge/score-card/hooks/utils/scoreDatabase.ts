@@ -43,7 +43,7 @@ export async function saveScoreToDatabase(
       observacoes: finalScoreData.observacoes || null,
       juiz_id: finalScoreData.juiz_id,
       data_registro: finalScoreData.data_registro || new Date().toISOString(),
-      bateria_id: bateriaId
+      numero_bateria: bateriaId
     };
 
     console.log('Record data to save:', JSON.stringify(recordData, null, 2));

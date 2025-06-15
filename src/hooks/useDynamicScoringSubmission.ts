@@ -45,23 +45,19 @@ export function useDynamicScoringSubmission() {
         if (data.equipeId) {
           console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
           
-          // For team submissions, get all team members from the equipes table
-          // First verify the team exists and get its members
-          const { data: teamData, error: teamError } = await supabase
-            .from('equipes')
-            .select(`
-              id,
-              nome,
-              inscricoes_modalidades(atleta_id)
-            `)
-            .eq('id', data.equipeId)
+          // The previous nested select on 'equipes' and 'inscricoes_modalidades'
+          // failed because the foreign key relationship might not be set up for it.
+          // We'll fetch team members directly from 'inscricoes_modalidades'.
+          const { data: teamMembers, error: teamError } = await supabase
+            .from('inscricoes_modalidades')
+            .select('atleta_id')
+            .eq('equipe_id', data.equipeId)
             .eq('evento_id', data.eventId)
-            .eq('modalidade_id', data.modalityId)
-            .single();
+            .eq('modalidade_id', data.modalityId);
 
           if (teamError) {
-            console.error('Error fetching team data:', teamError);
-            // Fallback: if team query fails, just score the current athlete
+            console.error('Error fetching team members:', teamError);
+            // Fallback: if team members query fails, just score the current athlete
             console.log('Fallback: Scoring only the current athlete');
             const individualPayload = {
               evento_id: data.eventId,
@@ -98,11 +94,9 @@ export function useDynamicScoringSubmission() {
             return pontuacao;
           }
 
-          // Get team members from the team data
-          const teamMembers = teamData.inscricoes_modalidades || [];
           console.log('Team members found:', teamMembers);
 
-          const membersToScore = teamMembers.length > 0 
+          const membersToScore = teamMembers && teamMembers.length > 0 
             ? teamMembers 
             : [{ atleta_id: data.athleteId }]; // Fallback to representative if team has no members
 

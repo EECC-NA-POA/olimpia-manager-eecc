@@ -8,7 +8,8 @@ export async function handleTeamScore(
   modalityIdInt: number, 
   teamId: number | null
 ): Promise<SaveScoreResult> {
-  console.log('Starting team score handling for team:', teamId, 'bateria:', recordData.bateria_id);
+  const numero_bateria = (recordData as any).numero_bateria;
+  console.log('Starting team score handling for team:', teamId, 'bateria:', numero_bateria);
   
   if (!teamId) {
     throw new Error('ID da equipe não encontrado para modalidade coletiva');
@@ -39,7 +40,7 @@ export async function handleTeamScore(
     .select('id, atleta_id')
     .eq('evento_id', eventId)
     .eq('modalidade_id', modalityIdInt)
-    .eq('bateria_id', recordData.bateria_id)
+    .eq('numero_bateria', numero_bateria)
     .eq('equipe_id', teamId)
     .in('atleta_id', teamMembers.map(m => m.atleta_id));
   
@@ -51,7 +52,7 @@ export async function handleTeamScore(
   
   if (existingIds.length > 0) {
     // Update existing records for this bateria
-    console.log('Updating existing team scores for bateria:', recordData.bateria_id);
+    console.log('Updating existing team scores for bateria:', numero_bateria);
     
     const updateData: any = {
       valor_pontuacao: recordData.valor_pontuacao,
@@ -72,11 +73,11 @@ export async function handleTeamScore(
       throw new Error(`Erro ao atualizar pontuações da equipe: ${updateError.message}`);
     }
     
-    console.log('Team scores updated successfully for bateria:', recordData.bateria_id);
+    console.log('Team scores updated successfully for bateria:', numero_bateria);
     return { success: true, operation: 'team_update', data: updateResult };
   } else {
     // Insert new scores for all team members for this bateria
-    console.log('Inserting new team scores for all members for bateria:', recordData.bateria_id);
+    console.log('Inserting new team scores for all members for bateria:', numero_bateria);
     
     const insertData = teamMembers.map(member => ({
       evento_id: recordData.evento_id,
@@ -88,7 +89,7 @@ export async function handleTeamScore(
       observacoes: recordData.observacoes,
       juiz_id: recordData.juiz_id,
       data_registro: recordData.data_registro,
-      bateria_id: recordData.bateria_id
+      numero_bateria: numero_bateria
     }));
     
     const { data: insertResult, error: insertError } = await supabase
@@ -101,7 +102,7 @@ export async function handleTeamScore(
       throw new Error(`Erro ao inserir pontuações da equipe: ${insertError.message}`);
     }
     
-    console.log('Team scores inserted successfully for bateria:', recordData.bateria_id);
+    console.log('Team scores inserted successfully for bateria:', numero_bateria);
     return { success: true, operation: 'team_insert', data: insertResult };
   }
 }

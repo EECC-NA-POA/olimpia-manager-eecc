@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -37,21 +38,21 @@ export function DynamicScoreForm({
   onSuccess
 }: DynamicScoreFormProps) {
   const { data: allCampos = [], isLoading: isLoadingCampos } = useCamposModelo(modeloId);
-  const { data: modeloData, isLoading: isLoadingModelo } = useQuery({
-    queryKey: ['modelo-details-for-form', modeloId],
+  const { data: modalityData, isLoading: isLoadingModalityData } = useQuery({
+    queryKey: ['modality-params-for-form', modalityId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('modelos_modalidade')
+        .from('modalidades')
         .select('parametros')
-        .eq('id', modeloId)
+        .eq('id', modalityId)
         .single();
       if (error) {
-        console.error("Error fetching modelo params for dynamic form", error);
+        console.error("Error fetching modality params for dynamic form", error);
         return null;
       };
       return data;
     },
-    enabled: !!modeloId,
+    enabled: !!modalityId,
   });
 
   const { createSchema } = useSchemaCreation([]);
@@ -65,7 +66,7 @@ export function DynamicScoreForm({
     campos = campos.filter(campo => campo.chave_campo !== 'equipe_id' && campo.chave_campo !== 'equipe');
   }
 
-  const parametros = modeloData?.parametros as any || {};
+  const parametros = modalityData?.parametros as any || {};
   const hasRaiaParam = parametros.num_raias && parametros.num_raias > 0;
   const usesBaterias = parametros.baterias === true;
   const raiaFieldExists = campos.some(c => c.chave_campo === 'raia' || c.chave_campo === 'lane');
@@ -114,7 +115,7 @@ export function DynamicScoreForm({
     onSuccess
   });
 
-  if (isLoadingCampos || isLoadingModelo) {
+  if (isLoadingCampos || isLoadingModalityData) {
     return <div>Carregando configuração da modalidade...</div>;
   }
 
