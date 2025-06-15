@@ -1,143 +1,55 @@
-
 import { CampoModelo } from '@/types/dynamicScoring';
 
 /**
- * Converte um valor de tempo formatado (MM:SS.mmm) para milissegundos
- */
-export function parseTimeToMilliseconds(timeValue: string): number {
-  // Remove espaços e converte para minúsculas
-  const cleaned = timeValue.trim().toLowerCase();
-  
-  // Formato MM:SS.mmm
-  const timeRegex = /^(\d{1,2}):(\d{2})\.(\d{3})$/;
-  const match = cleaned.match(timeRegex);
-  
-  if (match) {
-    const minutes = parseInt(match[1], 10);
-    const seconds = parseInt(match[2], 10);
-    const milliseconds = parseInt(match[3], 10);
-    
-    return (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
-  }
-  
-  // Se não conseguir fazer parse, retorna 0
-  return 0;
-}
-
-/**
- * Verifica se um valor é um tempo formatado
- */
-export function isTimeValue(value: string): boolean {
-  if (!value || typeof value !== 'string') return false;
-  
-  // Formato MM:SS.mmm
-  const timeRegex = /^(\d{1,2}):(\d{2})\.(\d{3})$/;
-  return timeRegex.test(value.trim());
-}
-
-/**
- * Determina se um modelo usa sistema de baterias baseado nos campos configurados
- * Verifica se existe algum campo relacionado a baterias ou se há configuração específica
- */
-export function modelUsesBateriasByFields(campos: CampoModelo[]): boolean {
-  if (!campos || campos.length === 0) {
-    return false;
-  }
-
-  // Verifica se existe campo específico para bateria
-  const hasBateriaField = campos.some(campo => 
-    campo.chave_campo.toLowerCase().includes('bateria') ||
-    campo.chave_campo.toLowerCase().includes('heat') ||
-    campo.chave_campo.toLowerCase().includes('numero_bateria')
-  );
-
-  // Verifica se há metadados que indicam uso de baterias
-  const hasMetadataWithBaterias = campos.some(campo => {
-    const metadados = campo.metadados as any;
-    return metadados && (
-      metadados.uses_baterias === true ||
-      metadados.bateria_system === true ||
-      metadados.heat_system === true
-    );
-  });
-
-  // Para modalidades como "Tiro com Arco", verificar se há configuração específica
-  // que sugere uso de baterias (como campos de tentativas múltiplas)
-  const hasMutipleAttempts = campos.some(campo =>
-    campo.chave_campo.includes('tentativa_') && 
-    campo.tipo_input !== 'configuration'
-  );
-
-  console.log('modelUsesBateriasByFields analysis:', {
-    totalCampos: campos.length,
-    hasBateriaField,
-    hasMetadataWithBaterias,
-    hasMutipleAttempts,
-    campos: campos.map(c => ({ key: c.chave_campo, type: c.tipo_input }))
-  });
-
-  return hasBateriaField || hasMetadataWithBaterias || hasMutipleAttempts;
-}
-
-/**
- * Filtra campos para remover apenas campos de configuração
- * Mantém todos os campos de pontuação, incluindo os relacionados a baterias
+ * Filters out configuration fields that should not appear in scoring tables
+ * Configuration fields are used for setup but not for actual scoring
  */
 export function filterScoringFields(campos: CampoModelo[]): CampoModelo[] {
+  const configurationFieldTypes = ['checkbox', 'config'];
+  const configurationFieldKeys = ['baterias', 'pontuacao', 'configuracao_pontuacao', 'usar_baterias'];
+  
   return campos.filter(campo => {
-    // Remove apenas campos marcados especificamente como configuração
-    const isConfigField = campo.tipo_input === 'configuration' ||
-                         campo.chave_campo === 'config_baterias' ||
-                         campo.chave_campo === 'config_raias' ||
-                         campo.chave_campo === 'regra_tipo';
+    // Filter out by input type (checkbox and config are typically configuration)
+    if (configurationFieldTypes.includes(campo.tipo_input)) {
+      return false;
+    }
     
-    return !isConfigField;
+    // Filter out by field key (known configuration field keys)
+    if (configurationFieldKeys.includes(campo.chave_campo.toLowerCase())) {
+      return false;
+    }
+    
+    // Keep all other fields as scoring fields
+    return true;
   });
 }
 
 /**
- * Verifica se um campo específico é relacionado a baterias
+ * Checks if a modality uses baterias based on its campos configuration
  */
-export function isFieldRelatedToBaterias(campo: CampoModelo): boolean {
-  const chaveLower = campo.chave_campo.toLowerCase();
-  return chaveLower.includes('bateria') || 
-         chaveLower.includes('heat') || 
-         chaveLower.includes('numero_bateria');
+export function modelUsesBateriasByFields(campos: CampoModelo[]): boolean {
+  return campos.some(campo => 
+    campo.chave_campo.toLowerCase() === 'baterias' && 
+    campo.tipo_input === 'checkbox'
+  );
 }
 
 /**
- * Extrai configuração de baterias dos campos do modelo
+ * Extracts bateria configuration from campos
  */
 export function extractBateriaConfig(campos: CampoModelo[]): {
   usesBaterias: boolean;
   allowsFinal: boolean;
-  maxBaterias?: number;
 } {
-  const bateriaFields = campos.filter(isFieldRelatedToBaterias);
+  const bateriaField = campos.find(campo => 
+    campo.chave_campo.toLowerCase() === 'baterias'
+  );
   
-  if (bateriaFields.length === 0) {
-    // Se não há campos específicos mas há múltiplas tentativas, assumir que usa baterias
-    const hasMutipleAttempts = campos.some(campo =>
-      campo.chave_campo.includes('tentativa_') && 
-      campo.tipo_input !== 'configuration'
-    );
-    
-    return {
-      usesBaterias: hasMutipleAttempts,
-      allowsFinal: hasMutipleAttempts,
-      maxBaterias: hasMutipleAttempts ? undefined : 0
-    };
-  }
-
-  // Analisar metadados dos campos de bateria para configuração
-  const bateriaConfig = bateriaFields.reduce((config, campo) => {
-    const metadados = campo.metadados as any;
-    if (metadados) {
-      if (metadados.allows_final) config.allowsFinal = true;
-      if (metadados.max_baterias) config.maxBaterias = metadados.max_baterias;
-    }
-    return config;
-  }, { usesBaterias: true, allowsFinal: true, maxBaterias: undefined as number | undefined });
-
-  return bateriaConfig;
+  const usesBaterias = !!bateriaField;
+  const allowsFinal = bateriaField?.metadados?.permite_final === true;
+  
+  return {
+    usesBaterias,
+    allowsFinal
+  };
 }

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Save, X, Edit, Trash2 } from 'lucide-react';
 import { Athlete } from '../../hooks/useAthletes';
 import { CampoModelo } from '@/types/dynamicScoring';
+import { filterScoringFields } from '@/utils/dynamicScoringUtils';
 
 interface AthleteTableRowProps {
   athlete: Athlete;
@@ -48,6 +49,14 @@ export function AthleteTableRow({
   onRemove,
   onDeleteScores
 }: AthleteTableRowProps) {
+  // CRITICAL: Filter out configuration fields before rendering
+  const scoringFields = filterScoringFields(campos);
+  
+  console.log('AthleteTableRow - Filtering fields for athlete:', athlete.atleta_nome, {
+    originalCount: campos.length,
+    filteredCount: scoringFields.length
+  });
+
   const renderFieldInput = (campo: CampoModelo) => {
     const fieldKey = campo.chave_campo;
     const currentValue = getFieldValue(athlete.atleta_id, fieldKey);
@@ -109,7 +118,7 @@ export function AthleteTableRow({
         )}
       </TableCell>
       
-      {campos.map((campo) => (
+      {scoringFields.map((campo) => (
         <TableCell key={campo.id} className="text-center">
           {isEditing ? (
             renderFieldInput(campo)
