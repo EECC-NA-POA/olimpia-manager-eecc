@@ -8,19 +8,33 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
   console.log('Observacoes received in upsertPontuacao:', data.observacoes);
   console.log('Numero bateria received:', data.numero_bateria);
 
+  // Destructuring to ensure only expected properties are used.
+  // This prevents any extraneous properties like 'bateria_id' from being passed.
+  const {
+    eventId,
+    modalityId,
+    athleteId,
+    equipeId,
+    judgeId,
+    modeloId,
+    observacoes,
+    numero_bateria, // Correct field
+    raia
+  } = data;
+
   const pontuacaoData = {
-    evento_id: data.eventId,
-    modalidade_id: data.modalityId,
-    atleta_id: data.athleteId,
-    equipe_id: data.equipeId || null,
-    juiz_id: data.judgeId,
-    modelo_id: data.modeloId,
+    evento_id: eventId,
+    modalidade_id: modalityId,
+    atleta_id: athleteId,
+    equipe_id: equipeId || null,
+    juiz_id: judgeId,
+    modelo_id: modeloId,
     valor_pontuacao: valorPontuacao,
     unidade: 'pontos',
-    observacoes: data.observacoes || null,
+    observacoes: observacoes || null,
     data_registro: new Date().toISOString(),
-    numero_bateria: data.numero_bateria || null,
-    raia: data.raia || null
+    numero_bateria: numero_bateria || null,
+    raia: raia || null
   };
 
   console.log('Final pontuacao data for database:', pontuacaoData);
