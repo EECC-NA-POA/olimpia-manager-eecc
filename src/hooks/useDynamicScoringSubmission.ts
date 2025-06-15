@@ -7,7 +7,6 @@ import { prepareTentativasData } from './useDynamicScoringSubmission/tentativasP
 import { upsertPontuacao, insertTentativas } from './useDynamicScoringSubmission/pontuacaoOperations';
 import type { DynamicSubmissionData } from './useDynamicScoringSubmission/types';
 
-// Update the interface to include observacoes
 interface ExtendedDynamicSubmissionData extends DynamicSubmissionData {
   observacoes?: string | null;
 }
@@ -40,7 +39,7 @@ export function useDynamicScoringSubmission() {
         const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
         const observacoes = data.formData.notes || data.observacoes || null;
 
-        // Unified data preparation for both team and individual
+        // Prepare base data structure
         const baseDataForDb = {
           eventId: data.eventId,
           modalityId: data.modalityId,
@@ -48,12 +47,12 @@ export function useDynamicScoringSubmission() {
           modeloId: data.modeloId,
           raia,
           observacoes,
-          numero_bateria: data.bateriaId || null, // Always use numero_bateria consistently
+          numero_bateria: data.bateriaId || null,
         };
 
         console.log('Base data for DB:', baseDataForDb);
 
-        // For teams, we handle score replication on the client-side
+        // Handle team scoring
         if (data.equipeId) {
           console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
           
@@ -64,20 +63,18 @@ export function useDynamicScoringSubmission() {
 
           if (teamError) {
             console.error('Error fetching team members:', teamError);
-            toast.error(`Erro ao buscar membros da equipe: ${teamError.message}`);
             throw teamError;
           }
 
           let membersToScore = teamMembersQuery;
           if (!membersToScore || membersToScore.length === 0) {
-            console.warn('Nenhum membro encontrado para a equipe, pontuando apenas o atleta representante.');
-            toast.info('A equipe não possui membros, pontuando apenas o representante.');
+            console.warn('No team members found, scoring only representative athlete');
             membersToScore = [{ atleta_id: data.athleteId }];
           }
           
           console.log('Team members to score:', membersToScore);
 
-          // Use the unified upsertPontuacao function for each team member
+          // Score each team member
           const pontuacoes = [];
           
           for (const member of membersToScore) {
@@ -87,28 +84,28 @@ export function useDynamicScoringSubmission() {
               equipeId: data.equipeId,
             };
             
-            console.log(`Upserting score for team member ${member.atleta_id}:`, memberDataForDb);
+            console.log(`Scoring team member ${member.atleta_id}:`, memberDataForDb);
             
             const pontuacao = await upsertPontuacao(memberDataForDb, valorPontuacao);
             pontuacoes.push(pontuacao);
           }
 
-          // Use the representative athlete's score for tentativas
+          // Use representative athlete's score for tentativas
           const representativeScore = pontuacoes.find(p => p.atleta_id === data.athleteId) || pontuacoes[0];
           
           if (!representativeScore) {
-            throw new Error('Nenhuma pontuação foi salva para a equipe.');
+            throw new Error('No scores were saved for the team.');
           }
 
           const tentativas = prepareTentativasData(data.formData, campos, representativeScore.id);
           await insertTentativas(tentativas, representativeScore.id);
 
-          console.log('=== SUBMISSÃO DE EQUIPE CONCLUÍDA ===');
+          console.log('=== TEAM SUBMISSION COMPLETED ===');
           return representativeScore;
         }
 
-        // --- Individual submission logic ---
-        console.log('--- Submissão Individual ---');
+        // Handle individual scoring
+        console.log('--- Individual Submission ---');
         
         const individualDataForDb = {
           ...baseDataForDb,
@@ -119,22 +116,22 @@ export function useDynamicScoringSubmission() {
         console.log('Individual data for DB:', individualDataForDb);
         
         const pontuacao = await upsertPontuacao(individualDataForDb, valorPontuacao);
-        console.log('=== PONTUAÇÃO INDIVIDUAL SALVA ===');
+        console.log('=== INDIVIDUAL SCORE SAVED ===');
 
         const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
         await insertTentativas(tentativas, pontuacao.id);
 
-        console.log('=== SUBMISSÃO INDIVIDUAL CONCLUÍDA COM SUCESSO ===');
+        console.log('=== INDIVIDUAL SUBMISSION COMPLETED ===');
         return pontuacao;
 
       } catch (error) {
-        console.error('=== ERRO GERAL NA SUBMISSÃO ===');
+        console.error('=== ERROR IN SUBMISSION ===');
         console.error('Error in mutation:', error);
         throw error;
       }
     },
     onSuccess: (data, variables) => {
-      console.log('=== SUCESSO NA MUTAÇÃO ===');
+      console.log('=== MUTATION SUCCESS ===');
       
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['team-score', variables.equipeId, variables.modalityId, variables.eventId] });
@@ -152,18 +149,17 @@ export function useDynamicScoringSubmission() {
       toast.success('Pontuação registrada com sucesso!');
     },
     onError: (error) => {
-      console.error('=== ERRO NA MUTAÇÃO ===');
+      console.error('=== MUTATION ERROR ===');
       console.error('Error submitting dynamic score:', error);
       
-      // More detailed error messages based on error type
       let errorMessage = 'Erro ao registrar pontuação';
       
       if (error?.message?.includes('constraint')) {
         errorMessage = 'Erro de restrição no banco de dados. Verifique se os dados estão corretos.';
       } else if (error?.message?.includes('numero_bateria')) {
         errorMessage = 'Erro com número da bateria. Verifique a configuração.';
-      } else if (error?.message?.includes('upsert')) {
-        errorMessage = 'Erro ao salvar pontuação. Tente novamente.';
+      } else if (error?.message?.includes('column') && error?.message?.includes('does not exist')) {
+        errorMessage = 'Erro de configuração do banco de dados. Entre em contato com o suporte.';
       } else if (error?.message) {
         errorMessage = `Erro: ${error.message}`;
       }
@@ -173,5 +169,4 @@ export function useDynamicScoringSubmission() {
   });
 }
 
-// Re-export types for convenience
 export type { DynamicSubmissionData } from './useDynamicScoringSubmission/types';

@@ -6,7 +6,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
   console.log('Data for upsert:', data);
   console.log('Valor pontuacao:', valorPontuacao);
   console.log('Observacoes received in upsertPontuacao:', data.observacoes);
-  console.log('Observacoes type in upsertPontuacao:', typeof data.observacoes);
+  console.log('Numero bateria received:', data.numero_bateria);
 
   const pontuacaoData = {
     evento_id: data.eventId,
@@ -16,37 +16,62 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     juiz_id: data.judgeId,
     modelo_id: data.modeloId,
     valor_pontuacao: valorPontuacao,
-    unidade: 'pontos', // Default for dynamic scoring
-    observacoes: data.observacoes || null, // Ensure observacoes is included
+    unidade: 'pontos',
+    observacoes: data.observacoes || null,
     data_registro: new Date().toISOString(),
-    numero_bateria: data.numero_bateria || null, // Use numero_bateria consistently
+    numero_bateria: data.numero_bateria || null,
     raia: data.raia || null
   };
 
   console.log('Final pontuacao data for database:', pontuacaoData);
-  console.log('Final observacoes value for database:', pontuacaoData.observacoes);
-  console.log('Final numero_bateria value for database:', pontuacaoData.numero_bateria);
 
-  // Use the correct unique constraint for upsert
-  const { data: pontuacao, error } = await supabase
+  // First, try to find existing record
+  const { data: existingRecord } = await supabase
     .from('pontuacoes')
-    .upsert(pontuacaoData, {
-      onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id,modelo_id,numero_bateria',
-      ignoreDuplicates: false
-    })
-    .select()
+    .select('id')
+    .eq('atleta_id', pontuacaoData.atleta_id)
+    .eq('modalidade_id', pontuacaoData.modalidade_id)
+    .eq('evento_id', pontuacaoData.evento_id)
+    .eq('juiz_id', pontuacaoData.juiz_id)
+    .eq('modelo_id', pontuacaoData.modelo_id)
+    .is('numero_bateria', pontuacaoData.numero_bateria)
     .single();
 
-  if (error) {
-    console.error('Error upserting pontuacao:', error);
-    console.error('Error details:', JSON.stringify(error, null, 2));
-    console.error('Data that failed to save:', pontuacaoData);
-    throw error;
+  let result;
+  
+  if (existingRecord) {
+    // Update existing record
+    console.log('Updating existing record with ID:', existingRecord.id);
+    const { data: updatedRecord, error } = await supabase
+      .from('pontuacoes')
+      .update(pontuacaoData)
+      .eq('id', existingRecord.id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating pontuacao:', error);
+      throw error;
+    }
+    result = updatedRecord;
+  } else {
+    // Insert new record
+    console.log('Inserting new record');
+    const { data: newRecord, error } = await supabase
+      .from('pontuacoes')
+      .insert(pontuacaoData)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error inserting pontuacao:', error);
+      throw error;
+    }
+    result = newRecord;
   }
 
-  console.log('Pontuacao upserted successfully:', pontuacao);
-  console.log('Saved observacoes value:', pontuacao.observacoes);
-  return pontuacao;
+  console.log('Pontuacao saved successfully:', result);
+  return result;
 }
 
 export async function insertTentativas(tentativas: any[], pontuacaoId: string) {
@@ -58,7 +83,7 @@ export async function insertTentativas(tentativas: any[], pontuacaoId: string) {
   console.log('=== INSERINDO TENTATIVAS ===');
   console.log('Tentativas to insert:', tentativas);
 
-  // Delete existing tentativas for this pontuacao - using correct table name
+  // Delete existing tentativas for this pontuacao
   const { error: deleteError } = await supabase
     .from('tentativas_pontuacao')
     .delete()
@@ -69,7 +94,7 @@ export async function insertTentativas(tentativas: any[], pontuacaoId: string) {
     throw deleteError;
   }
 
-  // Insert new tentativas - using correct table name
+  // Insert new tentativas
   const { data, error } = await supabase
     .from('tentativas_pontuacao')
     .insert(tentativas)
