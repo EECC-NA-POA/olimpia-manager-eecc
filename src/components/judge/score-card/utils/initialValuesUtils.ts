@@ -4,8 +4,8 @@ import { ScoreRecord } from '../types';
 export function getInitialValues(existingScore: ScoreRecord | null, modalityRule: any) {
   if (!existingScore || !modalityRule) return null;
   
-  const dados = existingScore.dados_json as any;
-  console.log('getInitialValues - existingScore dados_json:', dados);
+  const dados = existingScore.dados_pontuacao as any;
+  console.log('getInitialValues - existingScore dados_pontuacao:', dados);
   
   switch (modalityRule.regra_tipo) {
     case 'tempo':
