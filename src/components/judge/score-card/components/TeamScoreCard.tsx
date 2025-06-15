@@ -40,12 +40,33 @@ interface TeamScoreCardProps {
 function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, representativeAthlete }: TeamScoreCardProps & { representativeAthlete: TeamMember }) {
   const [isExpanded, setIsExpanded] = useState(false);
   
+  // Busca detalhes do modelo da modalidade
+  const { data: modalityDetails, isLoading: isLoadingModality } = useQuery({
+    queryKey: ['modality-details', modalityId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('modalidades')
+        .select('modelo_modalidade_id, tipo_pontuacao')
+        .eq('id', modalityId)
+        .single();
+      if (error) {
+        console.error('Error fetching modality details:', error);
+        throw new Error('Erro ao buscar detalhes da modalidade');
+      }
+      return data;
+    },
+    enabled: !!modalityId,
+  });
+  const modeloId = modalityDetails?.modelo_modalidade_id;
+  const tipoPontuacao = modalityDetails?.tipo_pontuacao || scoreType; // Preferir o tipo da modalidade
+
+  // Submissão para o modelo DINÂMICO, se houver modelo
   const { submitScoreMutation } = useScoreSubmission(
     eventId, 
     modalityId, 
-    { atleta_id: representativeAthlete.atleta_id, equipe_id: team.equipe_id }, 
+    { atleta_id: representativeAthlete?.atleta_id, equipe_id: team.equipe_id }, 
     judgeId, 
-    scoreType
+    tipoPontuacao
   );
 
   const { data: existingScore, refetch: refetchScore } = useQuery({
@@ -71,24 +92,6 @@ function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, r
     },
     enabled: !!eventId && !!team.equipe_id,
   });
-
-  const { data: modalityDetails, isLoading: isLoadingModality } = useQuery({
-    queryKey: ['modality-details', modalityId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('modalidades')
-        .select('modelo_modalidade_id')
-        .eq('id', modalityId)
-        .single();
-      if (error) {
-        console.error('Error fetching modality details:', error);
-        throw new Error('Erro ao buscar detalhes da modalidade');
-      }
-      return data;
-    },
-    enabled: !!modalityId,
-  });
-  const modeloId = modalityDetails?.modelo_modalidade_id;
 
   const { data: medalInfo } = useQuery({
     queryKey: ['team-medal', team.equipe_id, modalityId, eventId],
@@ -153,12 +156,16 @@ function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, r
                 Membros ({team.members.length}):
               </p>
               <div className="flex flex-wrap gap-1">
-                {team.members.map((member) => (
-                  <Badge key={member.atleta_id} variant="outline" className="text-xs">
-                    {member.atleta_nome}
-                    {member.numero_identificador && ` (${member.numero_identificador})`}
-                  </Badge>
-                ))}
+                {team.members.length > 0 ? (
+                  team.members.map((member) => (
+                    <Badge key={member.atleta_id} variant="outline" className="text-xs">
+                      {member.atleta_nome}
+                      {member.numero_identificador && ` (${member.numero_identificador})`}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-xs text-muted-foreground">Equipe sem atletas</span>
+                )}
               </div>
             </div>
           </div>
@@ -166,7 +173,7 @@ function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, r
           <MedalDisplay 
             scoreRecord={existingScore || null} 
             medalInfo={medalInfo || null}
-            scoreType={scoreType} 
+            scoreType={tipoPontuacao} 
           />
         </div>
       </CardHeader>
@@ -190,18 +197,18 @@ function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, r
               </p>
             </div>
             
-            {modeloId ? (
+            {(!!modeloId) ? (
               <DynamicScoreForm
                 modeloId={modeloId}
                 modalityId={modalityId}
-                athleteId={representativeAthlete.atleta_id}
+                athleteId={representativeAthlete?.atleta_id}
                 equipeId={team.equipe_id}
                 eventId={eventId!}
                 judgeId={judgeId}
                 initialValues={existingScore?.dados_pontuacao || {}}
                 onSuccess={handleDynamicSuccess}
               />
-            ) : scoreType === 'pontos' || scoreType === 'tempo' || scoreType === 'distancia' ? (
+            ) : tipoPontuacao === 'pontos' || tipoPontuacao === 'tempo' || tipoPontuacao === 'distancia' ? (
               <ScoreForm 
                 modalityId={modalityId}
                 initialValues={existingScore}
@@ -225,13 +232,15 @@ function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, r
 }
 
 
+// Permitir exibir equipes mesmo que sem membros!
 export function TeamScoreCard(props: TeamScoreCardProps) {
   const { team } = props;
   const representativeAthlete = team.members[0];
 
   if (!representativeAthlete) {
+    // Mesmo que a equipe esteja vazia (sem atletas), ainda mostra o nome e a categoria
     return (
-      <Card className="opacity-50">
+      <Card className="opacity-80">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center gap-2">
             {team.equipe_nome}
@@ -252,3 +261,5 @@ export function TeamScoreCard(props: TeamScoreCardProps) {
 
   return <TeamScoreCardContent {...props} representativeAthlete={representativeAthlete} />;
 }
+
+// FIM DO ARQUIVO

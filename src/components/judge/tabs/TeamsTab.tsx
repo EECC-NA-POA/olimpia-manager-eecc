@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users } from 'lucide-react';
@@ -48,20 +47,22 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     (isOrganizer || isJudge) ? undefined : user?.filial_id // Juiz e Organizador veem todas as equipes.
   );
 
-  // Transforma os dados para o formato de pontuação
+  // Agrupa equipes por modalidade, mesmo as sem atletas (MOSTRAR TODAS!)
   const transformedTeams = allTeams?.map(team => ({
     equipe_id: team.id,
     equipe_nome: team.nome,
     modalidade_id: team.modalidade_id,
     modalidade_nome: team.modalidade_info?.nome || '',
     tipo_pontuacao: (team.modalidade_info as any)?.tipo_pontuacao || 'pontos',
-    categoria: (team.modalidade_info as any)?.categoria,
+    categoria: (team.modalidade_info as any)?.categoria || team.categoria || '', // Categoria explícita
     filial_nome: team.filial_id || '',
-    members: team.atletas?.map(athlete => ({
-      atleta_id: athlete.atleta_id,
-      atleta_nome: athlete.atleta_nome || '',
-      numero_identificador: athlete.numero_identificador || ''
-    })) || []
+    members: Array.isArray(team.atletas)
+      ? team.atletas.map(athlete => ({
+          atleta_id: athlete.atleta_id,
+          atleta_nome: athlete.atleta_nome || '',
+          numero_identificador: athlete.numero_identificador || ''
+        }))
+      : []
   })) || [];
 
   const transformedModalities = allModalities?.map(modality => ({
