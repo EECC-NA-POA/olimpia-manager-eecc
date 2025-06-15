@@ -38,10 +38,19 @@ export function DynamicScoreForm({
   const { createSchema } = useSchemaCreation([]);
 
   // Filter to only scoring fields (remove configuration fields)
-  const campos = filterScoringFields(allCampos);
+  let campos = filterScoringFields(allCampos);
 
-  console.log('DynamicScoreForm - All campos:', allCampos);
-  console.log('DynamicScoreForm - Filtered scoring campos:', campos);
+  // If we're scoring a specific team (equipeId is provided),
+  // there's no need to show a team selector field in the form.
+  if (equipeId) {
+    campos = campos.filter(campo => campo.chave_campo !== 'equipe_id' && campo.chave_campo !== 'equipe');
+  }
+
+  console.log('DynamicScoreForm - All campos from hook:', allCampos.length);
+  if (equipeId) {
+    console.log(`DynamicScoreForm - Filtering out team selector as we are in context of equipeId: ${equipeId}`);
+  }
+  console.log('DynamicScoreForm - Final scoring campos:', campos.length, campos.map(c => c.chave_campo));
 
   const schema = createSchema(campos);
   
