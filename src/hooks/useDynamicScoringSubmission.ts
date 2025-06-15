@@ -45,49 +45,65 @@ export function useDynamicScoringSubmission() {
         if (data.equipeId) {
           console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
           
-          // For team submissions, we get the team members from inscricoes_modalidades
-          // where the equipe_id matches and the modalidade/evento are the same
-          const { data: teamMembers, error: membersError } = await supabase
-            .from('inscricoes_modalidades')
-            .select('atleta_id')
+          // For team submissions, get all team members from the equipes table
+          // First verify the team exists and get its members
+          const { data: teamData, error: teamError } = await supabase
+            .from('equipes')
+            .select(`
+              id,
+              nome,
+              inscricoes_modalidades(atleta_id)
+            `)
+            .eq('id', data.equipeId)
             .eq('evento_id', data.eventId)
             .eq('modalidade_id', data.modalityId)
-            .not('atleta_id', 'is', null);
-
-          if (membersError) {
-            console.error('Error fetching enrolled athletes:', membersError);
-            throw membersError;
-          }
-
-          // Filter to only team members that belong to the same team as the current athlete
-          const { data: athleteTeamInfo, error: teamInfoError } = await supabase
-            .from('inscricoes_modalidades')
-            .select('equipe_id')
-            .eq('evento_id', data.eventId)
-            .eq('modalidade_id', data.modalityId)
-            .eq('atleta_id', data.athleteId)
             .single();
 
-          if (teamInfoError || !athleteTeamInfo?.equipe_id) {
-            console.error('Error fetching athlete team info:', teamInfoError);
-            throw new Error('Atleta não está associado a uma equipe nesta modalidade');
+          if (teamError) {
+            console.error('Error fetching team data:', teamError);
+            // Fallback: if team query fails, just score the current athlete
+            console.log('Fallback: Scoring only the current athlete');
+            const individualPayload = {
+              evento_id: data.eventId,
+              modalidade_id: data.modalityId,
+              atleta_id: data.athleteId,
+              equipe_id: data.equipeId,
+              juiz_id: data.judgeId,
+              modelo_id: data.modeloId,
+              valor_pontuacao: valorPontuacao,
+              unidade: 'pontos',
+              observacoes: observacoes,
+              data_registro: new Date().toISOString(),
+              numero_bateria: data.bateriaId || null,
+              raia: raia,
+            };
+
+            const { data: pontuacao, error: upsertError } = await supabase
+              .from('pontuacoes')
+              .upsert(individualPayload, {
+                onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id,modelo_id,numero_bateria',
+              })
+              .select()
+              .single();
+
+            if (upsertError) {
+              console.error('Error upserting individual score:', upsertError);
+              throw upsertError;
+            }
+
+            const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
+            await insertTentativas(tentativas, pontuacao.id);
+
+            console.log('=== SUBMISSÃO INDIVIDUAL CONCLUÍDA (FALLBACK) ===');
+            return pontuacao;
           }
 
-          // Now get all athletes that belong to the same team
-          const { data: sameTeamMembers, error: sameTeamError } = await supabase
-            .from('inscricoes_modalidades')
-            .select('atleta_id')
-            .eq('evento_id', data.eventId)
-            .eq('modalidade_id', data.modalityId)
-            .eq('equipe_id', athleteTeamInfo.equipe_id);
+          // Get team members from the team data
+          const teamMembers = teamData.inscricoes_modalidades || [];
+          console.log('Team members found:', teamMembers);
 
-          if (sameTeamError) {
-            console.error('Error fetching same team members:', sameTeamError);
-            throw sameTeamError;
-          }
-
-          const membersToScore = (sameTeamMembers && sameTeamMembers.length > 0) 
-            ? sameTeamMembers 
+          const membersToScore = teamMembers.length > 0 
+            ? teamMembers 
             : [{ atleta_id: data.athleteId }]; // Fallback to representative if team has no members
 
           const scoresPayload = membersToScore.map(member => ({
