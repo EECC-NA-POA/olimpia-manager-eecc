@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -248,7 +249,7 @@ export function ModeloConfigurationDialog({
               Configurar Modelo: {editingModelo?.codigo_modelo || editingModelo?.descricao}
             </DialogTitle>
             {onDuplicate && (
-              <Button variant="outline" size="sm" onClick={handleDuplicate}>
+              <Button variant="outline" size="sm" onClick={handleDuplicate} className="mr-12">
                 <Copy className="h-4 w-4 mr-1" />
                 Duplicar
               </Button>
@@ -259,7 +260,7 @@ export function ModeloConfigurationDialog({
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Configurações de Bateria</CardTitle>
+              <CardTitle className="text-lg">Configurações de Bateria e Raias</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
@@ -277,19 +278,6 @@ export function ModeloConfigurationDialog({
               </div>
               
               {config.baterias && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="num_raias">Número de Raias por Bateria</Label>
-                    <Input
-                      id="num_raias"
-                      type="number"
-                      min="1"
-                      max="20"
-                      value={config.num_raias}
-                      onChange={(e) => setConfig(prev => ({ ...prev, num_raias: Number(e.target.value) }))}
-                    />
-                  </div>
-                  
                   <div className="flex items-center justify-between">
                     <div>
                       <Label htmlFor="permite_final">Permitir Bateria Final</Label>
@@ -303,8 +291,21 @@ export function ModeloConfigurationDialog({
                       onCheckedChange={(checked) => setConfig(prev => ({ ...prev, permite_final: checked }))}
                     />
                   </div>
-                </>
               )}
+              <div className="space-y-2">
+                <Label htmlFor="num_raias">Número de Raias</Label>
+                <Input
+                  id="num_raias"
+                  type="number"
+                  min="0"
+                  max="20"
+                  value={config.num_raias}
+                  onChange={(e) => setConfig(prev => ({ ...prev, num_raias: Number(e.target.value) }))}
+                />
+                <p className="text-sm text-muted-foreground">
+                  {config.baterias ? 'Número de raias por bateria.' : 'Número total de raias para a modalidade. Deixe 0 se não for aplicável.'}
+                </p>
+              </div>
             </CardContent>
           </Card>
           
@@ -533,3 +534,4 @@ export function ModeloConfigurationDialog({
     </Dialog>
   );
 }
+
