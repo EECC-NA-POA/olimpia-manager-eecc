@@ -6,6 +6,7 @@ import { TeamFilters } from './TeamFilters';
 import { TeamScoreCard } from '../../../score-card/components/TeamScoreCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { TeamCard } from './TeamCard';
 
 interface Team {
   equipe_id: number;
@@ -108,6 +109,9 @@ export function ViewAllTeamsTab({
     return acc;
   }, {} as Record<number, { modalidade_nome: string; tipo_pontuacao: string; teams: Team[] }>);
 
+  // Determine if current user is judge only
+  const isJudgeUser = !!judgeId && !isOrganizer;
+
   return (
     <div className="space-y-6">
       <TeamFilters
@@ -156,8 +160,8 @@ export function ViewAllTeamsTab({
 
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {modalityData.teams.map((team) => {
-                    // For judges, show score cards; for others, show read-only view
-                    if (!isReadOnly && judgeId) {
+                    // For judges, show score cards; for others, show appropriate view
+                    if (isJudgeUser) {
                       return (
                         <TeamScoreCard
                           key={`${team.equipe_id}-${team.modalidade_id}`}
@@ -174,7 +178,25 @@ export function ViewAllTeamsTab({
                       );
                     }
 
-                    // Read-only view for organizers/representatives
+                    // For organizers who can also score
+                    if (isOrganizer && !isReadOnly && judgeId) {
+                      return (
+                        <TeamScoreCard
+                          key={`${team.equipe_id}-${team.modalidade_id}`}
+                          team={{
+                            equipe_id: team.equipe_id,
+                            equipe_nome: team.equipe_nome,
+                            members: team.members
+                          }}
+                          modalityId={parseInt(modalityId)}
+                          eventId={eventId}
+                          judgeId={judgeId}
+                          scoreType={scoreType}
+                        />
+                      );
+                    }
+
+                    // Read-only view for organizers/representatives without scoring
                     return (
                       <Card key={`${team.equipe_id}-${team.modalidade_id}`}>
                         <CardHeader className="pb-2">

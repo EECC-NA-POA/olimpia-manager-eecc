@@ -19,7 +19,7 @@ interface TeamsTabProps {
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
   const { user } = useAuth();
   
-  // Check if user is ONLY a judge (judges should only view, not manage)
+  // Check if user is ONLY a judge (judges should only view and score, not manage)
   // Representatives can manage their teams, organizers can manage all teams
   const isJudgeOnly = user?.papeis?.some(role => role.codigo === 'JUZ') && 
                       !user?.papeis?.some(role => role.codigo === 'RDD') &&
@@ -98,11 +98,15 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     modalidade_nome: modality.nome
   })) || [];
 
-  // For judges only, show only the "View All Teams" tab with scoring capability
+  // For judges only, show only the team scoring interface
   if (isJudgeOnly) {
     return (
       <div className="space-y-6">
         <TeamsTabHeader isOrganizer={false}>
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-semibold text-primary mb-2">Pontuação de Equipes</h2>
+            <p className="text-muted-foreground">Visualize e pontue as equipes das modalidades coletivas</p>
+          </div>
           <ViewAllTeamsTab
             allTeams={transformedTeams}
             allModalities={transformedModalities}
