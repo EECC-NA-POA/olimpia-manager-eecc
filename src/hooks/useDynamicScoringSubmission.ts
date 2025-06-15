@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -48,13 +47,17 @@ export function useDynamicScoringSubmission() {
           console.log('--- Submissão Individual ---');
         }
 
-        const enhancedData = {
-          ...data,
+        // The underlying pontuacaoOperations.ts seems to incorrectly map `bateriaId` to `bateria_id`.
+        // We will rename it here to `numero_bateria` which is the correct column name in the database.
+        const { bateriaId, ...restOfData } = data;
+        const dataForDb = {
+          ...restOfData,
           raia,
           observacoes,
+          numero_bateria: bateriaId,
         };
         
-        const pontuacao = await upsertPontuacao(enhancedData, valorPontuacao);
+        const pontuacao = await upsertPontuacao(dataForDb as any, valorPontuacao);
         console.log('=== PONTUAÇÃO SALVA ===');
 
         const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
