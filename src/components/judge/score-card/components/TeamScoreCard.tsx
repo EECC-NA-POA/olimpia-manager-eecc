@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -14,6 +13,9 @@ import { MedalDisplay } from './MedalDisplay';
 import { ScoreForm } from './ScoreForm';
 import { useScoreSubmission } from '../hooks/useScoreSubmission';
 import { ScoreRecord } from '../types';
+import { DynamicScoreForm } from './DynamicScoreForm';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Terminal } from 'lucide-react';
 
 interface TeamMember {
   atleta_id: string;
@@ -54,7 +56,7 @@ export function TeamScoreCard({
   );
 
   // Fetch existing score if it exists (check for any team member's score)
-  const { data: existingScore } = useQuery({
+  const { data: existingScore, refetch: refetchScore } = useQuery({
     queryKey: ['team-score', team.equipe_id, modalityId, eventId],
     queryFn: async () => {
       if (!eventId || !representativeAthlete) return null;
@@ -77,6 +79,25 @@ export function TeamScoreCard({
     },
     enabled: !!eventId && !!representativeAthlete && !!team.equipe_id,
   });
+
+  // Fetch modality details to get the scoring model ID
+  const { data: modalityDetails, isLoading: isLoadingModality } = useQuery({
+    queryKey: ['modality-details', modalityId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('modalidades')
+        .select('modelo_modalidade_id')
+        .eq('id', modalityId)
+        .single();
+      if (error) {
+        console.error('Error fetching modality details:', error);
+        throw new Error('Erro ao buscar detalhes da modalidade');
+      }
+      return data;
+    },
+    enabled: !!modalityId,
+  });
+  const modeloId = modalityDetails?.modelo_modalidade_id;
 
   // Fetch medal info from premiacoes (check team's position)
   const { data: medalInfo } = useQuery({
@@ -110,11 +131,16 @@ export function TeamScoreCard({
     }
   }, [existingScore]);
 
-  // Handle form submission
+  // Handle form submission from legacy form
   const handleSubmit = (data: any) => {
     submitScoreMutation.mutate(data, {
       onSuccess: () => setIsExpanded(false)
     });
+  };
+
+  const handleDynamicSuccess = () => {
+    setIsExpanded(false);
+    refetchScore();
   };
 
   if (!representativeAthlete) {
@@ -170,8 +196,9 @@ export function TeamScoreCard({
           size="sm" 
           className="w-full my-2"
           onClick={() => setIsExpanded(!isExpanded)}
+          disabled={isLoadingModality}
         >
-          {isExpanded ? "Esconder formulário" : "Registrar pontuação da equipe"}
+          {isLoadingModality ? "Carregando..." : isExpanded ? "Esconder formulário" : "Registrar pontuação da equipe"}
         </Button>
 
         {isExpanded && (
@@ -182,12 +209,33 @@ export function TeamScoreCard({
               </p>
             </div>
             
-            <ScoreForm 
-              modalityId={modalityId}
-              initialValues={existingScore}
-              onSubmit={handleSubmit}
-              isPending={submitScoreMutation.isPending}
-            />
+            {modeloId ? (
+              <DynamicScoreForm
+                modeloId={modeloId}
+                modalityId={modalityId}
+                athleteId={representativeAthlete.atleta_id}
+                equipeId={team.equipe_id}
+                eventId={eventId!}
+                judgeId={judgeId}
+                initialValues={existingScore?.dados_pontuacao || {}}
+                onSuccess={handleDynamicSuccess}
+              />
+            ) : scoreType === 'pontos' || scoreType === 'tempo' || scoreType === 'distancia' ? (
+              <ScoreForm 
+                modalityId={modalityId}
+                initialValues={existingScore}
+                onSubmit={handleSubmit}
+                isPending={submitScoreMutation.isPending}
+              />
+            ) : (
+               <Alert variant="destructive">
+                 <Terminal className="h-4 w-4" />
+                 <AlertTitle>Modelo de Pontuação Ausente</AlertTitle>
+                 <AlertDescription>
+                   Esta modalidade não possui um modelo de pontuação dinâmico configurado. Por favor, contate o organizador.
+                 </AlertDescription>
+               </Alert>
+            )}
           </div>
         )}
       </CardContent>
