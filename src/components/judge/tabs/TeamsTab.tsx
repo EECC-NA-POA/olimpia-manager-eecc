@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
@@ -131,7 +130,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
       setIsDeleteDialogOpen,
       confirmDeleteTeam,
       cancelDeleteTeam
-    } = useTeamManager(eventId);
+    } = useTeamManager(eventId, false);
 
     return (
       <div className="space-y-6">
@@ -188,7 +187,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     setIsDeleteDialogOpen,
     confirmDeleteTeam,
     cancelDeleteTeam
-  } = useTeamManager(eventId);
+  } = useTeamManager(eventId, true);
 
   return (
     <div className="space-y-6">
