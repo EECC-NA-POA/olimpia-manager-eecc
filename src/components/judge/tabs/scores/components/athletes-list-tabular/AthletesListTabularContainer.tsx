@@ -62,22 +62,37 @@ export function AthletesListTabularContainer({
     enabled: hasModelo && !!modalityData?.modelo?.id
   });
 
-  console.log('=== ATHLETES LIST TABULAR DEBUG ===');
+  console.log('=== ATHLETES LIST TABULAR CONTAINER DEBUG ===');
   console.log('Props received:', {
     modalityId,
     eventId,
     athletesCount: athletes?.length || 0,
     isLoading,
-    athletes: athletes
+    judgeId,
+    scoreType
   });
+  console.log('Athletes data:', athletes);
   console.log('Modality data:', {
     hasModelo,
     usesBaterias,
     selectedBateriaId,
     isLoadingModalityData,
-    modalityData
+    modalityData,
+    modalityRule
   });
-  console.log('=== END DEBUG ===');
+  console.log('Bateria data:', {
+    bateriasCount: baterias.length,
+    selectedBateriaId,
+    selectedBateria,
+    isLoadingBaterias
+  });
+  console.log('Dynamic scoring data:', {
+    camposCount: campos.length,
+    existingScoresCount: existingScores.length,
+    campos,
+    existingScores
+  });
+  console.log('=== END ATHLETES LIST TABULAR CONTAINER DEBUG ===');
 
   if (isLoading || isLoadingModalityData) {
     return <LoadingState />;
@@ -95,11 +110,13 @@ export function AthletesListTabularContainer({
   console.log('=== END SAFE ATHLETES CHECK ===');
 
   if (safeAthletes.length === 0) {
+    console.log('No athletes found - showing empty card');
     return <EmptyAthletesCard />;
   }
 
   // Show dynamic scoring table if modelo is configured
   if (hasModelo && modalityData?.modelo) {
+    console.log('Showing dynamic scoring card');
     return (
       <DynamicScoringCard
         athletes={safeAthletes}
@@ -124,6 +141,7 @@ export function AthletesListTabularContainer({
   }
 
   // Fallback to regular scoring table for modalities without modelo
+  console.log('Showing regular scoring card');
   return (
     <RegularScoringCard
       athletes={safeAthletes}
