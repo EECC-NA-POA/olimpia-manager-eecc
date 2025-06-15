@@ -65,11 +65,13 @@ export function BatteryAndLanesSection({
             type="number"
             min="0"
             max="20"
-            value={config.num_raias}
-            onChange={(e) => onNumRaiasChange(Number(e.target.value))}
+            value={config.num_raias || 0}
+            onChange={(e) => onNumRaiasChange(Number(e.target.value) || 0)}
           />
           <p className="text-sm text-muted-foreground">
-            {config.baterias ? 'Número de raias por bateria.' : 'Número total de raias para a modalidade. Deixe 0 se não for aplicável.'}
+            {config.baterias 
+              ? 'Número de raias por bateria. Use 0 se raias não se aplicam.' 
+              : 'Número total de raias para a modalidade. Use 0 se raias não se aplicam.'}
           </p>
         </div>
       </CardContent>

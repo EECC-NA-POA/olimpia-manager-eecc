@@ -27,7 +27,7 @@ interface ModeloConfig {
 export function useModeloConfigurationState(editingModelo: any) {
   const [config, setConfig] = useState<ModeloConfig>({
     baterias: false,
-    num_raias: 8,
+    num_raias: 0,
     permite_final: false,
     regra_tipo: 'pontos',
     formato_resultado: '',
@@ -114,7 +114,7 @@ export function useModeloConfigurationState(editingModelo: any) {
       // Load configuration from parametros (already processed by useModeloConfigurationData)
       const loadedConfig = {
         baterias: editingModelo.parametros?.baterias || false,
-        num_raias: editingModelo.parametros?.num_raias || 8,
+        num_raias: editingModelo.parametros?.num_raias || 0,
         permite_final: editingModelo.parametros?.permite_final || false,
         regra_tipo: editingModelo.parametros?.regra_tipo || 'pontos',
         formato_resultado: editingModelo.parametros?.formato_resultado || '',
@@ -156,7 +156,7 @@ export function useModeloConfigurationState(editingModelo: any) {
       // Reset to defaults when not editing
       setConfig({
         baterias: false,
-        num_raias: 8,
+        num_raias: 0,
         permite_final: false,
         regra_tipo: 'pontos',
         formato_resultado: '',
