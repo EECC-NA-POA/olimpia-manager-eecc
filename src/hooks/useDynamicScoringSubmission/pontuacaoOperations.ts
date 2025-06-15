@@ -8,36 +8,23 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
   console.log('Observacoes received in upsertPontuacao:', data.observacoes);
   console.log('Numero bateria received:', data.numero_bateria);
 
-  // Destructuring to ensure only expected properties are used.
-  // This prevents any extraneous properties like 'bateria_id' from being passed.
-  const {
-    eventId,
-    modalityId,
-    athleteId,
-    equipeId,
-    judgeId,
-    modeloId,
-    observacoes,
-    numero_bateria, // Correct field
-    raia
-  } = data;
-
+  // CRITICAL: Ensure NO bateria_id is ever included - only allow expected fields
   const pontuacaoData = {
-    evento_id: eventId,
-    modalidade_id: modalityId,
-    atleta_id: athleteId,
-    equipe_id: equipeId || null,
-    juiz_id: judgeId,
-    modelo_id: modeloId,
+    evento_id: data.eventId,
+    modalidade_id: data.modalityId,
+    atleta_id: data.athleteId,
+    equipe_id: data.equipeId || null,
+    juiz_id: data.judgeId,
+    modelo_id: data.modeloId,
     valor_pontuacao: valorPontuacao,
     unidade: 'pontos',
-    observacoes: observacoes || null,
+    observacoes: data.observacoes || null,
     data_registro: new Date().toISOString(),
-    numero_bateria: numero_bateria || null,
-    raia: raia || null
+    numero_bateria: data.numero_bateria || null,
+    raia: data.raia || null
   };
 
-  console.log('Final pontuacao data for database:', pontuacaoData);
+  console.log('Final pontuacao data for database (GUARANTEED NO bateria_id):', pontuacaoData);
 
   // Build the search query with proper NULL handling
   let searchQuery = supabase

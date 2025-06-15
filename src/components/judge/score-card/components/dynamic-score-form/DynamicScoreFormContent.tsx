@@ -19,7 +19,7 @@ interface DynamicScoreFormContentProps {
   modeloId: number;
   modalityId: number;
   eventId: string;
-  bateriaId?: number;
+  numeroBateria?: number; // Changed from bateriaId to numeroBateria
   isSubmitting: boolean;
   onSubmit: (data: any) => void;
 }
@@ -30,7 +30,7 @@ export function DynamicScoreFormContent({
   modeloId,
   modalityId,
   eventId,
-  bateriaId,
+  numeroBateria, // Changed from bateriaId to numeroBateria
   isSubmitting,
   onSubmit
 }: DynamicScoreFormContentProps) {
@@ -42,7 +42,7 @@ export function DynamicScoreFormContent({
         modeloId={modeloId}
         modalityId={modalityId}
         eventId={eventId}
-        numeroBateria={bateriaId}
+        numeroBateria={numeroBateria} // Pass numeroBateria instead of bateriaId
       />
       
       <FormField

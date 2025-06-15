@@ -8,7 +8,7 @@ interface UseFormSubmissionProps {
   equipeId?: number;
   judgeId: string;
   modeloId: number;
-  bateriaId?: number;
+  numeroBateria?: number; // Changed from bateriaId to numeroBateria
   raia?: number;
   onSuccess?: () => void;
 }
@@ -20,70 +20,43 @@ export function useFormSubmission({
   equipeId,
   judgeId,
   modeloId,
-  bateriaId,
+  numeroBateria, // Changed from bateriaId to numeroBateria
   raia,
   onSuccess
 }: UseFormSubmissionProps) {
-  const submissionMutation = useDynamicScoringSubmission();
+  const mutation = useDynamicScoringSubmission();
 
-  const handleSubmit = async (data: any) => {
-    console.log('=== FORMULÁRIO SUBMETIDO (DynamicScoreForm) ===');
-    console.log('Form data submitted:', data);
-    console.log('Notes field value:', data.notes);
-    console.log('Full form data keys:', Object.keys(data));
-    
-    // Extract notes but keep everything else in formData
-    const { notes, ...formDataFields } = data;
-    
-    // Ensure we include the raia in formData if it exists
-    const formData = {
-      ...formDataFields
-    };
+  const handleSubmit = async (formData: any) => {
+    console.log('=== SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm) ===');
+    console.log('Form data:', formData);
+    console.log('Número da bateria (numeroBateria):', numeroBateria);
 
-    // Add raia to formData if available
-    if (raia !== undefined) {
-      formData.raia = raia;
-    }
-    
-    console.log('=== DADOS SEPARADOS (DynamicScoreForm) ===');
-    console.log('Form data after separation:', { formData, notes });
-    console.log('Notes extracted successfully:', notes);
-    console.log('Notes type:', typeof notes);
-    console.log('Notes length:', notes?.length || 'undefined/null');
-    
-    console.log('=== PARÂMETROS DE SUBMISSÃO (DynamicScoreForm) ===');
-    const submissionParams = {
-      athleteId,
-      modalityId,
-      eventId,
-      judgeId,
-      modeloId,
-      formData,
-      bateriaId,
-      equipeId,
-      // Ensure observacoes is properly passed with the notes value
-      observacoes: notes || null,
-    };
-    console.log('Submission params with observacoes:', submissionParams);
-    console.log('Observacoes value being sent:', submissionParams.observacoes);
-    
     try {
-      console.log('=== CHAMANDO MUTAÇÃO (DynamicScoreForm) ===');
-      console.log('About to call mutation with observacoes:', submissionParams.observacoes);
-      await submissionMutation.mutateAsync(submissionParams);
-      
-      console.log('=== MUTAÇÃO EXECUTADA COM SUCESSO (DynamicScoreForm) ===');
+      await mutation.mutateAsync({
+        athleteId,
+        modalityId,
+        eventId,
+        judgeId,
+        modeloId,
+        equipeId,
+        raia,
+        formData,
+        bateriaId: numeroBateria, // Pass numeroBateria as bateriaId (will be converted to numero_bateria)
+        observacoes: formData.notes
+      });
+
+      console.log('=== SUBMISSÃO CONCLUÍDA COM SUCESSO ===');
       onSuccess?.();
     } catch (error) {
       console.error('=== ERRO NA SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm) ===');
       console.error('Error submitting dynamic score:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
+      console.error('Error details:', error);
       throw error;
     }
   };
 
   return {
     handleSubmit,
-    isSubmitting: submissionMutation.isPending
+    isSubmitting: mutation.isPending
   };
 }
