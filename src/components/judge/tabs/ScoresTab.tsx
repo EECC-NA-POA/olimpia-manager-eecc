@@ -242,8 +242,6 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
           </Card>
         ) : (
           <AthletesListTabular
-            athletes={athletes}
-            isLoading={isLoadingAthletes}
             modalityId={selectedModalityId}
             eventId={eventId}
             judgeId={userId}

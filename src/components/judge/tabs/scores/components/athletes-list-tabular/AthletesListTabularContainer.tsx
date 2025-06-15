@@ -31,13 +31,16 @@ export function AthletesListTabularContainer({
   error
 }: AthletesListTabularContainerProps) {
   // Get modality data with modelo configuration
+  const modalityResult = useModalityWithModelo(modalityId);
   const { 
     data: modalityData, 
     modalityRule, 
     isLoading: isLoadingModalityData,
-    hasModelo,
-    error: modalityError
-  } = useModalityWithModelo(modalityId);
+    hasModelo
+  } = modalityResult;
+  
+  // Extract modalityError safely - it might not exist in all hook versions
+  const modalityError = 'error' in modalityResult ? modalityResult.error : null;
 
   // Get bateria data for this modality
   const {

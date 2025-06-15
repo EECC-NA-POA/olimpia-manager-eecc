@@ -16,7 +16,11 @@ export function AthletesListTabular({
   judgeId,
   scoreType
 }: AthletesListTabularProps) {
-  const { data: athletes, isLoading, error } = useAthletes(modalityId, eventId);
+  const athletesResult = useAthletes(modalityId, eventId);
+  const { data: athletes, isLoading } = athletesResult;
+  
+  // Extract error safely - it might not exist in all hook versions
+  const error = 'error' in athletesResult ? athletesResult.error : null;
 
   console.log('=== ATHLETES LIST TABULAR ===');
   console.log('Dados recebidos do hook useAthletes:', {
