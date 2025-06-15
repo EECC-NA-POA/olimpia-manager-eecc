@@ -2,6 +2,40 @@
 import { CampoModelo } from '@/types/dynamicScoring';
 
 /**
+ * Converte um valor de tempo formatado (MM:SS.mmm) para milissegundos
+ */
+export function parseTimeToMilliseconds(timeValue: string): number {
+  // Remove espaços e converte para minúsculas
+  const cleaned = timeValue.trim().toLowerCase();
+  
+  // Formato MM:SS.mmm
+  const timeRegex = /^(\d{1,2}):(\d{2})\.(\d{3})$/;
+  const match = cleaned.match(timeRegex);
+  
+  if (match) {
+    const minutes = parseInt(match[1], 10);
+    const seconds = parseInt(match[2], 10);
+    const milliseconds = parseInt(match[3], 10);
+    
+    return (minutes * 60 * 1000) + (seconds * 1000) + milliseconds;
+  }
+  
+  // Se não conseguir fazer parse, retorna 0
+  return 0;
+}
+
+/**
+ * Verifica se um valor é um tempo formatado
+ */
+export function isTimeValue(value: string): boolean {
+  if (!value || typeof value !== 'string') return false;
+  
+  // Formato MM:SS.mmm
+  const timeRegex = /^(\d{1,2}):(\d{2})\.(\d{3})$/;
+  return timeRegex.test(value.trim());
+}
+
+/**
  * Determina se um modelo usa sistema de baterias baseado nos campos configurados
  * Verifica se existe algum campo relacionado a baterias ou se há configuração específica
  */
@@ -103,7 +137,7 @@ export function extractBateriaConfig(campos: CampoModelo[]): {
       if (metadados.max_baterias) config.maxBaterias = metadados.max_baterias;
     }
     return config;
-  }, { usesBaterias: true, allowsFinal: true });
+  }, { usesBaterias: true, allowsFinal: true, maxBaterias: undefined as number | undefined });
 
   return bateriaConfig;
 }

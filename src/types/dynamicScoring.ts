@@ -13,7 +13,7 @@ export interface CampoModelo {
   modelo_id: number;
   chave_campo: string;
   rotulo_campo: string;
-  tipo_input: 'number' | 'integer' | 'text' | 'select' | 'calculated' | 'checkbox';
+  tipo_input: 'number' | 'integer' | 'text' | 'select' | 'calculated' | 'checkbox' | 'configuration';
   obrigatorio: boolean;
   ordem_exibicao: number;
   metadados: {
@@ -36,6 +36,8 @@ export interface CampoModelo {
     baterias?: boolean;
     num_raias?: number;
     permite_final?: boolean;
+    max_baterias?: number;
+    allows_final?: boolean;
   } | null;
 }
 
