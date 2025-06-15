@@ -32,6 +32,16 @@ export function useDynamicScoringSubmission() {
           throw camposError;
         }
 
+        // Check if this modality uses baterias by looking at the campos
+        const usesBaterias = campos?.some(campo => 
+          campo.chave_campo.toLowerCase().includes('bateria') ||
+          campo.chave_campo.toLowerCase().includes('heat') ||
+          campo.chave_campo.toLowerCase().includes('numero_bateria') ||
+          (campo.metadados && (campo.metadados as any).baterias === true)
+        ) || false;
+
+        console.log('Modality uses baterias?', usesBaterias);
+
         // Calcular valor_pontuacao principal a partir dos dados do formulário
         const valorPontuacao = calculateMainScore(data.formData, campos);
         console.log('Calculated valor_pontuacao:', valorPontuacao);
@@ -40,6 +50,7 @@ export function useDynamicScoringSubmission() {
         const observacoes = data.formData.notes || data.observacoes || null;
 
         // CRITICAL: Create clean data object with ONLY valid database fields
+        // For modalities that don't use baterias, completely exclude numero_bateria
         const cleanDataForDb = {
           eventId: data.eventId,
           modalityId: data.modalityId,
@@ -47,10 +58,12 @@ export function useDynamicScoringSubmission() {
           modeloId: data.modeloId,
           raia,
           observacoes,
-          numero_bateria: data.bateriaId ?? null, // Use numero_bateria, not bateria_id
+          // Only include numero_bateria if the modality actually uses baterias
+          ...(usesBaterias && { numero_bateria: data.bateriaId ?? null })
         };
 
-        console.log('Clean data for DB (GUARANTEED NO bateria_id):', cleanDataForDb);
+        console.log('Clean data for DB (bateria fields only if needed):', cleanDataForDb);
+        console.log('Uses baterias:', usesBaterias, '- numero_bateria included:', 'numero_bateria' in cleanDataForDb);
 
         // Handle team scoring
         if (data.equipeId) {
@@ -62,7 +75,7 @@ export function useDynamicScoringSubmission() {
             equipeId: data.equipeId,
           };
 
-          console.log('Team data for DB (GUARANTEED NO bateria_id):', teamDataForDb);
+          console.log('Team data for DB (conditional bateria fields):', teamDataForDb);
 
           const pontuacao = await upsertPontuacao(teamDataForDb, valorPontuacao);
           console.log('=== TEAM SCORE SAVED ===');
@@ -83,7 +96,7 @@ export function useDynamicScoringSubmission() {
           equipeId: data.equipeId || null,
         };
 
-        console.log('Individual data for DB (GUARANTEED NO bateria_id):', individualDataForDb);
+        console.log('Individual data for DB (conditional bateria fields):', individualDataForDb);
 
         const pontuacao = await upsertPontuacao(individualDataForDb, valorPontuacao);
         console.log('=== INDIVIDUAL SCORE SAVED ===');
@@ -124,7 +137,9 @@ export function useDynamicScoringSubmission() {
       
       let errorMessage = 'Erro ao registrar pontuação';
       
-      if (error?.message?.includes('constraint')) {
+      if (error?.message?.includes('bateria_id')) {
+        errorMessage = 'Erro de configuração: Esta modalidade não usa baterias, mas está tentando processar campos de bateria. Entre em contato com o suporte técnico.';
+      } else if (error?.message?.includes('constraint')) {
         errorMessage = 'Erro de restrição no banco de dados. Verifique se os dados estão corretos.';
       } else if (error?.message?.includes('numero_bateria')) {
         errorMessage = 'Erro com número da bateria. Verifique a configuração.';

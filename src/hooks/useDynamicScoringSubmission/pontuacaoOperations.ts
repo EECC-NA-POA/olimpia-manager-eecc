@@ -6,10 +6,17 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
   console.log('Data for upsert:', data);
   console.log('Valor pontuacao:', valorPontuacao);
   console.log('Observacoes received in upsertPontuacao:', data.observacoes);
-  console.log('Numero bateria received:', data.numero_bateria);
+  
+  // Check if numero_bateria should be included based on data
+  const includesBaterias = 'numero_bateria' in data;
+  console.log('Should include numero_bateria fields?', includesBaterias);
+  
+  if (includesBaterias) {
+    console.log('Numero bateria received:', data.numero_bateria);
+  }
 
-  // CRITICAL: Ensure NO bateria_id is ever included - only allow expected fields
-  const pontuacaoData = {
+  // CRITICAL: Build pontuacao data dynamically based on what fields are provided
+  const pontuacaoData: any = {
     evento_id: data.eventId,
     modalidade_id: data.modalityId,
     atleta_id: data.athleteId,
@@ -20,11 +27,15 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     unidade: 'pontos',
     observacoes: data.observacoes || null,
     data_registro: new Date().toISOString(),
-    numero_bateria: data.numero_bateria || null,
     raia: data.raia || null
   };
 
-  console.log('Final pontuacao data for database (GUARANTEED NO bateria_id):', pontuacaoData);
+  // Only add numero_bateria if it's supposed to be included
+  if (includesBaterias) {
+    pontuacaoData.numero_bateria = data.numero_bateria || null;
+  }
+
+  console.log('Final pontuacao data for database (conditional bateria fields):', pontuacaoData);
 
   // Build the search query with proper NULL handling
   let searchQuery = supabase
@@ -43,11 +54,13 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     searchQuery = searchQuery.eq('equipe_id', pontuacaoData.equipe_id);
   }
 
-  // Handle numero_bateria correctly - use is() for NULL values
-  if (pontuacaoData.numero_bateria === null) {
-    searchQuery = searchQuery.is('numero_bateria', null);
-  } else {
-    searchQuery = searchQuery.eq('numero_bateria', pontuacaoData.numero_bateria);
+  // Only add numero_bateria to search if the modality uses baterias
+  if (includesBaterias) {
+    if (pontuacaoData.numero_bateria === null) {
+      searchQuery = searchQuery.is('numero_bateria', null);
+    } else {
+      searchQuery = searchQuery.eq('numero_bateria', pontuacaoData.numero_bateria);
+    }
   }
 
   const { data: existingRecords, error: findError } = await searchQuery;
@@ -64,8 +77,8 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     const existingId = existingRecords[0].id;
     console.log('Updating existing record with ID:', existingId);
     
-    // CRITICAL: Create a clean update object without any bateria_id references
-    const updateData = {
+    // CRITICAL: Create a clean update object based on what fields should be included
+    const updateData: any = {
       evento_id: pontuacaoData.evento_id,
       modalidade_id: pontuacaoData.modalidade_id,
       atleta_id: pontuacaoData.atleta_id,
@@ -76,11 +89,15 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
       unidade: pontuacaoData.unidade,
       observacoes: pontuacaoData.observacoes,
       data_registro: pontuacaoData.data_registro,
-      numero_bateria: pontuacaoData.numero_bateria,
       raia: pontuacaoData.raia
     };
+
+    // Only include numero_bateria if the modality uses baterias
+    if (includesBaterias) {
+      updateData.numero_bateria = pontuacaoData.numero_bateria;
+    }
     
-    console.log('Clean update data (NO bateria_id):', updateData);
+    console.log('Clean update data (conditional bateria fields):', updateData);
     
     const { data: updatedRecord, error } = await supabase
       .from('pontuacoes')
@@ -98,8 +115,8 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     // Inserir novo registro
     console.log('Inserting new record');
     
-    // CRITICAL: Create a clean insert object without any bateria_id references
-    const insertData = {
+    // CRITICAL: Create a clean insert object based on what fields should be included
+    const insertData: any = {
       evento_id: pontuacaoData.evento_id,
       modalidade_id: pontuacaoData.modalidade_id,
       atleta_id: pontuacaoData.atleta_id,
@@ -110,11 +127,15 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
       unidade: pontuacaoData.unidade,
       observacoes: pontuacaoData.observacoes,
       data_registro: pontuacaoData.data_registro,
-      numero_bateria: pontuacaoData.numero_bateria,
       raia: pontuacaoData.raia
     };
+
+    // Only include numero_bateria if the modality uses baterias
+    if (includesBaterias) {
+      insertData.numero_bateria = pontuacaoData.numero_bateria;
+    }
     
-    console.log('Clean insert data (NO bateria_id):', insertData);
+    console.log('Clean insert data (conditional bateria fields):', insertData);
     
     const { data: newRecord, error } = await supabase
       .from('pontuacoes')
