@@ -1,3 +1,4 @@
+
 import { CampoModelo } from '@/types/dynamicScoring';
 
 export function filterScoringFields(campos: CampoModelo[]): CampoModelo[] {
@@ -6,26 +7,41 @@ export function filterScoringFields(campos: CampoModelo[]): CampoModelo[] {
     'configuracao_pontuacao',
     'config_baterias',
     'bateria_config',
-    'sistema_baterias'
+    'sistema_baterias',
+    'usar_bateria',
+    'configuracao_de_pontuacao',
+    'config_pontuacao'
   ];
   
   return campos.filter(campo => {
-    // Filter out configuration fields by key
-    if (configurationFieldKeys.includes(campo.chave_campo)) {
-      return false;
-    }
-    
-    // Filter out any field that contains "bateria" or "config" in the key (case insensitive)
+    // Filter out configuration fields by exact key match (case insensitive)
     const lowerKey = campo.chave_campo.toLowerCase();
+    if (configurationFieldKeys.includes(lowerKey)) {
+      console.log('Filtering out configuration field:', campo.chave_campo);
+      return false;
+    }
+    
+    // Filter out any field that contains "bateria" AND "config" in the key (case insensitive)
     if (lowerKey.includes('bateria') && lowerKey.includes('config')) {
+      console.log('Filtering out bateria config field:', campo.chave_campo);
       return false;
     }
     
+    // Filter out any field that contains "usar_bateria" in the key (case insensitive)
     if (lowerKey.includes('usar_bateria')) {
+      console.log('Filtering out usar_bateria field:', campo.chave_campo);
       return false;
     }
     
+    // Filter out any field that contains "configuracao" AND "pontuacao" in the key (case insensitive)
     if (lowerKey.includes('configuracao') && lowerKey.includes('pontuacao')) {
+      console.log('Filtering out configuracao pontuacao field:', campo.chave_campo);
+      return false;
+    }
+    
+    // Additional specific patterns for configuration fields
+    if (lowerKey.includes('config') && (lowerKey.includes('pont') || lowerKey.includes('score'))) {
+      console.log('Filtering out config scoring field:', campo.chave_campo);
       return false;
     }
     
