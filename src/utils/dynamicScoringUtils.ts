@@ -1,147 +1,109 @@
 
 import { CampoModelo } from '@/types/dynamicScoring';
 
+/**
+ * Determina se um modelo usa sistema de baterias baseado nos campos configurados
+ * Verifica se existe algum campo relacionado a baterias ou se há configuração específica
+ */
+export function modelUsesBateriasByFields(campos: CampoModelo[]): boolean {
+  if (!campos || campos.length === 0) {
+    return false;
+  }
+
+  // Verifica se existe campo específico para bateria
+  const hasBateriaField = campos.some(campo => 
+    campo.chave_campo.toLowerCase().includes('bateria') ||
+    campo.chave_campo.toLowerCase().includes('heat') ||
+    campo.chave_campo.toLowerCase().includes('numero_bateria')
+  );
+
+  // Verifica se há metadados que indicam uso de baterias
+  const hasMetadataWithBaterias = campos.some(campo => {
+    const metadados = campo.metadados as any;
+    return metadados && (
+      metadados.uses_baterias === true ||
+      metadados.bateria_system === true ||
+      metadados.heat_system === true
+    );
+  });
+
+  // Para modalidades como "Tiro com Arco", verificar se há configuração específica
+  // que sugere uso de baterias (como campos de tentativas múltiplas)
+  const hasMutipleAttempts = campos.some(campo =>
+    campo.chave_campo.includes('tentativa_') && 
+    campo.tipo_input !== 'configuration'
+  );
+
+  console.log('modelUsesBateriasByFields analysis:', {
+    totalCampos: campos.length,
+    hasBateriaField,
+    hasMetadataWithBaterias,
+    hasMutipleAttempts,
+    campos: campos.map(c => ({ key: c.chave_campo, type: c.tipo_input }))
+  });
+
+  return hasBateriaField || hasMetadataWithBaterias || hasMutipleAttempts;
+}
+
+/**
+ * Filtra campos para remover apenas campos de configuração
+ * Mantém todos os campos de pontuação, incluindo os relacionados a baterias
+ */
 export function filterScoringFields(campos: CampoModelo[]): CampoModelo[] {
-  const configurationFieldKeys = [
-    'usar_baterias',
-    'configuracao_pontuacao',
-    'config_baterias',
-    'bateria_config',
-    'sistema_baterias',
-    'usar_bateria',
-    'configuracao_de_pontuacao',
-    'config_pontuacao',
-    'configuracao_pontos',
-    'config_pontos',
-    'sistema_pontuacao',
-    'config_sistema',
-    'bateria_sistema',
-    'pontuacao_config'
-  ];
-  
   return campos.filter(campo => {
-    const lowerKey = campo.chave_campo.toLowerCase();
-    const lowerLabel = campo.rotulo_campo.toLowerCase();
+    // Remove apenas campos marcados especificamente como configuração
+    const isConfigField = campo.tipo_input === 'configuration' ||
+                         campo.chave_campo === 'config_baterias' ||
+                         campo.chave_campo === 'config_raias' ||
+                         campo.chave_campo === 'regra_tipo';
     
-    // Filter out configuration fields by exact key match (case insensitive)
-    if (configurationFieldKeys.includes(lowerKey)) {
-      console.log('Filtering out configuration field by key:', campo.chave_campo);
-      return false;
-    }
-    
-    // Filter out by label content (case insensitive)
-    if (lowerLabel.includes('usar bateria') || lowerLabel.includes('usar baterias')) {
-      console.log('Filtering out "Usar Baterias" field by label:', campo.rotulo_campo);
-      return false;
-    }
-    
-    if (lowerLabel.includes('configuração') && lowerLabel.includes('pontuação')) {
-      console.log('Filtering out "Configuração de Pontuação" field by label:', campo.rotulo_campo);
-      return false;
-    }
-    
-    if (lowerLabel.includes('configuração') && lowerLabel.includes('pontos')) {
-      console.log('Filtering out configuration field by label:', campo.rotulo_campo);
-      return false;
-    }
-    
-    // Filter out any field that contains "bateria" AND "config" in the key (case insensitive)
-    if (lowerKey.includes('bateria') && lowerKey.includes('config')) {
-      console.log('Filtering out bateria config field:', campo.chave_campo);
-      return false;
-    }
-    
-    // Filter out any field that contains "usar" AND "bateria" in the key (case insensitive)
-    if (lowerKey.includes('usar') && lowerKey.includes('bateria')) {
-      console.log('Filtering out usar_bateria field:', campo.chave_campo);
-      return false;
-    }
-    
-    // Filter out any field that contains "configuracao" AND "pontuacao" in the key (case insensitive)
-    if (lowerKey.includes('configuracao') && lowerKey.includes('pontuacao')) {
-      console.log('Filtering out configuracao pontuacao field:', campo.chave_campo);
-      return false;
-    }
-    
-    // Filter out any field that contains "config" AND ("pont" OR "score") in the key (case insensitive)
-    if (lowerKey.includes('config') && (lowerKey.includes('pont') || lowerKey.includes('score'))) {
-      console.log('Filtering out config scoring field:', campo.chave_campo);
-      return false;
-    }
-    
-    // Filter out any field that contains "sistema" AND ("bateria" OR "pontuacao") in the key (case insensitive)
-    if (lowerKey.includes('sistema') && (lowerKey.includes('bateria') || lowerKey.includes('pontuacao'))) {
-      console.log('Filtering out sistema field:', campo.chave_campo);
-      return false;
-    }
-    
-    return true;
+    return !isConfigField;
   });
 }
 
-export function filterCalculatedFields(campos: CampoModelo[]): CampoModelo[] {
-  return campos.filter(campo => campo.tipo_input === 'calculated');
+/**
+ * Verifica se um campo específico é relacionado a baterias
+ */
+export function isFieldRelatedToBaterias(campo: CampoModelo): boolean {
+  const chaveLower = campo.chave_campo.toLowerCase();
+  return chaveLower.includes('bateria') || 
+         chaveLower.includes('heat') || 
+         chaveLower.includes('numero_bateria');
 }
 
-export function filterManualFields(campos: CampoModelo[]): CampoModelo[] {
-  return campos.filter(campo => 
-    campo.tipo_input !== 'calculated' && 
-    !['bateria', 'numero_bateria', 'config'].includes(campo.chave_campo?.toLowerCase() || '')
-  );
-}
-
-// Esta função agora aceita a configuração do modelo em vez de apenas campos
-export function modelUsesBaterias(modeloConfig?: { parametros?: { baterias?: boolean } }): boolean {
-  console.log('Verificando se modelo usa baterias. Config recebida:', modeloConfig);
+/**
+ * Extrai configuração de baterias dos campos do modelo
+ */
+export function extractBateriaConfig(campos: CampoModelo[]): {
+  usesBaterias: boolean;
+  allowsFinal: boolean;
+  maxBaterias?: number;
+} {
+  const bateriaFields = campos.filter(isFieldRelatedToBaterias);
   
-  if (!modeloConfig?.parametros) {
-    console.log('Sem configuração de parâmetros, retornando false');
-    return false;
+  if (bateriaFields.length === 0) {
+    // Se não há campos específicos mas há múltiplas tentativas, assumir que usa baterias
+    const hasMutipleAttempts = campos.some(campo =>
+      campo.chave_campo.includes('tentativa_') && 
+      campo.tipo_input !== 'configuration'
+    );
+    
+    return {
+      usesBaterias: hasMutipleAttempts,
+      allowsFinal: hasMutipleAttempts,
+      maxBaterias: hasMutipleAttempts ? undefined : 0
+    };
   }
-  
-  const usesBaterias = modeloConfig.parametros.baterias === true;
-  console.log('Resultado final - modelo usa baterias:', usesBaterias);
-  
-  return usesBaterias;
-}
 
-// Função legacy para compatibilidade (deprecated)
-export function modelUsesBateriasByFields(campos: CampoModelo[]): boolean {
-  console.log('Verificando se modelo usa baterias. Campos recebidos:', campos.length);
-  
-  // Procurar por campos relacionados a baterias ou configuração
-  const configFields = campos.filter(campo => 
-    ['bateria', 'numero_bateria'].includes(campo.chave_campo?.toLowerCase() || '')
-  );
-  
-  console.log('Campos de configuração encontrados:', configFields.map(c => c.chave_campo));
-  
-  const usesBaterias = configFields.some(campo => 
-    ['bateria', 'numero_bateria'].includes(campo.chave_campo?.toLowerCase() || '') ||
-    campo.metadados?.baterias === true
-  );
-  
-  console.log('Resultado final - modelo usa baterias:', usesBaterias);
-  return usesBaterias;
-}
+  // Analisar metadados dos campos de bateria para configuração
+  const bateriaConfig = bateriaFields.reduce((config, campo) => {
+    const metadados = campo.metadados as any;
+    if (metadados) {
+      if (metadados.allows_final) config.allowsFinal = true;
+      if (metadados.max_baterias) config.maxBaterias = metadados.max_baterias;
+    }
+    return config;
+  }, { usesBaterias: true, allowsFinal: true });
 
-// Funções utilitárias para tempo
-export function isTimeValue(value: string): boolean {
-  // Verifica se é um valor de tempo no formato MM:SS ou HH:MM:SS
-  const timePattern = /^\d{1,2}:\d{2}(:\d{2})?$/;
-  return timePattern.test(value);
-}
-
-export function parseTimeToMilliseconds(timeString: string): number {
-  const parts = timeString.split(':').map(Number);
-  
-  if (parts.length === 2) {
-    // MM:SS format
-    return (parts[0] * 60 + parts[1]) * 1000;
-  } else if (parts.length === 3) {
-    // HH:MM:SS format
-    return (parts[0] * 3600 + parts[1] * 60 + parts[2]) * 1000;
-  }
-  
-  return 0;
+  return bateriaConfig;
 }

@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { modelUsesBateriasByFields } from '@/utils/dynamicScoringUtils';
+import { modelUsesBateriasByFields, extractBateriaConfig } from '@/utils/dynamicScoringUtils';
 
 export interface ModeloConfiguration {
   modalidade_id: number;
@@ -69,19 +69,20 @@ export function useModeloConfiguration(modalidadeId: number | null) {
       }
       
       console.log('Campos encontrados:', campos?.length || 0);
+      console.log('Campos detalhes:', campos?.map(c => ({ key: c.chave_campo, type: c.tipo_input })));
       
-      // Check if model uses baterias based on campos
-      const usesBaterias = campos ? modelUsesBateriasByFields(campos) : false;
-      console.log('Modelo usa baterias:', usesBaterias);
+      // Extract bateria configuration from campos
+      const bateriaConfig = campos ? extractBateriaConfig(campos) : { usesBaterias: false, allowsFinal: false };
+      console.log('Configuração de baterias extraída:', bateriaConfig);
       
       return {
         modalidade_id: modelo.modalidade_id,
         modelo_id: modelo.id,
         parametros: {
           regra_tipo: 'pontos',
-          baterias: usesBaterias,
+          baterias: bateriaConfig.usesBaterias,
           num_raias: 0,
-          permite_final: usesBaterias
+          permite_final: bateriaConfig.allowsFinal
         }
       } as ModeloConfiguration;
     },
