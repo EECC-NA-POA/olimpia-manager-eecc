@@ -154,14 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               return;
             }
 
-            if (event === 'TOKEN_REFRESHED') {
-              console.log('Token refreshed successfully');
-              setSessionExpired(false);
-              // Não buscar perfil novamente no refresh de token
-              return;
-            }
-
-            if (session?.user && event !== 'TOKEN_REFRESHED') {
+            if (session?.user) {
               try {
                 console.log('User session updated, fetching profile');
                 const userProfile = await fetchUserProfile(session.user.id);
