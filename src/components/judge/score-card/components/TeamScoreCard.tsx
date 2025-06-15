@@ -45,7 +45,7 @@ function TeamScoreCardContent({
 }: TeamScoreCardProps & { representativeAthlete: TeamMember }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Fetch comprehensive modality details including modelo_modalidade_id and categoria
+  // Fetch comprehensive modality details including the scoring model
   const { data: modalityDetails, isLoading: isLoadingModality } = useQuery({
     queryKey: ['modality-details-complete', modalityId],
     queryFn: async () => {
@@ -56,10 +56,9 @@ function TeamScoreCardContent({
         .select(`
           id,
           nome,
-          modelo_modalidade_id,
           tipo_pontuacao,
           categoria,
-          modelos_modalidades (
+          modelos_modalidade (
             id,
             codigo_modelo,
             descricao
@@ -79,7 +78,8 @@ function TeamScoreCardContent({
     enabled: !!modalityId,
   });
 
-  const modeloId = modalityDetails?.modelo_modalidade_id;
+  const modelo = modalityDetails?.modelos_modalidade?.[0];
+  const modeloId = modelo?.id;
   const tipoPontuacao = modalityDetails?.tipo_pontuacao || scoreType;
   const modalidadeCategoria = modalityDetails?.categoria || null;
 
@@ -165,8 +165,6 @@ function TeamScoreCardContent({
       'masculino': 'Masculino',
       'feminino': 'Feminino',
       'misto': 'Misto',
-      // Keep backward compatibility
-      'livre': 'Livre'
     };
     
     return categoryMap[categoria.toLowerCase()] || categoria;
@@ -311,8 +309,6 @@ export function TeamScoreCard(props: TeamScoreCardProps) {
       'masculino': 'Masculino',
       'feminino': 'Feminino',
       'misto': 'Misto',
-      // Keep backward compatibility
-      'livre': 'Livre'
     };
     
     return categoryMap[categoria.toLowerCase()] || categoria;
