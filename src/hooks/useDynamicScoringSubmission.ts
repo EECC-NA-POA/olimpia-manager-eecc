@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -46,13 +45,14 @@ export function useDynamicScoringSubmission() {
           console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
           
           const { data: teamMembers, error: membersError } = await supabase
-            .from('inscricoes_modalidades')
+            .from('equipes_atletas')
             .select('atleta_id')
-            .eq('evento_id', data.eventId)
-            .eq('modalidade_id', data.modalityId)
             .eq('equipe_id', data.equipeId);
 
-          if (membersError) throw membersError;
+          if (membersError) {
+            console.error('Error fetching team members from equipes_atletas:', membersError);
+            throw membersError;
+          }
 
           const membersToScore = (teamMembers && teamMembers.length > 0) 
             ? teamMembers 
