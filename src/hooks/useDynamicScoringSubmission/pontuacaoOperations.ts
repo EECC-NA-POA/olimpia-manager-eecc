@@ -25,39 +25,33 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
 
   console.log('Final pontuacao data for database:', pontuacaoData);
 
-  // First, try to find existing record using manual query building
-  let query = supabase
+  // Primeiro, buscar registro existente
+  const { data: existingRecords, error: findError } = await supabase
     .from('pontuacoes')
     .select('id')
     .eq('atleta_id', pontuacaoData.atleta_id)
     .eq('modalidade_id', pontuacaoData.modalidade_id)
     .eq('evento_id', pontuacaoData.evento_id)
     .eq('juiz_id', pontuacaoData.juiz_id)
-    .eq('modelo_id', pontuacaoData.modelo_id);
+    .eq('modelo_id', pontuacaoData.modelo_id)
+    .eq('numero_bateria', pontuacaoData.numero_bateria || null);
 
-  // Handle numero_bateria properly for both null and non-null cases
-  if (pontuacaoData.numero_bateria === null) {
-    query = query.is('numero_bateria', null);
-  } else {
-    query = query.eq('numero_bateria', pontuacaoData.numero_bateria);
-  }
-
-  const { data: existingRecord, error: findError } = await query.single();
-
-  if (findError && findError.code !== 'PGRST116') {
+  if (findError) {
     console.error('Error searching for existing record:', findError);
-    // Continue with insert if search fails
+    throw findError;
   }
 
   let result;
   
-  if (existingRecord && !findError) {
-    // Update existing record
-    console.log('Updating existing record with ID:', existingRecord.id);
+  if (existingRecords && existingRecords.length > 0) {
+    // Atualizar registro existente
+    const existingId = existingRecords[0].id;
+    console.log('Updating existing record with ID:', existingId);
+    
     const { data: updatedRecord, error } = await supabase
       .from('pontuacoes')
       .update(pontuacaoData)
-      .eq('id', existingRecord.id)
+      .eq('id', existingId)
       .select()
       .single();
     
@@ -67,11 +61,11 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     }
     result = updatedRecord;
   } else {
-    // Insert new record - this is where the error was happening
+    // Inserir novo registro
     console.log('Inserting new record');
     const { data: newRecord, error } = await supabase
       .from('pontuacoes')
-      .insert([pontuacaoData])
+      .insert(pontuacaoData)
       .select()
       .single();
     

@@ -13,21 +13,21 @@ interface SubmitScoreParams {
   eventId: string;
   judgeId: string;
   scoreType: 'tempo' | 'distancia' | 'pontos';
-  bateriaId?: number | null;
+  numeroBateria?: number | null; // Changed from bateriaId to numeroBateria
 }
 
 export function useScoreSubmission() {
   const queryClient = useQueryClient();
 
   const submitScoreMutation = useMutation({
-    mutationFn: async ({ athleteId, value, notes, athletes, modalityId, eventId, judgeId, scoreType, bateriaId }: SubmitScoreParams) => {
+    mutationFn: async ({ athleteId, value, notes, athletes, modalityId, eventId, judgeId, scoreType, numeroBateria }: SubmitScoreParams) => {
       if (!eventId) throw new Error('Event ID is required');
       
       const athlete = athletes.find(a => a.atleta_id === athleteId);
       if (!athlete) throw new Error('Athlete not found');
 
       console.log('=== SCORE SUBMISSION START ===');
-      console.log('Score submission data:', { athleteId, value, notes, modalityId, eventId, judgeId, scoreType });
+      console.log('Score submission data:', { athleteId, value, notes, modalityId, eventId, judgeId, scoreType, numeroBateria });
 
       // Convert value based on score type
       let processedValue: number;
@@ -54,19 +54,16 @@ export function useScoreSubmission() {
         valor_pontuacao: processedValue,
         unidade: scoreType === 'tempo' ? 'segundos' : scoreType === 'distancia' ? 'metros' : 'pontos',
         observacoes: notes || null,
-        numero_bateria: bateriaId,
+        numero_bateria: numeroBateria || null, // Use numero_bateria instead of bateriaId
         data_registro: new Date().toISOString()
       };
 
-      console.log('Upserting score data:', scoreData);
+      console.log('Inserting score data:', scoreData);
 
-      // Use upsert to avoid duplicates based on the unique constraint
+      // Insert the score data
       const { data, error } = await supabase
         .from('pontuacoes')
-        .upsert(scoreData, {
-          onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id,modelo_id,numero_bateria',
-          ignoreDuplicates: false
-        })
+        .insert(scoreData)
         .select()
         .single();
 
