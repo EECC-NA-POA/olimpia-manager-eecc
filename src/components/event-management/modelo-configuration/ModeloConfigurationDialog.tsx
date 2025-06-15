@@ -181,7 +181,7 @@ export function ModeloConfigurationDialog({
       rotulo_campo: 'Bateria',
       tipo_input: 'integer',
       obrigatorio: true,
-      ordem_exibicao: campos.length + 1,
+      ordem_exibicao: 1, // Always first
       metadados: {
         min: 1,
         max: 999,
@@ -201,17 +201,32 @@ export function ModeloConfigurationDialog({
       );
 
       if (!bateriaFieldExists) {
-        // Add bateria field automatically
+        // Add bateria field as the first field and increment ordem_exibicao of other fields
         const bateriaField = createBateriaField();
-        setCampos(prevCampos => [...prevCampos, bateriaField]);
+        setCampos(prevCampos => {
+          // Increment ordem_exibicao of all existing fields
+          const updatedCampos = prevCampos.map(campo => ({
+            ...campo,
+            ordem_exibicao: campo.ordem_exibicao + 1
+          }));
+          
+          // Add bateria field at the beginning
+          return [bateriaField, ...updatedCampos];
+        });
       }
     } else {
-      // Remove bateria field when baterias is disabled
-      setCampos(prevCampos => 
-        prevCampos.filter(campo => 
+      // Remove bateria field and adjust ordem_exibicao of remaining fields
+      setCampos(prevCampos => {
+        const filteredCampos = prevCampos.filter(campo => 
           campo.chave_campo !== 'bateria' && campo.chave_campo !== 'numero_bateria'
-        )
-      );
+        );
+        
+        // Reorder remaining fields to ensure continuous numbering
+        return filteredCampos.map((campo, index) => ({
+          ...campo,
+          ordem_exibicao: index + 1
+        }));
+      });
     }
   };
 
