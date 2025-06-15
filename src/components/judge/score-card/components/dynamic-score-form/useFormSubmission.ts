@@ -1,3 +1,4 @@
+
 import { useDynamicScoringSubmission } from '@/hooks/useDynamicScoringSubmission';
 
 interface UseFormSubmissionProps {
@@ -59,6 +60,7 @@ export function useFormSubmission({
       modeloId,
       formData,
       bateriaId,
+      equipeId,
       // Ensure observacoes is properly passed with the notes value
       observacoes: notes || null,
     };
