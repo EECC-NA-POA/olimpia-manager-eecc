@@ -25,21 +25,33 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
 
   console.log('Final pontuacao data for database:', pontuacaoData);
 
-  // First, try to find existing record
-  const { data: existingRecord } = await supabase
+  // Build the query step by step to handle null values properly
+  let query = supabase
     .from('pontuacoes')
     .select('id')
     .eq('atleta_id', pontuacaoData.atleta_id)
     .eq('modalidade_id', pontuacaoData.modalidade_id)
     .eq('evento_id', pontuacaoData.evento_id)
     .eq('juiz_id', pontuacaoData.juiz_id)
-    .eq('modelo_id', pontuacaoData.modelo_id)
-    .is('numero_bateria', pontuacaoData.numero_bateria)
-    .single();
+    .eq('modelo_id', pontuacaoData.modelo_id);
+
+  // Handle numero_bateria null/not null cases properly
+  if (pontuacaoData.numero_bateria === null) {
+    query = query.is('numero_bateria', null);
+  } else {
+    query = query.eq('numero_bateria', pontuacaoData.numero_bateria);
+  }
+
+  const { data: existingRecord, error: findError } = await query.single();
+
+  if (findError && findError.code !== 'PGRST116') {
+    console.error('Error searching for existing record:', findError);
+    // Continue with insert if search fails
+  }
 
   let result;
   
-  if (existingRecord) {
+  if (existingRecord && !findError) {
     // Update existing record
     console.log('Updating existing record with ID:', existingRecord.id);
     const { data: updatedRecord, error } = await supabase

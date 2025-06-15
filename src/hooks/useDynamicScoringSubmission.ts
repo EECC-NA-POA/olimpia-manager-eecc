@@ -47,7 +47,7 @@ export function useDynamicScoringSubmission() {
           modeloId: data.modeloId,
           raia,
           observacoes,
-          numero_bateria: data.bateriaId || null,
+          numero_bateria: data.bateriaId || null, // Ensure we use numero_bateria consistently
         };
 
         console.log('Base data for DB:', baseDataForDb);
@@ -56,52 +56,23 @@ export function useDynamicScoringSubmission() {
         if (data.equipeId) {
           console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
           
-          const { data: teamMembersQuery, error: teamError } = await supabase
-            .from('atletas_equipes')
-            .select('atleta_id')
-            .eq('equipe_id', data.equipeId);
-
-          if (teamError) {
-            console.error('Error fetching team members:', teamError);
-            throw teamError;
-          }
-
-          let membersToScore = teamMembersQuery;
-          if (!membersToScore || membersToScore.length === 0) {
-            console.warn('No team members found, scoring only representative athlete');
-            membersToScore = [{ atleta_id: data.athleteId }];
-          }
+          // Use the unified upsertPontuacao function for team scoring
+          const teamDataForDb = {
+            ...baseDataForDb,
+            athleteId: data.athleteId,
+            equipeId: data.equipeId,
+          };
           
-          console.log('Team members to score:', membersToScore);
-
-          // Score each team member
-          const pontuacoes = [];
+          console.log('Team data for DB:', teamDataForDb);
           
-          for (const member of membersToScore) {
-            const memberDataForDb = {
-              ...baseDataForDb,
-              athleteId: member.atleta_id,
-              equipeId: data.equipeId,
-            };
-            
-            console.log(`Scoring team member ${member.atleta_id}:`, memberDataForDb);
-            
-            const pontuacao = await upsertPontuacao(memberDataForDb, valorPontuacao);
-            pontuacoes.push(pontuacao);
-          }
+          const pontuacao = await upsertPontuacao(teamDataForDb, valorPontuacao);
+          console.log('=== TEAM SCORE SAVED ===');
 
-          // Use representative athlete's score for tentativas
-          const representativeScore = pontuacoes.find(p => p.atleta_id === data.athleteId) || pontuacoes[0];
-          
-          if (!representativeScore) {
-            throw new Error('No scores were saved for the team.');
-          }
-
-          const tentativas = prepareTentativasData(data.formData, campos, representativeScore.id);
-          await insertTentativas(tentativas, representativeScore.id);
+          const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
+          await insertTentativas(tentativas, pontuacao.id);
 
           console.log('=== TEAM SUBMISSION COMPLETED ===');
-          return representativeScore;
+          return pontuacao;
         }
 
         // Handle individual scoring
@@ -158,6 +129,8 @@ export function useDynamicScoringSubmission() {
         errorMessage = 'Erro de restrição no banco de dados. Verifique se os dados estão corretos.';
       } else if (error?.message?.includes('numero_bateria')) {
         errorMessage = 'Erro com número da bateria. Verifique a configuração.';
+      } else if (error?.message?.includes('bateria_id')) {
+        errorMessage = 'Erro de configuração: referência incorreta a bateria_id. Entre em contato com o suporte.';
       } else if (error?.message?.includes('column') && error?.message?.includes('does not exist')) {
         errorMessage = 'Erro de configuração do banco de dados. Entre em contato com o suporte.';
       } else if (error?.message) {
