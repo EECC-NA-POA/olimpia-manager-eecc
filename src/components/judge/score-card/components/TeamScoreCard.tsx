@@ -29,7 +29,7 @@ interface TeamScoreCardProps {
     equipe_id: number;
     equipe_nome: string;
     members: TeamMember[];
-    categoria?: string;
+    // categoria: string; <-- No longer direct, pulled from modality info below.
   };
   modalityId: number;
   eventId: string | null;
@@ -37,18 +37,25 @@ interface TeamScoreCardProps {
   scoreType: 'tempo' | 'distancia' | 'pontos';
 }
 
-function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, representativeAthlete }: TeamScoreCardProps & { representativeAthlete: TeamMember }) {
+function TeamScoreCardContent({
+  team,
+  modalityId,
+  eventId,
+  judgeId,
+  scoreType,
+  representativeAthlete
+}: TeamScoreCardProps & { representativeAthlete: TeamMember }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  
-  // Busca detalhes do modelo da modalidade
+
+  // Fetch all required modality details including categoria!
   const { data: modalityDetails, isLoading: isLoadingModality } = useQuery({
     queryKey: ['modality-details', modalityId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('modalidades')
-        .select('modelo_modalidade_id, tipo_pontuacao')
+        .select('modelo_modalidade_id, tipo_pontuacao, categoria')
         .eq('id', modalityId)
-        .single();
+        .maybeSingle();
       if (error) {
         console.error('Error fetching modality details:', error);
         throw new Error('Erro ao buscar detalhes da modalidade');
@@ -57,15 +64,17 @@ function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, r
     },
     enabled: !!modalityId,
   });
-  const modeloId = modalityDetails?.modelo_modalidade_id;
-  const tipoPontuacao = modalityDetails?.tipo_pontuacao || scoreType; // Preferir o tipo da modalidade
 
-  // Submissão para o modelo DINÂMICO, se houver modelo
+  const modeloId = modalityDetails?.modelo_modalidade_id;
+  const tipoPontuacao = modalityDetails?.tipo_pontuacao || scoreType; // Prefer tipo from modalidade
+  const modalidadeCategoria = modalityDetails?.categoria || null; // New: Fetch modalidade category
+
+  // Team scoring with support for the correct model
   const { submitScoreMutation } = useScoreSubmission(
-    eventId, 
-    modalityId, 
-    { atleta_id: representativeAthlete?.atleta_id, equipe_id: team.equipe_id }, 
-    judgeId, 
+    eventId,
+    modalityId,
+    { atleta_id: representativeAthlete?.atleta_id, equipe_id: team.equipe_id },
+    judgeId,
     tipoPontuacao
   );
 
@@ -73,7 +82,6 @@ function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, r
     queryKey: ['team-score', team.equipe_id, modalityId, eventId],
     queryFn: async () => {
       if (!eventId) return null;
-      
       const { data, error } = await supabase
         .from('pontuacoes')
         .select('*')
@@ -82,12 +90,10 @@ function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, r
         .eq('equipe_id', team.equipe_id)
         .limit(1)
         .maybeSingle();
-      
       if (error) {
         console.error('Error fetching existing team score:', error);
         return null;
       }
-      
       return data as ScoreRecord;
     },
     enabled: !!eventId && !!team.equipe_id,
@@ -97,7 +103,6 @@ function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, r
     queryKey: ['team-medal', team.equipe_id, modalityId, eventId],
     queryFn: async () => {
       if (!eventId) return null;
-      
       const { data, error } = await supabase
         .from('premiacoes')
         .select('posicao, medalha')
@@ -106,26 +111,22 @@ function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, r
         .eq('equipe_id', team.equipe_id)
         .limit(1)
         .maybeSingle();
-      
       if (error) {
         console.error('Error fetching team medal info:', error);
         return null;
       }
-      
       return data;
     },
     enabled: !!eventId && !!team.equipe_id,
   });
 
   useEffect(() => {
-    if (existingScore) {
-      setIsExpanded(true);
-    }
+    if (existingScore) setIsExpanded(true);
   }, [existingScore]);
 
   const handleSubmit = (data: any) => {
     submitScoreMutation.mutate(data, {
-      onSuccess: () => setIsExpanded(false)
+      onSuccess: () => setIsExpanded(false),
     });
   };
 
@@ -135,10 +136,12 @@ function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, r
   };
 
   return (
-    <Card className={`
+    <Card
+      className={`
       overflow-hidden transition-all duration-200
       ${existingScore ? 'border-blue-300 shadow-blue-100' : ''}
-    `}>
+    `}
+    >
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div className="flex-1">
@@ -147,8 +150,11 @@ function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, r
               <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                 Equipe
               </Badge>
-              {team.categoria && (
-                <Badge variant="secondary">{team.categoria}</Badge>
+              {/* Show category if available */}
+              {modalidadeCategoria && (
+                <Badge variant="secondary" className="bg-violet-50 text-violet-700 border-violet-200">
+                  {modalidadeCategoria}
+                </Badge>
               )}
             </CardTitle>
             <div className="mt-2">
@@ -169,19 +175,18 @@ function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, r
               </div>
             </div>
           </div>
-          
-          <MedalDisplay 
-            scoreRecord={existingScore || null} 
+          <MedalDisplay
+            scoreRecord={existingScore || null}
             medalInfo={medalInfo || null}
-            scoreType={tipoPontuacao} 
+            scoreType={tipoPontuacao}
           />
         </div>
       </CardHeader>
 
       <CardContent className="pt-0">
-        <Button 
+        <Button
           variant={isExpanded ? "outline" : "default"}
-          size="sm" 
+          size="sm"
           className="w-full my-2"
           onClick={() => setIsExpanded(!isExpanded)}
           disabled={isLoadingModality}
@@ -196,33 +201,34 @@ function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, r
                 <strong>Pontuação de equipe:</strong> A pontuação será registrada para todos os membros da equipe automaticamente.
               </p>
             </div>
-            
-            {(!!modeloId) ? (
+            {!!modeloId ? (
+              // Passa modeloId, modalityId, equipeId, eventId e judgeId para DynamicScoreForm (que já faz integração tentativas_pontuacao)
               <DynamicScoreForm
                 modeloId={modeloId}
                 modalityId={modalityId}
-                athleteId={representativeAthlete?.atleta_id}
                 equipeId={team.equipe_id}
                 eventId={eventId!}
                 judgeId={judgeId}
                 initialValues={existingScore?.dados_pontuacao || {}}
                 onSuccess={handleDynamicSuccess}
+                // Extra props below for robust support as new requirements arise:
+                representativeAthleteId={representativeAthlete?.atleta_id}
               />
             ) : tipoPontuacao === 'pontos' || tipoPontuacao === 'tempo' || tipoPontuacao === 'distancia' ? (
-              <ScoreForm 
+              <ScoreForm
                 modalityId={modalityId}
                 initialValues={existingScore}
                 onSubmit={handleSubmit}
                 isPending={submitScoreMutation.isPending}
               />
             ) : (
-               <Alert variant="destructive">
-                 <Terminal className="h-4 w-4" />
-                 <AlertTitle>Modelo de Pontuação Ausente</AlertTitle>
-                 <AlertDescription>
-                   Esta modalidade não possui um modelo de pontuação dinâmico configurado. Por favor, contate o organizador.
-                 </AlertDescription>
-               </Alert>
+              <Alert variant="destructive">
+                <Terminal className="h-4 w-4" />
+                <AlertTitle>Modelo de Pontuação Ausente</AlertTitle>
+                <AlertDescription>
+                  Esta modalidade não possui um modelo de pontuação dinâmico configurado. Por favor, contate o organizador.
+                </AlertDescription>
+              </Alert>
             )}
           </div>
         )}
@@ -231,14 +237,33 @@ function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, r
   );
 }
 
-
-// Permitir exibir equipes mesmo que sem membros!
+// Show team card even if the team has no members!
 export function TeamScoreCard(props: TeamScoreCardProps) {
-  const { team } = props;
+  const { team, modalityId } = props;
   const representativeAthlete = team.members[0];
+  const [category, setCategory] = useState<string | null>(null);
+
+  // Fetch the categoria for display on the empty team UI
+  useEffect(() => {
+    let ignore = false;
+    async function fetchCategory() {
+      const { data, error } = await supabase
+        .from('modalidades')
+        .select('categoria')
+        .eq('id', modalityId)
+        .maybeSingle();
+      if (!ignore && !error && data?.categoria) {
+        setCategory(data.categoria);
+      }
+    }
+    // Only fetch if a team exists with no members
+    if (!representativeAthlete) {
+      fetchCategory();
+    }
+    return () => { ignore = true; };
+  }, [modalityId, representativeAthlete]);
 
   if (!representativeAthlete) {
-    // Mesmo que a equipe esteja vazia (sem atletas), ainda mostra o nome e a categoria
     return (
       <Card className="opacity-80">
         <CardHeader className="pb-2">
@@ -247,8 +272,10 @@ export function TeamScoreCard(props: TeamScoreCardProps) {
             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
               Equipe
             </Badge>
-            {team.categoria && (
-              <Badge variant="secondary">{team.categoria}</Badge>
+            {category && (
+              <Badge variant="secondary" className="bg-violet-50 text-violet-700 border-violet-200">
+                {category}
+              </Badge>
             )}
           </CardTitle>
         </CardHeader>
