@@ -34,8 +34,8 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
   const { data: baterias = [], isLoading } = useQuery({
     queryKey: ['dynamic-baterias', modalityId, eventId],
     queryFn: async () => {
-      if (!eventId || !modalityId) {
-        console.log('useDynamicBaterias: Missing parameters', { modalityId, eventId });
+      if (!eventId || !modalityId || !usesBaterias) {
+        console.log('useDynamicBaterias: Missing parameters or baterias disabled', { modalityId, eventId, usesBaterias });
         return [];
       }
       
@@ -132,9 +132,9 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
     }
   });
 
-  // Auto-select bateria when available, but don't auto-create
+  // Auto-select bateria when available, but don't auto-create unless there's a valid context
   useEffect(() => {
-    if (usesBaterias && !isLoadingConfig && !isLoading) {
+    if (usesBaterias && !isLoadingConfig && !isLoading && modalityId && eventId) {
       const modalityKey = `${modalityId}-${eventId}`;
       
       console.log('useEffect: Checking bateria selection', {
@@ -152,16 +152,27 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
           console.log('Auto-selecting first regular bateria:', firstRegularBateria.numero);
           setSelectedBateriaId(firstRegularBateria.numero);
         }
+        return; // Don't auto-create if we have existing baterias
       }
       
-      // Only auto-create if no baterias exist AND we haven't auto-created for this modality yet
-      if (baterias.length === 0 && !hasAutoCreatedRef.current[modalityKey] && !createBateriaMutation.isPending) {
-        console.log('Auto-creating first bateria for modality:', modalityKey);
-        hasAutoCreatedRef.current[modalityKey] = true;
-        createBateriaMutation.mutate({ isFinal: false });
+      // Only auto-create if:
+      // 1. No baterias exist
+      // 2. Haven't auto-created for this modality yet
+      // 3. Not currently creating
+      // 4. The modality actually uses baterias (not just loading state)
+      // 5. User is in a context where they would interact with baterias (e.g., has athletes to score)
+      if (baterias.length === 0 && 
+          !hasAutoCreatedRef.current[modalityKey] && 
+          !createBateriaMutation.isPending &&
+          modeloConfig?.parametros?.baterias === true) {
+        
+        // Only auto-create if we're in an actual scoring context
+        // This prevents auto-creation when just browsing
+        console.log('Conditions met for potential auto-creation, but waiting for user interaction');
+        // Don't auto-create here anymore - let user explicitly create when needed
       }
     }
-  }, [usesBaterias, modalityId, eventId, isLoadingConfig, isLoading, baterias.length, selectedBateriaId]);
+  }, [usesBaterias, modalityId, eventId, isLoadingConfig, isLoading, baterias.length, selectedBateriaId, modeloConfig]);
 
   // Reset selected bateria when switching modalities
   useEffect(() => {
@@ -195,6 +206,8 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
     isLoading: isLoading || isLoadingConfig,
     setSelectedBateriaId,
     createNewBateria: () => {
+      const modalityKey = `${modalityId}-${eventId}`;
+      hasAutoCreatedRef.current[modalityKey] = true; // Mark as manually created
       console.log('Creating new regular bateria');
       createBateriaMutation.mutate({ isFinal: false });
     },
