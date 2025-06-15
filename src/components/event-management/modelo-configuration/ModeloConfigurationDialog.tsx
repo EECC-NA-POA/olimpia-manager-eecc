@@ -7,6 +7,10 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2, Copy } from 'lucide-react';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import { DraggableCampoCard } from './DraggableCampoCard';
 
 interface ModeloConfigurationDialogProps {
   isOpen: boolean;
@@ -48,6 +52,13 @@ export function ModeloConfigurationDialog({
   });
 
   const [campos, setCampos] = useState<CampoConfig[]>([]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     if (editingModelo) {
@@ -248,6 +259,25 @@ export function ModeloConfigurationDialog({
     setCampos(campos.map(campo => 
       campo.id === id ? { ...campo, ...updates } : campo
     ));
+  };
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      setCampos((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        
+        const newItems = arrayMove(items, oldIndex, newIndex);
+        
+        // Update ordem_exibicao based on new positions
+        return newItems.map((item, index) => ({
+          ...item,
+          ordem_exibicao: index + 1
+        }));
+      });
+    }
   };
 
   const handleSave = async () => {
@@ -482,95 +512,40 @@ export function ModeloConfigurationDialog({
                   Adicionar Campo
                 </Button>
               </div>
+              <p className="text-sm text-muted-foreground">
+                Arraste os campos para reordenar. A ordem será refletida na interface de pontuação.
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              {campos.map((campo, index) => (
-                <div key={campo.id} className="border rounded-lg p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium">
-                      Campo {index + 1}
-                      {campo.chave_campo === 'bateria' && (
-                        <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                          Auto-adicionado
-                        </span>
-                      )}
-                    </h4>
-                    {campos.length > 1 && campo.chave_campo !== 'bateria' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeCampo(campo.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label>Chave do Campo</Label>
-                      <Input
-                        value={campo.chave_campo}
-                        onChange={(e) => updateCampo(campo.id, { chave_campo: e.target.value })}
-                        placeholder="Ex: tempo, pontos, distancia"
-                        disabled={campo.chave_campo === 'bateria'}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Rótulo do Campo</Label>
-                      <Input
-                        value={campo.rotulo_campo}
-                        onChange={(e) => updateCampo(campo.id, { rotulo_campo: e.target.value })}
-                        placeholder="Ex: Tempo Final, Pontuação"
-                        disabled={campo.chave_campo === 'bateria'}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Tipo de Input</Label>
-                      <Select
-                        value={campo.tipo_input}
-                        onValueChange={(value) => updateCampo(campo.id, { tipo_input: value })}
-                        disabled={campo.chave_campo === 'bateria'}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="number">Número</SelectItem>
-                          <SelectItem value="integer">Inteiro</SelectItem>
-                          <SelectItem value="text">Texto</SelectItem>
-                          <SelectItem value="calculated">Calculado</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Ordem de Exibição</Label>
-                      <Input
-                        type="number"
-                        value={campo.ordem_exibicao}
-                        onChange={(e) => updateCampo(campo.id, { ordem_exibicao: Number(e.target.value) })}
-                        min="1"
-                        disabled={campo.chave_campo === 'bateria'}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id={`obrigatorio_${campo.id}`}
-                        checked={campo.obrigatorio}
-                        onCheckedChange={(checked) => updateCampo(campo.id, { obrigatorio: checked })}
-                        disabled={campo.chave_campo === 'bateria'}
-                      />
-                      <Label htmlFor={`obrigatorio_${campo.id}`}>Obrigatório</Label>
-                    </div>
-                  </div>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+                modifiers={[restrictToVerticalAxis]}
+              >
+                <SortableContext
+                  items={campos.map(campo => campo.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {campos.map((campo, index) => (
+                    <DraggableCampoCard
+                      key={campo.id}
+                      campo={campo}
+                      index={index}
+                      totalCampos={campos.length}
+                      onUpdate={updateCampo}
+                      onRemove={removeCampo}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+              
+              {campos.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Nenhum campo configurado.</p>
+                  <p>Clique em "Adicionar Campo" para começar.</p>
                 </div>
-              ))}
+              )}
             </CardContent>
           </Card>
           
