@@ -19,17 +19,21 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     unidade: 'pontos', // Default for dynamic scoring
     observacoes: data.observacoes || null, // Ensure observacoes is included
     data_registro: new Date().toISOString(),
-    numero_bateria: data.numero_bateria || null, // Use numero_bateria instead of bateria_id
+    numero_bateria: data.numero_bateria || null, // Use numero_bateria consistently
     raia: data.raia || null
   };
 
   console.log('Final pontuacao data for database:', pontuacaoData);
   console.log('Final observacoes value for database:', pontuacaoData.observacoes);
+  console.log('Final numero_bateria value for database:', pontuacaoData.numero_bateria);
 
-  // Remove onConflict specification to let Supabase use the table's default constraint
+  // Use the correct unique constraint for upsert
   const { data: pontuacao, error } = await supabase
     .from('pontuacoes')
-    .upsert(pontuacaoData)
+    .upsert(pontuacaoData, {
+      onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id,modelo_id,numero_bateria',
+      ignoreDuplicates: false
+    })
     .select()
     .single();
 
