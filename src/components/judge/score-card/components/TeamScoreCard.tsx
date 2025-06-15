@@ -201,13 +201,13 @@ function TeamScoreCardContent({
               </p>
             </div>
             {!!modeloId ? (
-              // Passa modeloId, modalityId, equipeId, eventId e judgeId para DynamicScoreForm (que já faz integração tentativas_pontuacao)
               <DynamicScoreForm
                 modeloId={modeloId}
                 modalityId={modalityId}
                 equipeId={team.equipe_id}
                 eventId={eventId!}
                 judgeId={judgeId}
+                athleteId={representativeAthlete.atleta_id}
                 initialValues={existingScore?.dados_pontuacao || {}}
                 onSuccess={handleDynamicSuccess}
               />
