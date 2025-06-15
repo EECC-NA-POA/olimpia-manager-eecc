@@ -9,9 +9,12 @@ interface ModeloConfigurationFiltersProps {
   onSearchChange: (value: string) => void;
   modalityFilter: string;
   onModalityFilterChange: (value: string) => void;
+  categoryFilter: string;
+  onCategoryFilterChange: (value: string) => void;
   useBatteryFilter: string;
   onUseBatteryFilterChange: (value: string) => void;
   modalities: Array<{ id: number; nome: string }>;
+  categories: Array<string>;
 }
 
 export function ModeloConfigurationFilters({
@@ -19,9 +22,12 @@ export function ModeloConfigurationFilters({
   onSearchChange,
   modalityFilter,
   onModalityFilterChange,
+  categoryFilter,
+  onCategoryFilterChange,
   useBatteryFilter,
   onUseBatteryFilterChange,
-  modalities
+  modalities,
+  categories
 }: ModeloConfigurationFiltersProps) {
   return (
     <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -47,6 +53,20 @@ export function ModeloConfigurationFilters({
           {modalities.map((modality) => (
             <SelectItem key={modality.id} value={modality.id.toString()}>
               {modality.nome}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={categoryFilter} onValueChange={onCategoryFilterChange}>
+        <SelectTrigger className="w-full md:w-[180px]">
+          <SelectValue placeholder="Filtrar por categoria" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todas as categorias</SelectItem>
+          {categories.map((category) => (
+            <SelectItem key={category} value={category}>
+              {category}
             </SelectItem>
           ))}
         </SelectContent>

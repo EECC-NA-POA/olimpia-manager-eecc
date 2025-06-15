@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 export function useModeloFiltering(modelos: any[]) {
   const [searchTerm, setSearchTerm] = useState('');
   const [modalityFilter, setModalityFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [useBatteryFilter, setUseBatteryFilter] = useState('all');
   const [sortConfig, setSortConfig] = useState<{
     key: string;
@@ -27,12 +28,16 @@ export function useModeloFiltering(modelos: any[]) {
       const modalityMatch = modalityFilter === 'all' || 
         modelo.modalidade_id?.toString() === modalityFilter;
 
+      // Category filter
+      const categoryMatch = categoryFilter === 'all' || 
+        modelo.modalidade?.categoria?.toLowerCase() === categoryFilter.toLowerCase();
+
       // Battery filter
       const batteryMatch = useBatteryFilter === 'all' || 
         (useBatteryFilter === 'true' && modelo.parametros?.baterias === true) ||
         (useBatteryFilter === 'false' && modelo.parametros?.baterias !== true);
 
-      return searchMatch && modalityMatch && batteryMatch;
+      return searchMatch && modalityMatch && categoryMatch && batteryMatch;
     });
 
     // Apply sorting
@@ -72,7 +77,7 @@ export function useModeloFiltering(modelos: any[]) {
     }
 
     return filtered;
-  }, [modelos, searchTerm, modalityFilter, useBatteryFilter, sortConfig]);
+  }, [modelos, searchTerm, modalityFilter, categoryFilter, useBatteryFilter, sortConfig]);
 
   const handleSort = (key: string) => {
     setSortConfig(current => {
@@ -90,6 +95,8 @@ export function useModeloFiltering(modelos: any[]) {
     setSearchTerm,
     modalityFilter,
     setModalityFilter,
+    categoryFilter,
+    setCategoryFilter,
     useBatteryFilter,
     setUseBatteryFilter,
     sortConfig,
