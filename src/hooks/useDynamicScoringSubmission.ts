@@ -51,7 +51,7 @@ export function useDynamicScoringSubmission() {
 
         // CRITICAL: Create clean data object with ONLY valid database fields
         // For modalities that don't use baterias, completely exclude numero_bateria
-        const cleanDataForDb = {
+        const cleanDataForDb: any = {
           eventId: data.eventId,
           modalityId: data.modalityId,
           judgeId: data.judgeId,
@@ -148,6 +148,8 @@ export function useDynamicScoringSubmission() {
         errorMessage = 'Erro com número da bateria. Verifique a configuração.';
       } else if (error?.message?.includes('column') && error?.message?.includes('does not exist')) {
         errorMessage = 'Erro de configuração do banco de dados. Entre em contato com o suporte.';
+      } else if (error?.message) {
+        errorMessage = `Erro: ${error.message}`;
       } else if (error?.message) {
         errorMessage = `Erro: ${error.message}`;
       }
