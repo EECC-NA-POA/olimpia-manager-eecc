@@ -25,16 +25,24 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
 
   console.log('Final pontuacao data for database:', pontuacaoData);
 
-  // Primeiro, buscar registro existente
-  const { data: existingRecords, error: findError } = await supabase
+  // Build the search query with proper NULL handling
+  let searchQuery = supabase
     .from('pontuacoes')
     .select('id')
     .eq('atleta_id', pontuacaoData.atleta_id)
     .eq('modalidade_id', pontuacaoData.modalidade_id)
     .eq('evento_id', pontuacaoData.evento_id)
     .eq('juiz_id', pontuacaoData.juiz_id)
-    .eq('modelo_id', pontuacaoData.modelo_id)
-    .eq('numero_bateria', pontuacaoData.numero_bateria || null);
+    .eq('modelo_id', pontuacaoData.modelo_id);
+
+  // Handle numero_bateria correctly - use is() for NULL values
+  if (pontuacaoData.numero_bateria === null) {
+    searchQuery = searchQuery.is('numero_bateria', null);
+  } else {
+    searchQuery = searchQuery.eq('numero_bateria', pontuacaoData.numero_bateria);
+  }
+
+  const { data: existingRecords, error: findError } = await searchQuery;
 
   if (findError) {
     console.error('Error searching for existing record:', findError);
