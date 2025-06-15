@@ -26,30 +26,30 @@ export function TeamMembersDisplay({ modalityId, athleteId, eventId, isTeamModal
       }
       
       try {
-        // First get the team ID for this athlete in this modality
-        const { data: enrollment, error: enrollmentError } = await supabase
-          .from('inscricoes_modalidades')
-          .select('equipe_id')
-          .eq('modalidade_id', modalityId)
+        // Find the team for the current athlete in this modality and event context.
+        const { data: teamEnrollment, error: teamEnrollmentError } = await supabase
+          .from('atletas_equipes')
+          .select('equipes!inner(id, modalidade_id, evento_id)')
           .eq('atleta_id', athleteId)
-          .eq('evento_id', eventId)
-          .maybeSingle();
-        
-        if (enrollmentError || !enrollment?.equipe_id) {
-          console.error('Error fetching team:', enrollmentError);
+          .eq('equipes.modalidade_id', modalityId)
+          .eq('equipes.evento_id', eventId)
+          .single();
+
+        if (teamEnrollmentError || !teamEnrollment) {
+          console.error('Error or no team found for athlete in this context:', teamEnrollmentError);
           return [];
         }
+
+        const teamId = teamEnrollment.equipes.id;
         
         // Then get all athletes in that team
         const { data: members, error: membersError } = await supabase
-          .from('inscricoes_modalidades')
+          .from('atletas_equipes')
           .select(`
             atleta_id,
             usuarios:atleta_id(nome_completo)
           `)
-          .eq('modalidade_id', modalityId)
-          .eq('evento_id', eventId)
-          .eq('equipe_id', enrollment.equipe_id);
+          .eq('equipe_id', teamId);
         
         if (membersError) {
           console.error('Error fetching team members:', membersError);

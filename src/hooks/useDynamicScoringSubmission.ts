@@ -44,11 +44,9 @@ export function useDynamicScoringSubmission() {
           console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
           
           const { data: teamMembersQuery, error: teamError } = await supabase
-            .from('inscricoes_modalidades')
+            .from('atletas_equipes')
             .select('atleta_id')
-            .eq('equipe_id', data.equipeId)
-            .eq('evento_id', data.eventId)
-            .eq('modalidade_id', data.modalityId);
+            .eq('equipe_id', data.equipeId);
 
           if (teamError) {
             console.error('Error fetching team members:', teamError);
