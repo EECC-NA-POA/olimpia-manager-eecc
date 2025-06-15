@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -115,12 +116,16 @@ export function useDynamicScoringSubmission() {
 
         // --- Individual submission logic (existing logic) ---
         console.log('--- Submissão Individual ---');
-        const { bateriaId, ...restOfData } = data;
         const dataForDb = {
-          ...restOfData,
+          eventId: data.eventId,
+          modalityId: data.modalityId,
+          athleteId: data.athleteId,
+          equipeId: data.equipeId,
+          judgeId: data.judgeId,
+          modeloId: data.modeloId,
           raia,
           observacoes,
-          numero_bateria: bateriaId || null,
+          numero_bateria: data.bateriaId || null,
         };
         
         const pontuacao = await upsertPontuacao(dataForDb as any, valorPontuacao);
