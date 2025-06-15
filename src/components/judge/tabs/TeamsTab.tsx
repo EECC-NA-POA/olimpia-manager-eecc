@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
@@ -70,7 +71,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     modalidade_nome: modality.nome
   })) || [];
 
-  // Caso seja juiz, renderiza somente a tela de pontuação (NÃO GERENCIA equipes)
+  // EXCLUSIVO: Juiz só vê a tela de pontuação de equipes
   if (isJudgeOnly) {
     return (
       <div className="space-y-6">
@@ -108,6 +109,30 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
 
   // For delegation representatives only, show only the "Manage Teams" tab (no scoring)
   if (isDelegationRepOnly) {
+    const {
+      modalities,
+      teams,
+      availableAthletes,
+      selectedModalityId,
+      setSelectedModalityId,
+      isLoading,
+      createTeam,
+      deleteTeam,
+      addAthlete,
+      removeAthlete,
+      updateAthletePosition,
+      isCreatingTeam,
+      isDeletingTeam,
+      isAddingAthlete,
+      isRemovingAthlete,
+      isUpdatingAthlete,
+      teamToDelete,
+      isDeleteDialogOpen,
+      setIsDeleteDialogOpen,
+      confirmDeleteTeam,
+      cancelDeleteTeam
+    } = useTeamManager(eventId);
+
     return (
       <div className="space-y-6">
         <TeamsTabHeader isOrganizer={false}>
@@ -139,6 +164,31 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
       </div>
     );
   }
+
+  // ORGANIZADOR: gerenciamento completo
+  const {
+    modalities,
+    teams,
+    availableAthletes,
+    selectedModalityId,
+    setSelectedModalityId,
+    isLoading,
+    createTeam,
+    deleteTeam,
+    addAthlete,
+    removeAthlete,
+    updateAthletePosition,
+    isCreatingTeam,
+    isDeletingTeam,
+    isAddingAthlete,
+    isRemovingAthlete,
+    isUpdatingAthlete,
+    teamToDelete,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    confirmDeleteTeam,
+    cancelDeleteTeam
+  } = useTeamManager(eventId);
 
   return (
     <div className="space-y-6">
