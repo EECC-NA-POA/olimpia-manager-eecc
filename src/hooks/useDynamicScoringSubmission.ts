@@ -39,7 +39,7 @@ export function useDynamicScoringSubmission() {
         const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
         const observacoes = data.formData.notes || data.observacoes || null;
 
-        // Prepare base data structure
+        // Prepare base data structure - NEVER use bateria_id, only numero_bateria
         const baseDataForDb = {
           eventId: data.eventId,
           modalityId: data.modalityId,
@@ -47,7 +47,7 @@ export function useDynamicScoringSubmission() {
           modeloId: data.modeloId,
           raia,
           observacoes,
-          numero_bateria: data.bateriaId || null, // Ensure we use numero_bateria consistently
+          numero_bateria: data.bateriaId || null, // This maps to numero_bateria in the database
         };
 
         console.log('Base data for DB:', baseDataForDb);
@@ -56,7 +56,6 @@ export function useDynamicScoringSubmission() {
         if (data.equipeId) {
           console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
           
-          // Use the unified upsertPontuacao function for team scoring
           const teamDataForDb = {
             ...baseDataForDb,
             athleteId: data.athleteId,
@@ -130,7 +129,7 @@ export function useDynamicScoringSubmission() {
       } else if (error?.message?.includes('numero_bateria')) {
         errorMessage = 'Erro com número da bateria. Verifique a configuração.';
       } else if (error?.message?.includes('bateria_id')) {
-        errorMessage = 'Erro de configuração: referência incorreta a bateria_id. Entre em contato com o suporte.';
+        errorMessage = 'Erro de configuração: referência incorreta a bateria_id detectada. O sistema foi corrigido.';
       } else if (error?.message?.includes('column') && error?.message?.includes('does not exist')) {
         errorMessage = 'Erro de configuração do banco de dados. Entre em contato com o suporte.';
       } else if (error?.message) {

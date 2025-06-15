@@ -25,7 +25,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
 
   console.log('Final pontuacao data for database:', pontuacaoData);
 
-  // Build the query step by step to handle null values properly
+  // First, try to find existing record using manual query building
   let query = supabase
     .from('pontuacoes')
     .select('id')
@@ -35,7 +35,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     .eq('juiz_id', pontuacaoData.juiz_id)
     .eq('modelo_id', pontuacaoData.modelo_id);
 
-  // Handle numero_bateria null/not null cases properly
+  // Handle numero_bateria properly for both null and non-null cases
   if (pontuacaoData.numero_bateria === null) {
     query = query.is('numero_bateria', null);
   } else {
@@ -67,11 +67,11 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     }
     result = updatedRecord;
   } else {
-    // Insert new record
+    // Insert new record - this is where the error was happening
     console.log('Inserting new record');
     const { data: newRecord, error } = await supabase
       .from('pontuacoes')
-      .insert(pontuacaoData)
+      .insert([pontuacaoData])
       .select()
       .single();
     
