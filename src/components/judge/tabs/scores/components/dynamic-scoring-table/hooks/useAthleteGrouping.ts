@@ -119,7 +119,8 @@ export function useAthleteGrouping({
       athletesLength: athletes.length,
       scoredAthletesLength: athleteGroups.scoredAthletes.length,
       unscoredAthletesLength: athleteGroups.unscoredAthletes.length,
-      selectedUnscoredSize: selectedUnscored.size
+      selectedUnscoredSize: selectedUnscored.size,
+      selectedBateriaId
     });
     
     if (!usesBaterias) {
@@ -132,7 +133,17 @@ export function useAthleteGrouping({
       return result;
     }
 
-    // For bateria mode, show scored + selected unscored
+    // For bateria mode without selected bateria, show ALL athletes to allow selection
+    if (!selectedBateriaId) {
+      const result = [...athletes].sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome));
+      console.log('Bateria mode without selected bateria - Show all athletes for selection:', {
+        count: result.length,
+        athletes: result.map(a => a.atleta_nome)
+      });
+      return result;
+    }
+
+    // For bateria mode with selected bateria, show scored + selected unscored
     const selectedUnscoredAthletes = athleteGroups.unscoredAthletes.filter(athlete => 
       selectedUnscored.has(athlete.atleta_id)
     );
@@ -142,7 +153,7 @@ export function useAthleteGrouping({
       ...selectedUnscoredAthletes
     ];
     
-    console.log('Bateria mode - Main table calculation:', {
+    console.log('Bateria mode with selected bateria - Main table calculation:', {
       scoredAthletes: athleteGroups.scoredAthletes.map(a => a.atleta_nome),
       selectedUnscoredAthletes: selectedUnscoredAthletes.map(a => a.atleta_nome),
       finalCount: result.length,
@@ -151,12 +162,12 @@ export function useAthleteGrouping({
     console.log('=== END MAIN TABLE ATHLETES CALCULATION ===');
     
     return result;
-  }, [athletes, athleteGroups.scoredAthletes, athleteGroups.unscoredAthletes, selectedUnscored, usesBaterias]);
+  }, [athletes, athleteGroups.scoredAthletes, athleteGroups.unscoredAthletes, selectedUnscored, usesBaterias, selectedBateriaId]);
 
-  // Athletes to show in the unscored section (unscored - selected) - only for bateria mode
+  // Athletes to show in the unscored section (unscored - selected) - only for bateria mode with selected bateria
   const unscoredSectionAthletes = React.useMemo(() => {
-    if (!usesBaterias) {
-      // No unscored section for non-bateria modalities
+    if (!usesBaterias || !selectedBateriaId) {
+      // No unscored section for non-bateria modalities or when no bateria is selected
       return [];
     }
 
@@ -168,7 +179,7 @@ export function useAthleteGrouping({
       athletes: result.map(a => a.atleta_nome)
     });
     return result;
-  }, [athleteGroups.unscoredAthletes, selectedUnscored, usesBaterias]);
+  }, [athleteGroups.unscoredAthletes, selectedUnscored, usesBaterias, selectedBateriaId]);
 
   return {
     mainTableAthletes,
