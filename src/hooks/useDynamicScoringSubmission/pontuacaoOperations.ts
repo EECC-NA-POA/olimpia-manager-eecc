@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 
 export async function upsertPontuacao(data: any, valorPontuacao: number) {
@@ -18,8 +19,8 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     unidade: 'pontos', // Default for dynamic scoring
     observacoes: data.observacoes || null, // Ensure observacoes is included
     data_registro: new Date().toISOString(),
-    numero_bateria: data.bateriaId || null, // Changed from bateria_id to numero_bateria
-    raia: data.raia || null // Changed from numero_raia to raia
+    numero_bateria: data.numero_bateria || null, // FIX: Use the correct property from the submission hook
+    raia: data.raia || null
   };
 
   console.log('Final pontuacao data for database:', pontuacaoData);
