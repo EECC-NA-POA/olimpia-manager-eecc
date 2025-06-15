@@ -19,7 +19,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number) {
     unidade: 'pontos', // Default for dynamic scoring
     observacoes: data.observacoes || null, // Ensure observacoes is included
     data_registro: new Date().toISOString(),
-    numero_bateria: data.numero_bateria || null, // FIX: Use the correct property from the submission hook
+    numero_bateria: data.numero_bateria || null, // Use numero_bateria instead of bateria_id
     raia: data.raia || null
   };
 
