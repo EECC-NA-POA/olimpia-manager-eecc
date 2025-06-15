@@ -39,8 +39,10 @@ export function AthletesListTabularContainer({
     hasModelo
   } = modalityResult;
   
-  // Extract modalityError safely - it might not exist in all hook versions
-  const modalityError = 'error' in modalityResult ? modalityResult.error : null;
+  // Extract modalityError safely with proper typing
+  const modalityError = ('error' in modalityResult && typeof modalityResult.error === 'string') 
+    ? modalityResult.error 
+    : null;
 
   // Get bateria data for this modality
   const {

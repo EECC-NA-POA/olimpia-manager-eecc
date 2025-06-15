@@ -19,8 +19,10 @@ export function AthletesListTabular({
   const athletesResult = useAthletes(modalityId, eventId);
   const { data: athletes, isLoading } = athletesResult;
   
-  // Extract error safely - it might not exist in all hook versions
-  const error = 'error' in athletesResult ? athletesResult.error : null;
+  // Extract error safely with proper typing
+  const error = ('error' in athletesResult && typeof athletesResult.error === 'string') 
+    ? athletesResult.error 
+    : null;
 
   console.log('=== ATHLETES LIST TABULAR ===');
   console.log('Dados recebidos do hook useAthletes:', {
