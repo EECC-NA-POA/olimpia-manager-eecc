@@ -7,7 +7,7 @@ export async function handleIndividualScore(
   eventId: string,
   modalityIdInt: number
 ): Promise<SaveScoreResult> {
-  console.log('Handling individual score for bateria:', recordData.bateria_id);
+  console.log('Handling individual score for bateria:', recordData.numero_bateria);
   
   // Check for existing record for this specific bateria
   const { data: existingRecords, error: fetchError } = await supabase
@@ -16,7 +16,7 @@ export async function handleIndividualScore(
     .eq('evento_id', eventId)
     .eq('modalidade_id', modalityIdInt)
     .eq('atleta_id', recordData.atleta_id)
-    .eq('bateria_id', recordData.bateria_id);
+    .eq('numero_bateria', recordData.numero_bateria);
   
   if (fetchError) {
     console.error('Error checking for existing record:', fetchError);
@@ -24,14 +24,14 @@ export async function handleIndividualScore(
   }
   
   const existingRecord = existingRecords && existingRecords.length > 0 ? existingRecords[0] : null;
-  console.log('Existing record found for bateria', recordData.bateria_id, ':', existingRecord ? 'Yes' : 'No');
+  console.log('Existing record found for bateria', recordData.numero_bateria, ':', existingRecord ? 'Yes' : 'No');
   
   let result;
   let operation;
   
   if (existingRecord) {
     // Update existing record for this specific bateria
-    console.log('Updating existing individual record for bateria:', recordData.bateria_id);
+    console.log('Updating existing individual record for bateria:', recordData.numero_bateria);
     const updateData: any = {
       valor_pontuacao: recordData.valor_pontuacao,
       unidade: recordData.unidade,
@@ -55,7 +55,7 @@ export async function handleIndividualScore(
     operation = 'update';
   } else {
     // Insert new record for this bateria
-    console.log('Inserting new individual record for bateria:', recordData.bateria_id);
+    console.log('Inserting new individual record for bateria:', recordData.numero_bateria);
     
     const insertData: any = {
       evento_id: recordData.evento_id,
@@ -67,7 +67,7 @@ export async function handleIndividualScore(
       observacoes: recordData.observacoes,
       juiz_id: recordData.juiz_id,
       data_registro: recordData.data_registro,
-      bateria_id: recordData.bateria_id
+      numero_bateria: recordData.numero_bateria
     };
 
     const { data: insertResult, error: insertError } = await supabase
@@ -84,7 +84,7 @@ export async function handleIndividualScore(
     operation = 'insert';
   }
   
-  console.log('Individual score saved successfully for bateria:', recordData.bateria_id, result ? 'Success' : 'No data returned');
+  console.log('Individual score saved successfully for bateria:', recordData.numero_bateria, result ? 'Success' : 'No data returned');
   return { 
     success: true, 
     data: result, 
