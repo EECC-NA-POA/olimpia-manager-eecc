@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -75,7 +74,7 @@ export function DynamicScoreForm({
   // and we are not using the full 'baterias' system.
   if (hasRaiaParam && !usesBaterias && !raiaFieldExists) {
     const raiaField: CampoModelo = {
-      id: `param_raia_${modeloId}`, // Make ID unique
+      id: -Math.floor(Math.random() * 100000), // Make ID unique and numeric
       modelo_id: modeloId,
       chave_campo: 'raia',
       rotulo_campo: 'Raia',
@@ -83,7 +82,6 @@ export function DynamicScoreForm({
       obrigatorio: true,
       ordem_exibicao: 0, // Show it near the top
       metadados: { placeholder: 'Número da raia' },
-      created_at: new Date().toISOString()
     };
     campos = [raiaField, ...campos];
   }

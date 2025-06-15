@@ -21,6 +21,7 @@ export interface CampoModelo {
     max?: number;
     step?: number;
     opcoes?: string[];
+    placeholder?: string;
     // Metadados para campos calculados
     tipo_calculo?: 'colocacao_bateria' | 'colocacao_final' | 'custom';
     campo_referencia?: string;

@@ -33,7 +33,7 @@ export function NumberField({ campo, form }: NumberFieldProps) {
               step={campo.tipo_input === 'integer' ? '1' : (campo.metadados?.step || 'any')}
               min={campo.metadados?.min}
               max={campo.metadados?.max}
-              placeholder={`Digite ${campo.rotulo_campo.toLowerCase()}`}
+              placeholder={campo.metadados?.placeholder || `Digite ${campo.rotulo_campo.toLowerCase()}`}
               {...field}
               onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : '')}
             />
