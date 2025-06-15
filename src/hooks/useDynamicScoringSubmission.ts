@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -45,42 +44,13 @@ export function useDynamicScoringSubmission() {
         if (data.equipeId) {
           console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
           
-          // Query team members using the correct approach - check both 'equipe_id' and 'time_id' columns
-          let teamMembers;
-          let teamError;
-          
-          // First try with 'time_id' column
-          const { data: teamMembersTimeId, error: teamErrorTimeId } = await supabase
+          // Fetch team members directly from 'inscricoes_modalidades' using 'equipe_id'
+          const { data: teamMembers, error: teamError } = await supabase
             .from('inscricoes_modalidades')
             .select('atleta_id')
-            .eq('time_id', data.equipeId)
+            .eq('equipe_id', data.equipeId)
             .eq('evento_id', data.eventId)
             .eq('modalidade_id', data.modalityId);
-
-          if (!teamErrorTimeId && teamMembersTimeId && teamMembersTimeId.length > 0) {
-            teamMembers = teamMembersTimeId;
-            teamError = null;
-          } else {
-            // Fallback: try with a different column name or approach
-            console.log('Could not fetch team members with time_id, trying alternative approach');
-            
-            // Try to get team members through the equipes table
-            const { data: teamInfo, error: teamInfoError } = await supabase
-              .from('equipes')
-              .select(`
-                atletas:inscricoes_modalidades(atleta_id)
-              `)
-              .eq('id', data.equipeId)
-              .single();
-
-            if (!teamInfoError && teamInfo?.atletas) {
-              teamMembers = teamInfo.atletas;
-              teamError = null;
-            } else {
-              teamMembers = null;
-              teamError = teamErrorTimeId || teamInfoError;
-            }
-          }
 
           if (teamError || !teamMembers || teamMembers.length === 0) {
             console.error('Error fetching team members or no members found:', teamError);
