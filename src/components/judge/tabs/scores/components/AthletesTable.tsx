@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Table,
@@ -136,7 +135,7 @@ export function AthletesTable({
         eventId: eventId!,
         judgeId,
         scoreType,
-        bateriaId: selectedBateriaId
+        numeroBateria: selectedBateriaId
       });
       cancelEditing(athleteId);
     } catch (error) {
