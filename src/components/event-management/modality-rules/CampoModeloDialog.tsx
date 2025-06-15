@@ -24,7 +24,7 @@ import { CalculatedFieldConfig } from './campo-dialog/CalculatedFieldConfig';
 const campoSchema = z.object({
   chave_campo: z.string().min(1, 'Chave é obrigatória'),
   rotulo_campo: z.string().min(1, 'Rótulo é obrigatório'),
-  tipo_input: z.enum(['number', 'integer', 'text', 'select', 'calculated', 'checkbox']),
+  tipo_input: z.enum(['number', 'integer', 'text', 'select', 'calculated', 'checkbox', 'configuration']),
   obrigatorio: z.boolean(),
   ordem_exibicao: z.coerce.number().min(1),
   min: z.coerce.number().optional(),
