@@ -54,7 +54,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     modalidade_id: team.modalidade_id,
     modalidade_nome: team.modalidade_info?.nome || '',
     tipo_pontuacao: (team.modalidade_info as any)?.tipo_pontuacao || 'pontos',
-    categoria: (team.modalidade_info as any)?.categoria || team.categoria || '', // Categoria explícita
+    categoria: (team.modalidade_info as any)?.categoria || '', // Corrigido: agora puxa da modalidade_info
     filial_nome: team.filial_id || '',
     members: Array.isArray(team.atletas)
       ? team.atletas.map(athlete => ({
