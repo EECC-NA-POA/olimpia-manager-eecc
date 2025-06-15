@@ -42,7 +42,7 @@ export function DynamicScoreFormContent({
         modeloId={modeloId}
         modalityId={modalityId}
         eventId={eventId}
-        bateriaId={bateriaId}
+        numeroBateria={bateriaId}
       />
       
       <FormField
