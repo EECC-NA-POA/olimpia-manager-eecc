@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Athlete } from '../../hooks/useAthletes';
 import { CampoModelo } from '@/types/dynamicScoring';
@@ -8,6 +9,7 @@ import { useAthleteGrouping } from './hooks/useAthleteGrouping';
 import { MainScoringTable } from './components/MainScoringTable';
 import { UnscoredAthletesSection } from './components/UnscoredAthletesSection';
 import { EmptyStateMessage } from './components/EmptyStateMessage';
+import { BateriaRequiredMessage } from './components/BateriaRequiredMessage';
 
 interface DynamicScoringTableContentProps {
   athletes: Athlete[];
@@ -107,6 +109,11 @@ export function DynamicScoringTableContent({
 
   const totalVisibleAthletes = mainTableAthletes.length + unscoredSectionAthletes.length;
   const hasAnyAthletes = athletes.length > 0;
+
+  // If modality uses baterias but no bateria is selected, show create bateria message
+  if (usesBaterias && !selectedBateriaId) {
+    return <BateriaRequiredMessage />;
+  }
 
   console.log('Rendering decision:', {
     hasAnyAthletes,
