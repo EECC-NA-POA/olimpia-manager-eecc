@@ -60,7 +60,6 @@ export function MainScoringTable({
                 <div className="flex flex-col items-center">
                   <span className="font-medium">{campo.rotulo_campo}</span>
                   {campo.obrigatorio && <span className="text-red-500 text-xs">*obrigatório</span>}
-                  <span className="text-xs text-muted-foreground">({campo.tipo_input})</span>
                 </div>
               </TableHead>
             ))}
@@ -78,7 +77,7 @@ export function MainScoringTable({
               hasUnsavedChanges={unsavedChanges.has(athlete.atleta_id)}
               editValues={editValues}
               selectedBateriaId={selectedBateriaId}
-              athleteIndex={index} // Pass the index for sequential numbering
+              athleteIndex={index}
               onEdit={onEdit}
               onSave={onSave}
               onCancel={onCancel}

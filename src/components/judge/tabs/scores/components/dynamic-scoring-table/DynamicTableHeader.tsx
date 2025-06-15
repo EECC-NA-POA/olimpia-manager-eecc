@@ -27,8 +27,10 @@ export function DynamicTableHeader({ campos }: DynamicTableHeaderProps) {
         
         {scoringFields.map((campo) => (
           <TableHead key={campo.id} className="text-center min-w-[120px]">
-            {campo.rotulo_campo}
-            {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
+            <div className="flex flex-col items-center">
+              <span className="font-medium">{campo.rotulo_campo}</span>
+              {campo.obrigatorio && <span className="text-red-500 text-xs">*obrigatório</span>}
+            </div>
           </TableHead>
         ))}
         

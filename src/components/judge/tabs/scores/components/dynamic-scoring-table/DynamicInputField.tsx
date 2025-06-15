@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +11,7 @@ interface DynamicInputFieldProps {
   value: string | number;
   onChange: (value: string | number) => void;
   selectedBateriaId?: number | null;
-  athleteIndex?: number; // New prop to determine the sequential number
+  athleteIndex?: number;
 }
 
 export function DynamicInputField({ 
@@ -42,8 +43,8 @@ export function DynamicInputField({
 
   // Lógica especial para o campo "Bateria"
   if (campo.chave_campo === 'bateria' || campo.chave_campo === 'numero_bateria') {
-    // Auto-fill with sequential numbers starting from 1
     let displayValue: string;
+    let autoFillValue: number;
     
     if (value) {
       // If there's already a saved value, use it
@@ -51,14 +52,19 @@ export function DynamicInputField({
     } else if (selectedBateriaId) {
       // If there's a selected bateria, use its number
       displayValue = selectedBateriaId === 999 ? 'Final' : selectedBateriaId.toString();
+      autoFillValue = selectedBateriaId === 999 ? 999 : selectedBateriaId;
     } else {
       // Auto-fill with sequential number starting from 1
-      displayValue = (athleteIndex + 1).toString();
-      // Auto-set the value when component renders
-      if (!value) {
-        onChange(athleteIndex + 1);
-      }
+      autoFillValue = athleteIndex + 1;
+      displayValue = autoFillValue.toString();
     }
+    
+    // Auto-set the value when component renders and no value exists
+    React.useEffect(() => {
+      if (!value && autoFillValue !== undefined) {
+        onChange(autoFillValue);
+      }
+    }, [value, autoFillValue, onChange]);
     
     return (
       <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
