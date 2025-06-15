@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Save, X, Edit, Trash2 } from 'lucide-react';
 import { Athlete } from '../../hooks/useAthletes';
 import { CampoModelo } from '@/types/dynamicScoring';
 import { filterScoringFields } from '@/utils/dynamicScoringUtils';
+import { DynamicInputField } from './DynamicInputField';
 
 interface AthleteTableRowProps {
   athlete: Athlete;
@@ -18,6 +18,7 @@ interface AthleteTableRowProps {
   hasUnsavedChanges: boolean;
   editValues: Record<string, any>;
   selectedBateriaId?: number | null;
+  athleteIndex?: number; // New prop for sequential numbering
   onEdit: (athleteId: string) => void;
   onSave: (athleteId: string) => void;
   onCancel: (athleteId: string) => void;
@@ -38,6 +39,7 @@ export function AthleteTableRow({
   hasUnsavedChanges,
   editValues,
   selectedBateriaId,
+  athleteIndex = 0,
   onEdit,
   onSave,
   onCancel,
@@ -54,48 +56,23 @@ export function AthleteTableRow({
   
   console.log('AthleteTableRow - Filtering fields for athlete:', athlete.atleta_nome, {
     originalCount: campos.length,
-    filteredCount: scoringFields.length
+    filteredCount: scoringFields.length,
+    athleteIndex
   });
 
   const renderFieldInput = (campo: CampoModelo) => {
     const fieldKey = campo.chave_campo;
     const currentValue = getFieldValue(athlete.atleta_id, fieldKey);
 
-    if (campo.tipo_input === 'select' && campo.metadados?.opcoes) {
-      const options = campo.metadados.opcoes;
-      
-      return (
-        <Select
-          value={currentValue?.toString() || ''}
-          onValueChange={(value) => onFieldChange(athlete.atleta_id, fieldKey, value)}
-        >
-          <SelectTrigger className="h-8">
-            <SelectValue placeholder="Selecione..." />
-          </SelectTrigger>
-          <SelectContent>
-            {options.map((option) => (
-              <SelectItem key={option} value={option}>
-                {option}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      );
-    }
-
+    // Use the DynamicInputField component for consistent behavior
     return (
-      <Input
-        type={campo.tipo_input === 'number' || campo.tipo_input === 'integer' ? 'number' : 'text'}
-        value={currentValue?.toString() || ''}
-        onChange={(e) => {
-          const value = (campo.tipo_input === 'number' || campo.tipo_input === 'integer') ? 
-            (e.target.value === '' ? '' : Number(e.target.value)) : 
-            e.target.value;
-          onFieldChange(athlete.atleta_id, fieldKey, value);
-        }}
-        className="h-8"
-        placeholder={`Digite ${campo.rotulo_campo.toLowerCase()}`}
-        step={campo.tipo_input === 'number' ? 'any' : undefined}
+      <DynamicInputField
+        campo={campo}
+        athleteId={athlete.atleta_id}
+        value={currentValue}
+        onChange={(value) => onFieldChange(athlete.atleta_id, fieldKey, value)}
+        selectedBateriaId={selectedBateriaId}
+        athleteIndex={athleteIndex}
       />
     );
   };

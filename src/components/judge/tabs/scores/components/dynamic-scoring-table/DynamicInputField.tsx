@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +10,7 @@ interface DynamicInputFieldProps {
   value: string | number;
   onChange: (value: string | number) => void;
   selectedBateriaId?: number | null;
+  athleteIndex?: number; // New prop to determine the sequential number
 }
 
 export function DynamicInputField({ 
@@ -18,14 +18,16 @@ export function DynamicInputField({
   athleteId, 
   value, 
   onChange,
-  selectedBateriaId
+  selectedBateriaId,
+  athleteIndex = 0
 }: DynamicInputFieldProps) {
   
   console.log(`DynamicInputField - ${campo.chave_campo}:`, {
     athleteId,
     campo: campo.chave_campo,
     currentValue: value,
-    tipo: campo.tipo_input
+    tipo: campo.tipo_input,
+    athleteIndex
   });
 
   // Se é um campo calculado, mostrar apenas o valor sem botão de calcular individual
@@ -40,15 +42,27 @@ export function DynamicInputField({
 
   // Lógica especial para o campo "Bateria"
   if (campo.chave_campo === 'bateria' || campo.chave_campo === 'numero_bateria') {
-    // Se não há valor salvo e há uma bateria selecionada, usar o número da bateria selecionada
-    const displayValue = value || (selectedBateriaId === 999 ? 'Final' : selectedBateriaId?.toString()) || '';
+    // Auto-fill with sequential numbers starting from 1
+    let displayValue: string;
     
-    // Se há valor salvo, formatá-lo corretamente
-    const formattedValue = value ? (value === '999' || value === 999 ? 'Final' : value.toString()) : displayValue;
+    if (value) {
+      // If there's already a saved value, use it
+      displayValue = value === '999' || value === 999 ? 'Final' : value.toString();
+    } else if (selectedBateriaId) {
+      // If there's a selected bateria, use its number
+      displayValue = selectedBateriaId === 999 ? 'Final' : selectedBateriaId.toString();
+    } else {
+      // Auto-fill with sequential number starting from 1
+      displayValue = (athleteIndex + 1).toString();
+      // Auto-set the value when component renders
+      if (!value) {
+        onChange(athleteIndex + 1);
+      }
+    }
     
     return (
       <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-        {formattedValue}
+        {displayValue}
       </Badge>
     );
   }
