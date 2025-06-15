@@ -1,11 +1,9 @@
 
 import React from 'react';
-import { Athlete } from '../hooks/useAthletes';
+import { Athlete, useAthletes } from '../hooks/useAthletes';
 import { AthletesListTabularContainer } from './athletes-list-tabular/AthletesListTabularContainer';
 
 interface AthletesListTabularProps {
-  athletes: Athlete[] | undefined;
-  isLoading: boolean;
   modalityId: number;
   eventId: string | null;
   judgeId: string;
@@ -13,13 +11,22 @@ interface AthletesListTabularProps {
 }
 
 export function AthletesListTabular({
-  athletes,
-  isLoading,
   modalityId,
   eventId,
   judgeId,
   scoreType
 }: AthletesListTabularProps) {
+  const { data: athletes, isLoading, error } = useAthletes(modalityId, eventId);
+
+  console.log('=== ATHLETES LIST TABULAR ===');
+  console.log('Dados recebidos do hook useAthletes:', {
+    athletes: athletes?.length || 0,
+    isLoading,
+    error,
+    modalityId,
+    eventId
+  });
+
   return (
     <AthletesListTabularContainer
       athletes={athletes}
@@ -28,6 +35,7 @@ export function AthletesListTabular({
       eventId={eventId}
       judgeId={judgeId}
       scoreType={scoreType}
+      error={error}
     />
   );
 }

@@ -9,6 +9,7 @@ import { EventValidationCard } from './EventValidationCard';
 import { EmptyAthletesCard } from './EmptyAthletesCard';
 import { DynamicScoringCard } from './DynamicScoringCard';
 import { RegularScoringCard } from './RegularScoringCard';
+import { ErrorState } from '@/components/ErrorState';
 
 interface AthletesListTabularContainerProps {
   athletes: Athlete[] | undefined;
@@ -17,6 +18,7 @@ interface AthletesListTabularContainerProps {
   eventId: string | null;
   judgeId: string;
   scoreType: 'tempo' | 'distancia' | 'pontos';
+  error?: string | null;
 }
 
 export function AthletesListTabularContainer({
@@ -25,14 +27,16 @@ export function AthletesListTabularContainer({
   modalityId,
   eventId,
   judgeId,
-  scoreType
+  scoreType,
+  error
 }: AthletesListTabularContainerProps) {
   // Get modality data with modelo configuration
   const { 
     data: modalityData, 
     modalityRule, 
     isLoading: isLoadingModalityData,
-    hasModelo
+    hasModelo,
+    error: modalityError
   } = useModalityWithModelo(modalityId);
 
   // Get bateria data for this modality
@@ -62,61 +66,63 @@ export function AthletesListTabularContainer({
     enabled: hasModelo && !!modalityData?.modelo?.id
   });
 
-  console.log('=== ATHLETES LIST TABULAR CONTAINER DEBUG ===');
-  console.log('Props received:', {
+  console.log('=== DEBUG DO CONTAINER DE ATLETAS ===');
+  console.log('Props recebidas:', {
     modalityId,
     eventId,
-    athletesCount: athletes?.length || 0,
-    isLoading,
+    quantidadeAtletas: athletes?.length || 0,
+    carregando: isLoading,
+    erro: error,
     judgeId,
     scoreType
   });
-  console.log('Athletes data:', athletes);
-  console.log('Modality data:', {
+  console.log('Dados dos atletas:', athletes);
+  console.log('Dados da modalidade:', {
     hasModelo,
     usesBaterias,
     selectedBateriaId,
-    isLoadingModalityData,
+    carregandoModalidade: isLoadingModalityData,
+    erroModalidade: modalityError,
     modalityData,
     modalityRule
   });
-  console.log('Bateria data:', {
-    bateriasCount: baterias.length,
-    selectedBateriaId,
-    selectedBateria,
-    isLoadingBaterias
-  });
-  console.log('Dynamic scoring data:', {
-    camposCount: campos.length,
-    existingScoresCount: existingScores.length,
-    campos,
-    existingScores
-  });
-  console.log('=== END ATHLETES LIST TABULAR CONTAINER DEBUG ===');
 
   if (isLoading || isLoadingModalityData) {
+    console.log('Mostrando estado de carregamento');
     return <LoadingState />;
   }
 
+  // Show error state if there's an error
+  if (error || modalityError) {
+    console.log('Mostrando estado de erro:', error || modalityError);
+    return (
+      <ErrorState 
+        message={error || modalityError || 'Erro ao carregar dados'} 
+        onRetry={() => window.location.reload()}
+      />
+    );
+  }
+
   if (!eventId) {
+    console.log('Evento não selecionado');
     return <EventValidationCard />;
   }
 
   const safeAthletes = athletes || [];
-  console.log('=== SAFE ATHLETES CHECK ===');
-  console.log('Athletes array:', safeAthletes);
-  console.log('Athletes count:', safeAthletes.length);
-  console.log('First athlete:', safeAthletes[0]);
-  console.log('=== END SAFE ATHLETES CHECK ===');
+  console.log('=== VERIFICAÇÃO SEGURA DE ATLETAS ===');
+  console.log('Array de atletas:', safeAthletes);
+  console.log('Quantidade de atletas:', safeAthletes.length);
+  console.log('Primeiro atleta:', safeAthletes[0]);
+  console.log('=== FIM DA VERIFICAÇÃO ===');
 
   if (safeAthletes.length === 0) {
-    console.log('No athletes found - showing empty card');
+    console.log('Nenhum atleta encontrado - mostrando card vazio');
     return <EmptyAthletesCard />;
   }
 
   // Show dynamic scoring table if modelo is configured
   if (hasModelo && modalityData?.modelo) {
-    console.log('Showing dynamic scoring card');
+    console.log('Mostrando card de pontuação dinâmica');
     return (
       <DynamicScoringCard
         athletes={safeAthletes}
@@ -141,7 +147,7 @@ export function AthletesListTabularContainer({
   }
 
   // Fallback to regular scoring table for modalities without modelo
-  console.log('Showing regular scoring card');
+  console.log('Mostrando card de pontuação regular');
   return (
     <RegularScoringCard
       athletes={safeAthletes}
