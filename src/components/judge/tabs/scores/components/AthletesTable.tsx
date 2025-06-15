@@ -1,20 +1,14 @@
+
 import React, { useState } from 'react';
-import {
-  Table,
-  TableBody,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Athlete } from '../hooks/useAthletes';
-import { ScoreTableHeader } from './ScoreTableHeader';
-import { ScoreEntryRow } from './ScoreEntryRow';
 import { AthleteNotesDialog } from './AthleteNotesDialog';
+import { MainScoringTable } from './MainScoringTable';
+import { UnscoredAthletesSection } from './UnscoredAthletesSection';
+import { EmptyAthletesList } from './EmptyAthletesList';
 import { useScoreEntries } from './hooks/useScoreEntries';
 import { useScoreSubmission } from './hooks/useScoreSubmission';
-import { Plus, Users } from 'lucide-react';
 
 interface AthletesTableProps {
   athletes: Athlete[];
@@ -178,11 +172,6 @@ export function AthletesTable({
     setSelectedUnscored(new Set());
   };
 
-  const getBateriaDisplayName = (bateriaId: number | null) => {
-    if (bateriaId === 999) return 'Final';
-    return bateriaId?.toString() || '';
-  };
-
   // Athletes to show in the main table (scored + selected unscored)
   const mainTableAthletes = [
     ...scoredAthletes,
@@ -198,113 +187,39 @@ export function AthletesTable({
     <>
       <div className="space-y-4">
         {/* Main scoring table */}
-        <div className="border rounded-md">
-          <Table>
-            <ScoreTableHeader scoreType={scoreType} />
-            <TableBody>
-              {mainTableAthletes.map((athlete) => {
-                const existingScore = existingScores.find(s => s.atleta_id === athlete.atleta_id);
-                const entry = scoreEntries[athlete.atleta_id];
+        {mainTableAthletes.length > 0 && (
+          <MainScoringTable
+            athletes={mainTableAthletes}
+            existingScores={existingScores}
+            scoreEntries={scoreEntries}
+            scoreType={scoreType}
+            isSubmitting={submitScoreMutation.isPending}
+            selectedBateriaId={selectedBateriaId}
+            onStartEditing={handleStartEditing}
+            onCancelEditing={cancelEditing}
+            onSaveScore={handleSaveScore}
+            onUpdateEntry={updateEntry}
+            onOpenNotesDialog={handleOpenNotesDialog}
+            formatScoreValue={formatScoreValue}
+          />
+        )}
 
-                return (
-                  <ScoreEntryRow
-                    key={athlete.atleta_id}
-                    athlete={athlete}
-                    existingScore={existingScore}
-                    scoreEntry={entry}
-                    scoreType={scoreType}
-                    isSubmitting={submitScoreMutation.isPending}
-                    onStartEditing={handleStartEditing}
-                    onCancelEditing={cancelEditing}
-                    onSaveScore={handleSaveScore}
-                    onUpdateEntry={updateEntry}
-                    onOpenNotesDialog={handleOpenNotesDialog}
-                    formatScoreValue={formatScoreValue}
-                    selectedBateriaId={selectedBateriaId}
-                  />
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-
+        {/* Empty state */}
         {mainTableAthletes.length === 0 && unscoredSectionAthletes.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">
-              {selectedBateriaId 
-                ? `Nenhum atleta disponível para a bateria ${getBateriaDisplayName(selectedBateriaId)}`
-                : 'Nenhum atleta inscrito nesta modalidade'
-              }
-            </p>
-          </div>
+          <EmptyAthletesList selectedBateriaId={selectedBateriaId} />
         )}
 
         {/* Unscored athletes section - only show if there are unscored athletes and a bateria is selected */}
         {selectedBateriaId && unscoredSectionAthletes.length > 0 && (
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Plus className="h-5 w-5" />
-                Atletas sem pontuação na bateria {getBateriaDisplayName(selectedBateriaId)}
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Selecione os atletas que deseja adicionar à tabela de pontuação:
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {/* Bulk selection controls */}
-                <div className="flex gap-2 pb-3 border-b">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSelectAllUnscored}
-                    className="flex items-center gap-2"
-                  >
-                    <Users className="h-4 w-4" />
-                    Selecionar todos ({unscoredSectionAthletes.length})
-                  </Button>
-                  {selectedUnscored.size > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleDeselectAllUnscored}
-                    >
-                      Desmarcar todos
-                    </Button>
-                  )}
-                </div>
-
-                {unscoredSectionAthletes.map((athlete) => (
-                  <div key={athlete.atleta_id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50">
-                    <Checkbox
-                      checked={selectedUnscored.has(athlete.atleta_id)}
-                      onCheckedChange={(checked) => 
-                        handleUnscoredSelection(athlete.atleta_id, checked as boolean)
-                      }
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium">{athlete.atleta_nome}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {athlete.tipo_documento}: {athlete.numero_documento} | {athlete.filial_nome || 'N/A'}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                
-                {selectedUnscored.size > 0 && (
-                  <div className="pt-3 border-t">
-                    <Button 
-                      onClick={handleAddSelectedToTable}
-                      className="w-full"
-                    >
-                      Adicionar {selectedUnscored.size} atleta(s) à tabela de pontuação
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <UnscoredAthletesSection
+            athletes={unscoredSectionAthletes}
+            selectedBateriaId={selectedBateriaId}
+            selectedUnscored={selectedUnscored}
+            onUnscoredSelection={handleUnscoredSelection}
+            onSelectAllUnscored={handleSelectAllUnscored}
+            onDeselectAllUnscored={handleDeselectAllUnscored}
+            onAddSelectedToTable={handleAddSelectedToTable}
+          />
         )}
       </div>
 
