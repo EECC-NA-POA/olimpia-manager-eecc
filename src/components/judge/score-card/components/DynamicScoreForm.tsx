@@ -18,7 +18,7 @@ interface DynamicScoreFormProps {
   equipeId?: number;
   eventId: string;
   judgeId: string;
-  bateriaId?: number;
+  numeroBateria?: number; // FIXED: usar numero_bateria
   raia?: number;
   initialValues?: any;
   onSuccess?: () => void;
@@ -31,7 +31,7 @@ export function DynamicScoreForm({
   equipeId,
   eventId,
   judgeId,
-  bateriaId,
+  numeroBateria, // FIXED: usar numero_bateria
   raia,
   initialValues,
   onSuccess
@@ -76,6 +76,7 @@ export function DynamicScoreForm({
     console.log(`DynamicScoreForm - Filtering out team selector as we are in context of equipeId: ${equipeId}`);
   }
   console.log('DynamicScoreForm - Final scoring campos:', campos.length, campos.map(c => c.chave_campo));
+  console.log('DynamicScoreForm - Using numero_bateria:', numeroBateria);
 
   const schema = createSchema(campos);
   
@@ -94,7 +95,7 @@ export function DynamicScoreForm({
     equipeId,
     judgeId,
     modeloId,
-    bateriaId,
+    bateriaId: numeroBateria, // This will be converted to numero_bateria internally
     raia,
     onSuccess
   });
@@ -127,7 +128,7 @@ export function DynamicScoreForm({
         modeloId={modeloId}
         modalityId={modalityId}
         eventId={eventId}
-        bateriaId={bateriaId}
+        bateriaId={numeroBateria} // This will be converted to numero_bateria internally
         isSubmitting={isSubmitting}
         onSubmit={handleSubmit}
       />

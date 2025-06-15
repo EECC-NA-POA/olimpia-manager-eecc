@@ -12,7 +12,7 @@ interface DynamicScoringFormProps {
   modeloId?: number;
   modalityId?: number;
   eventId?: string;
-  bateriaId?: number;
+  numeroBateria?: number; // FIXED: usar numero_bateria
 }
 
 export function DynamicScoringForm({ 
@@ -21,7 +21,7 @@ export function DynamicScoringForm({
   modeloId, 
   modalityId, 
   eventId,
-  bateriaId 
+  numeroBateria // FIXED: usar numero_bateria
 }: DynamicScoringFormProps) {
   // Separar campos calculados para mostrar o gerenciador apenas se necessário
   const calculatedFields = campos.filter(campo => campo.tipo_input === 'calculated');
@@ -33,6 +33,7 @@ export function DynamicScoringForm({
   console.log('DynamicScoringForm - Scoring fields after filtering:', scoringFields.length);
   console.log('DynamicScoringForm - Calculated fields:', calculatedFields.length);
   console.log('DynamicScoringForm - Filtered out configuration fields:', campos.filter(c => !scoringFields.includes(c)).map(c => c.chave_campo));
+  console.log('DynamicScoringForm - Using numero_bateria:', numeroBateria);
 
   return (
     <div className="space-y-4">
@@ -42,7 +43,7 @@ export function DynamicScoringForm({
           modeloId={modeloId}
           modalityId={modalityId}
           eventId={eventId}
-          bateriaId={bateriaId}
+          bateriaId={numeroBateria} // This will be converted to numero_bateria internally
         />
       )}
 

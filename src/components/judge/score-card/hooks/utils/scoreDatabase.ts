@@ -28,8 +28,8 @@ export async function saveScoreToDatabase(
     // Get team ID if needed
     const teamId = await getTeamId(athlete, modalityIdInt, eventId, isTeamModality);
     
-    // Get bateria ID FIRST - this will process and remove the _heat field
-    const bateriaId = await getBateriaId(finalScoreData, modalityIdInt, eventId);
+    // Get numero_bateria FIRST - this will process and remove any _heat field
+    const numeroBateria = await getBateriaId(finalScoreData, modalityIdInt, eventId);
 
     // Prepare the complete record data with explicit type conversion
     // Note: _heat field should be removed by getBateriaId at this point
@@ -43,10 +43,10 @@ export async function saveScoreToDatabase(
       observacoes: finalScoreData.observacoes || null,
       juiz_id: finalScoreData.juiz_id,
       data_registro: finalScoreData.data_registro || new Date().toISOString(),
-      numero_bateria: bateriaId
+      numero_bateria: numeroBateria
     };
 
-    console.log('Record data to save:', JSON.stringify(recordData, null, 2));
+    console.log('Record data to save (using numero_bateria):', JSON.stringify(recordData, null, 2));
     
     // Choose the correct approach based on modality type
     if (isTeamModality) {
