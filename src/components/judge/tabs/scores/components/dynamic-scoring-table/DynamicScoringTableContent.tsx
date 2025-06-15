@@ -119,9 +119,10 @@ export function DynamicScoringTableContent({
   return (
     <div className="space-y-4">
       {/* Main scoring table */}
+      {/* campos já VEM 100% filtrado de Main */}
       <MainScoringTable
         athletes={mainTableAthletes}
-        campos={campos} {/* ← já VEM 100% filtrado de Main */}
+        campos={campos}
         selectedBateriaId={selectedBateriaId}
         editingAthletes={editingAthletes}
         editValues={editValues}

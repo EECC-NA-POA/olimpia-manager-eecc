@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Athlete } from '../../hooks/useAthletes';
 import { CampoModelo, ModeloModalidade } from '@/types/dynamicScoring';
@@ -92,7 +91,8 @@ export function DynamicScoringTableMain({
   return (
     <DynamicScoringTableContent
       athletes={athletes}
-      campos={scoringFields} {/* ← SOMENTE CAMPOS DE PONTUAÇÃO */}
+      // SOMENTE CAMPOS DE PONTUAÇÃO
+      campos={scoringFields}
       selectedBateriaId={selectedBateriaId}
       editingAthletes={editingAthletes}
       editValues={editValues}
@@ -113,4 +113,3 @@ export function DynamicScoringTableMain({
     />
   );
 }
-
