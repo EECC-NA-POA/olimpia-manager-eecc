@@ -8,6 +8,9 @@ import { filterScoringFields } from '@/utils/dynamicScoringUtils';
 import { useSchemaCreation } from './dynamic-score-form/useSchemaCreation';
 import { useFormSubmission } from './dynamic-score-form/useFormSubmission';
 import { DynamicScoreFormContent } from './dynamic-score-form/DynamicScoreFormContent';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { CampoModelo } from '@/types/dynamicScoring';
 
 interface DynamicScoreFormProps {
   modeloId: number;
@@ -34,7 +37,24 @@ export function DynamicScoreForm({
   initialValues,
   onSuccess
 }: DynamicScoreFormProps) {
-  const { data: allCampos = [], isLoading } = useCamposModelo(modeloId);
+  const { data: allCampos = [], isLoading: isLoadingCampos } = useCamposModelo(modeloId);
+  const { data: modeloData, isLoading: isLoadingModelo } = useQuery({
+    queryKey: ['modelo-details-for-form', modeloId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('modelos_modalidade')
+        .select('parametros')
+        .eq('id', modeloId)
+        .single();
+      if (error) {
+        console.error("Error fetching modelo params for dynamic form", error);
+        return null;
+      };
+      return data;
+    },
+    enabled: !!modeloId,
+  });
+
   const { createSchema } = useSchemaCreation([]);
 
   // Filter to only scoring fields (remove configuration fields)
@@ -44,6 +64,28 @@ export function DynamicScoreForm({
   // there's no need to show a team selector field in the form.
   if (equipeId) {
     campos = campos.filter(campo => campo.chave_campo !== 'equipe_id' && campo.chave_campo !== 'equipe');
+  }
+
+  const parametros = modeloData?.parametros as any || {};
+  const hasRaiaParam = parametros.num_raias && parametros.num_raias > 0;
+  const usesBaterias = parametros.baterias === true;
+  const raiaFieldExists = campos.some(c => c.chave_campo === 'raia' || c.chave_campo === 'lane');
+
+  // Inject a 'raia' field if it's configured in params but not in campos,
+  // and we are not using the full 'baterias' system.
+  if (hasRaiaParam && !usesBaterias && !raiaFieldExists) {
+    const raiaField: CampoModelo = {
+      id: `param_raia_${modeloId}`, // Make ID unique
+      modelo_id: modeloId,
+      chave_campo: 'raia',
+      rotulo_campo: 'Raia',
+      tipo_input: 'number',
+      obrigatorio: true,
+      ordem_exibicao: 0, // Show it near the top
+      metadados: { placeholder: 'Número da raia' },
+      created_at: new Date().toISOString()
+    };
+    campos = [raiaField, ...campos];
   }
 
   console.log('DynamicScoreForm - All campos from hook:', allCampos.length);
@@ -74,7 +116,7 @@ export function DynamicScoreForm({
     onSuccess
   });
 
-  if (isLoading) {
+  if (isLoadingCampos || isLoadingModelo) {
     return <div>Carregando configuração da modalidade...</div>;
   }
 
