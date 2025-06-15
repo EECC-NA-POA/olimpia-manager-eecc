@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Athlete } from '../../hooks/useAthletes';
 import { CampoModelo } from '@/types/dynamicScoring';
@@ -122,7 +121,7 @@ export function DynamicScoringTableContent({
       {/* Main scoring table */}
       <MainScoringTable
         athletes={mainTableAthletes}
-        campos={campos}
+        campos={campos} {/* ← já VEM 100% filtrado de Main */}
         selectedBateriaId={selectedBateriaId}
         editingAthletes={editingAthletes}
         editValues={editValues}

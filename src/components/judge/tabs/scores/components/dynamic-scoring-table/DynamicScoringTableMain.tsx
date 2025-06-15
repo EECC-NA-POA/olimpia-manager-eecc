@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Athlete } from '../../hooks/useAthletes';
 import { CampoModelo, ModeloModalidade } from '@/types/dynamicScoring';
@@ -34,7 +35,7 @@ export function DynamicScoringTableMain({
   modalityName,
   usesBaterias = false
 }: DynamicScoringTableMainProps) {
-  // O filtro central está aqui, garantindo que SÓ passe para todos os componentes necessários os campos corretos.
+  // Sempre filtrar para garantir que não vão para a tabela!
   const scoringFields = filterScoringFields(campos);
   
   console.log('DynamicScoringTableMain - Original campos count:', campos.length);
@@ -63,7 +64,7 @@ export function DynamicScoringTableMain({
     judgeId,
     modelo,
     selectedBateriaId,
-    campos,
+    campos, // não filtra aqui pois pode ser necessário a lista cheia para operações internas
     existingScores,
     editValues,
     refetchScores,
@@ -91,7 +92,7 @@ export function DynamicScoringTableMain({
   return (
     <DynamicScoringTableContent
       athletes={athletes}
-      campos={scoringFields}
+      campos={scoringFields} {/* ← SOMENTE CAMPOS DE PONTUAÇÃO */}
       selectedBateriaId={selectedBateriaId}
       editingAthletes={editingAthletes}
       editValues={editValues}
@@ -112,3 +113,4 @@ export function DynamicScoringTableMain({
     />
   );
 }
+
