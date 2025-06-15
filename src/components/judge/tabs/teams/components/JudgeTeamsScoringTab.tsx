@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -106,19 +105,6 @@ export function JudgeTeamsScoringTab({
 
   return (
     <div className="space-y-6">
-      <Card className="border-blue-200 bg-blue-50/50">
-        <CardContent className="py-4">
-          <div className="flex items-center justify-center">
-            <div className="text-center">
-              <h3 className="font-semibold text-blue-800 mb-1">Área de Pontuação de Equipes</h3>
-              <p className="text-sm text-blue-600">
-                Visualize as equipes cadastradas e registre suas pontuações
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       <TeamFilters
         modalities={modalityOptions}
         branches={branches}

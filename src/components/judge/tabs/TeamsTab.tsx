@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +9,8 @@ import { ViewAllTeamsTab } from './teams/components/ViewAllTeamsTab';
 import { JudgeTeamsScoringTab } from './teams/components/JudgeTeamsScoringTab';
 import { NoModalitiesMessage } from './teams/components/NoModalitiesMessage';
 import { LoadingTeamsState } from './teams/components/LoadingTeamsState';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Users } from 'lucide-react';
 
 interface TeamsTabProps {
   userId: string;
@@ -103,27 +104,34 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
   if (isJudgeOnly) {
     return (
       <div className="space-y-6">
-        <TeamsTabHeader isOrganizer={false}>
-          <div className="text-center mb-6">
-            <h2 className="text-xl font-semibold text-primary mb-2">Pontuação de Equipes</h2>
-            <p className="text-muted-foreground">Visualize e pontue as equipes das modalidades coletivas</p>
-          </div>
-          <JudgeTeamsScoringTab
-            allTeams={transformedTeams}
-            allModalities={transformedModalities}
-            branches={branches}
-            isLoadingAllTeams={isLoadingAllTeams}
-            allTeamsError={allTeamsError}
-            modalityFilter={modalityFilter}
-            branchFilter={branchFilter}
-            searchTerm={searchTerm}
-            setModalityFilter={setModalityFilter}
-            setBranchFilter={setBranchFilter}
-            setSearchTerm={setSearchTerm}
-            eventId={eventId}
-            judgeId={userId}
-          />
-        </TeamsTabHeader>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Pontuação de Equipes
+            </CardTitle>
+            <CardDescription>
+              Visualize e pontue as equipes das modalidades coletivas.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <JudgeTeamsScoringTab
+              allTeams={transformedTeams}
+              allModalities={transformedModalities}
+              branches={branches}
+              isLoadingAllTeams={isLoadingAllTeams}
+              allTeamsError={allTeamsError}
+              modalityFilter={modalityFilter}
+              branchFilter={branchFilter}
+              searchTerm={searchTerm}
+              setModalityFilter={setModalityFilter}
+              setBranchFilter={setBranchFilter}
+              setSearchTerm={setSearchTerm}
+              eventId={eventId}
+              judgeId={userId}
+            />
+          </CardContent>
+        </Card>
       </div>
     );
   }
