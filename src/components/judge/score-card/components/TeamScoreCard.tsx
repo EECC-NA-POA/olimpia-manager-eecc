@@ -240,7 +240,7 @@ function TeamScoreCardContent({
               </p>
             </div>
             
-            {/* Priority: Use dynamic form if modelo exists, otherwise fallback to basic form */}
+            {/* Priority: Use dynamic form if modelo exists, otherwise show an alert */}
             {modeloId ? (
               <DynamicScoreForm
                 modeloId={modeloId}
@@ -252,19 +252,12 @@ function TeamScoreCardContent({
                 initialValues={existingScore?.dados_pontuacao || {}}
                 onSuccess={handleDynamicSuccess}
               />
-            ) : tipoPontuacao === 'pontos' || tipoPontuacao === 'tempo' || tipoPontuacao === 'distancia' ? (
-              <ScoreForm
-                modalityId={modalityId}
-                initialValues={existingScore}
-                onSubmit={handleSubmit}
-                isPending={submitScoreMutation.isPending}
-              />
             ) : (
               <Alert variant="destructive">
                 <Terminal className="h-4 w-4" />
                 <AlertTitle>Modelo de Pontuação Ausente</AlertTitle>
                 <AlertDescription>
-                  Esta modalidade não possui um modelo de pontuação dinâmico configurado. Por favor, contate o organizador.
+                  Esta modalidade de equipe não possui um modelo de pontuação dinâmico configurado. O registro de pontuação para equipes só é possível com um modelo dinâmico. Por favor, contate o organizador.
                 </AlertDescription>
               </Alert>
             )}
