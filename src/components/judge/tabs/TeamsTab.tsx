@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users } from 'lucide-react';
@@ -19,12 +20,11 @@ interface TeamsTabProps {
 export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
   const { user } = useAuth();
 
-  // Define se o usuário é apenas juiz (não pode gerenciar equipes)
-  const isJudgeOnly = user?.papeis?.some(role => role.codigo === 'JUZ')
-    && !user?.papeis?.some(role => role.codigo === 'RDD')
-    && !user?.papeis?.some(role => role.codigo === 'ORE');
+  // No painel do juiz, um usuário com papel de juiz (JUZ) só pode pontuar,
+  // independentemente de outros papéis que possa ter.
+  const isJudge = user?.papeis?.some(role => role.codigo === 'JUZ');
 
-    // Define se o usuário é representante de delegação APENAS
+  // Define se o usuário é representante de delegação APENAS
   const isDelegationRepOnly = user?.papeis?.some(role => role.codigo === 'RDD')
   && !user?.papeis?.some(role => role.codigo === 'ORE');
 
@@ -45,7 +45,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     modalityFilter,
     branchFilter,
     searchTerm,
-    (isOrganizer || isJudgeOnly) ? undefined : user?.filial_id // Juiz vê todas da sua filial por lógica backend
+    (isOrganizer || isJudge) ? undefined : user?.filial_id // Juiz e Organizador veem todas as equipes.
   );
 
   // Transforma os dados para o formato de pontuação
@@ -69,7 +69,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
   })) || [];
 
   // Exclusivo para Juiz: Só exibe pontuação de equipes, sem abas nem gerenciamento
-  if (isJudgeOnly) {
+  if (!isOrganizer && isJudge) {
     return (
       <div className="space-y-6">
         <Card>
