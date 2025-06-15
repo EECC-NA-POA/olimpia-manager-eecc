@@ -172,6 +172,9 @@ function TeamScoreCardContent({
     return categoryMap[categoria.toLowerCase()] || categoria;
   };
 
+  // Log rendering info for debugging - moved outside JSX
+  console.log('Rendering scoring form - modeloId:', modeloId, 'tipoPontuacao:', tipoPontuacao);
+
   return (
     <Card
       className={`
@@ -239,17 +242,15 @@ function TeamScoreCardContent({
               </p>
             </div>
             
-            {console.log('Rendering scoring form - modeloId:', modeloId, 'tipoPontuacao:', tipoPontuacao)}
-            
             {/* Priority: Use dynamic form if modelo exists, otherwise fallback to basic form */}
             {modeloId ? (
               <DynamicScoreForm
                 modeloId={modeloId}
                 modalityId={modalityId}
+                athleteId={representativeAthlete.atleta_id}
                 equipeId={team.equipe_id}
                 eventId={eventId!}
                 judgeId={judgeId}
-                athleteId={representativeAthlete.atleta_id}
                 initialValues={existingScore?.dados_pontuacao || {}}
                 onSuccess={handleDynamicSuccess}
               />
