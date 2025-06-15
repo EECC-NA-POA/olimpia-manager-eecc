@@ -94,21 +94,39 @@ export function useAthleteGrouping({
     };
   }, [athletes, selectedBateriaId, existingScores, hasExistingScore, usesBaterias]);
 
-  // Athletes to show in the main table (scored + selected unscored)
+  // Athletes to show in the main table
   const mainTableAthletes = React.useMemo(() => {
+    console.log('=== MAIN TABLE ATHLETES CALCULATION ===');
+    console.log('usesBaterias:', usesBaterias);
+    console.log('athletes.length:', athletes.length);
+    console.log('athleteGroups.scoredAthletes.length:', athleteGroups.scoredAthletes.length);
+    console.log('athleteGroups.unscoredAthletes.length:', athleteGroups.unscoredAthletes.length);
+    console.log('selectedUnscored size:', selectedUnscored.size);
+    
     if (!usesBaterias) {
-      // For non-bateria modalities, show all athletes in main table
+      // For non-bateria modalities, show ALL athletes in main table
       const result = [...athletes].sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome));
       console.log('No bateria mode - Main table athletes count:', result.length);
+      console.log('No bateria mode - Athletes:', result.map(a => a.atleta_nome));
       return result;
     }
 
     // For bateria mode, show scored + selected unscored
+    const selectedUnscoredAthletes = athleteGroups.unscoredAthletes.filter(athlete => 
+      selectedUnscored.has(athlete.atleta_id)
+    );
+    
     const result = [
       ...athleteGroups.scoredAthletes,
-      ...athleteGroups.unscoredAthletes.filter(athlete => selectedUnscored.has(athlete.atleta_id))
+      ...selectedUnscoredAthletes
     ];
+    
+    console.log('Bateria mode - Scored athletes:', athleteGroups.scoredAthletes.map(a => a.atleta_nome));
+    console.log('Bateria mode - Selected unscored athletes:', selectedUnscoredAthletes.map(a => a.atleta_nome));
     console.log('Bateria mode - Main table athletes count:', result.length);
+    console.log('Bateria mode - Final main table athletes:', result.map(a => a.atleta_nome));
+    console.log('=== END MAIN TABLE ATHLETES CALCULATION ===');
+    
     return result;
   }, [athletes, athleteGroups.scoredAthletes, athleteGroups.unscoredAthletes, selectedUnscored, usesBaterias]);
 
@@ -123,6 +141,7 @@ export function useAthleteGrouping({
       athlete => !selectedUnscored.has(athlete.atleta_id)
     );
     console.log('Unscored section athletes count:', result.length);
+    console.log('Unscored section athletes:', result.map(a => a.atleta_nome));
     return result;
   }, [athleteGroups.unscoredAthletes, selectedUnscored, usesBaterias]);
 
