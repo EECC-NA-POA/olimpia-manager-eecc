@@ -31,9 +31,6 @@ export const useRegisterAcceptance = ({
           throw new Error('Usuário não identificado');
         }
         
-        // Nome do usuário para registro
-        const nomeUsuario = userMetadata?.nome_completo || 'Usuário';
-        
         // Step 1: Get the latest privacy policy with all required fields
         console.log('Fetching latest privacy policy with complete data...');
         const { data: latestPolicy, error: policyError } = await supabase
@@ -75,28 +72,7 @@ export const useRegisterAcceptance = ({
         
         if (insertError) {
           console.error('Error inserting acceptance record:', insertError);
-          
-          // Se a inserção falhar, tentar com RPC personalizado
-          console.log('Attempting with custom RPC...');
-          try {
-            const { error: rpcError } = await supabase.rpc('register_privacy_acceptance', {
-              p_user_id: userId,
-              p_version: latestPolicy.versao_termo,
-              p_policy_id: latestPolicy.id,
-              p_policy_text: latestPolicy.termo_texto
-            });
-            
-            if (rpcError) {
-              console.error('RPC method failed:', rpcError);
-              throw rpcError;
-            }
-            
-            console.log('Acceptance registered successfully via RPC');
-            return true;
-          } catch (rpcErr) {
-            console.error('RPC attempt failed:', rpcErr);
-            throw new Error('Não foi possível registrar o aceite do termo de privacidade após múltiplas tentativas');
-          }
+          throw new Error('Não foi possível registrar o aceite do termo de privacidade');
         }
         
         console.log('Acceptance registered successfully');
