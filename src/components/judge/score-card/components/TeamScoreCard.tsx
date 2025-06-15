@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -28,6 +29,7 @@ interface TeamScoreCardProps {
     equipe_id: number;
     equipe_nome: string;
     members: TeamMember[];
+    categoria?: string;
   };
   modalityId: number;
   eventId: string | null;
@@ -35,31 +37,21 @@ interface TeamScoreCardProps {
   scoreType: 'tempo' | 'distancia' | 'pontos';
 }
 
-export function TeamScoreCard({ 
-  team, 
-  modalityId, 
-  eventId, 
-  judgeId,
-  scoreType
-}: TeamScoreCardProps) {
+function TeamScoreCardContent({ team, modalityId, eventId, judgeId, scoreType, representativeAthlete }: TeamScoreCardProps & { representativeAthlete: TeamMember }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  
-  // Use the first team member as representative for the team score
-  const representativeAthlete = team.members[0];
   
   const { submitScoreMutation } = useScoreSubmission(
     eventId, 
     modalityId, 
-    { atleta_id: representativeAthlete?.atleta_id, equipe_id: team.equipe_id }, 
+    { atleta_id: representativeAthlete.atleta_id, equipe_id: team.equipe_id }, 
     judgeId, 
     scoreType
   );
 
-  // Fetch existing score if it exists (check for any team member's score)
   const { data: existingScore, refetch: refetchScore } = useQuery({
     queryKey: ['team-score', team.equipe_id, modalityId, eventId],
     queryFn: async () => {
-      if (!eventId || !representativeAthlete) return null;
+      if (!eventId) return null;
       
       const { data, error } = await supabase
         .from('pontuacoes')
@@ -77,10 +69,9 @@ export function TeamScoreCard({
       
       return data as ScoreRecord;
     },
-    enabled: !!eventId && !!representativeAthlete && !!team.equipe_id,
+    enabled: !!eventId && !!team.equipe_id,
   });
 
-  // Fetch modality details to get the scoring model ID
   const { data: modalityDetails, isLoading: isLoadingModality } = useQuery({
     queryKey: ['modality-details', modalityId],
     queryFn: async () => {
@@ -99,11 +90,10 @@ export function TeamScoreCard({
   });
   const modeloId = modalityDetails?.modelo_modalidade_id;
 
-  // Fetch medal info from premiacoes (check team's position)
   const { data: medalInfo } = useQuery({
     queryKey: ['team-medal', team.equipe_id, modalityId, eventId],
     queryFn: async () => {
-      if (!eventId || !representativeAthlete) return null;
+      if (!eventId) return null;
       
       const { data, error } = await supabase
         .from('premiacoes')
@@ -121,17 +111,15 @@ export function TeamScoreCard({
       
       return data;
     },
-    enabled: !!eventId && !!representativeAthlete && !!team.equipe_id,
+    enabled: !!eventId && !!team.equipe_id,
   });
 
-  // Expand form when score exists
   useEffect(() => {
     if (existingScore) {
       setIsExpanded(true);
     }
   }, [existingScore]);
 
-  // Handle form submission from legacy form
   const handleSubmit = (data: any) => {
     submitScoreMutation.mutate(data, {
       onSuccess: () => setIsExpanded(false)
@@ -142,16 +130,6 @@ export function TeamScoreCard({
     setIsExpanded(false);
     refetchScore();
   };
-
-  if (!representativeAthlete) {
-    return (
-      <Card className="opacity-50">
-        <CardContent className="py-4">
-          <p className="text-center text-muted-foreground">Equipe sem membros</p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className={`
@@ -166,13 +144,16 @@ export function TeamScoreCard({
               <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                 Equipe
               </Badge>
+              {team.categoria && (
+                <Badge variant="secondary">{team.categoria}</Badge>
+              )}
             </CardTitle>
             <div className="mt-2">
               <p className="text-sm font-medium text-muted-foreground mb-1">
                 Membros ({team.members.length}):
               </p>
               <div className="flex flex-wrap gap-1">
-                {team.members.map((member, index) => (
+                {team.members.map((member) => (
                   <Badge key={member.atleta_id} variant="outline" className="text-xs">
                     {member.atleta_nome}
                     {member.numero_identificador && ` (${member.numero_identificador})`}
@@ -241,4 +222,33 @@ export function TeamScoreCard({
       </CardContent>
     </Card>
   );
+}
+
+
+export function TeamScoreCard(props: TeamScoreCardProps) {
+  const { team } = props;
+  const representativeAthlete = team.members[0];
+
+  if (!representativeAthlete) {
+    return (
+      <Card className="opacity-50">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg flex items-center gap-2">
+            {team.equipe_nome}
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              Equipe
+            </Badge>
+            {team.categoria && (
+              <Badge variant="secondary">{team.categoria}</Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="py-4">
+          <p className="text-center text-muted-foreground">Equipe sem membros</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return <TeamScoreCardContent {...props} representativeAthlete={representativeAthlete} />;
 }
