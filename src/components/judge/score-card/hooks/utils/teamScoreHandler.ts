@@ -8,7 +8,7 @@ export async function handleTeamScore(
   modalityIdInt: number, 
   teamId: number | null
 ): Promise<SaveScoreResult> {
-  const numero_bateria = (recordData as any).numero_bateria;
+  const { numero_bateria } = recordData;
   console.log('Starting team score handling for team:', teamId, 'bateria:', numero_bateria);
   
   if (!teamId) {
