@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { supabase, handleSupabaseError } from '@/lib/supabase';
 import { AuthContextType, AuthUser } from '@/types/auth';
 import { PUBLIC_ROUTES, PublicRoute } from '@/constants/routes';
-import { fetchUserProfile, handleAuthRedirect } from '@/services/authService';
+import { fetchUserProfile, handleAuthRedirect, clearUserProfileCache } from '@/services/authService';
 import { AuthContext } from '@/contexts/AuthContext';
 import { useAuthOperations } from '@/hooks/useAuthOperations';
 import { LoadingImage } from '@/components/ui/loading-image';
@@ -28,6 +28,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       localStorage.removeItem('currentEventId');
     }
+    // Limpar cache quando o evento muda
+    clearUserProfileCache();
   }, [currentEventId]);
 
   // Watch for changes to currentEventId in localStorage
@@ -43,14 +45,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Add event listener for storage events
     window.addEventListener('storage', handleStorageChange);
     
-    // Also check periodically
+    // Also check periodically, but less frequently
     const intervalId = setInterval(() => {
       const storedEventId = localStorage.getItem('currentEventId');
       if (storedEventId !== currentEventId) {
         console.log('Event ID changed in localStorage');
         setCurrentEventId(storedEventId);
       }
-    }, 1000);
+    }, 5000); // Reduzido para 5 segundos
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
@@ -79,6 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       localStorage.removeItem('currentEventId');
       setCurrentEventId(null);
+      clearUserProfileCache(); // Limpar cache em caso de erro de sessão
       
       toast.error(
         'Sua sessão expirou. Por favor, faça login novamente.',
@@ -145,6 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setSessionExpired(false);
                 localStorage.removeItem('currentEventId');
                 setCurrentEventId(null);
+                clearUserProfileCache(); // Limpar cache no logout
                 navigate('/', { replace: true });
               }
               return;
@@ -153,9 +157,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (event === 'TOKEN_REFRESHED') {
               console.log('Token refreshed successfully');
               setSessionExpired(false);
+              // Não buscar perfil novamente no refresh de token
+              return;
             }
 
-            if (session?.user) {
+            if (session?.user && event !== 'TOKEN_REFRESHED') {
               try {
                 console.log('User session updated, fetching profile');
                 const userProfile = await fetchUserProfile(session.user.id);
@@ -168,7 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 console.error('Error in auth setup');
                 handleSessionError(error);
               }
-            } else {
+            } else if (!session?.user) {
               if (mounted) {
                 console.log('No user session after auth state change');
                 setUser(null);
