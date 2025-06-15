@@ -14,6 +14,14 @@ interface ExtendedDynamicSubmissionData extends DynamicSubmissionData {
 export function useDynamicScoringSubmission() {
   const queryClient = useQueryClient();
 
+  // Utilitário para limpar qualquer campo 'bateria_id' de um objeto
+  function removeBateriaId(obj: any) {
+    if (!obj || typeof obj !== 'object') return obj;
+    const newObj = { ...obj };
+    if ('bateria_id' in newObj) delete newObj.bateria_id;
+    return newObj;
+  }
+
   return useMutation({
     mutationFn: async (data: ExtendedDynamicSubmissionData) => {
       console.log('=== INICIANDO SUBMISSÃO DE PONTUAÇÃO DINÂMICA ===');
@@ -35,37 +43,35 @@ export function useDynamicScoringSubmission() {
         // Calcular valor_pontuacao principal a partir dos dados do formulário
         const valorPontuacao = calculateMainScore(data.formData, campos);
         console.log('Calculated valor_pontuacao:', valorPontuacao);
-        
+
         const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
         const observacoes = data.formData.notes || data.observacoes || null;
 
-        // Garantir que bateria_id nunca vai para o objeto enviado ao banco:
-        // Usar apenas numero_bateria.
-        const baseDataForDb = {
+        // Garantir que bateria_id nunca vai para o objeto enviado ao banco
+        const baseDataForDb = removeBateriaId({
           eventId: data.eventId,
           modalityId: data.modalityId,
           judgeId: data.judgeId,
           modeloId: data.modeloId,
           raia,
           observacoes,
-          numero_bateria: data.bateriaId ?? null, // Corrigir para nunca enviar bateria_id
-          // bateria_id: undefined - NUNCA incluir este campo!
-        };
+          numero_bateria: data.bateriaId ?? null,
+        });
 
-        console.log('Base data for DB:', baseDataForDb);
+        console.log('Base data for DB (sem bateria_id):', baseDataForDb);
 
         // Handle team scoring
         if (data.equipeId) {
           console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
-          
-          const teamDataForDb = {
+
+          const teamDataForDb = removeBateriaId({
             ...baseDataForDb,
             athleteId: data.athleteId,
             equipeId: data.equipeId,
-          };
-          
-          console.log('Team data for DB:', teamDataForDb);
-          
+          });
+
+          console.log('Team data for DB (sem bateria_id):', teamDataForDb);
+
           const pontuacao = await upsertPontuacao(teamDataForDb, valorPontuacao);
           console.log('=== TEAM SCORE SAVED ===');
 
@@ -78,15 +84,15 @@ export function useDynamicScoringSubmission() {
 
         // Handle individual scoring
         console.log('--- Individual Submission ---');
-        
-        const individualDataForDb = {
+
+        const individualDataForDb = removeBateriaId({
           ...baseDataForDb,
           athleteId: data.athleteId,
           equipeId: data.equipeId || null,
-        };
-        
-        console.log('Individual data for DB:', individualDataForDb);
-        
+        });
+
+        console.log('Individual data for DB (sem bateria_id):', individualDataForDb);
+
         const pontuacao = await upsertPontuacao(individualDataForDb, valorPontuacao);
         console.log('=== INDIVIDUAL SCORE SAVED ===');
 
