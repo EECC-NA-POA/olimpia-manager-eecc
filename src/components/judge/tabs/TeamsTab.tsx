@@ -100,7 +100,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     modalidade_nome: modality.nome
   })) || [];
 
-  // For judges only, show only the team scoring interface - using dedicated component
+  // Se for juiz, exibe apenas a tela exclusiva de pontuação
   if (isJudgeOnly) {
     return (
       <div className="space-y-6">

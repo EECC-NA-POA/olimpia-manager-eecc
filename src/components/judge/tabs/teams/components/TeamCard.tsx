@@ -34,12 +34,12 @@ export function TeamCard({
 }: TeamCardProps) {
   const { user } = useAuth();
   
-  // Check if user is ONLY a judge (judges cannot delete teams or athletes)
-  const isJudgeOnly = user?.papeis?.some(role => role.codigo === 'JUZ') && 
+  // Determina se é juiz
+  const isJudgeOnly = user?.papeis?.some(role => role.codigo === 'JUZ') &&
                       !user?.papeis?.some(role => role.codigo === 'RDD') &&
                       !user?.papeis?.some(role => role.codigo === 'ORE');
 
-  // Judges cannot delete teams or athletes
+  // Só pode deletar se não for juiz nem uma das telas de visualização
   const canDelete = !isJudgeOnly && !isReadOnly && !isViewAll;
 
   return (
@@ -54,6 +54,7 @@ export function TeamCard({
             <Badge variant="outline" className="flex items-center gap-1">
               {team.atletas.length} atleta{team.atletas.length !== 1 ? 's' : ''}
             </Badge>
+            {/* NUNCA exibe o botão de deletar para juiz */}
             {canDelete && onDeleteTeam && (
               <Button
                 variant="destructive"
@@ -79,6 +80,7 @@ export function TeamCard({
           <div className="text-center py-8 text-muted-foreground">
             <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p>Nenhum atleta adicionado ainda</p>
+            {/* NÃO mostra dica para juiz */}
             {!isViewAll && !isJudgeOnly && (
               <p className="text-xs mt-1">Use a lista de atletas disponíveis acima para adicionar</p>
             )}
@@ -96,6 +98,7 @@ export function TeamCard({
                       </p>
                     </div>
                   </div>
+                  {/* NUNCA mostra o botão para remover atleta se for juiz */}
                   {canDelete && (
                     <Button
                       variant="destructive"
