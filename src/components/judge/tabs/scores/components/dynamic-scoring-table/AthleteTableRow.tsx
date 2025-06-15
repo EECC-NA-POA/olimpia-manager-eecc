@@ -1,9 +1,8 @@
+
 import React from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Save, X, Edit, Trash2 } from 'lucide-react';
 import { Athlete } from '../../hooks/useAthletes';
 import { CampoModelo } from '@/types/dynamicScoring';
@@ -18,7 +17,7 @@ interface AthleteTableRowProps {
   hasUnsavedChanges: boolean;
   editValues: Record<string, any>;
   selectedBateriaId?: number | null;
-  athleteIndex?: number; // New prop for sequential numbering
+  athleteIndex?: number;
   onEdit: (athleteId: string) => void;
   onSave: (athleteId: string) => void;
   onCancel: (athleteId: string) => void;
@@ -57,7 +56,8 @@ export function AthleteTableRow({
   console.log('AthleteTableRow - Filtering fields for athlete:', athlete.atleta_nome, {
     originalCount: campos.length,
     filteredCount: scoringFields.length,
-    athleteIndex
+    athleteIndex,
+    selectedBateriaId
   });
 
   const renderFieldInput = (campo: CampoModelo) => {
@@ -75,6 +75,23 @@ export function AthleteTableRow({
         athleteIndex={athleteIndex}
       />
     );
+  };
+
+  const renderDisplayValue = (campo: CampoModelo) => {
+    const fieldKey = campo.chave_campo;
+    
+    // Special handling for bateria field to show the selected bateria number
+    if ((campo.chave_campo === 'bateria' || campo.chave_campo === 'numero_bateria') && selectedBateriaId) {
+      const displayValue = selectedBateriaId === 999 ? 'Final' : selectedBateriaId.toString();
+      return (
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+          {displayValue}
+        </Badge>
+      );
+    }
+    
+    const displayValue = getDisplayValue(athlete.atleta_id, fieldKey);
+    return <div className="text-sm">{displayValue || '-'}</div>;
   };
 
   return (
@@ -100,9 +117,7 @@ export function AthleteTableRow({
           {isEditing ? (
             renderFieldInput(campo)
           ) : (
-            <div className="text-sm">
-              {getDisplayValue(athlete.atleta_id, campo.chave_campo) || '-'}
-            </div>
+            renderDisplayValue(campo)
           )}
         </TableCell>
       ))}

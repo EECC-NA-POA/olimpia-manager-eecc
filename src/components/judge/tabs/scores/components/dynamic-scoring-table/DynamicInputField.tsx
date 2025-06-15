@@ -28,6 +28,7 @@ export function DynamicInputField({
     campo: campo.chave_campo,
     currentValue: value,
     tipo: campo.tipo_input,
+    selectedBateriaId,
     athleteIndex
   });
 
@@ -44,27 +45,28 @@ export function DynamicInputField({
   // Lógica especial para o campo "Bateria"
   if (campo.chave_campo === 'bateria' || campo.chave_campo === 'numero_bateria') {
     let displayValue: string;
-    let autoFillValue: number;
+    let bateriaValue: number | undefined;
     
+    // If there's already a saved value, use it
     if (value) {
-      // If there's already a saved value, use it
       displayValue = value === '999' || value === 999 ? 'Final' : value.toString();
     } else if (selectedBateriaId) {
-      // If there's a selected bateria, use its number
+      // Use the selected bateria number as the auto-filled value
+      bateriaValue = selectedBateriaId;
       displayValue = selectedBateriaId === 999 ? 'Final' : selectedBateriaId.toString();
-      autoFillValue = selectedBateriaId === 999 ? 999 : selectedBateriaId;
     } else {
-      // Auto-fill with sequential number starting from 1
-      autoFillValue = athleteIndex + 1;
-      displayValue = autoFillValue.toString();
+      // Fallback to sequential number
+      bateriaValue = athleteIndex + 1;
+      displayValue = bateriaValue.toString();
     }
     
     // Auto-set the value when component renders and no value exists
     React.useEffect(() => {
-      if (!value && autoFillValue !== undefined) {
-        onChange(autoFillValue);
+      if (!value && bateriaValue !== undefined) {
+        console.log(`Auto-filling bateria field for athlete ${athleteId} with value:`, bateriaValue);
+        onChange(bateriaValue);
       }
-    }, [value, autoFillValue, onChange]);
+    }, [value, bateriaValue, onChange, athleteId]);
     
     return (
       <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
