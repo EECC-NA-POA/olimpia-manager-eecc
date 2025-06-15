@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -44,7 +43,7 @@ export function AthletesTable({
 
   const { submitScoreMutation } = useScoreSubmission();
 
-  // Fetch existing scores (filtered by bateria if selected)
+  // Fetch existing scores (filtered by numero_bateria if selected) - FIXED: usar numero_bateria
   const { data: existingScores = [] } = useQuery({
     queryKey: ['athlete-scores', modalityId, eventId, selectedBateriaId],
     queryFn: async () => {
@@ -57,7 +56,7 @@ export function AthletesTable({
         .eq('modalidade_id', modalityId)
         .in('atleta_id', athletes.map(a => a.atleta_id));
 
-      // Filter by bateria if selected
+      // Filter by numero_bateria if selected - FIXED: usar numero_bateria
       if (selectedBateriaId) {
         query = query.eq('numero_bateria', selectedBateriaId);
       }
@@ -69,7 +68,7 @@ export function AthletesTable({
         return [];
       }
       
-      console.log('Existing scores for bateria', selectedBateriaId, ':', data);
+      console.log('Existing scores for numero_bateria', selectedBateriaId, ':', data);
       return data || [];
     },
     enabled: !!eventId && athletes.length > 0,
@@ -92,7 +91,7 @@ export function AthletesTable({
       };
     }
 
-    // For bateria system, separate based on scores in this specific bateria
+    // For bateria system, separate based on scores in this specific bateria using numero_bateria
     const scored = athletes.filter(athlete => 
       existingScores.some(score => 
         score.atleta_id === athlete.atleta_id && score.numero_bateria === selectedBateriaId

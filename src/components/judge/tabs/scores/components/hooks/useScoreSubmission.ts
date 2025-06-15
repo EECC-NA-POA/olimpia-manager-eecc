@@ -13,7 +13,7 @@ interface SubmitScoreParams {
   eventId: string;
   judgeId: string;
   scoreType: 'tempo' | 'distancia' | 'pontos';
-  numeroBateria?: number | null; // Changed from bateriaId to numeroBateria
+  numeroBateria?: number | null; // FIXED: usar numeroBateria consistentemente
 }
 
 export function useScoreSubmission() {
@@ -44,7 +44,7 @@ export function useScoreSubmission() {
         processedValue = parseFloat(value) || 0;
       }
 
-      // Prepare the score data according to the pontuacoes table structure
+      // Prepare the score data - NUNCA usar bateria_id, sempre numero_bateria
       const scoreData = {
         evento_id: eventId,
         modalidade_id: modalityId,
@@ -54,11 +54,11 @@ export function useScoreSubmission() {
         valor_pontuacao: processedValue,
         unidade: scoreType === 'tempo' ? 'segundos' : scoreType === 'distancia' ? 'metros' : 'pontos',
         observacoes: notes || null,
-        numero_bateria: numeroBateria || null, // Use numero_bateria instead of bateriaId
+        numero_bateria: numeroBateria || null, // FIXED: usar numero_bateria
         data_registro: new Date().toISOString()
       };
 
-      console.log('Inserting score data:', scoreData);
+      console.log('Inserting score data (sem bateria_id):', scoreData);
 
       // Insert the score data
       const { data, error } = await supabase
@@ -76,8 +76,9 @@ export function useScoreSubmission() {
       console.log('=== SCORE SUBMISSION SUCCESS ===');
       return data;
     },
-    onSuccess: (_, { modalityId, eventId }) => {
-      queryClient.invalidateQueries({ queryKey: ['athlete-scores', modalityId, eventId] });
+    onSuccess: (_, { modalityId, eventId, numeroBateria }) => {
+      // Invalidate queries usando numero_bateria em vez de bateriaId
+      queryClient.invalidateQueries({ queryKey: ['athlete-scores', modalityId, eventId, numeroBateria] });
       queryClient.invalidateQueries({ queryKey: ['dynamic-baterias', modalityId, eventId] });
       toast.success('Pontuação salva com sucesso!');
     },

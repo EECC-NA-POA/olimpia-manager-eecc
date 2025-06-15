@@ -49,7 +49,7 @@ export function useDynamicScoringTableOperations({
       });
     }
     
-    // Add bateria field if selectedBateriaId exists and not in existing values
+    // Add numero_bateria field if selectedBateriaId exists - FIXED: usar numero_bateria
     if (selectedBateriaId && !initialValues.bateria && !initialValues.numero_bateria) {
       const bateriaField = campos.find(c => c.chave_campo === 'bateria' || c.chave_campo === 'numero_bateria');
       if (bateriaField) {
@@ -77,7 +77,7 @@ export function useDynamicScoringTableOperations({
       // Prepare form data ensuring all required fields are included
       const formData = { ...athleteEditValues };
       
-      // Add bateria field if not present but selectedBateriaId exists
+      // Add numero_bateria field if not present but selectedBateriaId exists - FIXED
       if (selectedBateriaId && !formData.bateria && !formData.numero_bateria) {
         const bateriaField = campos.find(c => c.chave_campo === 'bateria' || c.chave_campo === 'numero_bateria');
         if (bateriaField) {
@@ -85,7 +85,7 @@ export function useDynamicScoringTableOperations({
         }
       }
 
-      console.log('Final form data for submission:', formData);
+      console.log('Final form data for submission (sem bateria_id):', formData);
 
       await mutation.mutateAsync({
         athleteId,
@@ -94,7 +94,7 @@ export function useDynamicScoringTableOperations({
         judgeId,
         modeloId: modelo.id,
         formData,
-        bateriaId: selectedBateriaId
+        bateriaId: selectedBateriaId // Isso será convertido para numero_bateria internamente
       });
 
       stopEditing(athleteId);
