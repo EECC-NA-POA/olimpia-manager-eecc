@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -41,89 +40,30 @@ export function useDynamicScoringSubmission() {
         const observacoes = data.formData.notes || data.observacoes || null;
 
         // For teams, we handle score replication on the client-side
-        // to avoid relying on a potentially faulty database trigger.
         if (data.equipeId) {
           console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
           
-          // Try to fetch team members using different possible column names
-          let teamMembers = null;
-          let teamError = null;
-          
-          // First try with 'time_id' column
-          const { data: teamMembersTimeId, error: errorTimeId } = await supabase
+          const { data: teamMembersQuery, error: teamError } = await supabase
             .from('inscricoes_modalidades')
             .select('atleta_id')
-            .eq('time_id', data.equipeId)
+            .eq('equipe_id', data.equipeId)
             .eq('evento_id', data.eventId)
             .eq('modalidade_id', data.modalityId);
 
-          if (!errorTimeId && teamMembersTimeId && teamMembersTimeId.length > 0) {
-            teamMembers = teamMembersTimeId;
-            console.log('Found team members using time_id:', teamMembers.length);
-          } else {
-            console.log('time_id approach failed, trying equipe_id');
-            
-            // Try with 'equipe_id' column
-            const { data: teamMembersEquipeId, error: errorEquipeId } = await supabase
-              .from('inscricoes_modalidades')
-              .select('atleta_id')
-              .eq('equipe_id', data.equipeId)
-              .eq('evento_id', data.eventId)
-              .eq('modalidade_id', data.modalityId);
-
-            if (!errorEquipeId && teamMembersEquipeId && teamMembersEquipeId.length > 0) {
-              teamMembers = teamMembersEquipeId;
-              console.log('Found team members using equipe_id:', teamMembers.length);
-            } else {
-              teamError = errorTimeId || errorEquipeId;
-              console.error('Both approaches failed:', { errorTimeId, errorEquipeId });
-            }
+          if (teamError) {
+            console.error('Error fetching team members:', teamError);
+            toast.error(`Erro ao buscar membros da equipe: ${teamError.message}`);
+            throw teamError;
           }
 
-          if (teamError || !teamMembers || teamMembers.length === 0) {
-            console.error('Error fetching team members or no members found:', teamError);
-            // Fallback: if team members query fails, just score the current athlete
-            console.log('Fallback: Scoring only the current athlete');
-            const individualPayload = {
-              evento_id: data.eventId,
-              modalidade_id: data.modalityId,
-              atleta_id: data.athleteId,
-              equipe_id: data.equipeId,
-              juiz_id: data.judgeId,
-              modelo_id: data.modeloId,
-              valor_pontuacao: valorPontuacao,
-              unidade: 'pontos',
-              observacoes: observacoes,
-              data_registro: new Date().toISOString(),
-              numero_bateria: data.bateriaId || null,
-              raia: raia,
-            };
-
-            const { data: pontuacao, error: upsertError } = await supabase
-              .from('pontuacoes')
-              .upsert(individualPayload, {
-                onConflict: 'atleta_id,modalidade_id,evento_id,juiz_id,modelo_id,numero_bateria',
-              })
-              .select()
-              .single();
-
-            if (upsertError) {
-              console.error('Error upserting individual score:', upsertError);
-              throw upsertError;
-            }
-
-            const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
-            await insertTentativas(tentativas, pontuacao.id);
-
-            console.log('=== SUBMISSÃO INDIVIDUAL CONCLUÍDA (FALLBACK) ===');
-            return pontuacao;
+          let membersToScore = teamMembersQuery;
+          if (!membersToScore || membersToScore.length === 0) {
+            console.warn('Nenhum membro encontrado para a equipe, pontuando apenas o atleta representante.');
+            toast.info('A equipe não possui membros, pontuando apenas o representante.');
+            membersToScore = [{ atleta_id: data.athleteId }];
           }
-
-          console.log('Team members found:', teamMembers);
-
-          const membersToScore = teamMembers && teamMembers.length > 0 
-            ? teamMembers 
-            : [{ atleta_id: data.athleteId }]; // Fallback to representative if team has no members
+          
+          console.log('Team members to score:', membersToScore);
 
           const scoresPayload = membersToScore.map(member => ({
             evento_id: data.eventId,
@@ -156,7 +96,16 @@ export function useDynamicScoringSubmission() {
 
           const representativeScore = pontuacoes?.find(p => p.atleta_id === data.athleteId);
           if (!representativeScore) {
-            throw new Error('Falha ao encontrar a pontuação do atleta representante após o salvamento.');
+            console.error('Falha ao encontrar a pontuação do atleta representante após o salvamento.', pontuacoes);
+            // Attempt to find any score if representative is not there
+             const anyScore = pontuacoes && pontuacoes[0];
+             if (!anyScore) {
+                throw new Error('Nenhuma pontuação foi salva para a equipe.');
+             }
+             const tentativas = prepareTentativasData(data.formData, campos, anyScore.id);
+             await insertTentativas(tentativas, anyScore.id);
+             console.log('=== SUBMISSÃO DE EQUIPE CONCLUÍDA (com score genérico) ===');
+             return anyScore;
           }
 
           const tentativas = prepareTentativasData(data.formData, campos, representativeScore.id);
@@ -173,7 +122,7 @@ export function useDynamicScoringSubmission() {
           ...restOfData,
           raia,
           observacoes,
-          numero_bateria: bateriaId,
+          numero_bateria: bateriaId || null,
         };
         
         const pontuacao = await upsertPontuacao(dataForDb as any, valorPontuacao);
