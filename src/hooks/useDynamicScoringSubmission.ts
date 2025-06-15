@@ -39,7 +39,8 @@ export function useDynamicScoringSubmission() {
         const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
         const observacoes = data.formData.notes || data.observacoes || null;
 
-        // Prepare base data structure - usando APENAS numero_bateria
+        // Garantir que bateria_id nunca vai para o objeto enviado ao banco:
+        // Usar apenas numero_bateria.
         const baseDataForDb = {
           eventId: data.eventId,
           modalityId: data.modalityId,
@@ -47,7 +48,8 @@ export function useDynamicScoringSubmission() {
           modeloId: data.modeloId,
           raia,
           observacoes,
-          numero_bateria: data.bateriaId || null, // NUNCA usar bateria_id
+          numero_bateria: data.bateriaId ?? null, // Corrigir para nunca enviar bateria_id
+          // bateria_id: undefined - NUNCA incluir este campo!
         };
 
         console.log('Base data for DB:', baseDataForDb);
@@ -140,3 +142,4 @@ export function useDynamicScoringSubmission() {
 }
 
 export type { DynamicSubmissionData } from './useDynamicScoringSubmission/types';
+
