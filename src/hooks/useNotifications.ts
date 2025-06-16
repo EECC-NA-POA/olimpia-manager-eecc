@@ -32,8 +32,8 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
           throw userError;
         }
 
-        // Consulta principal para notificações segmentadas
-        const { data, error } = await supabase
+        // Consulta 1: Notificações destinadas à filial do usuário
+        const { data: destinedNotifications, error: destinedError } = await supabase
           .from('notificacoes')
           .select(`
             id,
@@ -53,17 +53,49 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
           .eq('notificacao_destinatarios.filial_id', userData.filial_id)
           .order('criado_em', { ascending: false });
 
-        if (error) {
-          console.error('Error fetching notifications:', error);
-          throw error;
+        // Consulta 2: Notificações criadas pelo próprio usuário
+        const { data: authoredNotifications, error: authoredError } = await supabase
+          .from('notificacoes')
+          .select(`
+            id,
+            evento_id,
+            autor_id,
+            autor_nome,
+            tipo_autor,
+            titulo,
+            mensagem,
+            visivel,
+            criado_em,
+            atualizado_em
+          `)
+          .eq('evento_id', eventId)
+          .eq('autor_id', userId)
+          .order('criado_em', { ascending: false });
+
+        if (destinedError) {
+          console.error('Error fetching destined notifications:', destinedError);
+          throw destinedError;
         }
 
-        console.log('Notifications from database:', data);
+        if (authoredError) {
+          console.error('Error fetching authored notifications:', authoredError);
+          throw authoredError;
+        }
 
-        if (!data) return [];
+        // Combinar e remover duplicatas
+        const allNotifications = [...(destinedNotifications || []), ...(authoredNotifications || [])];
+        const uniqueNotifications = allNotifications.filter((notification, index, self) => 
+          index === self.findIndex(n => n.id === notification.id)
+        );
+
+        console.log('Notifications from database - destined:', destinedNotifications?.length || 0);
+        console.log('Notifications from database - authored:', authoredNotifications?.length || 0);
+        console.log('Unique notifications after merge:', uniqueNotifications.length);
+
+        if (uniqueNotifications.length === 0) return [];
 
         // Buscar leituras do usuário para essas notificações
-        const notificationIds = data.map(n => n.id);
+        const notificationIds = uniqueNotifications.map(n => n.id);
         
         let readNotifications: string[] = [];
         if (notificationIds.length > 0) {
@@ -79,7 +111,7 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
         }
 
         // Transformar dados para incluir campo 'lida'
-        const notifications: Notification[] = data.map((item: any) => ({
+        const notifications: Notification[] = uniqueNotifications.map((item: any) => ({
           id: item.id,
           evento_id: item.evento_id,
           autor_id: item.autor_id,
@@ -92,6 +124,9 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
           atualizado_em: item.atualizado_em,
           lida: readNotifications.includes(item.id)
         }));
+
+        // Ordenar por data de criação (mais recente primeiro)
+        notifications.sort((a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime());
 
         console.log('Final processed notifications:', notifications);
         return notifications;
