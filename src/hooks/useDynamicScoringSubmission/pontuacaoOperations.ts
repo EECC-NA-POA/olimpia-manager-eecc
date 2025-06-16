@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 
 interface PontuacaoData {
@@ -59,7 +58,14 @@ export async function upsertPontuacao(
 
   try {
     // Check for existing record - using only fields that always exist
-    const searchFields = {
+    const searchFields: {
+      evento_id: string;
+      modalidade_id: number;
+      atleta_id: string;
+      juiz_id: string;
+      modelo_id: number;
+      equipe_id?: number;
+    } = {
       evento_id: data.eventId,
       modalidade_id: data.modalityId,
       atleta_id: data.athleteId,
