@@ -3,11 +3,12 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Users } from 'lucide-react';
+import { Search, Users, Trophy } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { CleanTeamScoreCard } from './CleanTeamScoreCard';
 import { useTeamScoringData } from '../hooks/useTeamScoringData';
+import { Badge } from '@/components/ui/badge';
 
 interface CleanTeamScoringTabProps {
   eventId: string | null;
@@ -40,7 +41,7 @@ export function CleanTeamScoringTab({
 
       const { data, error } = await supabase
         .from('modalidades')
-        .select('id, nome')
+        .select('id, nome, categoria')
         .eq('tipo_modalidade', 'coletiva')
         .order('nome');
 
@@ -73,6 +74,26 @@ export function CleanTeamScoringTab({
       </div>
     );
   }
+
+  // Group teams by modality and category
+  const teamsByModalityCategory = teams.reduce((acc, team) => {
+    const key = `${team.modalidade_nome}-${team.modalidade_categoria}`;
+    if (!acc[key]) {
+      acc[key] = {
+        modalidade_nome: team.modalidade_nome,
+        modalidade_categoria: team.modalidade_categoria,
+        modalidade_id: team.modalidade_id,
+        teams: []
+      };
+    }
+    acc[key].teams.push(team);
+    return acc;
+  }, {} as Record<string, {
+    modalidade_nome: string;
+    modalidade_categoria: string;
+    modalidade_id: number;
+    teams: typeof teams;
+  }>);
 
   return (
     <div className="space-y-6">
@@ -109,7 +130,7 @@ export function CleanTeamScoringTab({
                   <SelectItem value="all">Todas as modalidades</SelectItem>
                   {modalities.map((modality) => (
                     <SelectItem key={modality.id} value={modality.id.toString()}>
-                      {modality.nome}
+                      {modality.nome} - {modality.categoria}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -117,8 +138,8 @@ export function CleanTeamScoringTab({
             </div>
           </div>
 
-          {/* Team Cards */}
-          {teams.length === 0 ? (
+          {/* Teams grouped by modality and category */}
+          {Object.keys(teamsByModalityCategory).length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Nenhuma equipe encontrada</p>
@@ -130,14 +151,41 @@ export function CleanTeamScoringTab({
               </p>
             </div>
           ) : (
-            <div className="grid gap-4">
-              {teams.map((team) => (
-                <CleanTeamScoreCard
-                  key={team.equipe_id}
-                  team={team}
-                  eventId={eventId}
-                  judgeId={judgeId}
-                />
+            <div className="space-y-8">
+              {Object.entries(teamsByModalityCategory).map(([key, modalityGroup]) => (
+                <div key={key} className="space-y-4">
+                  {/* Modality Header */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Trophy className="h-5 w-5 text-olimpics-green-primary" />
+                          <span>{modalityGroup.modalidade_nome}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="capitalize">
+                            {modalityGroup.modalidade_categoria}
+                          </Badge>
+                          <Badge variant="outline">
+                            {modalityGroup.teams.length} equipe{modalityGroup.teams.length !== 1 ? 's' : ''}
+                          </Badge>
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                  </Card>
+
+                  {/* Teams in this modality-category */}
+                  <div className="grid gap-4">
+                    {modalityGroup.teams.map((team) => (
+                      <CleanTeamScoreCard
+                        key={team.equipe_id}
+                        team={team}
+                        eventId={eventId}
+                        judgeId={judgeId}
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           )}

@@ -7,6 +7,7 @@ interface Team {
   equipe_nome: string;
   modalidade_id: number;
   modalidade_nome: string;
+  modalidade_categoria: string;
   members: Array<{
     atleta_id: string;
     atleta_nome: string;
@@ -20,30 +21,6 @@ interface UseTeamScoringDataProps {
   branchFilter?: string | null;
   searchTerm?: string;
   userBranchId?: string;
-}
-
-// Define the expected structure from Supabase - both modalidades and usuarios come as arrays due to joins
-interface SupabaseTeamData {
-  id: number;
-  nome: string;
-  modalidade_id: number;
-  modalidades: Array<{
-    id: number;
-    nome: string;
-    tipo_pontuacao: string;
-    categoria: string;
-    modelos_modalidade: Array<{
-      id: number;
-      codigo_modelo: string;
-      descricao: string;
-    }>;
-  }>;
-  atletas_equipes: Array<{
-    atleta_id: string;
-    usuarios: Array<{
-      nome_completo: string;
-    }>;
-  }>;
 }
 
 export function useTeamScoringData({
@@ -60,60 +37,109 @@ export function useTeamScoringData({
 
       console.log('Fetching team scoring data for event:', eventId);
 
-      let query = supabase
+      // First, get all teams for the event
+      let teamsQuery = supabase
         .from('equipes')
-        .select(`
-          id,
-          nome,
-          modalidade_id,
-          modalidades!inner (
-            id,
-            nome,
-            tipo_pontuacao,
-            categoria,
-            modelos_modalidade (
-              id,
-              codigo_modelo,
-              descricao
-            )
-          ),
-          atletas_equipes (
+        .select('id, nome, modalidade_id')
+        .eq('evento_id', eventId);
+
+      if (modalityFilter) {
+        teamsQuery = teamsQuery.eq('modalidade_id', modalityFilter);
+      }
+
+      const { data: teamsData, error: teamsError } = await teamsQuery.order('nome');
+
+      if (teamsError) {
+        console.error('Error fetching teams:', teamsError);
+        throw teamsError;
+      }
+
+      console.log('Teams data:', teamsData);
+
+      if (!teamsData || teamsData.length === 0) {
+        console.log('No teams found');
+        return [];
+      }
+
+      const transformedTeams: Team[] = [];
+
+      // Process each team
+      for (const team of teamsData) {
+        console.log('Processing team:', team);
+
+        // Get modality information
+        const { data: modalityData, error: modalityError } = await supabase
+          .from('modalidades')
+          .select('id, nome, categoria, tipo_modalidade')
+          .eq('id', team.modalidade_id)
+          .single();
+
+        if (modalityError) {
+          console.error('Error fetching modality:', modalityError);
+          continue;
+        }
+
+        // Only process collective modalities
+        if (modalityData?.tipo_modalidade !== 'coletiva') {
+          console.log('Skipping non-collective modality:', modalityData?.nome);
+          continue;
+        }
+
+        // Get team athletes
+        const { data: athletesData, error: athletesError } = await supabase
+          .from('atletas_equipes')
+          .select(`
             atleta_id,
             usuarios!inner (
               nome_completo
             )
-          )
-        `)
-        .eq('evento_id', eventId);
+          `)
+          .eq('equipe_id', team.id);
 
-      // Apply filters
-      if (modalityFilter) {
-        query = query.eq('modalidade_id', modalityFilter);
+        if (athletesError) {
+          console.error('Error fetching team athletes:', athletesError);
+        }
+
+        console.log('Athletes data for team', team.nome, ':', athletesData);
+
+        // Transform athletes data
+        const members = (athletesData || []).map(athlete => {
+          const usuario = Array.isArray(athlete.usuarios) 
+            ? athlete.usuarios[0] 
+            : athlete.usuarios;
+          
+          return {
+            atleta_id: athlete.atleta_id,
+            atleta_nome: usuario?.nome_completo || '',
+            numero_identificador: '' // Will be fetched separately if needed
+          };
+        });
+
+        // Get payment info for numero_identificador if needed
+        for (const member of members) {
+          const { data: paymentData } = await supabase
+            .from('pagamentos')
+            .select('numero_identificador')
+            .eq('atleta_id', member.atleta_id)
+            .eq('evento_id', eventId)
+            .single();
+
+          if (paymentData?.numero_identificador) {
+            member.numero_identificador = paymentData.numero_identificador;
+          }
+        }
+
+        const transformedTeam: Team = {
+          equipe_id: team.id,
+          equipe_nome: team.nome,
+          modalidade_id: team.modalidade_id,
+          modalidade_nome: modalityData?.nome || '',
+          modalidade_categoria: modalityData?.categoria || '',
+          members
+        };
+
+        transformedTeams.push(transformedTeam);
       }
-
-      // Note: Removed filial_id filters since the column doesn't exist in equipes table
-      // If branch filtering is needed, it should be done through atletas_equipes -> usuarios -> filial_id
-
-      const { data, error } = await query.order('nome');
-
-      if (error) {
-        console.error('Error fetching teams:', error);
-        throw error;
-      }
-
-      console.log('Raw teams data:', data);
-
-      const transformedTeams: Team[] = (data as SupabaseTeamData[] || []).map(team => ({
-        equipe_id: team.id,
-        equipe_nome: team.nome,
-        modalidade_id: team.modalidade_id,
-        modalidade_nome: team.modalidades?.[0]?.nome || '',
-        members: (team.atletas_equipes || []).map(ae => ({
-          atleta_id: ae.atleta_id,
-          atleta_nome: ae.usuarios?.[0]?.nome_completo || '',
-          numero_identificador: '' // Will be fetched separately if needed
-        }))
-      }));
 
       // Apply search filter
       let filteredTeams = transformedTeams;
@@ -122,13 +148,14 @@ export function useTeamScoringData({
         filteredTeams = transformedTeams.filter(team =>
           team.equipe_nome.toLowerCase().includes(searchLower) ||
           team.modalidade_nome.toLowerCase().includes(searchLower) ||
+          team.modalidade_categoria.toLowerCase().includes(searchLower) ||
           team.members.some(member =>
             member.atleta_nome.toLowerCase().includes(searchLower)
           )
         );
       }
 
-      console.log('Transformed and filtered teams:', filteredTeams);
+      console.log('Final transformed and filtered teams:', filteredTeams);
       return filteredTeams;
     },
     enabled: !!eventId,
