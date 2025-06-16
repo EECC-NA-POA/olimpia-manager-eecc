@@ -19,68 +19,85 @@ export const submitNotification = async (
     destinatarios
   });
 
-  // 1. Inserir a notificação (o trigger preencherá automaticamente o autor_nome)
-  const notificationData = {
-    evento_id: eventId,
-    autor_id: userId,
-    tipo_autor: tipoAutor,
-    titulo,
-    mensagem,
-    visivel: true
-  };
+  try {
+    // 1. Inserir a notificação (o trigger preencherá automaticamente o autor_nome)
+    const notificationData = {
+      evento_id: eventId,
+      autor_id: userId,
+      tipo_autor: tipoAutor,
+      titulo,
+      mensagem,
+      visivel: true
+    };
 
-  const { data: result, error } = await supabase
-    .from('notificacoes')
-    .insert(notificationData)
-    .select()
-    .single();
+    console.log('Inserting notification with data:', notificationData);
 
-  if (error) {
-    console.error('Database error:', error);
-    throw error;
-  }
+    const { data: result, error } = await supabase
+      .from('notificacoes')
+      .insert(notificationData)
+      .select()
+      .single();
 
-  // 2. Preparar os destinatários
-  let destinatariosData: { notificacao_id: string; filial_id: string }[] = [];
-
-  if (destinatarios.includes('all')) {
-    // Se for "todas as filiais", buscar todas as filiais
-    const { data: filiais, error: filiaisError } = await supabase
-      .from('filiais')
-      .select('id');
-
-    if (filiaisError) {
-      console.error('Error fetching branches:', filiaisError);
-      // Tentar limpar a notificação criada
-      await supabase.from('notificacoes').delete().eq('id', result.id);
-      throw filiaisError;
+    if (error) {
+      console.error('Error inserting notification:', error);
+      throw error;
     }
 
-    destinatariosData = filiais.map(filial => ({
-      notificacao_id: result.id,
-      filial_id: filial.id
-    }));
-  } else {
-    // Se for filiais específicas
-    destinatariosData = destinatarios.map(filialId => ({
-      notificacao_id: result.id,
-      filial_id: filialId
-    }));
+    console.log('Notification inserted successfully:', result);
+
+    // 2. Preparar os destinatários
+    let destinatariosData: { notificacao_id: string; filial_id: string }[] = [];
+
+    if (destinatarios.includes('all')) {
+      console.log('Fetching all branches for "all" option');
+      // Se for "todas as filiais", buscar todas as filiais
+      const { data: filiais, error: filiaisError } = await supabase
+        .from('filiais')
+        .select('id');
+
+      if (filiaisError) {
+        console.error('Error fetching branches:', filiaisError);
+        // Tentar limpar a notificação criada
+        await supabase.from('notificacoes').delete().eq('id', result.id);
+        throw filiaisError;
+      }
+
+      console.log('Fetched branches:', filiais);
+
+      destinatariosData = filiais.map(filial => ({
+        notificacao_id: result.id,
+        filial_id: filial.id
+      }));
+    } else {
+      console.log('Using specific branches:', destinatarios);
+      // Se for filiais específicas
+      destinatariosData = destinatarios.map(filialId => ({
+        notificacao_id: result.id,
+        filial_id: filialId
+      }));
+    }
+
+    console.log('Inserting destinations:', destinatariosData);
+
+    const { error: destError } = await supabase
+      .from('notificacao_destinatarios')
+      .insert(destinatariosData);
+
+    if (destError) {
+      console.error('Error inserting destinations:', destError);
+      // Tentar limpar a notificação criada
+      await supabase.from('notificacoes').delete().eq('id', result.id);
+      throw destError;
+    }
+
+    console.log('Destinations inserted successfully');
+    console.log('Notification created successfully:', result);
+    toast.success('Notificação criada com sucesso!');
+    
+  } catch (error) {
+    console.error('Full error in submitNotification:', error);
+    throw error;
   }
-
-  const { error: destError } = await supabase
-    .from('notificacao_destinatarios')
-    .insert(destinatariosData);
-
-  if (destError) {
-    console.error('Error inserting destinations:', destError);
-    // Tentar limpar a notificação criada
-    await supabase.from('notificacoes').delete().eq('id', result.id);
-    throw destError;
-  }
-
-  console.log('Notification created successfully:', result);
-  toast.success('Notificação criada com sucesso!');
 };
 
 export const markNotificationAsRead = async (notificationId: string, userId: string) => {
