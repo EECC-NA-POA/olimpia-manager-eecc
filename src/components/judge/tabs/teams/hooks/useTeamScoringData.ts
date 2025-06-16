@@ -43,7 +43,6 @@ interface SupabaseTeamData {
     atleta_id: string;
     usuarios: Array<{
       nome_completo: string;
-      numero_identificador?: string;
     }>;
   }>;
 }
@@ -83,8 +82,7 @@ export function useTeamScoringData({
           atletas_equipes (
             atleta_id,
             usuarios!inner (
-              nome_completo,
-              numero_identificador
+              nome_completo
             )
           )
         `)
@@ -120,7 +118,7 @@ export function useTeamScoringData({
         members: (team.atletas_equipes || []).map(ae => ({
           atleta_id: ae.atleta_id,
           atleta_nome: ae.usuarios?.[0]?.nome_completo || '',
-          numero_identificador: ae.usuarios?.[0]?.numero_identificador || ''
+          numero_identificador: '' // Removido a referência à coluna que não existe
         }))
       }));
 
