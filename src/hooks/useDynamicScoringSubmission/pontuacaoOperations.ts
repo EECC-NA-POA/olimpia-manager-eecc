@@ -22,18 +22,10 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     raia: data.raia || null
   };
 
-  // APENAS incluir numero_bateria se a modalidade usa baterias E o valor está presente
-  if (usesBaterias && data.numeroBateria !== undefined && data.numeroBateria !== null) {
-    pontuacaoData.numero_bateria = data.numeroBateria;
-    console.log('Modalidade usa baterias - incluindo numero_bateria:', data.numeroBateria);
-  } else {
-    console.log('Modalidade NÃO usa baterias OU numero_bateria não fornecido - campo omitido');
-  }
-
-  console.log('Final pontuacao data for database:', pontuacaoData);
+  console.log('Final pontuacao data for database (NO BATTERY FIELDS):', pontuacaoData);
   console.log('Fields included:', Object.keys(pontuacaoData));
 
-  // Build search query - NUNCA incluir numero_bateria se a modalidade não usa baterias
+  // Build search query - NUNCA incluir numero_bateria para modalidades sem baterias
   let searchQuery = supabase
     .from('pontuacoes')
     .select('id')
@@ -50,17 +42,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     searchQuery = searchQuery.eq('equipe_id', pontuacaoData.equipe_id);
   }
 
-  // APENAS adicionar numero_bateria à consulta se a modalidade usa baterias
-  if (usesBaterias && 'numero_bateria' in pontuacaoData) {
-    if (pontuacaoData.numero_bateria === null || pontuacaoData.numero_bateria === undefined) {
-      searchQuery = searchQuery.is('numero_bateria', null);
-    } else {
-      searchQuery = searchQuery.eq('numero_bateria', pontuacaoData.numero_bateria);
-    }
-    console.log('Incluindo numero_bateria na consulta para modalidade com baterias');
-  } else {
-    console.log('NÃO incluindo numero_bateria na consulta - modalidade sem baterias');
-  }
+  console.log('Search query constructed WITHOUT battery fields');
 
   const { data: existingRecords, error: findError } = await searchQuery;
 
@@ -90,7 +72,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     result = updatedRecord;
   } else {
     // Insert new record
-    console.log('Inserting new record');
+    console.log('Inserting new record WITHOUT battery fields');
     
     const { data: newRecord, error } = await supabase
       .from('pontuacoes')

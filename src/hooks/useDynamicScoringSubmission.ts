@@ -35,16 +35,20 @@ export function useDynamicScoringSubmission() {
 
         console.log('Campos do modelo:', campos);
 
-        // VERIFICAR SE A MODALIDADE USA BATERIAS
+        // VERIFICAÇÃO CORRETA DE BATERIAS - procurar por campos específicos de bateria
         const bateriaField = campos?.find(campo => 
-          campo.chave_campo === 'baterias' || 
+          campo.chave_campo === 'numero_bateria' || 
           campo.chave_campo === 'bateria' ||
-          (campo.tipo_input === 'checkbox' && campo.metadados?.baterias === true)
+          (campo.tipo_input === 'select' && campo.metadados?.opcoes && 
+           Array.isArray(campo.metadados.opcoes) && 
+           campo.metadados.opcoes.some((opcao: any) => 
+             typeof opcao === 'string' && opcao.toLowerCase().includes('bateria')
+           ))
         );
         
         const usesBaterias = !!bateriaField;
         
-        console.log('=== VERIFICAÇÃO DE BATERIAS ===');
+        console.log('=== VERIFICAÇÃO DE BATERIAS CORRIGIDA ===');
         console.log('Bateria field found:', bateriaField);
         console.log('Uses baterias:', usesBaterias);
 
@@ -55,7 +59,7 @@ export function useDynamicScoringSubmission() {
         const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
         const observacoes = data.formData.notes || data.observacoes || null;
 
-        // Create base data object - NUNCA incluir campos de bateria para modalidades sem baterias
+        // Create base data object - SEM campos de bateria para modalidades sem baterias
         const baseDataForDb = {
           eventId: data.eventId,
           modalityId: data.modalityId,
@@ -77,15 +81,7 @@ export function useDynamicScoringSubmission() {
             equipeId: data.equipeId,
           };
 
-          // NUNCA incluir numero_bateria para modalidades de equipe sem baterias
-          if (usesBaterias && data.numeroBateria !== undefined && data.numeroBateria !== null) {
-            (teamDataForDb as any).numeroBateria = data.numeroBateria;
-            console.log('Added numeroBateria for bateria-enabled modality:', data.numeroBateria);
-          } else {
-            console.log('Modalidade de equipe SEM baterias - numero_bateria não será incluído');
-          }
-
-          console.log('Team data for DB:', teamDataForDb);
+          console.log('Team data for DB (WITHOUT battery fields):', teamDataForDb);
 
           const pontuacao = await upsertPontuacao(teamDataForDb, valorPontuacao, usesBaterias);
           console.log('=== TEAM SCORE SAVED ===');
@@ -106,13 +102,7 @@ export function useDynamicScoringSubmission() {
           equipeId: null,
         };
 
-        // NUNCA incluir numero_bateria para modalidades sem baterias
-        if (usesBaterias && data.numeroBateria !== undefined && data.numeroBateria !== null) {
-          (individualDataForDb as any).numeroBateria = data.numeroBateria;
-          console.log('Added numeroBateria for bateria-enabled modality:', data.numeroBateria);
-        }
-
-        console.log('Individual data for DB:', individualDataForDb);
+        console.log('Individual data for DB (WITHOUT battery fields):', individualDataForDb);
 
         const pontuacao = await upsertPontuacao(individualDataForDb, valorPontuacao, usesBaterias);
         console.log('=== INDIVIDUAL SCORE SAVED ===');

@@ -30,10 +30,9 @@ export function useFormSubmission({
     console.log('=== SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm - EQUIPES) ===');
     console.log('Form data:', formData);
     console.log('Equipe ID:', equipeId);
-    console.log('Numero Bateria:', numeroBateria);
 
     try {
-      // Preparar dados de submissão - CLEAN OBJECT
+      // Preparar dados de submissão - CLEAN OBJECT SEM CAMPOS DE BATERIA
       const submissionData: any = {
         athleteId,
         modalityId,
@@ -46,15 +45,7 @@ export function useFormSubmission({
         observacoes: formData.notes
       };
 
-      // APENAS incluir numeroBateria se fornecido
-      if (numeroBateria !== undefined && numeroBateria !== null) {
-        submissionData.numeroBateria = numeroBateria;
-        console.log('Including numeroBateria:', numeroBateria);
-      } else {
-        console.log('numeroBateria not provided - will be handled by usesBaterias check');
-      }
-
-      console.log('Final submission data:', submissionData);
+      console.log('Final submission data (NO BATTERY FIELDS):', submissionData);
 
       await mutation.mutateAsync(submissionData);
 
