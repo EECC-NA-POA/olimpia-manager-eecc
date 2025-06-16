@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CampoModelo } from '@/types/dynamicScoring';
+import { MaskedResultInput } from '@/components/judge/dynamic-scoring/MaskedResultInput';
 
 interface CleanTeamScoringFormProps {
   modeloId: number;
@@ -27,6 +28,27 @@ export function CleanTeamScoringForm({
   isSubmitting,
   initialValues = {}
 }: CleanTeamScoringFormProps) {
+  // Fetch modality rule to determine score type
+  const { data: modalityRule } = useQuery({
+    queryKey: ['modality-rule', modalityId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('regras_modalidades')
+        .select('regra_tipo, parametros')
+        .eq('modalidade_id', modalityId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching modality rule:', error);
+        return null;
+      }
+
+      console.log('Modality rule for team scoring:', data);
+      return data;
+    },
+    enabled: !!modalityId,
+  });
+
   // Fetch scoring fields only - NO battery or configuration fields
   const { data: campos = [], isLoading } = useQuery({
     queryKey: ['clean-team-campos', modeloId],
@@ -105,6 +127,9 @@ export function CleanTeamScoringForm({
     );
   }
 
+  // Determine if this modality uses time-based scoring
+  const isTimeBasedScoring = modalityRule?.regra_tipo === 'tempo';
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -118,6 +143,9 @@ export function CleanTeamScoringForm({
                 <FormLabel>
                   {campo.rotulo_campo}
                   {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
+                  {isTimeBasedScoring && campo.chave_campo.toLowerCase().includes('resultado') && (
+                    <span className="text-green-600 text-xs ml-2">(MM:SS.mmm)</span>
+                  )}
                 </FormLabel>
                 <FormControl>
                   {campo.tipo_input === 'number' || campo.tipo_input === 'integer' ? (
@@ -143,6 +171,19 @@ export function CleanTeamScoringForm({
                         ))}
                       </SelectContent>
                     </Select>
+                  ) : isTimeBasedScoring && campo.chave_campo.toLowerCase().includes('resultado') ? (
+                    <MaskedResultInput
+                      campo={{
+                        ...campo,
+                        metadados: {
+                          ...campo.metadados,
+                          formato_resultado: 'tempo'
+                        }
+                      }}
+                      form={form}
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                    />
                   ) : (
                     <Input
                       placeholder={campo.metadados?.placeholder || 'Digite aqui'}
