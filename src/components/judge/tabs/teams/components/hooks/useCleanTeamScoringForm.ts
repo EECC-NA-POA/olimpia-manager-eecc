@@ -17,25 +17,46 @@ export function useCleanTeamScoringForm({
   modalityId, 
   initialValues = {} 
 }: UseCleanTeamScoringFormProps) {
-  // Fetch modality rule to determine score type
-  const { data: modalityRule } = useQuery({
-    queryKey: ['modality-rule', modalityId],
+  // Fetch modality basic info to determine score type
+  const { data: modalityInfo } = useQuery({
+    queryKey: ['modality-info', modalityId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('regras_modalidades')
-        .select('regra_tipo, parametros')
-        .eq('modalidade_id', modalityId)
-        .maybeSingle();
+        .from('modalidades')
+        .select('id, nome, tipo_pontuacao')
+        .eq('id', modalityId)
+        .single();
 
       if (error) {
-        console.error('Error fetching modality rule:', error);
+        console.error('Error fetching modality info:', error);
         return null;
       }
 
-      console.log('Modality rule for team scoring:', data);
+      console.log('Modality info for team scoring:', data);
       return data;
     },
     enabled: !!modalityId,
+  });
+
+  // Fetch modelo configuration to check for specific scoring rules
+  const { data: modeloConfig } = useQuery({
+    queryKey: ['modelo-config', modeloId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('modelos_modalidade')
+        .select('parametros')
+        .eq('id', modeloId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching modelo config:', error);
+        return null;
+      }
+
+      console.log('Modelo config for team scoring:', data);
+      return data;
+    },
+    enabled: !!modeloId,
   });
 
   // Fetch scoring fields only - NO battery or configuration fields
@@ -119,27 +140,50 @@ export function useCleanTeamScoringForm({
     },
   });
 
-  // Determine the score format based on modality rule
+  // Determine the score format based on modality type and modelo config
   const getScoreFormat = () => {
-    if (!modalityRule) return 'pontos';
-    
-    switch (modalityRule.regra_tipo) {
-      case 'tempo':
-        return 'tempo';
-      case 'distancia':
-        return 'distancia';
-      default:
-        return 'pontos';
+    // First check modelo config for specific rules
+    if (modeloConfig?.parametros?.regra_tipo) {
+      switch (modeloConfig.parametros.regra_tipo) {
+        case 'tempo':
+          return 'tempo';
+        case 'distancia':
+          return 'distancia';
+        case 'pontos':
+          return 'pontos';
+      }
     }
+    
+    // Then check modality type_pontuacao
+    if (modalityInfo?.tipo_pontuacao) {
+      switch (modalityInfo.tipo_pontuacao) {
+        case 'tempo':
+          return 'tempo';
+        case 'distancia':
+          return 'distancia';
+        case 'pontos':
+        default:
+          return 'pontos';
+      }
+    }
+    
+    // Default fallback
+    return 'pontos';
   };
 
   const scoreFormat = getScoreFormat();
+
+  console.log('Score format determined:', scoreFormat, {
+    modalityInfo: modalityInfo?.tipo_pontuacao,
+    modeloConfig: modeloConfig?.parametros?.regra_tipo
+  });
 
   return {
     campos,
     isLoading,
     form,
     scoreFormat,
-    modalityRule
+    modalityInfo,
+    modeloConfig
   };
 }
