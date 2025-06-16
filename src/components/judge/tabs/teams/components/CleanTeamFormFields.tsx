@@ -70,6 +70,19 @@ export function CleanTeamFormFields({ campos, form, scoreFormat }: CleanTeamForm
                     value={field.value || ''}
                     onChange={field.onChange}
                   />
+                ) : campo.tipo_input === 'text' && campo.metadados?.formato_resultado ? (
+                  <MaskedResultInput
+                    campo={{
+                      ...campo,
+                      metadados: {
+                        ...campo.metadados,
+                        formato_resultado: scoreFormat as 'pontos' | 'tempo' | 'distancia'
+                      }
+                    }}
+                    form={form}
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                  />
                 ) : (
                   <Input
                     placeholder={campo.metadados?.placeholder || 'Digite aqui'}
