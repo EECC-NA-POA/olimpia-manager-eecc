@@ -8,6 +8,7 @@ interface UseFormSubmissionProps {
   equipeId?: number;
   judgeId: string;
   modeloId: number;
+  numeroBateria?: number;
   raia?: number;
   onSuccess?: () => void;
 }
@@ -19,6 +20,7 @@ export function useFormSubmission({
   equipeId,
   judgeId,
   modeloId,
+  numeroBateria,
   raia,
   onSuccess
 }: UseFormSubmissionProps) {
@@ -28,9 +30,10 @@ export function useFormSubmission({
     console.log('=== SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm - EQUIPES SEM BATERIAS) ===');
     console.log('Form data:', formData);
     console.log('Equipe ID:', equipeId);
+    console.log('Numero Bateria:', numeroBateria);
 
     try {
-      // Preparar dados de submissão - GARANTIDO SEM CAMPOS DE BATERIA
+      // Preparar dados de submissão - GARANTIDO SEM CAMPOS DE BATERIA para modalidades sem baterias
       const submissionData: any = {
         athleteId,
         modalityId,
@@ -43,7 +46,12 @@ export function useFormSubmission({
         observacoes: formData.notes
       };
 
-      console.log('Final submission data (GUARANTEED NO BATTERY FIELDS):', submissionData);
+      // CRITICAL: Only add numeroBateria if it exists and is not null/undefined
+      if (numeroBateria !== null && numeroBateria !== undefined) {
+        submissionData.numeroBateria = numeroBateria;
+      }
+
+      console.log('Final submission data (GUARANTEED NO BATTERY FIELDS FOR NON-BATTERY MODALITIES):', submissionData);
 
       await mutation.mutateAsync(submissionData);
 
