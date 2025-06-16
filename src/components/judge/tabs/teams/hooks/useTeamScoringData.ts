@@ -64,7 +64,7 @@ export function useTeamScoringData({
         throw teamsError;
       }
 
-      console.log('Teams data:', teamsData);
+      console.log('Teams data fetched:', teamsData);
 
       if (!teamsData || teamsData.length === 0) {
         console.log('No teams found');
@@ -77,12 +77,14 @@ export function useTeamScoringData({
       for (const team of teamsData) {
         console.log('Processing team:', team);
 
-        // Only process collective modalities
+        // Only process collective modalities - note: using 'coletivo' not 'coletiva'
         const modality = Array.isArray(team.modalidades) ? team.modalidades[0] : team.modalidades;
-        if (modality?.tipo_modalidade !== 'coletiva') {
-          console.log('Skipping non-collective modality:', modality?.nome);
+        if (modality?.tipo_modalidade !== 'coletivo') {
+          console.log('Skipping non-collective modality:', modality?.nome, 'type:', modality?.tipo_modalidade);
           continue;
         }
+
+        console.log('Processing collective modality team:', team.nome);
 
         // Get team athletes using the correct table structure
         const { data: athletesData, error: athletesError } = await supabase
@@ -96,8 +98,8 @@ export function useTeamScoringData({
           .eq('equipe_id', team.id);
 
         if (athletesError) {
-          console.error('Error fetching team athletes:', athletesError);
-          continue;
+          console.error('Error fetching team athletes for team', team.nome, ':', athletesError);
+          // Continue processing other teams even if this one fails
         }
 
         console.log('Athletes data for team', team.nome, ':', athletesData);
@@ -110,22 +112,26 @@ export function useTeamScoringData({
           
           return {
             atleta_id: athlete.atleta_id,
-            atleta_nome: usuario?.nome_completo || '',
+            atleta_nome: usuario?.nome_completo || 'Nome não encontrado',
             numero_identificador: '' // Will be fetched separately if needed
           };
         });
 
         // Get payment info for numero_identificador if needed
         for (const member of members) {
-          const { data: paymentData } = await supabase
-            .from('pagamentos')
-            .select('numero_identificador')
-            .eq('atleta_id', member.atleta_id)
-            .eq('evento_id', eventId)
-            .single();
+          try {
+            const { data: paymentData } = await supabase
+              .from('pagamentos')
+              .select('numero_identificador')
+              .eq('atleta_id', member.atleta_id)
+              .eq('evento_id', eventId)
+              .maybeSingle();
 
-          if (paymentData?.numero_identificador) {
-            member.numero_identificador = paymentData.numero_identificador;
+            if (paymentData?.numero_identificador) {
+              member.numero_identificador = paymentData.numero_identificador;
+            }
+          } catch (error) {
+            console.log('Could not fetch payment data for athlete:', member.atleta_id);
           }
         }
 
@@ -139,6 +145,7 @@ export function useTeamScoringData({
         };
 
         transformedTeams.push(transformedTeam);
+        console.log('Transformed team added:', transformedTeam);
       }
 
       // Apply search filter

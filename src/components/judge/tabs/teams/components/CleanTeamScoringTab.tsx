@@ -33,7 +33,7 @@ export function CleanTeamScoringTab({
     searchTerm
   });
 
-  // Get available modalities for filter
+  // Get available modalities for filter - only collective ones
   const { data: modalities = [] } = useQuery({
     queryKey: ['team-modalities', eventId],
     queryFn: async () => {
@@ -42,10 +42,16 @@ export function CleanTeamScoringTab({
       const { data, error } = await supabase
         .from('modalidades')
         .select('id, nome, categoria')
-        .eq('tipo_modalidade', 'coletiva')
+        .eq('evento_id', eventId)
+        .eq('tipo_modalidade', 'coletivo')
         .order('nome');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching modalities:', error);
+        throw error;
+      }
+      
+      console.log('Available collective modalities:', data);
       return data || [];
     },
     enabled: !!eventId,
@@ -68,6 +74,7 @@ export function CleanTeamScoringTab({
   }
 
   if (error) {
+    console.error('Error in CleanTeamScoringTab:', error);
     return (
       <div className="text-center py-8 text-red-600">
         Erro ao carregar equipes: {error.message}
@@ -95,7 +102,9 @@ export function CleanTeamScoringTab({
     teams: typeof teams;
   }>);
 
+  console.log('Teams data received:', teams);
   console.log('Teams grouped by modality-category:', teamsByModalityCategory);
+  console.log('Available modalities for filter:', modalities);
 
   return (
     <div className="space-y-6">
@@ -140,6 +149,11 @@ export function CleanTeamScoringTab({
             </div>
           </div>
 
+          {/* Debug info */}
+          <div className="text-sm text-muted-foreground bg-gray-50 p-2 rounded">
+            Debug: {teams.length} equipes encontradas, {Object.keys(teamsByModalityCategory).length} grupos de modalidade-categoria
+          </div>
+
           {/* Teams grouped by modality and category */}
           {Object.keys(teamsByModalityCategory).length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -148,9 +162,14 @@ export function CleanTeamScoringTab({
               <p className="text-sm mt-1">
                 {modalityFilter || searchTerm 
                   ? 'Tente ajustar os filtros de busca' 
-                  : 'Não há equipes disponíveis para este evento'
+                  : 'Não há equipes de modalidades coletivas disponíveis para este evento'
                 }
               </p>
+              {modalities.length === 0 && (
+                <p className="text-sm mt-1 text-orange-600">
+                  Nenhuma modalidade coletiva encontrada no evento
+                </p>
+              )}
             </div>
           ) : (
             <div className="space-y-8">
