@@ -24,30 +24,38 @@ export function BatteryAndLanesSection({
 }: BatteryAndLanesSectionProps) {
   const handleNumRaiasChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    console.log('Input change - raw value:', value);
     
     // Allow empty string for better UX while typing
     if (value === '') {
+      console.log('Empty value, allowing for now');
       return; // Don't call onNumRaiasChange yet, wait for a valid number
     }
     
     const numValue = parseInt(value, 10);
+    console.log('Parsed number value:', numValue);
     
-    // Allow any valid integer >= 0 and <= 20 (explicitly including 0)
+    // EXPLICITLY allow 0 and any valid integer between 0 and 20
     if (!isNaN(numValue) && numValue >= 0 && numValue <= 20) {
-      console.log('Setting num_raias to:', numValue);
+      console.log('Valid number, calling onNumRaiasChange with:', numValue);
       onNumRaiasChange(numValue);
+    } else {
+      console.log('Invalid number, not calling onNumRaiasChange');
     }
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    console.log('Input blur - value:', value);
     
     // If field is empty on blur, set to 0
     if (value === '') {
-      console.log('Setting num_raias to 0 on blur');
+      console.log('Empty on blur, setting to 0');
       onNumRaiasChange(0);
     }
   };
+
+  console.log('BatteryAndLanesSection render - config.num_raias:', config.num_raias);
 
   return (
     <Card>
@@ -92,7 +100,8 @@ export function BatteryAndLanesSection({
             type="number"
             min="0"
             max="20"
-            value={config.num_raias}
+            step="1"
+            value={config.num_raias === 0 ? '0' : config.num_raias}
             onChange={handleNumRaiasChange}
             onBlur={handleBlur}
             placeholder="0"

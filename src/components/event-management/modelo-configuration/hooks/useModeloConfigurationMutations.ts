@@ -5,7 +5,11 @@ import { toast } from 'sonner';
 export function useModeloConfigurationMutations(refetch: () => void) {
   const saveConfigurationMutation = useMutation({
     mutationFn: async ({ modeloId, parametros }: { modeloId: number, parametros: any }) => {
-      console.log('Saving configuration for modelo:', modeloId, 'with params:', parametros);
+      console.log('=== SAVE CONFIGURATION START ===');
+      console.log('Saving configuration for modelo:', modeloId);
+      console.log('Full parametros object:', parametros);
+      console.log('parametros.num_raias value:', parametros.num_raias);
+      console.log('parametros.num_raias type:', typeof parametros.num_raias);
       
       // Get existing campos for this modelo
       const { data: existingCampos, error: fetchError } = await supabase
@@ -37,13 +41,18 @@ export function useModeloConfigurationMutations(refetch: () => void) {
       // Create or update campos based on parametros
       const camposToInsert = [];
       
-      // Handle baterias configuration - explicitly check for undefined, not falsy values
+      // Handle baterias configuration - MUST preserve exact values including 0
       if (parametros.baterias !== undefined) {
-        console.log('Saving baterias config:', {
-          baterias: parametros.baterias,
-          num_raias: parametros.num_raias,
-          permite_final: parametros.permite_final
-        });
+        const bateriasMetadata = { 
+          baterias: parametros.baterias, 
+          num_raias: parametros.num_raias, // Preserve exact value, including 0
+          permite_final: parametros.permite_final || false 
+        };
+        
+        console.log('=== SAVING BATERIAS CONFIG ===');
+        console.log('Baterias metadata to save:', bateriasMetadata);
+        console.log('num_raias in metadata:', bateriasMetadata.num_raias);
+        console.log('num_raias type in metadata:', typeof bateriasMetadata.num_raias);
         
         camposToInsert.push({
           modelo_id: modeloId,
@@ -52,11 +61,7 @@ export function useModeloConfigurationMutations(refetch: () => void) {
           tipo_input: 'checkbox',
           obrigatorio: false,
           ordem_exibicao: 1000, // High order to put at end
-          metadados: { 
-            baterias: parametros.baterias, 
-            num_raias: parametros.num_raias, // Don't use ?? 0 here, preserve the actual value including 0
-            permite_final: parametros.permite_final || false 
-          }
+          metadados: bateriasMetadata
         });
       }
 
@@ -98,6 +103,8 @@ export function useModeloConfigurationMutations(refetch: () => void) {
         });
       }
 
+      console.log('=== FINAL CAMPOS TO INSERT ===');
+      console.log('Total campos to insert:', camposToInsert.length);
       console.log('Campos to insert:', camposToInsert);
 
       // Insert new campos
@@ -112,10 +119,11 @@ export function useModeloConfigurationMutations(refetch: () => void) {
           throw insertError;
         }
         
-        console.log('Successfully inserted campos:', insertedCampos);
+        console.log('=== SUCCESSFULLY INSERTED CAMPOS ===');
+        console.log('Inserted campos:', insertedCampos);
       }
 
-      console.log('Configuration saved successfully');
+      console.log('=== SAVE CONFIGURATION COMPLETE ===');
       return { success: true };
     },
     onSuccess: () => {
