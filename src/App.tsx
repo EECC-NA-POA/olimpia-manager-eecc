@@ -10,6 +10,7 @@ import { Footer } from "@/components/Footer";
 import { MainNavigation } from "@/components/MainNavigation";
 import { usePrivacyPolicyCheck } from "@/hooks/usePrivacyPolicyCheck";
 import { PrivacyPolicyAcceptanceModal } from "@/components/auth/PrivacyPolicyAcceptanceModal";
+import { FloatingNotificationIcon } from "@/components/notifications/FloatingNotificationIcon";
 
 import Index from "./pages/Index";
 import OlimpiadasNacionais from "./pages/OlimpiadasNacionais";
@@ -99,6 +100,9 @@ function AppContent() {
         </Routes>
       </main>
       <Footer />
+      
+      {/* Floating notification icon - only shows when there are unread notifications */}
+      <FloatingNotificationIcon />
       
       {showModal && (
         <PrivacyPolicyAcceptanceModal
