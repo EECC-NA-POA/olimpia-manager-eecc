@@ -37,7 +37,7 @@ export function NotificationCard({ notification, userId }: NotificationCardProps
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <h4 className={`font-semibold ${isUnread ? 'text-olimpics-text' : 'text-gray-700'}`}>
-                {notification.autor_nome}
+                {notification.titulo}
               </h4>
               <Badge variant={notification.tipo_autor === 'organizador' ? 'default' : 'secondary'}>
                 {notification.tipo_autor === 'organizador' ? 'Organizador' : 'Representante'}
@@ -47,6 +47,9 @@ export function NotificationCard({ notification, userId }: NotificationCardProps
                   Nova
                 </Badge>
               )}
+            </div>
+            <div className="text-xs text-gray-500 mb-2">
+              Por: {notification.autor_nome}
             </div>
             <div 
               className="text-sm text-gray-600 mb-2 prose prose-sm max-w-none"

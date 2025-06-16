@@ -8,9 +8,10 @@ export const submitNotification = async (
   userId: string,
   tipoAutor: NotificationAuthorType
 ) => {
-  const { mensagem, eventId, destinatarios } = data;
+  const { titulo, mensagem, eventId, destinatarios } = data;
 
   console.log('Creating notification with data:', {
+    titulo,
     mensagem,
     eventId,
     userId,
@@ -23,6 +24,7 @@ export const submitNotification = async (
     evento_id: eventId,
     autor_id: userId,
     tipo_autor: tipoAutor,
+    titulo,
     mensagem,
     visivel: true
   };

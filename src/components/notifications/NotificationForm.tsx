@@ -28,6 +28,8 @@ export function NotificationForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const {
+    titulo,
+    setTitulo,
     mensagem,
     setMensagem,
     selectedBranches,
@@ -40,7 +42,7 @@ export function NotificationForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const isValid = validateNotificationForm(mensagem, selectedBranches);
+    const isValid = validateNotificationForm(titulo, mensagem, selectedBranches);
 
     if (!isValid) return;
 
@@ -49,6 +51,7 @@ export function NotificationForm({
     try {
       await submitNotification(
         { 
+          titulo,
           mensagem, 
           eventId, 
           destinatarios: selectedBranches 
@@ -70,6 +73,8 @@ export function NotificationForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <NotificationFormFields
+        titulo={titulo}
+        setTitulo={setTitulo}
         mensagem={mensagem}
         setMensagem={setMensagem}
         selectedBranches={selectedBranches}

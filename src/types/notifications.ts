@@ -5,6 +5,7 @@ export interface Notification {
   autor_id: string;
   autor_nome: string;
   tipo_autor: 'organizador' | 'representante_delegacao';
+  titulo: string;
   mensagem: string;
   visivel: boolean;
   criado_em: string;
@@ -27,6 +28,7 @@ export interface NotificationReading {
 export type NotificationAuthorType = 'organizador' | 'representante_delegacao';
 
 export interface CreateNotificationData {
+  titulo: string;
   mensagem: string;
   eventId: string;
   destinatarios: string[]; // Array de filial_ids, ou ['all'] para todas

@@ -2,10 +2,13 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { BranchSelector } from './BranchSelector';
 
 interface NotificationFormFieldsProps {
+  titulo: string;
+  setTitulo: (value: string) => void;
   mensagem: string;
   setMensagem: (value: string) => void;
   selectedBranches: string[];
@@ -16,6 +19,8 @@ interface NotificationFormFieldsProps {
 }
 
 export function NotificationFormFields({
+  titulo,
+  setTitulo,
   mensagem,
   setMensagem,
   selectedBranches,
@@ -32,6 +37,18 @@ export function NotificationFormFields({
         isOrganizer={isOrganizer}
         userBranchId={userBranchId}
       />
+
+      <div>
+        <Label htmlFor="titulo">Título *</Label>
+        <Input
+          id="titulo"
+          type="text"
+          value={titulo}
+          onChange={(e) => setTitulo(e.target.value)}
+          placeholder="Digite o título da notificação"
+          required
+        />
+      </div>
 
       <div>
         <Label htmlFor="mensagem">Mensagem *</Label>

@@ -2,9 +2,15 @@
 import { toast } from "sonner";
 
 export const validateNotificationForm = (
+  titulo: string,
   mensagem: string,
   selectedBranches: string[]
 ): boolean => {
+  if (!titulo.trim()) {
+    toast.error('O título é obrigatório');
+    return false;
+  }
+
   if (!mensagem.trim()) {
     toast.error('A mensagem é obrigatória');
     return false;
