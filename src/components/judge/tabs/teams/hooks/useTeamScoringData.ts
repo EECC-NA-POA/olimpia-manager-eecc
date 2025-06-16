@@ -27,7 +27,6 @@ interface SupabaseTeamData {
   id: number;
   nome: string;
   modalidade_id: number;
-  filial_id: string;
   modalidades: Array<{
     id: number;
     nome: string;
@@ -67,7 +66,6 @@ export function useTeamScoringData({
           id,
           nome,
           modalidade_id,
-          filial_id,
           modalidades!inner (
             id,
             nome,
@@ -93,13 +91,8 @@ export function useTeamScoringData({
         query = query.eq('modalidade_id', modalityFilter);
       }
 
-      if (branchFilter) {
-        query = query.eq('filial_id', branchFilter);
-      }
-
-      if (userBranchId) {
-        query = query.eq('filial_id', userBranchId);
-      }
+      // Note: Removed filial_id filters since the column doesn't exist in equipes table
+      // If branch filtering is needed, it should be done through atletas_equipes -> usuarios -> filial_id
 
       const { data, error } = await query.order('nome');
 
@@ -118,7 +111,7 @@ export function useTeamScoringData({
         members: (team.atletas_equipes || []).map(ae => ({
           atleta_id: ae.atleta_id,
           atleta_nome: ae.usuarios?.[0]?.nome_completo || '',
-          numero_identificador: '' // Removido a referência à coluna que não existe
+          numero_identificador: '' // Will be fetched separately if needed
         }))
       }));
 
