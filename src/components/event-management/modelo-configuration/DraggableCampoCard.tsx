@@ -110,8 +110,8 @@ export function DraggableCampoCard({
                     id={`rotulo-${campo.id}`}
                     value={campo.rotulo_campo}
                     onChange={(e) => onUpdate(campo.id, { rotulo_campo: e.target.value })}
-                    placeholder="ex: Tempo, Pontos"
-                    disabled={campo.chave_campo === 'resultado'} // Resultado label is fixed
+                    placeholder="ex: Tempo, Pontos, Resultado"
+                    // Allow editing the label for all fields, including resultado
                   />
                 </div>
               </div>
