@@ -90,11 +90,11 @@ export function useTeamScoringData({
         equipe_id: team.id,
         equipe_nome: team.nome,
         modalidade_id: team.modalidade_id,
-        modalidade_nome: team.modalidades?.nome || '',
+        modalidade_nome: Array.isArray(team.modalidades) ? team.modalidades[0]?.nome || '' : team.modalidades?.nome || '',
         members: (team.atletas_equipes || []).map(ae => ({
           atleta_id: ae.atleta_id,
-          atleta_nome: ae.usuarios?.nome_completo || '',
-          numero_identificador: ae.usuarios?.numero_identificador || ''
+          atleta_nome: Array.isArray(ae.usuarios) ? ae.usuarios[0]?.nome_completo || '' : ae.usuarios?.nome_completo || '',
+          numero_identificador: Array.isArray(ae.usuarios) ? ae.usuarios[0]?.numero_identificador || '' : ae.usuarios?.numero_identificador || ''
         }))
       }));
 
