@@ -19,23 +19,42 @@ export const submitNotification = async (
     destinatarios
   });
 
-  // Buscar o nome do usuário autor
-  const { data: authorData, error: authorError } = await supabase
-    .from('usuarios')
-    .select('nome')
-    .eq('id', userId)
-    .single();
+  // Buscar o nome do usuário autor - tentar diferentes estruturas
+  let authorName = 'Usuário desconhecido';
+  
+  try {
+    // Primeiro tentar com 'nome_completo'
+    const { data: authorData, error: authorError } = await supabase
+      .from('usuarios')
+      .select('nome_completo')
+      .eq('id', userId)
+      .single();
 
-  if (authorError) {
-    console.error('Error fetching author data:', authorError);
-    throw authorError;
+    if (!authorError && authorData?.nome_completo) {
+      authorName = authorData.nome_completo;
+    } else {
+      // Se não encontrar, tentar com 'nome'
+      const { data: authorData2, error: authorError2 } = await supabase
+        .from('usuarios')
+        .select('nome')
+        .eq('id', userId)
+        .single();
+
+      if (!authorError2 && authorData2?.nome) {
+        authorName = authorData2.nome;
+      } else {
+        console.log('Could not fetch author name, using default');
+      }
+    }
+  } catch (error) {
+    console.log('Error fetching author, using default name:', error);
   }
 
   // 1. Inserir a notificação
   const notificationData = {
     evento_id: eventId,
     autor_id: userId,
-    autor_nome: authorData.nome,
+    autor_nome: authorName,
     tipo_autor: tipoAutor,
     titulo,
     mensagem,
