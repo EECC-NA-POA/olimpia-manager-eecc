@@ -8,10 +8,14 @@ import { ptBR } from 'date-fns/locale';
 
 interface NotificationsListProps {
   eventId: string;
+  userId?: string;
 }
 
-export function NotificationsList({ eventId }: NotificationsListProps) {
-  const { data: notifications, isLoading } = useNotifications({ eventId });
+export function NotificationsList({ eventId, userId }: NotificationsListProps) {
+  const { data: notifications, isLoading } = useNotifications({ 
+    eventId, 
+    userId 
+  });
 
   if (isLoading) {
     return (

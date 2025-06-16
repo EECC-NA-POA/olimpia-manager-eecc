@@ -40,7 +40,7 @@ export function NotificationManager({
           </Button>
         </CardHeader>
         <CardContent>
-          <NotificationsList eventId={eventId} />
+          <NotificationsList eventId={eventId} userId={userId} />
         </CardContent>
       </Card>
 
