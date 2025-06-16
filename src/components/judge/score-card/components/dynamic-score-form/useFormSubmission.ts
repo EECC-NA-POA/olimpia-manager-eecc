@@ -34,7 +34,7 @@ export function useFormSubmission({
 
     try {
       // Preparar dados de submissão - CLEAN OBJECT
-      const submissionData = {
+      const submissionData: any = {
         athleteId,
         modalityId,
         eventId,

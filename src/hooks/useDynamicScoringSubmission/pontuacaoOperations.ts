@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 
 export async function upsertPontuacao(data: any, valorPontuacao: number, usesBaterias: boolean = false) {
@@ -9,7 +8,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
   console.log('Observacoes received:', data.observacoes);
   
   // Build pontuacao data with ONLY valid database fields
-  const pontuacaoData = {
+  const pontuacaoData: any = {
     evento_id: data.eventId,
     modalidade_id: data.modalityId,
     atleta_id: data.athleteId,

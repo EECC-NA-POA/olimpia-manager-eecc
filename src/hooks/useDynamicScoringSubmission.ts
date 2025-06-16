@@ -9,6 +9,7 @@ import type { DynamicSubmissionData } from './useDynamicScoringSubmission/types'
 
 interface ExtendedDynamicSubmissionData extends DynamicSubmissionData {
   observacoes?: string | null;
+  numeroBateria?: number;
 }
 
 export function useDynamicScoringSubmission() {
@@ -54,7 +55,7 @@ export function useDynamicScoringSubmission() {
         const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
         const observacoes = data.formData.notes || data.observacoes || null;
 
-        // Create base data object - NUNCA incluir campos de bateria
+        // Create base data object - NUNCA incluir campos de bateria para modalidades sem baterias
         const baseDataForDb = {
           eventId: data.eventId,
           modalityId: data.modalityId,
@@ -76,9 +77,9 @@ export function useDynamicScoringSubmission() {
             equipeId: data.equipeId,
           };
 
-          // NUNCA incluir numero_bateria para equipes sem baterias
+          // NUNCA incluir numero_bateria para modalidades de equipe sem baterias
           if (usesBaterias && data.numeroBateria !== undefined && data.numeroBateria !== null) {
-            teamDataForDb.numeroBateria = data.numeroBateria;
+            (teamDataForDb as any).numeroBateria = data.numeroBateria;
             console.log('Added numeroBateria for bateria-enabled modality:', data.numeroBateria);
           } else {
             console.log('Modalidade de equipe SEM baterias - numero_bateria não será incluído');
@@ -107,7 +108,7 @@ export function useDynamicScoringSubmission() {
 
         // NUNCA incluir numero_bateria para modalidades sem baterias
         if (usesBaterias && data.numeroBateria !== undefined && data.numeroBateria !== null) {
-          individualDataForDb.numeroBateria = data.numeroBateria;
+          (individualDataForDb as any).numeroBateria = data.numeroBateria;
           console.log('Added numeroBateria for bateria-enabled modality:', data.numeroBateria);
         }
 
