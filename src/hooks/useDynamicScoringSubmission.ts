@@ -34,23 +34,11 @@ export function useDynamicScoringSubmission() {
 
         console.log('Campos do modelo:', campos);
 
-        // VERIFICAÇÃO CRÍTICA DE BATERIAS - NUNCA incluir bateria para modalidades sem baterias
-        const bateriaField = campos?.find(campo => 
-          campo.chave_campo === 'numero_bateria' || 
-          campo.chave_campo === 'bateria' ||
-          (campo.tipo_input === 'select' && campo.metadados?.opcoes && 
-           Array.isArray(campo.metadados.opcoes) && 
-           campo.metadados.opcoes.some((opcao: any) => 
-             typeof opcao === 'string' && opcao.toLowerCase().includes('bateria')
-           ))
-        );
+        // VERIFICAÇÃO CRÍTICA: Para modalidades de equipe, NUNCA usar baterias
+        console.log('=== MODALIDADE DE EQUIPE - FORÇANDO usesBaterias = false ===');
+        const usesBaterias = false; // Forçar false para equipes
         
-        const usesBaterias = !!bateriaField;
-        
-        console.log('=== VERIFICAÇÃO CRÍTICA DE BATERIAS ===');
-        console.log('Bateria field found:', bateriaField);
-        console.log('Uses baterias:', usesBaterias);
-        console.log('CRITICAL: Will NEVER include battery fields for this modality:', !usesBaterias);
+        console.log('Uses baterias (forçado para false):', usesBaterias);
 
         // Calcular valor_pontuacao principal
         const valorPontuacao = calculateMainScore(data.formData, campos);
@@ -59,7 +47,7 @@ export function useDynamicScoringSubmission() {
         const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
         const observacoes = data.formData.notes || data.observacoes || null;
 
-        // Create base data object - ZERO referências a bateria para modalidades sem baterias
+        // Create base data object - ZERO referências a bateria para modalidades de equipe
         const baseDataForDb = {
           eventId: data.eventId,
           modalityId: data.modalityId,
@@ -69,11 +57,11 @@ export function useDynamicScoringSubmission() {
           observacoes
         };
 
-        console.log('Base data for DB (NO BATTERY REFERENCES):', baseDataForDb);
+        console.log('Base data for DB (EQUIPE - NO BATTERY REFERENCES):', baseDataForDb);
 
         // Handle team scoring - NUNCA incluir campos de bateria
         if (data.equipeId) {
-          console.log('--- Submissão para Equipe (SEM BATERIAS) ---', { equipeId: data.equipeId });
+          console.log('--- Submissão para Equipe (SEM BATERIAS GARANTIDO) ---', { equipeId: data.equipeId });
 
           const teamDataForDb = {
             ...baseDataForDb,
@@ -81,21 +69,21 @@ export function useDynamicScoringSubmission() {
             equipeId: data.equipeId,
           };
 
-          console.log('Team data for DB (ZERO BATTERY FIELDS):', teamDataForDb);
+          console.log('Team data for DB (ZERO BATTERY FIELDS GARANTIDO):', teamDataForDb);
 
-          // CRÍTICO: Passar usesBaterias = false para garantir que NUNCA sejam incluídos campos de bateria
+          // CRÍTICO: Passar usesBaterias = false SEMPRE para equipes
           const pontuacao = await upsertPontuacao(teamDataForDb, valorPontuacao, false);
-          console.log('=== TEAM SCORE SAVED (NO BATTERIES) ===');
+          console.log('=== TEAM SCORE SAVED (NO BATTERIES GARANTIDO) ===');
 
           const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
           await insertTentativas(tentativas, pontuacao.id);
 
-          console.log('=== TEAM SUBMISSION COMPLETED (NO BATTERIES) ===');
+          console.log('=== TEAM SUBMISSION COMPLETED (NO BATTERIES GARANTIDO) ===');
           return pontuacao;
         }
 
-        // Handle individual scoring (fallback) - NUNCA incluir campos de bateria
-        console.log('--- Individual Submission (NO BATTERIES) ---');
+        // Handle individual scoring (fallback)
+        console.log('--- Individual Submission ---');
 
         const individualDataForDb = {
           ...baseDataForDb,
@@ -103,16 +91,15 @@ export function useDynamicScoringSubmission() {
           equipeId: null,
         };
 
-        console.log('Individual data for DB (ZERO BATTERY FIELDS):', individualDataForDb);
+        console.log('Individual data for DB:', individualDataForDb);
 
-        // CRÍTICO: Passar usesBaterias = false para garantir que NUNCA sejam incluídos campos de bateria
-        const pontuacao = await upsertPontuacao(individualDataForDb, valorPontuacao, false);
-        console.log('=== INDIVIDUAL SCORE SAVED (NO BATTERIES) ===');
+        const pontuacao = await upsertPontuacao(individualDataForDb, valorPontuacao, usesBaterias);
+        console.log('=== INDIVIDUAL SCORE SAVED ===');
 
         const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
         await insertTentativas(tentativas, pontuacao.id);
 
-        console.log('=== INDIVIDUAL SUBMISSION COMPLETED (NO BATTERIES) ===');
+        console.log('=== INDIVIDUAL SUBMISSION COMPLETED ===');
         return pontuacao;
 
       } catch (error) {

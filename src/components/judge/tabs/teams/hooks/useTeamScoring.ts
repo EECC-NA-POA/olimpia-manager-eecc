@@ -57,6 +57,7 @@ export function useTeamScoring({ eventId, judgeId }: UseTeamScoringProps) {
       return await dynamicScoringMutation.mutateAsync(submissionData);
     },
     onSuccess: () => {
+      console.log('=== TEAM SCORE SUBMISSION SUCCESS ===');
       toast.success('Pontuação da equipe registrada com sucesso!');
       
       // Invalidate team scoring queries
@@ -66,8 +67,12 @@ export function useTeamScoring({ eventId, judgeId }: UseTeamScoringProps) {
       queryClient.invalidateQueries({ 
         queryKey: ['team-score'] 
       });
+      queryClient.invalidateQueries({ 
+        queryKey: ['clean-team-score'] 
+      });
     },
     onError: (error: any) => {
+      console.error('=== TEAM SCORING ERROR ===');
       console.error('Team scoring error:', error);
       
       let errorMessage = 'Erro ao registrar pontuação da equipe';
@@ -79,6 +84,7 @@ export function useTeamScoring({ eventId, judgeId }: UseTeamScoringProps) {
       }
       
       toast.error(errorMessage);
+      throw error; // Re-throw para que o componente possa lidar com o erro
     }
   });
 

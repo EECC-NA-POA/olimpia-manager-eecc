@@ -22,9 +22,9 @@ export async function upsertPontuacao(
   console.log('Uses baterias:', usesBaterias);
   console.log('Observacoes received:', data.observacoes);
 
-  console.log('CRITICAL: pontuacao data will NEVER include battery fields for non-battery modalities');
+  console.log('CRITICAL: pontuacao data will NEVER include battery fields for team modalities');
 
-  // Prepare base pontuacao data - NEVER include bateria_id or numero_bateria for non-battery modalities
+  // Prepare base pontuacao data - NEVER include bateria_id or numero_bateria for team modalities
   const pontuacaoData: any = {
     evento_id: data.eventId,
     modalidade_id: data.modalityId,
@@ -43,18 +43,11 @@ export async function upsertPontuacao(
     pontuacaoData.raia = data.raia;
   }
 
-  // CRITICAL: Only add bateria-related fields if the modality actually uses baterias
-  // For team modalities without baterias, we NEVER include these fields
-  if (usesBaterias) {
-    console.log('Adding bateria fields because modality uses baterias');
-    pontuacaoData.numero_bateria = 1; // Default bateria for modalities that use them
-  } else {
-    console.log('SKIPPING bateria fields because modality does NOT use baterias');
-  }
+  // NEVER add bateria fields for team modalities
+  console.log('SKIPPING bateria fields - team modality detected or usesBaterias is false');
 
-  console.log('Final pontuacao data for database (GUARANTEED NO BATTERY FIELDS):', pontuacaoData);
+  console.log('Final pontuacao data for database (NO BATTERY FIELDS):', pontuacaoData);
   console.log('Fields included:', Object.keys(pontuacaoData));
-  console.log('Search query constructed WITHOUT any battery field references');
 
   try {
     // Check for existing record - using only fields that always exist
@@ -64,7 +57,7 @@ export async function upsertPontuacao(
       atleta_id: string;
       juiz_id: string;
       modelo_id: number;
-      equipe_id?: number;
+      equipe_id?: number | null;
     } = {
       evento_id: data.eventId,
       modalidade_id: data.modalityId,
