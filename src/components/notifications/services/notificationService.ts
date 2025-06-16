@@ -19,10 +19,23 @@ export const submitNotification = async (
     destinatarios
   });
 
+  // Buscar o nome do usuário autor
+  const { data: authorData, error: authorError } = await supabase
+    .from('usuarios')
+    .select('nome')
+    .eq('id', userId)
+    .single();
+
+  if (authorError) {
+    console.error('Error fetching author data:', authorError);
+    throw authorError;
+  }
+
   // 1. Inserir a notificação
   const notificationData = {
     evento_id: eventId,
     autor_id: userId,
+    autor_nome: authorData.nome,
     tipo_autor: tipoAutor,
     titulo,
     mensagem,

@@ -39,13 +39,13 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
             id,
             evento_id,
             autor_id,
-            autor_nome,
             tipo_autor,
             titulo,
             mensagem,
             visivel,
             criado_em,
             atualizado_em,
+            usuarios!notificacoes_autor_id_fkey(nome),
             notificacao_destinatarios!inner(filial_id),
             notificacao_leituras(lido_em)
           `)
@@ -66,12 +66,12 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
 
         if (!data) return [];
 
-        // Transformar dados para incluir campo 'lida'
+        // Transformar dados para incluir campo 'lida' e autor_nome
         const notifications: Notification[] = data.map((item: any) => ({
           id: item.id,
           evento_id: item.evento_id,
           autor_id: item.autor_id,
-          autor_nome: item.autor_nome,
+          autor_nome: item.usuarios?.nome || 'Usuário desconhecido',
           tipo_autor: item.tipo_autor,
           titulo: item.titulo,
           mensagem: item.mensagem,
