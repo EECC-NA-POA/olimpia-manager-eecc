@@ -22,13 +22,13 @@ interface UseTeamScoringDataProps {
   userBranchId?: string;
 }
 
-// Define the expected structure from Supabase
+// Define the expected structure from Supabase - modalidades comes as an array due to join
 interface SupabaseTeamData {
   id: number;
   nome: string;
   modalidade_id: number;
   filial_id: string;
-  modalidades: {
+  modalidades: Array<{
     id: number;
     nome: string;
     tipo_pontuacao: string;
@@ -38,7 +38,7 @@ interface SupabaseTeamData {
       codigo_modelo: string;
       descricao: string;
     }>;
-  };
+  }>;
   atletas_equipes: Array<{
     atleta_id: string;
     usuarios: {
@@ -116,7 +116,7 @@ export function useTeamScoringData({
         equipe_id: team.id,
         equipe_nome: team.nome,
         modalidade_id: team.modalidade_id,
-        modalidade_nome: team.modalidades?.nome || '',
+        modalidade_nome: team.modalidades?.[0]?.nome || '',
         members: (team.atletas_equipes || []).map(ae => ({
           atleta_id: ae.atleta_id,
           atleta_nome: ae.usuarios?.nome_completo || '',
