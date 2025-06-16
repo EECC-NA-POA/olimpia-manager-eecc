@@ -24,15 +24,26 @@ export function BatteryAndLanesSection({
 }: BatteryAndLanesSectionProps) {
   const handleNumRaiasChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Allow empty string temporarily, then convert to number (including 0)
+    
+    // Allow empty string for better UX while typing
+    if (value === '') {
+      return; // Don't call onNumRaiasChange yet, wait for a valid number
+    }
+    
+    const numValue = parseInt(value, 10);
+    
+    // Allow any number >= 0 and <= 20 (including 0)
+    if (!isNaN(numValue) && numValue >= 0 && numValue <= 20) {
+      onNumRaiasChange(numValue);
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    // If field is empty on blur, set to 0
     if (value === '') {
       onNumRaiasChange(0);
-    } else {
-      const numValue = parseInt(value, 10);
-      // Validate range but allow 0 as a valid value
-      if (!isNaN(numValue) && numValue >= 0 && numValue <= 20) {
-        onNumRaiasChange(numValue);
-      }
     }
   };
 
@@ -79,8 +90,10 @@ export function BatteryAndLanesSection({
             type="number"
             min="0"
             max="20"
-            value={config.num_raias.toString()}
+            value={config.num_raias}
             onChange={handleNumRaiasChange}
+            onBlur={handleBlur}
+            placeholder="0"
           />
           <p className="text-sm text-muted-foreground">
             {config.baterias 
