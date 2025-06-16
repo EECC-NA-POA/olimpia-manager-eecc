@@ -38,7 +38,7 @@ export function useModeloConfigurationMutations(refetch: () => void) {
       // Create or update campos based on parametros
       const camposToInsert = [];
       
-      // Handle baterias configuration
+      // Handle baterias configuration - use proper checks to allow 0 values
       if (parametros.baterias !== undefined) {
         camposToInsert.push({
           modelo_id: modeloId,
@@ -49,7 +49,7 @@ export function useModeloConfigurationMutations(refetch: () => void) {
           ordem_exibicao: 1000, // High order to put at end
           metadados: { 
             baterias: parametros.baterias, 
-            num_raias: parametros.num_raias || 8, 
+            num_raias: parametros.num_raias ?? 0, // Use nullish coalescing to preserve 0
             permite_final: parametros.permite_final || false 
           }
         });

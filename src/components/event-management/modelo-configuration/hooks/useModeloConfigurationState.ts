@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { arrayMove } from '@dnd-kit/sortable';
 
@@ -114,7 +113,7 @@ export function useModeloConfigurationState(editingModelo: any) {
       // Load configuration from parametros (already processed by useModeloConfigurationData)
       const loadedConfig = {
         baterias: editingModelo.parametros?.baterias || false,
-        num_raias: editingModelo.parametros?.num_raias || 0,
+        num_raias: editingModelo.parametros?.num_raias ?? 0, // Use nullish coalescing to allow 0
         permite_final: editingModelo.parametros?.permite_final || false,
         regra_tipo: editingModelo.parametros?.regra_tipo || 'pontos',
         formato_resultado: editingModelo.parametros?.formato_resultado || '',
@@ -230,6 +229,14 @@ export function useModeloConfigurationState(editingModelo: any) {
     setCampos(updatedCampos);
   };
 
+  const handleNumRaiasChange = (value: number) => {
+    console.log('Updating num_raias to:', value);
+    setConfig(prev => ({
+      ...prev,
+      num_raias: value // Allow 0 as a valid value
+    }));
+  };
+
   const addCampo = () => {
     const newCampo: CampoConfig = {
       id: 'campo_' + Date.now(),
@@ -281,6 +288,7 @@ export function useModeloConfigurationState(editingModelo: any) {
     setCampos,
     handleBateriasChange,
     handleRegraTypeChange,
+    handleNumRaiasChange,
     addCampo,
     removeCampo,
     updateCampo,

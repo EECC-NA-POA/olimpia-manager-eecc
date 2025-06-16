@@ -22,6 +22,20 @@ export function BatteryAndLanesSection({
   onNumRaiasChange,
   onPermiteFinalChange
 }: BatteryAndLanesSectionProps) {
+  const handleNumRaiasChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Allow empty string temporarily, then convert to number (including 0)
+    if (value === '') {
+      onNumRaiasChange(0);
+    } else {
+      const numValue = parseInt(value, 10);
+      // Validate range but allow 0 as a valid value
+      if (!isNaN(numValue) && numValue >= 0 && numValue <= 20) {
+        onNumRaiasChange(numValue);
+      }
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -65,8 +79,8 @@ export function BatteryAndLanesSection({
             type="number"
             min="0"
             max="20"
-            value={config.num_raias || 0}
-            onChange={(e) => onNumRaiasChange(Number(e.target.value) || 0)}
+            value={config.num_raias.toString()}
+            onChange={handleNumRaiasChange}
           />
           <p className="text-sm text-muted-foreground">
             {config.baterias 
