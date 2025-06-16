@@ -63,7 +63,7 @@ export function CleanTeamFormFields({ campos, form, scoreFormat }: CleanTeamForm
                       ...campo,
                       metadados: {
                         ...campo.metadados,
-                        formato_resultado: scoreFormat
+                        formato_resultado: scoreFormat as 'pontos' | 'tempo' | 'distancia'
                       }
                     }}
                     form={form}
