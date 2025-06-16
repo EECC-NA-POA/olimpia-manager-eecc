@@ -1,14 +1,15 @@
+
 import { supabase } from '@/lib/supabase';
 
 export async function upsertPontuacao(data: any, valorPontuacao: number, usesBaterias: boolean = false) {
-  console.log('=== UPSERT PONTUAÇÃO (MODALIDADE SEM BATERIAS) ===');
+  console.log('=== UPSERT PONTUAÇÃO ===');
   console.log('Data for upsert:', data);
   console.log('Valor pontuacao:', valorPontuacao);
   console.log('Uses baterias:', usesBaterias);
-  console.log('Observacoes received in upsertPontuacao:', data.observacoes);
+  console.log('Observacoes received:', data.observacoes);
   
-  // Build pontuacao data with ONLY valid fields
-  const pontuacaoData: any = {
+  // Build pontuacao data with ONLY valid database fields
+  const pontuacaoData = {
     evento_id: data.eventId,
     modalidade_id: data.modalityId,
     atleta_id: data.athleteId,
@@ -22,18 +23,18 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     raia: data.raia || null
   };
 
-  // NUNCA incluir numero_bateria se a modalidade não usa baterias
-  if (usesBaterias && 'numero_bateria' in data && data.numero_bateria !== undefined && data.numero_bateria !== null) {
-    pontuacaoData.numero_bateria = data.numero_bateria;
-    console.log('Added numero_bateria to pontuacao data:', data.numero_bateria);
+  // APENAS incluir numero_bateria se a modalidade usa baterias E o valor está presente
+  if (usesBaterias && data.numeroBateria !== undefined && data.numeroBateria !== null) {
+    pontuacaoData.numero_bateria = data.numeroBateria;
+    console.log('Modalidade usa baterias - incluindo numero_bateria:', data.numeroBateria);
   } else {
-    console.log('Modalidade NÃO usa baterias - numero_bateria NUNCA será incluído');
+    console.log('Modalidade NÃO usa baterias OU numero_bateria não fornecido - campo omitido');
   }
 
-  console.log('Final pontuacao data for database (NO BATERIA):', pontuacaoData);
+  console.log('Final pontuacao data for database:', pontuacaoData);
   console.log('Fields included:', Object.keys(pontuacaoData));
 
-  // Build the search query WITHOUT numero_bateria for non-battery modalities
+  // Build search query - NUNCA incluir numero_bateria se a modalidade não usa baterias
   let searchQuery = supabase
     .from('pontuacoes')
     .select('id')
@@ -43,23 +44,23 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     .eq('juiz_id', pontuacaoData.juiz_id)
     .eq('modelo_id', pontuacaoData.modelo_id);
 
-  // Handle equipe_id correctly - use is() for NULL values
+  // Handle equipe_id correctly
   if (pontuacaoData.equipe_id === null) {
     searchQuery = searchQuery.is('equipe_id', null);
   } else {
     searchQuery = searchQuery.eq('equipe_id', pontuacaoData.equipe_id);
   }
 
-  // NUNCA adicionar numero_bateria à consulta se a modalidade não usa baterias
+  // APENAS adicionar numero_bateria à consulta se a modalidade usa baterias
   if (usesBaterias && 'numero_bateria' in pontuacaoData) {
     if (pontuacaoData.numero_bateria === null || pontuacaoData.numero_bateria === undefined) {
       searchQuery = searchQuery.is('numero_bateria', null);
     } else {
       searchQuery = searchQuery.eq('numero_bateria', pontuacaoData.numero_bateria);
     }
-    console.log('Added numero_bateria to search query for bateria-enabled modality');
+    console.log('Incluindo numero_bateria na consulta para modalidade com baterias');
   } else {
-    console.log('Modalidade NÃO usa baterias - numero_bateria NUNCA será incluído na consulta');
+    console.log('NÃO incluindo numero_bateria na consulta - modalidade sem baterias');
   }
 
   const { data: existingRecords, error: findError } = await searchQuery;
@@ -76,15 +77,9 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     const existingId = existingRecords[0].id;
     console.log('Updating existing record with ID:', existingId);
     
-    // Create clean update data
-    const updateData = { ...pontuacaoData };
-    
-    console.log('Clean update data (NO BATERIA):', updateData);
-    console.log('Update fields included:', Object.keys(updateData));
-    
     const { data: updatedRecord, error } = await supabase
       .from('pontuacoes')
-      .update(updateData)
+      .update(pontuacaoData)
       .eq('id', existingId)
       .select()
       .single();
@@ -97,9 +92,6 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
   } else {
     // Insert new record
     console.log('Inserting new record');
-    
-    console.log('Clean insert data (NO BATERIA):', pontuacaoData);
-    console.log('Insert fields included:', Object.keys(pontuacaoData));
     
     const { data: newRecord, error } = await supabase
       .from('pontuacoes')
@@ -114,7 +106,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     result = newRecord;
   }
 
-  console.log('Pontuacao saved successfully (NO BATERIA):', result);
+  console.log('Pontuacao saved successfully:', result);
   return result;
 }
 

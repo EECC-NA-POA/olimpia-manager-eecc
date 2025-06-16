@@ -16,7 +16,7 @@ export function useDynamicScoringSubmission() {
 
   return useMutation({
     mutationFn: async (data: ExtendedDynamicSubmissionData) => {
-      console.log('=== INICIANDO SUBMISSÃO DE PONTUAÇÃO DINÂMICA (EQUIPES - SEM BATERIA) ===');
+      console.log('=== INICIANDO SUBMISSÃO DE PONTUAÇÃO DINÂMICA (EQUIPES) ===');
       console.log('Dynamic scoring submission data:', data);
 
       try {
@@ -34,7 +34,7 @@ export function useDynamicScoringSubmission() {
 
         console.log('Campos do modelo:', campos);
 
-        // VERIFICAR SE A MODALIDADE USA BATERIAS - APENAS pelos campos configurados
+        // VERIFICAR SE A MODALIDADE USA BATERIAS
         const bateriaField = campos?.find(campo => 
           campo.chave_campo === 'baterias' || 
           campo.chave_campo === 'bateria' ||
@@ -43,29 +43,19 @@ export function useDynamicScoringSubmission() {
         
         const usesBaterias = !!bateriaField;
         
-        console.log('=== VERIFICAÇÃO DE BATERIAS SIMPLIFICADA ===');
+        console.log('=== VERIFICAÇÃO DE BATERIAS ===');
         console.log('Bateria field found:', bateriaField);
         console.log('Uses baterias:', usesBaterias);
-        
-        // SE NÃO USA BATERIAS, REMOVER QUALQUER REFERÊNCIA
-        if (!usesBaterias) {
-          console.log('MODALIDADE NÃO USA BATERIAS - Removendo TODAS as referências');
-          // Remove todas as possíveis referências a bateria
-          delete (data as any).bateriaId;
-          delete (data as any).numeroBateria;
-          delete (data as any).numero_bateria;
-          delete (data as any).bateria_id;
-        }
 
-        // Calcular valor_pontuacao principal a partir dos dados do formulário
+        // Calcular valor_pontuacao principal
         const valorPontuacao = calculateMainScore(data.formData, campos);
         console.log('Calculated valor_pontuacao:', valorPontuacao);
 
         const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
         const observacoes = data.formData.notes || data.observacoes || null;
 
-        // Create clean data object - NUNCA incluir qualquer campo de bateria se não usa baterias
-        const cleanDataForDb: any = {
+        // Create base data object - NUNCA incluir campos de bateria
+        const baseDataForDb = {
           eventId: data.eventId,
           modalityId: data.modalityId,
           judgeId: data.judgeId,
@@ -74,60 +64,74 @@ export function useDynamicScoringSubmission() {
           observacoes
         };
 
-        console.log('Clean data for DB (NO BATERIA):', cleanDataForDb);
+        console.log('Base data for DB:', baseDataForDb);
 
         // Handle team scoring
         if (data.equipeId) {
-          console.log('--- Submissão para Equipe (SEM BATERIA) ---', { equipeId: data.equipeId });
+          console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
 
           const teamDataForDb = {
-            ...cleanDataForDb,
+            ...baseDataForDb,
             athleteId: data.athleteId,
             equipeId: data.equipeId,
           };
 
-          console.log('Team data for DB (NO BATERIA):', teamDataForDb);
+          // NUNCA incluir numero_bateria para equipes sem baterias
+          if (usesBaterias && data.numeroBateria !== undefined && data.numeroBateria !== null) {
+            teamDataForDb.numeroBateria = data.numeroBateria;
+            console.log('Added numeroBateria for bateria-enabled modality:', data.numeroBateria);
+          } else {
+            console.log('Modalidade de equipe SEM baterias - numero_bateria não será incluído');
+          }
+
+          console.log('Team data for DB:', teamDataForDb);
 
           const pontuacao = await upsertPontuacao(teamDataForDb, valorPontuacao, usesBaterias);
-          console.log('=== TEAM SCORE SAVED (NO BATERIA) ===');
+          console.log('=== TEAM SCORE SAVED ===');
 
           const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
           await insertTentativas(tentativas, pontuacao.id);
 
-          console.log('=== TEAM SUBMISSION COMPLETED (NO BATERIA) ===');
+          console.log('=== TEAM SUBMISSION COMPLETED ===');
           return pontuacao;
         }
 
         // Handle individual scoring (fallback)
-        console.log('--- Individual Submission (fallback - NO BATERIA) ---');
+        console.log('--- Individual Submission (fallback) ---');
 
         const individualDataForDb = {
-          ...cleanDataForDb,
+          ...baseDataForDb,
           athleteId: data.athleteId,
           equipeId: null,
         };
 
-        console.log('Individual data for DB (NO BATERIA):', individualDataForDb);
+        // NUNCA incluir numero_bateria para modalidades sem baterias
+        if (usesBaterias && data.numeroBateria !== undefined && data.numeroBateria !== null) {
+          individualDataForDb.numeroBateria = data.numeroBateria;
+          console.log('Added numeroBateria for bateria-enabled modality:', data.numeroBateria);
+        }
+
+        console.log('Individual data for DB:', individualDataForDb);
 
         const pontuacao = await upsertPontuacao(individualDataForDb, valorPontuacao, usesBaterias);
-        console.log('=== INDIVIDUAL SCORE SAVED (NO BATERIA) ===');
+        console.log('=== INDIVIDUAL SCORE SAVED ===');
 
         const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
         await insertTentativas(tentativas, pontuacao.id);
 
-        console.log('=== INDIVIDUAL SUBMISSION COMPLETED (NO BATERIA) ===');
+        console.log('=== INDIVIDUAL SUBMISSION COMPLETED ===');
         return pontuacao;
 
       } catch (error) {
-        console.error('=== ERROR IN TEAM SUBMISSION (NO BATERIA) ===');
+        console.error('=== ERROR IN SUBMISSION ===');
         console.error('Error in mutation:', error);
         throw error;
       }
     },
     onSuccess: (data, variables) => {
-      console.log('=== TEAM MUTATION SUCCESS (NO BATERIA) ===');
+      console.log('=== MUTATION SUCCESS ===');
       
-      // Invalidate team-specific queries
+      // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ['team-score', variables.equipeId, variables.modalityId, variables.eventId] });
       queryClient.invalidateQueries({ queryKey: ['athlete-scores', variables.athleteId, variables.modalityId] });
       queryClient.invalidateQueries({ 
@@ -140,20 +144,20 @@ export function useDynamicScoringSubmission() {
         queryKey: ['dynamic-score', variables.athleteId, variables.modalityId, variables.eventId, variables.judgeId, variables.modeloId] 
       });
       
-      toast.success('Pontuação da equipe registrada com sucesso!');
+      toast.success('Pontuação registrada com sucesso!');
     },
     onError: (error) => {
-      console.error('=== TEAM MUTATION ERROR (NO BATERIA) ===');
-      console.error('Error submitting team score:', error);
+      console.error('=== MUTATION ERROR ===');
+      console.error('Error submitting score:', error);
       
-      let errorMessage = 'Erro ao registrar pontuação da equipe';
+      let errorMessage = 'Erro ao registrar pontuação';
       
-      if (error?.message?.includes('bateria')) {
-        errorMessage = 'ERRO: Esta modalidade não usa baterias. Problema na configuração do sistema.';
+      if (error?.message?.includes('bateria_id') || error?.message?.includes('bateria')) {
+        errorMessage = 'ERRO CRÍTICO: Sistema tentando usar campo de bateria inexistente. Esta modalidade não possui baterias.';
       } else if (error?.message?.includes('constraint')) {
-        errorMessage = 'Erro de restrição no banco de dados. Verifique se os dados da equipe estão corretos.';
+        errorMessage = 'Erro de restrição no banco de dados. Verifique se os dados estão corretos.';
       } else if (error?.message?.includes('column') && error?.message?.includes('does not exist')) {
-        errorMessage = 'Erro de configuração do banco de dados. Entre em contato com o suporte.';
+        errorMessage = 'Erro: Campo inexistente no banco de dados.';
       } else if (error?.message) {
         errorMessage = `Erro: ${error.message}`;
       }
