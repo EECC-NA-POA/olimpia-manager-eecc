@@ -33,6 +33,7 @@ export function NotificationDetailDialog({
       onClose();
     } else if (notification && !notification.lida) {
       // Marcar como lida quando abrir o dialog
+      console.log('Marking notification as read:', notification.id, 'for user:', userId);
       markAsReadMutation.mutate({
         notificationId: notification.id,
         userId: userId
