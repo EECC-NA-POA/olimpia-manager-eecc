@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -133,7 +132,7 @@ export default function DelegationDashboard() {
             eventId={currentEventId}
             userId={user?.id || ''}
             isBranchFiltered={true}
-            branchId={user?.filial_id}
+            branchId={user?.filial_id ? Number(user.filial_id) : undefined}
           />
         );
 
