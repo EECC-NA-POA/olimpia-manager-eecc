@@ -32,7 +32,10 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
           throw userError;
         }
 
+        console.log('User data:', userData);
+
         // Consulta 1: Notificações destinadas à filial do usuário
+        console.log('Executing destined notifications query...');
         const { data: destinedNotifications, error: destinedError } = await supabase
           .from('notificacoes')
           .select(`
@@ -53,7 +56,10 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
           .eq('notificacao_destinatarios.filial_id', userData.filial_id)
           .order('criado_em', { ascending: false });
 
+        console.log('Destined notifications result:', { destinedNotifications, destinedError });
+
         // Consulta 2: Notificações criadas pelo próprio usuário
+        console.log('Executing authored notifications query...');
         const { data: authoredNotifications, error: authoredError } = await supabase
           .from('notificacoes')
           .select(`
@@ -72,6 +78,8 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
           .eq('autor_id', userId)
           .order('criado_em', { ascending: false });
 
+        console.log('Authored notifications result:', { authoredNotifications, authoredError });
+
         if (destinedError) {
           console.error('Error fetching destined notifications:', destinedError);
           throw destinedError;
@@ -84,6 +92,8 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
 
         // Combinar e remover duplicatas
         const allNotifications = [...(destinedNotifications || []), ...(authoredNotifications || [])];
+        console.log('All notifications before deduplication:', allNotifications);
+        
         const uniqueNotifications = allNotifications.filter((notification, index, self) => 
           index === self.findIndex(n => n.id === notification.id)
         );
@@ -92,7 +102,10 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
         console.log('Notifications from database - authored:', authoredNotifications?.length || 0);
         console.log('Unique notifications after merge:', uniqueNotifications.length);
 
-        if (uniqueNotifications.length === 0) return [];
+        if (uniqueNotifications.length === 0) {
+          console.log('No notifications found, returning empty array');
+          return [];
+        }
 
         // Buscar leituras do usuário para essas notificações
         const notificationIds = uniqueNotifications.map(n => n.id);
