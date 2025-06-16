@@ -12,35 +12,27 @@ interface NotificationCardProps {
 }
 
 export function NotificationCard({ notification, userId }: NotificationCardProps) {
-  const isUnread = !notification.lida;
-
   return (
-    <Card className={`${isUnread ? 'border-olimpics-orange-primary bg-orange-50' : 'border-gray-200'}`}>
+    <Card className="border-gray-200">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <h4 className={`font-semibold ${isUnread ? 'text-olimpics-text' : 'text-gray-700'}`}>
-                {notification.titulo}
+              <h4 className="font-semibold text-gray-700">
+                {notification.autor_nome}
               </h4>
-              {isUnread && (
-                <Badge variant="destructive" className="text-xs">
-                  Nova
-                </Badge>
-              )}
+              <Badge variant={notification.tipo_autor === 'organizador' ? 'default' : 'secondary'}>
+                {notification.tipo_autor === 'organizador' ? 'Organizador' : 'Representante'}
+              </Badge>
             </div>
-            <p className="text-sm text-gray-600 mb-2">
-              {notification.conteudo}
-            </p>
+            <div 
+              className="text-sm text-gray-600 mb-2 prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{ __html: notification.mensagem }}
+            />
             <div className="flex items-center gap-4 text-xs text-gray-500">
               <span>
-                {format(new Date(notification.data_criacao), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                {format(new Date(notification.criado_em), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
               </span>
-              {notification.data_expiracao && (
-                <span>
-                  Expira em: {format(new Date(notification.data_expiracao), 'dd/MM/yyyy', { locale: ptBR })}
-                </span>
-              )}
             </div>
           </div>
         </div>

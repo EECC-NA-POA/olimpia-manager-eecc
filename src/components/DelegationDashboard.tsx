@@ -131,8 +131,7 @@ export default function DelegationDashboard() {
           <NotificationManager
             eventId={currentEventId}
             userId={user?.id || ''}
-            isBranchFiltered={true}
-            branchId={user?.filial_id ? Number(user.filial_id) : undefined}
+            isRepresentanteDelegacao={isDelegationRep}
             isOrganizer={false}
           />
         );

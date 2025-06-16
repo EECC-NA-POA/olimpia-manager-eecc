@@ -113,7 +113,6 @@ export default function AthleteProfile({ profile, isPublicUser }: AthleteProfile
         <Notifications 
           eventId={currentEventId}
           userId={profile.id}
-          userProfiles={profile.papeis}
         />
       )}
 
