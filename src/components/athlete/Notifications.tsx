@@ -3,23 +3,22 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Bell, ChevronDown, ChevronUp } from "lucide-react";
 import { useNotifications } from '@/hooks/useNotifications';
-import { NotificationCard } from './notifications/NotificationCard';
-import { EmptyNotifications } from './notifications/EmptyNotifications';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface NotificationsProps {
   eventId: string;
   userId: string;
-  userProfiles?: Array<{ id?: number; codigo: string; nome: string; }>;
 }
 
-export default function Notifications({ eventId, userId, userProfiles }: NotificationsProps) {
+export default function Notifications({ eventId, userId }: NotificationsProps) {
   const [isOpen, setIsOpen] = useState(true);
   const { data: notifications, isLoading } = useNotifications({ 
     eventId, 
-    userId, 
-    userProfiles 
+    userId
   });
 
   if (isLoading) {
@@ -30,8 +29,6 @@ export default function Notifications({ eventId, userId, userProfiles }: Notific
     );
   }
 
-  const unreadCount = notifications?.filter(n => !n.lida).length || 0;
-
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <Card>
@@ -39,9 +36,9 @@ export default function Notifications({ eventId, userId, userProfiles }: Notific
           <CardTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5 text-olimpics-orange-primary" />
             Notificações
-            {unreadCount > 0 && (
-              <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                {unreadCount}
+            {notifications && notifications.length > 0 && (
+              <span className="bg-olimpics-orange-primary text-white text-xs px-2 py-1 rounded-full">
+                {notifications.length}
               </span>
             )}
           </CardTitle>
@@ -58,15 +55,38 @@ export default function Notifications({ eventId, userId, userProfiles }: Notific
         <CollapsibleContent>
           <CardContent>
             {!notifications || notifications.length === 0 ? (
-              <EmptyNotifications />
+              <div className="text-center py-8 text-gray-500">
+                <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium mb-2">Nenhuma notificação</p>
+                <p className="text-sm">Você não possui notificações no momento.</p>
+              </div>
             ) : (
               <div className="space-y-3">
                 {notifications.map((notification) => (
-                  <NotificationCard 
-                    key={notification.id} 
-                    notification={notification}
-                    userId={userId}
-                  />
+                  <Card key={notification.id} className="border-l-4 border-l-olimpics-orange-primary">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{notification.autor_nome}</span>
+                          <Badge variant={notification.tipo_autor === 'organizador' ? 'default' : 'secondary'}>
+                            {notification.tipo_autor === 'organizador' ? 'Organizador' : 'Representante'}
+                          </Badge>
+                        </div>
+                        <span className="text-sm text-gray-500">
+                          {formatDistanceToNow(new Date(notification.criado_em), { 
+                            addSuffix: true, 
+                            locale: ptBR 
+                          })}
+                        </span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div 
+                        className="prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{ __html: notification.mensagem }}
+                      />
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}

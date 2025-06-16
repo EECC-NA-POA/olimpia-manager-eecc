@@ -6,10 +6,9 @@ import type { Notification } from '@/types/notifications';
 interface UseNotificationsProps {
   eventId: string | null;
   userId?: string;
-  userProfiles?: Array<{ id?: number; codigo: string; nome: string; }>;
 }
 
-export function useNotifications({ eventId, userId, userProfiles }: UseNotificationsProps) {
+export function useNotifications({ eventId, userId }: UseNotificationsProps) {
   return useQuery({
     queryKey: ['notifications', eventId, userId],
     queryFn: async () => {
@@ -18,85 +17,46 @@ export function useNotifications({ eventId, userId, userProfiles }: UseNotificat
         return [];
       }
 
-      console.log('Fetching notifications for:', { eventId, userId, userProfiles });
+      console.log('Fetching notifications for:', { eventId, userId });
 
       try {
-        let query = supabase
+        const { data, error } = await supabase
           .from('notificacoes')
           .select(`
             id,
-            titulo,
-            conteudo,
-            tipo_destinatario,
-            perfil_id,
-            filial_id,
             evento_id,
-            ativa,
-            data_criacao,
-            data_expiracao,
-            lida,
-            usuario_id
+            autor_id,
+            autor_nome,
+            tipo_autor,
+            mensagem,
+            visivel,
+            criado_em,
+            atualizado_em
           `)
           .eq('evento_id', eventId)
-          .eq('ativa', true)
-          .order('data_criacao', { ascending: false });
-
-        // Filter by current date if there's an expiration date
-        query = query.or('data_expiracao.is.null,data_expiracao.gte.' + new Date().toISOString());
-
-        const { data, error } = await query;
+          .eq('visivel', true)
+          .order('criado_em', { ascending: false });
 
         if (error) {
           console.error('Error fetching notifications:', error);
           throw error;
         }
 
-        console.log('Raw notifications from database:', data);
+        console.log('Notifications from database:', data);
 
         if (!data) return [];
 
-        // Filter notifications based on user criteria
-        const filteredNotifications = data.filter((notification: any) => {
-          // If it's a general notification (tipo_destinatario = 'todos')
-          if (notification.tipo_destinatario === 'todos') {
-            return true;
-          }
-
-          // If it's targeted by profile type
-          if (notification.tipo_destinatario === 'perfil' && notification.perfil_id && userProfiles) {
-            return userProfiles.some(profile => profile.id === notification.perfil_id);
-          }
-
-          // If it's targeted by branch (assuming user has filial_id)
-          if (notification.tipo_destinatario === 'filial' && notification.filial_id) {
-            // This would need user's branch ID - we'd need to pass it as parameter
-            return false; // For now, disable branch filtering
-          }
-
-          // If it's a personal notification
-          if (notification.tipo_destinatario === 'individual' && notification.usuario_id === userId) {
-            return true;
-          }
-
-          return false;
-        });
-
-        console.log('Filtered notifications:', filteredNotifications);
-
         // Transform to match our Notification type
-        const notifications: Notification[] = filteredNotifications.map((item: any) => ({
+        const notifications: Notification[] = data.map((item: any) => ({
           id: item.id,
-          titulo: item.titulo,
-          conteudo: item.conteudo,
-          tipo_destinatario: item.tipo_destinatario,
-          perfil_id: item.perfil_id,
-          filial_id: item.filial_id,
           evento_id: item.evento_id,
-          ativa: item.ativa,
-          data_criacao: item.data_criacao,
-          data_expiracao: item.data_expiracao,
-          lida: item.lida || false,
-          usuario_id: item.usuario_id
+          autor_id: item.autor_id,
+          autor_nome: item.autor_nome,
+          tipo_autor: item.tipo_autor,
+          mensagem: item.mensagem,
+          visivel: item.visivel,
+          criado_em: item.criado_em,
+          atualizado_em: item.atualizado_em
         }));
 
         console.log('Final processed notifications:', notifications);

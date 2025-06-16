@@ -9,16 +9,14 @@ import { NotificationsList } from './NotificationsList';
 interface NotificationManagerProps {
   eventId: string;
   userId: string;
-  isBranchFiltered?: boolean;
-  branchId?: number;
+  isRepresentanteDelegacao?: boolean;
   isOrganizer?: boolean;
 }
 
 export function NotificationManager({ 
   eventId, 
   userId, 
-  isBranchFiltered = false, 
-  branchId,
+  isRepresentanteDelegacao = false,
   isOrganizer = false
 }: NotificationManagerProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -40,11 +38,7 @@ export function NotificationManager({
           </Button>
         </CardHeader>
         <CardContent>
-          <NotificationsList 
-            eventId={eventId}
-            isBranchFiltered={isBranchFiltered}
-            branchId={branchId}
-          />
+          <NotificationsList eventId={eventId} />
         </CardContent>
       </Card>
 
@@ -53,8 +47,7 @@ export function NotificationManager({
         userId={userId}
         isOpen={isCreateDialogOpen}
         onClose={() => setIsCreateDialogOpen(false)}
-        isBranchFiltered={isBranchFiltered}
-        branchId={branchId}
+        isRepresentanteDelegacao={isRepresentanteDelegacao}
         isOrganizer={isOrganizer}
       />
     </div>

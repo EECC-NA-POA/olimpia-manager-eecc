@@ -1,20 +1,18 @@
 
 import React, { useState } from 'react';
 import { NotificationFormFields } from './components/NotificationFormFields';
-import { BranchSelection } from './components/BranchSelection';
 import { DelegationInfoMessage } from './components/DelegationInfoMessage';
 import { useNotificationForm } from './hooks/useNotificationForm';
-import { useBranches } from './hooks/useBranches';
 import { validateNotificationForm } from './utils/validation';
 import { submitNotification } from './services/notificationService';
 import { toast } from "sonner";
+import type { NotificationAuthorType } from '@/types/notifications';
 
 interface NotificationFormProps {
   eventId: string;
   userId: string;
   onSuccess: () => void;
-  isBranchFiltered?: boolean;
-  branchId?: number;
+  isRepresentanteDelegacao?: boolean;
   isOrganizer?: boolean;
 }
 
@@ -22,40 +20,24 @@ export function NotificationForm({
   eventId, 
   userId, 
   onSuccess,
-  isBranchFiltered = false,
-  branchId,
+  isRepresentanteDelegacao = false,
   isOrganizer = false
 }: NotificationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const {
-    titulo,
-    setTitulo,
-    conteudo,
-    setConteudo,
-    tipoDestinatario,
-    setTipoDestinatario,
-    dataExpiracao,
-    setDataExpiracao,
-    selectedBranches,
-    handleBranchToggle,
+    mensagem,
+    setMensagem,
     resetForm
   } = useNotificationForm();
 
-  const { branches, loadingBranches } = useBranches(isOrganizer, isBranchFiltered);
+  // Determinar o tipo de autor baseado nos props
+  const tipoAutor: NotificationAuthorType = isOrganizer ? 'organizador' : 'representante_delegacao';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const isValid = validateNotificationForm(
-      titulo,
-      conteudo,
-      isOrganizer,
-      tipoDestinatario,
-      selectedBranches,
-      isBranchFiltered,
-      branchId
-    );
+    const isValid = validateNotificationForm(mensagem);
 
     if (!isValid) return;
 
@@ -63,12 +45,9 @@ export function NotificationForm({
 
     try {
       await submitNotification(
-        { titulo, conteudo, eventId, dataExpiracao },
-        isBranchFiltered,
-        branchId,
-        isOrganizer,
-        tipoDestinatario,
-        selectedBranches
+        { mensagem, eventId },
+        userId,
+        tipoAutor
       );
       
       resetForm();
@@ -84,30 +63,12 @@ export function NotificationForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <NotificationFormFields
-        titulo={titulo}
-        setTitulo={setTitulo}
-        conteudo={conteudo}
-        setConteudo={setConteudo}
-        dataExpiracao={dataExpiracao}
-        setDataExpiracao={setDataExpiracao}
-        tipoDestinatario={tipoDestinatario}
-        setTipoDestinatario={setTipoDestinatario}
-        isOrganizer={isOrganizer}
-        isBranchFiltered={isBranchFiltered}
+        mensagem={mensagem}
+        setMensagem={setMensagem}
         isSubmitting={isSubmitting}
       />
 
-      <BranchSelection
-        isOrganizer={isOrganizer}
-        isBranchFiltered={isBranchFiltered}
-        tipoDestinatario={tipoDestinatario}
-        branches={branches}
-        selectedBranches={selectedBranches}
-        loadingBranches={loadingBranches}
-        handleBranchToggle={handleBranchToggle}
-      />
-
-      <DelegationInfoMessage isBranchFiltered={isBranchFiltered} />
+      <DelegationInfoMessage isRepresentanteDelegacao={isRepresentanteDelegacao} />
     </form>
   );
 }

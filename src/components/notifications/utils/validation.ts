@@ -1,30 +1,11 @@
 
 import { toast } from "sonner";
-import type { NotificationTargetType } from '@/types/notifications';
 
 export const validateNotificationForm = (
-  titulo: string,
-  conteudo: string,
-  isOrganizer: boolean,
-  tipoDestinatario: NotificationTargetType,
-  selectedBranches: number[],
-  isBranchFiltered: boolean,
-  branchId?: number
+  mensagem: string
 ): boolean => {
-  if (!titulo.trim() || !conteudo.trim()) {
-    toast.error('Título e conteúdo são obrigatórios');
-    return false;
-  }
-
-  // Validação específica para organizadores selecionando filiais
-  if (isOrganizer && tipoDestinatario === 'filial' && selectedBranches.length === 0) {
-    toast.error('Selecione pelo menos uma filial');
-    return false;
-  }
-
-  // Validação para representantes de delegação
-  if (isBranchFiltered && !branchId) {
-    toast.error('Erro: Filial não identificada');
+  if (!mensagem.trim()) {
+    toast.error('A mensagem é obrigatória');
     return false;
   }
 

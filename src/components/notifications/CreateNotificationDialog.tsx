@@ -3,19 +3,18 @@ import React from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { NotificationForm } from './NotificationForm';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface CreateNotificationDialogProps {
   eventId: string;
   userId: string;
   isOpen: boolean;
   onClose: () => void;
-  isBranchFiltered?: boolean;
-  branchId?: number;
+  isRepresentanteDelegacao?: boolean;
   isOrganizer?: boolean;
 }
 
@@ -24,28 +23,29 @@ export function CreateNotificationDialog({
   userId,
   isOpen,
   onClose,
-  isBranchFiltered = false,
-  branchId,
+  isRepresentanteDelegacao = false,
   isOrganizer = false
 }: CreateNotificationDialogProps) {
+  const queryClient = useQueryClient();
+
+  const handleSuccess = () => {
+    // Invalidate notifications query to refresh the list
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    onClose();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nova Notificação</DialogTitle>
-          <DialogDescription>
-            {isBranchFiltered 
-              ? "Crie uma nova notificação para os participantes da sua filial."
-              : "Crie uma nova notificação para os participantes do evento."
-            }
-          </DialogDescription>
+          <DialogTitle>Criar Nova Notificação</DialogTitle>
         </DialogHeader>
+        
         <NotificationForm
           eventId={eventId}
           userId={userId}
-          onSuccess={onClose}
-          isBranchFiltered={isBranchFiltered}
-          branchId={branchId}
+          onSuccess={handleSuccess}
+          isRepresentanteDelegacao={isRepresentanteDelegacao}
           isOrganizer={isOrganizer}
         />
       </DialogContent>
