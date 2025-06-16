@@ -9,6 +9,7 @@ import type { DynamicSubmissionData } from './useDynamicScoringSubmission/types'
 
 interface ExtendedDynamicSubmissionData extends DynamicSubmissionData {
   observacoes?: string | null;
+  numeroBateria?: number | null;
 }
 
 export function useDynamicScoringSubmission() {
@@ -16,7 +17,7 @@ export function useDynamicScoringSubmission() {
 
   return useMutation({
     mutationFn: async (data: ExtendedDynamicSubmissionData) => {
-      console.log('=== INICIANDO SUBMISSÃO DE PONTUAÇÃO DINÂMICA (EQUIPES) ===');
+      console.log('=== INICIANDO SUBMISSÃO DE PONTUAÇÃO DINÂMICA (CORRIGIDA) ===');
       console.log('Dynamic scoring submission data:', data);
 
       try {
@@ -34,11 +35,10 @@ export function useDynamicScoringSubmission() {
 
         console.log('Campos do modelo:', campos);
 
-        // VERIFICAÇÃO CRÍTICA: Para modalidades de equipe, NUNCA usar baterias
-        console.log('=== MODALIDADE DE EQUIPE - FORÇANDO usesBaterias = false ===');
-        const usesBaterias = false; // Forçar false para equipes
+        // Para modalidades de equipe, NUNCA usar baterias
+        const usesBaterias = data.equipeId ? false : false; // Force false for now
         
-        console.log('Uses baterias (forçado para false):', usesBaterias);
+        console.log('Uses baterias (sempre false para equipes):', usesBaterias);
 
         // Calcular valor_pontuacao principal
         const valorPontuacao = calculateMainScore(data.formData, campos);
@@ -46,22 +46,24 @@ export function useDynamicScoringSubmission() {
 
         const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
         const observacoes = data.formData.notes || data.observacoes || null;
+        const numeroBateria = data.numeroBateria || null;
 
-        // Create base data object - ZERO referências a bateria para modalidades de equipe
+        // Create base data object - NUNCA usar bateria_id
         const baseDataForDb = {
           eventId: data.eventId,
           modalityId: data.modalityId,
           judgeId: data.judgeId,
           modeloId: data.modeloId,
           raia,
-          observacoes
+          observacoes,
+          numeroBateria
         };
 
-        console.log('Base data for DB (EQUIPE - NO BATTERY REFERENCES):', baseDataForDb);
+        console.log('Base data for DB (usando numero_bateria):', baseDataForDb);
 
-        // Handle team scoring - NUNCA incluir campos de bateria
+        // Handle team scoring
         if (data.equipeId) {
-          console.log('--- Submissão para Equipe (SEM BATERIAS GARANTIDO) ---', { equipeId: data.equipeId });
+          console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
 
           const teamDataForDb = {
             ...baseDataForDb,
@@ -69,20 +71,19 @@ export function useDynamicScoringSubmission() {
             equipeId: data.equipeId,
           };
 
-          console.log('Team data for DB (ZERO BATTERY FIELDS GARANTIDO):', teamDataForDb);
+          console.log('Team data for DB:', teamDataForDb);
 
-          // CRÍTICO: Passar usesBaterias = false SEMPRE para equipes
           const pontuacao = await upsertPontuacao(teamDataForDb, valorPontuacao, false);
-          console.log('=== TEAM SCORE SAVED (NO BATTERIES GARANTIDO) ===');
+          console.log('=== TEAM SCORE SAVED ===');
 
           const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
           await insertTentativas(tentativas, pontuacao.id);
 
-          console.log('=== TEAM SUBMISSION COMPLETED (NO BATTERIES GARANTIDO) ===');
+          console.log('=== TEAM SUBMISSION COMPLETED ===');
           return pontuacao;
         }
 
-        // Handle individual scoring (fallback)
+        // Handle individual scoring
         console.log('--- Individual Submission ---');
 
         const individualDataForDb = {
@@ -132,8 +133,8 @@ export function useDynamicScoringSubmission() {
       
       let errorMessage = 'Erro ao registrar pontuação';
       
-      if (error?.message?.includes('bateria_id') || error?.message?.includes('bateria')) {
-        errorMessage = 'ERRO CRÍTICO: Sistema tentando usar campo de bateria inexistente. Esta modalidade não possui baterias.';
+      if (error?.message?.includes('bateria_id')) {
+        errorMessage = 'ERRO CRÍTICO: Sistema ainda referencia campo bateria_id inexistente. Contacte o suporte técnico.';
       } else if (error?.message?.includes('constraint')) {
         errorMessage = 'Erro de restrição no banco de dados. Verifique se os dados estão corretos.';
       } else if (error?.message?.includes('column') && error?.message?.includes('does not exist')) {

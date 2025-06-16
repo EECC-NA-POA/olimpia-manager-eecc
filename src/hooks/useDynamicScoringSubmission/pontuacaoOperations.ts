@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 
 interface PontuacaoData {
@@ -9,6 +10,7 @@ interface PontuacaoData {
   modeloId: number;
   raia?: number | null;
   observacoes?: string | null;
+  numeroBateria?: number | null;
 }
 
 export async function upsertPontuacao(
@@ -22,9 +24,7 @@ export async function upsertPontuacao(
   console.log('Uses baterias:', usesBaterias);
   console.log('Observacoes received:', data.observacoes);
 
-  console.log('CRITICAL: pontuacao data will NEVER include battery fields for team modalities');
-
-  // Prepare base pontuacao data - NEVER include bateria_id or numero_bateria for team modalities
+  // Prepare base pontuacao data - SEMPRE usar numero_bateria, NUNCA bateria_id
   const pontuacaoData: any = {
     evento_id: data.eventId,
     modalidade_id: data.modalityId,
@@ -43,10 +43,12 @@ export async function upsertPontuacao(
     pontuacaoData.raia = data.raia;
   }
 
-  // NEVER add bateria fields for team modalities
-  console.log('SKIPPING bateria fields - team modality detected or usesBaterias is false');
+  // Only add numero_bateria if it exists and is not null
+  if (data.numeroBateria !== null && data.numeroBateria !== undefined) {
+    pontuacaoData.numero_bateria = data.numeroBateria;
+  }
 
-  console.log('Final pontuacao data for database (NO BATTERY FIELDS):', pontuacaoData);
+  console.log('Final pontuacao data for database:', pontuacaoData);
   console.log('Fields included:', Object.keys(pontuacaoData));
 
   try {
@@ -58,6 +60,7 @@ export async function upsertPontuacao(
       juiz_id: string;
       modelo_id: number;
       equipe_id?: number | null;
+      numero_bateria?: number | null;
     } = {
       evento_id: data.eventId,
       modalidade_id: data.modalityId,
@@ -69,6 +72,11 @@ export async function upsertPontuacao(
     // Add equipe_id to search if it exists
     if (data.equipeId) {
       searchFields.equipe_id = data.equipeId;
+    }
+
+    // Add numero_bateria to search if it exists
+    if (data.numeroBateria !== null && data.numeroBateria !== undefined) {
+      searchFields.numero_bateria = data.numeroBateria;
     }
 
     console.log('Searching for existing record with fields:', searchFields);
@@ -102,7 +110,7 @@ export async function upsertPontuacao(
       console.log('=== PONTUAÇÃO UPDATED SUCCESSFULLY ===');
       return updated;
     } else {
-      console.log('Inserting new record WITHOUT any battery field references');
+      console.log('Inserting new record');
       
       const { data: inserted, error: insertError } = await supabase
         .from('pontuacoes')
