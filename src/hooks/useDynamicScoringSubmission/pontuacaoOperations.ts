@@ -1,14 +1,31 @@
 
 import { supabase } from '@/lib/supabase';
 
-export async function upsertPontuacao(data: any, valorPontuacao: number, usesBaterias: boolean = false) {
+interface PontuacaoData {
+  eventId: string;
+  modalityId: number;
+  athleteId: string;
+  equipeId?: number | null;
+  judgeId: string;
+  modeloId: number;
+  raia?: number | null;
+  observacoes?: string | null;
+}
+
+export async function upsertPontuacao(
+  data: PontuacaoData, 
+  valorPontuacao: number, 
+  usesBaterias: boolean
+) {
   console.log('=== UPSERT PONTUAÇÃO ===');
   console.log('Data for upsert:', data);
   console.log('Valor pontuacao:', valorPontuacao);
   console.log('Uses baterias:', usesBaterias);
   console.log('Observacoes received:', data.observacoes);
-  
-  // Build pontuacao data with ONLY valid database fields - NEVER include battery fields for non-battery modalities
+
+  console.log('CRITICAL: pontuacao data will NEVER include battery fields for non-battery modalities');
+
+  // Prepare base pontuacao data - NEVER include bateria_id or numero_bateria for non-battery modalities
   const pontuacaoData: any = {
     evento_id: data.eventId,
     modalidade_id: data.modalityId,
@@ -19,111 +36,129 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     valor_pontuacao: valorPontuacao,
     unidade: 'pontos',
     observacoes: data.observacoes || null,
-    data_registro: new Date().toISOString(),
-    raia: data.raia || null
+    data_registro: new Date().toISOString()
   };
 
-  console.log('CRITICAL: pontuacao data will NEVER include battery fields for non-battery modalities');
+  // Only add raia if it exists and is not null
+  if (data.raia !== null && data.raia !== undefined) {
+    pontuacaoData.raia = data.raia;
+  }
+
+  // CRITICAL: Only add bateria-related fields if the modality actually uses baterias
+  // For team modalities without baterias, we NEVER include these fields
+  if (usesBaterias) {
+    console.log('Adding bateria fields because modality uses baterias');
+    pontuacaoData.numero_bateria = 1; // Default bateria for modalities that use them
+  } else {
+    console.log('SKIPPING bateria fields because modality does NOT use baterias');
+  }
+
   console.log('Final pontuacao data for database (GUARANTEED NO BATTERY FIELDS):', pontuacaoData);
   console.log('Fields included:', Object.keys(pontuacaoData));
-
-  // Build search query - NEVER include numero_bateria for modalities without batteries
-  let searchQuery = supabase
-    .from('pontuacoes')
-    .select('id')
-    .eq('atleta_id', pontuacaoData.atleta_id)
-    .eq('modalidade_id', pontuacaoData.modalidade_id)
-    .eq('evento_id', pontuacaoData.evento_id)
-    .eq('juiz_id', pontuacaoData.juiz_id)
-    .eq('modelo_id', pontuacaoData.modelo_id);
-
-  // Handle equipe_id correctly
-  if (pontuacaoData.equipe_id === null) {
-    searchQuery = searchQuery.is('equipe_id', null);
-  } else {
-    searchQuery = searchQuery.eq('equipe_id', pontuacaoData.equipe_id);
-  }
-
   console.log('Search query constructed WITHOUT any battery field references');
 
-  const { data: existingRecords, error: findError } = await searchQuery;
+  try {
+    // Check for existing record - using only fields that always exist
+    const searchFields = {
+      evento_id: data.eventId,
+      modalidade_id: data.modalityId,
+      atleta_id: data.athleteId,
+      juiz_id: data.judgeId,
+      modelo_id: data.modeloId
+    };
 
-  if (findError) {
-    console.error('Error searching for existing record:', findError);
-    throw findError;
-  }
-
-  let result;
-  
-  if (existingRecords && existingRecords.length > 0) {
-    // Update existing record
-    const existingId = existingRecords[0].id;
-    console.log('Updating existing record with ID:', existingId);
-    
-    const { data: updatedRecord, error } = await supabase
-      .from('pontuacoes')
-      .update(pontuacaoData)
-      .eq('id', existingId)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error updating pontuacao:', error);
-      throw error;
+    // Add equipe_id to search if it exists
+    if (data.equipeId) {
+      searchFields.equipe_id = data.equipeId;
     }
-    result = updatedRecord;
-  } else {
-    // Insert new record
-    console.log('Inserting new record WITHOUT any battery field references');
-    
-    const { data: newRecord, error } = await supabase
-      .from('pontuacoes')
-      .insert(pontuacaoData)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error inserting pontuacao:', error);
-      throw error;
-    }
-    result = newRecord;
-  }
 
-  console.log('Pontuacao saved successfully (NO BATTERY FIELDS):', result);
-  return result;
+    console.log('Searching for existing record with fields:', searchFields);
+
+    const { data: existing, error: searchError } = await supabase
+      .from('pontuacoes')
+      .select('id')
+      .match(searchFields)
+      .maybeSingle();
+
+    if (searchError) {
+      console.error('Error searching for existing record:', searchError);
+      throw searchError;
+    }
+
+    if (existing) {
+      console.log('Updating existing record with ID:', existing.id);
+      
+      const { data: updated, error: updateError } = await supabase
+        .from('pontuacoes')
+        .update(pontuacaoData)
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Error updating pontuacao:', updateError);
+        throw updateError;
+      }
+
+      console.log('=== PONTUAÇÃO UPDATED SUCCESSFULLY ===');
+      return updated;
+    } else {
+      console.log('Inserting new record WITHOUT any battery field references');
+      
+      const { data: inserted, error: insertError } = await supabase
+        .from('pontuacoes')
+        .insert(pontuacaoData)
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('Error inserting pontuacao:', insertError);
+        throw insertError;
+      }
+
+      console.log('=== PONTUAÇÃO INSERTED SUCCESSFULLY ===');
+      return inserted;
+    }
+  } catch (error) {
+    console.error('=== ERROR IN UPSERT PONTUAÇÃO ===');
+    console.error('Error details:', error);
+    throw error;
+  }
 }
 
-export async function insertTentativas(tentativas: any[], pontuacaoId: string) {
-  if (tentativas.length === 0) {
+export async function insertTentativas(tentativas: any[], pontuacaoId: number) {
+  if (!tentativas || tentativas.length === 0) {
     console.log('No tentativas to insert');
     return;
   }
 
-  console.log('=== INSERINDO TENTATIVAS ===');
+  console.log('=== INSERTING TENTATIVAS ===');
   console.log('Tentativas to insert:', tentativas);
+  console.log('Pontuacao ID:', pontuacaoId);
 
-  // Delete existing tentativas for this pontuacao
-  const { error: deleteError } = await supabase
-    .from('tentativas_pontuacao')
-    .delete()
-    .eq('pontuacao_id', pontuacaoId);
+  try {
+    // Add pontuacao_id to each tentativa
+    const tentativasWithId = tentativas.map(tentativa => ({
+      ...tentativa,
+      pontuacao_id: pontuacaoId
+    }));
 
-  if (deleteError) {
-    console.error('Error deleting existing tentativas:', deleteError);
-    throw deleteError;
-  }
+    const { data, error } = await supabase
+      .from('tentativas_pontuacao')
+      .insert(tentativasWithId)
+      .select();
 
-  // Insert new tentativas
-  const { data, error } = await supabase
-    .from('tentativas_pontuacao')
-    .insert(tentativas)
-    .select();
+    if (error) {
+      console.error('Error inserting tentativas:', error);
+      throw error;
+    }
 
-  if (error) {
-    console.error('Error inserting tentativas:', error);
+    console.log('=== TENTATIVAS INSERTED SUCCESSFULLY ===');
+    console.log('Inserted tentativas:', data);
+    return data;
+  } catch (error) {
+    console.error('=== ERROR INSERTING TENTATIVAS ===');
+    console.error('Error details:', error);
     throw error;
   }
-
-  console.log('Tentativas inserted successfully:', data);
-  return data;
 }
