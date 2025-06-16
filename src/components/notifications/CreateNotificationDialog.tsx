@@ -16,6 +16,7 @@ interface CreateNotificationDialogProps {
   onClose: () => void;
   isBranchFiltered?: boolean;
   branchId?: number;
+  isOrganizer?: boolean;
 }
 
 export function CreateNotificationDialog({
@@ -24,15 +25,19 @@ export function CreateNotificationDialog({
   isOpen,
   onClose,
   isBranchFiltered = false,
-  branchId
+  branchId,
+  isOrganizer = false
 }: CreateNotificationDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nova Notificação</DialogTitle>
           <DialogDescription>
-            Crie uma nova notificação para os participantes do evento.
+            {isBranchFiltered 
+              ? "Crie uma nova notificação para os participantes da sua filial."
+              : "Crie uma nova notificação para os participantes do evento."
+            }
           </DialogDescription>
         </DialogHeader>
         <NotificationForm
@@ -41,6 +46,7 @@ export function CreateNotificationDialog({
           onSuccess={onClose}
           isBranchFiltered={isBranchFiltered}
           branchId={branchId}
+          isOrganizer={isOrganizer}
         />
       </DialogContent>
     </Dialog>

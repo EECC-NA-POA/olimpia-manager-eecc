@@ -133,6 +133,7 @@ export default function DelegationDashboard() {
             userId={user?.id || ''}
             isBranchFiltered={true}
             branchId={user?.filial_id ? Number(user.filial_id) : undefined}
+            isOrganizer={false}
           />
         );
 

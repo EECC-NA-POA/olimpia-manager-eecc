@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -118,6 +117,7 @@ export default function OrganizerDashboard() {
           <NotificationManager
             eventId={currentEventId}
             userId={user?.id || ''}
+            isOrganizer={true}
           />
         );
 

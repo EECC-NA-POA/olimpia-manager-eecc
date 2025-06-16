@@ -11,13 +11,15 @@ interface NotificationManagerProps {
   userId: string;
   isBranchFiltered?: boolean;
   branchId?: number;
+  isOrganizer?: boolean;
 }
 
 export function NotificationManager({ 
   eventId, 
   userId, 
   isBranchFiltered = false, 
-  branchId 
+  branchId,
+  isOrganizer = false
 }: NotificationManagerProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
@@ -53,6 +55,7 @@ export function NotificationManager({
         onClose={() => setIsCreateDialogOpen(false)}
         isBranchFiltered={isBranchFiltered}
         branchId={branchId}
+        isOrganizer={isOrganizer}
       />
     </div>
   );
