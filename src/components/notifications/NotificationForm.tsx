@@ -91,14 +91,30 @@ export function NotificationForm({
       return;
     }
 
+    // Validação para representantes de delegação
+    if (isBranchFiltered && !branchId) {
+      toast.error('Erro: Filial não identificada');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // Preparar dados da notificação
-      const notificationData = {
+      console.log('Creating notification with data:', {
         titulo,
         conteudo,
-        tipo_destinatario: tipoDestinatario,
+        eventId,
+        isBranchFiltered,
+        branchId,
+        isOrganizer,
+        tipoDestinatario,
+        selectedBranches
+      });
+
+      // Preparar dados da notificação
+      const baseNotificationData = {
+        titulo,
+        conteudo,
         evento_id: eventId,
         data_expiracao: dataExpiracao || null,
         ativa: true,
@@ -107,36 +123,68 @@ export function NotificationForm({
 
       if (isBranchFiltered && branchId) {
         // Para representantes de delegação - sempre filtra pela filial
-        const { error } = await supabase
-          .from('notificacoes')
-          .insert({
-            ...notificationData,
-            tipo_destinatario: 'filial',
-            filial_id: branchId
-          });
+        const notificationData = {
+          ...baseNotificationData,
+          tipo_destinatario: 'filial',
+          filial_id: branchId
+        };
 
-        if (error) throw error;
+        console.log('Inserting delegation notification:', notificationData);
+
+        const { data, error } = await supabase
+          .from('notificacoes')
+          .insert(notificationData)
+          .select();
+
+        if (error) {
+          console.error('Database error:', error);
+          throw error;
+        }
+
+        console.log('Notification created successfully:', data);
       } else if (isOrganizer) {
         // Para organizadores
         if (tipoDestinatario === 'filial' && selectedBranches.length > 0) {
           // Criar uma notificação para cada filial selecionada
           const notifications = selectedBranches.map(filialId => ({
-            ...notificationData,
+            ...baseNotificationData,
+            tipo_destinatario: 'filial',
             filial_id: filialId
           }));
 
-          const { error } = await supabase
-            .from('notificacoes')
-            .insert(notifications);
+          console.log('Inserting organizer branch notifications:', notifications);
 
-          if (error) throw error;
+          const { data, error } = await supabase
+            .from('notificacoes')
+            .insert(notifications)
+            .select();
+
+          if (error) {
+            console.error('Database error:', error);
+            throw error;
+          }
+
+          console.log('Branch notifications created successfully:', data);
         } else {
           // Notificação geral ou outros tipos
-          const { error } = await supabase
-            .from('notificacoes')
-            .insert(notificationData);
+          const notificationData = {
+            ...baseNotificationData,
+            tipo_destinatario: tipoDestinatario
+          };
 
-          if (error) throw error;
+          console.log('Inserting general notification:', notificationData);
+
+          const { data, error } = await supabase
+            .from('notificacoes')
+            .insert(notificationData)
+            .select();
+
+          if (error) {
+            console.error('Database error:', error);
+            throw error;
+          }
+
+          console.log('General notification created successfully:', data);
         }
       }
 
@@ -152,7 +200,7 @@ export function NotificationForm({
       onSuccess();
     } catch (error) {
       console.error('Error creating notification:', error);
-      toast.error('Erro ao criar notificação');
+      toast.error('Erro ao criar notificação: ' + (error as any)?.message || 'Erro desconhecido');
     } finally {
       setIsSubmitting(false);
     }
