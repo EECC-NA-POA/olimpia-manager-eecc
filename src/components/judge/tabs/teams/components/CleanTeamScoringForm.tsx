@@ -61,15 +61,28 @@ export function CleanTeamScoringForm({
 
       if (error) throw error;
 
-      // Filter out configuration fields, battery fields, and specifically "configuracao_pontuacao"
-      const scoringFields = (data as CampoModelo[]).filter(campo => 
-        campo.tipo_input !== 'configuration' &&
-        !campo.chave_campo.includes('bateria') &&
-        !campo.chave_campo.includes('equipe') &&
-        campo.chave_campo !== 'numero_bateria' &&
-        campo.chave_campo !== 'configuracao_pontuacao' &&
-        !campo.chave_campo.toLowerCase().includes('configuracao')
-      );
+      // More aggressive filtering to exclude ALL configuration fields
+      const scoringFields = (data as CampoModelo[]).filter(campo => {
+        const chaveLower = campo.chave_campo.toLowerCase();
+        
+        // Exclude configuration input types
+        if (campo.tipo_input === 'configuration' || campo.tipo_input === 'checkbox') {
+          return false;
+        }
+        
+        // Exclude known configuration fields by key
+        const configurationKeys = [
+          'bateria', 'baterias', 'numero_bateria', 'equipe',
+          'configuracao_pontuacao', 'configuracao', 'pontuacao_config',
+          'usar_baterias', 'config_pontos'
+        ];
+        
+        if (configurationKeys.some(key => chaveLower.includes(key))) {
+          return false;
+        }
+        
+        return true;
+      });
 
       console.log('Clean team scoring fields:', scoringFields);
       return scoringFields;
@@ -129,8 +142,21 @@ export function CleanTeamScoringForm({
     );
   }
 
-  // Determine if this modality uses time-based scoring
-  const isTimeBasedScoring = modalityRule?.regra_tipo === 'tempo';
+  // Determine the score format based on modality rule
+  const getScoreFormat = () => {
+    if (!modalityRule) return 'pontos';
+    
+    switch (modalityRule.regra_tipo) {
+      case 'tempo':
+        return 'tempo';
+      case 'distancia':
+        return 'distancia';
+      default:
+        return 'pontos';
+    }
+  };
+
+  const scoreFormat = getScoreFormat();
 
   return (
     <Form {...form}>
@@ -145,8 +171,11 @@ export function CleanTeamScoringForm({
                 <FormLabel>
                   {campo.rotulo_campo}
                   {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
-                  {campo.chave_campo === 'resultado' && isTimeBasedScoring && (
+                  {campo.chave_campo === 'resultado' && scoreFormat === 'tempo' && (
                     <span className="text-green-600 text-xs ml-2">(MM:SS.mmm)</span>
+                  )}
+                  {campo.chave_campo === 'resultado' && scoreFormat === 'distancia' && (
+                    <span className="text-green-600 text-xs ml-2">(##,## m)</span>
                   )}
                 </FormLabel>
                 <FormControl>
@@ -179,7 +208,7 @@ export function CleanTeamScoringForm({
                         ...campo,
                         metadados: {
                           ...campo.metadados,
-                          formato_resultado: isTimeBasedScoring ? 'tempo' : (modalityRule?.regra_tipo === 'distancia' ? 'distancia' : 'pontos')
+                          formato_resultado: scoreFormat
                         }
                       }}
                       form={form}
