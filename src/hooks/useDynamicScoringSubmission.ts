@@ -32,16 +32,52 @@ export function useDynamicScoringSubmission() {
           throw camposError;
         }
 
-        // Check if this modality uses baterias by looking for bateria configuration fields
-        const bateriaConfig = campos?.find(campo => 
+        // NOVA LÓGICA: Verificar configuração de baterias no modelo de configuração
+        const { data: modeloConfig, error: modeloConfigError } = await supabase
+          .from('modelos_modalidade')
+          .select('modalidade_id')
+          .eq('id', data.modeloId)
+          .single();
+
+        if (modeloConfigError) {
+          console.error('Error fetching modelo config:', modeloConfigError);
+          throw modeloConfigError;
+        }
+
+        // Buscar configuração real da modalidade
+        const { data: modalidadeConfig, error: modalidadeConfigError } = await supabase
+          .from('modalidades')
+          .select('*')
+          .eq('id', modeloConfig.modalidade_id)
+          .single();
+
+        if (modalidadeConfigError) {
+          console.error('Error fetching modalidade config:', modalidadeConfigError);
+          throw modalidadeConfigError;
+        }
+
+        console.log('Modalidade configuration:', modalidadeConfig);
+
+        // Determinar se usa baterias baseado nos campos E na configuração da modalidade
+        const bateriaConfigField = campos?.find(campo => 
           campo.chave_campo === 'baterias' && 
           campo.tipo_input === 'checkbox'
         );
         
-        const usesBaterias = bateriaConfig?.metadados?.baterias === true;
+        // APENAS considerar baterias se estiver explicitamente configurado nos campos
+        const usesBaterias = bateriaConfigField?.metadados?.baterias === true;
 
-        console.log('Modality uses baterias?', usesBaterias);
-        console.log('Bateria config found:', bateriaConfig);
+        console.log('=== VERIFICAÇÃO DE BATERIAS ===');
+        console.log('Bateria config field found:', bateriaConfigField);
+        console.log('Uses baterias (from fields):', usesBaterias);
+        console.log('Provided bateriaId:', data.bateriaId);
+
+        // Se a modalidade NÃO usa baterias, remover qualquer referência a bateria
+        if (!usesBaterias) {
+          console.log('MODALIDADE NÃO USA BATERIAS - Removendo referências de bateria');
+          // Remove bateriaId from data to prevent it being used
+          delete (data as any).bateriaId;
+        }
 
         // Calcular valor_pontuacao principal a partir dos dados do formulário
         const valorPontuacao = calculateMainScore(data.formData, campos);
@@ -50,7 +86,7 @@ export function useDynamicScoringSubmission() {
         const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
         const observacoes = data.formData.notes || data.observacoes || null;
 
-        // Create clean data object - only include numero_bateria if modality uses baterias
+        // Create clean data object - NUNCA incluir numero_bateria se a modalidade não usa baterias
         const cleanDataForDb: any = {
           eventId: data.eventId,
           modalityId: data.modalityId,
@@ -60,10 +96,10 @@ export function useDynamicScoringSubmission() {
           observacoes
         };
 
-        // ONLY include numero_bateria if the modality actually uses baterias
-        if (usesBaterias && data.bateriaId !== undefined) {
+        // APENAS incluir numero_bateria se a modalidade realmente usa baterias E temos o valor
+        if (usesBaterias && data.bateriaId !== undefined && data.bateriaId !== null) {
           cleanDataForDb.numero_bateria = data.bateriaId;
-          console.log('Including numero_bateria:', data.bateriaId);
+          console.log('Including numero_bateria for bateria-enabled modality:', data.bateriaId);
         } else {
           console.log('Skipping numero_bateria - modality does not use baterias or no bateriaId provided');
         }

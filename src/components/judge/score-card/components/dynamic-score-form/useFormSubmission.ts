@@ -27,13 +27,14 @@ export function useFormSubmission({
   const mutation = useDynamicScoringSubmission();
 
   const handleSubmit = async (formData: any) => {
-    console.log('=== SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm - EQUIPES) ===');
+    console.log('=== SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm - EQUIPES SEM BATERIAS) ===');
     console.log('Form data:', formData);
     console.log('Equipe ID:', equipeId);
     console.log('Número da bateria (numeroBateria):', numeroBateria);
 
     try {
-      await mutation.mutateAsync({
+      // Preparar dados de submissão - APENAS incluir bateriaId se fornecido
+      const submissionData: any = {
         athleteId,
         modalityId,
         eventId,
@@ -42,14 +43,25 @@ export function useFormSubmission({
         equipeId,
         raia,
         formData,
-        bateriaId: numeroBateria, // Only pass if provided, will be filtered by the hook
         observacoes: formData.notes
-      });
+      };
 
-      console.log('=== SUBMISSÃO DE EQUIPE CONCLUÍDA COM SUCESSO ===');
+      // APENAS incluir bateriaId se realmente fornecido (não undefined)
+      if (numeroBateria !== undefined && numeroBateria !== null) {
+        submissionData.bateriaId = numeroBateria;
+        console.log('Including bateriaId in submission:', numeroBateria);
+      } else {
+        console.log('Skipping bateriaId - not provided or modalidade does not use baterias');
+      }
+
+      console.log('Final submission data:', submissionData);
+
+      await mutation.mutateAsync(submissionData);
+
+      console.log('=== SUBMISSÃO DE EQUIPE CONCLUÍDA COM SUCESSO (SEM BATERIAS) ===');
       onSuccess?.();
     } catch (error) {
-      console.error('=== ERRO NA SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm - EQUIPES) ===');
+      console.error('=== ERRO NA SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm - EQUIPES SEM BATERIAS) ===');
       console.error('Error submitting team score:', error);
       throw error;
     }
