@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { format } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Notification } from '@/types/notifications';
 
@@ -54,7 +54,10 @@ export function NotificationCard({ notification, onClick }: NotificationCardProp
           {/* Data da postagem */}
           <div className="text-xs text-gray-500 pt-1">
             <span>
-              {format(new Date(notification.criado_em), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+              {formatDistanceToNow(new Date(notification.criado_em), { 
+                addSuffix: true, 
+                locale: ptBR 
+              })}
             </span>
           </div>
 
