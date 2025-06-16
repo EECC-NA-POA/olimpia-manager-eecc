@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 
 export async function upsertPontuacao(data: any, valorPontuacao: number, usesBaterias: boolean = false) {
@@ -27,9 +26,12 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     raia: data.raia || null
   };
 
-  // CRITICAL: Only add numero_bateria if the modality actually uses baterias
-  if (usesBaterias && 'numero_bateria' in data) {
-    pontuacaoData.numero_bateria = data.numero_bateria || null;
+  // CRITICAL: Only add numero_bateria if the modality actually uses baterias AND we have a value
+  if (usesBaterias && 'numero_bateria' in data && data.numero_bateria !== undefined) {
+    pontuacaoData.numero_bateria = data.numero_bateria;
+    console.log('Added numero_bateria to pontuacao data:', data.numero_bateria);
+  } else {
+    console.log('Skipping numero_bateria field - not needed for this modality');
   }
 
   console.log('Final pontuacao data for database (FIXED):', pontuacaoData);
@@ -52,13 +54,16 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     searchQuery = searchQuery.eq('equipe_id', pontuacaoData.equipe_id);
   }
 
-  // CRITICAL: Only add numero_bateria to search if the modality uses baterias
+  // CRITICAL: Only add numero_bateria to search if the modality uses baterias AND we have the field
   if (usesBaterias && 'numero_bateria' in pontuacaoData) {
-    if (pontuacaoData.numero_bateria === null) {
+    if (pontuacaoData.numero_bateria === null || pontuacaoData.numero_bateria === undefined) {
       searchQuery = searchQuery.is('numero_bateria', null);
     } else {
       searchQuery = searchQuery.eq('numero_bateria', pontuacaoData.numero_bateria);
     }
+    console.log('Added numero_bateria to search query');
+  } else {
+    console.log('Skipping numero_bateria in search query - not applicable for this modality');
   }
 
   const { data: existingRecords, error: findError } = await searchQuery;
@@ -90,7 +95,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
       raia: pontuacaoData.raia
     };
 
-    // CRITICAL: Only include numero_bateria if the modality uses baterias
+    // CRITICAL: Only include numero_bateria if the modality uses baterias AND we have the field
     if (usesBaterias && 'numero_bateria' in pontuacaoData) {
       updateData.numero_bateria = pontuacaoData.numero_bateria;
     }
@@ -114,32 +119,13 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     // Insert new record
     console.log('Inserting new record');
     
-    // Create clean insert data - NEVER include bateria_id
-    const insertData: any = {
-      evento_id: pontuacaoData.evento_id,
-      modalidade_id: pontuacaoData.modalidade_id,
-      atleta_id: pontuacaoData.atleta_id,
-      equipe_id: pontuacaoData.equipe_id,
-      juiz_id: pontuacaoData.juiz_id,
-      modelo_id: pontuacaoData.modelo_id,
-      valor_pontuacao: pontuacaoData.valor_pontuacao,
-      unidade: pontuacaoData.unidade,
-      observacoes: pontuacaoData.observacoes,
-      data_registro: pontuacaoData.data_registro,
-      raia: pontuacaoData.raia
-    };
-
-    // CRITICAL: Only include numero_bateria if the modality uses baterias
-    if (usesBaterias && 'numero_bateria' in pontuacaoData) {
-      insertData.numero_bateria = pontuacaoData.numero_bateria;
-    }
-    
-    console.log('Clean insert data (FIXED):', insertData);
-    console.log('Insert fields included:', Object.keys(insertData));
+    // Use the same pontuacaoData for insert
+    console.log('Clean insert data (FIXED):', pontuacaoData);
+    console.log('Insert fields included:', Object.keys(pontuacaoData));
     
     const { data: newRecord, error } = await supabase
       .from('pontuacoes')
-      .insert(insertData)
+      .insert(pontuacaoData)
       .select()
       .single();
     

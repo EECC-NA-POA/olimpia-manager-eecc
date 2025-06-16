@@ -42,7 +42,7 @@ export function useFormSubmission({
         equipeId,
         raia,
         formData,
-        bateriaId: numeroBateria, // Will be converted to numero_bateria internally if needed
+        bateriaId: numeroBateria, // Only pass if provided, will be filtered by the hook
         observacoes: formData.notes
       });
 

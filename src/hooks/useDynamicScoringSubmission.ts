@@ -32,7 +32,7 @@ export function useDynamicScoringSubmission() {
           throw camposError;
         }
 
-        // Check if this modality uses baterias by looking at configuration fields
+        // Check if this modality uses baterias by looking for bateria configuration fields
         const bateriaConfig = campos?.find(campo => 
           campo.chave_campo === 'baterias' && 
           campo.tipo_input === 'checkbox'
@@ -41,6 +41,7 @@ export function useDynamicScoringSubmission() {
         const usesBaterias = bateriaConfig?.metadados?.baterias === true;
 
         console.log('Modality uses baterias?', usesBaterias);
+        console.log('Bateria config found:', bateriaConfig);
 
         // Calcular valor_pontuacao principal a partir dos dados do formulário
         const valorPontuacao = calculateMainScore(data.formData, campos);
@@ -49,7 +50,7 @@ export function useDynamicScoringSubmission() {
         const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
         const observacoes = data.formData.notes || data.observacoes || null;
 
-        // Create clean data object - NEVER use bateria_id, only numero_bateria when needed
+        // Create clean data object - only include numero_bateria if modality uses baterias
         const cleanDataForDb: any = {
           eventId: data.eventId,
           modalityId: data.modalityId,
@@ -60,8 +61,11 @@ export function useDynamicScoringSubmission() {
         };
 
         // ONLY include numero_bateria if the modality actually uses baterias
-        if (usesBaterias) {
-          cleanDataForDb.numero_bateria = data.bateriaId ?? null;
+        if (usesBaterias && data.bateriaId !== undefined) {
+          cleanDataForDb.numero_bateria = data.bateriaId;
+          console.log('Including numero_bateria:', data.bateriaId);
+        } else {
+          console.log('Skipping numero_bateria - modality does not use baterias or no bateriaId provided');
         }
 
         console.log('Clean data for DB (team scoring):', cleanDataForDb);
@@ -139,8 +143,8 @@ export function useDynamicScoringSubmission() {
       
       let errorMessage = 'Erro ao registrar pontuação da equipe';
       
-      if (error?.message?.includes('bateria_id')) {
-        errorMessage = 'Erro: Campo bateria_id não existe. O sistema foi corrigido para usar numero_bateria.';
+      if (error?.message?.includes('bateria_id') || error?.message?.includes('numero_bateria')) {
+        errorMessage = 'Erro: Esta modalidade não está configurada para usar baterias. Verifique a configuração do modelo.';
       } else if (error?.message?.includes('constraint')) {
         errorMessage = 'Erro de restrição no banco de dados. Verifique se os dados da equipe estão corretos.';
       } else if (error?.message?.includes('column') && error?.message?.includes('does not exist')) {
