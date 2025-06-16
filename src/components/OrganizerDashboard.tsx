@@ -3,7 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, ListChecks, BarChart, UsersRound } from "lucide-react";
+import { Users, ListChecks, BarChart, UsersRound, Bell } from "lucide-react";
 import { EmptyState } from "./dashboard/components/EmptyState";
 import { LoadingState } from "./dashboard/components/LoadingState";
 import { ErrorState } from "./dashboard/components/ErrorState";
@@ -13,6 +13,7 @@ import { AthletesTab } from "./dashboard/tabs/AthletesTab";
 import { EnrollmentsTab } from "./dashboard/tabs/EnrollmentsTab";
 import { StatisticsTab } from "./dashboard/tabs/StatisticsTab";
 import { TeamsTab } from "./judge/tabs/TeamsTab";
+import { NotificationManager } from "./notifications/NotificationManager";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
 export default function OrganizerDashboard() {
@@ -112,6 +113,14 @@ export default function OrganizerDashboard() {
           />
         );
 
+      case "notifications":
+        return (
+          <NotificationManager
+            eventId={currentEventId}
+            userId={user?.id || ''}
+          />
+        );
+
       default:
         return null;
     }
@@ -156,6 +165,14 @@ export default function OrganizerDashboard() {
               <span className="hidden sm:inline">Equipes</span>
               <span className="sm:hidden">Equipes</span>
             </TabsTrigger>
+            <TabsTrigger 
+              value="notifications"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+            >
+              <Bell className="h-3 w-3 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Notificações</span>
+              <span className="sm:hidden">Notif</span>
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -173,6 +190,10 @@ export default function OrganizerDashboard() {
         
         <TabsContent value="teams" className="mt-4 sm:mt-6">
           {renderTabContent("teams")}
+        </TabsContent>
+
+        <TabsContent value="notifications" className="mt-4 sm:mt-6">
+          {renderTabContent("notifications")}
         </TabsContent>
       </Tabs>
     </div>
