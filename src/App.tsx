@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './components/providers/AuthProvider';
@@ -70,73 +71,139 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-background">
       <GlobalHeader />
-      {user && !hideNavigation && <MainNavigation />}
-      
-      <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/events" element={<EventsLandingPage />} />
-          <Route path="/event/:slug" element={<PublicEventPage />} />
-          <Route path="/event/:slug/details" element={<EventDetailsPage />} />
-          <Route path="/landing/:eventSlug" element={<LandingPage />} />
-          <Route path="/olimpiadas-nacionais" element={<OlimpiadasNacionais />} />
-          
-          {/* Protected Routes */}
-          <Route 
-            path="/event-selection" 
-            element={user ? <EventSelectionPage /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/athlete-profile" 
-            element={user ? <AthleteProfile /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/cronograma" 
-            element={user ? <Cronograma /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/regulamento" 
-            element={user ? <EventRegulations /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/athlete-registrations" 
-            element={user ? <AthleteProfile /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/scores" 
-            element={user ? <Scores /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/organizer-dashboard" 
-            element={user ? <OrganizerPage /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/delegation-dashboard" 
-            element={user ? <DelegationPage /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/judge-dashboard" 
-            element={user ? <JudgeDashboard /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/administration" 
-            element={user ? <Administration /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/event-management" 
-            element={user ? <EventManagement /> : <Navigate to="/login" />} 
-          />
-          <Route 
-            path="/dashboard" 
-            element={user ? <Dashboard /> : <Navigate to="/login" />} 
-          />
-          <Route path="/rejected-access" element={<RejectedAccess />} />
-        </Routes>
-      </main>
+      {user && !hideNavigation ? (
+        <MainNavigation>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/events" element={<EventsLandingPage />} />
+            <Route path="/event/:slug" element={<PublicEventPage />} />
+            <Route path="/event/:slug/details" element={<EventDetailsPage />} />
+            <Route path="/landing/:eventSlug" element={<LandingPage />} />
+            <Route path="/olimpiadas-nacionais" element={<OlimpiadasNacionais />} />
+            
+            {/* Protected Routes */}
+            <Route 
+              path="/event-selection" 
+              element={user ? <EventSelectionPage /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/athlete-profile" 
+              element={user ? <AthleteProfile /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/cronograma" 
+              element={user ? <Cronograma /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/regulamento" 
+              element={user ? <EventRegulations /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/athlete-registrations" 
+              element={user ? <AthleteProfile /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/scores" 
+              element={user ? <Scores /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/organizer-dashboard" 
+              element={user ? <OrganizerPage /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/delegation-dashboard" 
+              element={user ? <DelegationPage /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/judge-dashboard" 
+              element={user ? <JudgeDashboard /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/administration" 
+              element={user ? <Administration /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/event-management" 
+              element={user ? <EventManagement /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/dashboard" 
+              element={user ? <Dashboard /> : <Navigate to="/login" />} 
+            />
+            <Route path="/rejected-access" element={<RejectedAccess />} />
+          </Routes>
+        </MainNavigation>
+      ) : (
+        <main className="flex-1">
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/events" element={<EventsLandingPage />} />
+            <Route path="/event/:slug" element={<PublicEventPage />} />
+            <Route path="/event/:slug/details" element={<EventDetailsPage />} />
+            <Route path="/landing/:eventSlug" element={<LandingPage />} />
+            <Route path="/olimpiadas-nacionais" element={<OlimpiadasNacionais />} />
+            
+            {/* Protected Routes */}
+            <Route 
+              path="/event-selection" 
+              element={user ? <EventSelectionPage /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/athlete-profile" 
+              element={user ? <AthleteProfile /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/cronograma" 
+              element={user ? <Cronograma /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/regulamento" 
+              element={user ? <EventRegulations /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/athlete-registrations" 
+              element={user ? <AthleteProfile /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/scores" 
+              element={user ? <Scores /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/organizer-dashboard" 
+              element={user ? <OrganizerPage /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/delegation-dashboard" 
+              element={user ? <DelegationPage /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/judge-dashboard" 
+              element={user ? <JudgeDashboard /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/administration" 
+              element={user ? <Administration /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/event-management" 
+              element={user ? <EventManagement /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/dashboard" 
+              element={user ? <Dashboard /> : <Navigate to="/login" />} 
+            />
+            <Route path="/rejected-access" element={<RejectedAccess />} />
+          </Routes>
+        </main>
+      )}
 
       {!isPublicRoute && <Footer />}
       {showFloatingIcon && <FloatingNotificationIcon />}
