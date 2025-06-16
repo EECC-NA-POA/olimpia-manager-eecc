@@ -37,10 +37,20 @@ export function useTeamScoringData({
 
       console.log('Fetching team scoring data for event:', eventId);
 
-      // First, get all teams for the event
+      // Get all teams for the event with modality info
       let teamsQuery = supabase
         .from('equipes')
-        .select('id, nome, modalidade_id')
+        .select(`
+          id,
+          nome,
+          modalidade_id,
+          modalidades!inner (
+            id,
+            nome,
+            categoria,
+            tipo_modalidade
+          )
+        `)
         .eq('evento_id', eventId);
 
       if (modalityFilter) {
@@ -67,25 +77,14 @@ export function useTeamScoringData({
       for (const team of teamsData) {
         console.log('Processing team:', team);
 
-        // Get modality information
-        const { data: modalityData, error: modalityError } = await supabase
-          .from('modalidades')
-          .select('id, nome, categoria, tipo_modalidade')
-          .eq('id', team.modalidade_id)
-          .single();
-
-        if (modalityError) {
-          console.error('Error fetching modality:', modalityError);
-          continue;
-        }
-
         // Only process collective modalities
-        if (modalityData?.tipo_modalidade !== 'coletiva') {
-          console.log('Skipping non-collective modality:', modalityData?.nome);
+        const modality = Array.isArray(team.modalidades) ? team.modalidades[0] : team.modalidades;
+        if (modality?.tipo_modalidade !== 'coletiva') {
+          console.log('Skipping non-collective modality:', modality?.nome);
           continue;
         }
 
-        // Get team athletes
+        // Get team athletes using the correct table structure
         const { data: athletesData, error: athletesError } = await supabase
           .from('atletas_equipes')
           .select(`
@@ -98,6 +97,7 @@ export function useTeamScoringData({
 
         if (athletesError) {
           console.error('Error fetching team athletes:', athletesError);
+          continue;
         }
 
         console.log('Athletes data for team', team.nome, ':', athletesData);
@@ -133,8 +133,8 @@ export function useTeamScoringData({
           equipe_id: team.id,
           equipe_nome: team.nome,
           modalidade_id: team.modalidade_id,
-          modalidade_nome: modalityData?.nome || '',
-          modalidade_categoria: modalityData?.categoria || '',
+          modalidade_nome: modality?.nome || '',
+          modalidade_categoria: modality?.categoria || '',
           members
         };
 

@@ -95,6 +95,8 @@ export function CleanTeamScoringTab({
     teams: typeof teams;
   }>);
 
+  console.log('Teams grouped by modality-category:', teamsByModalityCategory);
+
   return (
     <div className="space-y-6">
       <Card>
