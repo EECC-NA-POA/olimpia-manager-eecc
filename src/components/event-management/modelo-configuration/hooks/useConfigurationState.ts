@@ -31,11 +31,14 @@ export function useConfigurationState() {
   };
 
   const handleNumRaiasChange = (value: number) => {
-    console.log('Updating num_raias to:', value);
-    setConfig(prev => ({
-      ...prev,
-      num_raias: value // Allow 0 as a valid value
-    }));
+    console.log('useConfigurationState - Updating num_raias to:', value);
+    // Explicitly allow 0 as a valid value - using strict equality check
+    if (value >= 0 && value <= 20) {
+      setConfig(prev => ({
+        ...prev,
+        num_raias: value
+      }));
+    }
   };
 
   const handlePermiteFinalChange = (checked: boolean) => {

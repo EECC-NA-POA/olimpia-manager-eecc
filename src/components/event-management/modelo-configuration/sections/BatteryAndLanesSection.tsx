@@ -32,8 +32,9 @@ export function BatteryAndLanesSection({
     
     const numValue = parseInt(value, 10);
     
-    // Allow any number >= 0 and <= 20 (including 0)
+    // Allow any valid integer >= 0 and <= 20 (explicitly including 0)
     if (!isNaN(numValue) && numValue >= 0 && numValue <= 20) {
+      console.log('Setting num_raias to:', numValue);
       onNumRaiasChange(numValue);
     }
   };
@@ -43,6 +44,7 @@ export function BatteryAndLanesSection({
     
     // If field is empty on blur, set to 0
     if (value === '') {
+      console.log('Setting num_raias to 0 on blur');
       onNumRaiasChange(0);
     }
   };

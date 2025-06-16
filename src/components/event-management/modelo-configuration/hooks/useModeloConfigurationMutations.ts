@@ -1,4 +1,3 @@
-
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -38,8 +37,14 @@ export function useModeloConfigurationMutations(refetch: () => void) {
       // Create or update campos based on parametros
       const camposToInsert = [];
       
-      // Handle baterias configuration - use proper checks to allow 0 values
+      // Handle baterias configuration - explicitly check for undefined, not falsy values
       if (parametros.baterias !== undefined) {
+        console.log('Saving baterias config:', {
+          baterias: parametros.baterias,
+          num_raias: parametros.num_raias,
+          permite_final: parametros.permite_final
+        });
+        
         camposToInsert.push({
           modelo_id: modeloId,
           chave_campo: 'baterias',
@@ -49,7 +54,7 @@ export function useModeloConfigurationMutations(refetch: () => void) {
           ordem_exibicao: 1000, // High order to put at end
           metadados: { 
             baterias: parametros.baterias, 
-            num_raias: parametros.num_raias ?? 0, // Use nullish coalescing to preserve 0
+            num_raias: parametros.num_raias, // Don't use ?? 0 here, preserve the actual value including 0
             permite_final: parametros.permite_final || false 
           }
         });
