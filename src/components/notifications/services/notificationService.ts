@@ -10,52 +10,27 @@ export const submitNotification = async (
 ) => {
   const { titulo, mensagem, eventId, destinatarios } = data;
 
-  console.log('=== CREATING NOTIFICATION DEBUG ===');
-  console.log('Input data:', { titulo, mensagem, eventId, userId, tipoAutor, destinatarios });
+  console.log('Creating notification with data:', {
+    titulo,
+    mensagem,
+    eventId,
+    userId,
+    tipoAutor,
+    destinatarios
+  });
 
   try {
-    // Primeiro, vamos verificar se o usuário existe
-    console.log('1. Checking if user exists...');
-    const { data: userData, error: userError } = await supabase
-      .from('usuarios')
-      .select('id, nome_completo')
-      .eq('id', userId)
-      .single();
-
-    if (userError) {
-      console.error('Error fetching user:', userError);
-      throw new Error(`User not found: ${userError.message}`);
-    }
-
-    console.log('User found:', userData);
-
-    // Verificar se o evento existe
-    console.log('2. Checking if event exists...');
-    const { data: eventData, error: eventError } = await supabase
-      .from('eventos')
-      .select('id, nome')
-      .eq('id', eventId)
-      .single();
-
-    if (eventError) {
-      console.error('Error fetching event:', eventError);
-      throw new Error(`Event not found: ${eventError.message}`);
-    }
-
-    console.log('Event found:', eventData);
-
-    // Preparar dados da notificação - INCLUINDO autor_nome manualmente para evitar trigger
+    // 1. Inserir a notificação (o trigger preencherá automaticamente o autor_nome)
     const notificationData = {
       evento_id: eventId,
       autor_id: userId,
-      autor_nome: userData.nome_completo, // Incluir manualmente
       tipo_autor: tipoAutor,
       titulo,
       mensagem,
       visivel: true
     };
 
-    console.log('3. Inserting notification with manual autor_nome:', notificationData);
+    console.log('Inserting notification with data:', notificationData);
 
     const { data: result, error } = await supabase
       .from('notificacoes')
@@ -68,20 +43,21 @@ export const submitNotification = async (
       throw error;
     }
 
-    console.log('4. Notification inserted successfully:', result);
+    console.log('Notification inserted successfully:', result);
 
-    // Preparar os destinatários
+    // 2. Preparar os destinatários
     let destinatariosData: { notificacao_id: string; filial_id: string }[] = [];
 
     if (destinatarios.includes('all')) {
-      console.log('5. Fetching all branches for "all" option');
+      console.log('Fetching all branches for "all" option');
+      // Se for "todas as filiais", buscar todas as filiais
       const { data: filiais, error: filiaisError } = await supabase
         .from('filiais')
         .select('id');
 
       if (filiaisError) {
         console.error('Error fetching branches:', filiaisError);
-        // Limpar a notificação criada
+        // Tentar limpar a notificação criada
         await supabase.from('notificacoes').delete().eq('id', result.id);
         throw filiaisError;
       }
@@ -93,14 +69,15 @@ export const submitNotification = async (
         filial_id: filial.id
       }));
     } else {
-      console.log('5. Using specific branches:', destinatarios);
+      console.log('Using specific branches:', destinatarios);
+      // Se for filiais específicas
       destinatariosData = destinatarios.map(filialId => ({
         notificacao_id: result.id,
         filial_id: filialId
       }));
     }
 
-    console.log('6. Inserting destinations:', destinatariosData);
+    console.log('Inserting destinations:', destinatariosData);
 
     const { error: destError } = await supabase
       .from('notificacao_destinatarios')
@@ -108,17 +85,17 @@ export const submitNotification = async (
 
     if (destError) {
       console.error('Error inserting destinations:', destError);
-      // Limpar a notificação criada
+      // Tentar limpar a notificação criada
       await supabase.from('notificacoes').delete().eq('id', result.id);
       throw destError;
     }
 
-    console.log('7. SUCCESS - Notification created completely');
+    console.log('Destinations inserted successfully');
+    console.log('Notification created successfully:', result);
     toast.success('Notificação criada com sucesso!');
     
   } catch (error) {
-    console.error('=== NOTIFICATION CREATION FAILED ===');
-    console.error('Error details:', error);
+    console.error('Full error in submitNotification:', error);
     throw error;
   }
 };
