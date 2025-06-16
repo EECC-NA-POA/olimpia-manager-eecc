@@ -21,7 +21,8 @@ export function useModeloConfigurationState(editingModelo: any) {
     updateCampo,
     handleBateriaToggle,
     updateCamposForRegraType,
-    handleDragEnd
+    handleDragEnd,
+    ensureResultadoField
   } = useCamposState();
 
   useModeloDataLoader({ editingModelo, setConfig, setCampos });
@@ -34,6 +35,8 @@ export function useModeloConfigurationState(editingModelo: any) {
   const handleRegraTypeChange = (value: string) => {
     baseRegraTypeChange(value);
     updateCamposForRegraType(value);
+    // Ensure resultado field exists after regra type change
+    ensureResultadoField(value);
   };
 
   const addCampo = () => {

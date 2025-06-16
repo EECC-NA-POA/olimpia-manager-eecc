@@ -7,7 +7,46 @@ import { createBateriaField } from './utils/fieldUtils';
 export function useCamposState() {
   const [campos, setCampos] = useState<CampoConfig[]>([]);
 
+  const createResultadoField = (regraType: string): CampoConfig => {
+    return {
+      id: 'campo_resultado_' + Date.now(),
+      chave_campo: 'resultado',
+      rotulo_campo: 'Resultado',
+      tipo_input: 'text',
+      obrigatorio: true,
+      ordem_exibicao: 1,
+      metadados: {
+        formato_resultado: regraType === 'tempo' ? 'tempo' : regraType === 'distancia' ? 'distancia' : 'pontos'
+      }
+    };
+  };
+
+  const ensureResultadoField = (regraType: string) => {
+    setCampos(prevCampos => {
+      const hasResultadoField = prevCampos.some(campo => 
+        campo.chave_campo === 'resultado'
+      );
+
+      if (!hasResultadoField) {
+        const resultadoField = createResultadoField(regraType);
+        // Increment ordem_exibicao of all existing fields
+        const updatedCampos = prevCampos.map(campo => ({
+          ...campo,
+          ordem_exibicao: campo.ordem_exibicao + 1
+        }));
+        
+        // Add resultado field at the beginning
+        return [resultadoField, ...updatedCampos];
+      }
+
+      return prevCampos;
+    });
+  };
+
   const addCampo = (regraType: string) => {
+    // Ensure resultado field exists first
+    ensureResultadoField(regraType);
+    
     const newCampo: CampoConfig = {
       id: 'campo_' + Date.now(),
       chave_campo: '',
@@ -19,11 +58,18 @@ export function useCamposState() {
         formato_resultado: regraType === 'tempo' ? 'tempo' : regraType === 'distancia' ? 'distancia' : 'pontos'
       }
     };
-    setCampos([...campos, newCampo]);
+    setCampos(prev => [...prev, newCampo]);
   };
 
   const removeCampo = (id: string) => {
-    setCampos(campos.filter(campo => campo.id !== id));
+    setCampos(campos.filter(campo => {
+      // Prevent removal of the resultado field
+      if (campo.chave_campo === 'resultado') {
+        console.log('Cannot remove required resultado field');
+        return true;
+      }
+      return campo.id !== id;
+    }));
   };
 
   const updateCampo = (id: string, updates: Partial<CampoConfig>) => {
@@ -70,15 +116,35 @@ export function useCamposState() {
   };
 
   const updateCamposForRegraType = (regraType: string) => {
-    // Atualizar campos existentes com o novo tipo
-    const updatedCampos = campos.map(campo => ({
-      ...campo,
-      metadados: {
-        ...campo.metadados,
-        formato_resultado: regraType === 'tempo' ? 'tempo' : regraType === 'distancia' ? 'distancia' : 'pontos'
+    setCampos(prevCampos => {
+      // Ensure resultado field exists for the new regra type
+      const hasResultadoField = prevCampos.some(campo => 
+        campo.chave_campo === 'resultado'
+      );
+
+      let updatedCampos = prevCampos;
+
+      if (!hasResultadoField) {
+        const resultadoField = createResultadoField(regraType);
+        // Add resultado field and adjust other fields' ordem_exibicao
+        updatedCampos = [
+          resultadoField,
+          ...prevCampos.map(campo => ({
+            ...campo,
+            ordem_exibicao: campo.ordem_exibicao + 1
+          }))
+        ];
       }
-    }));
-    setCampos(updatedCampos);
+
+      // Update all fields with the new regra type format
+      return updatedCampos.map(campo => ({
+        ...campo,
+        metadados: {
+          ...campo.metadados,
+          formato_resultado: regraType === 'tempo' ? 'tempo' : regraType === 'distancia' ? 'distancia' : 'pontos'
+        }
+      }));
+    });
   };
 
   const handleDragEnd = (event: any) => {
@@ -108,6 +174,7 @@ export function useCamposState() {
     updateCampo,
     handleBateriaToggle,
     updateCamposForRegraType,
-    handleDragEnd
+    handleDragEnd,
+    ensureResultadoField
   };
 }
