@@ -16,7 +16,7 @@ export function useDynamicScoringSubmission() {
 
   return useMutation({
     mutationFn: async (data: ExtendedDynamicSubmissionData) => {
-      console.log('=== INICIANDO SUBMISSÃO DE PONTUAÇÃO DINÂMICA (EQUIPES) ===');
+      console.log('=== INICIANDO SUBMISSÃO DE PONTUAÇÃO DINÂMICA (EQUIPES - SEM BATERIA) ===');
       console.log('Dynamic scoring submission data:', data);
 
       try {
@@ -32,51 +32,29 @@ export function useDynamicScoringSubmission() {
           throw camposError;
         }
 
-        // NOVA LÓGICA: Verificar configuração de baterias no modelo de configuração
-        const { data: modeloConfig, error: modeloConfigError } = await supabase
-          .from('modelos_modalidade')
-          .select('modalidade_id')
-          .eq('id', data.modeloId)
-          .single();
+        console.log('Campos do modelo:', campos);
 
-        if (modeloConfigError) {
-          console.error('Error fetching modelo config:', modeloConfigError);
-          throw modeloConfigError;
-        }
-
-        // Buscar configuração real da modalidade
-        const { data: modalidadeConfig, error: modalidadeConfigError } = await supabase
-          .from('modalidades')
-          .select('*')
-          .eq('id', modeloConfig.modalidade_id)
-          .single();
-
-        if (modalidadeConfigError) {
-          console.error('Error fetching modalidade config:', modalidadeConfigError);
-          throw modalidadeConfigError;
-        }
-
-        console.log('Modalidade configuration:', modalidadeConfig);
-
-        // Determinar se usa baterias baseado nos campos E na configuração da modalidade
-        const bateriaConfigField = campos?.find(campo => 
-          campo.chave_campo === 'baterias' && 
-          campo.tipo_input === 'checkbox'
+        // VERIFICAR SE A MODALIDADE USA BATERIAS - APENAS pelos campos configurados
+        const bateriaField = campos?.find(campo => 
+          campo.chave_campo === 'baterias' || 
+          campo.chave_campo === 'bateria' ||
+          (campo.tipo_input === 'checkbox' && campo.metadados?.baterias === true)
         );
         
-        // APENAS considerar baterias se estiver explicitamente configurado nos campos
-        const usesBaterias = bateriaConfigField?.metadados?.baterias === true;
-
-        console.log('=== VERIFICAÇÃO DE BATERIAS ===');
-        console.log('Bateria config field found:', bateriaConfigField);
-        console.log('Uses baterias (from fields):', usesBaterias);
-        console.log('Provided bateriaId:', data.bateriaId);
-
-        // Se a modalidade NÃO usa baterias, remover qualquer referência a bateria
+        const usesBaterias = !!bateriaField;
+        
+        console.log('=== VERIFICAÇÃO DE BATERIAS SIMPLIFICADA ===');
+        console.log('Bateria field found:', bateriaField);
+        console.log('Uses baterias:', usesBaterias);
+        
+        // SE NÃO USA BATERIAS, REMOVER QUALQUER REFERÊNCIA
         if (!usesBaterias) {
-          console.log('MODALIDADE NÃO USA BATERIAS - Removendo referências de bateria');
-          // Remove bateriaId from data to prevent it being used
+          console.log('MODALIDADE NÃO USA BATERIAS - Removendo TODAS as referências');
+          // Remove todas as possíveis referências a bateria
           delete (data as any).bateriaId;
+          delete (data as any).numeroBateria;
+          delete (data as any).numero_bateria;
+          delete (data as any).bateria_id;
         }
 
         // Calcular valor_pontuacao principal a partir dos dados do formulário
@@ -86,7 +64,7 @@ export function useDynamicScoringSubmission() {
         const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
         const observacoes = data.formData.notes || data.observacoes || null;
 
-        // Create clean data object - NUNCA incluir numero_bateria se a modalidade não usa baterias
+        // Create clean data object - NUNCA incluir qualquer campo de bateria se não usa baterias
         const cleanDataForDb: any = {
           eventId: data.eventId,
           modalityId: data.modalityId,
@@ -96,20 +74,11 @@ export function useDynamicScoringSubmission() {
           observacoes
         };
 
-        // APENAS incluir numero_bateria se a modalidade realmente usa baterias E temos o valor
-        if (usesBaterias && data.bateriaId !== undefined && data.bateriaId !== null) {
-          cleanDataForDb.numero_bateria = data.bateriaId;
-          console.log('Including numero_bateria for bateria-enabled modality:', data.bateriaId);
-        } else {
-          console.log('Skipping numero_bateria - modality does not use baterias or no bateriaId provided');
-        }
-
-        console.log('Clean data for DB (team scoring):', cleanDataForDb);
-        console.log('Uses baterias:', usesBaterias, '- numero_bateria included:', 'numero_bateria' in cleanDataForDb);
+        console.log('Clean data for DB (NO BATERIA):', cleanDataForDb);
 
         // Handle team scoring
         if (data.equipeId) {
-          console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
+          console.log('--- Submissão para Equipe (SEM BATERIA) ---', { equipeId: data.equipeId });
 
           const teamDataForDb = {
             ...cleanDataForDb,
@@ -117,20 +86,20 @@ export function useDynamicScoringSubmission() {
             equipeId: data.equipeId,
           };
 
-          console.log('Team data for DB:', teamDataForDb);
+          console.log('Team data for DB (NO BATERIA):', teamDataForDb);
 
           const pontuacao = await upsertPontuacao(teamDataForDb, valorPontuacao, usesBaterias);
-          console.log('=== TEAM SCORE SAVED ===');
+          console.log('=== TEAM SCORE SAVED (NO BATERIA) ===');
 
           const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
           await insertTentativas(tentativas, pontuacao.id);
 
-          console.log('=== TEAM SUBMISSION COMPLETED ===');
+          console.log('=== TEAM SUBMISSION COMPLETED (NO BATERIA) ===');
           return pontuacao;
         }
 
         // Handle individual scoring (fallback)
-        console.log('--- Individual Submission (fallback) ---');
+        console.log('--- Individual Submission (fallback - NO BATERIA) ---');
 
         const individualDataForDb = {
           ...cleanDataForDb,
@@ -138,25 +107,25 @@ export function useDynamicScoringSubmission() {
           equipeId: null,
         };
 
-        console.log('Individual data for DB:', individualDataForDb);
+        console.log('Individual data for DB (NO BATERIA):', individualDataForDb);
 
         const pontuacao = await upsertPontuacao(individualDataForDb, valorPontuacao, usesBaterias);
-        console.log('=== INDIVIDUAL SCORE SAVED ===');
+        console.log('=== INDIVIDUAL SCORE SAVED (NO BATERIA) ===');
 
         const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
         await insertTentativas(tentativas, pontuacao.id);
 
-        console.log('=== INDIVIDUAL SUBMISSION COMPLETED ===');
+        console.log('=== INDIVIDUAL SUBMISSION COMPLETED (NO BATERIA) ===');
         return pontuacao;
 
       } catch (error) {
-        console.error('=== ERROR IN TEAM SUBMISSION ===');
+        console.error('=== ERROR IN TEAM SUBMISSION (NO BATERIA) ===');
         console.error('Error in mutation:', error);
         throw error;
       }
     },
     onSuccess: (data, variables) => {
-      console.log('=== TEAM MUTATION SUCCESS ===');
+      console.log('=== TEAM MUTATION SUCCESS (NO BATERIA) ===');
       
       // Invalidate team-specific queries
       queryClient.invalidateQueries({ queryKey: ['team-score', variables.equipeId, variables.modalityId, variables.eventId] });
@@ -174,13 +143,13 @@ export function useDynamicScoringSubmission() {
       toast.success('Pontuação da equipe registrada com sucesso!');
     },
     onError: (error) => {
-      console.error('=== TEAM MUTATION ERROR ===');
+      console.error('=== TEAM MUTATION ERROR (NO BATERIA) ===');
       console.error('Error submitting team score:', error);
       
       let errorMessage = 'Erro ao registrar pontuação da equipe';
       
-      if (error?.message?.includes('bateria_id') || error?.message?.includes('numero_bateria')) {
-        errorMessage = 'Erro: Esta modalidade não está configurada para usar baterias. Verifique a configuração do modelo.';
+      if (error?.message?.includes('bateria')) {
+        errorMessage = 'ERRO: Esta modalidade não usa baterias. Problema na configuração do sistema.';
       } else if (error?.message?.includes('constraint')) {
         errorMessage = 'Erro de restrição no banco de dados. Verifique se os dados da equipe estão corretos.';
       } else if (error?.message?.includes('column') && error?.message?.includes('does not exist')) {

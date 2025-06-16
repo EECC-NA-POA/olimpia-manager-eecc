@@ -1,20 +1,12 @@
-
 import { supabase } from '@/lib/supabase';
 
 export async function upsertPontuacao(data: any, valorPontuacao: number, usesBaterias: boolean = false) {
-  console.log('=== UPSERT PONTUAÇÃO (MODALIDADE SEM BATERIAS FIXED) ===');
+  console.log('=== UPSERT PONTUAÇÃO (MODALIDADE SEM BATERIAS) ===');
   console.log('Data for upsert:', data);
   console.log('Valor pontuacao:', valorPontuacao);
   console.log('Uses baterias:', usesBaterias);
   console.log('Observacoes received in upsertPontuacao:', data.observacoes);
   
-  // CRITICAL: Se a modalidade não usa baterias, NUNCA incluir numero_bateria
-  if (usesBaterias && 'numero_bateria' in data) {
-    console.log('Numero bateria received for bateria-enabled modality:', data.numero_bateria);
-  } else {
-    console.log('Modalidade não usa baterias - numero_bateria será omitido completamente');
-  }
-
   // Build pontuacao data with ONLY valid fields
   const pontuacaoData: any = {
     evento_id: data.eventId,
@@ -30,18 +22,18 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     raia: data.raia || null
   };
 
-  // CRITICAL: APENAS adicionar numero_bateria se a modalidade usa baterias E temos um valor
+  // NUNCA incluir numero_bateria se a modalidade não usa baterias
   if (usesBaterias && 'numero_bateria' in data && data.numero_bateria !== undefined && data.numero_bateria !== null) {
     pontuacaoData.numero_bateria = data.numero_bateria;
     console.log('Added numero_bateria to pontuacao data:', data.numero_bateria);
   } else {
-    console.log('Omitindo numero_bateria - modalidade não usa baterias ou valor não fornecido');
+    console.log('Modalidade NÃO usa baterias - numero_bateria NUNCA será incluído');
   }
 
-  console.log('Final pontuacao data for database (NO BATERIAS FIXED):', pontuacaoData);
+  console.log('Final pontuacao data for database (NO BATERIA):', pontuacaoData);
   console.log('Fields included:', Object.keys(pontuacaoData));
 
-  // Build the search query with proper NULL handling
+  // Build the search query WITHOUT numero_bateria for non-battery modalities
   let searchQuery = supabase
     .from('pontuacoes')
     .select('id')
@@ -58,7 +50,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     searchQuery = searchQuery.eq('equipe_id', pontuacaoData.equipe_id);
   }
 
-  // CRITICAL: APENAS adicionar numero_bateria à consulta se a modalidade usa baterias
+  // NUNCA adicionar numero_bateria à consulta se a modalidade não usa baterias
   if (usesBaterias && 'numero_bateria' in pontuacaoData) {
     if (pontuacaoData.numero_bateria === null || pontuacaoData.numero_bateria === undefined) {
       searchQuery = searchQuery.is('numero_bateria', null);
@@ -67,7 +59,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     }
     console.log('Added numero_bateria to search query for bateria-enabled modality');
   } else {
-    console.log('Omitindo numero_bateria da consulta - modalidade não usa baterias');
+    console.log('Modalidade NÃO usa baterias - numero_bateria NUNCA será incluído na consulta');
   }
 
   const { data: existingRecords, error: findError } = await searchQuery;
@@ -84,10 +76,10 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     const existingId = existingRecords[0].id;
     console.log('Updating existing record with ID:', existingId);
     
-    // Create clean update data - usar exatamente os mesmos campos da inserção
+    // Create clean update data
     const updateData = { ...pontuacaoData };
     
-    console.log('Clean update data (NO BATERIAS FIXED):', updateData);
+    console.log('Clean update data (NO BATERIA):', updateData);
     console.log('Update fields included:', Object.keys(updateData));
     
     const { data: updatedRecord, error } = await supabase
@@ -106,7 +98,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     // Insert new record
     console.log('Inserting new record');
     
-    console.log('Clean insert data (NO BATERIAS FIXED):', pontuacaoData);
+    console.log('Clean insert data (NO BATERIA):', pontuacaoData);
     console.log('Insert fields included:', Object.keys(pontuacaoData));
     
     const { data: newRecord, error } = await supabase
@@ -122,7 +114,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     result = newRecord;
   }
 
-  console.log('Pontuacao saved successfully (NO BATERIAS FIXED):', result);
+  console.log('Pontuacao saved successfully (NO BATERIA):', result);
   return result;
 }
 
