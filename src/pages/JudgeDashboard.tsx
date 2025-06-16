@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { ScoresTab } from '@/components/judge/tabs/ScoresTab';
-import { TeamsTab } from '@/components/judge/tabs/TeamsTab';
+import { CleanTeamsTab } from '@/components/judge/tabs/CleanTeamsTab';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function JudgeDashboard() {
@@ -86,7 +86,7 @@ export default function JudgeDashboard() {
         </TabsContent>
         
         <TabsContent value="teams" className="mt-4 sm:mt-6">
-          <TeamsTab userId={user.id} eventId={currentEventId} />
+          <CleanTeamsTab userId={user.id} eventId={currentEventId} />
         </TabsContent>
       </Tabs>
     </div>
