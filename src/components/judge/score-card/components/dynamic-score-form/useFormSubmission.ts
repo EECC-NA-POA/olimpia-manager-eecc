@@ -8,7 +8,7 @@ interface UseFormSubmissionProps {
   equipeId?: number;
   judgeId: string;
   modeloId: number;
-  numeroBateria?: number; // Changed from bateriaId to numeroBateria
+  numeroBateria?: number;
   raia?: number;
   onSuccess?: () => void;
 }
@@ -20,15 +20,16 @@ export function useFormSubmission({
   equipeId,
   judgeId,
   modeloId,
-  numeroBateria, // Changed from bateriaId to numeroBateria
+  numeroBateria,
   raia,
   onSuccess
 }: UseFormSubmissionProps) {
   const mutation = useDynamicScoringSubmission();
 
   const handleSubmit = async (formData: any) => {
-    console.log('=== SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm) ===');
+    console.log('=== SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm - EQUIPES) ===');
     console.log('Form data:', formData);
+    console.log('Equipe ID:', equipeId);
     console.log('Número da bateria (numeroBateria):', numeroBateria);
 
     try {
@@ -41,16 +42,15 @@ export function useFormSubmission({
         equipeId,
         raia,
         formData,
-        bateriaId: numeroBateria, // Pass numeroBateria as bateriaId (will be converted to numero_bateria)
+        bateriaId: numeroBateria, // Will be converted to numero_bateria internally if needed
         observacoes: formData.notes
       });
 
-      console.log('=== SUBMISSÃO CONCLUÍDA COM SUCESSO ===');
+      console.log('=== SUBMISSÃO DE EQUIPE CONCLUÍDA COM SUCESSO ===');
       onSuccess?.();
     } catch (error) {
-      console.error('=== ERRO NA SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm) ===');
-      console.error('Error submitting dynamic score:', error);
-      console.error('Error details:', error);
+      console.error('=== ERRO NA SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm - EQUIPES) ===');
+      console.error('Error submitting team score:', error);
       throw error;
     }
   };

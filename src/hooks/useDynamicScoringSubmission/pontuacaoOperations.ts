@@ -1,7 +1,8 @@
+
 import { supabase } from '@/lib/supabase';
 
 export async function upsertPontuacao(data: any, valorPontuacao: number, usesBaterias: boolean = false) {
-  console.log('=== UPSERT PONTUAÇÃO ===');
+  console.log('=== UPSERT PONTUAÇÃO (EQUIPES FIXED) ===');
   console.log('Data for upsert:', data);
   console.log('Valor pontuacao:', valorPontuacao);
   console.log('Uses baterias:', usesBaterias);
@@ -11,7 +12,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     console.log('Numero bateria received:', data.numero_bateria);
   }
 
-  // Build pontuacao data with ONLY the fields that should exist for this modality
+  // Build pontuacao data with ONLY valid fields - NEVER include bateria_id
   const pontuacaoData: any = {
     evento_id: data.eventId,
     modalidade_id: data.modalityId,
@@ -31,7 +32,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     pontuacaoData.numero_bateria = data.numero_bateria || null;
   }
 
-  console.log('Final pontuacao data for database:', pontuacaoData);
+  console.log('Final pontuacao data for database (FIXED):', pontuacaoData);
   console.log('Fields included:', Object.keys(pontuacaoData));
 
   // Build the search query with proper NULL handling
@@ -70,11 +71,11 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
   let result;
   
   if (existingRecords && existingRecords.length > 0) {
-    // Atualizar registro existente
+    // Update existing record
     const existingId = existingRecords[0].id;
     console.log('Updating existing record with ID:', existingId);
     
-    // Create clean update data - NEVER include fields that don't exist for this modality
+    // Create clean update data - NEVER include bateria_id
     const updateData: any = {
       evento_id: pontuacaoData.evento_id,
       modalidade_id: pontuacaoData.modalidade_id,
@@ -94,7 +95,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
       updateData.numero_bateria = pontuacaoData.numero_bateria;
     }
     
-    console.log('Clean update data:', updateData);
+    console.log('Clean update data (FIXED):', updateData);
     console.log('Update fields included:', Object.keys(updateData));
     
     const { data: updatedRecord, error } = await supabase
@@ -110,10 +111,10 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     }
     result = updatedRecord;
   } else {
-    // Inserir novo registro
+    // Insert new record
     console.log('Inserting new record');
     
-    // Create clean insert data - NEVER include fields that don't exist for this modality
+    // Create clean insert data - NEVER include bateria_id
     const insertData: any = {
       evento_id: pontuacaoData.evento_id,
       modalidade_id: pontuacaoData.modalidade_id,
@@ -133,7 +134,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
       insertData.numero_bateria = pontuacaoData.numero_bateria;
     }
     
-    console.log('Clean insert data:', insertData);
+    console.log('Clean insert data (FIXED):', insertData);
     console.log('Insert fields included:', Object.keys(insertData));
     
     const { data: newRecord, error } = await supabase
@@ -149,7 +150,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     result = newRecord;
   }
 
-  console.log('Pontuacao saved successfully:', result);
+  console.log('Pontuacao saved successfully (FIXED):', result);
   return result;
 }
 

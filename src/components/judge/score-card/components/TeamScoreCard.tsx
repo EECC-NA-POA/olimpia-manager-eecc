@@ -11,8 +11,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MedalDisplay } from './MedalDisplay';
-import { ScoreForm } from './ScoreForm';
-import { useScoreSubmission } from '../hooks/useScoreSubmission';
 import { ScoreRecord } from '../types';
 import { DynamicScoreForm } from './DynamicScoreForm';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -92,19 +90,12 @@ function TeamScoreCardContent({
     modalityDetails
   });
 
-  // Team scoring with support for the correct model
-  const { submitScoreMutation } = useScoreSubmission(
-    eventId,
-    modalityId,
-    { atleta_id: representativeAthlete?.atleta_id, equipe_id: team.equipe_id },
-    judgeId,
-    tipoPontuacao
-  );
-
   const { data: existingScore, refetch: refetchScore } = useQuery({
     queryKey: ['team-score', team.equipe_id, modalityId, eventId],
     queryFn: async () => {
       if (!eventId) return null;
+      
+      // Query specifically for team scores - look for any team member's score
       const { data, error } = await supabase
         .from('pontuacoes')
         .select('*')
@@ -113,10 +104,12 @@ function TeamScoreCardContent({
         .eq('equipe_id', team.equipe_id)
         .limit(1)
         .maybeSingle();
+        
       if (error) {
         console.error('Error fetching existing team score:', error);
         return null;
       }
+      
       return data as ScoreRecord;
     },
     enabled: !!eventId && !!team.equipe_id,
@@ -128,9 +121,7 @@ function TeamScoreCardContent({
     queryFn: async () => {
       if (!eventId) return null;
       
-      // Since equipe_id doesn't exist in premiacoes, we need to find medals
-      // for team members and determine if the team has a medal
-      // For now, we'll skip team medal display until the database structure is clarified
+      // Skip team medal display until the database structure is clarified
       console.log('Team medal info query skipped - equipe_id column not available in premiacoes table');
       return null;
     },
@@ -141,12 +132,6 @@ function TeamScoreCardContent({
     if (existingScore) setIsExpanded(true);
   }, [existingScore]);
 
-  const handleSubmit = (data: any) => {
-    submitScoreMutation.mutate(data, {
-      onSuccess: () => setIsExpanded(false),
-    });
-  };
-
   const handleDynamicSuccess = () => {
     setIsExpanded(false);
     refetchScore();
@@ -155,7 +140,6 @@ function TeamScoreCardContent({
   const getCategoryDisplayName = (categoria: string | null) => {
     if (!categoria) return null;
     
-    // Map the categories to their proper display names
     const categoryMap: { [key: string]: string } = {
       'masculino': 'Masculino',
       'feminino': 'Feminino',
@@ -164,9 +148,6 @@ function TeamScoreCardContent({
     
     return categoryMap[categoria.toLowerCase()] || categoria;
   };
-
-  // Log rendering info for debugging - moved outside JSX
-  console.log('Rendering scoring form - modeloId:', modeloId, 'tipoPontuacao:', tipoPontuacao);
 
   return (
     <Card
@@ -183,7 +164,6 @@ function TeamScoreCardContent({
               <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                 Equipe
               </Badge>
-              {/* Show category if available */}
               {modalidadeCategoria && (
                 <Badge variant="secondary" className="bg-violet-50 text-violet-700 border-violet-200">
                   {getCategoryDisplayName(modalidadeCategoria)}
@@ -235,7 +215,6 @@ function TeamScoreCardContent({
               </p>
             </div>
             
-            {/* Priority: Use dynamic form if modelo exists, otherwise show an alert */}
             {modeloId ? (
               <DynamicScoreForm
                 modeloId={modeloId}
@@ -292,7 +271,6 @@ export function TeamScoreCard(props: TeamScoreCardProps) {
   const getCategoryDisplayName = (categoria: string | null) => {
     if (!categoria) return null;
     
-    // Map the categories to their proper display names
     const categoryMap: { [key: string]: string } = {
       'masculino': 'Masculino',
       'feminino': 'Feminino',
