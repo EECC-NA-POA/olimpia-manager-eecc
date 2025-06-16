@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 
 export async function upsertPontuacao(data: any, valorPontuacao: number, usesBaterias: boolean = false) {
@@ -7,7 +8,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
   console.log('Uses baterias:', usesBaterias);
   console.log('Observacoes received:', data.observacoes);
   
-  // Build pontuacao data with ONLY valid database fields
+  // Build pontuacao data with ONLY valid database fields - NEVER include battery fields for non-battery modalities
   const pontuacaoData: any = {
     evento_id: data.eventId,
     modalidade_id: data.modalityId,
@@ -22,10 +23,11 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     raia: data.raia || null
   };
 
-  console.log('Final pontuacao data for database (NO BATTERY FIELDS):', pontuacaoData);
+  console.log('CRITICAL: pontuacao data will NEVER include battery fields for non-battery modalities');
+  console.log('Final pontuacao data for database (GUARANTEED NO BATTERY FIELDS):', pontuacaoData);
   console.log('Fields included:', Object.keys(pontuacaoData));
 
-  // Build search query - NUNCA incluir numero_bateria para modalidades sem baterias
+  // Build search query - NEVER include numero_bateria for modalities without batteries
   let searchQuery = supabase
     .from('pontuacoes')
     .select('id')
@@ -42,7 +44,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     searchQuery = searchQuery.eq('equipe_id', pontuacaoData.equipe_id);
   }
 
-  console.log('Search query constructed WITHOUT battery fields');
+  console.log('Search query constructed WITHOUT any battery field references');
 
   const { data: existingRecords, error: findError } = await searchQuery;
 
@@ -72,7 +74,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     result = updatedRecord;
   } else {
     // Insert new record
-    console.log('Inserting new record WITHOUT battery fields');
+    console.log('Inserting new record WITHOUT any battery field references');
     
     const { data: newRecord, error } = await supabase
       .from('pontuacoes')
@@ -87,7 +89,7 @@ export async function upsertPontuacao(data: any, valorPontuacao: number, usesBat
     result = newRecord;
   }
 
-  console.log('Pontuacao saved successfully:', result);
+  console.log('Pontuacao saved successfully (NO BATTERY FIELDS):', result);
   return result;
 }
 

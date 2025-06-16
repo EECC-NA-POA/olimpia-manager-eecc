@@ -8,7 +8,6 @@ interface UseFormSubmissionProps {
   equipeId?: number;
   judgeId: string;
   modeloId: number;
-  numeroBateria?: number;
   raia?: number;
   onSuccess?: () => void;
 }
@@ -20,19 +19,18 @@ export function useFormSubmission({
   equipeId,
   judgeId,
   modeloId,
-  numeroBateria,
   raia,
   onSuccess
 }: UseFormSubmissionProps) {
   const mutation = useDynamicScoringSubmission();
 
   const handleSubmit = async (formData: any) => {
-    console.log('=== SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm - EQUIPES) ===');
+    console.log('=== SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm - EQUIPES SEM BATERIAS) ===');
     console.log('Form data:', formData);
     console.log('Equipe ID:', equipeId);
 
     try {
-      // Preparar dados de submissão - CLEAN OBJECT SEM CAMPOS DE BATERIA
+      // Preparar dados de submissão - GARANTIDO SEM CAMPOS DE BATERIA
       const submissionData: any = {
         athleteId,
         modalityId,
@@ -45,11 +43,11 @@ export function useFormSubmission({
         observacoes: formData.notes
       };
 
-      console.log('Final submission data (NO BATTERY FIELDS):', submissionData);
+      console.log('Final submission data (GUARANTEED NO BATTERY FIELDS):', submissionData);
 
       await mutation.mutateAsync(submissionData);
 
-      console.log('=== SUBMISSÃO CONCLUÍDA COM SUCESSO ===');
+      console.log('=== SUBMISSÃO CONCLUÍDA COM SUCESSO (SEM BATERIAS) ===');
       onSuccess?.();
     } catch (error) {
       console.error('=== ERRO NA SUBMISSÃO DO FORMULÁRIO ===');
