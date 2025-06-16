@@ -51,19 +51,22 @@ export function NotificationCard({ notification, onClick }: NotificationCardProp
             {getFirstLine(notification.mensagem)}
           </p>
           
-          {/* Informações do autor e data (sem destaque) */}
-          <div className="flex items-center gap-2 text-xs text-gray-500 pt-1">
-            <span>{notification.autor_nome}</span>
+          {/* Data da postagem */}
+          <div className="text-xs text-gray-500 pt-1">
+            <span>
+              {format(new Date(notification.criado_em), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+            </span>
+          </div>
+
+          {/* Informações do autor (sem destaque) */}
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <span>Postada por: {notification.autor_nome}</span>
             <Badge 
               variant={notification.tipo_autor === 'organizador' ? 'default' : 'secondary'}
               className="text-xs"
             >
               {notification.tipo_autor === 'organizador' ? 'Organizador' : 'Representante'}
             </Badge>
-            <span>•</span>
-            <span>
-              {format(new Date(notification.criado_em), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-            </span>
           </div>
         </div>
       </CardContent>
