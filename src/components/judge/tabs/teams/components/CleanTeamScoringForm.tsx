@@ -61,7 +61,7 @@ export function CleanTeamScoringForm({
 
       if (error) throw error;
 
-      // More aggressive filtering to exclude ALL configuration fields
+      // Ultra aggressive filtering to exclude ALL configuration fields
       const scoringFields = (data as CampoModelo[]).filter(campo => {
         const chaveLower = campo.chave_campo.toLowerCase();
         
@@ -70,14 +70,19 @@ export function CleanTeamScoringForm({
           return false;
         }
         
-        // Exclude known configuration fields by key
+        // Exclude ALL known configuration fields by key
         const configurationKeys = [
           'bateria', 'baterias', 'numero_bateria', 'equipe',
           'configuracao_pontuacao', 'configuracao', 'pontuacao_config',
-          'usar_baterias', 'config_pontos'
+          'usar_baterias', 'config_pontos', 'config', 'configuracao_de_pontuacao'
         ];
         
         if (configurationKeys.some(key => chaveLower.includes(key))) {
+          return false;
+        }
+        
+        // Additional check: if the field label contains "configuração"
+        if (campo.rotulo_campo?.toLowerCase().includes('configuração')) {
           return false;
         }
         
