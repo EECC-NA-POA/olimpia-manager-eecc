@@ -57,12 +57,16 @@ export function AthleteTableRow({
     originalCount: campos.length,
     filteredCount: scoringFields.length,
     athleteIndex,
-    selectedBateriaId
+    selectedBateriaId,
+    athleteHasScore,
+    isEditing
   });
 
   const renderFieldInput = (campo: CampoModelo) => {
     const fieldKey = campo.chave_campo;
     const currentValue = getFieldValue(athlete.atleta_id, fieldKey);
+    
+    console.log(`Rendering input for ${athlete.atleta_nome} - ${fieldKey}:`, currentValue);
 
     // Use the DynamicInputField component for consistent behavior
     return (
@@ -79,10 +83,34 @@ export function AthleteTableRow({
 
   const renderDisplayValue = (campo: CampoModelo) => {
     const fieldKey = campo.chave_campo;
+    const currentValue = getFieldValue(athlete.atleta_id, fieldKey);
     
-    // Special handling for bateria field to show the selected bateria number
-    if ((campo.chave_campo === 'bateria' || campo.chave_campo === 'numero_bateria') && selectedBateriaId) {
-      const displayValue = selectedBateriaId === 999 ? 'Final' : selectedBateriaId.toString();
+    console.log(`Rendering display for ${athlete.atleta_nome} - ${fieldKey}:`, currentValue);
+    
+    // Special handling for calculated fields
+    if (campo.tipo_input === 'calculated') {
+      const displayValue = currentValue || '-';
+      return (
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+          {displayValue}
+        </Badge>
+      );
+    }
+    
+    // Special handling for bateria field to show the selected bateria number or saved value
+    if ((campo.chave_campo === 'bateria' || campo.chave_campo === 'numero_bateria')) {
+      let displayValue: string;
+      
+      if (currentValue) {
+        // Use saved value
+        displayValue = currentValue === '999' || currentValue === 999 ? 'Final' : currentValue.toString();
+      } else if (selectedBateriaId) {
+        // Fallback to selected bateria
+        displayValue = selectedBateriaId === 999 ? 'Final' : selectedBateriaId.toString();
+      } else {
+        displayValue = '-';
+      }
+      
       return (
         <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
           {displayValue}
@@ -91,7 +119,7 @@ export function AthleteTableRow({
     }
     
     const displayValue = getDisplayValue(athlete.atleta_id, fieldKey);
-    return <div className="text-sm">{displayValue || '-'}</div>;
+    return <div className="text-sm font-medium">{displayValue || '-'}</div>;
   };
 
   return (

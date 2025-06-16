@@ -1,5 +1,5 @@
 
-import React from 'react';
+import { useMemo } from 'react';
 
 interface UseDynamicScoringFieldValuesProps {
   editValues: Record<string, any>;
@@ -16,70 +16,66 @@ export function useDynamicScoringFieldValues({
   updateFieldValue,
   hasUnsavedChanges
 }: UseDynamicScoringFieldValuesProps) {
-  const getFieldValue = React.useCallback((athleteId: string, fieldKey: string): string | number => {
-    // First check for edit values (unsaved changes)
-    if (editValues[athleteId] && editValues[athleteId][fieldKey] !== undefined) {
-      return editValues[athleteId][fieldKey];
+  
+  // Memoize existing scores for better performance
+  const existingScoresMap = useMemo(() => {
+    const map = new Map();
+    existingScores.forEach(score => {
+      map.set(score.atleta_id, score);
+    });
+    return map;
+  }, [existingScores]);
+
+  const getFieldValue = (athleteId: string, fieldKey: string): string | number => {
+    console.log(`getFieldValue called for athlete ${athleteId}, field ${fieldKey}`);
+    
+    // First check if we have unsaved changes for this athlete and field
+    const athleteEditValues = editValues[athleteId];
+    if (athleteEditValues && athleteEditValues[fieldKey] !== undefined) {
+      console.log(`Found edit value for ${athleteId}.${fieldKey}:`, athleteEditValues[fieldKey]);
+      return athleteEditValues[fieldKey];
     }
 
     // Then check existing scores
-    const existingScore = existingScores.find(score => {
-      const matchesAthlete = score.atleta_id === athleteId;
-      
-      if (selectedBateriaId) {
-        // For bateria system, match specific bateria
-        return matchesAthlete && score.numero_bateria === selectedBateriaId;
-      } else {
-        // For non-bateria system, find any score for this athlete
-        return matchesAthlete;
-      }
-    });
-
-    if (existingScore && existingScore.campos_valores) {
-      const fieldValue = existingScore.campos_valores[fieldKey];
-      if (fieldValue !== undefined && fieldValue !== null) {
-        return fieldValue;
-      }
+    const existingScore = existingScoresMap.get(athleteId);
+    if (existingScore?.tentativas && existingScore.tentativas[fieldKey]) {
+      const tentativa = existingScore.tentativas[fieldKey];
+      const value = tentativa.valor_formatado || tentativa.valor || '';
+      console.log(`Found existing score for ${athleteId}.${fieldKey}:`, value);
+      return value;
     }
 
+    console.log(`No value found for ${athleteId}.${fieldKey}, returning empty`);
     return '';
-  }, [editValues, existingScores, selectedBateriaId]);
+  };
 
-  const getDisplayValue = React.useCallback((athleteId: string, fieldKey: string): string => {
+  const getDisplayValue = (athleteId: string, fieldKey: string): string => {
+    console.log(`getDisplayValue called for athlete ${athleteId}, field ${fieldKey}`);
+    
     const value = getFieldValue(athleteId, fieldKey);
-    if (value === '' || value === null || value === undefined) {
-      return '-';
+    
+    // Special formatting for bateria field
+    if ((fieldKey === 'bateria' || fieldKey === 'numero_bateria') && value) {
+      const displayValue = value === '999' || value === 999 ? 'Final' : value.toString();
+      console.log(`Bateria field display value for ${athleteId}:`, displayValue);
+      return displayValue;
     }
-    return String(value);
-  }, [getFieldValue]);
+    
+    const displayValue = value?.toString() || '';
+    console.log(`Display value for ${athleteId}.${fieldKey}:`, displayValue);
+    return displayValue;
+  };
 
-  const hasExistingScore = React.useCallback((athleteId: string): boolean => {
-    console.log(`Checking if athlete ${athleteId} has existing score. Selected bateria: ${selectedBateriaId}`);
-    console.log('Existing scores:', existingScores.length);
-    
-    const hasScore = existingScores.some(score => {
-      const matchesAthlete = score.atleta_id === athleteId;
-      
-      if (selectedBateriaId) {
-        // For bateria system, check specific bateria
-        const matchesBateria = score.numero_bateria === selectedBateriaId;
-        const result = matchesAthlete && matchesBateria;
-        console.log(`Athlete ${athleteId} - matches athlete: ${matchesAthlete}, matches bateria ${selectedBateriaId}: ${matchesBateria}, final result: ${result}`);
-        return result;
-      } else {
-        // For non-bateria system, any score counts
-        console.log(`Athlete ${athleteId} - non-bateria mode, has score: ${matchesAthlete}`);
-        return matchesAthlete;
-      }
-    });
-    
-    console.log(`Final result for athlete ${athleteId}: ${hasScore}`);
+  const hasExistingScore = (athleteId: string): boolean => {
+    const hasScore = existingScoresMap.has(athleteId);
+    console.log(`hasExistingScore for ${athleteId}:`, hasScore);
     return hasScore;
-  }, [existingScores, selectedBateriaId]);
+  };
 
-  const handleFieldChange = React.useCallback((athleteId: string, fieldKey: string, value: string | number) => {
+  const handleFieldChange = (athleteId: string, fieldKey: string, value: string | number) => {
+    console.log(`handleFieldChange called:`, { athleteId, fieldKey, value });
     updateFieldValue(athleteId, fieldKey, value);
-  }, [updateFieldValue]);
+  };
 
   return {
     getFieldValue,
