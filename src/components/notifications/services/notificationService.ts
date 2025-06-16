@@ -40,11 +40,33 @@ export const submitNotification = async (
     throw error;
   }
 
-  // 2. Inserir os destinatários
-  const destinatariosData = destinatarios.map(filialId => ({
-    notificacao_id: result.id,
-    filial_id: filialId === 'all' ? null : filialId
-  }));
+  // 2. Preparar os destinatários
+  let destinatariosData: { notificacao_id: string; filial_id: string }[] = [];
+
+  if (destinatarios.includes('all')) {
+    // Se for "todas as filiais", buscar todas as filiais
+    const { data: filiais, error: filiaisError } = await supabase
+      .from('filiais')
+      .select('id');
+
+    if (filiaisError) {
+      console.error('Error fetching branches:', filiaisError);
+      // Tentar limpar a notificação criada
+      await supabase.from('notificacoes').delete().eq('id', result.id);
+      throw filiaisError;
+    }
+
+    destinatariosData = filiais.map(filial => ({
+      notificacao_id: result.id,
+      filial_id: filial.id
+    }));
+  } else {
+    // Se for filiais específicas
+    destinatariosData = destinatarios.map(filialId => ({
+      notificacao_id: result.id,
+      filial_id: filialId
+    }));
+  }
 
   const { error: destError } = await supabase
     .from('notificacao_destinatarios')

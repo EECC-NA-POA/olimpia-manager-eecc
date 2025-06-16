@@ -46,15 +46,11 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
             visivel,
             criado_em,
             atualizado_em,
-            notificacao_destinatarios!inner(filial_id),
-            notificacao_leituras(lido_em)
+            notificacao_destinatarios!inner(filial_id)
           `)
           .eq('evento_id', eventId)
           .eq('visivel', true)
-          .or(`filial_id.is.null,filial_id.eq.${userData.filial_id}`, { 
-            foreignTable: 'notificacao_destinatarios' 
-          })
-          .eq('notificacao_leituras.usuario_id', userId)
+          .eq('notificacao_destinatarios.filial_id', userData.filial_id)
           .order('criado_em', { ascending: false });
 
         if (error) {
@@ -65,6 +61,22 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
         console.log('Notifications from database:', data);
 
         if (!data) return [];
+
+        // Buscar leituras do usuário para essas notificações
+        const notificationIds = data.map(n => n.id);
+        
+        let readNotifications: string[] = [];
+        if (notificationIds.length > 0) {
+          const { data: reads, error: readsError } = await supabase
+            .from('notificacao_leituras')
+            .select('notificacao_id')
+            .eq('usuario_id', userId)
+            .in('notificacao_id', notificationIds);
+
+          if (!readsError && reads) {
+            readNotifications = reads.map(r => r.notificacao_id);
+          }
+        }
 
         // Transformar dados para incluir campo 'lida'
         const notifications: Notification[] = data.map((item: any) => ({
@@ -78,7 +90,7 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
           visivel: item.visivel,
           criado_em: item.criado_em,
           atualizado_em: item.atualizado_em,
-          lida: item.notificacao_leituras && item.notificacao_leituras.length > 0
+          lida: readNotifications.includes(item.id)
         }));
 
         console.log('Final processed notifications:', notifications);
