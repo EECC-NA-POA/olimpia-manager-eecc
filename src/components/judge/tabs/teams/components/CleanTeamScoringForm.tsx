@@ -61,12 +61,14 @@ export function CleanTeamScoringForm({
 
       if (error) throw error;
 
-      // Filter out configuration fields and battery fields
+      // Filter out configuration fields, battery fields, and specifically "configuracao_pontuacao"
       const scoringFields = (data as CampoModelo[]).filter(campo => 
         campo.tipo_input !== 'configuration' &&
         !campo.chave_campo.includes('bateria') &&
         !campo.chave_campo.includes('equipe') &&
-        campo.chave_campo !== 'numero_bateria'
+        campo.chave_campo !== 'numero_bateria' &&
+        campo.chave_campo !== 'configuracao_pontuacao' &&
+        !campo.chave_campo.toLowerCase().includes('configuracao')
       );
 
       console.log('Clean team scoring fields:', scoringFields);
@@ -143,7 +145,7 @@ export function CleanTeamScoringForm({
                 <FormLabel>
                   {campo.rotulo_campo}
                   {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
-                  {isTimeBasedScoring && campo.chave_campo.toLowerCase().includes('resultado') && (
+                  {campo.chave_campo === 'resultado' && isTimeBasedScoring && (
                     <span className="text-green-600 text-xs ml-2">(MM:SS.mmm)</span>
                   )}
                 </FormLabel>
@@ -171,13 +173,13 @@ export function CleanTeamScoringForm({
                         ))}
                       </SelectContent>
                     </Select>
-                  ) : isTimeBasedScoring && campo.chave_campo.toLowerCase().includes('resultado') ? (
+                  ) : campo.chave_campo === 'resultado' ? (
                     <MaskedResultInput
                       campo={{
                         ...campo,
                         metadados: {
                           ...campo.metadados,
-                          formato_resultado: 'tempo'
+                          formato_resultado: isTimeBasedScoring ? 'tempo' : (modalityRule?.regra_tipo === 'distancia' ? 'distancia' : 'pontos')
                         }
                       }}
                       form={form}
