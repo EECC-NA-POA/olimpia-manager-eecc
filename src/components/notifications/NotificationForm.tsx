@@ -11,6 +11,7 @@ import type { NotificationAuthorType } from '@/types/notifications';
 interface NotificationFormProps {
   eventId: string;
   userId: string;
+  userBranchId?: string;
   onSuccess: () => void;
   isRepresentanteDelegacao?: boolean;
   isOrganizer?: boolean;
@@ -19,6 +20,7 @@ interface NotificationFormProps {
 export function NotificationForm({ 
   eventId, 
   userId, 
+  userBranchId,
   onSuccess,
   isRepresentanteDelegacao = false,
   isOrganizer = false
@@ -28,16 +30,17 @@ export function NotificationForm({
   const {
     mensagem,
     setMensagem,
+    selectedBranches,
+    setSelectedBranches,
     resetForm
-  } = useNotificationForm();
+  } = useNotificationForm(userBranchId, isOrganizer);
 
-  // Determinar o tipo de autor baseado nos props
   const tipoAutor: NotificationAuthorType = isOrganizer ? 'organizador' : 'representante_delegacao';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const isValid = validateNotificationForm(mensagem);
+    const isValid = validateNotificationForm(mensagem, selectedBranches);
 
     if (!isValid) return;
 
@@ -45,7 +48,11 @@ export function NotificationForm({
 
     try {
       await submitNotification(
-        { mensagem, eventId },
+        { 
+          mensagem, 
+          eventId, 
+          destinatarios: selectedBranches 
+        },
         userId,
         tipoAutor
       );
@@ -65,7 +72,11 @@ export function NotificationForm({
       <NotificationFormFields
         mensagem={mensagem}
         setMensagem={setMensagem}
+        selectedBranches={selectedBranches}
+        setSelectedBranches={setSelectedBranches}
         isSubmitting={isSubmitting}
+        isOrganizer={isOrganizer}
+        userBranchId={userBranchId}
       />
 
       <DelegationInfoMessage isRepresentanteDelegacao={isRepresentanteDelegacao} />

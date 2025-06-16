@@ -3,20 +3,36 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { BranchSelector } from './BranchSelector';
 
 interface NotificationFormFieldsProps {
   mensagem: string;
   setMensagem: (value: string) => void;
+  selectedBranches: string[];
+  setSelectedBranches: (branches: string[]) => void;
   isSubmitting: boolean;
+  isOrganizer: boolean;
+  userBranchId?: string;
 }
 
 export function NotificationFormFields({
   mensagem,
   setMensagem,
-  isSubmitting
+  selectedBranches,
+  setSelectedBranches,
+  isSubmitting,
+  isOrganizer,
+  userBranchId
 }: NotificationFormFieldsProps) {
   return (
     <>
+      <BranchSelector
+        selectedBranches={selectedBranches}
+        onBranchChange={setSelectedBranches}
+        isOrganizer={isOrganizer}
+        userBranchId={userBranchId}
+      />
+
       <div>
         <Label htmlFor="mensagem">Mensagem *</Label>
         <RichTextEditor

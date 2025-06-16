@@ -9,6 +9,7 @@ import { NotificationsList } from './NotificationsList';
 interface NotificationManagerProps {
   eventId: string;
   userId: string;
+  userBranchId?: string;
   isRepresentanteDelegacao?: boolean;
   isOrganizer?: boolean;
 }
@@ -16,6 +17,7 @@ interface NotificationManagerProps {
 export function NotificationManager({ 
   eventId, 
   userId, 
+  userBranchId,
   isRepresentanteDelegacao = false,
   isOrganizer = false
 }: NotificationManagerProps) {
@@ -45,6 +47,7 @@ export function NotificationManager({
       <CreateNotificationDialog
         eventId={eventId}
         userId={userId}
+        userBranchId={userBranchId}
         isOpen={isCreateDialogOpen}
         onClose={() => setIsCreateDialogOpen(false)}
         isRepresentanteDelegacao={isRepresentanteDelegacao}

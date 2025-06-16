@@ -12,14 +12,27 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
   return useQuery({
     queryKey: ['notifications', eventId, userId],
     queryFn: async () => {
-      if (!eventId) {
-        console.log('No eventId provided for notifications');
+      if (!eventId || !userId) {
+        console.log('No eventId or userId provided for notifications');
         return [];
       }
 
       console.log('Fetching notifications for:', { eventId, userId });
 
       try {
+        // Buscar filial do usuário
+        const { data: userData, error: userError } = await supabase
+          .from('usuarios')
+          .select('filial_id')
+          .eq('id', userId)
+          .single();
+
+        if (userError) {
+          console.error('Error fetching user data:', userError);
+          throw userError;
+        }
+
+        // Consulta principal com JOINs para notificações segmentadas
         const { data, error } = await supabase
           .from('notificacoes')
           .select(`
@@ -31,10 +44,16 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
             mensagem,
             visivel,
             criado_em,
-            atualizado_em
+            atualizado_em,
+            notificacao_destinatarios!inner(filial_id),
+            notificacao_leituras(lido_em)
           `)
           .eq('evento_id', eventId)
           .eq('visivel', true)
+          .or(`filial_id.is.null,filial_id.eq.${userData.filial_id}`, { 
+            foreignTable: 'notificacao_destinatarios' 
+          })
+          .eq('notificacao_leituras.usuario_id', userId)
           .order('criado_em', { ascending: false });
 
         if (error) {
@@ -46,7 +65,7 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
 
         if (!data) return [];
 
-        // Transform to match our Notification type
+        // Transformar dados para incluir campo 'lida'
         const notifications: Notification[] = data.map((item: any) => ({
           id: item.id,
           evento_id: item.evento_id,
@@ -56,7 +75,8 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
           mensagem: item.mensagem,
           visivel: item.visivel,
           criado_em: item.criado_em,
-          atualizado_em: item.atualizado_em
+          atualizado_em: item.atualizado_em,
+          lida: item.notificacao_leituras && item.notificacao_leituras.length > 0
         }));
 
         console.log('Final processed notifications:', notifications);
@@ -67,7 +87,7 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
         throw error;
       }
     },
-    enabled: !!eventId,
+    enabled: !!eventId && !!userId,
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchInterval: 1000 * 60 * 2, // Refetch every 2 minutes
   });

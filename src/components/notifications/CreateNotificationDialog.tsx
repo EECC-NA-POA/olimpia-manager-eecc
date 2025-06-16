@@ -12,6 +12,7 @@ import { useQueryClient } from '@tanstack/react-query';
 interface CreateNotificationDialogProps {
   eventId: string;
   userId: string;
+  userBranchId?: string;
   isOpen: boolean;
   onClose: () => void;
   isRepresentanteDelegacao?: boolean;
@@ -21,6 +22,7 @@ interface CreateNotificationDialogProps {
 export function CreateNotificationDialog({
   eventId,
   userId,
+  userBranchId,
   isOpen,
   onClose,
   isRepresentanteDelegacao = false,
@@ -29,7 +31,6 @@ export function CreateNotificationDialog({
   const queryClient = useQueryClient();
 
   const handleSuccess = () => {
-    // Invalidate notifications query to refresh the list
     queryClient.invalidateQueries({ queryKey: ['notifications'] });
     onClose();
   };
@@ -44,6 +45,7 @@ export function CreateNotificationDialog({
         <NotificationForm
           eventId={eventId}
           userId={userId}
+          userBranchId={userBranchId}
           onSuccess={handleSuccess}
           isRepresentanteDelegacao={isRepresentanteDelegacao}
           isOrganizer={isOrganizer}
