@@ -56,13 +56,24 @@ export const EnrollmentList = ({
   // Get user's filial_id from their profile
   const userFilialId = user?.user_metadata?.filial_id;
   
+  console.log('=== ENROLLMENT LIST DEBUG ===');
+  console.log('User filial_id:', userFilialId);
+  console.log('Current event ID:', currentEventId);
+  console.log('Registered modalities:', registeredModalities);
+
   const { data: modalitiesWithRepresentatives } = useModalitiesWithRepresentatives(
     userFilialId, 
     currentEventId
   );
 
+  console.log('Modalities with representatives data:', modalitiesWithRepresentatives);
+
   const getRepresentativeForModality = (modalityId: number) => {
-    return modalitiesWithRepresentatives?.find(m => m.id === modalityId)?.representative;
+    console.log(`Looking for representative for modality ID: ${modalityId}`);
+    const found = modalitiesWithRepresentatives?.find(m => m.id === modalityId);
+    console.log(`Found modality in representatives data:`, found);
+    console.log(`Representative for modality ${modalityId}:`, found?.representative);
+    return found?.representative;
   };
 
   return (
@@ -81,6 +92,9 @@ export const EnrollmentList = ({
         </TableHeader>
         <TableBody>
           {registeredModalities?.map((registration) => {
+            console.log(`Processing registration:`, registration);
+            console.log(`Registration modality ID: ${registration.modalidade?.id}`);
+            
             const representative = getRepresentativeForModality(registration.modalidade?.id);
             
             return (
