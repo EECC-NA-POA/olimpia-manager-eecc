@@ -11,6 +11,7 @@ import Login from "@/pages/Login";
 import AthleteProfile from "@/pages/AthleteProfile";
 import Dashboard from "@/pages/Dashboard";
 import JudgeDashboard from "@/pages/JudgeDashboard";
+import MonitorPage from "@/pages/MonitorPage";
 import DelegationPage from "@/pages/DelegationPage";
 import EventsLandingPage from "@/pages/EventsLandingPage";
 import EventSelectionPage from "@/pages/EventSelectionPage";
@@ -34,9 +35,10 @@ function App() {
                   <Route path="/" element={<Index />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/athlete" element={<AthleteProfile />} />
+                  <Route path="/athlete-profile" element={<AthleteProfile />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/judge" element={<JudgeDashboard />} />
-                  <Route path="/monitor" element={<Dashboard />} />
+                  <Route path="/monitor" element={<MonitorPage />} />
                   <Route path="/monitor/session/:sessionId" element={<SessionDetailsPage />} />
                   <Route path="/delegation" element={<DelegationPage />} />
                   <Route path="/events" element={<EventsLandingPage />} />
