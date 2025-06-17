@@ -10,23 +10,25 @@ import {
 } from "../charts/dataTransformers";
 import { ChartConfig } from "@/components/ui/chart/types";
 
-// Define a consistent color palette
+// Define a consistent color palette including exempt
 const CHART_COLORS = {
   green: '#10B981',
   yellow: '#F59E0B',
   red: '#EF4444',
   blue: '#6366F1',
   purple: '#8B5CF6',
-  pink: '#EC4899'
+  pink: '#EC4899',
+  gray: '#6B7280'
 };
 
 const PAYMENT_STATUS_COLORS = {
   'confirmado': CHART_COLORS.green,
   'pendente': CHART_COLORS.yellow,
-  'cancelado': CHART_COLORS.red
+  'cancelado': CHART_COLORS.red,
+  'isento': CHART_COLORS.gray
 };
 
-// Chart config that matches the ChartConfig type
+// Chart config that matches the ChartConfig type including exempt
 const CHART_CONFIG: ChartConfig = {
   modalities: {
     color: CHART_COLORS.blue,
@@ -43,6 +45,10 @@ const CHART_CONFIG: ChartConfig = {
   cancelado: {
     color: CHART_COLORS.red,
     label: 'Cancelado'
+  },
+  isento: {
+    color: CHART_COLORS.gray,
+    label: 'Isento'
   },
   categories: {
     color: CHART_COLORS.purple,
@@ -90,15 +96,16 @@ export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
     );
   }
 
-  // Calculate totals
+  // Calculate totals including exempt
   const calculatedTotals = calculateTotals(filteredData);
   console.log("Calculated totals:", calculatedTotals);
 
-  // Map the calculated totals to the format expected by SummaryCards
+  // Map the calculated totals to the format expected by SummaryCards including exempt
   const summaryCardsTotals = {
     inscricoes: calculatedTotals.totalGeral,
     pago: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pago) || 0), 0),
-    pendente: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pendente) || 0), 0)
+    pendente: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pendente) || 0), 0),
+    isentos: calculatedTotals.totalIsentos
   };
   console.log("Summary cards totals:", summaryCardsTotals);
 

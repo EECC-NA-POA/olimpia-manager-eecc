@@ -46,7 +46,7 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
     if (viewCheckError) {
       console.warn('View vw_analytics_filiais does not exist, using alternative approach');
       
-      // Alternative approach: Build analytics from base tables including dependents
+      // Alternative approach: Build analytics from base tables including dependents and exempt users
       // Get all filiais first
       let filiaisQuery = supabase
         .from('filiais')
@@ -62,7 +62,7 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
       
       console.log('Building analytics for filiais:', filiais);
 
-      // Build analytics for each filial including dependents
+      // Build analytics for each filial including dependents and exempt users
       const analyticsPromises = filiais?.map(async (filial) => {
         console.log(`Building analytics for filial: ${filial.nome} (${filial.id})`);
         
@@ -102,45 +102,44 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
 
         console.log(`Registrations (including dependents) for filial ${filial.nome}:`, registrations?.length || 0);
 
-        // Calculate status counts including dependents and their payment status
+        // Calculate status counts including dependents, exempt users, and their payment status
         const statusCounts = {
           confirmado: 0,
           pendente: 0,
-          cancelado: 0
+          cancelado: 0,
+          isento: 0 // Add exempt count
         };
 
         let totalPago = 0;
         let totalPendente = 0;
 
         registrations?.forEach(reg => {
-          // Fix: Handle usuarios as an array of objects from the join
-          const usuarios = reg.usuarios as { filial_id: string; tipo_perfil: string }[] | null;
-          if (usuarios && Array.isArray(usuarios)) {
-            usuarios.forEach(usuario => {
-              if (['atleta', 'dependente'].includes(usuario.tipo_perfil)) {
-                if (reg.status in statusCounts) {
-                  statusCounts[reg.status as keyof typeof statusCounts]++;
-                }
+          // Handle usuarios correctly - it's a single object due to the foreign key relationship
+          const usuario = reg.usuarios as { filial_id: string; tipo_perfil: string } | null;
+          if (usuario && ['atleta', 'dependente'].includes(usuario.tipo_perfil)) {
+            if (reg.status in statusCounts) {
+              statusCounts[reg.status as keyof typeof statusCounts]++;
+            }
 
-                // Calculate payment totals including dependents
-                if (Array.isArray(reg.pagamentos)) {
-                  reg.pagamentos.forEach((pagamento: any) => {
-                    if (pagamento.status === 'confirmado') {
-                      totalPago += Number(pagamento.valor) || 0;
-                    } else if (pagamento.status === 'pendente') {
-                      totalPendente += Number(pagamento.valor) || 0;
-                    }
-                  });
+            // Calculate payment totals including dependents
+            if (Array.isArray(reg.pagamentos)) {
+              reg.pagamentos.forEach((pagamento: any) => {
+                if (pagamento.status === 'confirmado') {
+                  totalPago += Number(pagamento.valor) || 0;
+                } else if (pagamento.status === 'pendente') {
+                  totalPendente += Number(pagamento.valor) || 0;
+                } else if (pagamento.status === 'isento') {
+                  statusCounts.isento++;
                 }
-              }
-            });
+              });
+            }
           }
         });
 
         console.log(`Status counts for filial ${filial.nome}:`, statusCounts);
         console.log(`Payment totals for filial ${filial.nome}:`, { totalPago, totalPendente });
 
-        const totalInscritosGeral = statusCounts.confirmado + statusCounts.pendente + statusCounts.cancelado;
+        const totalInscritosGeral = statusCounts.confirmado + statusCounts.pendente + statusCounts.cancelado + statusCounts.isento;
 
         console.log(`Final counts for filial ${filial.nome}:`, {
           totalInscritosGeral,
@@ -157,12 +156,14 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
           total_inscritos_por_status: [
             { status_pagamento: 'confirmado', quantidade: statusCounts.confirmado },
             { status_pagamento: 'pendente', quantidade: statusCounts.pendente },
-            { status_pagamento: 'cancelado', quantidade: statusCounts.cancelado }
+            { status_pagamento: 'cancelado', quantidade: statusCounts.cancelado },
+            { status_pagamento: 'isento', quantidade: statusCounts.isento }
           ],
           inscritos_por_status_pagamento: [
             { status_pagamento: 'confirmado', quantidade: statusCounts.confirmado },
             { status_pagamento: 'pendente', quantidade: statusCounts.pendente },
-            { status_pagamento: 'cancelado', quantidade: statusCounts.cancelado }
+            { status_pagamento: 'cancelado', quantidade: statusCounts.cancelado },
+            { status_pagamento: 'isento', quantidade: statusCounts.isento }
           ],
           modalidades_populares: [], // Simplified for now
           valor_total_pago: totalPago,
@@ -173,12 +174,12 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
       const results = await Promise.all(analyticsPromises);
       const validResults = results.filter((result): result is BranchAnalytics => result !== null);
       
-      console.log('Built analytics data (including dependents):', validResults);
+      console.log('Built analytics data (including dependents and exempt):', validResults);
       console.log('Total from built analytics:', validResults.reduce((sum, r) => sum + r.total_inscritos_geral, 0));
       return validResults;
     }
 
-    // If view exists, use it but ensure it includes dependents
+    // If view exists, use it but ensure it includes dependents and exempt users
     let query = supabase
       .from('vw_analytics_filiais')
       .select('*')
@@ -193,7 +194,7 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
 
     if (error) throw error;
     
-    console.log('Analytics data from view (should include dependents):', data);
+    console.log('Analytics data from view (should include dependents and exempt):', data);
     return data as BranchAnalytics[] || [];
   } catch (error) {
     console.error('Error fetching branch analytics:', error);

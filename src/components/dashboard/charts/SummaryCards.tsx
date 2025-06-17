@@ -1,7 +1,7 @@
 
 import { BranchAnalytics } from "@/types/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Coins, Users } from "lucide-react";
+import { Activity, Coins, Users, Shield } from "lucide-react";
 import { formatToCurrency } from "@/utils/formatters";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
@@ -27,12 +27,13 @@ interface SummaryCardsProps {
     inscricoes: number;
     pago: number;
     pendente: number;
+    isentos?: number;
   };
 }
 
 export function SummaryCards({ totals }: SummaryCardsProps) {
   return (
-    <div className="grid gap-6 md:grid-cols-3">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       <Card className="hover:shadow-lg transition-shadow">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div className="space-y-1">
@@ -90,6 +91,28 @@ export function SummaryCards({ totals }: SummaryCardsProps) {
           </p>
         </CardContent>
       </Card>
+
+      {totals.isentos !== undefined && (
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div className="space-y-1">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Isentos
+                <InfoIcon tooltip="Número de inscrições com isenção de pagamento" />
+              </CardTitle>
+            </div>
+            <Shield className="h-4 w-4 text-gray-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-600">
+              {totals.isentos.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Inscrições isentas de pagamento
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
