@@ -17,6 +17,10 @@ interface SaveAttendanceData {
   status: 'presente' | 'ausente' | 'atrasado';
 }
 
+interface CreateSessionWithAttendanceData extends CreateSessionData {
+  attendances: Omit<SaveAttendanceData, 'chamada_id'>[];
+}
+
 export const useMonitorMutations = () => {
   const queryClient = useQueryClient();
   const { user, currentEventId } = useAuth();
@@ -25,33 +29,7 @@ export const useMonitorMutations = () => {
     mutationFn: async (sessionData: CreateSessionData) => {
       if (!user?.id || !currentEventId) throw new Error('Usuário não autenticado ou evento não selecionado');
 
-      // Primeiro buscar os dados da modalidade representante
-      const { data: repData, error: repError } = await supabase
-        .from('modalidade_representantes')
-        .select('modalidade_id, filial_id')
-        .eq('id', sessionData.modalidade_rep_id)
-        .single();
-
-      if (repError) throw repError;
-
-      // Buscar atletas inscritos na modalidade
-      const { data: inscricoesData, error: inscricoesError } = await supabase
-        .from('inscricoes_modalidades')
-        .select(`
-          atleta_id,
-          usuarios!inscricoes_modalidades_atleta_id_fkey (id)
-        `)
-        .eq('modalidade_id', repData.modalidade_id)
-        .eq('evento_id', currentEventId)
-        .eq('status', 'confirmado');
-
-      if (inscricoesError) throw inscricoesError;
-
-      if (!inscricoesData || inscricoesData.length === 0) {
-        throw new Error('Não há atletas inscritos nesta modalidade');
-      }
-
-      // Criar a chamada
+      // Apenas criar a chamada sem criar presenças automaticamente
       const { data: chamada, error: chamadaError } = await supabase
         .from('chamadas')
         .insert({
@@ -63,33 +41,67 @@ export const useMonitorMutations = () => {
 
       if (chamadaError) throw chamadaError;
 
-      // Criar registros de presença para todos os atletas (padrão: presente)
-      const attendanceRecords = inscricoesData.map(item => {
-        const usuario = item.usuarios as any;
-        const atletaId = Array.isArray(usuario) ? usuario[0]?.id : usuario?.id;
-        return {
+      return chamada;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['monitor-sessions'] });
+      toast.success('Chamada criada com sucesso! Agora você pode marcar as presenças.');
+    },
+    onError: (error: any) => {
+      console.error('Error creating session:', error);
+      toast.error('Erro ao criar chamada: ' + error.message);
+    }
+  });
+
+  const createSessionWithAttendance = useMutation({
+    mutationFn: async (data: CreateSessionWithAttendanceData) => {
+      if (!user?.id || !currentEventId) throw new Error('Usuário não autenticado ou evento não selecionado');
+
+      // Primeiro criar a chamada
+      const { data: chamada, error: chamadaError } = await supabase
+        .from('chamadas')
+        .insert({
+          modalidade_rep_id: data.modalidade_rep_id,
+          data_hora_inicio: data.data_hora_inicio,
+          data_hora_fim: data.data_hora_fim,
+          descricao: data.descricao,
+          criado_por: user.id
+        })
+        .select()
+        .single();
+
+      if (chamadaError) throw chamadaError;
+
+      // Depois criar as presenças
+      if (data.attendances && data.attendances.length > 0) {
+        const attendanceRecords = data.attendances.map(attendance => ({
           chamada_id: chamada.id,
-          atleta_id: atletaId,
-          status: 'presente' as const,
+          atleta_id: attendance.atleta_id,
+          status: attendance.status,
           registrado_por: user.id
-        };
-      });
+        }));
 
-      const { error: attendanceError } = await supabase
-        .from('chamada_presencas')
-        .insert(attendanceRecords);
+        const { error: attendanceError } = await supabase
+          .from('chamada_presencas')
+          .insert(attendanceRecords);
 
-      if (attendanceError) throw attendanceError;
+        if (attendanceError) {
+          console.error('Error creating attendances:', attendanceError);
+          // Se houver erro nas presenças, tentar deletar a chamada criada
+          await supabase.from('chamadas').delete().eq('id', chamada.id);
+          throw new Error('Erro ao registrar presenças: ' + attendanceError.message);
+        }
+      }
 
       return chamada;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['monitor-sessions'] });
       queryClient.invalidateQueries({ queryKey: ['session-attendance'] });
-      toast.success('Chamada criada com sucesso! Todos os atletas foram marcados como presentes.');
+      toast.success('Chamada criada e presenças registradas com sucesso!');
     },
     onError: (error: any) => {
-      console.error('Error creating session:', error);
+      console.error('Error creating session with attendance:', error);
       toast.error('Erro ao criar chamada: ' + error.message);
     }
   });
@@ -118,6 +130,13 @@ export const useMonitorMutations = () => {
 
   const deleteSession = useMutation({
     mutationFn: async (sessionId: string) => {
+      // Primeiro deletar as presenças relacionadas
+      await supabase
+        .from('chamada_presencas')
+        .delete()
+        .eq('chamada_id', sessionId);
+
+      // Depois deletar a chamada
       const { error } = await supabase
         .from('chamadas')
         .delete()
@@ -139,7 +158,7 @@ export const useMonitorMutations = () => {
     mutationFn: async (attendances: SaveAttendanceData[]) => {
       if (!user?.id) throw new Error('Usuário não autenticado');
 
-      // First, delete existing attendances for this session
+      // Primeiro, deletar presenças existentes para esta chamada
       const chamadaId = attendances[0]?.chamada_id;
       if (chamadaId) {
         await supabase
@@ -148,7 +167,7 @@ export const useMonitorMutations = () => {
           .eq('chamada_id', chamadaId);
       }
 
-      // Then insert new attendances
+      // Depois inserir as novas presenças
       const attendancesToInsert = attendances.map(attendance => ({
         ...attendance,
         registrado_por: user.id
@@ -172,6 +191,7 @@ export const useMonitorMutations = () => {
 
   return {
     createSession,
+    createSessionWithAttendance,
     updateSession,
     deleteSession,
     saveAttendances

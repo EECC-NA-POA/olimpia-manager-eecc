@@ -2,13 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Loader2, ClipboardCheck, Plus, Trash2, Users, Save, AlertCircle } from "lucide-react";
+import { Loader2, ClipboardCheck, Plus, Trash2, Users } from "lucide-react";
 import { useMonitorModalities } from "@/hooks/useMonitorModalities";
 import { useMonitorSessions } from "@/hooks/useMonitorSessions";
 import { useMonitorMutations } from "@/hooks/useMonitorMutations";
@@ -17,6 +13,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import AttendanceSessionDetail from './AttendanceSessionDetail';
+import AttendanceCreationDialog from './AttendanceCreationDialog';
 import { LoadingImage } from "@/components/ui/loading-image";
 
 export default function MonitorAttendancePage() {
@@ -28,16 +25,11 @@ export default function MonitorAttendancePage() {
   );
   const [isNewSessionOpen, setIsNewSessionOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
-  const [sessionForm, setSessionForm] = useState({
-    data_hora_inicio: '',
-    data_hora_fim: '',
-    descricao: ''
-  });
 
   const { data: modalities, isLoading: modalitiesLoading } = useMonitorModalities();
   const { data: sessions, isLoading: sessionsLoading } = useMonitorSessions(selectedModalidade || undefined);
   const { data: modalityAthletes, isLoading: athletesLoading } = useModalityAthletes(selectedModalidade || undefined);
-  const { createSession, updateSession, deleteSession } = useMonitorMutations();
+  const { deleteSession } = useMonitorMutations();
 
   useEffect(() => {
     if (modalidadeParam && modalities) {
@@ -47,31 +39,6 @@ export default function MonitorAttendancePage() {
       }
     }
   }, [modalidadeParam, modalities]);
-
-  const handleCreateSession = async () => {
-    if (!selectedModalidade || !sessionForm.data_hora_inicio) {
-      return;
-    }
-
-    try {
-      const newSession = await createSession.mutateAsync({
-        modalidade_rep_id: selectedModalidade,
-        data_hora_inicio: sessionForm.data_hora_inicio,
-        data_hora_fim: sessionForm.data_hora_fim || undefined,
-        descricao: sessionForm.descricao || 'Chamada de presença'
-      });
-
-      setIsNewSessionOpen(false);
-      setSessionForm({ data_hora_inicio: '', data_hora_fim: '', descricao: '' });
-      
-      // Redirecionar automaticamente para a tela de presença
-      if (newSession && newSession.id) {
-        setSelectedSession(newSession.id);
-      }
-    } catch (error) {
-      console.error('Error creating session:', error);
-    }
-  };
 
   const handleDeleteSession = async (sessionId: string) => {
     if (confirm('Tem certeza que deseja excluir esta chamada?')) {
@@ -184,96 +151,14 @@ export default function MonitorAttendancePage() {
                   )}
                 </div>
                 
-                <Dialog open={isNewSessionOpen} onOpenChange={setIsNewSessionOpen}>
-                  <DialogTrigger asChild>
-                    <Button 
-                      className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:w-auto"
-                      disabled={!canCreateSession}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Nova Chamada
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="w-[95vw] max-w-md mx-auto">
-                    <DialogHeader>
-                      <DialogTitle>Nova Chamada</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 py-2">
-                      {!hasAthletes && !athletesLoading && (
-                        <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                          <AlertCircle className="h-4 w-4 text-yellow-600" />
-                          <span className="text-sm text-yellow-700">
-                            Esta modalidade não possui atletas inscritos.
-                          </span>
-                        </div>
-                      )}
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="data_hora_inicio">Data e Hora de Início *</Label>
-                        <Input
-                          id="data_hora_inicio"
-                          type="datetime-local"
-                          value={sessionForm.data_hora_inicio}
-                          onChange={(e) => setSessionForm({ ...sessionForm, data_hora_inicio: e.target.value })}
-                          className="w-full"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="data_hora_fim">Data e Hora de Fim</Label>
-                        <Input
-                          id="data_hora_fim"
-                          type="datetime-local"
-                          value={sessionForm.data_hora_fim}
-                          onChange={(e) => setSessionForm({ ...sessionForm, data_hora_fim: e.target.value })}
-                          className="w-full"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="descricao">Descrição (opcional)</Label>
-                        <Textarea
-                          id="descricao"
-                          value={sessionForm.descricao}
-                          onChange={(e) => setSessionForm({ ...sessionForm, descricao: e.target.value })}
-                          placeholder="Descreva o objetivo desta chamada..."
-                          className="w-full min-h-[80px] resize-none"
-                        />
-                      </div>
-                      
-                      {hasAthletes && (
-                        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                          <Users className="h-4 w-4 text-green-600" />
-                          <span className="text-sm text-green-700">
-                            Todos os {modalityAthletes?.length} atletas serão automaticamente marcados como presentes.
-                          </span>
-                        </div>
-                      )}
-                      
-                      <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                        <Button 
-                          onClick={handleCreateSession}
-                          disabled={createSession.isPending || !sessionForm.data_hora_inicio || !canCreateSession}
-                          className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:flex-1"
-                        >
-                          {createSession.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          ) : (
-                            <Save className="h-4 w-4 mr-2" />
-                          )}
-                          Criar Chamada
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setIsNewSessionOpen(false)}
-                          className="w-full sm:w-auto"
-                        >
-                          Cancelar
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button 
+                  onClick={() => setIsNewSessionOpen(true)}
+                  className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:w-auto"
+                  disabled={!canCreateSession}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Chamada
+                </Button>
               </div>
             </CardHeader>
           </Card>
@@ -344,6 +229,13 @@ export default function MonitorAttendancePage() {
           )}
         </>
       )}
+
+      <AttendanceCreationDialog
+        open={isNewSessionOpen}
+        onOpenChange={setIsNewSessionOpen}
+        modalidadeRepId={selectedModalidade}
+        modalityName={selectedModalityData?.modalidades.nome || ''}
+      />
     </div>
   );
 }
