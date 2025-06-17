@@ -45,32 +45,19 @@ export const submitNotification = async (
 
     console.log('Notification inserted successfully:', result);
 
-    // 2. Preparar os destinatários
-    let destinatariosData: { notificacao_id: string; filial_id: string }[] = [];
+    // 2. Preparar os destinatários - SEMPRE criar registros em notificacao_destinatarios
+    let destinatariosData: { notificacao_id: string; filial_id: string | null }[] = [];
 
     if (destinatarios.includes('all')) {
-      console.log('Fetching all branches for "all" option');
-      // Se for "todas as filiais", buscar todas as filiais
-      const { data: filiais, error: filiaisError } = await supabase
-        .from('filiais')
-        .select('id');
-
-      if (filiaisError) {
-        console.error('Error fetching branches:', filiaisError);
-        // Tentar limpar a notificação criada
-        await supabase.from('notificacoes').delete().eq('id', result.id);
-        throw filiaisError;
-      }
-
-      console.log('Fetched branches:', filiais);
-
-      destinatariosData = filiais.map(filial => ({
+      console.log('Creating destination record for all branches (filial_id = null)');
+      // Para "todas as filiais", criar um registro com filial_id = null
+      destinatariosData = [{
         notificacao_id: result.id,
-        filial_id: filial.id
-      }));
+        filial_id: null
+      }];
     } else {
       console.log('Using specific branches:', destinatarios);
-      // Se for filiais específicas
+      // Para filiais específicas
       destinatariosData = destinatarios.map(filialId => ({
         notificacao_id: result.id,
         filial_id: filialId
