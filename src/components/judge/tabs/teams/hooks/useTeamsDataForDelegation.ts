@@ -47,7 +47,7 @@ export function useTeamsDataForDelegation(
         teamsData.map(async (team) => {
           console.log(`Processing team: ${team.nome} (ID: ${team.id})`);
           
-          // Get athletes for this team - same query as in the working organizer version
+          // Get athletes for this team with proper join to usuarios and filiais
           const { data: athletesData, error: athletesError } = await supabase
             .from('atletas_equipes')
             .select(`
@@ -55,7 +55,7 @@ export function useTeamsDataForDelegation(
               atleta_id,
               posicao,
               raia,
-              usuarios!inner(
+              usuarios(
                 nome_completo,
                 tipo_documento,
                 numero_documento,
@@ -77,21 +77,22 @@ export function useTeamsDataForDelegation(
             };
           }
 
-          console.log(`Athletes in team ${team.nome}:`, athletesData?.length || 0, athletesData);
+          console.log(`Athletes data raw for team ${team.nome}:`, athletesData);
 
-          // Transform athletes data - same transformation as in the working version
+          // Transform athletes data
           const atletas = (athletesData || []).map(athlete => {
-            // Handle usuarios data properly - it should be a single object, not an array
-            const usuario = Array.isArray(athlete.usuarios) 
-              ? athlete.usuarios[0] 
-              : athlete.usuarios;
+            console.log('Processing athlete data:', athlete);
             
-            // Handle filiais data properly  
-            const filial = usuario?.filiais 
-              ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
-              : null;
+            // usuarios should be a single object due to the foreign key relationship
+            const usuario = athlete.usuarios;
+            
+            // filiais should be a single object due to the foreign key relationship  
+            const filial = usuario?.filiais;
 
-            console.log(`Processing athlete: ${usuario?.nome_completo} from filial ${usuario?.filial_id}`);
+            console.log(`Processing athlete: ${usuario?.nome_completo} from filial ${usuario?.filial_id}`, {
+              usuario,
+              filial
+            });
 
             return {
               id: athlete.id,
