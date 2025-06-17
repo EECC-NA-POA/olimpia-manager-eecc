@@ -46,7 +46,7 @@ export const useAnalyticsData = (eventId: string | null, filterByBranch: boolean
         }
         
         // Now fetch the analytics with the appropriate filter
-        const result = await fetchBranchAnalytics(eventId, filterByBranch ? filialId : undefined);
+        const result = await fetchBranchAnalytics(eventId, filialId);
         return result;
       } catch (error) {
         console.error('Error in branch analytics query:', error);

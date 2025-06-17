@@ -16,6 +16,7 @@ export function calculateTotals(data: BranchAnalytics[]) {
   let totalConfirmados = 0;
   let totalPendentes = 0;
   let totalCancelados = 0;
+  let totalIsentos = 0;
 
   data.forEach(branchData => {
     totalGeral += branchData.total_inscritos_geral;
@@ -31,6 +32,11 @@ export function calculateTotals(data: BranchAnalytics[]) {
         totalCancelados += status.quantidade;
       }
     });
+
+    // Count isentos if available
+    if (branchData.total_isentos) {
+      totalIsentos += branchData.total_isentos;
+    }
   });
 
   return {
@@ -38,7 +44,8 @@ export function calculateTotals(data: BranchAnalytics[]) {
     totalModalidades,
     totalConfirmados,
     totalPendentes,
-    totalCancelados
+    totalCancelados,
+    totalIsentos
   };
 }
 
