@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { toast } from "sonner";
 import type { NotificationAuthorType, CreateNotificationData } from '@/types/notifications';
@@ -100,6 +101,7 @@ export const submitNotification = async (
 };
 
 export const markNotificationAsRead = async (notificationId: string, userId: string) => {
+  console.log('=== MARK AS READ START ===');
   console.log('markNotificationAsRead called with:', { notificationId, userId });
   
   if (!notificationId || !userId) {
@@ -109,13 +111,15 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
   
   try {
     // Primeiro, verificar se já existe um registro
-    console.log('Checking if notification is already read...');
+    console.log('=== CHECKING EXISTING READ STATUS ===');
     const { data: existingRead, error: checkError } = await supabase
       .from('notificacao_leituras')
       .select('id')
       .eq('notificacao_id', notificationId)
       .eq('usuario_id', userId)
       .maybeSingle();
+
+    console.log('Check result:', { existingRead, checkError });
 
     if (checkError) {
       console.error('Error checking existing read status:', checkError);
@@ -127,7 +131,12 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
       return { success: true, message: 'Already read', data: existingRead };
     }
 
-    console.log('Attempting to insert into notificacao_leituras...');
+    console.log('=== ATTEMPTING TO INSERT ===');
+    console.log('Insert data:', {
+      notificacao_id: notificationId,
+      usuario_id: userId,
+      lido_em: new Date().toISOString()
+    });
     
     const { data, error } = await supabase
       .from('notificacao_leituras')
@@ -139,15 +148,23 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
       .select()
       .single();
 
+    console.log('Insert result:', { data, error });
+
     if (error) {
-      console.error('Database error details:', error);
+      console.error('=== DATABASE ERROR ===');
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      console.error('Error details:', error.details);
+      console.error('Error hint:', error.hint);
       throw error;
     }
 
+    console.log('=== SUCCESS ===');
     console.log('Notification marked as read successfully:', data);
     return { success: true, data };
     
   } catch (error) {
+    console.error('=== CATCH ERROR ===');
     console.error('Error in markNotificationAsRead:', error);
     throw error;
   }
