@@ -30,10 +30,16 @@ export const useMonitorSessions = (modalidadeRepId?: string) => {
         return [];
       }
 
-      // Buscar as chamadas diretamente
-      const { data: chamadas, error } = await supabase
+      // Buscar as chamadas com join explícito usando o relacionamento correto
+      const { data: sessions, error } = await supabase
         .from('chamadas')
-        .select('*')
+        .select(`
+          *,
+          modalidade_representantes (
+            modalidades!modalidade_representantes_modalidade_id_fkey (nome),
+            filiais (nome)
+          )
+        `)
         .eq('modalidade_rep_id', modalidadeRepId)
         .order('data_hora_inicio', { ascending: false });
 
@@ -42,44 +48,8 @@ export const useMonitorSessions = (modalidadeRepId?: string) => {
         throw error;
       }
 
-      console.log('Chamadas found:', chamadas);
-
-      if (!chamadas || chamadas.length === 0) {
-        return [];
-      }
-
-      // Buscar dados da modalidade_representantes com uma query mais simples
-      const { data: modalidadeRep, error: repError } = await supabase
-        .from('modalidade_representantes')
-        .select(`
-          modalidades (nome),
-          filiais (nome)
-        `)
-        .eq('id', modalidadeRepId)
-        .single();
-
-      if (repError) {
-        console.error('Error fetching modalidade_representantes:', repError);
-        throw repError;
-      }
-
-      console.log('Modalidade rep data:', modalidadeRep);
-
-      // Combinar os dados com type assertion para resolver os tipos
-      const transformedData = chamadas.map(chamada => ({
-        ...chamada,
-        modalidade_representantes: {
-          modalidades: {
-            nome: (modalidadeRep.modalidades as any)?.nome || 'N/A'
-          },
-          filiais: {
-            nome: (modalidadeRep.filiais as any)?.nome || 'N/A'
-          }
-        }
-      }));
-
-      console.log('Final transformed sessions:', transformedData);
-      return transformedData as MonitorSession[];
+      console.log('Sessions with modalidade data:', sessions);
+      return sessions as MonitorSession[];
     },
     enabled: !!modalidadeRepId,
   });
