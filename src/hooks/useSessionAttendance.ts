@@ -107,8 +107,8 @@ export const useSessionAttendance = (chamadaId: string | null) => {
       // Transform the data to match our interface
       const transformedData = data.map(item => {
         const pagamento = pagamentosData.find(p => p.atleta_id === item.atleta_id);
-        const atletaData = item.usuarios;
-        const chamadaData = item.chamadas;
+        const atletaData = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
+        const chamadaData = Array.isArray(item.chamadas) ? item.chamadas[0] : item.chamadas;
         
         return {
           id: item.id,
@@ -130,10 +130,14 @@ export const useSessionAttendance = (chamadaId: string | null) => {
             observacoes: chamadaData.observacoes,
             modalidade_representantes: {
               modalidades: {
-                nome: chamadaData.modalidade_representantes?.modalidades?.nome || ''
+                nome: Array.isArray(chamadaData.modalidade_representantes?.modalidades) 
+                  ? chamadaData.modalidade_representantes.modalidades[0]?.nome || ''
+                  : chamadaData.modalidade_representantes?.modalidades?.nome || ''
               },
               filiais: {
-                nome: chamadaData.modalidade_representantes?.filiais?.nome || ''
+                nome: Array.isArray(chamadaData.modalidade_representantes?.filiais) 
+                  ? chamadaData.modalidade_representantes.filiais[0]?.nome || ''
+                  : chamadaData.modalidade_representantes?.filiais?.nome || ''
               }
             }
           } : undefined
@@ -207,7 +211,7 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
 
       const athletes = inscricoesData.map(item => {
         const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
-        const atletaData = item.usuarios;
+        const atletaData = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
         
         return {
           id: atletaData?.id || '',
@@ -271,8 +275,11 @@ export const useAttendanceByAthlete = (modalidadeRepId: string | null) => {
 
       // Agrupar dados por atleta e mês
       const attendanceByAthlete = attendanceData?.reduce((acc, item) => {
-        const atletaNome = item.usuarios?.nome_completo || 'Atleta Desconhecido';
-        const dataPresenca = new Date(item.chamadas?.data_hora_inicio || '');
+        const atletaData = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
+        const chamadaData = Array.isArray(item.chamadas) ? item.chamadas[0] : item.chamadas;
+        
+        const atletaNome = atletaData?.nome_completo || 'Atleta Desconhecido';
+        const dataPresenca = new Date(chamadaData?.data_hora_inicio || '');
         const mesAno = `${dataPresenca.getFullYear()}-${String(dataPresenca.getMonth() + 1).padStart(2, '0')}`;
         
         if (!acc[atletaNome]) {
