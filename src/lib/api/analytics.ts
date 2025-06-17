@@ -115,7 +115,7 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
 
         registrations?.forEach(reg => {
           // Handle usuarios correctly - it's a single object due to the foreign key relationship
-          const usuario = reg.usuarios as { filial_id: string; tipo_perfil: string } | null;
+          const usuario = reg.usuarios;
           if (usuario && ['atleta', 'dependente'].includes(usuario.tipo_perfil)) {
             if (reg.status in statusCounts) {
               statusCounts[reg.status as keyof typeof statusCounts]++;
