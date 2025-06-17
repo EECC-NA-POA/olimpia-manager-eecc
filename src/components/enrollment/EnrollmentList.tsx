@@ -94,8 +94,10 @@ export const EnrollmentList = ({
           {registeredModalities?.map((registration) => {
             console.log(`Processing registration:`, registration);
             console.log(`Registration modality ID: ${registration.modalidade?.id}`);
+            console.log(`Registration modality name: ${registration.modalidade?.nome}`);
             
             const representative = getRepresentativeForModality(registration.modalidade?.id);
+            console.log(`Final representative for ${registration.modalidade?.nome}:`, representative);
             
             return (
               <TableRow 
