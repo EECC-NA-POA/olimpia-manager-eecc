@@ -52,8 +52,8 @@ export const useMonitorSessions = (modalidadeRepId?: string) => {
       const { data: modalidadeRep, error: repError } = await supabase
         .from('modalidade_representantes')
         .select(`
-          modalidades!inner (nome),
-          filiais!inner (nome)
+          modalidades!modalidade_representantes_modalidade_id_fkey (nome),
+          filiais!modalidade_representantes_filial_id_fkey (nome)
         `)
         .eq('id', modalidadeRepId)
         .single();
@@ -70,10 +70,10 @@ export const useMonitorSessions = (modalidadeRepId?: string) => {
         ...chamada,
         modalidade_representantes: {
           modalidades: {
-            nome: modalidadeRep.modalidades.nome
+            nome: Array.isArray(modalidadeRep.modalidades) ? modalidadeRep.modalidades[0]?.nome : modalidadeRep.modalidades?.nome
           },
           filiais: {
-            nome: modalidadeRep.filiais.nome
+            nome: Array.isArray(modalidadeRep.filiais) ? modalidadeRep.filiais[0]?.nome : modalidadeRep.filiais?.nome
           }
         }
       }));
