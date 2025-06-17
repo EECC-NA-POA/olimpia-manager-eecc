@@ -8,6 +8,7 @@
 /* Remove overflow hidden to allow scrolling on home page */
 body {
   overflow: auto; /* Changed from hidden to auto */
+  padding-bottom: 0; /* Reset for desktop */
 }
 
 /* Ensure root and app div allow scrolling */
@@ -29,16 +30,55 @@ body {
   overflow: auto !important;
 }
 
-/* Add responsive padding for content */
+/* Mobile specific adjustments */
 @media (max-width: 768px) {
+  /* Add bottom padding for mobile navigation */
+  body {
+    padding-bottom: 80px !important; /* Space for the mobile navigation */
+  }
+  
+  /* Ensure main content has proper spacing */
+  main {
+    padding-bottom: 80px !important;
+    min-height: calc(100vh - 80px) !important;
+  }
+  
+  /* Content padding adjustments */
   .content-padding {
     padding-top: 4rem; /* Adjust for smaller screens */
+    padding-bottom: 5rem; /* Extra space for mobile nav */
+  }
+  
+  /* Ensure mobile navigation is always visible */
+  .mobile-navigation {
+    display: block !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 50 !important;
+  }
+}
+
+/* Desktop: hide mobile navigation */
+@media (min-width: 769px) {
+  body {
+    padding-bottom: 0 !important;
+  }
+  
+  .mobile-navigation {
+    display: none !important;
   }
 }
 
 /* Ensure content doesn't overlap with the mobile navigation */
 @media (max-width: 768px) {
   .pb-16 {
-    padding-bottom: 4rem;
+    padding-bottom: 5rem !important; /* Increased from 4rem to 5rem */
+  }
+  
+  /* Fix for pages that might not have proper bottom spacing */
+  .page-content {
+    margin-bottom: 80px;
   }
 }

@@ -33,32 +33,32 @@ const MobileNavigation = ({
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-lg md:hidden">
       <div className="grid grid-cols-5 gap-1 px-2 py-2">
         {navigationItems.slice(0, 4).map((item) => (
           <button
             key={item.path}
             onClick={() => navigate(item.path)}
             className={cn(
-              "flex flex-col items-center justify-center p-2 text-xs rounded-lg transition-colors",
+              "flex flex-col items-center justify-center p-2 text-xs rounded-lg transition-colors min-h-[60px]",
               currentPath === item.path
                 ? "text-olimpics-green-primary bg-olimpics-green-primary/10"
                 : "text-gray-500 hover:text-olimpics-green-primary hover:bg-olimpics-green-primary/5"
             )}
           >
             <item.icon className="w-5 h-5 mb-1" />
-            <span>{item.label}</span>
+            <span className="text-center leading-tight">{item.label}</span>
           </button>
         ))}
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex flex-col items-center justify-center p-2 text-xs text-gray-500 rounded-lg hover:text-olimpics-green-primary hover:bg-olimpics-green-primary/5">
+            <button className="flex flex-col items-center justify-center p-2 text-xs text-gray-500 rounded-lg hover:text-olimpics-green-primary hover:bg-olimpics-green-primary/5 min-h-[60px]">
               <ArrowLeftRight className="w-5 h-5 mb-1" />
-              <span>Mais</span>
+              <span className="text-center leading-tight">Mais</span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 mb-2" sideOffset={40}>
+          <DropdownMenuContent align="end" className="w-56 mb-2 bg-white shadow-lg border" sideOffset={40}>
             {/* Extra menu items that didn't fit */}
             {navigationItems.slice(4).map((item) => (
               <DropdownMenuItem
@@ -203,22 +203,15 @@ export const MobileNavigationLink = () => {
   // Minhas Inscrições - available for all roles
   navigationItems.push({
     label: "Inscrições",
-    path: "/athlete-registrations",
+    path: "/minhas-inscricoes",
     icon: function ClipboardIcon(props: any) { return <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/></svg>; }
-  });
-  
-  // Pontuações - available for all roles
-  navigationItems.push({
-    label: "Pontuações",
-    path: "/scores",
-    icon: function MedalIcon(props: any) { return <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.11"/><path d="M15 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/></svg>; }
   });
   
   // Role-specific items
   if (roles.isOrganizer) {
     navigationItems.push({
       label: "Organizador",
-      path: "/organizer-dashboard",
+      path: "/organizador",
       icon: function UsersIcon(props: any) { return <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>; }
     });
   }
@@ -226,7 +219,7 @@ export const MobileNavigationLink = () => {
   if (roles.isDelegationRep) {
     navigationItems.push({
       label: "Delegação",
-      path: "/delegation-dashboard",
+      path: "/delegacao",
       icon: function UsersIcon(props: any) { return <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>; }
     });
   }
