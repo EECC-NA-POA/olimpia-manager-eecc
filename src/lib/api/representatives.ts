@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 
 export interface ModalityRepresentative {
@@ -99,30 +98,25 @@ export const fetchModalitiesWithRepresentatives = async (filialId: string, event
       console.log(`Processing modality ${modality.id} (${modality.nome}), found rep:`, rep);
       
       let representative = undefined;
-      if (rep?.usuarios) {
-        // Handle both array and object formats
+      if (rep && rep.usuarios) {
         const userData = Array.isArray(rep.usuarios) ? rep.usuarios[0] : rep.usuarios;
         console.log('User data for representative:', userData);
         
-        if (userData && userData.nome_completo) {
+        if (userData) {
           representative = {
             atleta_id: rep.atleta_id,
             nome_completo: userData.nome_completo,
             email: userData.email,
             telefone: userData.telefone
           };
-          console.log('Created representative object:', representative);
         }
       }
 
-      const result = {
+      return {
         id: modality.id,
         nome: modality.nome,
         representative
       };
-      
-      console.log(`Final modality with representative:`, result);
-      return result;
     }) || [];
 
     console.log('Combined modalities with representatives:', modalitiesWithReps);
