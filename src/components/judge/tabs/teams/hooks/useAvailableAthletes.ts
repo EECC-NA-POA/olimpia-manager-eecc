@@ -34,9 +34,9 @@ export function useAvailableAthletes(
       const athletesInTeams = teamAthletes?.map(ta => ta.atleta_id) || [];
       console.log('Athletes already in teams from DB:', athletesInTeams);
 
-      // Get enrollments for this modality
+      // Build the base query for available athletes
       let enrollmentsQuery = supabase
-        .from('inscricoes')
+        .from('inscricoes_modalidades')
         .select(`
           atleta_id,
           usuarios!inner(
@@ -50,7 +50,7 @@ export function useAvailableAthletes(
         `)
         .eq('evento_id', eventId)
         .eq('modalidade_id', selectedModalityId)
-        .eq('status', 'confirmada');
+        .eq('status', 'confirmado');
 
       // For delegation representatives OR non-organizers, filter by branch
       if ((isDelegationRep || !isOrganizer) && user?.filial_id) {
@@ -66,6 +66,7 @@ export function useAvailableAthletes(
       }
 
       console.log('Found enrollments:', enrollments?.length);
+      console.log('Enrollments data:', enrollments);
 
       if (!enrollments) return [];
 
@@ -84,6 +85,14 @@ export function useAvailableAthletes(
           const pagamento = Array.isArray(enrollment.pagamentos)
             ? enrollment.pagamentos[0]
             : enrollment.pagamentos;
+
+          console.log('Processing athlete:', {
+            atleta_id: enrollment.atleta_id,
+            nome: usuario?.nome_completo,
+            filial_id: usuario?.filial_id,
+            filial_nome: filial?.nome,
+            user_filial_id: user?.filial_id
+          });
 
           return {
             id: enrollment.atleta_id,
