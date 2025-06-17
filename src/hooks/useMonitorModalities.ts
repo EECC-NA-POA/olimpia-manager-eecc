@@ -81,73 +81,100 @@ export const useMonitorModalities = () => {
         });
       }
 
-      // Step 5: Try the full query with detailed logging
-      console.log('=== STEP 5: Full query with joins ===');
-      const { data: fullData, error: fullError } = await supabase
+      // Step 5: Try a simplified query approach
+      console.log('=== STEP 5: Simplified query approach ===');
+      
+      // First get the representative records for this user
+      const { data: userReps, error: userRepsError } = await supabase
         .from('modalidade_representantes')
-        .select(`
-          id,
-          atleta_id,
-          modalidade_id,
-          filial_id,
-          criado_em,
-          atualizado_em,
-          modalidades (
-            id,
-            nome,
-            categoria,
-            evento_id
-          ),
-          filiais (
-            id,
-            nome,
-            cidade,
-            estado
-          )
-        `)
+        .select('*')
         .eq('atleta_id', user.id);
 
-      console.log('Full query result:', fullData);
-      console.log('Full query error:', fullError);
-
-      if (fullError) {
-        console.error('useMonitorModalities - Error in full query:', fullError);
-        throw fullError;
+      if (userRepsError) {
+        console.error('Error fetching user representatives:', userRepsError);
+        throw userRepsError;
       }
 
-      // Step 6: Filter and transform
-      console.log('=== STEP 6: Filtering by event ===');
-      const filteredData = fullData?.filter(item => {
-        // Fix: Access the first element of the modalidades array
-        const modalidade = Array.isArray(item.modalidades) ? item.modalidades[0] : item.modalidades;
-        console.log('Checking item for event filter:', {
-          item_id: item.id,
-          modalidade_id: item.modalidade_id,
-          modalidade_evento_id: modalidade?.evento_id,
-          current_event_id: currentEventId,
-          matches: modalidade?.evento_id === currentEventId
-        });
-        return modalidade?.evento_id === currentEventId;
-      }) || [];
+      console.log('User representatives:', userReps);
 
-      console.log('Filtered data count:', filteredData.length);
-      console.log('Final filtered data:', filteredData);
+      if (!userReps || userReps.length === 0) {
+        console.log('No representatives found for user');
+        return [];
+      }
 
-      // Transform the data to match our interface
-      const transformedData = filteredData.map(item => {
-        const transformed = {
-          ...item,
-          modalidades: Array.isArray(item.modalidades) ? item.modalidades[0] : item.modalidades,
-          filiais: Array.isArray(item.filiais) ? item.filiais[0] : item.filiais
-        };
-        console.log('Transformed item:', transformed);
-        return transformed;
-      });
+      // Now get the modalities and filiais data separately
+      const modalityIds = userReps.map(rep => rep.modalidade_id);
+      const filialIds = userReps.map(rep => rep.filial_id);
+
+      console.log('Fetching modalidades with IDs:', modalityIds);
+      const { data: modalidades, error: modalidadesError } = await supabase
+        .from('modalidades')
+        .select('id, nome, categoria, evento_id')
+        .in('id', modalityIds)
+        .eq('evento_id', currentEventId); // Filter by current event
+
+      if (modalidadesError) {
+        console.error('Error fetching modalidades:', modalidadesError);
+        throw modalidadesError;
+      }
+
+      console.log('Fetched modalidades:', modalidades);
+
+      console.log('Fetching filiais with IDs:', filialIds);
+      const { data: filiaisData, error: filiaisDataError } = await supabase
+        .from('filiais')
+        .select('id, nome, cidade, estado')
+        .in('id', filialIds);
+
+      if (filiaisDataError) {
+        console.error('Error fetching filiais:', filiaisDataError);
+        throw filiaisDataError;
+      }
+
+      console.log('Fetched filiais:', filiaisData);
+
+      // Step 6: Combine the data
+      console.log('=== STEP 6: Combining data ===');
+      const combinedData = userReps
+        .map(rep => {
+          const modalidade = modalidades?.find(mod => mod.id === rep.modalidade_id);
+          const filial = filiaisData?.find(fil => fil.id === rep.filial_id);
+          
+          console.log(`Processing rep ${rep.id}:`, {
+            rep,
+            modalidade,
+            filial,
+            hasModalidade: !!modalidade,
+            hasFilial: !!filial
+          });
+
+          if (!modalidade || !filial) {
+            console.log(`Skipping rep ${rep.id} - missing modalidade or filial`);
+            return null;
+          }
+
+          return {
+            ...rep,
+            modalidades: {
+              id: modalidade.id,
+              nome: modalidade.nome,
+              categoria: modalidade.categoria
+            },
+            filiais: {
+              id: filial.id,
+              nome: filial.nome,
+              cidade: filial.cidade,
+              estado: filial.estado
+            }
+          };
+        })
+        .filter(Boolean) as MonitorModality[];
 
       console.log('=== FINAL RESULT ===');
-      console.log('Final transformed data:', transformedData);
+      console.log('Final combined data:', combinedData);
+      console.log('Total records:', combinedData.length);
       
-      return transformedData as MonitorModality[];
+      return combinedData;
     },
     enabled: !!user?.id && !!currentEventId,
   });
