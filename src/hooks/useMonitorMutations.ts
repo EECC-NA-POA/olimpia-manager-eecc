@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -18,21 +19,22 @@ interface SaveAttendanceData {
 
 export const useMonitorMutations = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, currentEventId } = useAuth();
 
   const createSession = useMutation({
     mutationFn: async (sessionData: CreateSessionData) => {
-      if (!user?.id) throw new Error('Usuário não autenticado');
+      if (!user?.id || !currentEventId) throw new Error('Usuário não autenticado ou evento não selecionado');
 
-      // Primeiro buscar os atletas inscritos na modalidade
+      // Primeiro buscar os dados da modalidade representante
       const { data: repData, error: repError } = await supabase
         .from('modalidade_representantes')
-        .select('modalidade_id, filial_id, evento_id')
+        .select('modalidade_id, filial_id')
         .eq('id', sessionData.modalidade_rep_id)
         .single();
 
       if (repError) throw repError;
 
+      // Buscar atletas inscritos na modalidade usando o evento atual
       const { data: athletesData, error: athletesError } = await supabase
         .from('inscricoes_modalidades')
         .select(`
@@ -40,7 +42,7 @@ export const useMonitorMutations = () => {
           usuarios!inner (id)
         `)
         .eq('modalidade_id', repData.modalidade_id)
-        .eq('evento_id', repData.evento_id)
+        .eq('evento_id', currentEventId)
         .eq('status', 'confirmado');
 
       if (athletesError) throw athletesError;

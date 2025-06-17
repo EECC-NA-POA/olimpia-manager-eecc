@@ -1,19 +1,23 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useModalityAthletes = (modalidadeRepId?: string) => {
+  const { currentEventId } = useAuth();
+  
   return useQuery({
-    queryKey: ['modality-athletes', modalidadeRepId],
+    queryKey: ['modality-athletes', modalidadeRepId, currentEventId],
     queryFn: async () => {
-      if (!modalidadeRepId) return [];
+      if (!modalidadeRepId || !currentEventId) return [];
       
       console.log('Fetching athletes for modality rep:', modalidadeRepId);
+      console.log('Current event ID:', currentEventId);
       
       // Primeiro buscar a modalidade e filial do representante
       const { data: repData, error: repError } = await supabase
         .from('modalidade_representantes')
-        .select('modalidade_id, filial_id, evento_id')
+        .select('modalidade_id, filial_id')
         .eq('id', modalidadeRepId)
         .single();
 
@@ -22,7 +26,9 @@ export const useModalityAthletes = (modalidadeRepId?: string) => {
         throw repError;
       }
 
-      // Buscar atletas inscritos na modalidade
+      console.log('Representative data:', repData);
+
+      // Buscar atletas inscritos na modalidade usando o evento atual
       const { data, error } = await supabase
         .from('inscricoes_modalidades')
         .select(`
@@ -35,7 +41,7 @@ export const useModalityAthletes = (modalidadeRepId?: string) => {
           )
         `)
         .eq('modalidade_id', repData.modalidade_id)
-        .eq('evento_id', repData.evento_id)
+        .eq('evento_id', currentEventId)
         .eq('status', 'confirmado');
 
       if (error) {
@@ -56,6 +62,6 @@ export const useModalityAthletes = (modalidadeRepId?: string) => {
       console.log('Modality athletes found:', athletes.length);
       return athletes;
     },
-    enabled: !!modalidadeRepId,
+    enabled: !!modalidadeRepId && !!currentEventId,
   });
 };
