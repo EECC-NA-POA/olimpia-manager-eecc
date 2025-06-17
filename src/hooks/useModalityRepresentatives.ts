@@ -9,18 +9,46 @@ import {
 } from '@/lib/api/representatives';
 
 export const useModalitiesWithRepresentatives = (filialId: string | undefined, eventId: string | null) => {
+  console.log('useModalitiesWithRepresentatives called with:', { filialId, eventId });
+  
   return useQuery({
     queryKey: ['modalities-representatives', filialId, eventId],
-    queryFn: () => fetchModalitiesWithRepresentatives(filialId!, eventId!),
+    queryFn: async () => {
+      console.log('Fetching modalities with representatives...');
+      if (!filialId || !eventId) {
+        throw new Error('filialId and eventId are required');
+      }
+      const result = await fetchModalitiesWithRepresentatives(filialId, eventId);
+      console.log('Modalities with representatives result:', result);
+      return result;
+    },
     enabled: !!filialId && !!eventId,
+    retry: (failureCount, error) => {
+      console.error('Query failed:', error);
+      return failureCount < 2;
+    }
   });
 };
 
 export const useRegisteredAthletes = (filialId: string | undefined, modalityId: number | null, eventId: string | null) => {
+  console.log('useRegisteredAthletes called with:', { filialId, modalityId, eventId });
+  
   return useQuery({
     queryKey: ['registered-athletes', filialId, modalityId, eventId],
-    queryFn: () => fetchRegisteredAthletesForModality(filialId!, modalityId!, eventId!),
+    queryFn: async () => {
+      console.log('Fetching registered athletes...');
+      if (!filialId || !modalityId || !eventId) {
+        throw new Error('filialId, modalityId and eventId are required');
+      }
+      const result = await fetchRegisteredAthletesForModality(filialId, modalityId, eventId);
+      console.log('Registered athletes result:', result);
+      return result;
+    },
     enabled: !!filialId && !!modalityId && !!eventId,
+    retry: (failureCount, error) => {
+      console.error('Athletes query failed:', error);
+      return failureCount < 2;
+    }
   });
 };
 
@@ -28,27 +56,40 @@ export const useRepresentativeMutations = (filialId: string | undefined, eventId
   const queryClient = useQueryClient();
 
   const setRepresentative = useMutation({
-    mutationFn: ({ modalityId, atletaId }: { modalityId: number; atletaId: string }) =>
-      setModalityRepresentative(filialId!, modalityId, atletaId),
+    mutationFn: async ({ modalityId, atletaId }: { modalityId: number; atletaId: string }) => {
+      console.log('Setting representative mutation:', { filialId, modalityId, atletaId });
+      if (!filialId) {
+        throw new Error('filialId is required');
+      }
+      return await setModalityRepresentative(filialId, modalityId, atletaId);
+    },
     onSuccess: () => {
+      console.log('Representative set successfully');
       queryClient.invalidateQueries({ queryKey: ['modalities-representatives', filialId, eventId] });
       toast.success('Representante definido com sucesso!');
     },
     onError: (error: any) => {
       console.error('Error setting representative:', error);
-      toast.error('Erro ao definir representante');
+      toast.error('Erro ao definir representante: ' + (error.message || 'Erro desconhecido'));
     },
   });
 
   const removeRepresentative = useMutation({
-    mutationFn: (modalityId: number) => removeModalityRepresentative(filialId!, modalityId),
+    mutationFn: async (modalityId: number) => {
+      console.log('Removing representative mutation:', { filialId, modalityId });
+      if (!filialId) {
+        throw new Error('filialId is required');
+      }
+      return await removeModalityRepresentative(filialId, modalityId);
+    },
     onSuccess: () => {
+      console.log('Representative removed successfully');
       queryClient.invalidateQueries({ queryKey: ['modalities-representatives', filialId, eventId] });
       toast.success('Representante removido com sucesso!');
     },
     onError: (error: any) => {
       console.error('Error removing representative:', error);
-      toast.error('Erro ao remover representante');
+      toast.error('Erro ao remover representante: ' + (error.message || 'Erro desconhecido'));
     },
   });
 

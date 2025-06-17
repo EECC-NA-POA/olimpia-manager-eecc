@@ -22,6 +22,8 @@ interface RepresentativesTabProps {
 export function RepresentativesTab({ filialId, eventId }: RepresentativesTabProps) {
   const [selectedModalityForChange, setSelectedModalityForChange] = useState<number | null>(null);
   
+  console.log('RepresentativesTab props:', { filialId, eventId });
+
   const {
     data: modalities,
     isLoading,
@@ -36,24 +38,44 @@ export function RepresentativesTab({ filialId, eventId }: RepresentativesTabProp
 
   const { setRepresentative, removeRepresentative } = useRepresentativeMutations(filialId, eventId);
 
+  console.log('Modalities data:', modalities);
+  console.log('Loading state:', isLoading);
+  console.log('Error state:', error);
+
   const handleSetRepresentative = (modalityId: number, atletaId: string) => {
+    console.log('Setting representative:', { modalityId, atletaId });
     setRepresentative.mutate({ modalityId, atletaId });
     setSelectedModalityForChange(null);
   };
 
   const handleRemoveRepresentative = (modalityId: number) => {
+    console.log('Removing representative for modality:', modalityId);
     removeRepresentative.mutate(modalityId);
   };
 
+  // Validate required props
+  if (!filialId || !eventId) {
+    console.error('Missing required props:', { filialId, eventId });
+    return (
+      <EmptyState
+        title="Dados insuficientes"
+        description="Não foi possível carregar os representantes. Filial ou evento não identificado."
+      />
+    );
+  }
+
   if (isLoading) {
+    console.log('Loading modalities...');
     return <LoadingState />;
   }
 
   if (error) {
+    console.error('Error loading modalities:', error);
     return <ErrorState onRetry={refetch} />;
   }
 
   if (!modalities || modalities.length === 0) {
+    console.log('No modalities found');
     return (
       <EmptyState
         title="Nenhuma modalidade encontrada"
@@ -61,6 +83,8 @@ export function RepresentativesTab({ filialId, eventId }: RepresentativesTabProp
       />
     );
   }
+
+  console.log('Rendering modalities:', modalities.length);
 
   return (
     <div className="space-y-4">
