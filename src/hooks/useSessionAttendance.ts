@@ -15,6 +15,21 @@ export interface SessionAttendance {
     email: string;
     numero_identificador: string | null;
   };
+  chamada?: {
+    id: string;
+    descricao: string;
+    data_hora_inicio: string;
+    data_hora_fim: string | null;
+    observacoes: string | null;
+    modalidade_representantes: {
+      modalidades: {
+        nome: string;
+      };
+      filiais: {
+        nome: string;
+      };
+    };
+  };
 }
 
 export interface AthleteForAttendance {
@@ -45,9 +60,20 @@ export const useSessionAttendance = (chamadaId: string | null) => {
           status,
           registrado_em,
           registrado_por,
-          atleta:usuarios!chamada_presencas_atleta_id_fkey (
+          atleta:atleta_id (
             nome_completo,
             email
+          ),
+          chamada:chamada_id (
+            id,
+            descricao,
+            data_hora_inicio,
+            data_hora_fim,
+            observacoes,
+            modalidade_representantes:modalidade_rep_id (
+              modalidades:modalidade_id (nome),
+              filiais:filial_id (nome)
+            )
           )
         `)
         .eq('chamada_id', chamadaId);
@@ -70,13 +96,12 @@ export const useSessionAttendance = (chamadaId: string | null) => {
 
         // Transform the data to match our interface
         const transformedData = data?.map(item => {
-          const atleta = Array.isArray(item.atleta) ? item.atleta[0] : item.atleta;
           const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
           
           return {
             ...item,
             atleta: {
-              ...atleta,
+              ...item.atleta,
               numero_identificador: pagamento?.numero_identificador || null
             }
           };
@@ -89,7 +114,7 @@ export const useSessionAttendance = (chamadaId: string | null) => {
       const transformedData = data?.map(item => ({
         ...item,
         atleta: {
-          ...(Array.isArray(item.atleta) ? item.atleta[0] : item.atleta),
+          ...item.atleta,
           numero_identificador: null
         }
       })) || [];
@@ -130,7 +155,7 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
         .from('inscricoes_modalidades')
         .select(`
           atleta_id,
-          usuarios!inscricoes_modalidades_atleta_id_fkey (
+          atleta:atleta_id (
             id,
             nome_completo,
             email
@@ -159,13 +184,12 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
         .eq('evento_id', currentEventId);
 
       const athletes = inscricoesData.map(item => {
-        const usuario = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
         const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
         
         return {
-          id: usuario.id,
-          nome_completo: usuario.nome_completo,
-          email: usuario.email,
+          id: item.atleta.id,
+          nome_completo: item.atleta.nome_completo,
+          email: item.atleta.email,
           numero_identificador: pagamento?.numero_identificador || null,
         };
       });
