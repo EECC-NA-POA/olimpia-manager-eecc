@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 
 export interface ModalityRepresentative {
@@ -40,7 +39,7 @@ export const fetchModalityRepresentatives = async (filialId: string, eventId: st
       .select(`
         *,
         modalidades!inner(id, nome),
-        usuarios(id, nome_completo, email, telefone)
+        usuarios!modalidade_representantes_atleta_id_fkey(id, nome_completo, email, telefone)
       `)
       .eq('filial_id', filialId)
       .eq('modalidades.evento_id', eventId);
@@ -76,13 +75,13 @@ export const fetchModalitiesWithRepresentatives = async (filialId: string, event
 
     console.log('Modalities fetched:', modalities);
 
-    // Then get representatives for this filial
+    // Then get representatives for this filial - fix the relationship specification
     const { data: representatives, error: repsError } = await supabase
       .from('modalidade_representantes')
       .select(`
         modalidade_id,
         atleta_id,
-        usuarios(nome_completo, email, telefone)
+        usuarios!modalidade_representantes_atleta_id_fkey(nome_completo, email, telefone)
       `)
       .eq('filial_id', filialId);
 
