@@ -7,7 +7,6 @@ import { useTeamMutations } from './useTeamMutations';
 export interface TeamFormData {
   nome: string;
   modalidade_id: string;
-  observacoes?: string;
 }
 
 export function useTeamOperations(eventId: string | null, branchId?: string) {
