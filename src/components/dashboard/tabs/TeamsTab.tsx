@@ -28,7 +28,7 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
   const [branchFilter, setBranchFilter] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Dados de equipes/modalidades/filiais (para pontuação de juiz)
+  // Dados de equipes/modalidades/filiais (filtrado por filial do usuário)
   const {
     teams: allTeams,
     modalities: allModalities,
@@ -40,10 +40,10 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
     modalityFilter,
     branchFilter,
     searchTerm,
-    user?.filial_id // Representante de delegação vê apenas suas equipes
+    user?.filial_id // Filtrar por filial do usuário
   );
 
-  // Agrupa equipes por modalidade, mesmo as sem atletas (MOSTRAR TODAS!)
+  // Agrupa equipes por modalidade, filtradas por filial
   const transformedTeams = allTeams?.map(team => ({
     equipe_id: team.id,
     equipe_nome: team.nome,
@@ -66,65 +66,7 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
     modalidade_nome: modality.nome
   })) || [];
 
-  // Para representantes de delegação, mostrar apenas a aba "Gerenciar Equipes" (sem pontuação)
-  if (isDelegationRepOnly) {
-    const {
-      modalities,
-      teams,
-      availableAthletes,
-      selectedModalityId,
-      setSelectedModalityId,
-      isLoading,
-      createTeam,
-      deleteTeam,
-      addAthlete,
-      removeAthlete,
-      updateAthletePosition,
-      isCreatingTeam,
-      isDeletingTeam,
-      isAddingAthlete,
-      isRemovingAthlete,
-      isUpdatingAthlete,
-      teamToDelete,
-      isDeleteDialogOpen,
-      setIsDeleteDialogOpen,
-      confirmDeleteTeam,
-      cancelDeleteTeam
-    } = useTeamManager(eventId, false);
-
-    return (
-      <div className="space-y-6">
-        <TeamsTabHeader isOrganizer={false}>
-          <ManageTeamsTab
-            modalities={modalities}
-            teams={teams}
-            availableAthletes={availableAthletes}
-            selectedModalityId={selectedModalityId}
-            setSelectedModalityId={setSelectedModalityId}
-            isLoading={isLoading}
-            createTeam={createTeam}
-            deleteTeam={deleteTeam}
-            addAthlete={addAthlete}
-            removeAthlete={removeAthlete}
-            updateAthletePosition={updateAthletePosition}
-            isCreatingTeam={isCreatingTeam}
-            isDeletingTeam={isDeletingTeam}
-            isAddingAthlete={isAddingAthlete}
-            isRemovingAthlete={isRemovingAthlete}
-            isUpdatingAthlete={isUpdatingAthlete}
-            isOrganizer={false}
-            teamToDelete={teamToDelete}
-            isDeleteDialogOpen={isDeleteDialogOpen}
-            setIsDeleteDialogOpen={setIsDeleteDialogOpen}
-            confirmDeleteTeam={confirmDeleteTeam}
-            cancelDeleteTeam={cancelDeleteTeam}
-          />
-        </TeamsTabHeader>
-      </div>
-    );
-  }
-
-  // ORGANIZADOR: gerenciamento completo (caso seja organizador também)
+  // Hook de gerenciamento de equipes (filtrado por filial do usuário)
   const {
     modalities,
     teams,
@@ -147,11 +89,11 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
     setIsDeleteDialogOpen,
     confirmDeleteTeam,
     cancelDeleteTeam
-  } = useTeamManager(eventId, true);
+  } = useTeamManager(eventId, !isDelegationRepOnly); // Para representantes de delegação, passar false para isOrganizer
 
   return (
     <div className="space-y-6">
-      <TeamsTabHeader isOrganizer={true}>
+      <TeamsTabHeader isOrganizer={!isDelegationRepOnly}>
         <Tabs defaultValue="manage" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="manage">
@@ -180,7 +122,7 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
               isAddingAthlete={isAddingAthlete}
               isRemovingAthlete={isRemovingAthlete}
               isUpdatingAthlete={isUpdatingAthlete}
-              isOrganizer={true}
+              isOrganizer={!isDelegationRepOnly}
               teamToDelete={teamToDelete}
               isDeleteDialogOpen={isDeleteDialogOpen}
               setIsDeleteDialogOpen={setIsDeleteDialogOpen}
@@ -202,7 +144,7 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
               setModalityFilter={setModalityFilter}
               setBranchFilter={setBranchFilter}
               setSearchTerm={setSearchTerm}
-              isOrganizer={true}
+              isOrganizer={!isDelegationRepOnly}
               eventId={eventId}
               judgeId={user?.id || ''}
             />
