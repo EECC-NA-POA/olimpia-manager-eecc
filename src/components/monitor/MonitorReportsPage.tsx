@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -119,7 +120,7 @@ export default function MonitorReportsPage() {
         .from('inscricoes_modalidades')
         .select(`
           atleta_id,
-          usuarios (
+          usuarios!inner (
             nome_completo,
             numero_identificador
           )

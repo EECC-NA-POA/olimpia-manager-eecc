@@ -45,7 +45,7 @@ export const useSessionAttendance = (chamadaId: number | null) => {
           observacoes,
           created_at,
           updated_at,
-          atleta:usuarios (
+          atleta:usuarios!inner (
             nome_completo,
             email,
             numero_identificador
@@ -90,7 +90,7 @@ export const useAthletesForAttendance = (modalidadeRepId: number | null) => {
         .from('inscricoes_modalidades')
         .select(`
           atleta_id,
-          usuarios (
+          usuarios!inner (
             id,
             nome_completo,
             email,
@@ -107,10 +107,10 @@ export const useAthletesForAttendance = (modalidadeRepId: number | null) => {
       }
 
       const athletes = data?.map(item => ({
-        id: item.usuarios?.id || item.atleta_id,
-        nome_completo: item.usuarios?.nome_completo || 'Nome não encontrado',
-        email: item.usuarios?.email || 'Email não encontrado',
-        numero_identificador: item.usuarios?.numero_identificador || null,
+        id: item.usuarios.id,
+        nome_completo: item.usuarios.nome_completo,
+        email: item.usuarios.email,
+        numero_identificador: item.usuarios.numero_identificador,
       })) || [];
 
       console.log('Athletes for attendance:', athletes);

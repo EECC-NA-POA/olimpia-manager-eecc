@@ -34,11 +34,11 @@ export const useMonitorSessions = (modalidadeRepId?: number) => {
           data_hora_fim,
           descricao,
           created_at,
-          modalidade_representantes (
-            modalidades (
+          modalidade_representantes!inner (
+            modalidades!inner (
               nome
             ),
-            filiais (
+            filiais!inner (
               nome
             )
           )
