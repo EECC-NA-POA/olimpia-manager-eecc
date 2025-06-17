@@ -132,7 +132,7 @@ export default function AttendanceCreationDialog({
         </DialogHeader>
 
         {step === 'form' ? (
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-2 max-h-[70vh] overflow-auto">
             <div className="space-y-2">
               <Label htmlFor="modalidade">Modalidade</Label>
               <Input
@@ -173,12 +173,38 @@ export default function AttendanceCreationDialog({
               />
             </div>
 
+            {/* Lista de Atletas Inscritos */}
             {athletes && athletes.length > 0 && (
-              <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <Users className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-green-700">
-                  {athletes.length} atleta{athletes.length !== 1 ? 's' : ''} encontrado{athletes.length !== 1 ? 's' : ''} para esta modalidade.
-                </span>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <Users className="h-4 w-4 text-green-600" />
+                  <span className="text-sm text-green-700 font-medium">
+                    {athletes.length} atleta{athletes.length !== 1 ? 's' : ''} inscrito{athletes.length !== 1 ? 's' : ''} nesta modalidade:
+                  </span>
+                </div>
+                
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Lista de Atletas</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0 max-h-48 overflow-y-auto">
+                    <div className="space-y-2">
+                      {athletes.map((athlete, index) => (
+                        <div key={athlete.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm truncate">{athlete.nome_completo}</div>
+                            <div className="text-xs text-gray-500 truncate">{athlete.email}</div>
+                          </div>
+                          {athlete.numero_identificador && (
+                            <Badge variant="outline" className="text-xs ml-2">
+                              ID: {athlete.numero_identificador}
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
             
