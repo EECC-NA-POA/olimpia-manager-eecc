@@ -2,11 +2,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-
-interface TeamFormData {
-  nome: string;
-  modalidade_id: string;
-}
+import { TeamFormData } from './useTeamOperations';
 
 export function useTeamMutations(eventId: string | null, branchId?: string, editingTeam?: any) {
   const queryClient = useQueryClient();
@@ -15,7 +11,7 @@ export function useTeamMutations(eventId: string | null, branchId?: string, edit
   const teamMutation = useMutation({
     mutationFn: async (teamData: TeamFormData) => {
       const formattedData = {
-        ...teamData,
+        nome: teamData.nome,
         modalidade_id: parseInt(teamData.modalidade_id),
       };
       
@@ -30,10 +26,16 @@ export function useTeamMutations(eventId: string | null, branchId?: string, edit
         if (error) throw error;
         return data;
       } else {
-        // Create new team
+        // Create new team - get current user id for created_by
+        const { data: { user } } = await supabase.auth.getUser();
+        
         const { data, error } = await supabase
           .from('equipes')
-          .insert([{ ...formattedData, evento_id: eventId, filial_id: branchId }])
+          .insert([{ 
+            ...formattedData, 
+            evento_id: eventId,
+            created_by: user?.id
+          }])
           .select();
         
         if (error) throw error;

@@ -25,7 +25,7 @@ interface Team {
   modalidades?: {
     nome: string;
     categoria: string;
-  }; // Note: this is a single object, not an array
+  };
 }
 
 interface TeamsListProps {
