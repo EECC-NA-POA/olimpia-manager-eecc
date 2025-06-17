@@ -60,19 +60,19 @@ export const useSessionAttendance = (chamadaId: string | null) => {
           status,
           registrado_em,
           registrado_por,
-          atletas (
+          atletas!inner (
             nome_completo,
             email
           ),
-          chamadas (
+          chamadas!inner (
             id,
             descricao,
             data_hora_inicio,
             data_hora_fim,
             observacoes,
-            modalidade_representantes (
-              modalidades (nome),
-              filiais (nome)
+            modalidade_representantes!inner (
+              modalidades!inner (nome),
+              filiais!inner (nome)
             )
           )
         `)
@@ -97,8 +97,8 @@ export const useSessionAttendance = (chamadaId: string | null) => {
         // Transform the data to match our interface
         const transformedData = data.map(item => {
           const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
-          const atletaData = Array.isArray(item.atletas) ? item.atletas[0] : item.atletas;
-          const chamadaData = Array.isArray(item.chamadas) ? item.chamadas[0] : item.chamadas;
+          const atletaData = item.atletas;
+          const chamadaData = item.chamadas;
           
           return {
             ...item,
@@ -115,14 +115,10 @@ export const useSessionAttendance = (chamadaId: string | null) => {
               observacoes: chamadaData.observacoes,
               modalidade_representantes: {
                 modalidades: {
-                  nome: Array.isArray(chamadaData.modalidade_representantes) 
-                    ? chamadaData.modalidade_representantes[0]?.modalidades?.[0]?.nome || ''
-                    : chamadaData.modalidade_representantes?.modalidades?.[0]?.nome || ''
+                  nome: chamadaData.modalidade_representantes?.modalidades?.nome || ''
                 },
                 filiais: {
-                  nome: Array.isArray(chamadaData.modalidade_representantes) 
-                    ? chamadaData.modalidade_representantes[0]?.filiais?.[0]?.nome || ''
-                    : chamadaData.modalidade_representantes?.filiais?.[0]?.nome || ''
+                  nome: chamadaData.modalidade_representantes?.filiais?.nome || ''
                 }
               }
             } : undefined
@@ -134,8 +130,8 @@ export const useSessionAttendance = (chamadaId: string | null) => {
 
       // Se não há dados ou currentEventId, retornar sem numero_identificador
       const transformedData = data?.map(item => {
-        const atletaData = Array.isArray(item.atletas) ? item.atletas[0] : item.atletas;
-        const chamadaData = Array.isArray(item.chamadas) ? item.chamadas[0] : item.chamadas;
+        const atletaData = item.atletas;
+        const chamadaData = item.chamadas;
         
         return {
           ...item,
@@ -152,14 +148,10 @@ export const useSessionAttendance = (chamadaId: string | null) => {
             observacoes: chamadaData.observacoes,
             modalidade_representantes: {
               modalidades: {
-                nome: Array.isArray(chamadaData.modalidade_representantes) 
-                  ? chamadaData.modalidade_representantes[0]?.modalidades?.[0]?.nome || ''
-                  : chamadaData.modalidade_representantes?.modalidades?.[0]?.nome || ''
+                nome: chamadaData.modalidade_representantes?.modalidades?.nome || ''
               },
               filiais: {
-                nome: Array.isArray(chamadaData.modalidade_representantes) 
-                  ? chamadaData.modalidade_representantes[0]?.filiais?.[0]?.nome || ''
-                  : chamadaData.modalidade_representantes?.filiais?.[0]?.nome || ''
+                nome: chamadaData.modalidade_representantes?.filiais?.nome || ''
               }
             }
           } : undefined
@@ -202,7 +194,7 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
         .from('inscricoes_modalidades')
         .select(`
           atleta_id,
-          atletas (
+          atletas!inner (
             id,
             nome_completo,
             email
@@ -232,7 +224,7 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
 
       const athletes = inscricoesData.map(item => {
         const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
-        const atletaData = Array.isArray(item.atletas) ? item.atletas[0] : item.atletas;
+        const atletaData = item.atletas;
         
         return {
           id: atletaData?.id || '',
