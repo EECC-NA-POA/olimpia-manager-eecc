@@ -34,8 +34,8 @@ export const useMonitorMutations = () => {
 
       if (repError) throw repError;
 
-      // Buscar atletas inscritos na modalidade usando o evento atual
-      const { data: athletesData, error: athletesError } = await supabase
+      // Buscar atletas inscritos na modalidade
+      const { data: inscricoesData, error: inscricoesError } = await supabase
         .from('inscricoes_modalidades')
         .select(`
           atleta_id,
@@ -45,9 +45,9 @@ export const useMonitorMutations = () => {
         .eq('evento_id', currentEventId)
         .eq('status', 'confirmado');
 
-      if (athletesError) throw athletesError;
+      if (inscricoesError) throw inscricoesError;
 
-      if (!athletesData || athletesData.length === 0) {
+      if (!inscricoesData || inscricoesData.length === 0) {
         throw new Error('Não há atletas inscritos nesta modalidade');
       }
 
@@ -64,7 +64,7 @@ export const useMonitorMutations = () => {
       if (chamadaError) throw chamadaError;
 
       // Criar registros de presença para todos os atletas (padrão: presente)
-      const attendanceRecords = athletesData.map(item => {
+      const attendanceRecords = inscricoesData.map(item => {
         const usuario = item.usuarios as any;
         const atletaId = Array.isArray(usuario) ? usuario[0]?.id : usuario?.id;
         return {

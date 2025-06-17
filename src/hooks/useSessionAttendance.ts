@@ -125,8 +125,8 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
 
       console.log('Representative data:', repData);
 
-      // Buscar atletas inscritos na modalidade usando o evento atual
-      const { data, error } = await supabase
+      // Buscar atletas inscritos na modalidade
+      const { data: inscricoesData, error: inscricoesError } = await supabase
         .from('inscricoes_modalidades')
         .select(`
           atleta_id,
@@ -134,31 +134,41 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
             id,
             nome_completo,
             email
-          ),
-          pagamentos!left (
-            numero_identificador
           )
         `)
         .eq('modalidade_id', repData.modalidade_id)
         .eq('evento_id', currentEventId)
-        .eq('status', 'confirmado')
-        .eq('pagamentos.evento_id', currentEventId);
+        .eq('status', 'confirmado');
 
-      if (error) {
-        console.error('Error fetching athletes for attendance:', error);
-        throw error;
+      if (inscricoesError) {
+        console.error('Error fetching athletes for attendance:', inscricoesError);
+        throw inscricoesError;
       }
 
-      const athletes = data?.map(item => {
+      if (!inscricoesData || inscricoesData.length === 0) {
+        console.log('No athletes found for attendance');
+        return [];
+      }
+
+      // Buscar dados de pagamento separadamente
+      const atletaIds = inscricoesData.map(item => item.atleta_id);
+      const { data: pagamentosData } = await supabase
+        .from('pagamentos')
+        .select('atleta_id, numero_identificador')
+        .in('atleta_id', atletaIds)
+        .eq('evento_id', currentEventId);
+
+      const athletes = inscricoesData.map(item => {
         const usuario = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
-        const pagamento = Array.isArray(item.pagamentos) ? item.pagamentos[0] : item.pagamentos;
+        const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
+        
         return {
           id: usuario.id,
           nome_completo: usuario.nome_completo,
           email: usuario.email,
           numero_identificador: pagamento?.numero_identificador || null,
         };
-      }) || [];
+      });
 
       console.log('Athletes for attendance:', athletes);
       return athletes as AthleteForAttendance[];
