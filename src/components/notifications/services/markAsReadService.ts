@@ -120,6 +120,15 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
     };
     console.log('Insert data:', insertData);
     
+    // **TESTE: verificar se consegue consultar notificacao_destinatarios diretamente**
+    console.log('=== TESTING DIRECT ACCESS TO DESTINATIONS ===');
+    const { data: testDestinations, error: testDestError } = await supabase
+      .from('notificacao_destinatarios')
+      .select('*')
+      .eq('notificacao_id', notificationId);
+    
+    console.log('Direct destinations query result:', { testDestinations, testDestError });
+    
     // Inserir o registro de leitura
     console.log('=== INSERTING READ RECORD ===');
     const { data: insertResult, error: insertError } = await supabase
