@@ -62,7 +62,15 @@ export const useMonitorModalities = () => {
       }
 
       console.log('Monitor modalities data:', data);
-      return (data || []) as MonitorModality[];
+      
+      // Transform the data to match our interface since Supabase returns nested objects as arrays
+      const transformedData = data?.map(item => ({
+        ...item,
+        modalidades: Array.isArray(item.modalidades) ? item.modalidades[0] : item.modalidades,
+        filiais: Array.isArray(item.filiais) ? item.filiais[0] : item.filiais
+      })) || [];
+
+      return transformedData as MonitorModality[];
     },
     enabled: !!user?.id,
   });

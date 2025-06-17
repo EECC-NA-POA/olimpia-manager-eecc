@@ -59,7 +59,14 @@ export const useSessionAttendance = (chamadaId: number | null) => {
       }
 
       console.log('Session attendance data:', data);
-      return (data || []) as SessionAttendance[];
+      
+      // Transform the data to match our interface
+      const transformedData = data?.map(item => ({
+        ...item,
+        atleta: Array.isArray(item.atleta) ? item.atleta[0] : item.atleta
+      })) || [];
+
+      return transformedData as SessionAttendance[];
     },
     enabled: !!chamadaId,
   });
@@ -106,12 +113,15 @@ export const useAthletesForAttendance = (modalidadeRepId: number | null) => {
         throw error;
       }
 
-      const athletes = data?.map(item => ({
-        id: item.usuarios.id,
-        nome_completo: item.usuarios.nome_completo,
-        email: item.usuarios.email,
-        numero_identificador: item.usuarios.numero_identificador,
-      })) || [];
+      const athletes = data?.map(item => {
+        const usuario = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
+        return {
+          id: usuario.id,
+          nome_completo: usuario.nome_completo,
+          email: usuario.email,
+          numero_identificador: usuario.numero_identificador,
+        };
+      }) || [];
 
       console.log('Athletes for attendance:', athletes);
       return athletes as AthleteForAttendance[];

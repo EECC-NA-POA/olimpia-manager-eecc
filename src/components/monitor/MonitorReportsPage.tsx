@@ -139,7 +139,7 @@ export default function MonitorReportsPage() {
 
       const attendancesByAthlete = new Map();
       athletesData.forEach(athlete => {
-        const userData = athlete.usuarios;
+        const userData = Array.isArray(athlete.usuarios) ? athlete.usuarios[0] : athlete.usuarios;
         if (userData) {
           attendancesByAthlete.set(athlete.atleta_id, {
             athlete_name: userData.nome_completo,

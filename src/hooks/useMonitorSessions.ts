@@ -57,7 +57,21 @@ export const useMonitorSessions = (modalidadeRepId?: number) => {
       }
 
       console.log('Monitor sessions data:', data);
-      return (data || []) as MonitorSession[];
+      
+      // Transform the data to match our interface
+      const transformedData = data?.map(item => ({
+        ...item,
+        modalidade_representantes: {
+          modalidades: Array.isArray(item.modalidade_representantes.modalidades) 
+            ? item.modalidade_representantes.modalidades[0] 
+            : item.modalidade_representantes.modalidades,
+          filiais: Array.isArray(item.modalidade_representantes.filiais) 
+            ? item.modalidade_representantes.filiais[0] 
+            : item.modalidade_representantes.filiais
+        }
+      })) || [];
+
+      return transformedData as MonitorSession[];
     },
     enabled: !!modalidadeRepId,
   });
