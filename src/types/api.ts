@@ -88,6 +88,7 @@ export interface BranchAnalytics {
   total_inscritos_modalidades: number;
   valor_total_pago: number;
   valor_total_pendente: number;
+  total_isentos?: number;
   modalidades_populares: ModalidadePopular[];
   total_inscritos_por_status: StatusPagamento[];
   inscritos_por_status_pagamento: StatusInscricao[];
