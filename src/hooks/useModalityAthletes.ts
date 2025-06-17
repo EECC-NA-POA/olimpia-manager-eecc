@@ -33,7 +33,7 @@ export const useModalityAthletes = (modalidadeRepId?: string) => {
         .from('inscricoes_modalidades')
         .select(`
           atleta_id,
-          usuarios!inner (
+          usuarios!inscricoes_modalidades_atleta_id_fkey (
             id,
             nome_completo,
             email
@@ -53,7 +53,7 @@ export const useModalityAthletes = (modalidadeRepId?: string) => {
         return [];
       }
 
-      // Buscar dados de pagamento separadamente
+      // Buscar dados de pagamento separadamente usando atleta_id
       const atletaIds = inscricoesData.map(item => item.atleta_id);
       const { data: pagamentosData } = await supabase
         .from('pagamentos')

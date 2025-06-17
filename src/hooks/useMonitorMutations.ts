@@ -39,7 +39,7 @@ export const useMonitorMutations = () => {
         .from('inscricoes_modalidades')
         .select(`
           atleta_id,
-          usuarios!inner (id)
+          usuarios!inscricoes_modalidades_atleta_id_fkey (id)
         `)
         .eq('modalidade_id', repData.modalidade_id)
         .eq('evento_id', currentEventId)
