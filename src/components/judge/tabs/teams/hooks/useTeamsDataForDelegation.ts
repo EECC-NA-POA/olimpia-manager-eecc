@@ -83,11 +83,15 @@ export function useTeamsDataForDelegation(
           const atletas = (athletesData || []).map(athlete => {
             console.log('Processing athlete data:', athlete);
             
-            // usuarios should be a single object due to the foreign key relationship
-            const usuario = athlete.usuarios;
+            // Handle usuarios data - it should be a single object due to foreign key
+            const usuario = Array.isArray(athlete.usuarios) 
+              ? athlete.usuarios[0] 
+              : athlete.usuarios;
             
-            // filiais should be a single object due to the foreign key relationship  
-            const filial = usuario?.filiais;
+            // Handle filiais data - it should be a single object due to foreign key  
+            const filial = usuario?.filiais 
+              ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
+              : null;
 
             console.log(`Processing athlete: ${usuario?.nome_completo} from filial ${usuario?.filial_id}`, {
               usuario,
