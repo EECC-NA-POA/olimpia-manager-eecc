@@ -51,6 +51,9 @@ export default function AthleteProfile({ profile, isPublicUser }: AthleteProfile
     });
   };
 
+  console.log('AthleteProfile - profile:', profile);
+  console.log('AthleteProfile - isPublicUser:', isPublicUser);
+
   return (
     <div className="space-y-6">
       {!isPublicUser && (
@@ -108,7 +111,7 @@ export default function AthleteProfile({ profile, isPublicUser }: AthleteProfile
         <DependentsTable userId={profile.id} eventId={currentEventId} />
       )}
 
-      {/* Seção de Notificações */}
+      {/* Seção de Notificações - sempre mostrar se tiver evento atual */}
       {currentEventId && (
         <Notifications 
           eventId={currentEventId}
