@@ -116,7 +116,29 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
         registrations?.forEach(reg => {
           // Handle usuarios correctly - it's a single object due to the foreign key relationship
           const usuario = reg.usuarios;
-          if (usuario && ['atleta', 'dependente'].includes(usuario.tipo_perfil)) {
+          if (usuario && Array.isArray(usuario)) {
+            // If it's an array, take the first element
+            const firstUser = usuario[0];
+            if (firstUser && ['atleta', 'dependente'].includes(firstUser.tipo_perfil)) {
+              if (reg.status in statusCounts) {
+                statusCounts[reg.status as keyof typeof statusCounts]++;
+              }
+
+              // Calculate payment totals including dependents
+              if (Array.isArray(reg.pagamentos)) {
+                reg.pagamentos.forEach((pagamento: any) => {
+                  if (pagamento.status === 'confirmado') {
+                    totalPago += Number(pagamento.valor) || 0;
+                  } else if (pagamento.status === 'pendente') {
+                    totalPendente += Number(pagamento.valor) || 0;
+                  } else if (pagamento.status === 'isento') {
+                    statusCounts.isento++;
+                  }
+                });
+              }
+            }
+          } else if (usuario && ['atleta', 'dependente'].includes(usuario.tipo_perfil)) {
+            // If it's a single object
             if (reg.status in statusCounts) {
               statusCounts[reg.status as keyof typeof statusCounts]++;
             }
