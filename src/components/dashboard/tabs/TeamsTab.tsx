@@ -8,8 +8,12 @@ import { EmptyState } from '../components/EmptyState';
 import { useTeamOperations } from './teams/hooks/useTeamOperations';
 import { TeamFormDialog } from './teams/TeamFormDialog';
 import { TeamsList } from './teams/TeamsList';
+import { TeamFormation } from '../../judge/TeamFormation';
+import { useTeamsDataForDelegation } from '../../judge/tabs/teams/hooks/useTeamsDataForDelegation';
+import { useAvailableAthletesData } from '../../judge/tabs/teams/hooks/useAvailableAthletesData';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { useState } from 'react';
 
 interface TeamsTabProps {
   eventId: string | null;
@@ -19,6 +23,7 @@ interface TeamsTabProps {
 export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [selectedModalityId, setSelectedModalityId] = useState<number | null>(null);
   
   // Use branch ID from user if not provided
   const userBranchId = branchId || user?.filial_id;
@@ -40,6 +45,21 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
     handleDeleteTeam,
     handleNewTeamClick
   } = useTeamOperations(eventId, userBranchId);
+
+  // Get teams for selected modality with athletes from the user's branch
+  const { data: modalityTeams, isLoading: isLoadingModalityTeams } = useTeamsDataForDelegation(
+    eventId,
+    selectedModalityId,
+    userBranchId
+  );
+
+  // Get available athletes for the selected modality (filtered by branch)
+  const { data: availableAthletes, isLoading: isLoadingAthletes } = useAvailableAthletesData(
+    eventId,
+    selectedModalityId,
+    false, // isOrganizer = false
+    modalityTeams || []
+  );
 
   // Loading state
   if (isLoadingTeams || isLoadingModalities) {
@@ -83,6 +103,25 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
           Nova Equipe
         </Button>
       </div>
+
+      {/* Modality Selector */}
+      <div className="space-y-4">
+        <div>
+          <label className="text-sm font-medium">Selecione uma modalidade coletiva:</label>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {teamModalities?.map((modality) => (
+              <Button
+                key={modality.id}
+                variant={selectedModalityId === modality.id ? "default" : "outline"}
+                onClick={() => setSelectedModalityId(modality.id)}
+                className="text-sm"
+              >
+                {modality.nome} - {modality.categoria}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
       
       {/* Team Form Dialog */}
       <TeamFormDialog 
@@ -95,12 +134,40 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
         resetFormAndDialog={resetAndCloseDialog}
       />
       
-      {/* Teams List */}
-      <TeamsList 
-        teams={teams || []}
-        onEditTeam={handleEditTeam}
-        onDeleteTeam={handleDeleteTeam}
-      />
+      {/* Show team formation interface when a modality is selected */}
+      {selectedModalityId && (
+        <div className="space-y-6">
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-semibold mb-4">
+              Formação de Equipes - {teamModalities?.find(m => m.id === selectedModalityId)?.nome}
+            </h3>
+            
+            {isLoadingModalityTeams || isLoadingAthletes ? (
+              <LoadingState />
+            ) : (
+              <TeamFormation
+                teams={modalityTeams || []}
+                availableAthletes={availableAthletes || []}
+                eventId={eventId}
+                modalityId={selectedModalityId}
+                isOrganizer={false}
+                isReadOnly={false}
+                branchId={userBranchId}
+              />
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Teams List - Show all teams for the branch */}
+      <div className="border-t pt-6">
+        <h3 className="text-lg font-semibold mb-4">Todas as Equipes da Filial</h3>
+        <TeamsList 
+          teams={teams || []}
+          onEditTeam={handleEditTeam}
+          onDeleteTeam={handleDeleteTeam}
+        />
+      </div>
     </div>
   );
 }
