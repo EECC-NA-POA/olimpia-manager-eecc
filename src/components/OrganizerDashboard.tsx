@@ -1,8 +1,9 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, ListChecks, BarChart, UsersRound, Bell } from "lucide-react";
+import { Users, ListChecks, BarChart, Bell } from "lucide-react";
 import { EmptyState } from "./dashboard/components/EmptyState";
 import { LoadingState } from "./dashboard/components/LoadingState";
 import { ErrorState } from "./dashboard/components/ErrorState";
@@ -11,7 +12,6 @@ import { NoEventSelected } from "./dashboard/components/NoEventSelected";
 import { AthletesTab } from "./dashboard/tabs/AthletesTab";
 import { EnrollmentsTab } from "./dashboard/tabs/EnrollmentsTab";
 import { StatisticsTab } from "./dashboard/tabs/StatisticsTab";
-import { TeamsTab } from "./judge/tabs/TeamsTab";
 import { NotificationManager } from "./notifications/NotificationManager";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
@@ -103,15 +103,6 @@ export default function OrganizerDashboard() {
         }
         return <EnrollmentsTab enrollments={confirmedEnrollments} />;
 
-      case "teams":
-        return (
-          <TeamsTab
-            userId={user?.id || ''}
-            eventId={currentEventId}
-            isOrganizer={true}
-          />
-        );
-
       case "notifications":
         return (
           <NotificationManager
@@ -158,14 +149,6 @@ export default function OrganizerDashboard() {
               <span className="sm:hidden">Inscrições</span>
             </TabsTrigger>
             <TabsTrigger 
-              value="teams"
-              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
-            >
-              <UsersRound className="h-3 w-3 sm:h-5 sm:w-5" />
-              <span className="hidden sm:inline">Equipes</span>
-              <span className="sm:hidden">Equipes</span>
-            </TabsTrigger>
-            <TabsTrigger 
               value="notifications"
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
             >
@@ -186,10 +169,6 @@ export default function OrganizerDashboard() {
 
         <TabsContent value="enrollments" className="mt-4 sm:mt-6">
           {renderTabContent("enrollments")}
-        </TabsContent>
-        
-        <TabsContent value="teams" className="mt-4 sm:mt-6">
-          {renderTabContent("teams")}
         </TabsContent>
 
         <TabsContent value="notifications" className="mt-4 sm:mt-6">
