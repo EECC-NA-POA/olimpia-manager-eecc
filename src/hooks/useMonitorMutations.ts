@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -64,7 +63,9 @@ export const useMonitorMutations = () => {
 
       // Criar registros de presença para todos os atletas (padrão: presente)
       const attendanceRecords = athletesData.map(item => {
-        const atletaId = Array.isArray(item.usuarios) ? item.usuarios[0]?.id : item.usuarios?.id;
+        // Type assertion to handle the usuarios relation properly
+        const usuario = item.usuarios as any;
+        const atletaId = Array.isArray(usuario) ? usuario[0]?.id : usuario?.id;
         return {
           chamada_id: chamada.id,
           atleta_id: atletaId,
