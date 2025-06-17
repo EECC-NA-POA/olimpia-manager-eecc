@@ -26,8 +26,6 @@ interface Team {
     nome: string;
     categoria: string;
   }; // Note: this is a single object, not an array
-  cor_uniforme?: string;
-  observacoes?: string;
 }
 
 interface TeamsListProps {
@@ -60,8 +58,6 @@ export function TeamsList({ teams, onEditTeam, onDeleteTeam }: TeamsListProps) {
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>Modalidade</TableHead>
-              <TableHead>Uniforme</TableHead>
-              <TableHead>Observações</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -70,8 +66,6 @@ export function TeamsList({ teams, onEditTeam, onDeleteTeam }: TeamsListProps) {
               <TableRow key={team.id}>
                 <TableCell className="font-medium">{team.nome}</TableCell>
                 <TableCell>{team.modalidades?.nome} - {team.modalidades?.categoria}</TableCell>
-                <TableCell>{team.cor_uniforme || '-'}</TableCell>
-                <TableCell>{team.observacoes || '-'}</TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button
                     variant="outline"
