@@ -42,50 +42,67 @@ export const useMonitorModalities = () => {
       console.log('useMonitorModalities - Fetching monitor modalities for user:', user.id);
       console.log('useMonitorModalities - Current event ID:', currentEventId);
       
-      // First, let's check if the user exists in modalidade_representantes
-      const { data: checkData, error: checkError } = await supabase
+      // First, let's check if the user exists in modalidade_representantes without any filters
+      console.log('=== STEP 1: Checking user in modalidade_representantes ===');
+      const { data: allUserReps, error: allUserError } = await supabase
         .from('modalidade_representantes')
         .select('*')
         .eq('atleta_id', user.id);
 
-      console.log('useMonitorModalities - Raw modalidade_representantes check:', checkData);
-      console.log('useMonitorModalities - Check error:', checkError);
+      console.log('useMonitorModalities - All user representatives:', allUserReps);
+      console.log('useMonitorModalities - Error:', allUserError);
 
-      // Now let's get the full data with joins
-      const { data, error } = await supabase
+      // Check if modalidades exist for current event
+      console.log('=== STEP 2: Checking modalidades for current event ===');
+      const { data: eventModalities, error: modalitiesError } = await supabase
+        .from('modalidades')
+        .select('id, nome, categoria, evento_id')
+        .eq('evento_id', currentEventId);
+
+      console.log('useMonitorModalities - Event modalidades:', eventModalities);
+      console.log('useMonitorModalities - Modalidades error:', modalitiesError);
+
+      // Try a simpler query first
+      console.log('=== STEP 3: Simple query with user filter ===');
+      const { data: simpleData, error: simpleError } = await supabase
         .from('modalidade_representantes')
         .select(`
-          id,
-          atleta_id,
-          modalidade_id,
-          filial_id,
-          criado_em,
-          atualizado_em,
-          modalidades!inner (
+          *,
+          modalidades (
             id,
             nome,
             categoria,
             evento_id
           ),
-          filiais!inner (
+          filiais (
             id,
             nome,
             cidade,
             estado
           )
         `)
-        .eq('atleta_id', user.id)
-        .eq('modalidades.evento_id', currentEventId);
+        .eq('atleta_id', user.id);
 
-      if (error) {
-        console.error('useMonitorModalities - Error fetching monitor modalities:', error);
-        throw error;
+      console.log('useMonitorModalities - Simple query result:', simpleData);
+      console.log('useMonitorModalities - Simple query error:', simpleError);
+
+      // Filter by event on the client side for now
+      const filteredData = simpleData?.filter(item => {
+        console.log('useMonitorModalities - Checking item:', item);
+        console.log('useMonitorModalities - Item modalidade evento_id:', item.modalidades?.evento_id);
+        console.log('useMonitorModalities - Current event ID:', currentEventId);
+        return item.modalidades?.evento_id === currentEventId;
+      });
+
+      console.log('useMonitorModalities - Filtered data:', filteredData);
+
+      if (simpleError) {
+        console.error('useMonitorModalities - Error in simple query:', simpleError);
+        throw simpleError;
       }
 
-      console.log('useMonitorModalities - Monitor modalities data with joins:', data);
-      
-      // Transform the data to match our interface since Supabase returns nested objects as arrays
-      const transformedData = data?.map(item => {
+      // Transform the data to match our interface
+      const transformedData = filteredData?.map(item => {
         console.log('useMonitorModalities - Transforming item:', item);
         return {
           ...item,
