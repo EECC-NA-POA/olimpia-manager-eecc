@@ -18,8 +18,48 @@ import EventSelectionPage from "@/pages/EventSelectionPage";
 import OrganizerPage from "@/pages/OrganizerPage";
 import EventManagement from "@/pages/EventManagement";
 import SessionDetailsPage from "@/components/monitor/SessionDetailsPage";
+import { MainNavigation } from "@/components/MainNavigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
+
+function AppContent() {
+  const { user } = useAuth();
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <GlobalHeader />
+      {user ? (
+        <MainNavigation>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/athlete" element={<AthleteProfile />} />
+            <Route path="/athlete-profile" element={<AthleteProfile />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/judge" element={<JudgeDashboard />} />
+            <Route path="/monitor" element={<MonitorPage />} />
+            <Route path="/monitor/session/:sessionId" element={<SessionDetailsPage />} />
+            <Route path="/delegation" element={<DelegationPage />} />
+            <Route path="/events" element={<EventsLandingPage />} />
+            <Route path="/event-selection" element={<EventSelectionPage />} />
+            <Route path="/organizer/events" element={<OrganizerPage />} />
+            <Route path="/organizer/events/:eventId" element={<EventManagement />} />
+          </Routes>
+        </MainNavigation>
+      ) : (
+        <main className="flex-1">
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/events" element={<EventsLandingPage />} />
+            <Route path="/event-selection" element={<EventSelectionPage />} />
+          </Routes>
+        </main>
+      )}
+      <Footer />
+    </div>
+  );
+}
 
 function App() {
   return (
@@ -28,27 +68,7 @@ function App() {
         <Toaster />
         <BrowserRouter>
           <AuthProvider>
-            <div className="min-h-screen flex flex-col">
-              <GlobalHeader />
-              <main className="flex-1">
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/athlete" element={<AthleteProfile />} />
-                  <Route path="/athlete-profile" element={<AthleteProfile />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/judge" element={<JudgeDashboard />} />
-                  <Route path="/monitor" element={<MonitorPage />} />
-                  <Route path="/monitor/session/:sessionId" element={<SessionDetailsPage />} />
-                  <Route path="/delegation" element={<DelegationPage />} />
-                  <Route path="/events" element={<EventsLandingPage />} />
-                  <Route path="/event-selection" element={<EventSelectionPage />} />
-                  <Route path="/organizer/events" element={<OrganizerPage />} />
-                  <Route path="/organizer/events/:eventId" element={<EventManagement />} />
-                </Routes>
-              </main>
-              <Footer />
-            </div>
+            <AppContent />
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
