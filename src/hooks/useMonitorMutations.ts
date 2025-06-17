@@ -2,142 +2,131 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
-export interface CreateSessionData {
-  modalidade_rep_id: number;
+interface CreateSessionData {
+  modalidade_rep_id: string;
   data_hora_inicio: string;
   data_hora_fim?: string;
   descricao: string;
 }
 
-export interface UpdateSessionData {
-  id: number;
-  data_hora_inicio?: string;
-  data_hora_fim?: string;
-  descricao?: string;
-}
-
-export interface AttendanceData {
-  chamada_id: number;
+interface SaveAttendanceData {
+  chamada_id: string;
   atleta_id: string;
   status: 'presente' | 'ausente' | 'atrasado';
-  observacoes?: string;
 }
 
 export const useMonitorMutations = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const createSession = useMutation({
-    mutationFn: async (data: CreateSessionData) => {
-      console.log('Creating session:', data);
-      
-      const { data: result, error } = await supabase
+    mutationFn: async (sessionData: CreateSessionData) => {
+      if (!user?.id) throw new Error('Usuário não autenticado');
+
+      const { data, error } = await supabase
         .from('chamadas')
-        .insert([data])
+        .insert({
+          ...sessionData,
+          criado_por: user.id
+        })
         .select()
         .single();
 
-      if (error) {
-        console.error('Error creating session:', error);
-        throw error;
-      }
-
-      return result;
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['monitor-sessions'] });
       toast.success('Sessão criada com sucesso!');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error creating session:', error);
-      toast.error('Erro ao criar sessão');
-    },
+      toast.error('Erro ao criar sessão: ' + error.message);
+    }
   });
 
   const updateSession = useMutation({
-    mutationFn: async (data: UpdateSessionData) => {
-      console.log('Updating session:', data);
-      
-      const { id, ...updateData } = data;
-      const { data: result, error } = await supabase
+    mutationFn: async ({ id, data }: { id: string; data: Partial<CreateSessionData> }) => {
+      const { error } = await supabase
         .from('chamadas')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
+        .update({
+          ...data,
+          atualizado_em: new Date().toISOString()
+        })
+        .eq('id', id);
 
-      if (error) {
-        console.error('Error updating session:', error);
-        throw error;
-      }
-
-      return result;
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['monitor-sessions'] });
       toast.success('Sessão atualizada com sucesso!');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error updating session:', error);
-      toast.error('Erro ao atualizar sessão');
-    },
+      toast.error('Erro ao atualizar sessão: ' + error.message);
+    }
   });
 
   const deleteSession = useMutation({
-    mutationFn: async (sessionId: number) => {
-      console.log('Deleting session:', sessionId);
-      
+    mutationFn: async (sessionId: string) => {
       const { error } = await supabase
         .from('chamadas')
         .delete()
         .eq('id', sessionId);
 
-      if (error) {
-        console.error('Error deleting session:', error);
-        throw error;
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['monitor-sessions'] });
       toast.success('Sessão excluída com sucesso!');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error deleting session:', error);
-      toast.error('Erro ao excluir sessão');
-    },
+      toast.error('Erro ao excluir sessão: ' + error.message);
+    }
   });
 
   const saveAttendances = useMutation({
-    mutationFn: async (attendances: AttendanceData[]) => {
-      console.log('Saving attendances:', attendances);
-      
-      const { data, error } = await supabase
-        .from('chamada_presencas')
-        .upsert(attendances, {
-          onConflict: 'chamada_id,atleta_id'
-        });
+    mutationFn: async (attendances: SaveAttendanceData[]) => {
+      if (!user?.id) throw new Error('Usuário não autenticado');
 
-      if (error) {
-        console.error('Error saving attendances:', error);
-        throw error;
+      // First, delete existing attendances for this session
+      const chamadaId = attendances[0]?.chamada_id;
+      if (chamadaId) {
+        await supabase
+          .from('chamada_presencas')
+          .delete()
+          .eq('chamada_id', chamadaId);
       }
 
-      return data;
+      // Then insert new attendances
+      const attendancesToInsert = attendances.map(attendance => ({
+        ...attendance,
+        registrado_por: user.id
+      }));
+
+      const { error } = await supabase
+        .from('chamada_presencas')
+        .insert(attendancesToInsert);
+
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['session-attendance'] });
       toast.success('Presenças salvas com sucesso!');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error saving attendances:', error);
-      toast.error('Erro ao salvar presenças');
-    },
+      toast.error('Erro ao salvar presenças: ' + error.message);
+    }
   });
 
   return {
     createSession,
     updateSession,
     deleteSession,
-    saveAttendances,
+    saveAttendances
   };
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,13 +13,13 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface AttendanceSessionDetailProps {
-  sessionId: number;
+  sessionId: string;
   onBack: () => void;
 }
 
 export default function AttendanceSessionDetail({ sessionId, onBack }: AttendanceSessionDetailProps) {
-  const [attendanceData, setAttendanceData] = useState<Map<string, { status: string; observacoes: string; attendance_id?: number }>>(new Map());
-  const [modalidadeRepId, setModalidadeRepId] = useState<number | null>(null);
+  const [attendanceData, setAttendanceData] = useState<Map<string, { status: string; attendance_id?: string }>>(new Map());
+  const [modalidadeRepId, setModalidadeRepId] = useState<string | null>(null);
 
   // Buscar dados da sessão
   const { data: sessions } = useMonitorSessions(modalidadeRepId);
@@ -50,7 +49,6 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
       athletes.forEach(athlete => {
         newAttendanceData.set(athlete.id, {
           status: 'ausente',
-          observacoes: '',
           attendance_id: undefined
         });
       });
@@ -59,7 +57,6 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
       existingAttendances.forEach(attendance => {
         newAttendanceData.set(attendance.atleta_id, {
           status: attendance.status,
-          observacoes: attendance.observacoes || '',
           attendance_id: attendance.id
         });
       });
@@ -69,59 +66,23 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
   }, [existingAttendances, athletes]);
 
   const handleStatusChange = (athleteId: string, status: string) => {
-    const current = attendanceData.get(athleteId) || { status: 'ausente', observacoes: '' };
+    const current = attendanceData.get(athleteId) || { status: 'ausente' };
     setAttendanceData(new Map(attendanceData.set(athleteId, { ...current, status })));
-  };
-
-  const handleObservationsChange = (athleteId: string, observacoes: string) => {
-    const current = attendanceData.get(athleteId) || { status: 'ausente', observacoes: '' };
-    setAttendanceData(new Map(attendanceData.set(athleteId, { ...current, observacoes })));
   };
 
   const handleSaveAttendances = async () => {
     if (!athletes) return;
 
     const attendancesToSave = athletes.map(athlete => {
-      const data = attendanceData.get(athlete.id) || { status: 'ausente', observacoes: '' };
+      const data = attendanceData.get(athlete.id) || { status: 'ausente' };
       return {
         chamada_id: sessionId,
         atleta_id: athlete.id,
-        status: data.status as 'presente' | 'ausente' | 'atrasado',
-        observacoes: data.observacoes || undefined
+        status: data.status as 'presente' | 'ausente' | 'atrasado'
       };
     });
 
     await saveAttendances.mutateAsync(attendancesToSave);
-  };
-
-  const getStatusBadge = (status: string) => {
-    const colors = {
-      presente: 'bg-green-100 text-green-800 border-green-200',
-      ausente: 'bg-red-100 text-red-800 border-red-200',
-      atrasado: 'bg-yellow-100 text-yellow-800 border-yellow-200'
-    };
-    return colors[status as keyof typeof colors] || colors.ausente;
-  };
-
-  const getStatusCounts = () => {
-    if (!athletes) return { presente: 0, ausente: 0, atrasado: 0, total: 0 };
-    
-    let presente = 0, ausente = 0, atrasado = 0;
-    
-    athletes.forEach(athlete => {
-      const data = attendanceData.get(athlete.id);
-      if (data) {
-        switch (data.status) {
-          case 'presente': presente++; break;
-          case 'atrasado': atrasado++; break;
-          default: ausente++; break;
-        }
-      } else {
-        ausente++;
-      }
-    });
-    
-    return { presente, ausente, atrasado, total: athletes.length };
   };
 
   if (attendancesLoading || athletesLoading || !session) {
@@ -153,6 +114,36 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
       </div>
     );
   }
+
+  const getStatusBadge = (status: string) => {
+    const colors = {
+      presente: 'bg-green-100 text-green-800 border-green-200',
+      ausente: 'bg-red-100 text-red-800 border-red-200',
+      atrasado: 'bg-yellow-100 text-yellow-800 border-yellow-200'
+    };
+    return colors[status as keyof typeof colors] || colors.ausente;
+  };
+
+  const getStatusCounts = () => {
+    if (!athletes) return { presente: 0, ausente: 0, atrasado: 0, total: 0 };
+    
+    let presente = 0, ausente = 0, atrasado = 0;
+    
+    athletes.forEach(athlete => {
+      const data = attendanceData.get(athlete.id);
+      if (data) {
+        switch (data.status) {
+          case 'presente': presente++; break;
+          case 'atrasado': atrasado++; break;
+          default: ausente++; break;
+        }
+      } else {
+        ausente++;
+      }
+    });
+    
+    return { presente, ausente, atrasado, total: athletes.length };
+  };
 
   const counts = getStatusCounts();
 
@@ -230,12 +221,11 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
                 <TableHead>Atleta</TableHead>
                 <TableHead>ID</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Observações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {athletes.map((athlete) => {
-                const data = attendanceData.get(athlete.id) || { status: 'ausente', observacoes: '' };
+                const data = attendanceData.get(athlete.id) || { status: 'ausente' };
                 return (
                   <TableRow key={athlete.id}>
                     <TableCell>
@@ -269,14 +259,6 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
                           </SelectItem>
                         </SelectContent>
                       </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        value={data.observacoes}
-                        onChange={(e) => handleObservationsChange(athlete.id, e.target.value)}
-                        placeholder="Observações..."
-                        className="w-48"
-                      />
                     </TableCell>
                   </TableRow>
                 );

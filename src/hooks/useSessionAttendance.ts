@@ -3,13 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
 export interface SessionAttendance {
-  id: number;
-  chamada_id: number;
+  id: string;
+  chamada_id: string;
   atleta_id: string;
   status: 'presente' | 'ausente' | 'atrasado';
-  observacoes: string | null;
-  created_at: string;
-  updated_at: string;
+  registrado_em: string;
+  registrado_por: string;
   atleta: {
     nome_completo: string;
     email: string;
@@ -23,11 +22,10 @@ export interface AthleteForAttendance {
   email: string;
   numero_identificador: string | null;
   status?: 'presente' | 'ausente' | 'atrasado';
-  observacoes?: string;
-  attendance_id?: number;
+  attendance_id?: string;
 }
 
-export const useSessionAttendance = (chamadaId: number | null) => {
+export const useSessionAttendance = (chamadaId: string | null) => {
   return useQuery({
     queryKey: ['session-attendance', chamadaId],
     queryFn: async () => {
@@ -42,9 +40,8 @@ export const useSessionAttendance = (chamadaId: number | null) => {
           chamada_id,
           atleta_id,
           status,
-          observacoes,
-          created_at,
-          updated_at,
+          registrado_em,
+          registrado_por,
           atleta:usuarios!inner (
             nome_completo,
             email,
@@ -72,7 +69,7 @@ export const useSessionAttendance = (chamadaId: number | null) => {
   });
 };
 
-export const useAthletesForAttendance = (modalidadeRepId: number | null) => {
+export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
   return useQuery({
     queryKey: ['athletes-for-attendance', modalidadeRepId],
     queryFn: async () => {

@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 
 export interface MonitorModality {
-  id: number;
+  id: string;
   usuario_id: string;
   modalidade_id: number;
   filial_id: number;

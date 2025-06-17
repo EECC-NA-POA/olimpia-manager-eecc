@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,11 +20,11 @@ export default function MonitorAttendancePage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const modalidadeParam = searchParams.get('modalidade');
-  const [selectedModalidade, setSelectedModalidade] = useState<number | null>(
-    modalidadeParam ? parseInt(modalidadeParam) : null
+  const [selectedModalidade, setSelectedModalidade] = useState<string | null>(
+    modalidadeParam || null
   );
   const [isNewSessionOpen, setIsNewSessionOpen] = useState(false);
-  const [selectedSession, setSelectedSession] = useState<number | null>(null);
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [sessionForm, setSessionForm] = useState({
     data_hora_inicio: '',
     data_hora_fim: '',
@@ -38,10 +37,9 @@ export default function MonitorAttendancePage() {
 
   useEffect(() => {
     if (modalidadeParam && modalities) {
-      const modalidadeId = parseInt(modalidadeParam);
-      const exists = modalities.find(m => m.id === modalidadeId);
+      const exists = modalities.find(m => m.id === modalidadeParam);
       if (exists) {
-        setSelectedModalidade(modalidadeId);
+        setSelectedModalidade(modalidadeParam);
       }
     }
   }, [modalidadeParam, modalities]);
@@ -62,7 +60,7 @@ export default function MonitorAttendancePage() {
     setSessionForm({ data_hora_inicio: '', data_hora_fim: '', descricao: '' });
   };
 
-  const handleDeleteSession = async (sessionId: number) => {
+  const handleDeleteSession = async (sessionId: string) => {
     if (confirm('Tem certeza que deseja excluir esta sessão?')) {
       await deleteSession.mutateAsync(sessionId);
     }
@@ -107,7 +105,7 @@ export default function MonitorAttendancePage() {
     );
   }
 
-  const selectedModalityData = modalities.find(m => m.id === selectedModalidade);
+  const selectedModalityData = modalities?.find(m => m.id === selectedModalidade);
 
   return (
     <div className="space-y-6">

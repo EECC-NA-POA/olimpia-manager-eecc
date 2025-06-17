@@ -3,12 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
 export interface MonitorSession {
-  id: number;
-  modalidade_rep_id: number;
+  id: string;
+  modalidade_rep_id: string;
   data_hora_inicio: string;
   data_hora_fim: string | null;
   descricao: string;
-  created_at: string;
+  criado_em: string;
   modalidade_representantes: {
     modalidades: {
       nome: string;
@@ -19,7 +19,7 @@ export interface MonitorSession {
   };
 }
 
-export const useMonitorSessions = (modalidadeRepId?: number) => {
+export const useMonitorSessions = (modalidadeRepId?: string) => {
   return useQuery({
     queryKey: ['monitor-sessions', modalidadeRepId],
     queryFn: async () => {
@@ -33,7 +33,7 @@ export const useMonitorSessions = (modalidadeRepId?: number) => {
           data_hora_inicio,
           data_hora_fim,
           descricao,
-          created_at,
+          criado_em,
           modalidade_representantes!inner (
             modalidades!inner (
               nome
