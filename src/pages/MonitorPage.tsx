@@ -5,17 +5,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, FileText, Users } from "lucide-react";
 import SessionsListCard from "@/components/monitor/SessionsListCard";
 import MonitorReportsPage from "@/components/monitor/MonitorReportsPage";
-import { useMonitorSessions } from "@/hooks/useMonitorSessions";
+import EditAttendanceDialog from "@/components/monitor/EditAttendanceDialog";
+import { useMonitorSessions, MonitorSession } from "@/hooks/useMonitorSessions";
 import { useUserModalityReps } from "@/hooks/useUserModalityReps";
 
 export default function MonitorPage() {
   const [selectedModalityRep, setSelectedModalityRep] = useState<string>("");
+  const [selectedSessionForEdit, setSelectedSessionForEdit] = useState<MonitorSession | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  
   const { data: modalityReps, isLoading: modalityRepsLoading } = useUserModalityReps();
   const { data: sessions, isLoading } = useMonitorSessions(selectedModalityRep);
 
-  const handleEditSession = (session: any) => {
-    // Implementar edição de sessão se necessário
+  const handleEditSession = (session: MonitorSession) => {
     console.log('Edit session:', session);
+    setSelectedSessionForEdit(session);
+    setShowEditDialog(true);
   };
 
   // Automaticamente selecionar a primeira modalidade representante se houver
@@ -119,6 +124,15 @@ export default function MonitorPage() {
             </TabsContent>
           </Tabs>
         </>
+      )}
+
+      {/* Edit Dialog */}
+      {selectedSessionForEdit && (
+        <EditAttendanceDialog
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          session={selectedSessionForEdit}
+        />
       )}
     </div>
   );
