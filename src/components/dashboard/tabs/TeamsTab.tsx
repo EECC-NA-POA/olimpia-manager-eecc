@@ -9,6 +9,7 @@ import { useTeamOperations } from './teams/hooks/useTeamOperations';
 import { TeamFormDialog } from './teams/TeamFormDialog';
 import { TeamsList } from './teams/TeamsList';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TeamsTabProps {
   eventId: string | null;
@@ -16,7 +17,12 @@ interface TeamsTabProps {
 }
 
 export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
+  
+  // Use branch ID from user if not provided
+  const userBranchId = branchId || user?.filial_id;
+  
   const {
     teamModalities,
     teams,
@@ -33,7 +39,7 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
     handleEditTeam,
     handleDeleteTeam,
     handleNewTeamClick
-  } = useTeamOperations(eventId, branchId);
+  } = useTeamOperations(eventId, userBranchId);
 
   // Loading state
   if (isLoadingTeams || isLoadingModalities) {
@@ -44,7 +50,7 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
   if (teamsError || modalitiesError) {
     return (
       <ErrorState 
-        onRetry={() => queryClient.invalidateQueries({ queryKey: ['teams', eventId, branchId] })} 
+        onRetry={() => queryClient.invalidateQueries({ queryKey: ['teams', eventId, userBranchId] })} 
       />
     );
   }
@@ -62,7 +68,12 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-olimpics-green-primary">Gerenciamento de Equipes</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-olimpics-green-primary">Gerenciamento de Equipes</h2>
+          <p className="text-muted-foreground mt-1">
+            Gerencie as equipes da sua filial para as modalidades coletivas
+          </p>
+        </div>
         
         <Button 
           onClick={handleNewTeamClick}

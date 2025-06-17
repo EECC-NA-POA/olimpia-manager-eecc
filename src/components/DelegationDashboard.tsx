@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,7 +12,7 @@ import { NoEventSelected } from "./dashboard/components/NoEventSelected";
 import { AthletesTab } from "./dashboard/tabs/AthletesTab";
 import { EnrollmentsTab } from "./dashboard/tabs/EnrollmentsTab";
 import { StatisticsTab } from "./dashboard/tabs/StatisticsTab";
-import { TeamsTab } from "./judge/tabs/TeamsTab";
+import { TeamsTab } from "./dashboard/tabs/TeamsTab";
 import { NotificationManager } from "./notifications/NotificationManager";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
@@ -120,9 +121,8 @@ export default function DelegationDashboard() {
       case "teams":
         return (
           <TeamsTab
-            userId={user?.id || ''}
             eventId={currentEventId}
-            isOrganizer={false} // Representante de delegação não tem permissões de organizador
+            branchId={user?.filial_id}
           />
         );
 
@@ -178,7 +178,7 @@ export default function DelegationDashboard() {
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
             >
               <UsersRound className="h-3 w-3 sm:h-5 sm:w-5" />
-              <span className="hidden sm:inline">Equipes</span>
+              <span className="hidden sm:inline">Gerenciar Equipes</span>
               <span className="sm:hidden">Equipes</span>
             </TabsTrigger>
             <TabsTrigger 
