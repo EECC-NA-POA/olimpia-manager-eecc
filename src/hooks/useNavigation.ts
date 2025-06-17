@@ -31,11 +31,12 @@ export const useNavigation = () => {
     isPublicGeral: userRoleCodes.includes('PGR'),
     isAdmin: userRoleCodes.includes('ADM'),
     isJudge: userRoleCodes.includes('JUZ'),
-    isFilosofoMonitor: userRoleCodes.includes('FMO') || userRoleCodes.includes('FILOSOFO_MONITOR') || userRoleCodes.includes('filosofo_monitor')
+    isFilosofoMonitor: userRoleCodes.includes('FMON') || userRoleCodes.includes('FMO') || userRoleCodes.includes('FILOSOFO_MONITOR') || userRoleCodes.includes('filosofo_monitor')
   };
 
   console.log('Detected roles:', roles);
   console.log('Is Filosofo Monitor?', roles.isFilosofoMonitor);
+  console.log('Checking for FMON code:', userRoleCodes.includes('FMON'));
 
   // Redirect authenticated users without an event to event selection
   useEffect(() => {

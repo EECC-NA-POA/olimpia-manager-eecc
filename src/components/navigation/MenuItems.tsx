@@ -27,7 +27,7 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
   const isAthlete = roles.isAthlete;
   const isFilosofoMonitor = roles.isFilosofoMonitor;
   
-  // Log para debug
+  // Log para debug - verificando especificamente o código FMON
   console.log('MenuItems - User roles:', {
     isAdmin,
     isOrganizer,
@@ -38,6 +38,8 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
   });
   
   console.log('MenuItems - User papeis:', user?.papeis);
+  console.log('MenuItems - User role codes:', user?.papeis?.map(role => role.codigo));
+  console.log('MenuItems - Has FMON role?', user?.papeis?.some(role => role.codigo === 'FMON'));
   
   // Check if user can manage events (admin with cadastra_eventos=true)
   const canManageEvents = isAdmin && canCreateEvents;
@@ -107,8 +109,9 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
     });
   }
 
-  // 7. Filósofo Monitor - NEW SECTION - SEMPRE MOSTRAR SE TIVER O PAPEL
+  // 7. Filósofo Monitor - SEMPRE MOSTRAR SE TIVER O PAPEL
   console.log('Checking if should show Filosofo Monitor menu. isFilosofoMonitor:', isFilosofoMonitor);
+  console.log('Direct check for FMON code:', user?.papeis?.some(role => role.codigo === 'FMON'));
   
   if (isFilosofoMonitor) {
     console.log('Adding Filosofo Monitor menu items');
@@ -135,6 +138,7 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
     });
   } else {
     console.log('Not showing Filosofo Monitor menu items - user does not have the role');
+    console.log('Available role codes:', user?.papeis?.map(role => role.codigo));
   }
   
   // 8. Juiz (Judge)
