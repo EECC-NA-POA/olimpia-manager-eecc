@@ -1,11 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, ArrowLeft, Save, Users } from "lucide-react";
+import { Loader2, ArrowLeft, Save, Users, UserCheck, UserX, Clock } from "lucide-react";
 import { useMonitorSessions } from "@/hooks/useMonitorSessions";
 import { useSessionAttendance, useAthletesForAttendance, AthleteForAttendance } from "@/hooks/useSessionAttendance";
 import { useMonitorMutations } from "@/hooks/useMonitorMutations";
@@ -21,39 +19,33 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
   const [attendanceData, setAttendanceData] = useState<Map<string, { status: string; attendance_id?: string }>>(new Map());
   const [modalidadeRepId, setModalidadeRepId] = useState<string | null>(null);
 
-  // Buscar dados da sessão
   const { data: sessions } = useMonitorSessions(modalidadeRepId);
   const session = sessions?.find(s => s.id === sessionId);
 
-  // Buscar presenças existentes
   const { data: existingAttendances, isLoading: attendancesLoading } = useSessionAttendance(sessionId);
-  
-  // Buscar atletas elegíveis
   const { data: athletes, isLoading: athletesLoading } = useAthletesForAttendance(modalidadeRepId);
   
   const { saveAttendances } = useMonitorMutations();
 
-  // Atualizar modalidadeRepId quando a sessão for carregada
   useEffect(() => {
     if (session) {
       setModalidadeRepId(session.modalidade_rep_id);
     }
   }, [session]);
 
-  // Inicializar dados de presença quando os dados chegarem
   useEffect(() => {
     if (existingAttendances && athletes) {
       const newAttendanceData = new Map();
       
-      // Primeiro, inicializar todos os atletas com status 'ausente'
+      // Primeiro, inicializar todos os atletas com status 'presente' (padrão)
       athletes.forEach(athlete => {
         newAttendanceData.set(athlete.id, {
-          status: 'ausente',
+          status: 'presente',
           attendance_id: undefined
         });
       });
       
-      // Depois, atualizar com os dados existentes
+      // Depois, atualizar com os dados existentes se houver
       existingAttendances.forEach(attendance => {
         newAttendanceData.set(attendance.atleta_id, {
           status: attendance.status,
@@ -62,11 +54,21 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
       });
       
       setAttendanceData(newAttendanceData);
+    } else if (athletes && !existingAttendances) {
+      // Se não há dados existentes, inicializar todos como presente
+      const newAttendanceData = new Map();
+      athletes.forEach(athlete => {
+        newAttendanceData.set(athlete.id, {
+          status: 'presente',
+          attendance_id: undefined
+        });
+      });
+      setAttendanceData(newAttendanceData);
     }
   }, [existingAttendances, athletes]);
 
   const handleStatusChange = (athleteId: string, status: string) => {
-    const current = attendanceData.get(athleteId) || { status: 'ausente' };
+    const current = attendanceData.get(athleteId) || { status: 'presente' };
     setAttendanceData(new Map(attendanceData.set(athleteId, { ...current, status })));
   };
 
@@ -74,7 +76,7 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
     if (!athletes) return;
 
     const attendancesToSave = athletes.map(athlete => {
-      const data = attendanceData.get(athlete.id) || { status: 'ausente' };
+      const data = attendanceData.get(athlete.id) || { status: 'presente' };
       return {
         chamada_id: sessionId,
         atleta_id: athlete.id,
@@ -95,13 +97,13 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
 
   if (!athletes || athletes.length === 0) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 p-4">
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={onBack}>
+          <Button variant="outline" onClick={onBack} size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
-          <h1 className="text-2xl font-bold text-olimpics-text">Presença - {session.descricao}</h1>
+          <h1 className="text-xl font-bold text-olimpics-text">{session.descricao}</h1>
         </div>
         
         <Card>
@@ -115,15 +117,6 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
     );
   }
 
-  const getStatusBadge = (status: string) => {
-    const colors = {
-      presente: 'bg-green-100 text-green-800 border-green-200',
-      ausente: 'bg-red-100 text-red-800 border-red-200',
-      atrasado: 'bg-yellow-100 text-yellow-800 border-yellow-200'
-    };
-    return colors[status as keyof typeof colors] || colors.ausente;
-  };
-
   const getStatusCounts = () => {
     if (!athletes) return { presente: 0, ausente: 0, atrasado: 0, total: 0 };
     
@@ -135,10 +128,11 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
         switch (data.status) {
           case 'presente': presente++; break;
           case 'atrasado': atrasado++; break;
-          default: ausente++; break;
+          case 'ausente': ausente++; break;
+          default: presente++; break;
         }
       } else {
-        ausente++;
+        presente++;
       }
     });
     
@@ -148,16 +142,17 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
   const counts = getStatusCounts();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={onBack}>
+    <div className="space-y-4 p-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <Button variant="outline" onClick={onBack} size="sm" className="flex-shrink-0">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-olimpics-text">{session.descricao}</h1>
-            <p className="text-sm text-gray-500">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg sm:text-xl font-bold text-olimpics-text truncate">{session.descricao}</h1>
+            <p className="text-xs sm:text-sm text-gray-500">
               {format(new Date(session.data_hora_inicio), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
               {session.data_hora_fim && ` - ${format(new Date(session.data_hora_fim), 'HH:mm', { locale: ptBR })}`}
             </p>
@@ -167,7 +162,8 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
         <Button 
           onClick={handleSaveAttendances}
           disabled={saveAttendances.isPending}
-          className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary"
+          className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:w-auto"
+          size="sm"
         >
           {saveAttendances.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -179,92 +175,95 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
       </div>
 
       {/* Resumo de Presenças */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-olimpics-green-primary">{counts.total}</div>
-            <div className="text-sm text-gray-500">Total de Atletas</div>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-lg sm:text-2xl font-bold text-olimpics-green-primary">{counts.total}</div>
+            <div className="text-xs sm:text-sm text-gray-500">Total</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{counts.presente}</div>
-            <div className="text-sm text-gray-500">Presentes</div>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-lg sm:text-2xl font-bold text-green-600">{counts.presente}</div>
+            <div className="text-xs sm:text-sm text-gray-500">Presentes</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-600">{counts.atrasado}</div>
-            <div className="text-sm text-gray-500">Atrasados</div>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-lg sm:text-2xl font-bold text-yellow-600">{counts.atrasado}</div>
+            <div className="text-xs sm:text-sm text-gray-500">Atrasados</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-red-600">{counts.ausente}</div>
-            <div className="text-sm text-gray-500">Ausentes</div>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-lg sm:text-2xl font-bold text-red-600">{counts.ausente}</div>
+            <div className="text-xs sm:text-sm text-gray-500">Ausentes</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabela de Atletas */}
+      {/* Lista de Atletas Mobile-Friendly */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5" />
-            Lista de Presença
+            Lista de Presença ({athletes.length} atletas)
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Atleta</TableHead>
-                <TableHead>ID</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {athletes.map((athlete) => {
-                const data = attendanceData.get(athlete.id) || { status: 'ausente' };
-                return (
-                  <TableRow key={athlete.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{athlete.nome_completo}</div>
-                        <div className="text-sm text-gray-500">{athlete.email}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {athlete.numero_identificador || 'N/A'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={data.status}
-                        onValueChange={(value) => handleStatusChange(athlete.id, value)}
+        <CardContent className="p-4">
+          <div className="space-y-3">
+            {athletes.map((athlete) => {
+              const data = attendanceData.get(athlete.id) || { status: 'presente' };
+              return (
+                <div key={athlete.id} className="border rounded-lg p-3 bg-gray-50">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm sm:text-base truncate">{athlete.nome_completo}</div>
+                      <div className="text-xs sm:text-sm text-gray-500 truncate">{athlete.email}</div>
+                      {athlete.numero_identificador && (
+                        <Badge variant="outline" className="text-xs mt-1">
+                          ID: {athlete.numero_identificador}
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-2 flex-shrink-0">
+                      <Button
+                        size="sm"
+                        variant={data.status === 'presente' ? 'default' : 'outline'}
+                        onClick={() => handleStatusChange(athlete.id, 'presente')}
+                        className={`flex-1 sm:flex-none ${data.status === 'presente' ? 'bg-green-600 hover:bg-green-700' : ''}`}
                       >
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="presente">
-                            <Badge className={getStatusBadge('presente')}>Presente</Badge>
-                          </SelectItem>
-                          <SelectItem value="atrasado">
-                            <Badge className={getStatusBadge('atrasado')}>Atrasado</Badge>
-                          </SelectItem>
-                          <SelectItem value="ausente">
-                            <Badge className={getStatusBadge('ausente')}>Ausente</Badge>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                        <UserCheck className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Presente</span>
+                        <span className="sm:hidden">P</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={data.status === 'atrasado' ? 'default' : 'outline'}
+                        onClick={() => handleStatusChange(athlete.id, 'atrasado')}
+                        className={`flex-1 sm:flex-none ${data.status === 'atrasado' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}`}
+                      >
+                        <Clock className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Atrasado</span>
+                        <span className="sm:hidden">A</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={data.status === 'ausente' ? 'default' : 'outline'}
+                        onClick={() => handleStatusChange(athlete.id, 'ausente')}
+                        className={`flex-1 sm:flex-none ${data.status === 'ausente' ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                      >
+                        <UserX className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Ausente</span>
+                        <span className="sm:hidden">F</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
     </div>

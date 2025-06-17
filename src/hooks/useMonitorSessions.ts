@@ -25,59 +25,60 @@ export const useMonitorSessions = (modalidadeRepId?: string) => {
     queryFn: async () => {
       console.log('Fetching monitor sessions for modalidade_rep_id:', modalidadeRepId);
       
-      let query = supabase
-        .from('chamadas')
-        .select(`
-          id,
-          modalidade_rep_id,
-          data_hora_inicio,
-          data_hora_fim,
-          descricao,
-          criado_em,
-          modalidade_representantes!inner (
-            modalidades!inner (
-              nome
-            ),
-            filiais!inner (
-              nome
-            )
-          )
-        `)
-        .order('data_hora_inicio', { ascending: false });
-
-      if (modalidadeRepId) {
-        query = query.eq('modalidade_rep_id', modalidadeRepId);
+      if (!modalidadeRepId) {
+        console.log('No modalidade_rep_id provided, returning empty array');
+        return [];
       }
 
-      const { data, error } = await query;
+      // Buscar as chamadas diretamente
+      const { data: chamadas, error } = await supabase
+        .from('chamadas')
+        .select('*')
+        .eq('modalidade_rep_id', modalidadeRepId)
+        .order('data_hora_inicio', { ascending: false });
 
       if (error) {
         console.error('Error fetching monitor sessions:', error);
         throw error;
       }
 
-      console.log('Monitor sessions data:', data);
-      
-      // Transform the data to match our interface
-      const transformedData = data?.map(item => {
-        // First extract the modalidade_representantes object from the array
-        const modalidadeRep = Array.isArray(item.modalidade_representantes) 
-          ? item.modalidade_representantes[0] 
-          : item.modalidade_representantes;
-        
-        return {
-          ...item,
-          modalidade_representantes: {
-            modalidades: Array.isArray(modalidadeRep.modalidades) 
-              ? modalidadeRep.modalidades[0] 
-              : modalidadeRep.modalidades,
-            filiais: Array.isArray(modalidadeRep.filiais) 
-              ? modalidadeRep.filiais[0] 
-              : modalidadeRep.filiais
-          }
-        };
-      }) || [];
+      console.log('Chamadas found:', chamadas);
 
+      if (!chamadas || chamadas.length === 0) {
+        return [];
+      }
+
+      // Buscar dados da modalidade_representantes
+      const { data: modalidadeRep, error: repError } = await supabase
+        .from('modalidade_representantes')
+        .select(`
+          modalidades!inner (nome),
+          filiais!inner (nome)
+        `)
+        .eq('id', modalidadeRepId)
+        .single();
+
+      if (repError) {
+        console.error('Error fetching modalidade_representantes:', repError);
+        throw repError;
+      }
+
+      console.log('Modalidade rep data:', modalidadeRep);
+
+      // Combinar os dados
+      const transformedData = chamadas.map(chamada => ({
+        ...chamada,
+        modalidade_representantes: {
+          modalidades: {
+            nome: modalidadeRep.modalidades.nome
+          },
+          filiais: {
+            nome: modalidadeRep.filiais.nome
+          }
+        }
+      }));
+
+      console.log('Final transformed sessions:', transformedData);
       return transformedData as MonitorSession[];
     },
     enabled: !!modalidadeRepId,

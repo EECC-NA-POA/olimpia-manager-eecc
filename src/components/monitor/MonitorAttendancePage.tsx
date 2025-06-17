@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Loader2, ClipboardCheck, Plus, Edit, Trash2, Users, Save } from "lucide-react";
+import { Loader2, ClipboardCheck, Plus, Trash2, Users, Save } from "lucide-react";
 import { useMonitorModalities } from "@/hooks/useMonitorModalities";
 import { useMonitorSessions } from "@/hooks/useMonitorSessions";
 import { useMonitorMutations } from "@/hooks/useMonitorMutations";
@@ -50,15 +50,24 @@ export default function MonitorAttendancePage() {
       return;
     }
 
-    await createSession.mutateAsync({
-      modalidade_rep_id: selectedModalidade,
-      data_hora_inicio: sessionForm.data_hora_inicio,
-      data_hora_fim: sessionForm.data_hora_fim || undefined,
-      descricao: sessionForm.descricao || 'Chamada de presença'
-    });
+    try {
+      const newSession = await createSession.mutateAsync({
+        modalidade_rep_id: selectedModalidade,
+        data_hora_inicio: sessionForm.data_hora_inicio,
+        data_hora_fim: sessionForm.data_hora_fim || undefined,
+        descricao: sessionForm.descricao || 'Chamada de presença'
+      });
 
-    setIsNewSessionOpen(false);
-    setSessionForm({ data_hora_inicio: '', data_hora_fim: '', descricao: '' });
+      setIsNewSessionOpen(false);
+      setSessionForm({ data_hora_inicio: '', data_hora_fim: '', descricao: '' });
+      
+      // Redirecionar automaticamente para a tela de presença
+      if (newSession && newSession.id) {
+        setSelectedSession(newSession.id);
+      }
+    } catch (error) {
+      console.error('Error creating session:', error);
+    }
   };
 
   const handleDeleteSession = async (sessionId: string) => {
@@ -192,12 +201,12 @@ export default function MonitorAttendancePage() {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="descricao">Descrição</Label>
+                        <Label htmlFor="descricao">Descrição (opcional)</Label>
                         <Textarea
                           id="descricao"
                           value={sessionForm.descricao}
                           onChange={(e) => setSessionForm({ ...sessionForm, descricao: e.target.value })}
-                          placeholder="Descreva o objetivo desta sessão... (opcional)"
+                          placeholder="Descreva o objetivo desta sessão..."
                           className="w-full min-h-[80px] resize-none"
                         />
                       </div>
