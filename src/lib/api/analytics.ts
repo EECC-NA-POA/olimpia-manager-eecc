@@ -110,7 +110,8 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
 
         registrations?.forEach(reg => {
           // Fix the type access - usuarios is a single object, not an array
-          if (reg.usuarios && ['atleta', 'dependente'].includes(reg.usuarios.tipo_perfil)) {
+          const usuario = reg.usuarios as { filial_id: string; tipo_perfil: string } | null;
+          if (usuario && ['atleta', 'dependente'].includes(usuario.tipo_perfil)) {
             if (reg.status in statusCounts) {
               statusCounts[reg.status as keyof typeof statusCounts]++;
             }
@@ -171,7 +172,7 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
     let query = supabase
       .from('vw_analytics_filiais')
       .select('*')
-      .eq('evento_id', eventId);
+      .eq('evento_id', eventI);
 
     // For delegation representatives, only show their branch
     if (filterByBranch && userFilialId) {
