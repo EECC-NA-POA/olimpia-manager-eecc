@@ -9,6 +9,7 @@ export function useMarkAsRead() {
     mutationFn: ({ notificationId, userId }: { notificationId: string; userId: string }) => {
       console.log('=== MUTATION START ===');
       console.log('useMarkAsRead mutation called with:', { notificationId, userId });
+      console.log('Current timestamp:', new Date().toISOString());
       return markNotificationAsRead(notificationId, userId);
     },
     onSuccess: (data, variables) => {
@@ -29,6 +30,8 @@ export function useMarkAsRead() {
     onError: (error, variables) => {
       console.error('=== MUTATION ERROR ===');
       console.error('Error marking notification as read:', error, variables);
+      console.error('Error type:', typeof error);
+      console.error('Error constructor:', error.constructor.name);
     }
   });
 }

@@ -110,6 +110,33 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
   }
   
   try {
+    // Verificar dados do usuário autenticado
+    console.log('=== CHECKING AUTH USER ===');
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    console.log('Auth user:', user?.id, 'Expected userId:', userId);
+    console.log('Auth error:', authError);
+    
+    // Verificar se o usuário tem filial
+    console.log('=== CHECKING USER BRANCH ===');
+    const { data: userData, error: userError } = await supabase
+      .from('usuarios')
+      .select('filial_id')
+      .eq('id', userId)
+      .single();
+    
+    console.log('User data:', userData);
+    console.log('User error:', userError);
+    
+    // Verificar destinatários da notificação
+    console.log('=== CHECKING NOTIFICATION DESTINATIONS ===');
+    const { data: destinations, error: destError } = await supabase
+      .from('notificacao_destinatarios')
+      .select('*')
+      .eq('notificacao_id', notificationId);
+    
+    console.log('Destinations:', destinations);
+    console.log('Destinations error:', destError);
+    
     // Primeiro, verificar se já existe um registro
     console.log('=== CHECKING EXISTING READ STATUS ===');
     const { data: existingRead, error: checkError } = await supabase
