@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 
 export interface ModalityRepresentative {
@@ -95,12 +96,23 @@ export const fetchModalitiesWithRepresentatives = async (filialId: string, event
     // Combine the data
     const modalitiesWithReps: ModalityWithRepresentative[] = modalities?.map(modality => {
       const rep = representatives?.find(r => r.modalidade_id === modality.id);
-      const representative = rep && rep.usuarios ? {
-        atleta_id: rep.atleta_id,
-        nome_completo: (rep.usuarios as any).nome_completo,
-        email: (rep.usuarios as any).email,
-        telefone: (rep.usuarios as any).telefone
-      } : undefined;
+      console.log('Processing modality:', modality.id, 'found rep:', rep);
+      
+      let representative = undefined;
+      if (rep && rep.usuarios) {
+        // Handle case where usuarios might be an array (shouldn't happen with the foreign key, but let's be safe)
+        const userData = Array.isArray(rep.usuarios) ? rep.usuarios[0] : rep.usuarios;
+        console.log('User data for representative:', userData);
+        
+        if (userData) {
+          representative = {
+            atleta_id: rep.atleta_id,
+            nome_completo: userData.nome_completo,
+            email: userData.email,
+            telefone: userData.telefone
+          };
+        }
+      }
 
       return {
         id: modality.id,
@@ -145,12 +157,16 @@ export const fetchRegisteredAthletesForModality = async (filialId: string, modal
 
     console.log('Registered athletes data:', data);
 
-    const athletes = data?.map(item => ({
-      id: item.atleta_id,
-      nome_completo: (item.usuarios as any).nome_completo,
-      email: (item.usuarios as any).email,
-      telefone: (item.usuarios as any).telefone
-    })) || [];
+    const athletes = data?.map(item => {
+      // Handle case where usuarios might be an array
+      const userData = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
+      return {
+        id: item.atleta_id,
+        nome_completo: userData.nome_completo,
+        email: userData.email,
+        telefone: userData.telefone
+      };
+    }) || [];
 
     console.log('Processed athletes:', athletes);
     return athletes;
@@ -164,29 +180,61 @@ export const setModalityRepresentative = async (filialId: string, modalityId: nu
   console.log('setModalityRepresentative called with:', { filialId, modalityId, atletaId });
   
   try {
-    const { data, error } = await supabase
+    // First, let's check if a representative already exists for this modality and filial
+    const { data: existing, error: checkError } = await supabase
       .from('modalidade_representantes')
-      .upsert(
-        {
+      .select('*')
+      .eq('filial_id', filialId)
+      .eq('modalidade_id', modalityId)
+      .single();
+
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows found
+      console.error('Error checking existing representative:', checkError);
+      throw checkError;
+    }
+
+    console.log('Existing representative:', existing);
+
+    let result;
+    if (existing) {
+      // Update existing representative
+      const { data, error } = await supabase
+        .from('modalidade_representantes')
+        .update({
+          atleta_id: atletaId,
+          updated_at: new Date().toISOString()
+        })
+        .eq('filial_id', filialId)
+        .eq('modalidade_id', modalityId)
+        .select();
+
+      if (error) {
+        console.error('Error updating modality representative:', error);
+        throw error;
+      }
+      result = data;
+    } else {
+      // Insert new representative
+      const { data, error } = await supabase
+        .from('modalidade_representantes')
+        .insert({
           filial_id: filialId,
           modalidade_id: modalityId,
           atleta_id: atletaId,
+          created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        },
-        { 
-          onConflict: 'filial_id,modalidade_id',
-          ignoreDuplicates: false 
-        }
-      )
-      .select();
+        })
+        .select();
 
-    if (error) {
-      console.error('Error setting modality representative:', error);
-      throw error;
+      if (error) {
+        console.error('Error inserting modality representative:', error);
+        throw error;
+      }
+      result = data;
     }
     
-    console.log('Representative set successfully:', data);
-    return data;
+    console.log('Representative set successfully:', result);
+    return result;
   } catch (error) {
     console.error('Exception in setModalityRepresentative:', error);
     throw error;

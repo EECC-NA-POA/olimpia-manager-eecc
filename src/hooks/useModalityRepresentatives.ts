@@ -61,10 +61,13 @@ export const useRepresentativeMutations = (filialId: string | undefined, eventId
       if (!filialId) {
         throw new Error('filialId is required');
       }
-      return await setModalityRepresentative(filialId, modalityId, atletaId);
+      console.log('Calling setModalityRepresentative API...');
+      const result = await setModalityRepresentative(filialId, modalityId, atletaId);
+      console.log('setModalityRepresentative result:', result);
+      return result;
     },
-    onSuccess: () => {
-      console.log('Representative set successfully');
+    onSuccess: (data, variables) => {
+      console.log('Representative set successfully, invalidating queries...', { data, variables });
       queryClient.invalidateQueries({ queryKey: ['modalities-representatives', filialId, eventId] });
       toast.success('Representante definido com sucesso!');
     },
@@ -80,10 +83,13 @@ export const useRepresentativeMutations = (filialId: string | undefined, eventId
       if (!filialId) {
         throw new Error('filialId is required');
       }
-      return await removeModalityRepresentative(filialId, modalityId);
+      console.log('Calling removeModalityRepresentative API...');
+      const result = await removeModalityRepresentative(filialId, modalityId);
+      console.log('removeModalityRepresentative result:', result);
+      return result;
     },
-    onSuccess: () => {
-      console.log('Representative removed successfully');
+    onSuccess: (data, variables) => {
+      console.log('Representative removed successfully, invalidating queries...', { data, variables });
       queryClient.invalidateQueries({ queryKey: ['modalities-representatives', filialId, eventId] });
       toast.success('Representante removido com sucesso!');
     },
