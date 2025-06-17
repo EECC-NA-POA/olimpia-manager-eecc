@@ -6,8 +6,6 @@ export interface ModalityRepresentative {
   filial_id: string;
   modalidade_id: number;
   atleta_id: string;
-  created_at: string;
-  updated_at: string;
   modalidades?: {
     id: number;
     nome: string;
@@ -264,8 +262,7 @@ export const setModalityRepresentative = async (filialId: string, modalityId: nu
       const { data, error } = await supabase
         .from('modalidade_representantes')
         .update({
-          atleta_id: atletaId,
-          updated_at: new Date().toISOString()
+          atleta_id: atletaId
         })
         .eq('id', existing.id)
         .select(`
@@ -289,9 +286,7 @@ export const setModalityRepresentative = async (filialId: string, modalityId: nu
         .insert({
           filial_id: filialId,
           modalidade_id: modalityId,
-          atleta_id: atletaId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          atleta_id: atletaId
         })
         .select(`
           *,
