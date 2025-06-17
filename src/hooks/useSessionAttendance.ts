@@ -59,7 +59,7 @@ export const useSessionAttendance = (chamadaId: number | null) => {
       }
 
       console.log('Session attendance data:', data);
-      return data || [];
+      return (data || []) as SessionAttendance[];
     },
     enabled: !!chamadaId,
   });

@@ -62,7 +62,7 @@ export const useMonitorModalities = () => {
       }
 
       console.log('Monitor modalities data:', data);
-      return data || [];
+      return (data || []) as MonitorModality[];
     },
     enabled: !!user?.id,
   });

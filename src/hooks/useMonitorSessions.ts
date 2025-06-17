@@ -57,7 +57,7 @@ export const useMonitorSessions = (modalidadeRepId?: number) => {
       }
 
       console.log('Monitor sessions data:', data);
-      return data || [];
+      return (data || []) as MonitorSession[];
     },
     enabled: !!modalidadeRepId,
   });
