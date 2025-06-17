@@ -16,7 +16,7 @@ export function useTeamsDataForDelegation(
       console.log('Fetching teams for delegation:', { eventId, modalityId, branchId });
 
       // Get teams for the specific modality
-      let teamsQuery = supabase
+      const { data: teamsData, error: teamsError } = await supabase
         .from('equipes')
         .select(`
           id,
@@ -33,8 +33,6 @@ export function useTeamsDataForDelegation(
         .eq('evento_id', eventId)
         .eq('modalidade_id', modalityId);
 
-      const { data: teamsData, error: teamsError } = await teamsQuery;
-
       if (teamsError) {
         console.error('Error fetching teams:', teamsError);
         throw new Error('Não foi possível carregar as equipes');
@@ -44,17 +42,19 @@ export function useTeamsDataForDelegation(
 
       console.log('Found teams for modality:', teamsData.length, teamsData.map(t => t.nome));
 
-      // For each team, get its athletes and filter by branch if specified
+      // For each team, get its athletes
       const teamsWithAthletes = await Promise.all(
         teamsData.map(async (team) => {
           console.log(`Processing team: ${team.nome} (ID: ${team.id})`);
           
-          // Get athletes for this team
-          let athletesQuery = supabase
+          // Get athletes for this team - same query as in the working organizer version
+          const { data: athletesData, error: athletesError } = await supabase
             .from('atletas_equipes')
             .select(`
               id,
               atleta_id,
+              posicao,
+              raia,
               usuarios!inner(
                 nome_completo,
                 tipo_documento,
@@ -64,8 +64,6 @@ export function useTeamsDataForDelegation(
               )
             `)
             .eq('equipe_id', team.id);
-
-          const { data: athletesData, error: athletesError } = await athletesQuery;
 
           if (athletesError) {
             console.error('Error fetching team athletes:', athletesError);
@@ -81,9 +79,9 @@ export function useTeamsDataForDelegation(
 
           console.log(`Athletes in team ${team.nome}:`, athletesData?.length || 0, athletesData);
 
-          // Transform athletes data - don't filter by branch here, show all athletes
+          // Transform athletes data - same transformation as in the working version
           const atletas = (athletesData || []).map(athlete => {
-            const usuario = Array.isArray(athlete.usuarios) ? athlete.usuarios[0] : athlete.usuarios;
+            const usuario = athlete.usuarios;
             const filial = usuario?.filiais 
               ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
               : null;
@@ -95,8 +93,8 @@ export function useTeamsDataForDelegation(
               atleta_id: athlete.atleta_id,
               atleta_nome: usuario?.nome_completo || '',
               documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
-              posicao: 1, // Default position
-              raia: undefined,
+              posicao: athlete.posicao || 1,
+              raia: athlete.raia,
               filial_nome: filial?.nome || 'N/A'
             };
           });
