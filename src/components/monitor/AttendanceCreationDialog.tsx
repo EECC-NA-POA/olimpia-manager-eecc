@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Save, Users } from "lucide-react";
 import { useModalityAthletes } from "@/hooks/useModalityAthletes";
 import { useMonitorMutations } from "@/hooks/useMonitorMutations";
-import AthletesList from './attendance-creation/AthletesList';
 import AttendanceStatusSummary from './attendance-creation/AttendanceStatusSummary';
 import AthleteAttendanceCard from './attendance-creation/AthleteAttendanceCard';
 
@@ -152,17 +151,13 @@ export default function AttendanceCreationDialog({
             </div>
           </div>
 
-          {/* Lista de atletas e informações */}
+          {/* Informação de atletas inscritos */}
           {athletes && athletes.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <Users className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-green-700 font-medium">
-                  {athletes.length} atleta{athletes.length !== 1 ? 's' : ''} inscrito{athletes.length !== 1 ? 's' : ''} nesta modalidade
-                </span>
-              </div>
-              
-              <AthletesList athletes={athletes} />
+            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <Users className="h-4 w-4 text-green-600" />
+              <span className="text-sm text-green-700 font-medium">
+                {athletes.length} atleta{athletes.length !== 1 ? 's' : ''} inscrito{athletes.length !== 1 ? 's' : ''} nesta modalidade
+              </span>
             </div>
           )}
 
