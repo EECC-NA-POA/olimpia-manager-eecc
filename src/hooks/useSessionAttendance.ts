@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -128,18 +127,24 @@ export const useSessionAttendance = (chamadaId: string | null) => {
             data_hora_inicio: chamadaData.data_hora_inicio,
             data_hora_fim: chamadaData.data_hora_fim,
             observacoes: chamadaData.observacoes,
-            modalidade_representantes: {
-              modalidades: {
-                nome: Array.isArray(chamadaData.modalidade_representantes?.modalidades) 
-                  ? chamadaData.modalidade_representantes.modalidades[0]?.nome || ''
-                  : chamadaData.modalidade_representantes?.modalidades?.nome || ''
-              },
-              filiais: {
-                nome: Array.isArray(chamadaData.modalidade_representantes?.filiais) 
-                  ? chamadaData.modalidade_representantes.filiais[0]?.nome || ''
-                  : chamadaData.modalidade_representantes?.filiais?.nome || ''
-              }
-            }
+            modalidade_representantes: (() => {
+              const modalidadeRepData = Array.isArray(chamadaData.modalidade_representantes) 
+                ? chamadaData.modalidade_representantes[0] 
+                : chamadaData.modalidade_representantes;
+              
+              return {
+                modalidades: {
+                  nome: Array.isArray(modalidadeRepData?.modalidades) 
+                    ? modalidadeRepData.modalidades[0]?.nome || ''
+                    : modalidadeRepData?.modalidades?.nome || ''
+                },
+                filiais: {
+                  nome: Array.isArray(modalidadeRepData?.filiais) 
+                    ? modalidadeRepData.filiais[0]?.nome || ''
+                    : modalidadeRepData?.filiais?.nome || ''
+                }
+              };
+            })()
           } : undefined
         };
       });
