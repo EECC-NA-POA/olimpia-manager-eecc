@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
-import { User, Users, Calendar, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut } from 'lucide-react';
+import { User, Users, Calendar, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut, UsersRound } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupContent } from '@/components/ui/sidebar';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 import { useAuth } from '@/contexts/AuthContext';
@@ -91,6 +91,14 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
       label: "Delegação",
       icon: <Users className="h-5 w-5" />,
       tooltip: "Delegação"
+    });
+    
+    // 7a. Equipes de Delegação (Delegation Teams) - NEW
+    menuItems.push({
+      path: "/delegacao-equipes",
+      label: "Equipes",
+      icon: <UsersRound className="h-5 w-5" />,
+      tooltip: "Gerenciar Equipes"
     });
   }
   
