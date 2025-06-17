@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -28,16 +28,20 @@ export function NotificationDetailDialog({
 }: NotificationDetailDialogProps) {
   const markAsReadMutation = useMarkAsRead();
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      onClose();
-    } else if (notification && !notification.lida) {
-      // Marcar como lida quando abrir o dialog
-      console.log('Marking notification as read:', notification.id, 'for user:', userId);
+  // Marcar como lida quando o dialog abrir
+  useEffect(() => {
+    if (isOpen && notification && userId) {
+      console.log('Dialog opened, marking notification as read:', notification.id, 'for user:', userId);
       markAsReadMutation.mutate({
         notificationId: notification.id,
         userId: userId
       });
+    }
+  }, [isOpen, notification?.id, userId, markAsReadMutation]);
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      onClose();
     }
   };
 

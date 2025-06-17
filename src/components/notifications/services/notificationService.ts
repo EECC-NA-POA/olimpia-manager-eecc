@@ -103,25 +103,39 @@ export const submitNotification = async (
 export const markNotificationAsRead = async (notificationId: string, userId: string) => {
   console.log('markNotificationAsRead called with:', { notificationId, userId });
   
+  if (!notificationId || !userId) {
+    console.error('Missing required parameters:', { notificationId, userId });
+    throw new Error('notificationId e userId são obrigatórios');
+  }
+  
   try {
-    const { error } = await supabase
+    console.log('Attempting to insert into notificacao_leituras...');
+    
+    const { data, error } = await supabase
       .from('notificacao_leituras')
       .insert({
         notificacao_id: notificationId,
         usuario_id: userId
-      });
+      })
+      .select()
+      .single();
 
     if (error) {
+      console.error('Database error details:', error);
+      
       // Se for erro de duplicata (código 23505), ignorar pois significa que já foi lida
       if (error.code === '23505') {
-        console.log('Notification already marked as read');
-        return;
+        console.log('Notification already marked as read - duplicate key error');
+        return { success: true, message: 'Already read' };
       }
+      
       console.error('Error marking notification as read:', error);
       throw error;
     }
 
-    console.log('Notification marked as read successfully');
+    console.log('Notification marked as read successfully:', data);
+    return { success: true, data };
+    
   } catch (error) {
     console.error('Error in markNotificationAsRead:', error);
     throw error;

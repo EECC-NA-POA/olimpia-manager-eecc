@@ -10,13 +10,13 @@ export function useMarkAsRead() {
       console.log('useMarkAsRead mutation called with:', { notificationId, userId });
       return markNotificationAsRead(notificationId, userId);
     },
-    onSuccess: () => {
-      console.log('Notification marked as read successfully');
+    onSuccess: (data, variables) => {
+      console.log('Notification marked as read successfully', variables);
       // Invalidar queries de notificações para atualizar status
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
-    onError: (error) => {
-      console.error('Error marking notification as read:', error);
+    onError: (error, variables) => {
+      console.error('Error marking notification as read:', error, variables);
     }
   });
 }
