@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { TeamCard } from './team-formation/TeamCard';
 import { useTeamFormation } from './team-formation/useTeamFormation';
@@ -75,7 +76,7 @@ export function TeamFormation({
 
       {/* Message when no available athletes */}
       {!isReadOnly && availableAthletes && availableAthletes.length === 0 && (
-        <Alert className="bg-amber-50 border-amber-200">
+        <Alert variant="info" className="bg-amber-50 border-amber-200">
           <AlertCircle className="h-4 w-4 text-amber-600" />
           <AlertDescription className="text-amber-800">
             {isOrganizer 

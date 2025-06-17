@@ -9,8 +9,6 @@ import {
   transformBranchRegistrationsData 
 } from "../charts/dataTransformers";
 import { ChartConfig } from "@/components/ui/chart/types";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoIcon } from "lucide-react";
 
 // Define a consistent color palette
 const CHART_COLORS = {
@@ -100,8 +98,7 @@ export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
   const summaryCardsTotals = {
     inscricoes: calculatedTotals.totalGeral,
     pago: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pago) || 0), 0),
-    pendente: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pendente) || 0), 0),
-    isentos: calculatedTotals.totalIsentos
+    pendente: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pendente) || 0), 0)
   };
   console.log("Summary cards totals:", summaryCardsTotals);
 
@@ -116,17 +113,6 @@ export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
     <div className="space-y-8">
       {/* Summary Cards Section */}
       <SummaryCards totals={summaryCardsTotals} />
-
-      {/* Alert about exempt users if they exist */}
-      {summaryCardsTotals.isentos > 0 && (
-        <Alert className="border-blue-200 bg-blue-50">
-          <InfoIcon className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
-            <strong>Informação importante:</strong> Existem {summaryCardsTotals.isentos} usuário(s) com perfil "isento" 
-            que não estão sendo contabilizados nos valores financeiros totais (Total Pago e Total Pendente).
-          </AlertDescription>
-        </Alert>
-      )}
 
       {/* Charts Section - Using a consistent layout */}
       <div className="space-y-8">

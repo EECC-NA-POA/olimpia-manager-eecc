@@ -1,7 +1,7 @@
 
 import { BranchAnalytics } from "@/types/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Coins, Users, UserX } from "lucide-react";
+import { Activity, Coins, Users } from "lucide-react";
 import { formatToCurrency } from "@/utils/formatters";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
@@ -27,13 +27,12 @@ interface SummaryCardsProps {
     inscricoes: number;
     pago: number;
     pendente: number;
-    isentos?: number;
   };
 }
 
 export function SummaryCards({ totals }: SummaryCardsProps) {
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-6 md:grid-cols-3">
       <Card className="hover:shadow-lg transition-shadow">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div className="space-y-1">
@@ -91,28 +90,6 @@ export function SummaryCards({ totals }: SummaryCardsProps) {
           </p>
         </CardContent>
       </Card>
-
-      {totals.isentos !== undefined && totals.isentos > 0 && (
-        <Card className="hover:shadow-lg transition-shadow border-gray-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div className="space-y-1">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Usuários Isentos
-                <InfoIcon tooltip="Usuários com perfil 'isento' que não são contabilizados nos totais financeiros" />
-              </CardTitle>
-            </div>
-            <UserX className="h-4 w-4 text-gray-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-600">
-              {totals.isentos.toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Não contabilizados nos totais
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
