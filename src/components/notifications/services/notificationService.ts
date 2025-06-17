@@ -190,38 +190,38 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
     };
     console.log('Insert data:', insertData);
     
-    const { data, error } = await supabase
+    // Vamos tentar sem select primeiro para ver se o problema é com o RLS no SELECT
+    console.log('=== TRYING INSERT WITHOUT SELECT ===');
+    const { error: insertError } = await supabase
       .from('notificacao_leituras')
-      .insert(insertData)
-      .select()
-      .single();
+      .insert(insertData);
 
-    console.log('Insert result:', { data, error });
+    console.log('Insert without select result:', { insertError });
 
-    if (error) {
+    if (insertError) {
       console.error('=== DATABASE ERROR DETAILS ===');
-      console.error('Error code:', error.code);
-      console.error('Error message:', error.message);
-      console.error('Error details:', error.details);
-      console.error('Error hint:', error.hint);
-      
-      // Tentar um select para verificar se o registro foi criado mesmo com erro
-      console.log('=== CHECKING IF RECORD WAS CREATED DESPITE ERROR ===');
-      const { data: checkData, error: checkErr } = await supabase
-        .from('notificacao_leituras')
-        .select('*')
-        .eq('notificacao_id', notificationId)
-        .eq('usuario_id', userId)
-        .maybeSingle();
-      
-      console.log('Post-error check:', { checkData, checkErr });
-      
-      throw error;
+      console.error('Error code:', insertError.code);
+      console.error('Error message:', insertError.message);
+      console.error('Error details:', insertError.details);
+      console.error('Error hint:', insertError.hint);
+      throw insertError;
     }
 
+    // Se chegou até aqui, a inserção foi bem-sucedida
+    // Vamos tentar buscar o registro recém-criado
+    console.log('=== INSERT SUCCESSFUL, CHECKING IF RECORD EXISTS ===');
+    const { data: newReadRecord, error: selectError } = await supabase
+      .from('notificacao_leituras')
+      .select('*')
+      .eq('notificacao_id', notificationId)
+      .eq('usuario_id', userId)
+      .maybeSingle();
+    
+    console.log('New read record:', { newReadRecord, selectError });
+
     console.log('=== SUCCESS ===');
-    console.log('Notification marked as read successfully:', data);
-    return { success: true, data };
+    console.log('Notification marked as read successfully');
+    return { success: true, data: newReadRecord };
     
   } catch (error) {
     console.error('=== CATCH ERROR ===');
