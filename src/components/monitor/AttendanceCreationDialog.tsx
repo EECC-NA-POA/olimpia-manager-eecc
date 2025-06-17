@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -133,6 +132,7 @@ export default function AttendanceCreationDialog({
 
         {step === 'form' ? (
           <div className="space-y-4 py-2 max-h-[70vh] overflow-auto">
+            
             <div className="space-y-2">
               <Label htmlFor="modalidade">Modalidade</Label>
               <Input
