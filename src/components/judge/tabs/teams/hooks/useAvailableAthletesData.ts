@@ -62,7 +62,7 @@ export function useAvailableAthletesData(
 
       console.log('Found enrollments:', enrollments.length, enrollments);
 
-      // Get all athletes already in teams for this modality from database
+      // Get all athletes already in teams for this modality and event from database
       const { data: athletesInTeams, error: teamsError } = await supabase
         .from('atletas_equipes')
         .select(`
@@ -74,6 +74,7 @@ export function useAvailableAthletesData(
 
       if (teamsError) {
         console.error('Error fetching athletes in teams:', teamsError);
+        // Don't throw error, just continue with empty set
       }
 
       // Create set of athlete IDs that are already in teams
@@ -82,11 +83,12 @@ export function useAvailableAthletesData(
       );
       
       console.log('Athletes already in teams from DB:', Array.from(athletesInTeamsSet));
+      console.log('All enrollments athlete IDs:', enrollments.map(e => e.atleta_id));
       
       const availableAthletes = enrollments
         .filter(enrollment => {
           const isInTeam = athletesInTeamsSet.has(enrollment.atleta_id);
-          console.log(`Athlete ${enrollment.atleta_id} is in team:`, isInTeam);
+          console.log(`Athlete ${enrollment.atleta_id} (${enrollment.usuarios?.nome_completo}) is in team:`, isInTeam);
           return !isInTeam;
         })
         .map(enrollment => {
@@ -100,12 +102,12 @@ export function useAvailableAthletesData(
             ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
             : null;
 
-          console.log('Processing athlete:', {
+          console.log('Processing available athlete:', {
             id: enrollment.atleta_id,
             nome: usuario?.nome_completo,
             filial: filial?.nome,
-            usuario,
-            filial_raw: usuario?.filiais
+            filial_id: usuario?.filial_id,
+            branchId
           });
 
           return {
@@ -116,6 +118,7 @@ export function useAvailableAthletesData(
           };
         });
 
+      console.log('Final available athletes count:', availableAthletes.length);
       console.log('Final available athletes:', availableAthletes);
       return availableAthletes;
     },

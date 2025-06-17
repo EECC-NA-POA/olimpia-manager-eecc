@@ -183,11 +183,14 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
             ) : (
               <div className="space-y-4">
                 {/* Debug information */}
-                <div className="text-sm text-muted-foreground space-y-1">
+                <div className="text-sm text-muted-foreground space-y-1 p-4 bg-gray-50 rounded">
+                  <p><strong>Debug Info:</strong></p>
                   <p>Filial: {userBranchId}</p>
                   <p>Modalidade: {selectedModalityId}</p>
                   <p>Equipes encontradas: {modalityTeams?.length || 0}</p>
                   <p>Atletas disponíveis: {availableAthletes?.length || 0}</p>
+                  <p>Equipes: {modalityTeams?.map(t => t.nome).join(', ') || 'Nenhuma'}</p>
+                  <p>Atletas: {availableAthletes?.map(a => a.nome).join(', ') || 'Nenhum'}</p>
                 </div>
                 
                 <TeamFormation
