@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { format, isValid, parseISO } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { Loader2, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -18,6 +18,7 @@ import { RegisteredModality } from "@/types/modality";
 interface EnrollmentListProps {
   registeredModalities: RegisteredModality[];
   withdrawMutation: UseMutationResult<void, Error, number, unknown>;
+  modalitiesWithRepresentatives?: any[];
 }
 
 const formatDate = (dateString: string | null) => {
@@ -34,10 +35,30 @@ const formatDate = (dateString: string | null) => {
   }
 };
 
+const formatPhoneForWhatsApp = (phone: string) => {
+  // Remove all non-numeric characters
+  const cleanPhone = phone.replace(/\D/g, '');
+  
+  // Add country code if not present (assuming Brazil +55)
+  if (cleanPhone.length === 11 && !cleanPhone.startsWith('55')) {
+    return `55${cleanPhone}`;
+  }
+  if (cleanPhone.length === 10 && !cleanPhone.startsWith('55')) {
+    return `55${cleanPhone}`;
+  }
+  
+  return cleanPhone;
+};
+
 export const EnrollmentList = ({ 
   registeredModalities, 
-  withdrawMutation 
+  withdrawMutation,
+  modalitiesWithRepresentatives = []
 }: EnrollmentListProps) => {
+  const getRepresentativeForModality = (modalityId: number) => {
+    return modalitiesWithRepresentatives.find(m => m.id === modalityId)?.representative;
+  };
+
   return (
     <div className="rounded-lg border overflow-hidden">
       <Table>
@@ -48,47 +69,74 @@ export const EnrollmentList = ({
             <TableHead className="font-semibold">Categoria</TableHead>
             <TableHead className="font-semibold">Status</TableHead>
             <TableHead className="font-semibold">Data de Inscrição</TableHead>
+            <TableHead className="font-semibold">Representante</TableHead>
             <TableHead className="font-semibold">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {registeredModalities?.map((registration) => (
-            <TableRow 
-              key={registration.id}
-              className="transition-colors hover:bg-gray-50"
-            >
-              <TableCell className="font-medium">{registration.modalidade?.nome}</TableCell>
-              <TableCell className="capitalize">{registration.modalidade?.tipo_modalidade}</TableCell>
-              <TableCell className="capitalize">{registration.modalidade?.categoria}</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <StatusIndicator status={registration.status} />
-                  <span className="capitalize">{registration.status}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                {formatDate(registration.data_inscricao)}
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  disabled={registration.status !== 'pendente' || withdrawMutation.isPending}
-                  onClick={() => withdrawMutation.mutate(registration.id)}
-                  className="transition-all duration-200 hover:bg-red-600"
-                >
-                  {withdrawMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processando...
-                    </>
+          {registeredModalities?.map((registration) => {
+            const representative = getRepresentativeForModality(registration.modalidade?.id);
+            
+            return (
+              <TableRow 
+                key={registration.id}
+                className="transition-colors hover:bg-gray-50"
+              >
+                <TableCell className="font-medium">{registration.modalidade?.nome}</TableCell>
+                <TableCell className="capitalize">{registration.modalidade?.tipo_modalidade}</TableCell>
+                <TableCell className="capitalize">{registration.modalidade?.categoria}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <StatusIndicator status={registration.status} />
+                    <span className="capitalize">{registration.status}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {formatDate(registration.data_inscricao)}
+                </TableCell>
+                <TableCell>
+                  {representative ? (
+                    <div className="space-y-1">
+                      <div className="font-medium text-sm">
+                        {representative.nome_completo}
+                      </div>
+                      {representative.telefone && (
+                        <a
+                          href={`https://wa.me/${formatPhoneForWhatsApp(representative.telefone)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-green-600 hover:text-green-700 text-sm transition-colors"
+                        >
+                          <Phone className="h-3 w-3" />
+                          {representative.telefone}
+                        </a>
+                      )}
+                    </div>
                   ) : (
-                    "Desistir"
+                    <span className="text-gray-500 text-sm">Não definido</span>
                   )}
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={registration.status !== 'pendente' || withdrawMutation.isPending}
+                    onClick={() => withdrawMutation.mutate(registration.id)}
+                    className="transition-all duration-200 hover:bg-red-600"
+                  >
+                    {withdrawMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processando...
+                      </>
+                    ) : (
+                      "Desistir"
+                    )}
+                  </Button>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

@@ -15,6 +15,7 @@ import { EnrollmentHeader } from "./enrollment/EnrollmentHeader";
 import { useAthleteProfile } from "@/hooks/useAthleteProfile";
 import { useRegisteredModalities } from "@/hooks/useRegisteredModalities";
 import { useModalityMutations } from "@/hooks/useModalityMutations";
+import { useModalitiesWithRepresentatives } from "@/hooks/useModalityRepresentatives";
 import { Modality } from "@/types/modality";
 
 export default function AthleteRegistrations() {
@@ -25,6 +26,12 @@ export default function AthleteRegistrations() {
   const { data: athleteProfile, isLoading: profileLoading } = useAthleteProfile(user?.id, currentEventId);
   const { data: registeredModalities, isLoading: registrationsLoading } = useRegisteredModalities(user?.id, currentEventId);
   const { withdrawMutation, registerMutation } = useModalityMutations(user?.id, currentEventId);
+
+  // Fetch modalities with representatives data
+  const { data: modalitiesWithRepresentatives, isLoading: representativesLoading } = useModalitiesWithRepresentatives(
+    athleteProfile?.filial_id,
+    currentEventId
+  );
 
   const { data: allModalities, isLoading: modalitiesLoading } = useQuery({
     queryKey: ['modalities', currentEventId],
@@ -42,7 +49,7 @@ export default function AthleteRegistrations() {
     enabled: !!currentEventId,
   });
 
-  if (modalitiesLoading || registrationsLoading || profileLoading) {
+  if (modalitiesLoading || registrationsLoading || profileLoading || representativesLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin text-olimpics-green-primary" />
@@ -94,6 +101,7 @@ export default function AthleteRegistrations() {
                 <EnrollmentList
                   registeredModalities={registeredModalities || []}
                   withdrawMutation={withdrawMutation}
+                  modalitiesWithRepresentatives={modalitiesWithRepresentatives || []}
                 />
 
                 <AvailableModalities
