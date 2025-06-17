@@ -1,14 +1,15 @@
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { UserPlus } from 'lucide-react';
-import { LoadingState } from '../components/LoadingState';
-import { ErrorState } from '../components/ErrorState';
-import { EmptyState } from '../components/EmptyState';
-import { useTeamOperations } from './teams/hooks/useTeamOperations';
-import { TeamFormDialog } from './teams/TeamFormDialog';
-import { TeamsList } from './teams/TeamsList';
-import { useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Users } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAllTeamsData } from '@/components/judge/tabs/teams/hooks/useAllTeamsData';
+import { JudgeTeamsScoringTab } from '@/components/judge/tabs/teams/components/JudgeTeamsScoringTab';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useTeamManager } from '@/components/judge/tabs/teams/hooks/useTeamManager';
+import { TeamsTabHeader } from '@/components/judge/tabs/teams/components/TeamsTabHeader';
+import { ManageTeamsTab } from '@/components/judge/tabs/teams/components/ManageTeamsTab';
+import { ViewAllTeamsTab } from '@/components/judge/tabs/teams/components/ViewAllTeamsTab';
 
 interface TeamsTabProps {
   eventId: string | null;
@@ -16,88 +17,198 @@ interface TeamsTabProps {
 }
 
 export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
-  const queryClient = useQueryClient();
-  
-  console.log('TeamsTab - eventId:', eventId, 'branchId:', branchId);
-  
+  const { user } = useAuth();
+
+  // Define se o usuário é representante de delegação APENAS
+  const isDelegationRepOnly = user?.papeis?.some(role => role.codigo === 'RDD')
+  && !user?.papeis?.some(role => role.codigo === 'ORE');
+
+  // Filtros e estados para visualização dos times
+  const [modalityFilter, setModalityFilter] = useState<number | null>(null);
+  const [branchFilter, setBranchFilter] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Dados de equipes/modalidades/filiais (para pontuação de juiz)
   const {
-    teamModalities,
+    teams: allTeams,
+    modalities: allModalities,
+    branches,
+    isLoading: isLoadingAllTeams,
+    error: allTeamsError,
+  } = useAllTeamsData(
+    eventId,
+    modalityFilter,
+    branchFilter,
+    searchTerm,
+    user?.filial_id // Representante de delegação vê apenas suas equipes
+  );
+
+  // Agrupa equipes por modalidade, mesmo as sem atletas (MOSTRAR TODAS!)
+  const transformedTeams = allTeams?.map(team => ({
+    equipe_id: team.id,
+    equipe_nome: team.nome,
+    modalidade_id: team.modalidade_id,
+    modalidade_nome: team.modalidade_info?.nome || '',
+    tipo_pontuacao: (team.modalidade_info as any)?.tipo_pontuacao || 'pontos',
+    categoria: (team.modalidade_info as any)?.categoria || '',
+    filial_nome: team.filial_id || '',
+    members: Array.isArray(team.atletas)
+      ? team.atletas.map(athlete => ({
+          atleta_id: athlete.atleta_id,
+          atleta_nome: athlete.atleta_nome || '',
+          numero_identificador: athlete.numero_identificador || ''
+        }))
+      : []
+  })) || [];
+
+  const transformedModalities = allModalities?.map(modality => ({
+    modalidade_id: modality.id,
+    modalidade_nome: modality.nome
+  })) || [];
+
+  // Para representantes de delegação, mostrar apenas a aba "Gerenciar Equipes" (sem pontuação)
+  if (isDelegationRepOnly) {
+    const {
+      modalities,
+      teams,
+      availableAthletes,
+      selectedModalityId,
+      setSelectedModalityId,
+      isLoading,
+      createTeam,
+      deleteTeam,
+      addAthlete,
+      removeAthlete,
+      updateAthletePosition,
+      isCreatingTeam,
+      isDeletingTeam,
+      isAddingAthlete,
+      isRemovingAthlete,
+      isUpdatingAthlete,
+      teamToDelete,
+      isDeleteDialogOpen,
+      setIsDeleteDialogOpen,
+      confirmDeleteTeam,
+      cancelDeleteTeam
+    } = useTeamManager(eventId, false);
+
+    return (
+      <div className="space-y-6">
+        <TeamsTabHeader isOrganizer={false}>
+          <ManageTeamsTab
+            modalities={modalities}
+            teams={teams}
+            availableAthletes={availableAthletes}
+            selectedModalityId={selectedModalityId}
+            setSelectedModalityId={setSelectedModalityId}
+            isLoading={isLoading}
+            createTeam={createTeam}
+            deleteTeam={deleteTeam}
+            addAthlete={addAthlete}
+            removeAthlete={removeAthlete}
+            updateAthletePosition={updateAthletePosition}
+            isCreatingTeam={isCreatingTeam}
+            isDeletingTeam={isDeletingTeam}
+            isAddingAthlete={isAddingAthlete}
+            isRemovingAthlete={isRemovingAthlete}
+            isUpdatingAthlete={isUpdatingAthlete}
+            isOrganizer={false}
+            teamToDelete={teamToDelete}
+            isDeleteDialogOpen={isDeleteDialogOpen}
+            setIsDeleteDialogOpen={setIsDeleteDialogOpen}
+            confirmDeleteTeam={confirmDeleteTeam}
+            cancelDeleteTeam={cancelDeleteTeam}
+          />
+        </TeamsTabHeader>
+      </div>
+    );
+  }
+
+  // ORGANIZADOR: gerenciamento completo (caso seja organizador também)
+  const {
+    modalities,
     teams,
-    isLoadingModalities,
-    isLoadingTeams,
-    modalitiesError,
-    teamsError,
-    isDialogOpen,
-    setIsDialogOpen,
-    editingTeam,
-    teamMutation,
-    handleSubmit,
-    resetAndCloseDialog,
-    handleEditTeam,
-    handleDeleteTeam,
-    handleNewTeamClick
-  } = useTeamOperations(eventId, branchId);
-
-  console.log('TeamsTab - Loading states:', { isLoadingTeams, isLoadingModalities });
-  console.log('TeamsTab - Error states:', { teamsError, modalitiesError });
-  console.log('TeamsTab - Data:', { teams, teamModalities });
-
-  // Loading state
-  if (isLoadingTeams || isLoadingModalities) {
-    return <LoadingState />;
-  }
-
-  // Error state
-  if (teamsError || modalitiesError) {
-    console.error('TeamsTab - Errors:', { teamsError, modalitiesError });
-    return (
-      <ErrorState 
-        onRetry={() => queryClient.invalidateQueries({ queryKey: ['teams', eventId, branchId] })} 
-      />
-    );
-  }
-
-  // Empty state - No team modalities available
-  if (!teamModalities || teamModalities.length === 0) {
-    return (
-      <EmptyState 
-        title="Nenhuma modalidade coletiva disponível" 
-        description="Não há modalidades coletivas disponíveis para este evento" 
-      />
-    );
-  }
+    availableAthletes,
+    selectedModalityId,
+    setSelectedModalityId,
+    isLoading,
+    createTeam,
+    deleteTeam,
+    addAthlete,
+    removeAthlete,
+    updateAthletePosition,
+    isCreatingTeam,
+    isDeletingTeam,
+    isAddingAthlete,
+    isRemovingAthlete,
+    isUpdatingAthlete,
+    teamToDelete,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    confirmDeleteTeam,
+    cancelDeleteTeam
+  } = useTeamManager(eventId, true);
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-olimpics-green-primary">Gerenciamento de Equipes</h2>
-        
-        <Button 
-          onClick={handleNewTeamClick}
-          className="flex items-center gap-2"
-        >
-          <UserPlus className="h-4 w-4" />
-          Nova Equipe
-        </Button>
-      </div>
-      
-      {/* Team Form Dialog */}
-      <TeamFormDialog 
-        isOpen={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        onSubmit={handleSubmit}
-        isSubmitting={teamMutation.isPending}
-        editingTeam={editingTeam}
-        teamModalities={teamModalities || []}
-        resetFormAndDialog={resetAndCloseDialog}
-      />
-      
-      {/* Teams List */}
-      <TeamsList 
-        teams={teams || []}
-        onEditTeam={handleEditTeam}
-        onDeleteTeam={handleDeleteTeam}
-      />
+      <TeamsTabHeader isOrganizer={true}>
+        <Tabs defaultValue="manage" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="manage">
+              Gerenciar Equipes
+            </TabsTrigger>
+            <TabsTrigger value="view-all">
+              Visualizar Todas as Equipes
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="manage">
+            <ManageTeamsTab
+              modalities={modalities}
+              teams={teams}
+              availableAthletes={availableAthletes}
+              selectedModalityId={selectedModalityId}
+              setSelectedModalityId={setSelectedModalityId}
+              isLoading={isLoading}
+              createTeam={createTeam}
+              deleteTeam={deleteTeam}
+              addAthlete={addAthlete}
+              removeAthlete={removeAthlete}
+              updateAthletePosition={updateAthletePosition}
+              isCreatingTeam={isCreatingTeam}
+              isDeletingTeam={isDeletingTeam}
+              isAddingAthlete={isAddingAthlete}
+              isRemovingAthlete={isRemovingAthlete}
+              isUpdatingAthlete={isUpdatingAthlete}
+              isOrganizer={true}
+              teamToDelete={teamToDelete}
+              isDeleteDialogOpen={isDeleteDialogOpen}
+              setIsDeleteDialogOpen={setIsDeleteDialogOpen}
+              confirmDeleteTeam={confirmDeleteTeam}
+              cancelDeleteTeam={cancelDeleteTeam}
+            />
+          </TabsContent>
+          
+          <TabsContent value="view-all">
+            <ViewAllTeamsTab
+              allTeams={transformedTeams}
+              allModalities={transformedModalities}
+              branches={branches}
+              isLoadingAllTeams={isLoadingAllTeams}
+              allTeamsError={allTeamsError}
+              modalityFilter={modalityFilter}
+              branchFilter={branchFilter}
+              searchTerm={searchTerm}
+              setModalityFilter={setModalityFilter}
+              setBranchFilter={setBranchFilter}
+              setSearchTerm={setSearchTerm}
+              isOrganizer={true}
+              eventId={eventId}
+              judgeId={user?.id || ''}
+            />
+          </TabsContent>
+        </Tabs>
+      </TeamsTabHeader>
     </div>
   );
 }
