@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,7 +12,7 @@ import { NoEventSelected } from "./dashboard/components/NoEventSelected";
 import { AthletesTab } from "./dashboard/tabs/AthletesTab";
 import { EnrollmentsTab } from "./dashboard/tabs/EnrollmentsTab";
 import { StatisticsTab } from "./dashboard/tabs/StatisticsTab";
-import { TeamsTab } from "./judge/tabs/TeamsTab";
+import { TeamsTab } from "./dashboard/tabs/TeamsTab";
 import { NotificationManager } from "./notifications/NotificationManager";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
@@ -120,9 +121,8 @@ export default function DelegationDashboard() {
       case "teams":
         return (
           <TeamsTab
-            userId={user?.id || ''}
             eventId={currentEventId}
-            isOrganizer={false} // Representante de delegação não tem permissões de organizador
+            branchId={user?.filial_id}
           />
         );
 
