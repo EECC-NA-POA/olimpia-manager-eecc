@@ -30,14 +30,14 @@ export const useMonitorSessions = (modalidadeRepId?: string) => {
         return [];
       }
 
-      // Buscar as chamadas com join explícito usando o relacionamento correto
+      // Buscar as chamadas com join mais específico para evitar ambiguidade
       const { data: sessions, error } = await supabase
         .from('chamadas')
         .select(`
           *,
-          modalidade_representantes (
+          modalidade_representantes!modalidade_rep_id (
             modalidades!modalidade_representantes_modalidade_id_fkey (nome),
-            filiais (nome)
+            filiais!modalidade_representantes_filial_id_fkey (nome)
           )
         `)
         .eq('modalidade_rep_id', modalidadeRepId)
