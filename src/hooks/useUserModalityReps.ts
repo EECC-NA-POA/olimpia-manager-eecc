@@ -44,7 +44,15 @@ export const useUserModalityReps = () => {
       }
 
       console.log('User modality representatives:', data);
-      return data as UserModalityRep[];
+      
+      // Transform the data to match our interface
+      const transformedData = data?.map(item => ({
+        ...item,
+        modalidades: Array.isArray(item.modalidades) ? item.modalidades[0] : item.modalidades,
+        filiais: Array.isArray(item.filiais) ? item.filiais[0] : item.filiais,
+      })) || [];
+      
+      return transformedData as UserModalityRep[];
     },
     enabled: !!user?.id,
   });
