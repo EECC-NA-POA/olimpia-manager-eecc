@@ -8,14 +8,16 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Loader2, ClipboardCheck, Plus, Trash2, Users, Save } from "lucide-react";
+import { Loader2, ClipboardCheck, Plus, Trash2, Users, Save, AlertCircle } from "lucide-react";
 import { useMonitorModalities } from "@/hooks/useMonitorModalities";
 import { useMonitorSessions } from "@/hooks/useMonitorSessions";
 import { useMonitorMutations } from "@/hooks/useMonitorMutations";
+import { useModalityAthletes } from "@/hooks/useModalityAthletes";
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import AttendanceSessionDetail from './AttendanceSessionDetail';
+import { LoadingImage } from "@/components/ui/loading-image";
 
 export default function MonitorAttendancePage() {
   const [searchParams] = useSearchParams();
@@ -34,6 +36,7 @@ export default function MonitorAttendancePage() {
 
   const { data: modalities, isLoading: modalitiesLoading } = useMonitorModalities();
   const { data: sessions, isLoading: sessionsLoading } = useMonitorSessions(selectedModalidade || undefined);
+  const { data: modalityAthletes, isLoading: athletesLoading } = useModalityAthletes(selectedModalidade || undefined);
   const { createSession, updateSession, deleteSession } = useMonitorMutations();
 
   useEffect(() => {
@@ -71,7 +74,7 @@ export default function MonitorAttendancePage() {
   };
 
   const handleDeleteSession = async (sessionId: string) => {
-    if (confirm('Tem certeza que deseja excluir esta sessão?')) {
+    if (confirm('Tem certeza que deseja excluir esta chamada?')) {
       await deleteSession.mutateAsync(sessionId);
     }
   };
@@ -79,7 +82,7 @@ export default function MonitorAttendancePage() {
   if (modalitiesLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-olimpics-green-primary" />
+        <LoadingImage text="Carregando modalidades..." />
       </div>
     );
   }
@@ -116,6 +119,8 @@ export default function MonitorAttendancePage() {
   }
 
   const selectedModalityData = modalities?.find(m => m.id === selectedModalidade);
+  const hasAthletes = modalityAthletes && modalityAthletes.length > 0;
+  const canCreateSession = selectedModalidade && hasAthletes && !athletesLoading;
 
   return (
     <div className="space-y-4 sm:space-y-6 p-4 sm:p-0">
@@ -164,11 +169,27 @@ export default function MonitorAttendancePage() {
                   <p className="text-sm text-gray-500 mt-1">
                     {selectedModalityData.filiais.nome} - {selectedModalityData.filiais.cidade}, {selectedModalityData.filiais.estado}
                   </p>
+                  {athletesLoading ? (
+                    <div className="flex items-center gap-2 mt-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm text-gray-500">Verificando atletas inscritos...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 mt-2">
+                      <Users className="h-4 w-4 text-olimpics-green-primary" />
+                      <span className="text-sm text-gray-600">
+                        {modalityAthletes?.length || 0} atleta{(modalityAthletes?.length || 0) !== 1 ? 's' : ''} inscrito{(modalityAthletes?.length || 0) !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 
                 <Dialog open={isNewSessionOpen} onOpenChange={setIsNewSessionOpen}>
                   <DialogTrigger asChild>
-                    <Button className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:w-auto">
+                    <Button 
+                      className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:w-auto"
+                      disabled={!canCreateSession}
+                    >
                       <Plus className="h-4 w-4 mr-2" />
                       Nova Chamada de Presença
                     </Button>
@@ -178,6 +199,15 @@ export default function MonitorAttendancePage() {
                       <DialogTitle>Nova Chamada de Presença</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-2">
+                      {!hasAthletes && !athletesLoading && (
+                        <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <AlertCircle className="h-4 w-4 text-yellow-600" />
+                          <span className="text-sm text-yellow-700">
+                            Esta modalidade não possui atletas inscritos.
+                          </span>
+                        </div>
+                      )}
+                      
                       <div className="space-y-2">
                         <Label htmlFor="data_hora_inicio">Data e Hora de Início *</Label>
                         <Input
@@ -206,15 +236,24 @@ export default function MonitorAttendancePage() {
                           id="descricao"
                           value={sessionForm.descricao}
                           onChange={(e) => setSessionForm({ ...sessionForm, descricao: e.target.value })}
-                          placeholder="Descreva o objetivo desta sessão..."
+                          placeholder="Descreva o objetivo desta chamada..."
                           className="w-full min-h-[80px] resize-none"
                         />
                       </div>
                       
+                      {hasAthletes && (
+                        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <Users className="h-4 w-4 text-green-600" />
+                          <span className="text-sm text-green-700">
+                            Todos os {modalityAthletes?.length} atletas serão automaticamente marcados como presentes.
+                          </span>
+                        </div>
+                      )}
+                      
                       <div className="flex flex-col sm:flex-row gap-2 pt-2">
                         <Button 
                           onClick={handleCreateSession}
-                          disabled={createSession.isPending || !sessionForm.data_hora_inicio}
+                          disabled={createSession.isPending || !sessionForm.data_hora_inicio || !canCreateSession}
                           className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:flex-1"
                         >
                           {createSession.isPending ? (
@@ -239,10 +278,10 @@ export default function MonitorAttendancePage() {
             </CardHeader>
           </Card>
 
-          {/* Lista de Sessões */}
+          {/* Lista de Chamadas */}
           {sessionsLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-olimpics-green-primary" />
+              <LoadingImage size="sm" text="Carregando chamadas..." />
             </div>
           ) : sessions && sessions.length > 0 ? (
             <div className="grid gap-4">
@@ -293,9 +332,12 @@ export default function MonitorAttendancePage() {
           ) : (
             <Card>
               <CardContent className="p-4 sm:p-6 text-center">
-                <p className="text-gray-500">Nenhuma sessão de presença criada ainda.</p>
+                <p className="text-gray-500">Nenhuma chamada de presença criada ainda.</p>
                 <p className="text-sm text-gray-400 mt-2">
-                  Clique em "Nova Chamada de Presença" para criar sua primeira sessão.
+                  {canCreateSession 
+                    ? 'Clique em "Nova Chamada de Presença" para criar sua primeira chamada.'
+                    : 'Aguarde a inscrição de atletas para poder criar chamadas.'
+                  }
                 </p>
               </CardContent>
             </Card>

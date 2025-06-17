@@ -9,6 +9,7 @@ import { useSessionAttendance, useAthletesForAttendance, AthleteForAttendance } 
 import { useMonitorMutations } from "@/hooks/useMonitorMutations";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { LoadingImage } from "@/components/ui/loading-image";
 
 interface AttendanceSessionDetailProps {
   sessionId: string;
@@ -90,7 +91,7 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
   if (attendancesLoading || athletesLoading || !session) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-olimpics-green-primary" />
+        <LoadingImage text="Carregando chamada de presença..." />
       </div>
     );
   }
