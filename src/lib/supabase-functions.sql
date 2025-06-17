@@ -8,7 +8,7 @@ BEGIN
     SELECT 1
     FROM public.modalidade_representantes mr
     WHERE mr.id = modalidade_rep_id_param
-      AND mr.usuario_id = auth.uid()
+      AND mr.atleta_id = auth.uid()
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -23,7 +23,7 @@ BEGIN
     FROM public.chamadas c
     JOIN public.modalidade_representantes mr ON mr.id = c.modalidade_rep_id
     WHERE c.id = chamada_id_param
-      AND mr.usuario_id = auth.uid()
+      AND mr.atleta_id = auth.uid()
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -36,7 +36,7 @@ BEGIN
   RETURN EXISTS (
     SELECT 1
     FROM public.modalidade_representantes mr
-    WHERE mr.usuario_id = auth.uid()
+    WHERE mr.atleta_id = auth.uid()
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -59,7 +59,7 @@ CREATE POLICY chamadas_select_policy
       SELECT 1
       FROM public.modalidade_representantes mr
       WHERE mr.id = chamadas.modalidade_rep_id
-        AND mr.usuario_id = auth.uid()
+        AND mr.atleta_id = auth.uid()
     )
   );
 
