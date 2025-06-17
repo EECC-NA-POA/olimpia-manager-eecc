@@ -118,14 +118,16 @@ export const useMonitorModalities = () => {
       // Step 6: Filter and transform
       console.log('=== STEP 6: Filtering by event ===');
       const filteredData = fullData?.filter(item => {
+        // Fix: Access the first element of the modalidades array
+        const modalidade = Array.isArray(item.modalidades) ? item.modalidades[0] : item.modalidades;
         console.log('Checking item for event filter:', {
           item_id: item.id,
           modalidade_id: item.modalidade_id,
-          modalidade_evento_id: item.modalidades?.evento_id,
+          modalidade_evento_id: modalidade?.evento_id,
           current_event_id: currentEventId,
-          matches: item.modalidades?.evento_id === currentEventId
+          matches: modalidade?.evento_id === currentEventId
         });
-        return item.modalidades?.evento_id === currentEventId;
+        return modalidade?.evento_id === currentEventId;
       }) || [];
 
       console.log('Filtered data count:', filteredData.length);
