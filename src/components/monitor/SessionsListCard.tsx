@@ -3,20 +3,19 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Users, Eye, Edit } from "lucide-react";
+import { Calendar, Clock, Users, Edit } from "lucide-react";
 import { MonitorSession } from "@/hooks/useMonitorSessions";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface SessionsListCardProps {
   session: MonitorSession;
-  onViewDetails: (sessionId: string) => void;
+  onViewDetails?: (sessionId: string) => void;
   onEditSession: (session: MonitorSession) => void;
 }
 
 export default function SessionsListCard({ 
   session, 
-  onViewDetails, 
   onEditSession 
 }: SessionsListCardProps) {
   return (
@@ -51,14 +50,6 @@ export default function SessionsListCard({
           </div>
           
           <div className="flex gap-2 flex-shrink-0">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => onViewDetails(session.id)}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Ver Detalhes
-            </Button>
             <Button 
               variant="outline" 
               size="sm"

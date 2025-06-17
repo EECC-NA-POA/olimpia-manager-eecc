@@ -7,17 +7,11 @@ import SessionsListCard from "@/components/monitor/SessionsListCard";
 import MonitorReportsPage from "@/components/monitor/MonitorReportsPage";
 import { useMonitorSessions } from "@/hooks/useMonitorSessions";
 import { useUserModalityReps } from "@/hooks/useUserModalityReps";
-import { useNavigate } from 'react-router-dom';
 
 export default function MonitorPage() {
-  const navigate = useNavigate();
   const [selectedModalityRep, setSelectedModalityRep] = useState<string>("");
   const { data: modalityReps, isLoading: modalityRepsLoading } = useUserModalityReps();
   const { data: sessions, isLoading } = useMonitorSessions(selectedModalityRep);
-
-  const handleViewDetails = (sessionId: string) => {
-    navigate(`/monitor/session/${sessionId}`);
-  };
 
   const handleEditSession = (session: any) => {
     // Implementar edição de sessão se necessário
@@ -105,7 +99,6 @@ export default function MonitorPage() {
                     <SessionsListCard
                       key={session.id}
                       session={session}
-                      onViewDetails={handleViewDetails}
                       onEditSession={handleEditSession}
                     />
                   ))}

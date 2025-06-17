@@ -102,7 +102,7 @@ export const useSessionAttendance = (chamadaId: string | null) => {
           status,
           registrado_em,
           registrado_por,
-          atletas!inner (
+          usuarios!chamada_presencas_atleta_id_fkey (
             nome_completo,
             email
           ),
@@ -139,8 +139,8 @@ export const useSessionAttendance = (chamadaId: string | null) => {
         // Transform the data to match our interface
         const transformedData = data.map(item => {
           const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
-          // Safely extract athlete data
-          const atletaData = Array.isArray(item.atletas) ? item.atletas[0] : item.atletas;
+          // Safely extract athlete data from usuarios table
+          const atletaData = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
           // Safely extract chamada data
           const chamadaData = Array.isArray(item.chamadas) ? item.chamadas[0] : item.chamadas;
           
@@ -174,8 +174,8 @@ export const useSessionAttendance = (chamadaId: string | null) => {
 
       // Se não há dados ou currentEventId, retornar sem numero_identificador
       const transformedData = data?.map(item => {
-        // Safely extract athlete data
-        const atletaData = Array.isArray(item.atletas) ? item.atletas[0] : item.atletas;
+        // Safely extract athlete data from usuarios table
+        const atletaData = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
         // Safely extract chamada data
         const chamadaData = Array.isArray(item.chamadas) ? item.chamadas[0] : item.chamadas;
         
@@ -240,7 +240,7 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
         .from('inscricoes_modalidades')
         .select(`
           atleta_id,
-          atletas!inner (
+          usuarios!inner (
             id,
             nome_completo,
             email
@@ -270,8 +270,8 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
 
       const athletes = inscricoesData.map(item => {
         const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
-        // Safely extract athlete data
-        const atletaData = Array.isArray(item.atletas) ? item.atletas[0] : item.atletas;
+        // Safely extract athlete data from usuarios table
+        const atletaData = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
         
         return {
           id: atletaData?.id || '',
