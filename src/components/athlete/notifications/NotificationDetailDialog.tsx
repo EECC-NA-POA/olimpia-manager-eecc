@@ -98,7 +98,7 @@ export function NotificationDetailDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-left">
             {notification.titulo}
@@ -112,7 +112,7 @@ export function NotificationDetailDialog({
                 </Badge>
                 <span>•</span>
                 <span>
-                  {getTimeAgo(notification.criado_em)} ({format(new Date(notification.criado_em), 'dd/MM/yyyy HH:mm', { locale: ptBR })})
+                  {getTimeAgo(notification.criado_em)} ({format(new Date(notification.criado_em), 'dd/MM/yyyy', { locale: ptBR })})
                 </span>
               </div>
               
