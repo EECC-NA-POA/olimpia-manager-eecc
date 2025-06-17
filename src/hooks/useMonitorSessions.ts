@@ -48,12 +48,12 @@ export const useMonitorSessions = (modalidadeRepId?: string) => {
         return [];
       }
 
-      // Buscar dados da modalidade_representantes
+      // Buscar dados da modalidade_representantes com uma query mais simples
       const { data: modalidadeRep, error: repError } = await supabase
         .from('modalidade_representantes')
         .select(`
-          modalidades!modalidade_representantes_modalidade_id_fkey (nome),
-          filiais!modalidade_representantes_filial_id_fkey (nome)
+          modalidades (nome),
+          filiais (nome)
         `)
         .eq('id', modalidadeRepId)
         .single();
@@ -65,15 +65,15 @@ export const useMonitorSessions = (modalidadeRepId?: string) => {
 
       console.log('Modalidade rep data:', modalidadeRep);
 
-      // Combinar os dados
+      // Combinar os dados com type assertion para resolver os tipos
       const transformedData = chamadas.map(chamada => ({
         ...chamada,
         modalidade_representantes: {
           modalidades: {
-            nome: Array.isArray(modalidadeRep.modalidades) ? modalidadeRep.modalidades[0]?.nome : modalidadeRep.modalidades?.nome
+            nome: (modalidadeRep.modalidades as any)?.nome || 'N/A'
           },
           filiais: {
-            nome: Array.isArray(modalidadeRep.filiais) ? modalidadeRep.filiais[0]?.nome : modalidadeRep.filiais?.nome
+            nome: (modalidadeRep.filiais as any)?.nome || 'N/A'
           }
         }
       }));
