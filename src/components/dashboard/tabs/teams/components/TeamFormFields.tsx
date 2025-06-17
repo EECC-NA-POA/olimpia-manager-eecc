@@ -69,6 +69,34 @@ export function TeamFormFields({ form, teamModalities, editingTeam }: TeamFormFi
           </FormItem>
         )}
       />
+      
+      <FormField
+        control={form.control}
+        name="cor_uniforme"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Cor do Uniforme</FormLabel>
+            <FormControl>
+              <Input placeholder="Ex: Azul e Branco" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      <FormField
+        control={form.control}
+        name="observacoes"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Observações</FormLabel>
+            <FormControl>
+              <Input placeholder="Observações sobre a equipe (opcional)" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </>
   );
 }
