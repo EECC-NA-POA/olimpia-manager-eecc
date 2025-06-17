@@ -69,7 +69,7 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
         // Get total registered users including dependents for this filial
         const { data: totalUsers, error: totalError } = await supabase
           .from('usuarios')
-          .select('id')
+          .select('id, tipo_perfil')
           .eq('filial_id', filial.id)
           .in('tipo_perfil', ['atleta', 'dependente']); // Include both athletes and dependents
 
@@ -79,6 +79,10 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
         }
 
         console.log(`Total users (including dependents) in filial ${filial.nome}:`, totalUsers?.length || 0);
+        console.log(`Breakdown:`, {
+          atletas: totalUsers?.filter(u => u.tipo_perfil === 'atleta').length || 0,
+          dependentes: totalUsers?.filter(u => u.tipo_perfil === 'dependente').length || 0
+        });
 
         // Get registrations for this event including dependents
         const { data: registrations, error: regError } = await supabase
@@ -105,6 +109,7 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
         };
 
         registrations?.forEach(reg => {
+          // Fix the type access - usuarios is a single object, not an array
           if (reg.usuarios && ['atleta', 'dependente'].includes(reg.usuarios.tipo_perfil)) {
             if (reg.status in statusCounts) {
               statusCounts[reg.status as keyof typeof statusCounts]++;
@@ -125,6 +130,13 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
         const totalPendente = revenueData?.filter(p => p.status === 'pendente').reduce((sum, p) => sum + p.valor, 0) || 0;
 
         const totalInscritosGeral = statusCounts.confirmado + statusCounts.pendente + statusCounts.cancelado;
+
+        console.log(`Final counts for filial ${filial.nome}:`, {
+          totalInscritosGeral,
+          statusCounts,
+          totalPago,
+          totalPendente
+        });
 
         return {
           filial_id: filial.id,
@@ -151,6 +163,7 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
       const validResults = results.filter((result): result is BranchAnalytics => result !== null);
       
       console.log('Built analytics data (including dependents):', validResults);
+      console.log('Total from built analytics:', validResults.reduce((sum, r) => sum + r.total_inscritos_geral, 0));
       return validResults;
     }
 
