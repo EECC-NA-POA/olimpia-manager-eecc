@@ -41,6 +41,48 @@ export interface AthleteForAttendance {
   attendance_id?: string;
 }
 
+// Helper function to safely extract modalidade name
+const extractModalidadeName = (modalidadeRepresentantes: any): string => {
+  if (!modalidadeRepresentantes) return '';
+  
+  if (Array.isArray(modalidadeRepresentantes)) {
+    const first = modalidadeRepresentantes[0];
+    if (!first) return '';
+    
+    if (Array.isArray(first.modalidades)) {
+      return first.modalidades[0]?.nome || '';
+    }
+    return first.modalidades?.nome || '';
+  }
+  
+  if (Array.isArray(modalidadeRepresentantes.modalidades)) {
+    return modalidadeRepresentantes.modalidades[0]?.nome || '';
+  }
+  
+  return modalidadeRepresentantes.modalidades?.nome || '';
+};
+
+// Helper function to safely extract filial name
+const extractFilialName = (modalidadeRepresentantes: any): string => {
+  if (!modalidadeRepresentantes) return '';
+  
+  if (Array.isArray(modalidadeRepresentantes)) {
+    const first = modalidadeRepresentantes[0];
+    if (!first) return '';
+    
+    if (Array.isArray(first.filiais)) {
+      return first.filiais[0]?.nome || '';
+    }
+    return first.filiais?.nome || '';
+  }
+  
+  if (Array.isArray(modalidadeRepresentantes.filiais)) {
+    return modalidadeRepresentantes.filiais[0]?.nome || '';
+  }
+  
+  return modalidadeRepresentantes.filiais?.nome || '';
+};
+
 export const useSessionAttendance = (chamadaId: string | null) => {
   const { currentEventId } = useAuth();
   
@@ -97,9 +139,9 @@ export const useSessionAttendance = (chamadaId: string | null) => {
         // Transform the data to match our interface
         const transformedData = data.map(item => {
           const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
-          // Safely extract athlete data (could be array or object)
+          // Safely extract athlete data
           const atletaData = Array.isArray(item.atletas) ? item.atletas[0] : item.atletas;
-          // Safely extract chamada data (could be array or object)
+          // Safely extract chamada data
           const chamadaData = Array.isArray(item.chamadas) ? item.chamadas[0] : item.chamadas;
           
           return {
@@ -117,22 +159,10 @@ export const useSessionAttendance = (chamadaId: string | null) => {
               observacoes: chamadaData.observacoes,
               modalidade_representantes: {
                 modalidades: {
-                  nome: Array.isArray(chamadaData.modalidade_representantes) 
-                    ? (Array.isArray(chamadaData.modalidade_representantes[0]?.modalidades) 
-                        ? chamadaData.modalidade_representantes[0].modalidades[0]?.nome || ''
-                        : chamadaData.modalidade_representantes[0]?.modalidades?.nome || '')
-                    : (Array.isArray(chamadaData.modalidade_representantes?.modalidades) 
-                        ? chamadaData.modalidade_representantes.modalidades[0]?.nome || ''
-                        : chamadaData.modalidade_representantes?.modalidades?.nome || '')
+                  nome: extractModalidadeName(chamadaData.modalidade_representantes)
                 },
                 filiais: {
-                  nome: Array.isArray(chamadaData.modalidade_representantes) 
-                    ? (Array.isArray(chamadaData.modalidade_representantes[0]?.filiais) 
-                        ? chamadaData.modalidade_representantes[0].filiais[0]?.nome || ''
-                        : chamadaData.modalidade_representantes[0]?.filiais?.nome || '')
-                    : (Array.isArray(chamadaData.modalidade_representantes?.filiais) 
-                        ? chamadaData.modalidade_representantes.filiais[0]?.nome || ''
-                        : chamadaData.modalidade_representantes?.filiais?.nome || '')
+                  nome: extractFilialName(chamadaData.modalidade_representantes)
                 }
               }
             } : undefined
@@ -144,9 +174,9 @@ export const useSessionAttendance = (chamadaId: string | null) => {
 
       // Se não há dados ou currentEventId, retornar sem numero_identificador
       const transformedData = data?.map(item => {
-        // Safely extract athlete data (could be array or object)
+        // Safely extract athlete data
         const atletaData = Array.isArray(item.atletas) ? item.atletas[0] : item.atletas;
-        // Safely extract chamada data (could be array or object)
+        // Safely extract chamada data
         const chamadaData = Array.isArray(item.chamadas) ? item.chamadas[0] : item.chamadas;
         
         return {
@@ -164,22 +194,10 @@ export const useSessionAttendance = (chamadaId: string | null) => {
             observacoes: chamadaData.observacoes,
             modalidade_representantes: {
               modalidades: {
-                nome: Array.isArray(chamadaData.modalidade_representantes) 
-                  ? (Array.isArray(chamadaData.modalidade_representantes[0]?.modalidades) 
-                      ? chamadaData.modalidade_representantes[0].modalidades[0]?.nome || ''
-                      : chamadaData.modalidade_representantes[0]?.modalidades?.nome || '')
-                  : (Array.isArray(chamadaData.modalidade_representantes?.modalidades) 
-                      ? chamadaData.modalidade_representantes.modalidades[0]?.nome || ''
-                      : chamadaData.modalidade_representantes?.modalidades?.nome || '')
+                nome: extractModalidadeName(chamadaData.modalidade_representantes)
               },
               filiais: {
-                nome: Array.isArray(chamadaData.modalidade_representantes) 
-                  ? (Array.isArray(chamadaData.modalidade_representantes[0]?.filiais) 
-                      ? chamadaData.modalidade_representantes[0].filiais[0]?.nome || ''
-                      : chamadaData.modalidade_representantes[0]?.filiais?.nome || '')
-                  : (Array.isArray(chamadaData.modalidade_representantes?.filiais) 
-                      ? chamadaData.modalidade_representantes.filiais[0]?.nome || ''
-                      : chamadaData.modalidade_representantes?.filiais?.nome || '')
+                nome: extractFilialName(chamadaData.modalidade_representantes)
               }
             }
           } : undefined
@@ -252,7 +270,7 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
 
       const athletes = inscricoesData.map(item => {
         const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
-        // Safely extract athlete data (could be array or object)
+        // Safely extract athlete data
         const atletaData = Array.isArray(item.atletas) ? item.atletas[0] : item.atletas;
         
         return {
