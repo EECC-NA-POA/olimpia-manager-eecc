@@ -91,7 +91,7 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
   if (attendancesLoading || athletesLoading || !session) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <LoadingImage text="Carregando chamada de presença..." />
+        <LoadingImage text="Carregando chamada..." />
       </div>
     );
   }

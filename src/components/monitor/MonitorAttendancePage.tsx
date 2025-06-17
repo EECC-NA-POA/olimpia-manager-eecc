@@ -92,7 +92,7 @@ export default function MonitorAttendancePage() {
       <div className="space-y-4 p-4">
         <div className="flex items-center gap-3">
           <ClipboardCheck className="h-6 w-6 sm:h-8 sm:w-8 text-olimpics-green-primary" />
-          <h1 className="text-xl sm:text-3xl font-bold text-olimpics-text">Chamadas de Presença</h1>
+          <h1 className="text-xl sm:text-3xl font-bold text-olimpics-text">Chamadas</h1>
         </div>
         
         <Card>
@@ -127,7 +127,7 @@ export default function MonitorAttendancePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <ClipboardCheck className="h-6 w-6 sm:h-8 sm:w-8 text-olimpics-green-primary" />
-          <h1 className="text-xl sm:text-3xl font-bold text-olimpics-text">Chamadas de Presença</h1>
+          <h1 className="text-xl sm:text-3xl font-bold text-olimpics-text">Chamadas</h1>
         </div>
       </div>
 
@@ -191,12 +191,12 @@ export default function MonitorAttendancePage() {
                       disabled={!canCreateSession}
                     >
                       <Plus className="h-4 w-4 mr-2" />
-                      Nova Chamada de Presença
+                      Nova Chamada
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="w-[95vw] max-w-md mx-auto">
                     <DialogHeader>
-                      <DialogTitle>Nova Chamada de Presença</DialogTitle>
+                      <DialogTitle>Nova Chamada</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-2">
                       {!hasAthletes && !athletesLoading && (
@@ -332,10 +332,10 @@ export default function MonitorAttendancePage() {
           ) : (
             <Card>
               <CardContent className="p-4 sm:p-6 text-center">
-                <p className="text-gray-500">Nenhuma chamada de presença criada ainda.</p>
+                <p className="text-gray-500">Nenhuma chamada criada ainda.</p>
                 <p className="text-sm text-gray-400 mt-2">
                   {canCreateSession 
-                    ? 'Clique em "Nova Chamada de Presença" para criar sua primeira chamada.'
+                    ? 'Clique em "Nova Chamada" para criar sua primeira chamada.'
                     : 'Aguarde a inscrição de atletas para poder criar chamadas.'
                   }
                 </p>

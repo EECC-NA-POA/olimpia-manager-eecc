@@ -7,7 +7,7 @@ import MonitorAttendancePage from './MonitorAttendancePage';
 import MonitorReportsPage from './MonitorReportsPage';
 
 export default function MonitorDashboard() {
-  const [activeTab, setActiveTab] = useState("modalidades");
+  const [activeTab, setActiveTab] = useState("chamadas");
 
   return (
     <div className="space-y-6">
@@ -18,17 +18,17 @@ export default function MonitorDashboard() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="chamadas">Chamadas</TabsTrigger>
           <TabsTrigger value="modalidades">Minhas Modalidades</TabsTrigger>
-          <TabsTrigger value="chamadas">Chamadas de Presença</TabsTrigger>
           <TabsTrigger value="relatorios">Relatórios de Presença</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="modalidades" className="mt-6">
-          <MonitorModalitiesPage />
-        </TabsContent>
-
         <TabsContent value="chamadas" className="mt-6">
           <MonitorAttendancePage />
+        </TabsContent>
+
+        <TabsContent value="modalidades" className="mt-6">
+          <MonitorModalitiesPage />
         </TabsContent>
 
         <TabsContent value="relatorios" className="mt-6">
