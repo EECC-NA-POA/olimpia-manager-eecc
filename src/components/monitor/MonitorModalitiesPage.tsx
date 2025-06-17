@@ -53,7 +53,7 @@ export default function MonitorModalitiesPage() {
                     <div className="flex items-center gap-2 text-gray-500">
                       <Calendar className="h-4 w-4" />
                       <span>
-                        Monitor desde {format(new Date(modality.created_at), 'dd/MM/yyyy', { locale: ptBR })}
+                        Monitor desde {format(new Date(modality.criado_em), 'dd/MM/yyyy', { locale: ptBR })}
                       </span>
                     </div>
                   </div>

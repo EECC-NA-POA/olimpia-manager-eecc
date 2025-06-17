@@ -5,18 +5,18 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export interface MonitorModality {
   id: string;
-  usuario_id: string;
+  atleta_id: string;
   modalidade_id: number;
-  filial_id: number;
-  evento_id: string;
-  created_at: string;
+  filial_id: string;
+  criado_em: string;
+  atualizado_em: string | null;
   modalidades: {
     id: number;
     nome: string;
     categoria: string;
   };
   filiais: {
-    id: number;
+    id: string;
     nome: string;
     cidade: string;
     estado: string;
@@ -37,11 +37,11 @@ export const useMonitorModalities = () => {
         .from('modalidade_representantes')
         .select(`
           id,
-          usuario_id,
+          atleta_id,
           modalidade_id,
           filial_id,
-          evento_id,
-          created_at,
+          criado_em,
+          atualizado_em,
           modalidades!inner (
             id,
             nome,
@@ -54,7 +54,7 @@ export const useMonitorModalities = () => {
             estado
           )
         `)
-        .eq('usuario_id', user.id);
+        .eq('atleta_id', user.id);
 
       if (error) {
         console.error('Error fetching monitor modalities:', error);
