@@ -8,7 +8,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { format } from 'date-fns';
+import { format, differenceInHours, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useMarkAsRead } from '@/hooks/useMarkAsRead';
 import type { Notification } from '@/types/notifications';
@@ -18,6 +18,25 @@ interface NotificationDetailDialogProps {
   userId: string;
   isOpen: boolean;
   onClose: () => void;
+}
+
+// Função para calcular tempo relativo mais preciso
+function getTimeAgo(date: string): string {
+  const notificationDate = new Date(date);
+  const now = new Date();
+  
+  const hoursAgo = differenceInHours(now, notificationDate);
+  const daysAgo = differenceInDays(now, notificationDate);
+  
+  if (hoursAgo < 1) {
+    return 'há poucos minutos';
+  } else if (hoursAgo < 24) {
+    return `há ${hoursAgo} hora${hoursAgo > 1 ? 's' : ''}`;
+  } else if (daysAgo === 1) {
+    return 'há 1 dia';
+  } else {
+    return `há ${daysAgo} dias`;
+  }
 }
 
 export function NotificationDetailDialog({ 
@@ -93,7 +112,7 @@ export function NotificationDetailDialog({
                 </Badge>
                 <span>•</span>
                 <span>
-                  {format(new Date(notification.criado_em), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                  {getTimeAgo(notification.criado_em)} ({format(new Date(notification.criado_em), 'dd/MM/yyyy HH:mm', { locale: ptBR })})
                 </span>
               </div>
               

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, differenceInHours, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Notification } from '@/types/notifications';
 
@@ -11,17 +11,37 @@ interface NotificationCardProps {
   onClick: () => void;
 }
 
-// Função para extrair a primeira linha do texto HTML
-function getFirstLine(htmlContent: string): string {
-  // Remove tags HTML e pega apenas o texto
-  const textContent = htmlContent.replace(/<[^>]*>/g, '');
+// Função para extrair a primeira linha do texto HTML mantendo formatação básica
+function getFirstLineWithFormatting(htmlContent: string): string {
+  // Remove apenas tags de bloco que quebram o layout do card, mas mantém formatação inline
+  const cleanContent = htmlContent
+    .replace(/<\/?(div|p|h[1-6]|ul|ol|li)[^>]*>/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
   
-  // Pega a primeira linha ou os primeiros 100 caracteres
-  const firstLine = textContent.split('\n')[0];
-  if (firstLine.length > 100) {
-    return firstLine.substring(0, 100) + '...';
+  if (cleanContent.length > 120) {
+    return cleanContent.substring(0, 120) + '...';
   }
-  return firstLine + (textContent.length > firstLine.length ? '...' : '');
+  return cleanContent;
+}
+
+// Função para calcular tempo relativo mais preciso
+function getTimeAgo(date: string): string {
+  const notificationDate = new Date(date);
+  const now = new Date();
+  
+  const hoursAgo = differenceInHours(now, notificationDate);
+  const daysAgo = differenceInDays(now, notificationDate);
+  
+  if (hoursAgo < 1) {
+    return 'há poucos minutos';
+  } else if (hoursAgo < 24) {
+    return `há ${hoursAgo} hora${hoursAgo > 1 ? 's' : ''}`;
+  } else if (daysAgo === 1) {
+    return 'há 1 dia';
+  } else {
+    return `há ${daysAgo} dias`;
+  }
 }
 
 export function NotificationCard({ notification, onClick }: NotificationCardProps) {
@@ -46,18 +66,18 @@ export function NotificationCard({ notification, onClick }: NotificationCardProp
             </h4>
           </div>
           
-          {/* Primeira linha da mensagem */}
-          <p className="text-gray-600 text-sm leading-relaxed">
-            {getFirstLine(notification.mensagem)}
-          </p>
+          {/* Primeira linha da mensagem com formatação HTML */}
+          <div 
+            className="text-gray-600 text-sm leading-relaxed prose prose-sm max-w-none"
+            dangerouslySetInnerHTML={{ 
+              __html: getFirstLineWithFormatting(notification.mensagem) 
+            }}
+          />
           
-          {/* Data da postagem */}
+          {/* Data da postagem com cálculo mais preciso */}
           <div className="text-xs text-gray-500 pt-1">
             <span>
-              {formatDistanceToNow(new Date(notification.criado_em), { 
-                addSuffix: true, 
-                locale: ptBR 
-              })}
+              {getTimeAgo(notification.criado_em)}
             </span>
           </div>
 
