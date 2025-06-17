@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Users, Calendar, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut, UserCheck, ClipboardCheck, BarChart3 } from 'lucide-react';
+import { User, Users, Calendar, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut, UserCheck } from 'lucide-react';
 import { MenuItem } from '../types';
 
 export const useMenuItems = (onLogout: () => void) => {
@@ -20,20 +20,6 @@ export const useMenuItems = (onLogout: () => void) => {
   const isDelegationRep = roles.isDelegationRep;
   const isAthlete = roles.isAthlete;
   const isFilosofoMonitor = roles.isFilosofoMonitor;
-  
-  // Log para debug - verificando especificamente o código FMON
-  console.log('MenuItems - User roles:', {
-    isAdmin,
-    isOrganizer,
-    isDelegationRep,
-    isAthlete,
-    isFilosofoMonitor,
-    isJudge
-  });
-  
-  console.log('MenuItems - User papeis:', user?.papeis);
-  console.log('MenuItems - User role codes:', user?.papeis?.map(role => role.codigo));
-  console.log('MenuItems - Has FMON role?', user?.papeis?.some(role => role.codigo === 'FMON'));
   
   // Check if user can manage events (admin with cadastra_eventos=true)
   const canManageEvents = isAdmin && canCreateEvents;
@@ -75,7 +61,7 @@ export const useMenuItems = (onLogout: () => void) => {
     tooltip: "Regulamento"
   });
   
-  // 4. Minhas Inscrições (My Registrations) - for all roles - FIXED ROUTE
+  // 4. Minhas Inscrições (My Registrations) - for all roles
   menuItems.push({
     path: "/minhas-inscricoes",
     label: "Minhas Inscrições",
@@ -83,7 +69,7 @@ export const useMenuItems = (onLogout: () => void) => {
     tooltip: "Minhas Inscrições"
   });
   
-  // 5. Organizador (Organizer) - FIXED ROUTE
+  // 5. Organizador (Organizer)
   if (isOrganizer) {
     menuItems.push({
       path: "/organizador",
@@ -93,7 +79,7 @@ export const useMenuItems = (onLogout: () => void) => {
     });
   }
   
-  // 6. Delegação (Delegation) - FIXED ROUTE
+  // 6. Delegação (Delegation)
   if (isDelegationRep) {
     menuItems.push({
       path: "/delegacao",
@@ -103,36 +89,14 @@ export const useMenuItems = (onLogout: () => void) => {
     });
   }
 
-  // 7. Filósofo Monitor - SEMPRE MOSTRAR SE TIVER O PAPEL
-  console.log('Checking if should show Filosofo Monitor menu. isFilosofoMonitor:', isFilosofoMonitor);
-  console.log('Direct check for FMON code:', user?.papeis?.some(role => role.codigo === 'FMON'));
-  
+  // 7. Filósofo Monitor - ÚNICA ENTRADA NO MENU
   if (isFilosofoMonitor) {
-    console.log('Adding Filosofo Monitor menu items');
-    
     menuItems.push({
-      path: "/monitor/modalidades",
-      label: "Minhas Modalidades",
+      path: "/monitor",
+      label: "Filósofo Monitor",
       icon: <UserCheck className="h-5 w-5" />,
-      tooltip: "Minhas Modalidades"
+      tooltip: "Filósofo Monitor"
     });
-    
-    menuItems.push({
-      path: "/monitor/chamadas",
-      label: "Chamadas de Presença",
-      icon: <ClipboardCheck className="h-5 w-5" />,
-      tooltip: "Chamadas de Presença"
-    });
-    
-    menuItems.push({
-      path: "/monitor/relatorios",
-      label: "Relatórios de Presença",
-      icon: <BarChart3 className="h-5 w-5" />,
-      tooltip: "Relatórios de Presença"
-    });
-  } else {
-    console.log('Not showing Filosofo Monitor menu items - user does not have the role');
-    console.log('Available role codes:', user?.papeis?.map(role => role.codigo));
   }
   
   // 8. Juiz (Judge)
@@ -165,7 +129,7 @@ export const useMenuItems = (onLogout: () => void) => {
     }
   }
 
-  // 11. Trocar Evento - FIXED FUNCTIONALITY
+  // 11. Trocar Evento
   menuItems.push({
     path: "#",
     label: "Trocar Evento",
@@ -185,9 +149,6 @@ export const useMenuItems = (onLogout: () => void) => {
     action: onLogout,
     className: "text-red-300 hover:text-red-100 hover:bg-red-500/20"
   });
-
-  console.log('MenuItems final count:', menuItems.length);
-  console.log('MenuItems:', menuItems.map(item => item.label));
 
   return menuItems;
 };

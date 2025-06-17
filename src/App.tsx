@@ -36,10 +36,8 @@ import OrganizerDashboard from "./components/OrganizerDashboard";
 import DelegationDashboard from "./components/DelegationDashboard";
 import AthleteRegistrations from "./components/AthleteRegistrations";
 
-// Import Filosofo Monitor components
-import MonitorModalitiesPage from "./components/monitor/MonitorModalitiesPage";
-import MonitorAttendancePage from "./components/monitor/MonitorAttendancePage";
-import MonitorReportsPage from "./components/monitor/MonitorReportsPage";
+// Import Filosofo Monitor component
+import MonitorDashboard from "./components/monitor/MonitorDashboard";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -101,10 +99,8 @@ function AppContent() {
                 <Route path="/organizador" element={<OrganizerDashboard />} />
                 <Route path="/delegacao" element={<DelegationDashboard />} />
                 
-                {/* Filosofo Monitor routes */}
-                <Route path="/monitor/modalidades" element={<MonitorModalitiesPage />} />
-                <Route path="/monitor/chamadas" element={<MonitorAttendancePage />} />
-                <Route path="/monitor/relatorios" element={<MonitorReportsPage />} />
+                {/* Filosofo Monitor consolidated route */}
+                <Route path="/monitor" element={<MonitorDashboard />} />
               </Routes>
             </MainNavigation>
           } />

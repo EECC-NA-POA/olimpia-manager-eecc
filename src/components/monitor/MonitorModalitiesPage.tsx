@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, UserCheck, MapPin, Calendar } from "lucide-react";
+import { Loader2, MapPin, Calendar } from "lucide-react";
 import { useMonitorModalities } from "@/hooks/useMonitorModalities";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -20,11 +20,6 @@ export default function MonitorModalitiesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <UserCheck className="h-8 w-8 text-olimpics-green-primary" />
-        <h1 className="text-3xl font-bold text-olimpics-text">Minhas Modalidades</h1>
-      </div>
-
       {!modalities || modalities.length === 0 ? (
         <Card>
           <CardContent className="p-6 text-center">
