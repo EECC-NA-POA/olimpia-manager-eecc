@@ -17,6 +17,9 @@ interface TeamsTabProps {
 
 export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
   const queryClient = useQueryClient();
+  
+  console.log('TeamsTab - eventId:', eventId, 'branchId:', branchId);
+  
   const {
     teamModalities,
     teams,
@@ -35,6 +38,10 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
     handleNewTeamClick
   } = useTeamOperations(eventId, branchId);
 
+  console.log('TeamsTab - Loading states:', { isLoadingTeams, isLoadingModalities });
+  console.log('TeamsTab - Error states:', { teamsError, modalitiesError });
+  console.log('TeamsTab - Data:', { teams, teamModalities });
+
   // Loading state
   if (isLoadingTeams || isLoadingModalities) {
     return <LoadingState />;
@@ -42,6 +49,7 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
 
   // Error state
   if (teamsError || modalitiesError) {
+    console.error('TeamsTab - Errors:', { teamsError, modalitiesError });
     return (
       <ErrorState 
         onRetry={() => queryClient.invalidateQueries({ queryKey: ['teams', eventId, branchId] })} 
