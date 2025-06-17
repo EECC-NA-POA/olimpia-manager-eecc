@@ -65,7 +65,6 @@ export const useMonitorMutations = () => {
 
       // Criar registros de presença para todos os atletas (padrão: presente)
       const attendanceRecords = athletesData.map(item => {
-        // Type assertion to handle the usuarios relation properly
         const usuario = item.usuarios as any;
         const atletaId = Array.isArray(usuario) ? usuario[0]?.id : usuario?.id;
         return {

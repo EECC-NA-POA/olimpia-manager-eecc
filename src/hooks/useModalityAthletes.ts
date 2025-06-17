@@ -36,8 +36,7 @@ export const useModalityAthletes = (modalidadeRepId?: string) => {
           usuarios!inner (
             id,
             nome_completo,
-            email,
-            numero_identificador
+            email
           )
         `)
         .eq('modalidade_id', repData.modalidade_id)
@@ -55,7 +54,7 @@ export const useModalityAthletes = (modalidadeRepId?: string) => {
           id: usuario.id,
           nome_completo: usuario.nome_completo,
           email: usuario.email,
-          numero_identificador: usuario.numero_identificador,
+          numero_identificador: null, // Campo não existe na tabela usuarios
         };
       }) || [];
 

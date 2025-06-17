@@ -45,8 +45,7 @@ export const useSessionAttendance = (chamadaId: string | null) => {
           registrado_por,
           atleta:usuarios!inner (
             nome_completo,
-            email,
-            numero_identificador
+            email
           )
         `)
         .eq('chamada_id', chamadaId);
@@ -61,7 +60,10 @@ export const useSessionAttendance = (chamadaId: string | null) => {
       // Transform the data to match our interface
       const transformedData = data?.map(item => ({
         ...item,
-        atleta: Array.isArray(item.atleta) ? item.atleta[0] : item.atleta
+        atleta: {
+          ...(Array.isArray(item.atleta) ? item.atleta[0] : item.atleta),
+          numero_identificador: null // Campo não existe na tabela usuarios
+        }
       })) || [];
 
       return transformedData as SessionAttendance[];
@@ -103,8 +105,7 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
           usuarios!inner (
             id,
             nome_completo,
-            email,
-            numero_identificador
+            email
           )
         `)
         .eq('modalidade_id', repData.modalidade_id)
@@ -122,7 +123,7 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
           id: usuario.id,
           nome_completo: usuario.nome_completo,
           email: usuario.email,
-          numero_identificador: usuario.numero_identificador,
+          numero_identificador: null, // Campo não existe na tabela usuarios
         };
       }) || [];
 
