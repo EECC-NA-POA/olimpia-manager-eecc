@@ -88,7 +88,11 @@ export function useAvailableAthletesData(
       const availableAthletes = enrollments
         .filter(enrollment => {
           const isInTeam = athletesInTeamsSet.has(enrollment.atleta_id);
-          console.log(`Athlete ${enrollment.atleta_id} (${enrollment.usuarios?.nome_completo}) is in team:`, isInTeam);
+          // Handle usuarios data properly to get the name
+          const usuario = Array.isArray(enrollment.usuarios) 
+            ? enrollment.usuarios[0] 
+            : enrollment.usuarios;
+          console.log(`Athlete ${enrollment.atleta_id} (${usuario?.nome_completo}) is in team:`, isInTeam);
           return !isInTeam;
         })
         .map(enrollment => {
