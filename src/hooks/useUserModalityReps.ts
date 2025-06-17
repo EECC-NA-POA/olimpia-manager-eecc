@@ -7,7 +7,7 @@ export interface UserModalityRep {
   id: string;
   modalidade_id: string;
   filial_id: string;
-  user_id: string;
+  atleta_id: string;
   modalidades: {
     nome: string;
   };
@@ -32,11 +32,11 @@ export const useUserModalityReps = () => {
           id,
           modalidade_id,
           filial_id,
-          user_id,
+          atleta_id,
           modalidades!modalidade_representantes_modalidade_id_fkey (nome),
           filiais!modalidade_representantes_filial_id_fkey (nome)
         `)
-        .eq('user_id', user.id);
+        .eq('atleta_id', user.id);
 
       if (error) {
         console.error('Error fetching user modality representatives:', error);
