@@ -2,98 +2,93 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-
-export interface AvailableAthlete {
-  id: string;
-  nome: string;
-  documento: string;
-  filial_nome?: string;
-}
+import { AthleteOption } from '../types';
 
 export function useAvailableAthletes(
-  eventId: string | null,
-  selectedModalityId: number | null,
-  isOrganizer: boolean = false,
-  branchId?: string | null,
-  teams?: any[] // Add teams parameter to filter out already added athletes
+  eventId: string | null, 
+  selectedModalityId: number | null, 
+  isOrganizer: boolean
 ) {
   const { user } = useAuth();
-  const userBranchId = user?.filial_id;
 
   return useQuery({
-    queryKey: ['available-athletes', selectedModalityId, eventId, isOrganizer ? 'organizer' : branchId || userBranchId, teams?.length || 0],
-    queryFn: async (): Promise<AvailableAthlete[]> => {
+    queryKey: ['available-athletes', eventId, selectedModalityId, isOrganizer, user?.filial_id],
+    queryFn: async () => {
       if (!eventId || !selectedModalityId) return [];
 
       console.log('Fetching available athletes for modality:', selectedModalityId, 'isOrganizer:', isOrganizer);
 
-      // Base query to get enrolled athletes in this modality
-      let query = supabase
-        .from('inscricoes_modalidades')
+      // First get all athletes already in teams for this modality
+      const { data: teamAthletes } = await supabase
+        .from('atletas_equipes')
+        .select(`
+          atleta_id,
+          equipes!inner(modalidade_id, evento_id)
+        `)
+        .eq('equipes.evento_id', eventId)
+        .eq('equipes.modalidade_id', selectedModalityId);
+
+      const athletesInTeams = teamAthletes?.map(ta => ta.atleta_id) || [];
+      console.log('Athletes already in teams from DB:', athletesInTeams);
+
+      // Get enrollments for this modality
+      let enrollmentsQuery = supabase
+        .from('inscricoes')
         .select(`
           atleta_id,
           usuarios!inner(
             nome_completo,
-            tipo_documento,
-            numero_documento,
             filial_id,
             filiais!inner(nome)
-          )
+          ),
+          pagamentos(numero_identificador)
         `)
         .eq('evento_id', eventId)
         .eq('modalidade_id', selectedModalityId)
-        .eq('status', 'confirmado');
+        .eq('status', 'confirmada');
 
-      // If not organizer, filter by branch - organizers can see ALL athletes
-      if (!isOrganizer && (branchId || userBranchId)) {
-        query = query.eq('usuarios.filial_id', branchId || userBranchId);
+      // For non-organizers (delegation representatives), filter by branch
+      if (!isOrganizer && user?.filial_id) {
+        enrollmentsQuery = enrollmentsQuery.eq('usuarios.filial_id', user.filial_id);
       }
 
-      const { data: enrollments, error } = await query;
+      const { data: enrollments, error } = await enrollmentsQuery;
 
       if (error) {
         console.error('Error fetching enrollments:', error);
-        return [];
+        throw error;
       }
+
+      console.log('Found enrollments:', enrollments?.length);
 
       if (!enrollments) return [];
 
-      console.log('Found enrollments:', enrollments.length);
-
-      // Get athletes already in teams for this modality to prevent duplicates
-      const athletesInTeams = new Set();
-      if (teams && teams.length > 0) {
-        teams.forEach(team => {
-          if (team.athletes && team.athletes.length > 0) {
-            team.athletes.forEach(athlete => {
-              athletesInTeams.add(athlete.atleta_id);
-            });
-          }
-        });
-      }
-
-      console.log('Athletes already in teams:', Array.from(athletesInTeams));
-      
-      return enrollments
-        .filter(enrollment => !athletesInTeams.has(enrollment.atleta_id))
+      // Filter out athletes already in teams and format the data
+      const availableAthletes: AthleteOption[] = enrollments
+        .filter(enrollment => !athletesInTeams.includes(enrollment.atleta_id))
         .map(enrollment => {
-          // Handle usuarios data properly
           const usuario = Array.isArray(enrollment.usuarios) 
             ? enrollment.usuarios[0] 
             : enrollment.usuarios;
           
-          // Handle filiais data properly  
           const filial = usuario?.filiais 
             ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
             : null;
 
+          const pagamento = Array.isArray(enrollment.pagamentos)
+            ? enrollment.pagamentos[0]
+            : enrollment.pagamentos;
+
           return {
             id: enrollment.atleta_id,
             nome: usuario?.nome_completo || '',
-            documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
-            filial_nome: filial?.nome || 'N/A'
+            filial_nome: filial?.nome || 'N/A',
+            numero_identificador: pagamento?.numero_identificador || undefined
           };
         });
+
+      console.log('Available athletes after filtering:', availableAthletes);
+      return availableAthletes;
     },
     enabled: !!eventId && !!selectedModalityId,
   });

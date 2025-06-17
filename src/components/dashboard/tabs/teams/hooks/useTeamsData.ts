@@ -7,14 +7,14 @@ export function useTeamsData(eventId: string | null, branchId?: string) {
   const { user } = useAuth();
   
   return useQuery({
-    queryKey: ['teams', eventId, branchId, user?.id],
+    queryKey: ['teams', eventId, branchId, user?.id, user?.filial_id],
     queryFn: async () => {
       if (!eventId || !user?.id) {
         console.log('useTeamsData - Missing eventId or user:', { eventId, userId: user?.id });
         return [];
       }
       
-      console.log('useTeamsData - Fetching teams for:', { eventId, userId: user.id, branchId });
+      console.log('useTeamsData - Fetching teams for:', { eventId, userId: user.id, branchId, filialId: user.filial_id });
       
       // Para representantes de delegação, buscar apenas equipes criadas por usuários da mesma filial
       // Primeiro, buscar todos os usuários da mesma filial
