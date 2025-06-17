@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { BranchAnalytics } from '@/types/api';
 
@@ -112,23 +113,27 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
         let totalPendente = 0;
 
         registrations?.forEach(reg => {
-          // Fix: Handle usuarios as a single object (not array) due to foreign key relationship
-          const usuario = reg.usuarios as { filial_id: string; tipo_perfil: string } | null;
-          if (usuario && ['atleta', 'dependente'].includes(usuario.tipo_perfil)) {
-            if (reg.status in statusCounts) {
-              statusCounts[reg.status as keyof typeof statusCounts]++;
-            }
-
-            // Calculate payment totals including dependents
-            if (Array.isArray(reg.pagamentos)) {
-              reg.pagamentos.forEach((pagamento: any) => {
-                if (pagamento.status === 'confirmado') {
-                  totalPago += Number(pagamento.valor) || 0;
-                } else if (pagamento.status === 'pendente') {
-                  totalPendente += Number(pagamento.valor) || 0;
+          // Fix: Handle usuarios as an array of objects from the join
+          const usuarios = reg.usuarios as { filial_id: string; tipo_perfil: string }[] | null;
+          if (usuarios && Array.isArray(usuarios)) {
+            usuarios.forEach(usuario => {
+              if (['atleta', 'dependente'].includes(usuario.tipo_perfil)) {
+                if (reg.status in statusCounts) {
+                  statusCounts[reg.status as keyof typeof statusCounts]++;
                 }
-              });
-            }
+
+                // Calculate payment totals including dependents
+                if (Array.isArray(reg.pagamentos)) {
+                  reg.pagamentos.forEach((pagamento: any) => {
+                    if (pagamento.status === 'confirmado') {
+                      totalPago += Number(pagamento.valor) || 0;
+                    } else if (pagamento.status === 'pendente') {
+                      totalPendente += Number(pagamento.valor) || 0;
+                    }
+                  });
+                }
+              }
+            });
           }
         });
 
