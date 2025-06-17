@@ -1,5 +1,5 @@
 
-import { ArrowLeftRight, LogOut, UserCheck, ClipboardCheck, BarChart3 } from "lucide-react";
+import { ArrowLeftRight, LogOut, UserCheck } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { NavigationItem } from "./navigation-items";
 import { cn } from "@/lib/utils";
@@ -224,24 +224,12 @@ export const MobileNavigationLink = () => {
     });
   }
 
-  // Filósofo Monitor items
+  // Filósofo Monitor - ÚNICA ENTRADA (matching desktop menu)
   if (roles.isFilosofoMonitor) {
     navigationItems.push({
-      label: "Modalidades",
-      path: "/monitor/modalidades",
+      label: "Filósofo Monitor",
+      path: "/monitor",
       icon: UserCheck
-    });
-    
-    navigationItems.push({
-      label: "Chamadas",
-      path: "/monitor/chamadas",
-      icon: ClipboardCheck
-    });
-    
-    navigationItems.push({
-      label: "Relatórios",
-      path: "/monitor/relatorios",
-      icon: BarChart3
     });
   }
   
