@@ -133,7 +133,8 @@ export function NotificationsList({ eventId, userId }: NotificationsListProps) {
               </CardHeader>
               <CardContent>
                 <div 
-                  className="prose prose-sm max-w-none"
+                  className="ql-editor"
+                  style={{ padding: 0 }}
                   dangerouslySetInnerHTML={{ __html: notification.mensagem }}
                 />
               </CardContent>

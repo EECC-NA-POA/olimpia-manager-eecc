@@ -68,7 +68,7 @@ export function NotificationCard({ notification, onClick }: NotificationCardProp
           
           {/* Primeira linha da mensagem com formatação HTML */}
           <div 
-            className="text-gray-600 text-sm leading-relaxed prose prose-sm max-w-none"
+            className="text-gray-600 text-sm leading-relaxed ql-editor"
             dangerouslySetInnerHTML={{ 
               __html: getFirstLineWithFormatting(notification.mensagem) 
             }}

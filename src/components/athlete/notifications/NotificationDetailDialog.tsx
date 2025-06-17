@@ -117,7 +117,8 @@ export function NotificationDetailDialog({
               </div>
               
               <div 
-                className="prose prose-sm max-w-none text-left"
+                className="ql-editor text-left"
+                style={{ padding: 0 }}
                 dangerouslySetInnerHTML={{ __html: notification.mensagem }}
               />
             </div>
