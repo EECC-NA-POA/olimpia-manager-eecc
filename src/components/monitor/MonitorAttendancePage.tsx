@@ -46,7 +46,7 @@ export default function MonitorAttendancePage() {
   }, [modalidadeParam, modalities]);
 
   const handleCreateSession = async () => {
-    if (!selectedModalidade || !sessionForm.data_hora_inicio || !sessionForm.descricao) {
+    if (!selectedModalidade || !sessionForm.data_hora_inicio) {
       return;
     }
 
@@ -54,7 +54,7 @@ export default function MonitorAttendancePage() {
       modalidade_rep_id: selectedModalidade,
       data_hora_inicio: sessionForm.data_hora_inicio,
       data_hora_fim: sessionForm.data_hora_fim || undefined,
-      descricao: sessionForm.descricao
+      descricao: sessionForm.descricao || 'Chamada de presença'
     });
 
     setIsNewSessionOpen(false);
@@ -77,14 +77,14 @@ export default function MonitorAttendancePage() {
 
   if (!modalities || modalities.length === 0) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 p-4">
         <div className="flex items-center gap-3">
-          <ClipboardCheck className="h-8 w-8 text-olimpics-green-primary" />
-          <h1 className="text-3xl font-bold text-olimpics-text">Chamadas de Presença</h1>
+          <ClipboardCheck className="h-6 w-6 sm:h-8 sm:w-8 text-olimpics-green-primary" />
+          <h1 className="text-xl sm:text-3xl font-bold text-olimpics-text">Chamadas de Presença</h1>
         </div>
         
         <Card>
-          <CardContent className="p-6 text-center">
+          <CardContent className="p-4 sm:p-6 text-center">
             <p className="text-gray-500">
               Você não está cadastrado como monitor de nenhuma modalidade.
             </p>
@@ -109,31 +109,34 @@ export default function MonitorAttendancePage() {
   const selectedModalityData = modalities?.find(m => m.id === selectedModalidade);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <ClipboardCheck className="h-8 w-8 text-olimpics-green-primary" />
-          <h1 className="text-3xl font-bold text-olimpics-text">Chamadas de Presença</h1>
+          <ClipboardCheck className="h-6 w-6 sm:h-8 sm:w-8 text-olimpics-green-primary" />
+          <h1 className="text-xl sm:text-3xl font-bold text-olimpics-text">Chamadas de Presença</h1>
         </div>
       </div>
 
       {/* Seletor de Modalidade */}
       <Card>
-        <CardHeader>
-          <CardTitle>Selecionar Modalidade</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Selecionar Modalidade</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <Select
             value={selectedModalidade || ''}
             onValueChange={(value) => setSelectedModalidade(value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Selecione uma modalidade" />
             </SelectTrigger>
             <SelectContent>
               {modalities.map((modality) => (
                 <SelectItem key={modality.id} value={modality.id}>
-                  {modality.modalidades.nome} - {modality.filiais.nome}
+                  <div className="flex flex-col">
+                    <span>{modality.modalidades.nome}</span>
+                    <span className="text-sm text-gray-500">{modality.filiais.nome}</span>
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -146,70 +149,77 @@ export default function MonitorAttendancePage() {
           {/* Header da Modalidade Selecionada */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>{selectedModalityData.modalidades.nome}</CardTitle>
-                  <p className="text-sm text-gray-500">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div className="flex-1">
+                  <CardTitle className="text-lg sm:text-xl">{selectedModalityData.modalidades.nome}</CardTitle>
+                  <p className="text-sm text-gray-500 mt-1">
                     {selectedModalityData.filiais.nome} - {selectedModalityData.filiais.cidade}, {selectedModalityData.filiais.estado}
                   </p>
                 </div>
                 
                 <Dialog open={isNewSessionOpen} onOpenChange={setIsNewSessionOpen}>
                   <DialogTrigger asChild>
-                    <Button className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary">
+                    <Button className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:w-auto">
                       <Plus className="h-4 w-4 mr-2" />
-                      Nova Chamada
+                      Nova Chamada de Presença
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="w-[95vw] max-w-md mx-auto">
                     <DialogHeader>
-                      <DialogTitle>Nova Sessão de Presença</DialogTitle>
+                      <DialogTitle>Nova Chamada de Presença</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
+                    <div className="space-y-4 py-2">
+                      <div className="space-y-2">
                         <Label htmlFor="data_hora_inicio">Data e Hora de Início *</Label>
                         <Input
                           id="data_hora_inicio"
                           type="datetime-local"
                           value={sessionForm.data_hora_inicio}
                           onChange={(e) => setSessionForm({ ...sessionForm, data_hora_inicio: e.target.value })}
+                          className="w-full"
                         />
                       </div>
                       
-                      <div>
+                      <div className="space-y-2">
                         <Label htmlFor="data_hora_fim">Data e Hora de Fim</Label>
                         <Input
                           id="data_hora_fim"
                           type="datetime-local"
                           value={sessionForm.data_hora_fim}
                           onChange={(e) => setSessionForm({ ...sessionForm, data_hora_fim: e.target.value })}
+                          className="w-full"
                         />
                       </div>
                       
-                      <div>
-                        <Label htmlFor="descricao">Descrição *</Label>
+                      <div className="space-y-2">
+                        <Label htmlFor="descricao">Descrição</Label>
                         <Textarea
                           id="descricao"
                           value={sessionForm.descricao}
                           onChange={(e) => setSessionForm({ ...sessionForm, descricao: e.target.value })}
-                          placeholder="Descreva o objetivo desta sessão..."
+                          placeholder="Descreva o objetivo desta sessão... (opcional)"
+                          className="w-full min-h-[80px] resize-none"
                         />
                       </div>
                       
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2 pt-2">
                         <Button 
                           onClick={handleCreateSession}
-                          disabled={createSession.isPending}
-                          className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary"
+                          disabled={createSession.isPending || !sessionForm.data_hora_inicio}
+                          className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:flex-1"
                         >
                           {createSession.isPending ? (
                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
                           ) : (
                             <Save className="h-4 w-4 mr-2" />
                           )}
-                          Criar Sessão
+                          Criar Chamada
                         </Button>
-                        <Button variant="outline" onClick={() => setIsNewSessionOpen(false)}>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setIsNewSessionOpen(false)}
+                          className="w-full sm:w-auto"
+                        >
                           Cancelar
                         </Button>
                       </div>
@@ -230,11 +240,11 @@ export default function MonitorAttendancePage() {
               {sessions.map((session) => (
                 <Card key={session.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                          <h3 className="font-semibold">{session.descricao}</h3>
-                          <Badge variant="outline">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                          <h3 className="font-semibold truncate">{session.descricao}</h3>
+                          <Badge variant="outline" className="self-start sm:self-auto">
                             {format(new Date(session.data_hora_inicio), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                           </Badge>
                         </div>
@@ -245,20 +255,23 @@ export default function MonitorAttendancePage() {
                         )}
                       </div>
                       
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-shrink-0">
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => setSelectedSession(session.id)}
+                          className="flex-1 sm:flex-none"
                         >
                           <Users className="h-4 w-4 mr-1" />
-                          Presenças
+                          <span className="hidden sm:inline">Presenças</span>
+                          <span className="sm:hidden">Ver</span>
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleDeleteSession(session.id)}
                           disabled={deleteSession.isPending}
+                          className="px-3"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -270,10 +283,10 @@ export default function MonitorAttendancePage() {
             </div>
           ) : (
             <Card>
-              <CardContent className="p-6 text-center">
+              <CardContent className="p-4 sm:p-6 text-center">
                 <p className="text-gray-500">Nenhuma sessão de presença criada ainda.</p>
                 <p className="text-sm text-gray-400 mt-2">
-                  Clique em "Nova Chamada" para criar sua primeira sessão.
+                  Clique em "Nova Chamada de Presença" para criar sua primeira sessão.
                 </p>
               </CardContent>
             </Card>
