@@ -9,6 +9,7 @@ interface CreateSessionData {
   data_hora_inicio: string;
   data_hora_fim?: string;
   descricao: string;
+  observacoes?: string;
 }
 
 interface SaveAttendanceData {
@@ -40,6 +41,7 @@ export const useMonitorMutations = () => {
           data_hora_inicio: sessionData.data_hora_inicio,
           data_hora_fim: sessionData.data_hora_fim,
           descricao: sessionData.descricao,
+          observacoes: sessionData.observacoes,
           criado_por: user.id
         })
         .select()
@@ -79,6 +81,7 @@ export const useMonitorMutations = () => {
           data_hora_inicio: data.data_hora_inicio,
           data_hora_fim: data.data_hora_fim,
           descricao: data.descricao,
+          observacoes: data.observacoes,
           criado_por: user.id
         })
         .select()

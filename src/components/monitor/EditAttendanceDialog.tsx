@@ -5,17 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Save, Users } from "lucide-react";
+import { Loader2, Save, Users, AlertTriangle } from "lucide-react";
 import { useModalityAthletes } from "@/hooks/useModalityAthletes";
 import { useMonitorMutations } from "@/hooks/useMonitorMutations";
+import { useSessionAttendance, useAthletesForAttendance } from "@/hooks/useSessionAttendance";
+import { MonitorSession } from "@/hooks/useMonitorSessions";
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import AttendanceStatusSummary from './attendance-creation/AttendanceStatusSummary';
 import AthleteAttendanceCard from './attendance-creation/AthleteAttendanceCard';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-interface AttendanceCreationDialogProps {
+interface EditAttendanceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  modalidadeRepId: string | null;
-  modalityName: string;
+  session: MonitorSession;
 }
 
 interface AthleteAttendance {
@@ -26,12 +30,11 @@ interface AthleteAttendance {
   status: 'presente' | 'ausente' | 'atrasado';
 }
 
-export default function AttendanceCreationDialog({ 
+export default function EditAttendanceDialog({ 
   open, 
   onOpenChange, 
-  modalidadeRepId,
-  modalityName 
-}: AttendanceCreationDialogProps) {
+  session 
+}: EditAttendanceDialogProps) {
   const [sessionForm, setSessionForm] = useState({
     data_hora_inicio: '',
     data_hora_fim: '',
@@ -40,22 +43,41 @@ export default function AttendanceCreationDialog({
   });
   const [athletesAttendance, setAthletesAttendance] = useState<AthleteAttendance[]>([]);
 
-  const { data: athletes, isLoading: athletesLoading } = useModalityAthletes(modalidadeRepId || undefined);
-  const { createSessionWithAttendance } = useMonitorMutations();
+  const { data: existingAttendances } = useSessionAttendance(session.id);
+  const { data: athletes, isLoading: athletesLoading } = useAthletesForAttendance(session.modalidade_rep_id);
+  const { updateSession, saveAttendances } = useMonitorMutations();
 
   useEffect(() => {
-    if (athletes && open) {
-      // Inicializar todos os atletas como presentes
+    if (session && open) {
+      setSessionForm({
+        data_hora_inicio: format(new Date(session.data_hora_inicio), "yyyy-MM-dd'T'HH:mm"),
+        data_hora_fim: session.data_hora_fim ? format(new Date(session.data_hora_fim), "yyyy-MM-dd'T'HH:mm") : '',
+        descricao: session.descricao || '',
+        observacoes: (session as any).observacoes || ''
+      });
+    }
+  }, [session, open]);
+
+  useEffect(() => {
+    if (athletes && existingAttendances && open) {
+      // Criar mapa das presenças existentes
+      const existingAttendanceMap = new Map();
+      existingAttendances.forEach(attendance => {
+        existingAttendanceMap.set(attendance.atleta_id, attendance.status);
+      });
+
+      // Inicializar todos os atletas com status baseado nas presenças existentes ou 'presente' como padrão
       const initialAttendance = athletes.map(athlete => ({
         id: athlete.id,
         nome_completo: athlete.nome_completo,
         email: athlete.email,
         numero_identificador: athlete.numero_identificador,
-        status: 'presente' as const
+        status: existingAttendanceMap.get(athlete.id) || 'presente' as const
       }));
+      
       setAthletesAttendance(initialAttendance);
     }
-  }, [athletes, open]);
+  }, [athletes, existingAttendances, open]);
 
   const handleStatusChange = (athleteId: string, status: 'presente' | 'ausente' | 'atrasado') => {
     setAthletesAttendance(prev => 
@@ -65,29 +87,33 @@ export default function AttendanceCreationDialog({
     );
   };
 
-  const handleCreateSession = async () => {
-    if (!modalidadeRepId) return;
-
+  const handleUpdateSession = async () => {
     try {
-      const attendances = athletesAttendance.map(athlete => ({
-        atleta_id: athlete.id,
-        status: athlete.status
-      }));
-
-      await createSessionWithAttendance.mutateAsync({
-        modalidade_rep_id: modalidadeRepId,
-        data_hora_inicio: sessionForm.data_hora_inicio,
-        data_hora_fim: sessionForm.data_hora_fim || undefined,
-        descricao: sessionForm.descricao || 'Chamada de presença',
-        observacoes: sessionForm.observacoes,
-        attendances
+      // Atualizar dados da sessão
+      await updateSession.mutateAsync({
+        id: session.id,
+        data: {
+          data_hora_inicio: sessionForm.data_hora_inicio,
+          data_hora_fim: sessionForm.data_hora_fim || undefined,
+          descricao: sessionForm.descricao,
+          observacoes: sessionForm.observacoes
+        }
       });
 
-      // Reset form and close dialog
-      setSessionForm({ data_hora_inicio: '', data_hora_fim: '', descricao: '', observacoes: '' });
+      // Salvar presenças atualizadas
+      if (athletes && athletes.length > 0) {
+        const attendances = athletesAttendance.map(athlete => ({
+          chamada_id: session.id,
+          atleta_id: athlete.id,
+          status: athlete.status
+        }));
+
+        await saveAttendances.mutateAsync(attendances);
+      }
+
       onOpenChange(false);
     } catch (error) {
-      console.error('Error creating session:', error);
+      console.error('Error updating session:', error);
     }
   };
 
@@ -104,19 +130,19 @@ export default function AttendanceCreationDialog({
     );
   }
 
-  const canCreateSession = sessionForm.data_hora_inicio && athletes && athletes.length > 0;
+  const canUpdateSession = sessionForm.data_hora_inicio && sessionForm.descricao;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95vw] max-w-6xl mx-auto max-h-[90vh] overflow-hidden">
         <DialogHeader>
-          <DialogTitle>Nova Chamada - {modalityName}</DialogTitle>
+          <DialogTitle>Editar Chamada - {session.modalidade_representantes.modalidades.nome}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-2 max-h-[75vh] overflow-auto">
           {/* Formulário de configuração */}
           <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-semibold text-lg">Configuração da Chamada</h3>
+            <h3 className="font-semibold text-lg">Dados da Chamada</h3>
             
             {/* Datas lado a lado */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -142,13 +168,12 @@ export default function AttendanceCreationDialog({
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="descricao">Descrição (opcional)</Label>
-              <Textarea
+              <Label htmlFor="descricao">Descrição *</Label>
+              <Input
                 id="descricao"
                 value={sessionForm.descricao}
                 onChange={(e) => setSessionForm({ ...sessionForm, descricao: e.target.value })}
                 placeholder="Descreva o objetivo desta chamada..."
-                className="min-h-[80px] resize-none"
               />
             </div>
 
@@ -167,6 +192,18 @@ export default function AttendanceCreationDialog({
             </div>
           </div>
 
+          {/* Alerta sobre observações se houver */}
+          {sessionForm.observacoes && (
+            <Alert className="border-amber-200 bg-amber-50">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-800">
+                <strong>Observações registradas:</strong> {sessionForm.observacoes}
+                <br />
+                <span className="text-sm">Lembre-se de atualizar a chamada quando estes atletas realizarem o cadastro no sistema.</span>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Informação de atletas inscritos */}
           {athletes && athletes.length > 0 && (
             <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -181,7 +218,7 @@ export default function AttendanceCreationDialog({
           {athletesAttendance.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-lg">Marcar Presenças</h3>
+                <h3 className="font-semibold text-lg">Atualizar Presenças</h3>
                 <AttendanceStatusSummary athletesAttendance={athletesAttendance} />
               </div>
 
@@ -200,16 +237,16 @@ export default function AttendanceCreationDialog({
           {/* Botões de ação */}
           <div className="flex gap-2 pt-4 border-t sticky bottom-0 bg-white">
             <Button 
-              onClick={handleCreateSession}
-              disabled={!canCreateSession || createSessionWithAttendance.isPending}
+              onClick={handleUpdateSession}
+              disabled={!canUpdateSession || updateSession.isPending || saveAttendances.isPending}
               className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary flex-1"
             >
-              {createSessionWithAttendance.isPending ? (
+              {(updateSession.isPending || saveAttendances.isPending) ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : (
                 <Save className="h-4 w-4 mr-2" />
               )}
-              Criar Chamada
+              Salvar Alterações
             </Button>
             <Button 
               variant="outline" 
