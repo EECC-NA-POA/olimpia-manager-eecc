@@ -69,14 +69,21 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
     }
     
     // Verificar se o usuário pode acessar esta notificação
-    const destinations = notificationWithDestinations.notificacao_destinatarios;
-    const userCanAccess = destinations.some(dest => 
-      dest.filial_id === null || dest.filial_id === userData.filial_id
-    );
+    const destinations = notificationWithDestinations.notificacao_destinatarios || [];
+    console.log('Raw destinations from DB:', destinations);
+    console.log('User filial_id:', userData.filial_id);
+    
+    // Verificação de acesso:
+    // 1. Se não há destinatários específicos (destinations vazio), a notificação é para todos
+    // 2. Se há destinatários e um deles é null (todas as filiais), o usuário tem acesso
+    // 3. Se há destinatários e a filial do usuário está incluída, o usuário tem acesso
+    const userCanAccess = destinations.length === 0 || 
+                         destinations.some(dest => dest.filial_id === null || dest.filial_id === userData.filial_id);
     
     console.log('User can access notification:', userCanAccess);
-    console.log('User filial_id:', userData.filial_id);
-    console.log('Notification destinations:', destinations);
+    console.log('Access logic - destinations empty:', destinations.length === 0);
+    console.log('Access logic - has null destination:', destinations.some(dest => dest.filial_id === null));
+    console.log('Access logic - has user filial:', destinations.some(dest => dest.filial_id === userData.filial_id));
     
     if (!userCanAccess) {
       console.error('User does not have access to this notification');
@@ -113,13 +120,15 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
     };
     console.log('Insert data:', insertData);
     
-    // Tentar inserir sem .select() para evitar problemas de RLS no SELECT
-    console.log('=== INSERTING WITHOUT SELECT ===');
-    const { error: insertError } = await supabase
+    // Inserir o registro de leitura
+    console.log('=== INSERTING READ RECORD ===');
+    const { data: insertResult, error: insertError } = await supabase
       .from('notificacao_leituras')
-      .insert(insertData);
+      .insert(insertData)
+      .select()
+      .single();
 
-    console.log('Insert result (without select):', { insertError });
+    console.log('Insert result:', { insertResult, insertError });
 
     if (insertError) {
       console.error('=== DATABASE INSERT ERROR ===');
@@ -140,22 +149,9 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
       throw insertError;
     }
 
-    // Se chegou até aqui, a inserção foi bem-sucedida
-    console.log('=== INSERT SUCCESSFUL ===');
-    
-    // Tentar buscar o registro recém-criado para confirmar
-    const { data: newReadRecord, error: selectError } = await supabase
-      .from('notificacao_leituras')
-      .select('*')
-      .eq('notificacao_id', notificationId)
-      .eq('usuario_id', userId)
-      .maybeSingle();
-    
-    console.log('Newly created record check:', { newReadRecord, selectError });
-
     console.log('=== SUCCESS ===');
     console.log('Notification marked as read successfully');
-    return { success: true, data: newReadRecord };
+    return { success: true, data: insertResult };
     
   } catch (error) {
     console.error('=== CATCH ERROR ===');
