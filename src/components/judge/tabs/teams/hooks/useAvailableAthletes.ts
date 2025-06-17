@@ -34,6 +34,24 @@ export function useAvailableAthletes(
       const athletesInTeams = teamAthletes?.map(ta => ta.atleta_id) || [];
       console.log('Athletes already in teams from DB:', athletesInTeams);
 
+      // For delegation representatives, first get the user IDs from their branch
+      let allowedUserIds: string[] = [];
+      if (isDelegationRep && user?.filial_id) {
+        console.log('Getting users from branch:', user.filial_id);
+        const { data: branchUsers } = await supabase
+          .from('usuarios')
+          .select('id')
+          .eq('filial_id', user.filial_id);
+        
+        allowedUserIds = branchUsers?.map(u => u.id) || [];
+        console.log('Allowed user IDs from branch:', allowedUserIds);
+        
+        if (allowedUserIds.length === 0) {
+          console.log('No users found for this branch, returning empty');
+          return [];
+        }
+      }
+
       // Build the base query for available athletes
       let enrollmentsQuery = supabase
         .from('inscricoes_modalidades')
@@ -52,11 +70,10 @@ export function useAvailableAthletes(
         .eq('modalidade_id', selectedModalityId)
         .eq('status', 'confirmado');
 
-      // CRITICAL: For delegation representatives, ALWAYS filter by branch
-      // For organizers, show all athletes
-      if (isDelegationRep && user?.filial_id) {
-        console.log('Applying DELEGATION REP branch filter for filial_id:', user.filial_id);
-        enrollmentsQuery = enrollmentsQuery.eq('usuarios.filial_id', user.filial_id);
+      // Apply branch filtering
+      if (isDelegationRep && allowedUserIds.length > 0) {
+        console.log('Applying DELEGATION REP user ID filter:', allowedUserIds);
+        enrollmentsQuery = enrollmentsQuery.in('atleta_id', allowedUserIds);
       } else if (!isOrganizer && user?.filial_id) {
         console.log('Applying NON-ORGANIZER branch filter for filial_id:', user.filial_id);
         enrollmentsQuery = enrollmentsQuery.eq('usuarios.filial_id', user.filial_id);
