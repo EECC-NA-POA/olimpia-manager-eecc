@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
-import { User, Users, Calendar, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut } from 'lucide-react';
+import { User, Users, Calendar, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut, UserCheck, ClipboardCheck, BarChart3 } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupContent } from '@/components/ui/sidebar';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,6 +25,7 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
   const isOrganizer = roles.isOrganizer;
   const isDelegationRep = roles.isDelegationRep;
   const isAthlete = roles.isAthlete;
+  const isFilosofoMonitor = roles.isFilosofoMonitor;
   
   // Check if user can manage events (admin with cadastra_eventos=true)
   const canManageEvents = isAdmin && canCreateEvents;
@@ -74,7 +75,7 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
     tooltip: "Minhas Inscrições"
   });
   
-  // 6. Organizador (Organizer) - FIXED ROUTE
+  // 5. Organizador (Organizer) - FIXED ROUTE
   if (isOrganizer) {
     menuItems.push({
       path: "/organizador",
@@ -84,13 +85,37 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
     });
   }
   
-  // 7. Delegação (Delegation) - FIXED ROUTE
+  // 6. Delegação (Delegation) - FIXED ROUTE
   if (isDelegationRep) {
     menuItems.push({
       path: "/delegacao",
       label: "Delegação",
       icon: <Users className="h-5 w-5" />,
       tooltip: "Delegação"
+    });
+  }
+
+  // 7. Filósofo Monitor - NEW SECTION
+  if (isFilosofoMonitor) {
+    menuItems.push({
+      path: "/monitor/modalidades",
+      label: "Minhas Modalidades",
+      icon: <UserCheck className="h-5 w-5" />,
+      tooltip: "Minhas Modalidades"
+    });
+    
+    menuItems.push({
+      path: "/monitor/chamadas",
+      label: "Chamadas de Presença",
+      icon: <ClipboardCheck className="h-5 w-5" />,
+      tooltip: "Chamadas de Presença"
+    });
+    
+    menuItems.push({
+      path: "/monitor/relatorios",
+      label: "Relatórios de Presença",
+      icon: <BarChart3 className="h-5 w-5" />,
+      tooltip: "Relatórios de Presença"
     });
   }
   

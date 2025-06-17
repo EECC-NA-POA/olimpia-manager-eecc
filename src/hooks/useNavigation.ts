@@ -10,6 +10,7 @@ interface UserRoles {
   isPublicGeral: boolean;
   isAdmin: boolean;
   isJudge: boolean;
+  isFilosofoMonitor: boolean;
 }
 
 export const useNavigation = () => {
@@ -28,7 +29,8 @@ export const useNavigation = () => {
     isDelegationRep: userRoleCodes.includes('RDD'),
     isPublicGeral: userRoleCodes.includes('PGR'),
     isAdmin: userRoleCodes.includes('ADM'),
-    isJudge: userRoleCodes.includes('JUZ')
+    isJudge: userRoleCodes.includes('JUZ'),
+    isFilosofoMonitor: userRoleCodes.includes('FMO') // Novo papel
   };
 
   // Redirect authenticated users without an event to event selection
