@@ -40,8 +40,6 @@ export function TeamFormDialog({
     defaultValues: {
       nome: editingTeam?.nome || '',
       modalidade_id: editingTeam ? String(editingTeam.modalidade_id) : '',
-      cor_uniforme: editingTeam?.cor_uniforme || '',
-      observacoes: editingTeam?.observacoes || ''
     }
   });
 
@@ -51,15 +49,11 @@ export function TeamFormDialog({
       form.reset({
         nome: editingTeam.nome,
         modalidade_id: String(editingTeam.modalidade_id),
-        cor_uniforme: editingTeam.cor_uniforme || '',
-        observacoes: editingTeam.observacoes || '',
       });
     } else {
       form.reset({
         nome: '',
         modalidade_id: '',
-        cor_uniforme: '',
-        observacoes: ''
       });
     }
   }, [editingTeam, form]);
