@@ -60,19 +60,19 @@ export const useSessionAttendance = (chamadaId: string | null) => {
           status,
           registrado_em,
           registrado_por,
-          atleta:atleta_id (
+          atleta:atleta_id!inner (
             nome_completo,
             email
           ),
-          chamada:chamada_id (
+          chamada:chamada_id!inner (
             id,
             descricao,
             data_hora_inicio,
             data_hora_fim,
             observacoes,
-            modalidade_representantes:modalidade_rep_id (
-              modalidades:modalidade_id (nome),
-              filiais:filial_id (nome)
+            modalidade_representantes:modalidade_rep_id!inner (
+              modalidades:modalidade_id!inner (nome),
+              filiais:filial_id!inner (nome)
             )
           )
         `)
@@ -104,7 +104,22 @@ export const useSessionAttendance = (chamadaId: string | null) => {
               nome_completo: item.atleta?.nome_completo || '',
               email: item.atleta?.email || '',
               numero_identificador: pagamento?.numero_identificador || null
-            }
+            },
+            chamada: item.chamada ? {
+              id: item.chamada.id,
+              descricao: item.chamada.descricao,
+              data_hora_inicio: item.chamada.data_hora_inicio,
+              data_hora_fim: item.chamada.data_hora_fim,
+              observacoes: item.chamada.observacoes,
+              modalidade_representantes: {
+                modalidades: {
+                  nome: item.chamada.modalidade_representantes?.modalidades?.nome || ''
+                },
+                filiais: {
+                  nome: item.chamada.modalidade_representantes?.filiais?.nome || ''
+                }
+              }
+            } : undefined
           };
         });
 
@@ -118,7 +133,22 @@ export const useSessionAttendance = (chamadaId: string | null) => {
           nome_completo: item.atleta?.nome_completo || '',
           email: item.atleta?.email || '',
           numero_identificador: null
-        }
+        },
+        chamada: item.chamada ? {
+          id: item.chamada.id,
+          descricao: item.chamada.descricao,
+          data_hora_inicio: item.chamada.data_hora_inicio,
+          data_hora_fim: item.chamada.data_hora_fim,
+          observacoes: item.chamada.observacoes,
+          modalidade_representantes: {
+            modalidades: {
+              nome: item.chamada.modalidade_representantes?.modalidades?.nome || ''
+            },
+            filiais: {
+              nome: item.chamada.modalidade_representantes?.filiais?.nome || ''
+            }
+          }
+        } : undefined
       })) || [];
 
       return transformedData as SessionAttendance[];
@@ -157,7 +187,7 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
         .from('inscricoes_modalidades')
         .select(`
           atleta_id,
-          atleta:atleta_id (
+          atleta:atleta_id!inner (
             id,
             nome_completo,
             email
