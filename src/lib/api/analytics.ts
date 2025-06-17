@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { BranchAnalytics } from '@/types/api';
 
@@ -113,7 +112,7 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
         let totalPendente = 0;
 
         registrations?.forEach(reg => {
-          // Fix the type access - usuarios is a single object, not an array
+          // Fix: Handle usuarios as a single object (not array) due to foreign key relationship
           const usuario = reg.usuarios as { filial_id: string; tipo_perfil: string } | null;
           if (usuario && ['atleta', 'dependente'].includes(usuario.tipo_perfil)) {
             if (reg.status in statusCounts) {
