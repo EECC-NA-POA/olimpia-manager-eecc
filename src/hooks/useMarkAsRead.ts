@@ -16,16 +16,20 @@ export function useMarkAsRead() {
       console.log('=== MUTATION SUCCESS ===');
       console.log('Notification marked as read successfully', variables, data);
       
-      // Invalidar queries de notificações para atualizar status
-      console.log('Invalidating notifications queries...');
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      
-      // Também invalidar query específica se existir
+      // Invalidar todas as queries de notificações
+      console.log('Invalidating all notification queries...');
       queryClient.invalidateQueries({ 
-        queryKey: ['notifications', variables.notificationId] 
+        queryKey: ['notifications'],
+        exact: false 
       });
       
-      console.log('Queries invalidated successfully');
+      // Forçar refetch imediato das notificações
+      queryClient.refetchQueries({ 
+        queryKey: ['notifications'],
+        exact: false 
+      });
+      
+      console.log('Queries invalidated and refetched successfully');
     },
     onError: (error, variables) => {
       console.error('=== MUTATION ERROR ===');

@@ -27,7 +27,7 @@ export function NotificationDetailDialog({
   onClose 
 }: NotificationDetailDialogProps) {
   const markAsReadMutation = useMarkAsRead();
-  const hasMarkedAsRead = useRef<string | null>(null);
+  const hasMarkedAsRead = useRef<Set<string>>(new Set());
 
   // Marcar como lida quando o dialog abrir
   useEffect(() => {
@@ -35,35 +35,36 @@ export function NotificationDetailDialog({
     console.log('isOpen:', isOpen);
     console.log('notification?.id:', notification?.id);
     console.log('userId:', userId);
-    console.log('hasMarkedAsRead.current:', hasMarkedAsRead.current);
     console.log('notification?.lida:', notification?.lida);
+    console.log('hasMarkedAsRead has this ID:', hasMarkedAsRead.current.has(notification?.id || ''));
     
-    if (isOpen && notification && userId && hasMarkedAsRead.current !== notification.id) {
-      console.log('=== DIALOG OPENED - MARKING AS READ ===');
-      console.log('Dialog opened, marking notification as read:', notification.id, 'for user:', userId);
-      console.log('Notification is currently read?', notification.lida);
+    if (isOpen && notification && userId && !notification.lida && !hasMarkedAsRead.current.has(notification.id)) {
+      console.log('=== MARKING NOTIFICATION AS READ ===');
+      console.log('Marking notification as read:', notification.id, 'for user:', userId);
       
       // Marcar que já tentamos para esta notificação
-      hasMarkedAsRead.current = notification.id;
+      hasMarkedAsRead.current.add(notification.id);
       
-      // Só marcar como lida se ainda não estiver lida
-      if (!notification.lida) {
-        console.log('Notification is unread, calling markAsRead mutation...');
-        markAsReadMutation.mutate({
-          notificationId: notification.id,
-          userId: userId
-        });
-      } else {
-        console.log('Notification is already read, skipping mutation');
-      }
+      markAsReadMutation.mutate({
+        notificationId: notification.id,
+        userId: userId
+      });
+    } else {
+      console.log('Skipping mark as read:', {
+        isOpen,
+        hasNotification: !!notification,
+        hasUserId: !!userId,
+        isAlreadyRead: notification?.lida,
+        alreadyMarked: hasMarkedAsRead.current.has(notification?.id || '')
+      });
     }
   }, [isOpen, notification?.id, userId, notification?.lida, markAsReadMutation]);
 
-  // Reset ref quando o dialog fechar
+  // Reset quando o dialog fechar
   useEffect(() => {
     if (!isOpen) {
-      console.log('=== DIALOG CLOSED - RESETTING REF ===');
-      hasMarkedAsRead.current = null;
+      console.log('=== DIALOG CLOSED - CLEARING MARKS ===');
+      hasMarkedAsRead.current.clear();
     }
   }, [isOpen]);
 
