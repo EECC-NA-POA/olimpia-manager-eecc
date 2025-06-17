@@ -117,16 +117,18 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
     console.log('Session user ID:', session?.user?.id);
     console.log('Session error:', sessionError);
     
-    // Verificar dados do usuário autenticado
-    console.log('=== CHECKING AUTH USER ===');
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    console.log('Auth user ID:', user?.id);
-    console.log('Expected userId:', userId);
-    console.log('IDs match:', user?.id === userId);
-    console.log('Auth error:', authError);
+    if (!session || !session.user) {
+      console.error('No authenticated session found');
+      throw new Error('Usuário não autenticado');
+    }
     
-    // Verificar se o usuário tem filial
-    console.log('=== CHECKING USER BRANCH ===');
+    if (session.user.id !== userId) {
+      console.error('Session user ID does not match provided userId:', { sessionUserId: session.user.id, providedUserId: userId });
+      throw new Error('ID do usuário não confere com a sessão');
+    }
+    
+    // Verificar dados do usuário autenticado
+    console.log('=== CHECKING USER DATA ===');
     const { data: userData, error: userError } = await supabase
       .from('usuarios')
       .select('filial_id, nome_completo')
@@ -136,29 +138,49 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
     console.log('User data:', userData);
     console.log('User error:', userError);
     
-    // Verificar se a notificação existe
-    console.log('=== CHECKING NOTIFICATION EXISTS ===');
-    const { data: notificationData, error: notificationError } = await supabase
+    if (userError) {
+      console.error('Error fetching user data:', userError);
+      throw new Error('Erro ao buscar dados do usuário');
+    }
+    
+    // Verificar se a notificação existe e suas destinações
+    console.log('=== CHECKING NOTIFICATION AND DESTINATIONS ===');
+    const { data: notificationWithDestinations, error: notifError } = await supabase
       .from('notificacoes')
-      .select('id, titulo, autor_id, evento_id')
+      .select(`
+        id, 
+        titulo, 
+        autor_id, 
+        evento_id,
+        notificacao_destinatarios (
+          filial_id
+        )
+      `)
       .eq('id', notificationId)
       .single();
     
-    console.log('Notification data:', notificationData);
-    console.log('Notification error:', notificationError);
+    console.log('Notification with destinations:', notificationWithDestinations);
+    console.log('Notification error:', notifError);
     
-    // Verificar destinatários da notificação
-    console.log('=== CHECKING NOTIFICATION DESTINATIONS ===');
-    const { data: destinations, error: destError } = await supabase
-      .from('notificacao_destinatarios')
-      .select('*')
-      .eq('notificacao_id', notificationId);
+    if (notifError) {
+      console.error('Error fetching notification:', notifError);
+      throw new Error('Erro ao buscar notificação');
+    }
     
-    console.log('Destinations:', destinations);
-    console.log('Destinations error:', destError);
-    console.log('User filial matches destination:', destinations?.some(d => 
-      d.filial_id === null || d.filial_id === userData?.filial_id
-    ));
+    // Verificar se o usuário pode acessar esta notificação
+    const destinations = notificationWithDestinations.notificacao_destinatarios;
+    const userCanAccess = destinations.some(dest => 
+      dest.filial_id === null || dest.filial_id === userData.filial_id
+    );
+    
+    console.log('User can access notification:', userCanAccess);
+    console.log('User filial_id:', userData.filial_id);
+    console.log('Notification destinations:', destinations);
+    
+    if (!userCanAccess) {
+      console.error('User does not have access to this notification');
+      throw new Error('Usuário não tem acesso a esta notificação');
+    }
     
     // Verificar se já existe um registro
     console.log('=== CHECKING EXISTING READ STATUS ===');
@@ -190,26 +212,37 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
     };
     console.log('Insert data:', insertData);
     
-    // Vamos tentar sem select primeiro para ver se o problema é com o RLS no SELECT
-    console.log('=== TRYING INSERT WITHOUT SELECT ===');
+    // Verificar se as permissões estão corretas antes da inserção
+    console.log('=== TESTING RLS PERMISSIONS ===');
     const { error: insertError } = await supabase
       .from('notificacao_leituras')
       .insert(insertData);
 
-    console.log('Insert without select result:', { insertError });
+    console.log('Insert result:', { insertError });
 
     if (insertError) {
-      console.error('=== DATABASE ERROR DETAILS ===');
+      console.error('=== DATABASE INSERT ERROR ===');
       console.error('Error code:', insertError.code);
       console.error('Error message:', insertError.message);
       console.error('Error details:', insertError.details);
       console.error('Error hint:', insertError.hint);
+      
+      // Análise específica do erro
+      if (insertError.code === '42501') {
+        console.error('RLS PERMISSION DENIED - The RLS policy is blocking the insert');
+      } else if (insertError.message?.includes('duplicate key')) {
+        console.error('DUPLICATE KEY - Record already exists');
+      } else if (insertError.message?.includes('violates foreign key')) {
+        console.error('FOREIGN KEY VIOLATION - Referenced record does not exist');
+      }
+      
       throw insertError;
     }
 
     // Se chegou até aqui, a inserção foi bem-sucedida
-    // Vamos tentar buscar o registro recém-criado
-    console.log('=== INSERT SUCCESSFUL, CHECKING IF RECORD EXISTS ===');
+    console.log('=== INSERT SUCCESSFUL ===');
+    
+    // Tentar buscar o registro recém-criado para confirmar
     const { data: newReadRecord, error: selectError } = await supabase
       .from('notificacao_leituras')
       .select('*')
@@ -217,7 +250,7 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
       .eq('usuario_id', userId)
       .maybeSingle();
     
-    console.log('New read record:', { newReadRecord, selectError });
+    console.log('Newly created record check:', { newReadRecord, selectError });
 
     console.log('=== SUCCESS ===');
     console.log('Notification marked as read successfully');
@@ -226,6 +259,8 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
   } catch (error) {
     console.error('=== CATCH ERROR ===');
     console.error('Error in markNotificationAsRead:', error);
+    console.error('Error type:', typeof error);
+    console.error('Error constructor:', error?.constructor?.name);
     console.error('Full error object:', JSON.stringify(error, null, 2));
     throw error;
   }
