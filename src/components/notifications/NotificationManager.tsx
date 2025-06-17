@@ -12,6 +12,7 @@ interface NotificationManagerProps {
   userBranchId?: string;
   isRepresentanteDelegacao?: boolean;
   isOrganizer?: boolean;
+  isDelegationDashboard?: boolean;
 }
 
 export function NotificationManager({ 
@@ -19,7 +20,8 @@ export function NotificationManager({
   userId, 
   userBranchId,
   isRepresentanteDelegacao = false,
-  isOrganizer = false
+  isOrganizer = false,
+  isDelegationDashboard = false
 }: NotificationManagerProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
@@ -40,7 +42,11 @@ export function NotificationManager({
           </Button>
         </CardHeader>
         <CardContent>
-          <NotificationsList eventId={eventId} userId={userId} />
+          <NotificationsList 
+            eventId={eventId} 
+            userId={userId}
+            isDelegationDashboard={isDelegationDashboard}
+          />
         </CardContent>
       </Card>
 

@@ -5,13 +5,14 @@ import { RefreshCw } from "lucide-react";
 interface DashboardHeaderProps {
   onRefresh: () => void;
   isRefreshing: boolean;
+  title?: string;
 }
 
-export function DashboardHeader({ onRefresh, isRefreshing }: DashboardHeaderProps) {
+export function DashboardHeader({ onRefresh, isRefreshing, title = "Dashboard do Organizador" }: DashboardHeaderProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
       <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-olimpics-text text-center sm:text-left">
-        Dashboard do Organizador
+        {title}
       </h1>
       <Button 
         onClick={onRefresh} 

@@ -119,7 +119,7 @@ export default function DelegationDashboard() {
 
       case "notifications":
         return (
-          <NotificationManager
+          <DelegationNotificationManager
             eventId={currentEventId}
             userId={user?.id || ''}
             userBranchId={user?.filial_id}
@@ -135,7 +135,11 @@ export default function DelegationDashboard() {
 
   return (
     <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6 px-2 sm:px-4">
-      <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+      <DashboardHeader 
+        onRefresh={handleRefresh} 
+        isRefreshing={isRefreshing} 
+        title="Dashboard da Delegação"
+      />
 
       <Tabs defaultValue="statistics" className="w-full" onValueChange={setActiveTab} value={activeTab}>
         <div className="overflow-x-auto">
@@ -192,5 +196,31 @@ export default function DelegationDashboard() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+// Componente específico para notificações da delegação que filtra apenas por tipo de autor
+function DelegationNotificationManager({ 
+  eventId, 
+  userId, 
+  userBranchId,
+  isRepresentanteDelegacao = false,
+  isOrganizer = false
+}: {
+  eventId: string;
+  userId: string;
+  userBranchId?: string;
+  isRepresentanteDelegacao?: boolean;
+  isOrganizer?: boolean;
+}) {
+  return (
+    <NotificationManager
+      eventId={eventId}
+      userId={userId}
+      userBranchId={userBranchId}
+      isRepresentanteDelegacao={isRepresentanteDelegacao}
+      isOrganizer={isOrganizer}
+      isDelegationDashboard={true}
+    />
   );
 }

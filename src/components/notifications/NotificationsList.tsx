@@ -16,9 +16,10 @@ import { NotificationReadersDialog } from './NotificationReadersDialog';
 interface NotificationsListProps {
   eventId: string;
   userId?: string;
+  isDelegationDashboard?: boolean;
 }
 
-export function NotificationsList({ eventId, userId }: NotificationsListProps) {
+export function NotificationsList({ eventId, userId, isDelegationDashboard = false }: NotificationsListProps) {
   const [selectedNotificationForReaders, setSelectedNotificationForReaders] = useState<string | null>(null);
   const { data: notifications, isLoading } = useNotifications({ 
     eventId, 
@@ -67,10 +68,25 @@ export function NotificationsList({ eventId, userId }: NotificationsListProps) {
     );
   }
 
+  // Filtrar notificações quando estiver no dashboard da delegação
+  const filteredNotifications = isDelegationDashboard 
+    ? notifications.filter(notification => 
+        notification.autor_id === userId && notification.tipo_autor === 'representante_delegacao'
+      )
+    : notifications;
+
+  if (filteredNotifications.length === 0 && isDelegationDashboard) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        <p>Nenhuma notificação criada como representante de delegação encontrada para este evento.</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="space-y-4">
-        {notifications.map((notification) => {
+        {filteredNotifications.map((notification) => {
           const isAuthor = notification.autor_id === userId;
           
           return (
