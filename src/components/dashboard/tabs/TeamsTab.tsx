@@ -49,7 +49,7 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
     handleNewTeamClick
   } = useTeamOperations(eventId, userBranchId);
 
-  // Get teams for selected modality with athletes from the user's branch
+  // Get teams for selected modality (following organizer pattern)
   const { data: modalityTeams, isLoading: isLoadingModalityTeams, error: modalityTeamsError } = useTeamsDataForDelegation(
     eventId,
     selectedModalityId,
@@ -58,7 +58,7 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
 
   console.log('TeamsTab - Modality teams:', modalityTeams);
 
-  // Get available athletes for the selected modality (filtered by branch)
+  // Get available athletes for the selected modality (filtered by branch for delegation)
   const { data: availableAthletes, isLoading: isLoadingAthletes, error: athletesError } = useAvailableAthletesData(
     eventId,
     selectedModalityId,
@@ -67,8 +67,6 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
   );
 
   console.log('TeamsTab - Available athletes:', availableAthletes);
-  console.log('TeamsTab - Athletes loading:', isLoadingAthletes);
-  console.log('TeamsTab - Athletes error:', athletesError);
 
   // Loading state
   if (isLoadingTeams || isLoadingModalities) {
@@ -117,7 +115,7 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
         </Button>
       </div>
 
-      {/* Modality Selector */}
+      {/* Modality Selector (following organizer pattern) */}
       <div className="space-y-4">
         <div>
           <label className="text-sm font-medium">Selecione uma modalidade coletiva:</label>
@@ -181,28 +179,15 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
                 />
               </div>
             ) : (
-              <div className="space-y-4">
-                {/* Debug information */}
-                <div className="text-sm text-muted-foreground space-y-1 p-4 bg-gray-50 rounded">
-                  <p><strong>Debug Info:</strong></p>
-                  <p>Filial: {userBranchId}</p>
-                  <p>Modalidade: {selectedModalityId}</p>
-                  <p>Equipes encontradas: {modalityTeams?.length || 0}</p>
-                  <p>Atletas disponíveis: {availableAthletes?.length || 0}</p>
-                  <p>Equipes: {modalityTeams?.map(t => t.nome).join(', ') || 'Nenhuma'}</p>
-                  <p>Atletas: {availableAthletes?.map(a => a.nome).join(', ') || 'Nenhum'}</p>
-                </div>
-                
-                <TeamFormation
-                  teams={modalityTeams || []}
-                  availableAthletes={availableAthletes || []}
-                  eventId={eventId}
-                  modalityId={selectedModalityId}
-                  isOrganizer={false}
-                  isReadOnly={false}
-                  branchId={userBranchId}
-                />
-              </div>
+              <TeamFormation
+                teams={modalityTeams || []}
+                availableAthletes={availableAthletes || []}
+                eventId={eventId}
+                modalityId={selectedModalityId}
+                isOrganizer={false}
+                isReadOnly={false}
+                branchId={userBranchId}
+              />
             )}
           </div>
         </div>

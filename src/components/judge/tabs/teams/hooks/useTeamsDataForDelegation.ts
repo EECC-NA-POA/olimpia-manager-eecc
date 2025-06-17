@@ -15,7 +15,7 @@ export function useTeamsDataForDelegation(
 
       console.log('Fetching teams for delegation:', { eventId, modalityId, branchId });
 
-      // Get teams for the specific modality
+      // Get teams for the specific modality (similar to organizer approach)
       const { data: teamsData, error: teamsError } = await supabase
         .from('equipes')
         .select(`
@@ -42,100 +42,77 @@ export function useTeamsDataForDelegation(
 
       console.log('Found teams for modality:', teamsData.length, teamsData.map(t => t.nome));
 
-      // For each team, get its athletes
-      const teamsWithAthletes = await Promise.all(
-        teamsData.map(async (team) => {
-          console.log(`Processing team: ${team.nome} (ID: ${team.id})`);
-          
-          // Get athletes for this team with proper join to usuarios and filiais
-          const { data: athletesData, error: athletesError } = await supabase
-            .from('atletas_equipes')
-            .select(`
-              id,
-              atleta_id,
-              posicao,
-              raia,
-              usuarios(
-                nome_completo,
-                tipo_documento,
-                numero_documento,
-                filial_id,
-                filiais(nome)
-              )
-            `)
-            .eq('equipe_id', team.id);
+      // Process each team to get athletes (following organizer pattern)
+      const processedTeams: TeamData[] = [];
+      
+      for (const team of teamsData) {
+        console.log(`Processing team: ${team.nome} (ID: ${team.id})`);
+        
+        // Get athletes for this team
+        const { data: athletesData, error: athletesError } = await supabase
+          .from('atletas_equipes')
+          .select(`
+            id,
+            atleta_id,
+            usuarios!inner(
+              nome_completo,
+              tipo_documento,
+              numero_documento,
+              filial_id,
+              filiais!inner(nome)
+            )
+          `)
+          .eq('equipe_id', team.id);
 
-          if (athletesError) {
-            console.error('Error fetching team athletes:', athletesError);
-            return {
-              id: team.id,
-              nome: team.nome,
-              modalidade_id: team.modalidade_id,
-              filial_id: branchId || '',
-              evento_id: team.evento_id,
-              atletas: []
-            };
-          }
+        if (athletesError) {
+          console.error('Error fetching team athletes:', athletesError);
+          // Continue with empty athletes array instead of failing
+        }
 
-          console.log(`Athletes data raw for team ${team.nome}:`, athletesData);
+        console.log(`Athletes data for team ${team.nome}:`, athletesData);
 
-          // Transform athletes data
-          const atletas = (athletesData || []).map(athlete => {
-            console.log('Processing athlete data:', athlete);
-            
-            // Handle usuarios data - it should be a single object due to foreign key
-            const usuario = Array.isArray(athlete.usuarios) 
-              ? athlete.usuarios[0] 
-              : athlete.usuarios;
-            
-            // Handle filiais data - it should be a single object due to foreign key  
-            const filial = usuario?.filiais 
-              ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
-              : null;
-
-            console.log(`Processing athlete: ${usuario?.nome_completo} from filial ${usuario?.filial_id}`, {
-              usuario,
-              filial
-            });
-
-            return {
-              id: athlete.id,
-              atleta_id: athlete.atleta_id,
-              atleta_nome: usuario?.nome_completo || '',
-              documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
-              posicao: athlete.posicao || 1,
-              raia: athlete.raia,
-              filial_nome: filial?.nome || 'N/A'
-            };
-          });
-
-          console.log(`Team ${team.nome} final athletes:`, atletas.length, atletas.map(a => a.atleta_nome));
-
-          const modalidade = Array.isArray(team.modalidades) ? team.modalidades[0] : team.modalidades;
+        // Transform athletes data (similar to organizer approach)
+        const atletas = (athletesData || []).map(athlete => {
+          const usuario = athlete.usuarios;
+          const filial = usuario?.filiais;
 
           return {
-            id: team.id,
-            nome: team.nome,
-            modalidade_id: team.modalidade_id,
-            filial_id: branchId || '',
-            evento_id: team.evento_id,
-            modalidade_info: {
-              id: team.modalidade_id,
-              nome: modalidade?.nome || '',
-              categoria: modalidade?.categoria || '',
-              tipo_modalidade: 'coletiva' as 'individual' | 'coletiva'
-            },
-            atletas
+            id: athlete.id,
+            atleta_id: athlete.atleta_id,
+            atleta_nome: usuario?.nome_completo || '',
+            documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
+            posicao: 1, // Default position
+            raia: undefined,
+            filial_nome: filial?.nome || 'N/A'
           };
-        })
-      );
+        });
 
-      console.log('Final teams with athletes:', teamsWithAthletes.map(t => ({
+        console.log(`Team ${team.nome} final athletes:`, atletas.length, atletas.map(a => a.atleta_nome));
+
+        const modalidade = team.modalidades;
+
+        processedTeams.push({
+          id: team.id,
+          nome: team.nome,
+          modalidade_id: team.modalidade_id,
+          filial_id: branchId || '',
+          evento_id: team.evento_id,
+          modalidade_info: {
+            id: team.modalidade_id,
+            nome: modalidade?.nome || '',
+            categoria: modalidade?.categoria || '',
+            tipo_modalidade: 'coletiva' as 'individual' | 'coletiva'
+          },
+          atletas
+        });
+      }
+
+      console.log('Final teams with athletes:', processedTeams.map(t => ({
         nome: t.nome,
         atletas: t.atletas.length
       })));
 
-      return teamsWithAthletes;
+      return processedTeams;
     },
     enabled: !!eventId && !!modalityId,
   });
