@@ -10,7 +10,10 @@ export const useAthleteData = (eventId: string | null, filterByBranch: boolean =
     refetch
   } = useQuery({
     queryKey: ['athlete-management', eventId, filterByBranch],
-    queryFn: () => fetchAthleteManagement(filterByBranch, eventId),
+    queryFn: () => {
+      console.log('Fetching athlete data including dependents for event:', eventId);
+      return fetchAthleteManagement(filterByBranch, eventId);
+    },
     enabled: !!eventId,
     retry: 1,
     meta: {
@@ -19,6 +22,8 @@ export const useAthleteData = (eventId: string | null, filterByBranch: boolean =
       }
     }
   });
+
+  console.log('Athletes data loaded (including dependents):', athletes?.length || 0);
 
   return {
     athletes,
