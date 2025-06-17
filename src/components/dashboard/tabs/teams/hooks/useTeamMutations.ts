@@ -11,7 +11,7 @@ export function useTeamMutations(eventId: string | null, branchId?: string, edit
   const teamMutation = useMutation({
     mutationFn: async (teamData: TeamFormData) => {
       const formattedData = {
-        nome: teamData.nome,
+        ...teamData,
         modalidade_id: parseInt(teamData.modalidade_id),
       };
       
@@ -26,16 +26,10 @@ export function useTeamMutations(eventId: string | null, branchId?: string, edit
         if (error) throw error;
         return data;
       } else {
-        // Create new team - get current user id for created_by
-        const { data: { user } } = await supabase.auth.getUser();
-        
+        // Create new team
         const { data, error } = await supabase
           .from('equipes')
-          .insert([{ 
-            ...formattedData, 
-            evento_id: eventId,
-            created_by: user?.id
-          }])
+          .insert([{ ...formattedData, evento_id: eventId, filial_id: branchId }])
           .select();
         
         if (error) throw error;

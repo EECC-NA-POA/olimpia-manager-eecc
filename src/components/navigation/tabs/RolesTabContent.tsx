@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { Users, Gavel, UsersRound } from 'lucide-react';
+import { Users, Gavel } from 'lucide-react';
 import { NavLink } from '../NavLink';
 
 interface RolesTabContentProps {
@@ -25,20 +25,12 @@ export function RolesTabContent({ isOrganizer, isDelegationRep, isJudge }: Roles
       )}
       
       {isDelegationRep && (
-        <>
-          <NavLink 
-            to="/delegation-dashboard"
-            icon={<Users className="h-4 w-4" />}
-            label="Delegação"
-            isActive={location.pathname === '/delegation-dashboard'}
-          />
-          <NavLink 
-            to="/delegacao-equipes"
-            icon={<UsersRound className="h-4 w-4" />}
-            label="Equipes"
-            isActive={location.pathname === '/delegacao-equipes'}
-          />
-        </>
+        <NavLink 
+          to="/delegation-dashboard"
+          icon={<Users className="h-4 w-4" />}
+          label="Delegação"
+          isActive={location.pathname === '/delegation-dashboard'}
+        />
       )}
       
       {isJudge && (
