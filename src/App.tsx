@@ -24,12 +24,12 @@ import { useAuth } from "@/contexts/AuthContext";
 const queryClient = new QueryClient();
 
 function AppContent() {
-  const { user } = useAuth();
+  const { user, currentEventId } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col">
       <GlobalHeader />
-      {user ? (
+      {user && currentEventId ? (
         <MainNavigation>
           <Routes>
             <Route path="/" element={<Index />} />
