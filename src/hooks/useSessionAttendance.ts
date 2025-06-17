@@ -117,14 +117,22 @@ export const useSessionAttendance = (chamadaId: string | null) => {
               observacoes: chamadaData.observacoes,
               modalidade_representantes: {
                 modalidades: {
-                  nome: Array.isArray(chamadaData.modalidade_representantes?.modalidades) 
-                    ? chamadaData.modalidade_representantes.modalidades[0]?.nome || ''
-                    : chamadaData.modalidade_representantes?.modalidades?.nome || ''
+                  nome: Array.isArray(chamadaData.modalidade_representantes) 
+                    ? (Array.isArray(chamadaData.modalidade_representantes[0]?.modalidades) 
+                        ? chamadaData.modalidade_representantes[0].modalidades[0]?.nome || ''
+                        : chamadaData.modalidade_representantes[0]?.modalidades?.nome || '')
+                    : (Array.isArray(chamadaData.modalidade_representantes?.modalidades) 
+                        ? chamadaData.modalidade_representantes.modalidades[0]?.nome || ''
+                        : chamadaData.modalidade_representantes?.modalidades?.nome || '')
                 },
                 filiais: {
-                  nome: Array.isArray(chamadaData.modalidade_representantes?.filiais) 
-                    ? chamadaData.modalidade_representantes.filiais[0]?.nome || ''
-                    : chamadaData.modalidade_representantes?.filiais?.nome || ''
+                  nome: Array.isArray(chamadaData.modalidade_representantes) 
+                    ? (Array.isArray(chamadaData.modalidade_representantes[0]?.filiais) 
+                        ? chamadaData.modalidade_representantes[0].filiais[0]?.nome || ''
+                        : chamadaData.modalidade_representantes[0]?.filiais?.nome || '')
+                    : (Array.isArray(chamadaData.modalidade_representantes?.filiais) 
+                        ? chamadaData.modalidade_representantes.filiais[0]?.nome || ''
+                        : chamadaData.modalidade_representantes?.filiais?.nome || '')
                 }
               }
             } : undefined
@@ -156,14 +164,22 @@ export const useSessionAttendance = (chamadaId: string | null) => {
             observacoes: chamadaData.observacoes,
             modalidade_representantes: {
               modalidades: {
-                nome: Array.isArray(chamadaData.modalidade_representantes?.modalidades) 
-                  ? chamadaData.modalidade_representantes.modalidades[0]?.nome || ''
-                  : chamadaData.modalidade_representantes?.modalidades?.nome || ''
+                nome: Array.isArray(chamadaData.modalidade_representantes) 
+                  ? (Array.isArray(chamadaData.modalidade_representantes[0]?.modalidades) 
+                      ? chamadaData.modalidade_representantes[0].modalidades[0]?.nome || ''
+                      : chamadaData.modalidade_representantes[0]?.modalidades?.nome || '')
+                  : (Array.isArray(chamadaData.modalidade_representantes?.modalidades) 
+                      ? chamadaData.modalidade_representantes.modalidades[0]?.nome || ''
+                      : chamadaData.modalidade_representantes?.modalidades?.nome || '')
               },
               filiais: {
-                nome: Array.isArray(chamadaData.modalidade_representantes?.filiais) 
-                  ? chamadaData.modalidade_representantes.filiais[0]?.nome || ''
-                  : chamadaData.modalidade_representantes?.filiais?.nome || ''
+                nome: Array.isArray(chamadaData.modalidade_representantes) 
+                  ? (Array.isArray(chamadaData.modalidade_representantes[0]?.filiais) 
+                      ? chamadaData.modalidade_representantes[0].filiais[0]?.nome || ''
+                      : chamadaData.modalidade_representantes[0]?.filiais?.nome || '')
+                  : (Array.isArray(chamadaData.modalidade_representantes?.filiais) 
+                      ? chamadaData.modalidade_representantes.filiais[0]?.nome || ''
+                      : chamadaData.modalidade_representantes?.filiais?.nome || '')
               }
             }
           } : undefined
