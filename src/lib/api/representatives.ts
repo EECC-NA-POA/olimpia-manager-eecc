@@ -76,7 +76,7 @@ export const fetchModalitiesWithRepresentatives = async (filialId: string, event
 
     console.log('Modalities fetched:', modalities);
 
-    // Then get representatives for this filial - fix the relationship specification
+    // Then get representatives for this filial
     const { data: representatives, error: repsError } = await supabase
       .from('modalidade_representantes')
       .select(`
@@ -96,11 +96,10 @@ export const fetchModalitiesWithRepresentatives = async (filialId: string, event
     // Combine the data
     const modalitiesWithReps: ModalityWithRepresentative[] = modalities?.map(modality => {
       const rep = representatives?.find(r => r.modalidade_id === modality.id);
-      console.log('Processing modality:', modality.id, 'found rep:', rep);
+      console.log(`Processing modality ${modality.id} (${modality.nome}), found rep:`, rep);
       
       let representative = undefined;
       if (rep && rep.usuarios) {
-        // Handle case where usuarios might be an array (shouldn't happen with the foreign key, but let's be safe)
         const userData = Array.isArray(rep.usuarios) ? rep.usuarios[0] : rep.usuarios;
         console.log('User data for representative:', userData);
         
@@ -158,7 +157,6 @@ export const fetchRegisteredAthletesForModality = async (filialId: string, modal
     console.log('Registered athletes data:', data);
 
     const athletes = data?.map(item => {
-      // Handle case where usuarios might be an array
       const userData = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
       return {
         id: item.atleta_id,
@@ -177,44 +175,115 @@ export const fetchRegisteredAthletesForModality = async (filialId: string, modal
 };
 
 export const setModalityRepresentative = async (filialId: string, modalityId: number, atletaId: string) => {
-  console.log('setModalityRepresentative called with:', { filialId, modalityId, atletaId });
+  console.log('=== SETTING MODALITY REPRESENTATIVE ===');
+  console.log('Parameters:', { filialId, modalityId, atletaId });
   
   try {
-    // First, let's check if a representative already exists for this modality and filial
+    // Verify the athlete exists and belongs to the filial
+    console.log('Step 1: Verifying athlete exists...');
+    const { data: athlete, error: athleteError } = await supabase
+      .from('usuarios')
+      .select('id, nome_completo, filial_id')
+      .eq('id', atletaId)
+      .single();
+
+    if (athleteError) {
+      console.error('Error verifying athlete:', athleteError);
+      throw new Error(`Atleta não encontrado: ${athleteError.message}`);
+    }
+
+    if (!athlete) {
+      console.error('Athlete not found');
+      throw new Error('Atleta não encontrado');
+    }
+
+    if (athlete.filial_id !== filialId) {
+      console.error('Athlete does not belong to the filial:', { athleteFilial: athlete.filial_id, expectedFilial: filialId });
+      throw new Error('Atleta não pertence à filial especificada');
+    }
+
+    console.log('Athlete verified:', athlete);
+
+    // Verify the modality exists
+    console.log('Step 2: Verifying modality exists...');
+    const { data: modality, error: modalityError } = await supabase
+      .from('modalidades')
+      .select('id, nome')
+      .eq('id', modalityId)
+      .single();
+
+    if (modalityError) {
+      console.error('Error verifying modality:', modalityError);
+      throw new Error(`Modalidade não encontrada: ${modalityError.message}`);
+    }
+
+    console.log('Modality verified:', modality);
+
+    // Check if athlete is registered for this modality
+    console.log('Step 3: Checking athlete registration...');
+    const { data: registration, error: registrationError } = await supabase
+      .from('inscricoes_modalidades')
+      .select('*')
+      .eq('atleta_id', atletaId)
+      .eq('modalidade_id', modalityId)
+      .eq('status', 'confirmado')
+      .single();
+
+    if (registrationError && registrationError.code !== 'PGRST116') {
+      console.error('Error checking registration:', registrationError);
+      throw new Error(`Erro ao verificar inscrição: ${registrationError.message}`);
+    }
+
+    if (!registration) {
+      console.error('Athlete not registered for modality');
+      throw new Error('Atleta não está inscrito nesta modalidade ou inscrição não confirmada');
+    }
+
+    console.log('Registration verified:', registration);
+
+    // Check if a representative already exists for this modality and filial
+    console.log('Step 4: Checking existing representative...');
     const { data: existing, error: checkError } = await supabase
       .from('modalidade_representantes')
       .select('*')
       .eq('filial_id', filialId)
       .eq('modalidade_id', modalityId)
-      .single();
+      .maybeSingle();
 
-    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows found
+    if (checkError) {
       console.error('Error checking existing representative:', checkError);
-      throw checkError;
+      throw new Error(`Erro ao verificar representante existente: ${checkError.message}`);
     }
 
-    console.log('Existing representative:', existing);
+    console.log('Existing representative check result:', existing);
 
     let result;
     if (existing) {
       // Update existing representative
+      console.log('Step 5a: Updating existing representative...');
       const { data, error } = await supabase
         .from('modalidade_representantes')
         .update({
           atleta_id: atletaId,
           updated_at: new Date().toISOString()
         })
-        .eq('filial_id', filialId)
-        .eq('modalidade_id', modalityId)
-        .select();
+        .eq('id', existing.id)
+        .select(`
+          *,
+          usuarios!modalidade_representantes_atleta_id_fkey(nome_completo, email, telefone)
+        `)
+        .single();
 
       if (error) {
         console.error('Error updating modality representative:', error);
-        throw error;
+        throw new Error(`Erro ao atualizar representante: ${error.message}`);
       }
+      
       result = data;
+      console.log('Representative updated successfully:', result);
     } else {
       // Insert new representative
+      console.log('Step 5b: Creating new representative...');
       const { data, error } = await supabase
         .from('modalidade_representantes')
         .insert({
@@ -224,41 +293,53 @@ export const setModalityRepresentative = async (filialId: string, modalityId: nu
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
-        .select();
+        .select(`
+          *,
+          usuarios!modalidade_representantes_atleta_id_fkey(nome_completo, email, telefone)
+        `)
+        .single();
 
       if (error) {
         console.error('Error inserting modality representative:', error);
-        throw error;
+        throw new Error(`Erro ao criar representante: ${error.message}`);
       }
+      
       result = data;
+      console.log('Representative created successfully:', result);
     }
     
-    console.log('Representative set successfully:', result);
+    console.log('=== REPRESENTATIVE SET SUCCESSFULLY ===');
     return result;
   } catch (error) {
-    console.error('Exception in setModalityRepresentative:', error);
+    console.error('=== ERROR IN setModalityRepresentative ===');
+    console.error('Error details:', error);
     throw error;
   }
 };
 
 export const removeModalityRepresentative = async (filialId: string, modalityId: number) => {
-  console.log('removeModalityRepresentative called with:', { filialId, modalityId });
+  console.log('=== REMOVING MODALITY REPRESENTATIVE ===');
+  console.log('Parameters:', { filialId, modalityId });
   
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('modalidade_representantes')
       .delete()
       .eq('filial_id', filialId)
-      .eq('modalidade_id', modalityId);
+      .eq('modalidade_id', modalityId)
+      .select();
 
     if (error) {
       console.error('Error removing modality representative:', error);
-      throw error;
+      throw new Error(`Erro ao remover representante: ${error.message}`);
     }
     
-    console.log('Representative removed successfully');
+    console.log('Representative removed successfully:', data);
+    console.log('=== REPRESENTATIVE REMOVED SUCCESSFULLY ===');
+    return data;
   } catch (error) {
-    console.error('Exception in removeModalityRepresentative:', error);
+    console.error('=== ERROR IN removeModalityRepresentative ===');
+    console.error('Error details:', error);
     throw error;
   }
 };

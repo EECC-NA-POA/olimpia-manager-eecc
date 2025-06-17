@@ -57,45 +57,86 @@ export const useRepresentativeMutations = (filialId: string | undefined, eventId
 
   const setRepresentative = useMutation({
     mutationFn: async ({ modalityId, atletaId }: { modalityId: number; atletaId: string }) => {
-      console.log('Setting representative mutation:', { filialId, modalityId, atletaId });
+      console.log('=== STARTING SET REPRESENTATIVE MUTATION ===');
+      console.log('Mutation parameters:', { filialId, modalityId, atletaId });
+      
       if (!filialId) {
-        throw new Error('filialId is required');
+        console.error('filialId is required but not provided');
+        throw new Error('filialId é obrigatório');
       }
+      
       console.log('Calling setModalityRepresentative API...');
       const result = await setModalityRepresentative(filialId, modalityId, atletaId);
-      console.log('setModalityRepresentative result:', result);
+      console.log('setModalityRepresentative API result:', result);
+      
+      console.log('=== SET REPRESENTATIVE MUTATION COMPLETED ===');
       return result;
     },
     onSuccess: (data, variables) => {
-      console.log('Representative set successfully, invalidating queries...', { data, variables });
+      console.log('=== SET REPRESENTATIVE MUTATION SUCCESS ===');
+      console.log('Success data:', data);
+      console.log('Variables:', variables);
+      
+      // Invalidate and refetch queries
+      console.log('Invalidating queries...');
       queryClient.invalidateQueries({ queryKey: ['modalities-representatives', filialId, eventId] });
+      queryClient.invalidateQueries({ queryKey: ['registered-athletes'] });
+      
       toast.success('Representante definido com sucesso!');
+      console.log('=== SUCCESS HANDLING COMPLETED ===');
     },
     onError: (error: any) => {
-      console.error('Error setting representative:', error);
-      toast.error('Erro ao definir representante: ' + (error.message || 'Erro desconhecido'));
+      console.error('=== SET REPRESENTATIVE MUTATION ERROR ===');
+      console.error('Error object:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      
+      const errorMessage = error.message || 'Erro desconhecido ao definir representante';
+      toast.error(`Erro ao definir representante: ${errorMessage}`);
+      
+      console.log('=== ERROR HANDLING COMPLETED ===');
     },
   });
 
   const removeRepresentative = useMutation({
     mutationFn: async (modalityId: number) => {
-      console.log('Removing representative mutation:', { filialId, modalityId });
+      console.log('=== STARTING REMOVE REPRESENTATIVE MUTATION ===');
+      console.log('Mutation parameters:', { filialId, modalityId });
+      
       if (!filialId) {
-        throw new Error('filialId is required');
+        console.error('filialId is required but not provided');
+        throw new Error('filialId é obrigatório');
       }
+      
       console.log('Calling removeModalityRepresentative API...');
       const result = await removeModalityRepresentative(filialId, modalityId);
-      console.log('removeModalityRepresentative result:', result);
+      console.log('removeModalityRepresentative API result:', result);
+      
+      console.log('=== REMOVE REPRESENTATIVE MUTATION COMPLETED ===');
       return result;
     },
     onSuccess: (data, variables) => {
-      console.log('Representative removed successfully, invalidating queries...', { data, variables });
+      console.log('=== REMOVE REPRESENTATIVE MUTATION SUCCESS ===');
+      console.log('Success data:', data);
+      console.log('Variables:', variables);
+      
+      // Invalidate and refetch queries
+      console.log('Invalidating queries...');
       queryClient.invalidateQueries({ queryKey: ['modalities-representatives', filialId, eventId] });
+      
       toast.success('Representante removido com sucesso!');
+      console.log('=== SUCCESS HANDLING COMPLETED ===');
     },
     onError: (error: any) => {
-      console.error('Error removing representative:', error);
-      toast.error('Erro ao remover representante: ' + (error.message || 'Erro desconhecido'));
+      console.error('=== REMOVE REPRESENTATIVE MUTATION ERROR ===');
+      console.error('Error object:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      
+      const errorMessage = error.message || 'Erro desconhecido ao remover representante';
+      toast.error(`Erro ao remover representante: ${errorMessage}`);
+      
+      console.log('=== ERROR HANDLING COMPLETED ===');
     },
   });
 
