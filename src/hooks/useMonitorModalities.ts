@@ -39,35 +39,59 @@ export const useMonitorModalities = () => {
         return [];
       }
       
-      console.log('useMonitorModalities - Fetching monitor modalities for user:', user.id);
-      console.log('useMonitorModalities - Current event ID:', currentEventId);
+      console.log('=== DEBUGGING MONITOR MODALITIES QUERY ===');
+      console.log('User ID:', user.id);
+      console.log('Current Event ID:', currentEventId);
       
-      // First, let's check if the user exists in modalidade_representantes without any filters
-      console.log('=== STEP 1: Checking user in modalidade_representantes ===');
-      const { data: allUserReps, error: allUserError } = await supabase
+      // Step 1: Check what's in modalidade_representantes for this user
+      console.log('=== STEP 1: Raw modalidade_representantes data ===');
+      const { data: rawReps, error: rawError } = await supabase
         .from('modalidade_representantes')
         .select('*')
         .eq('atleta_id', user.id);
 
-      console.log('useMonitorModalities - All user representatives:', allUserReps);
-      console.log('useMonitorModalities - Error:', allUserError);
+      console.log('Raw representatives data:', rawReps);
+      if (rawError) console.error('Raw representatives error:', rawError);
 
-      // Check if modalidades exist for current event
-      console.log('=== STEP 2: Checking modalidades for current event ===');
-      const { data: eventModalities, error: modalitiesError } = await supabase
+      // Step 2: Check what modalidades exist for this event
+      console.log('=== STEP 2: Event modalidades ===');
+      const { data: eventMods, error: eventModsError } = await supabase
         .from('modalidades')
-        .select('id, nome, categoria, evento_id')
+        .select('*')
         .eq('evento_id', currentEventId);
 
-      console.log('useMonitorModalities - Event modalidades:', eventModalities);
-      console.log('useMonitorModalities - Modalidades error:', modalitiesError);
+      console.log('Event modalidades:', eventMods);
+      if (eventModsError) console.error('Event modalidades error:', eventModsError);
 
-      // Try a simpler query first
-      console.log('=== STEP 3: Simple query with user filter ===');
-      const { data: simpleData, error: simpleError } = await supabase
+      // Step 3: Check what filiais exist
+      console.log('=== STEP 3: Filiais ===');
+      const { data: filiais, error: filiaisError } = await supabase
+        .from('filiais')
+        .select('*');
+
+      console.log('All filiais:', filiais);
+      if (filiaisError) console.error('Filiais error:', filiaisError);
+
+      // Step 4: Manual join to see what should match
+      if (rawReps && eventMods) {
+        console.log('=== STEP 4: Manual data matching ===');
+        rawReps.forEach(rep => {
+          const matchingModality = eventMods.find(mod => mod.id === rep.modalidade_id);
+          console.log(`Rep modalidade_id ${rep.modalidade_id} matches event modality:`, matchingModality);
+        });
+      }
+
+      // Step 5: Try the full query with detailed logging
+      console.log('=== STEP 5: Full query with joins ===');
+      const { data: fullData, error: fullError } = await supabase
         .from('modalidade_representantes')
         .select(`
-          *,
+          id,
+          atleta_id,
+          modalidade_id,
+          filial_id,
+          criado_em,
+          atualizado_em,
           modalidades (
             id,
             nome,
@@ -83,35 +107,44 @@ export const useMonitorModalities = () => {
         `)
         .eq('atleta_id', user.id);
 
-      console.log('useMonitorModalities - Simple query result:', simpleData);
-      console.log('useMonitorModalities - Simple query error:', simpleError);
+      console.log('Full query result:', fullData);
+      console.log('Full query error:', fullError);
 
-      // Filter by event on the client side for now
-      const filteredData = simpleData?.filter(item => {
-        console.log('useMonitorModalities - Checking item:', item);
-        console.log('useMonitorModalities - Item modalidade evento_id:', item.modalidades?.evento_id);
-        console.log('useMonitorModalities - Current event ID:', currentEventId);
-        return item.modalidades?.evento_id === currentEventId;
-      });
-
-      console.log('useMonitorModalities - Filtered data:', filteredData);
-
-      if (simpleError) {
-        console.error('useMonitorModalities - Error in simple query:', simpleError);
-        throw simpleError;
+      if (fullError) {
+        console.error('useMonitorModalities - Error in full query:', fullError);
+        throw fullError;
       }
 
+      // Step 6: Filter and transform
+      console.log('=== STEP 6: Filtering by event ===');
+      const filteredData = fullData?.filter(item => {
+        console.log('Checking item for event filter:', {
+          item_id: item.id,
+          modalidade_id: item.modalidade_id,
+          modalidade_evento_id: item.modalidades?.evento_id,
+          current_event_id: currentEventId,
+          matches: item.modalidades?.evento_id === currentEventId
+        });
+        return item.modalidades?.evento_id === currentEventId;
+      }) || [];
+
+      console.log('Filtered data count:', filteredData.length);
+      console.log('Final filtered data:', filteredData);
+
       // Transform the data to match our interface
-      const transformedData = filteredData?.map(item => {
-        console.log('useMonitorModalities - Transforming item:', item);
-        return {
+      const transformedData = filteredData.map(item => {
+        const transformed = {
           ...item,
           modalidades: Array.isArray(item.modalidades) ? item.modalidades[0] : item.modalidades,
           filiais: Array.isArray(item.filiais) ? item.filiais[0] : item.filiais
         };
-      }) || [];
+        console.log('Transformed item:', transformed);
+        return transformed;
+      });
 
-      console.log('useMonitorModalities - Final transformed data:', transformedData);
+      console.log('=== FINAL RESULT ===');
+      console.log('Final transformed data:', transformedData);
+      
       return transformedData as MonitorModality[];
     },
     enabled: !!user?.id && !!currentEventId,
