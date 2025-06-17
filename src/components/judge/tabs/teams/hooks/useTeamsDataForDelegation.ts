@@ -81,7 +81,12 @@ export function useTeamsDataForDelegation(
 
           // Transform athletes data - same transformation as in the working version
           const atletas = (athletesData || []).map(athlete => {
-            const usuario = athlete.usuarios;
+            // Handle usuarios data properly - it should be a single object, not an array
+            const usuario = Array.isArray(athlete.usuarios) 
+              ? athlete.usuarios[0] 
+              : athlete.usuarios;
+            
+            // Handle filiais data properly  
             const filial = usuario?.filiais 
               ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
               : null;
