@@ -39,6 +39,8 @@ export function useAvailableAthletes(
           usuarios!inner(
             nome_completo,
             filial_id,
+            tipo_documento,
+            numero_documento,
             filiais!inner(nome)
           ),
           pagamentos(numero_identificador)
@@ -82,6 +84,7 @@ export function useAvailableAthletes(
           return {
             id: enrollment.atleta_id,
             nome: usuario?.nome_completo || '',
+            documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
             filial_nome: filial?.nome || 'N/A',
             numero_identificador: pagamento?.numero_identificador || undefined
           };
