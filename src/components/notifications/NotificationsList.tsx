@@ -22,7 +22,8 @@ export function NotificationsList({ eventId, userId }: NotificationsListProps) {
   const [selectedNotificationForReaders, setSelectedNotificationForReaders] = useState<string | null>(null);
   const { data: notifications, isLoading } = useNotifications({ 
     eventId, 
-    userId 
+    userId,
+    includeAuthoredHidden: true // No gerenciamento, incluir notificações ocultas do autor
   });
   const queryClient = useQueryClient();
 

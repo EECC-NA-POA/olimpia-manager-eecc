@@ -22,7 +22,8 @@ export default function Notifications({ eventId, userId }: NotificationsProps) {
   
   const { data: notifications, isLoading } = useNotifications({ 
     eventId, 
-    userId
+    userId,
+    includeAuthoredHidden: false // No perfil do atleta, não incluir notificações ocultas mesmo se for o autor
   });
 
   const handleNotificationClick = (notification: Notification) => {

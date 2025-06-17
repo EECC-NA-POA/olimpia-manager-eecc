@@ -6,18 +6,19 @@ import type { Notification } from '@/types/notifications';
 interface UseNotificationsProps {
   eventId: string | null;
   userId?: string;
+  includeAuthoredHidden?: boolean; // Novo parâmetro para controlar se inclui notificações ocultas do autor
 }
 
-export function useNotifications({ eventId, userId }: UseNotificationsProps) {
+export function useNotifications({ eventId, userId, includeAuthoredHidden = false }: UseNotificationsProps) {
   return useQuery({
-    queryKey: ['notifications', eventId, userId],
+    queryKey: ['notifications', eventId, userId, includeAuthoredHidden],
     queryFn: async () => {
       if (!eventId || !userId) {
         console.log('No eventId or userId provided for notifications');
         return [];
       }
 
-      console.log('Fetching notifications for:', { eventId, userId });
+      console.log('Fetching notifications for:', { eventId, userId, includeAuthoredHidden });
 
       try {
         // Buscar filial do usuário
@@ -58,9 +59,9 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
 
         console.log('Destined notifications result:', { destinedNotifications, destinedError });
 
-        // Consulta 2: Notificações criadas pelo próprio usuário (todas, visíveis e não visíveis)
+        // Consulta 2: Notificações criadas pelo próprio usuário
         console.log('Executing authored notifications query...');
-        const { data: authoredNotifications, error: authoredError } = await supabase
+        let authoredNotificationsQuery = supabase
           .from('notificacoes')
           .select(`
             id,
@@ -75,7 +76,14 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
             atualizado_em
           `)
           .eq('evento_id', eventId)
-          .eq('autor_id', userId)
+          .eq('autor_id', userId);
+
+        // Se não deve incluir notificações ocultas do autor, filtrar apenas as visíveis
+        if (!includeAuthoredHidden) {
+          authoredNotificationsQuery = authoredNotificationsQuery.eq('visivel', true);
+        }
+
+        const { data: authoredNotifications, error: authoredError } = await authoredNotificationsQuery
           .order('criado_em', { ascending: false });
 
         console.log('Authored notifications result:', { authoredNotifications, authoredError });
@@ -90,16 +98,15 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
           throw authoredError;
         }
 
-        // Para usuários atletas: combinar notificações destinadas (apenas visíveis) + suas próprias (todas)
-        // Para usuários não-atletas: apenas suas próprias notificações
+        // Combinar notificações destinadas (apenas visíveis) + notificações do autor (conforme parâmetro)
         let allNotifications: any[] = [];
         
-        // Se o usuário está vendo como atleta, incluir notificações destinadas (apenas visíveis)
+        // Incluir notificações destinadas (sempre apenas visíveis)
         if (destinedNotifications) {
           allNotifications = [...destinedNotifications];
         }
         
-        // Sempre incluir notificações criadas pelo próprio usuário (todas)
+        // Incluir notificações criadas pelo próprio usuário (visíveis ou todas, conforme parâmetro)
         if (authoredNotifications) {
           allNotifications = [...allNotifications, ...authoredNotifications];
         }
