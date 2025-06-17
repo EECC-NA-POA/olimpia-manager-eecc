@@ -24,7 +24,7 @@ export function useTeamsDataForDelegation(
           modalidade_id,
           evento_id,
           created_by,
-          modalidades!inner(
+          modalidades(
             nome,
             categoria,
             tipo_pontuacao
@@ -54,12 +54,12 @@ export function useTeamsDataForDelegation(
           .select(`
             id,
             atleta_id,
-            usuarios!inner(
+            usuarios(
               nome_completo,
               tipo_documento,
               numero_documento,
               filial_id,
-              filiais!inner(nome)
+              filiais(nome)
             )
           `)
           .eq('equipe_id', team.id);
@@ -72,7 +72,7 @@ export function useTeamsDataForDelegation(
         console.log(`Athletes data for team ${team.nome}:`, athletesData);
 
         // Transform athletes data (similar to organizer approach)
-        const atletas = (athletesData || []).map(athlete => {
+        const atletas = (athletesData || []).map((athlete: any) => {
           const usuario = athlete.usuarios;
           const filial = usuario?.filiais;
 
@@ -89,7 +89,7 @@ export function useTeamsDataForDelegation(
 
         console.log(`Team ${team.nome} final athletes:`, atletas.length, atletas.map(a => a.atleta_nome));
 
-        const modalidade = team.modalidades;
+        const modalidade = team.modalidades as any;
 
         processedTeams.push({
           id: team.id,
