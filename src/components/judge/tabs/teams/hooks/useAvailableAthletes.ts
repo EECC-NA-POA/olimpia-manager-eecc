@@ -11,12 +11,15 @@ export function useAvailableAthletes(
 ) {
   const { user } = useAuth();
 
+  // Check if user is delegation representative
+  const isDelegationRep = user?.papeis?.some(role => role.codigo === 'RDD') || false;
+
   return useQuery({
-    queryKey: ['available-athletes', eventId, selectedModalityId, isOrganizer, user?.filial_id],
+    queryKey: ['available-athletes', eventId, selectedModalityId, isOrganizer, user?.filial_id, isDelegationRep],
     queryFn: async () => {
       if (!eventId || !selectedModalityId) return [];
 
-      console.log('Fetching available athletes for modality:', selectedModalityId, 'isOrganizer:', isOrganizer);
+      console.log('Fetching available athletes for modality:', selectedModalityId, 'isOrganizer:', isOrganizer, 'isDelegationRep:', isDelegationRep, 'userFilialId:', user?.filial_id);
 
       // First get all athletes already in teams for this modality
       const { data: teamAthletes } = await supabase
@@ -49,8 +52,9 @@ export function useAvailableAthletes(
         .eq('modalidade_id', selectedModalityId)
         .eq('status', 'confirmada');
 
-      // For non-organizers (delegation representatives), filter by branch
-      if (!isOrganizer && user?.filial_id) {
+      // For delegation representatives OR non-organizers, filter by branch
+      if ((isDelegationRep || !isOrganizer) && user?.filial_id) {
+        console.log('Applying branch filter for filial_id:', user.filial_id);
         enrollmentsQuery = enrollmentsQuery.eq('usuarios.filial_id', user.filial_id);
       }
 
