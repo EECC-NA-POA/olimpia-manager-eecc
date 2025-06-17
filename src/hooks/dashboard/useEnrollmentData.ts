@@ -51,7 +51,6 @@ export const useEnrollmentData = (eventId: string | null, filterByBranch: boolea
           console.warn('View vw_inscricoes_com_confirmacao does not exist, using alternative data source');
           
           // Alternative approach: Get basic enrollment data from inscricoes_modalidades
-          // This query should include both regular athletes and dependents
           let query = supabase
             .from('inscricoes_modalidades')
             .select(`
@@ -86,10 +85,10 @@ export const useEnrollmentData = (eventId: string | null, filterByBranch: boolea
             });
           }
           
-          // Filter out records where usuarios is null and include dependents
+          // Filter out records where usuarios is null
           const validData = (data || []).filter(item => item.usuarios !== null);
           
-          // Transform to match EnrolledUser interface (including dependents)
+          // Transform to match EnrolledUser interface
           const transformedData: EnrolledUser[] = validData.map((item: any) => ({
             id: item.id,
             atleta_id: item.atleta_id,
@@ -106,11 +105,11 @@ export const useEnrollmentData = (eventId: string | null, filterByBranch: boolea
             evento_id: eventId
           }));
 
-          console.log(`Found ${transformedData.length} confirmed enrollments (including dependents) after filtering`);
+          console.log(`Found ${transformedData.length} confirmed enrollments after filtering`);
           return transformedData;
         }
 
-        // If view exists, use the original query (should include dependents)
+        // If view exists, use the original query
         let query = supabase
           .from('vw_inscricoes_com_confirmacao')
           .select('*')
@@ -125,7 +124,7 @@ export const useEnrollmentData = (eventId: string | null, filterByBranch: boolea
         const { data, error } = await query;
 
         if (error) throw error;
-        console.log(`Found ${data?.length || 0} enrollments (including dependents) using view`);
+        console.log(`Found ${data?.length || 0} enrollments using view`);
         return data as EnrolledUser[];
       } catch (error) {
         console.error('Error fetching enrollments:', error);

@@ -5,14 +5,13 @@ import { PaymentStatus } from "./types";
 export function useMetricsData(data: BranchAnalytics[]) {
   console.log('Analytics data received:', data); // Debug log
 
-  // Calculate total unique athletes including dependents
+  // Calculate total unique athletes
   const totalAthletes = data.reduce((acc, branch) => {
     console.log('Branch total_inscritos_geral:', branch.total_inscritos_geral);
-    // Ensure we're counting all registered users including dependents
     return acc + (Number(branch.total_inscritos_geral) || 0);
   }, 0);
   
-  // Calculate payment status totals including dependents
+  // Calculate payment status totals
   const paymentTotals = data.reduce((acc, branch) => {
     console.log('Branch total_inscritos_por_status:', branch.total_inscritos_por_status);
     const statusData = branch.total_inscritos_por_status || [];
@@ -34,23 +33,16 @@ export function useMetricsData(data: BranchAnalytics[]) {
     return acc + (Number(branch.valor_total_pago) || 0);
   }, 0);
 
-  // Calculate pending revenue
-  const totalRevenuePending = data.reduce((acc, branch) => {
-    console.log('Branch valor_total_pendente:', branch.valor_total_pendente);
-    return acc + (Number(branch.valor_total_pendente) || 0);
-  }, 0);
-
   console.log('Calculated metrics:', {
     totalAthletes,
     totalRevenuePaid,
-    totalRevenuePending,
     paymentTotals
   });
 
   return {
     totalAthletes,
     totalRevenuePaid,
-    totalRevenuePending,
+    totalRevenuePending: 0, // Since this isn't in the view currently
     totalAthletesPendingPayment: paymentTotals.pending
   };
 }

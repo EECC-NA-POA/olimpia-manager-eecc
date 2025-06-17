@@ -8,7 +8,7 @@ import { useEnrollmentData } from './dashboard/useEnrollmentData';
 export const useDashboardData = (eventId: string | null, filterByBranch: boolean = false) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Get athlete management data (including dependents)
+  // Get athlete management data
   const { 
     athletes, 
     isLoading: isLoadingAthletes, 
@@ -23,7 +23,7 @@ export const useDashboardData = (eventId: string | null, filterByBranch: boolean
     error: branchesError 
   } = useBranchData();
 
-  // Get analytics data (including dependents)
+  // Get analytics data
   const { 
     branchAnalytics, 
     isLoading: isLoadingAnalytics, 
@@ -31,7 +31,7 @@ export const useDashboardData = (eventId: string | null, filterByBranch: boolean
     refetch: refetchAnalytics 
   } = useAnalyticsData(eventId, filterByBranch);
 
-  // Get enrollment data (including dependents)
+  // Get enrollment data
   const { 
     confirmedEnrollments, 
     isLoading: isLoadingEnrollments, 
@@ -43,26 +43,17 @@ export const useDashboardData = (eventId: string | null, filterByBranch: boolean
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      console.log('Refreshing all dashboard data including dependents...');
       await Promise.all([
         refetchAthletes(),
         refetchAnalytics(),
         refetchEnrollments()
       ]);
-      console.log('Dashboard data refresh completed');
     } catch (error) {
       console.error('Error refreshing data:', error);
     } finally {
       setIsRefreshing(false);
     }
   };
-
-  console.log('Dashboard data summary (including dependents):', {
-    athletes: athletes?.length || 0,
-    branches: branches?.length || 0,
-    branchAnalytics: branchAnalytics?.length || 0,
-    confirmedEnrollments: confirmedEnrollments?.length || 0
-  });
 
   return {
     athletes: athletes || [],
