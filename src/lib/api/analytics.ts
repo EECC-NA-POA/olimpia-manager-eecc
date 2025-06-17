@@ -172,7 +172,7 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
     let query = supabase
       .from('vw_analytics_filiais')
       .select('*')
-      .eq('evento_id', eventI);
+      .eq('evento_id', eventId);
 
     // For delegation representatives, only show their branch
     if (filterByBranch && userFilialId) {
