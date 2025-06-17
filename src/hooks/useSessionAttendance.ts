@@ -97,8 +97,10 @@ export const useSessionAttendance = (chamadaId: string | null) => {
         // Transform the data to match our interface
         const transformedData = data.map(item => {
           const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
-          const atletaData = item.atletas;
-          const chamadaData = item.chamadas;
+          // Safely extract athlete data (could be array or object)
+          const atletaData = Array.isArray(item.atletas) ? item.atletas[0] : item.atletas;
+          // Safely extract chamada data (could be array or object)
+          const chamadaData = Array.isArray(item.chamadas) ? item.chamadas[0] : item.chamadas;
           
           return {
             ...item,
@@ -115,10 +117,14 @@ export const useSessionAttendance = (chamadaId: string | null) => {
               observacoes: chamadaData.observacoes,
               modalidade_representantes: {
                 modalidades: {
-                  nome: chamadaData.modalidade_representantes?.modalidades?.nome || ''
+                  nome: Array.isArray(chamadaData.modalidade_representantes?.modalidades) 
+                    ? chamadaData.modalidade_representantes.modalidades[0]?.nome || ''
+                    : chamadaData.modalidade_representantes?.modalidades?.nome || ''
                 },
                 filiais: {
-                  nome: chamadaData.modalidade_representantes?.filiais?.nome || ''
+                  nome: Array.isArray(chamadaData.modalidade_representantes?.filiais) 
+                    ? chamadaData.modalidade_representantes.filiais[0]?.nome || ''
+                    : chamadaData.modalidade_representantes?.filiais?.nome || ''
                 }
               }
             } : undefined
@@ -130,8 +136,10 @@ export const useSessionAttendance = (chamadaId: string | null) => {
 
       // Se não há dados ou currentEventId, retornar sem numero_identificador
       const transformedData = data?.map(item => {
-        const atletaData = item.atletas;
-        const chamadaData = item.chamadas;
+        // Safely extract athlete data (could be array or object)
+        const atletaData = Array.isArray(item.atletas) ? item.atletas[0] : item.atletas;
+        // Safely extract chamada data (could be array or object)
+        const chamadaData = Array.isArray(item.chamadas) ? item.chamadas[0] : item.chamadas;
         
         return {
           ...item,
@@ -148,10 +156,14 @@ export const useSessionAttendance = (chamadaId: string | null) => {
             observacoes: chamadaData.observacoes,
             modalidade_representantes: {
               modalidades: {
-                nome: chamadaData.modalidade_representantes?.modalidades?.nome || ''
+                nome: Array.isArray(chamadaData.modalidade_representantes?.modalidades) 
+                  ? chamadaData.modalidade_representantes.modalidades[0]?.nome || ''
+                  : chamadaData.modalidade_representantes?.modalidades?.nome || ''
               },
               filiais: {
-                nome: chamadaData.modalidade_representantes?.filiais?.nome || ''
+                nome: Array.isArray(chamadaData.modalidade_representantes?.filiais) 
+                  ? chamadaData.modalidade_representantes.filiais[0]?.nome || ''
+                  : chamadaData.modalidade_representantes?.filiais?.nome || ''
               }
             }
           } : undefined
@@ -224,7 +236,8 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
 
       const athletes = inscricoesData.map(item => {
         const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
-        const atletaData = item.atletas;
+        // Safely extract athlete data (could be array or object)
+        const atletaData = Array.isArray(item.atletas) ? item.atletas[0] : item.atletas;
         
         return {
           id: atletaData?.id || '',
