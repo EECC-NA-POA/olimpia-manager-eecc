@@ -1,4 +1,5 @@
 
+
 -- Função para verificar se o usuário é monitor de uma modalidade
 CREATE OR REPLACE FUNCTION public.verificar_permissao_monitor(modalidade_rep_id_param uuid)
 RETURNS boolean AS $$
@@ -146,3 +147,4 @@ CREATE POLICY presencas_delete_policy
 GRANT EXECUTE ON FUNCTION public.verificar_permissao_monitor(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.verificar_permissao_presenca(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.usuario_e_monitor() TO authenticated;
+
