@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -27,17 +27,29 @@ export function NotificationDetailDialog({
   onClose 
 }: NotificationDetailDialogProps) {
   const markAsReadMutation = useMarkAsRead();
+  const hasMarkedAsRead = useRef<string | null>(null);
 
   // Marcar como lida quando o dialog abrir
   useEffect(() => {
-    if (isOpen && notification && userId) {
+    if (isOpen && notification && userId && hasMarkedAsRead.current !== notification.id) {
       console.log('Dialog opened, marking notification as read:', notification.id, 'for user:', userId);
+      
+      // Marcar que já tentamos para esta notificação
+      hasMarkedAsRead.current = notification.id;
+      
       markAsReadMutation.mutate({
         notificationId: notification.id,
         userId: userId
       });
     }
   }, [isOpen, notification?.id, userId, markAsReadMutation]);
+
+  // Reset ref quando o dialog fechar
+  useEffect(() => {
+    if (!isOpen) {
+      hasMarkedAsRead.current = null;
+    }
+  }, [isOpen]);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
