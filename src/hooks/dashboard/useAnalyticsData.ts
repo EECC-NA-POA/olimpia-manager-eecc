@@ -1,64 +1,49 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { fetchBranchAnalytics } from '@/lib/api';
-import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import { fetchBranchAnalytics, BranchAnalytics } from '@/lib/api';
 
 export const useAnalyticsData = (eventId: string | null, filterByBranch: boolean = false) => {
   const { 
-    data: branchAnalytics,
+    data: branchAnalytics, 
     isLoading,
     error,
-    refetch 
+    refetch
   } = useQuery({
     queryKey: ['branch-analytics', eventId, filterByBranch],
-    queryFn: async () => {
-      try {
-        console.log('Fetching branch analytics with eventId:', eventId, 'filterByBranch:', filterByBranch);
-        
-        if (!eventId) {
-          console.warn('Event ID is required for analytics query');
-          return [];
-        }
-        
-        // Only get user's filial_id if we need to filter by branch
-        let filialId;
-        if (filterByBranch) {
-          const { data: { user } } = await supabase.auth.getUser();
-          
-          if (!user?.id) {
-            console.warn('User ID not available for filtering branch analytics');
-            return [];
-          }
-          
-          const { data: userProfile, error: userError } = await supabase
-            .from('usuarios')
-            .select('filial_id')
-            .eq('id', user.id)
-            .maybeSingle();
-            
-          if (userError) {
-            console.error('Error fetching user profile for branch filtering:', userError);
-          } else {
-            filialId = userProfile?.filial_id;
-            console.log('User filial_id for analytics filtering:', filialId);
-          }
-        }
-        
-        // Now fetch the analytics with the appropriate filter
-        const result = await fetchBranchAnalytics(eventId, filterByBranch ? filialId : undefined);
-        return result;
-      } catch (error) {
-        console.error('Error in branch analytics query:', error);
-        toast.error('Erro ao carregar dados estatísticos');
-        return []; // Return empty array instead of throwing to prevent breaking the UI
-      }
+    queryFn: () => {
+      console.log('Fetching analytics data including dependents for event:', eventId);
+      return fetchBranchAnalytics(eventId, filterByBranch);
     },
     enabled: !!eventId,
+    retry: 1,
+    meta: {
+      onError: (error: any) => {
+        console.error('Error fetching analytics:', error);
+      }
+    }
   });
 
+  console.log('Analytics data loaded (should include dependents):', branchAnalytics);
+  console.log('Total analytics records:', branchAnalytics?.length || 0);
+
+  // Log detailed information about the analytics data
+  if (branchAnalytics && branchAnalytics.length > 0) {
+    branchAnalytics.forEach((branch, index) => {
+      console.log(`Branch ${index + 1} - ${branch.filial}:`, {
+        total_inscritos_geral: branch.total_inscritos_geral,
+        total_inscritos_modalidades: branch.total_inscritos_modalidades,
+        total_inscritos_por_status: branch.total_inscritos_por_status
+      });
+    });
+    
+    const totalFromAnalytics = branchAnalytics.reduce((sum, branch) => 
+      sum + (Number(branch.total_inscritos_geral) || 0), 0
+    );
+    console.log('Total calculated from analytics (including dependents):', totalFromAnalytics);
+  }
+
   return {
-    branchAnalytics: branchAnalytics || [],
+    branchAnalytics,
     isLoading,
     error,
     refetch
