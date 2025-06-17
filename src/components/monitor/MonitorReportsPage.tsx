@@ -81,7 +81,7 @@ export default function MonitorReportsPage() {
 
       const totalAthletes = athletesData?.length || 0;
 
-      return data.map(session => {
+      return data?.map(session => {
         const presences = session.chamada_presencas || [];
         const presentCount = presences.filter(p => p.status === 'presente').length;
         const lateCount = presences.filter(p => p.status === 'atrasado').length;
@@ -96,7 +96,7 @@ export default function MonitorReportsPage() {
           absent_count: absentCount,
           attendance_rate: totalAthletes > 0 ? Math.round((presentCount / totalAthletes) * 100) : 0
         } as AttendanceReport;
-      });
+      }) || [];
     },
     enabled: !!selectedModalidade,
   });
@@ -139,14 +139,17 @@ export default function MonitorReportsPage() {
 
       const attendancesByAthlete = new Map();
       athletesData.forEach(athlete => {
-        attendancesByAthlete.set(athlete.atleta_id, {
-          athlete_name: athlete.usuarios.nome_completo,
-          athlete_identifier: athlete.usuarios.numero_identificador || 'N/A',
-          total_sessions: sessions.length,
-          present_sessions: 0,
-          late_sessions: 0,
-          absent_sessions: 0
-        });
+        const userData = athlete.usuarios;
+        if (userData) {
+          attendancesByAthlete.set(athlete.atleta_id, {
+            athlete_name: userData.nome_completo,
+            athlete_identifier: userData.numero_identificador || 'N/A',
+            total_sessions: sessions.length,
+            present_sessions: 0,
+            late_sessions: 0,
+            absent_sessions: 0
+          });
+        }
       });
 
       attendancesData?.forEach(attendance => {

@@ -59,7 +59,7 @@ export const useSessionAttendance = (chamadaId: number | null) => {
       }
 
       console.log('Session attendance data:', data);
-      return data as SessionAttendance[];
+      return data || [];
     },
     enabled: !!chamadaId,
   });
@@ -106,12 +106,12 @@ export const useAthletesForAttendance = (modalidadeRepId: number | null) => {
         throw error;
       }
 
-      const athletes = data.map(item => ({
-        id: item.usuarios.id,
-        nome_completo: item.usuarios.nome_completo,
-        email: item.usuarios.email,
-        numero_identificador: item.usuarios.numero_identificador,
-      }));
+      const athletes = data?.map(item => ({
+        id: item.usuarios?.id || item.atleta_id,
+        nome_completo: item.usuarios?.nome_completo || 'Nome não encontrado',
+        email: item.usuarios?.email || 'Email não encontrado',
+        numero_identificador: item.usuarios?.numero_identificador || null,
+      })) || [];
 
       console.log('Athletes for attendance:', athletes);
       return athletes as AthleteForAttendance[];
