@@ -61,16 +61,23 @@ export const EnrollmentList = ({
   console.log('Current event ID:', currentEventId);
   console.log('Registered modalities:', registeredModalities);
 
-  const { data: modalitiesWithRepresentatives } = useModalitiesWithRepresentatives(
+  const { data: modalitiesWithRepresentatives, isLoading: isLoadingRepresentatives } = useModalitiesWithRepresentatives(
     userFilialId, 
     currentEventId
   );
 
   console.log('Modalities with representatives data:', modalitiesWithRepresentatives);
+  console.log('Is loading representatives:', isLoadingRepresentatives);
 
   const getRepresentativeForModality = (modalityId: number) => {
     console.log(`Looking for representative for modality ID: ${modalityId}`);
-    const found = modalitiesWithRepresentatives?.find(m => m.id === modalityId);
+    
+    if (!modalitiesWithRepresentatives) {
+      console.log('No modalitiesWithRepresentatives data available');
+      return undefined;
+    }
+    
+    const found = modalitiesWithRepresentatives.find(m => m.id === modalityId);
     console.log(`Found modality in representatives data:`, found);
     console.log(`Representative for modality ${modalityId}:`, found?.representative);
     return found?.representative;
@@ -144,7 +151,7 @@ export const EnrollmentList = ({
                     </div>
                   ) : (
                     <span className="text-xs text-gray-500">
-                      Não definido
+                      {isLoadingRepresentatives ? 'Carregando...' : 'Não definido'}
                     </span>
                   )}
                 </TableCell>
