@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import Footer from "@/components/Footer";
 import Index from "@/pages/Index";
+import OlimpiadasNacionais from "@/pages/OlimpiadasNacionais";
 import Login from "@/pages/Login";
 import AthleteProfile from "@/pages/AthleteProfile";
 import Dashboard from "@/pages/Dashboard";
@@ -33,6 +34,7 @@ function AppContent() {
         <MainNavigation>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/olimpiadas-nacionais" element={<OlimpiadasNacionais />} />
             <Route path="/athlete" element={<AthleteProfile />} />
             <Route path="/athlete-profile" element={<AthleteProfile />} />
             <Route path="/dashboard" element={<Dashboard />} />
@@ -50,6 +52,7 @@ function AppContent() {
         <main className="flex-1">
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/olimpiadas-nacionais" element={<OlimpiadasNacionais />} />
             <Route path="/login" element={<Login />} />
             <Route path="/events" element={<EventsLandingPage />} />
             <Route path="/event-selection" element={<EventSelectionPage />} />
