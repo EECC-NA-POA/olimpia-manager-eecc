@@ -110,22 +110,42 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
   }
   
   try {
+    // Verificar sessão do usuário autenticado
+    console.log('=== CHECKING AUTH SESSION ===');
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    console.log('Session exists:', !!session);
+    console.log('Session user ID:', session?.user?.id);
+    console.log('Session error:', sessionError);
+    
     // Verificar dados do usuário autenticado
     console.log('=== CHECKING AUTH USER ===');
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    console.log('Auth user:', user?.id, 'Expected userId:', userId);
+    console.log('Auth user ID:', user?.id);
+    console.log('Expected userId:', userId);
+    console.log('IDs match:', user?.id === userId);
     console.log('Auth error:', authError);
     
     // Verificar se o usuário tem filial
     console.log('=== CHECKING USER BRANCH ===');
     const { data: userData, error: userError } = await supabase
       .from('usuarios')
-      .select('filial_id')
+      .select('filial_id, nome_completo')
       .eq('id', userId)
       .single();
     
     console.log('User data:', userData);
     console.log('User error:', userError);
+    
+    // Verificar se a notificação existe
+    console.log('=== CHECKING NOTIFICATION EXISTS ===');
+    const { data: notificationData, error: notificationError } = await supabase
+      .from('notificacoes')
+      .select('id, titulo, autor_id, evento_id')
+      .eq('id', notificationId)
+      .single();
+    
+    console.log('Notification data:', notificationData);
+    console.log('Notification error:', notificationError);
     
     // Verificar destinatários da notificação
     console.log('=== CHECKING NOTIFICATION DESTINATIONS ===');
@@ -136,17 +156,20 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
     
     console.log('Destinations:', destinations);
     console.log('Destinations error:', destError);
+    console.log('User filial matches destination:', destinations?.some(d => 
+      d.filial_id === null || d.filial_id === userData?.filial_id
+    ));
     
-    // Primeiro, verificar se já existe um registro
+    // Verificar se já existe um registro
     console.log('=== CHECKING EXISTING READ STATUS ===');
     const { data: existingRead, error: checkError } = await supabase
       .from('notificacao_leituras')
-      .select('id')
+      .select('id, lido_em')
       .eq('notificacao_id', notificationId)
       .eq('usuario_id', userId)
       .maybeSingle();
 
-    console.log('Check result:', { existingRead, checkError });
+    console.log('Existing read check result:', { existingRead, checkError });
 
     if (checkError) {
       console.error('Error checking existing read status:', checkError);
@@ -154,35 +177,45 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
     }
 
     if (existingRead) {
-      console.log('Notification already marked as read');
+      console.log('Notification already marked as read at:', existingRead.lido_em);
       return { success: true, message: 'Already read', data: existingRead };
     }
 
-    console.log('=== ATTEMPTING TO INSERT ===');
-    console.log('Insert data:', {
+    // Tentar inserir o registro de leitura
+    console.log('=== ATTEMPTING TO INSERT READ RECORD ===');
+    const insertData = {
       notificacao_id: notificationId,
       usuario_id: userId,
       lido_em: new Date().toISOString()
-    });
+    };
+    console.log('Insert data:', insertData);
     
     const { data, error } = await supabase
       .from('notificacao_leituras')
-      .insert({
-        notificacao_id: notificationId,
-        usuario_id: userId,
-        lido_em: new Date().toISOString()
-      })
+      .insert(insertData)
       .select()
       .single();
 
     console.log('Insert result:', { data, error });
 
     if (error) {
-      console.error('=== DATABASE ERROR ===');
+      console.error('=== DATABASE ERROR DETAILS ===');
       console.error('Error code:', error.code);
       console.error('Error message:', error.message);
       console.error('Error details:', error.details);
       console.error('Error hint:', error.hint);
+      
+      // Tentar um select para verificar se o registro foi criado mesmo com erro
+      console.log('=== CHECKING IF RECORD WAS CREATED DESPITE ERROR ===');
+      const { data: checkData, error: checkErr } = await supabase
+        .from('notificacao_leituras')
+        .select('*')
+        .eq('notificacao_id', notificationId)
+        .eq('usuario_id', userId)
+        .maybeSingle();
+      
+      console.log('Post-error check:', { checkData, checkErr });
+      
       throw error;
     }
 
@@ -193,6 +226,7 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
   } catch (error) {
     console.error('=== CATCH ERROR ===');
     console.error('Error in markNotificationAsRead:', error);
+    console.error('Full error object:', JSON.stringify(error, null, 2));
     throw error;
   }
 };

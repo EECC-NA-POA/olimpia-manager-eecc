@@ -31,27 +31,44 @@ export function NotificationDetailDialog({
 
   // Marcar como lida quando o dialog abrir
   useEffect(() => {
+    console.log('=== DIALOG EFFECT TRIGGERED ===');
+    console.log('isOpen:', isOpen);
+    console.log('notification?.id:', notification?.id);
+    console.log('userId:', userId);
+    console.log('hasMarkedAsRead.current:', hasMarkedAsRead.current);
+    console.log('notification?.lida:', notification?.lida);
+    
     if (isOpen && notification && userId && hasMarkedAsRead.current !== notification.id) {
+      console.log('=== DIALOG OPENED - MARKING AS READ ===');
       console.log('Dialog opened, marking notification as read:', notification.id, 'for user:', userId);
+      console.log('Notification is currently read?', notification.lida);
       
       // Marcar que já tentamos para esta notificação
       hasMarkedAsRead.current = notification.id;
       
-      markAsReadMutation.mutate({
-        notificationId: notification.id,
-        userId: userId
-      });
+      // Só marcar como lida se ainda não estiver lida
+      if (!notification.lida) {
+        console.log('Notification is unread, calling markAsRead mutation...');
+        markAsReadMutation.mutate({
+          notificationId: notification.id,
+          userId: userId
+        });
+      } else {
+        console.log('Notification is already read, skipping mutation');
+      }
     }
-  }, [isOpen, notification?.id, userId, markAsReadMutation]);
+  }, [isOpen, notification?.id, userId, notification?.lida, markAsReadMutation]);
 
   // Reset ref quando o dialog fechar
   useEffect(() => {
     if (!isOpen) {
+      console.log('=== DIALOG CLOSED - RESETTING REF ===');
       hasMarkedAsRead.current = null;
     }
   }, [isOpen]);
 
   const handleOpenChange = (open: boolean) => {
+    console.log('=== DIALOG OPEN CHANGE ===', open);
     if (!open) {
       onClose();
     }
