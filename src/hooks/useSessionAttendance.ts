@@ -95,17 +95,18 @@ export const useSessionAttendance = (chamadaId: string | null) => {
           .eq('evento_id', currentEventId);
 
         // Transform the data to match our interface
-        const transformedData = data?.map(item => {
+        const transformedData = data.map(item => {
           const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
           
           return {
             ...item,
             atleta: {
-              ...item.atleta,
+              nome_completo: item.atleta?.nome_completo || '',
+              email: item.atleta?.email || '',
               numero_identificador: pagamento?.numero_identificador || null
             }
           };
-        }) || [];
+        });
 
         return transformedData as SessionAttendance[];
       }
@@ -114,7 +115,8 @@ export const useSessionAttendance = (chamadaId: string | null) => {
       const transformedData = data?.map(item => ({
         ...item,
         atleta: {
-          ...item.atleta,
+          nome_completo: item.atleta?.nome_completo || '',
+          email: item.atleta?.email || '',
           numero_identificador: null
         }
       })) || [];
@@ -187,9 +189,9 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
         const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
         
         return {
-          id: item.atleta.id,
-          nome_completo: item.atleta.nome_completo,
-          email: item.atleta.email,
+          id: item.atleta?.id || '',
+          nome_completo: item.atleta?.nome_completo || '',
+          email: item.atleta?.email || '',
           numero_identificador: pagamento?.numero_identificador || null,
         };
       });
