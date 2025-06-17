@@ -24,15 +24,34 @@ export interface MonitorModality {
 }
 
 export const useMonitorModalities = () => {
-  const { user } = useAuth();
+  const { user, currentEventId } = useAuth();
 
   return useQuery({
-    queryKey: ['monitor-modalities', user?.id],
+    queryKey: ['monitor-modalities', user?.id, currentEventId],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!user?.id) {
+        console.log('useMonitorModalities - No user ID available');
+        return [];
+      }
       
-      console.log('Fetching monitor modalities for user:', user.id);
+      if (!currentEventId) {
+        console.log('useMonitorModalities - No current event ID available');
+        return [];
+      }
       
+      console.log('useMonitorModalities - Fetching monitor modalities for user:', user.id);
+      console.log('useMonitorModalities - Current event ID:', currentEventId);
+      
+      // First, let's check if the user exists in modalidade_representantes
+      const { data: checkData, error: checkError } = await supabase
+        .from('modalidade_representantes')
+        .select('*')
+        .eq('atleta_id', user.id);
+
+      console.log('useMonitorModalities - Raw modalidade_representantes check:', checkData);
+      console.log('useMonitorModalities - Check error:', checkError);
+
+      // Now let's get the full data with joins
       const { data, error } = await supabase
         .from('modalidade_representantes')
         .select(`
@@ -45,7 +64,8 @@ export const useMonitorModalities = () => {
           modalidades!inner (
             id,
             nome,
-            categoria
+            categoria,
+            evento_id
           ),
           filiais!inner (
             id,
@@ -54,24 +74,29 @@ export const useMonitorModalities = () => {
             estado
           )
         `)
-        .eq('atleta_id', user.id);
+        .eq('atleta_id', user.id)
+        .eq('modalidades.evento_id', currentEventId);
 
       if (error) {
-        console.error('Error fetching monitor modalities:', error);
+        console.error('useMonitorModalities - Error fetching monitor modalities:', error);
         throw error;
       }
 
-      console.log('Monitor modalities data:', data);
+      console.log('useMonitorModalities - Monitor modalities data with joins:', data);
       
       // Transform the data to match our interface since Supabase returns nested objects as arrays
-      const transformedData = data?.map(item => ({
-        ...item,
-        modalidades: Array.isArray(item.modalidades) ? item.modalidades[0] : item.modalidades,
-        filiais: Array.isArray(item.filiais) ? item.filiais[0] : item.filiais
-      })) || [];
+      const transformedData = data?.map(item => {
+        console.log('useMonitorModalities - Transforming item:', item);
+        return {
+          ...item,
+          modalidades: Array.isArray(item.modalidades) ? item.modalidades[0] : item.modalidades,
+          filiais: Array.isArray(item.filiais) ? item.filiais[0] : item.filiais
+        };
+      }) || [];
 
+      console.log('useMonitorModalities - Final transformed data:', transformedData);
       return transformedData as MonitorModality[];
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!currentEventId,
   });
 };

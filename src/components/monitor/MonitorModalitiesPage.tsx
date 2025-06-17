@@ -2,18 +2,22 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MapPin, Calendar } from "lucide-react";
+import { MapPin, Calendar } from "lucide-react";
 import { useMonitorModalities } from "@/hooks/useMonitorModalities";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { LoadingImage } from "@/components/ui/loading-image";
 
 export default function MonitorModalitiesPage() {
   const { data: modalities, isLoading } = useMonitorModalities();
 
+  console.log('MonitorModalitiesPage - isLoading:', isLoading);
+  console.log('MonitorModalitiesPage - modalities data:', modalities);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-olimpics-green-primary" />
+        <LoadingImage text="Carregando modalidades..." />
       </div>
     );
   }
