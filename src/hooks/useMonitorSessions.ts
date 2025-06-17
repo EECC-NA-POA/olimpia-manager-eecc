@@ -59,17 +59,24 @@ export const useMonitorSessions = (modalidadeRepId?: number) => {
       console.log('Monitor sessions data:', data);
       
       // Transform the data to match our interface
-      const transformedData = data?.map(item => ({
-        ...item,
-        modalidade_representantes: {
-          modalidades: Array.isArray(item.modalidade_representantes.modalidades) 
-            ? item.modalidade_representantes.modalidades[0] 
-            : item.modalidade_representantes.modalidades,
-          filiais: Array.isArray(item.modalidade_representantes.filiais) 
-            ? item.modalidade_representantes.filiais[0] 
-            : item.modalidade_representantes.filiais
-        }
-      })) || [];
+      const transformedData = data?.map(item => {
+        // First extract the modalidade_representantes object from the array
+        const modalidadeRep = Array.isArray(item.modalidade_representantes) 
+          ? item.modalidade_representantes[0] 
+          : item.modalidade_representantes;
+        
+        return {
+          ...item,
+          modalidade_representantes: {
+            modalidades: Array.isArray(modalidadeRep.modalidades) 
+              ? modalidadeRep.modalidades[0] 
+              : modalidadeRep.modalidades,
+            filiais: Array.isArray(modalidadeRep.filiais) 
+              ? modalidadeRep.filiais[0] 
+              : modalidadeRep.filiais
+          }
+        };
+      }) || [];
 
       return transformedData as MonitorSession[];
     },
