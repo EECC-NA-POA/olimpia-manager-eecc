@@ -28,6 +28,9 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
   // Use branch ID from user if not provided
   const userBranchId = branchId || user?.filial_id;
   
+  console.log('TeamsTab - Current user branch:', userBranchId);
+  console.log('TeamsTab - Selected modality:', selectedModalityId);
+  
   const {
     teamModalities,
     teams,
@@ -47,19 +50,25 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
   } = useTeamOperations(eventId, userBranchId);
 
   // Get teams for selected modality with athletes from the user's branch
-  const { data: modalityTeams, isLoading: isLoadingModalityTeams } = useTeamsDataForDelegation(
+  const { data: modalityTeams, isLoading: isLoadingModalityTeams, error: modalityTeamsError } = useTeamsDataForDelegation(
     eventId,
     selectedModalityId,
     userBranchId
   );
 
+  console.log('TeamsTab - Modality teams:', modalityTeams);
+
   // Get available athletes for the selected modality (filtered by branch)
-  const { data: availableAthletes, isLoading: isLoadingAthletes } = useAvailableAthletesData(
+  const { data: availableAthletes, isLoading: isLoadingAthletes, error: athletesError } = useAvailableAthletesData(
     eventId,
     selectedModalityId,
-    false, // isOrganizer = false
+    false, // isOrganizer = false (delegation representative)
     modalityTeams || []
   );
+
+  console.log('TeamsTab - Available athletes:', availableAthletes);
+  console.log('TeamsTab - Athletes loading:', isLoadingAthletes);
+  console.log('TeamsTab - Athletes error:', athletesError);
 
   // Loading state
   if (isLoadingTeams || isLoadingModalities) {
@@ -68,9 +77,13 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
 
   // Error state
   if (teamsError || modalitiesError) {
+    console.error('TeamsTab - Error:', { teamsError, modalitiesError });
     return (
       <ErrorState 
-        onRetry={() => queryClient.invalidateQueries({ queryKey: ['teams', eventId, userBranchId] })} 
+        onRetry={() => {
+          queryClient.invalidateQueries({ queryKey: ['teams', eventId, userBranchId] });
+          queryClient.invalidateQueries({ queryKey: ['team-modalities', eventId] });
+        }} 
       />
     );
   }
@@ -113,7 +126,10 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
               <Button
                 key={modality.id}
                 variant={selectedModalityId === modality.id ? "default" : "outline"}
-                onClick={() => setSelectedModalityId(modality.id)}
+                onClick={() => {
+                  console.log('Selecting modality:', modality.id, modality.nome);
+                  setSelectedModalityId(modality.id);
+                }}
                 className="text-sm"
               >
                 {modality.nome} - {modality.categoria}
@@ -142,18 +158,48 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
               Formação de Equipes - {teamModalities?.find(m => m.id === selectedModalityId)?.nome}
             </h3>
             
-            {isLoadingModalityTeams || isLoadingAthletes ? (
+            {/* Show loading states and errors for modality-specific data */}
+            {(isLoadingModalityTeams || isLoadingAthletes) ? (
               <LoadingState />
+            ) : modalityTeamsError || athletesError ? (
+              <div className="space-y-4">
+                {modalityTeamsError && (
+                  <div className="text-red-600 text-sm">
+                    Erro ao carregar equipes: {modalityTeamsError.message}
+                  </div>
+                )}
+                {athletesError && (
+                  <div className="text-red-600 text-sm">
+                    Erro ao carregar atletas: {athletesError.message}
+                  </div>
+                )}
+                <ErrorState 
+                  onRetry={() => {
+                    queryClient.invalidateQueries({ queryKey: ['teams-delegation', eventId, selectedModalityId, userBranchId] });
+                    queryClient.invalidateQueries({ queryKey: ['available-athletes', eventId, selectedModalityId] });
+                  }} 
+                />
+              </div>
             ) : (
-              <TeamFormation
-                teams={modalityTeams || []}
-                availableAthletes={availableAthletes || []}
-                eventId={eventId}
-                modalityId={selectedModalityId}
-                isOrganizer={false}
-                isReadOnly={false}
-                branchId={userBranchId}
-              />
+              <div className="space-y-4">
+                {/* Debug information */}
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p>Filial: {userBranchId}</p>
+                  <p>Modalidade: {selectedModalityId}</p>
+                  <p>Equipes encontradas: {modalityTeams?.length || 0}</p>
+                  <p>Atletas disponíveis: {availableAthletes?.length || 0}</p>
+                </div>
+                
+                <TeamFormation
+                  teams={modalityTeams || []}
+                  availableAthletes={availableAthletes || []}
+                  eventId={eventId}
+                  modalityId={selectedModalityId}
+                  isOrganizer={false}
+                  isReadOnly={false}
+                  branchId={userBranchId}
+                />
+              </div>
             )}
           </div>
         </div>

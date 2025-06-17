@@ -14,11 +14,16 @@ export function useAvailableAthletesData(
   const branchId = user?.filial_id;
 
   return useQuery({
-    queryKey: ['available-athletes', eventId, selectedModalityId, teams.map(t => t.atletas.map(a => a.atleta_id)).flat().join(',')],
+    queryKey: ['available-athletes', eventId, selectedModalityId, branchId, isOrganizer, teams.map(t => t.atletas?.map(a => a.atleta_id)).flat().join(',')],
     queryFn: async (): Promise<AthleteOption[]> => {
       if (!eventId || !selectedModalityId) return [];
 
-      console.log('Fetching available athletes for modality:', selectedModalityId, 'isOrganizer:', isOrganizer);
+      console.log('Fetching available athletes for:', { 
+        eventId, 
+        selectedModalityId, 
+        branchId, 
+        isOrganizer 
+      });
 
       // Base query to get enrolled athletes in this modality
       let query = supabase
@@ -39,6 +44,7 @@ export function useAvailableAthletesData(
 
       // For organizers, show ALL athletes. For regular users, filter by branch
       if (!isOrganizer && branchId) {
+        console.log('Filtering by branch:', branchId);
         query = query.eq('usuarios.filial_id', branchId);
       }
 
@@ -46,12 +52,15 @@ export function useAvailableAthletesData(
 
       if (error) {
         console.error('Error fetching enrollments:', error);
+        throw new Error(`Erro ao buscar inscrições: ${error.message}`);
+      }
+
+      if (!enrollments) {
+        console.log('No enrollments found');
         return [];
       }
 
-      if (!enrollments) return [];
-
-      console.log('Found enrollments:', enrollments.length);
+      console.log('Found enrollments:', enrollments.length, enrollments);
 
       // Get all athletes already in teams for this modality from database
       const { data: athletesInTeams, error: teamsError } = await supabase
@@ -74,8 +83,12 @@ export function useAvailableAthletesData(
       
       console.log('Athletes already in teams from DB:', Array.from(athletesInTeamsSet));
       
-      return enrollments
-        .filter(enrollment => !athletesInTeamsSet.has(enrollment.atleta_id))
+      const availableAthletes = enrollments
+        .filter(enrollment => {
+          const isInTeam = athletesInTeamsSet.has(enrollment.atleta_id);
+          console.log(`Athlete ${enrollment.atleta_id} is in team:`, isInTeam);
+          return !isInTeam;
+        })
         .map(enrollment => {
           // Handle usuarios data properly
           const usuario = Array.isArray(enrollment.usuarios) 
@@ -87,6 +100,14 @@ export function useAvailableAthletesData(
             ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
             : null;
 
+          console.log('Processing athlete:', {
+            id: enrollment.atleta_id,
+            nome: usuario?.nome_completo,
+            filial: filial?.nome,
+            usuario,
+            filial_raw: usuario?.filiais
+          });
+
           return {
             id: enrollment.atleta_id,
             nome: usuario?.nome_completo || '',
@@ -94,6 +115,9 @@ export function useAvailableAthletesData(
             filial_nome: filial?.nome || 'N/A'
           };
         });
+
+      console.log('Final available athletes:', availableAthletes);
+      return availableAthletes;
     },
     enabled: !!eventId && !!selectedModalityId,
   });
