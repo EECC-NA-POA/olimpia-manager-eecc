@@ -5,6 +5,7 @@ export * from './modalities';
 export * from './payments';
 export * from './profiles';
 export * from './events';
+export * from './representatives';
 import { supabase } from '@/lib/supabase';
 
 // Re-export types so components can still import them from @/lib/api

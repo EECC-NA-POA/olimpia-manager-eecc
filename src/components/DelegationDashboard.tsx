@@ -3,7 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, ListChecks, BarChart, Bell } from "lucide-react";
+import { Users, ListChecks, BarChart, Bell, UserCheck } from "lucide-react";
 import { EmptyState } from "./dashboard/components/EmptyState";
 import { LoadingState } from "./dashboard/components/LoadingState";
 import { ErrorState } from "./dashboard/components/ErrorState";
@@ -12,6 +12,7 @@ import { NoEventSelected } from "./dashboard/components/NoEventSelected";
 import { AthletesTab } from "./dashboard/tabs/AthletesTab";
 import { EnrollmentsTab } from "./dashboard/tabs/EnrollmentsTab";
 import { StatisticsTab } from "./dashboard/tabs/StatisticsTab";
+import { RepresentativesTab } from "./dashboard/tabs/RepresentativesTab";
 import { NotificationManager } from "./notifications/NotificationManager";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
@@ -26,6 +27,7 @@ export default function DelegationDashboard() {
 
   // Check if the user is a delegation representative
   const isDelegationRep = user?.papeis?.some(role => role.codigo === 'RDD') || false;
+  const isOrganizer = user?.papeis?.some(role => role.codigo === 'ORG') || false;
 
   const {
     isRefreshing,
@@ -117,6 +119,17 @@ export default function DelegationDashboard() {
         }
         return <EnrollmentsTab enrollments={confirmedEnrollments} />;
 
+      case "representatives":
+        if (!user?.filial_id) {
+          return <EmptyState title="Filial não identificada" description="Não foi possível identificar sua filial" />;
+        }
+        return (
+          <RepresentativesTab 
+            filialId={user.filial_id} 
+            eventId={currentEventId} 
+          />
+        );
+
       case "notifications":
         return (
           <DelegationNotificationManager
@@ -168,6 +181,16 @@ export default function DelegationDashboard() {
               <span className="hidden sm:inline">Inscrições por Modalidade</span>
               <span className="sm:hidden">Inscrições</span>
             </TabsTrigger>
+            {(isDelegationRep || isOrganizer) && (
+              <TabsTrigger 
+                value="representatives"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+              >
+                <UserCheck className="h-3 w-3 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Representantes</span>
+                <span className="sm:hidden">Reps</span>
+              </TabsTrigger>
+            )}
             <TabsTrigger 
               value="notifications"
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
@@ -190,6 +213,12 @@ export default function DelegationDashboard() {
         <TabsContent value="enrollments" className="mt-4 sm:mt-6">
           {renderTabContent("enrollments")}
         </TabsContent>
+
+        {(isDelegationRep || isOrganizer) && (
+          <TabsContent value="representatives" className="mt-4 sm:mt-6">
+            {renderTabContent("representatives")}
+          </TabsContent>
+        )}
 
         <TabsContent value="notifications" className="mt-4 sm:mt-6">
           {renderTabContent("notifications")}
