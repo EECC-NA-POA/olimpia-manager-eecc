@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Download, Calendar, Users, UserCheck, UserX, Clock, Printer } from "lucide-react";
+import { FileText, Download, Calendar, Users, UserCheck, UserX, Clock, Printer, TrendingUp } from "lucide-react";
 import { useUserModalityReps } from "@/hooks/useUserModalityReps";
 import { useMonitorSessions } from "@/hooks/useMonitorSessions";
 import { useSessionAttendance } from "@/hooks/useSessionAttendance";
+import AttendanceChart from "./AttendanceChart";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -159,6 +160,13 @@ export default function MonitorReportsPage() {
         </CardContent>
       </Card>
 
+      {/* Gráfico de Assiduidade */}
+      {selectedModalityRep && (
+        <div className="no-print">
+          <AttendanceChart modalidadeRepId={selectedModalityRep} />
+        </div>
+      )}
+
       {/* Relatório */}
       {selectedSession && selectedSessionData && (
         <div className="print-area space-y-6">
@@ -308,9 +316,9 @@ export default function MonitorReportsPage() {
       {selectedModalityRep && !selectedSession && (
         <Card>
           <CardContent className="p-8 text-center">
-            <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-700 mb-2">Selecione uma chamada</h3>
-            <p className="text-gray-500">Escolha uma chamada específica para gerar o relatório</p>
+            <TrendingUp className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-700 mb-2">Gráfico de Assiduidade Disponível</h3>
+            <p className="text-gray-500">O gráfico de assiduidade por atleta está exibido acima. Selecione uma chamada específica para ver o relatório detalhado.</p>
           </CardContent>
         </Card>
       )}

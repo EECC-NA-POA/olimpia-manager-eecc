@@ -41,48 +41,6 @@ export interface AthleteForAttendance {
   attendance_id?: string;
 }
 
-// Helper function to safely extract modalidade name
-const extractModalidadeName = (modalidadeRepresentantes: any): string => {
-  if (!modalidadeRepresentantes) return '';
-  
-  if (Array.isArray(modalidadeRepresentantes)) {
-    const first = modalidadeRepresentantes[0];
-    if (!first) return '';
-    
-    if (Array.isArray(first.modalidades)) {
-      return first.modalidades[0]?.nome || '';
-    }
-    return first.modalidades?.nome || '';
-  }
-  
-  if (Array.isArray(modalidadeRepresentantes.modalidades)) {
-    return modalidadeRepresentantes.modalidades[0]?.nome || '';
-  }
-  
-  return modalidadeRepresentantes.modalidades?.nome || '';
-};
-
-// Helper function to safely extract filial name
-const extractFilialName = (modalidadeRepresentantes: any): string => {
-  if (!modalidadeRepresentantes) return '';
-  
-  if (Array.isArray(modalidadeRepresentantes)) {
-    const first = modalidadeRepresentantes[0];
-    if (!first) return '';
-    
-    if (Array.isArray(first.filiais)) {
-      return first.filiais[0]?.nome || '';
-    }
-    return first.filiais?.nome || '';
-  }
-  
-  if (Array.isArray(modalidadeRepresentantes.filiais)) {
-    return modalidadeRepresentantes.filiais[0]?.nome || '';
-  }
-  
-  return modalidadeRepresentantes.filiais?.nome || '';
-};
-
 export const useSessionAttendance = (chamadaId: string | null) => {
   const { currentEventId } = useAuth();
   
@@ -125,66 +83,44 @@ export const useSessionAttendance = (chamadaId: string | null) => {
         throw error;
       }
 
-      console.log('Session attendance data:', data);
+      console.log('Session attendance raw data:', data);
       
+      if (!data || data.length === 0) {
+        console.log('No attendance data found for chamada_id:', chamadaId);
+        return [];
+      }
+
       // Buscar dados de pagamento para obter numero_identificador
-      if (data && data.length > 0 && currentEventId) {
-        const atletaIds = data.map(item => item.atleta_id);
-        const { data: pagamentosData } = await supabase
+      const atletaIds = data.map(item => item.atleta_id);
+      let pagamentosData = [];
+      
+      if (currentEventId && atletaIds.length > 0) {
+        const { data: pagamentos } = await supabase
           .from('pagamentos')
           .select('atleta_id, numero_identificador')
           .in('atleta_id', atletaIds)
           .eq('evento_id', currentEventId);
-
-        // Transform the data to match our interface
-        const transformedData = data.map(item => {
-          const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
-          // Safely extract athlete data from usuarios table
-          const atletaData = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
-          // Safely extract chamada data
-          const chamadaData = Array.isArray(item.chamadas) ? item.chamadas[0] : item.chamadas;
-          
-          return {
-            ...item,
-            atleta: {
-              nome_completo: atletaData?.nome_completo || '',
-              email: atletaData?.email || '',
-              numero_identificador: pagamento?.numero_identificador || null
-            },
-            chamada: chamadaData ? {
-              id: chamadaData.id,
-              descricao: chamadaData.descricao,
-              data_hora_inicio: chamadaData.data_hora_inicio,
-              data_hora_fim: chamadaData.data_hora_fim,
-              observacoes: chamadaData.observacoes,
-              modalidade_representantes: {
-                modalidades: {
-                  nome: extractModalidadeName(chamadaData.modalidade_representantes)
-                },
-                filiais: {
-                  nome: extractFilialName(chamadaData.modalidade_representantes)
-                }
-              }
-            } : undefined
-          };
-        });
-
-        return transformedData as SessionAttendance[];
+        
+        pagamentosData = pagamentos || [];
       }
 
-      // Se não há dados ou currentEventId, retornar sem numero_identificador
-      const transformedData = data?.map(item => {
-        // Safely extract athlete data from usuarios table
-        const atletaData = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
-        // Safely extract chamada data
-        const chamadaData = Array.isArray(item.chamadas) ? item.chamadas[0] : item.chamadas;
+      // Transform the data to match our interface
+      const transformedData = data.map(item => {
+        const pagamento = pagamentosData.find(p => p.atleta_id === item.atleta_id);
+        const atletaData = item.usuarios;
+        const chamadaData = item.chamadas;
         
         return {
-          ...item,
+          id: item.id,
+          chamada_id: item.chamada_id,
+          atleta_id: item.atleta_id,
+          status: item.status,
+          registrado_em: item.registrado_em,
+          registrado_por: item.registrado_por,
           atleta: {
             nome_completo: atletaData?.nome_completo || '',
             email: atletaData?.email || '',
-            numero_identificador: null
+            numero_identificador: pagamento?.numero_identificador || null
           },
           chamada: chamadaData ? {
             id: chamadaData.id,
@@ -194,16 +130,17 @@ export const useSessionAttendance = (chamadaId: string | null) => {
             observacoes: chamadaData.observacoes,
             modalidade_representantes: {
               modalidades: {
-                nome: extractModalidadeName(chamadaData.modalidade_representantes)
+                nome: chamadaData.modalidade_representantes?.modalidades?.nome || ''
               },
               filiais: {
-                nome: extractFilialName(chamadaData.modalidade_representantes)
+                nome: chamadaData.modalidade_representantes?.filiais?.nome || ''
               }
             }
           } : undefined
         };
-      }) || [];
+      });
 
+      console.log('Transformed attendance data:', transformedData);
       return transformedData as SessionAttendance[];
     },
     enabled: !!chamadaId,
@@ -270,8 +207,7 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
 
       const athletes = inscricoesData.map(item => {
         const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
-        // Safely extract athlete data from usuarios table
-        const atletaData = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
+        const atletaData = item.usuarios;
         
         return {
           id: atletaData?.id || '',
@@ -283,6 +219,83 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
 
       console.log('Athletes for attendance:', athletes);
       return athletes as AthleteForAttendance[];
+    },
+    enabled: !!modalidadeRepId && !!currentEventId,
+  });
+};
+
+// Hook para dados de assiduidade por atleta
+export const useAttendanceByAthlete = (modalidadeRepId: string | null) => {
+  const { currentEventId } = useAuth();
+  
+  return useQuery({
+    queryKey: ['attendance-by-athlete', modalidadeRepId, currentEventId],
+    queryFn: async () => {
+      if (!modalidadeRepId || !currentEventId) return [];
+      
+      console.log('Fetching attendance by athlete for modalidade_rep_id:', modalidadeRepId);
+      
+      // Primeiro buscar a modalidade do representante
+      const { data: repData, error: repError } = await supabase
+        .from('modalidade_representantes')
+        .select('modalidade_id')
+        .eq('id', modalidadeRepId)
+        .single();
+
+      if (repError) {
+        console.error('Error fetching representative data:', repError);
+        throw repError;
+      }
+
+      // Buscar todas as chamadas e presenças da modalidade
+      const { data: attendanceData, error: attendanceError } = await supabase
+        .from('chamada_presencas')
+        .select(`
+          atleta_id,
+          status,
+          registrado_em,
+          chamadas!inner (
+            modalidade_rep_id,
+            data_hora_inicio
+          ),
+          usuarios!chamada_presencas_atleta_id_fkey (
+            nome_completo
+          )
+        `)
+        .eq('chamadas.modalidade_rep_id', modalidadeRepId);
+
+      if (attendanceError) {
+        console.error('Error fetching attendance data:', attendanceError);
+        throw attendanceError;
+      }
+
+      // Agrupar dados por atleta e mês
+      const attendanceByAthlete = attendanceData?.reduce((acc, item) => {
+        const atletaNome = item.usuarios?.nome_completo || 'Atleta Desconhecido';
+        const dataPresenca = new Date(item.chamadas?.data_hora_inicio || '');
+        const mesAno = `${dataPresenca.getFullYear()}-${String(dataPresenca.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (!acc[atletaNome]) {
+          acc[atletaNome] = {};
+        }
+        
+        if (!acc[atletaNome][mesAno]) {
+          acc[atletaNome][mesAno] = {
+            presente: 0,
+            ausente: 0,
+            atrasado: 0,
+            total: 0
+          };
+        }
+        
+        acc[atletaNome][mesAno][item.status]++;
+        acc[atletaNome][mesAno].total++;
+        
+        return acc;
+      }, {} as Record<string, Record<string, { presente: number; ausente: number; atrasado: number; total: number }>>);
+
+      console.log('Attendance by athlete:', attendanceByAthlete);
+      return attendanceByAthlete || {};
     },
     enabled: !!modalidadeRepId && !!currentEventId,
   });
