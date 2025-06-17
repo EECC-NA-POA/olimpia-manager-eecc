@@ -34,24 +34,6 @@ export function useAvailableAthletes(
       const athletesInTeams = teamAthletes?.map(ta => ta.atleta_id) || [];
       console.log('Athletes already in teams from DB:', athletesInTeams);
 
-      // For delegation representatives, first get the user IDs from their branch
-      let allowedUserIds: string[] = [];
-      if (isDelegationRep && user?.filial_id) {
-        console.log('Getting users from branch:', user.filial_id);
-        const { data: branchUsers } = await supabase
-          .from('usuarios')
-          .select('id')
-          .eq('filial_id', user.filial_id);
-        
-        allowedUserIds = branchUsers?.map(u => u.id) || [];
-        console.log('Allowed user IDs from branch:', allowedUserIds);
-        
-        if (allowedUserIds.length === 0) {
-          console.log('No users found for this branch, returning empty');
-          return [];
-        }
-      }
-
       // Build the base query for available athletes
       let enrollmentsQuery = supabase
         .from('inscricoes_modalidades')
@@ -70,10 +52,11 @@ export function useAvailableAthletes(
         .eq('modalidade_id', selectedModalityId)
         .eq('status', 'confirmado');
 
-      // Apply branch filtering
-      if (isDelegationRep && allowedUserIds.length > 0) {
-        console.log('Applying DELEGATION REP user ID filter:', allowedUserIds);
-        enrollmentsQuery = enrollmentsQuery.in('atleta_id', allowedUserIds);
+      // CRITICAL: Apply branch filtering DIRECTLY on the join condition
+      if (isDelegationRep && user?.filial_id) {
+        console.log('Applying DELEGATION REP branch filter for filial_id:', user.filial_id);
+        // Filter directly on the usuarios table through the join
+        enrollmentsQuery = enrollmentsQuery.eq('usuarios.filial_id', user.filial_id);
       } else if (!isOrganizer && user?.filial_id) {
         console.log('Applying NON-ORGANIZER branch filter for filial_id:', user.filial_id);
         enrollmentsQuery = enrollmentsQuery.eq('usuarios.filial_id', user.filial_id);
@@ -99,6 +82,20 @@ export function useAvailableAthletes(
           const isInTeam = athletesInTeams.includes(enrollment.atleta_id);
           console.log(`Athlete ${enrollment.atleta_id} in team: ${isInTeam}`);
           return !isInTeam;
+        })
+        .filter(enrollment => {
+          // Double-check branch filtering for delegation representatives
+          const usuario = Array.isArray(enrollment.usuarios) 
+            ? enrollment.usuarios[0] 
+            : enrollment.usuarios;
+          
+          if (isDelegationRep && user?.filial_id) {
+            const matches = usuario?.filial_id === user.filial_id;
+            console.log(`Branch filter check - Athlete ${enrollment.atleta_id}, filial_id: ${usuario?.filial_id}, user filial_id: ${user.filial_id}, matches: ${matches}`);
+            return matches;
+          }
+          
+          return true;
         })
         .map(enrollment => {
           const usuario = Array.isArray(enrollment.usuarios) 
