@@ -97,26 +97,32 @@ export const useSessionAttendance = (chamadaId: string | null) => {
         // Transform the data to match our interface
         const transformedData = data.map(item => {
           const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
+          const atletaData = Array.isArray(item.atletas) ? item.atletas[0] : item.atletas;
+          const chamadaData = Array.isArray(item.chamadas) ? item.chamadas[0] : item.chamadas;
           
           return {
             ...item,
             atleta: {
-              nome_completo: item.atletas?.nome_completo || '',
-              email: item.atletas?.email || '',
+              nome_completo: atletaData?.nome_completo || '',
+              email: atletaData?.email || '',
               numero_identificador: pagamento?.numero_identificador || null
             },
-            chamada: item.chamadas ? {
-              id: item.chamadas.id,
-              descricao: item.chamadas.descricao,
-              data_hora_inicio: item.chamadas.data_hora_inicio,
-              data_hora_fim: item.chamadas.data_hora_fim,
-              observacoes: item.chamadas.observacoes,
+            chamada: chamadaData ? {
+              id: chamadaData.id,
+              descricao: chamadaData.descricao,
+              data_hora_inicio: chamadaData.data_hora_inicio,
+              data_hora_fim: chamadaData.data_hora_fim,
+              observacoes: chamadaData.observacoes,
               modalidade_representantes: {
                 modalidades: {
-                  nome: item.chamadas.modalidade_representantes?.modalidades?.nome || ''
+                  nome: Array.isArray(chamadaData.modalidade_representantes) 
+                    ? chamadaData.modalidade_representantes[0]?.modalidades?.[0]?.nome || ''
+                    : chamadaData.modalidade_representantes?.modalidades?.[0]?.nome || ''
                 },
                 filiais: {
-                  nome: item.chamadas.modalidade_representantes?.filiais?.nome || ''
+                  nome: Array.isArray(chamadaData.modalidade_representantes) 
+                    ? chamadaData.modalidade_representantes[0]?.filiais?.[0]?.nome || ''
+                    : chamadaData.modalidade_representantes?.filiais?.[0]?.nome || ''
                 }
               }
             } : undefined
@@ -127,29 +133,38 @@ export const useSessionAttendance = (chamadaId: string | null) => {
       }
 
       // Se não há dados ou currentEventId, retornar sem numero_identificador
-      const transformedData = data?.map(item => ({
-        ...item,
-        atleta: {
-          nome_completo: item.atletas?.nome_completo || '',
-          email: item.atletas?.email || '',
-          numero_identificador: null
-        },
-        chamada: item.chamadas ? {
-          id: item.chamadas.id,
-          descricao: item.chamadas.descricao,
-          data_hora_inicio: item.chamadas.data_hora_inicio,
-          data_hora_fim: item.chamadas.data_hora_fim,
-          observacoes: item.chamadas.observacoes,
-          modalidade_representantes: {
-            modalidades: {
-              nome: item.chamadas.modalidade_representantes?.modalidades?.nome || ''
-            },
-            filiais: {
-              nome: item.chamadas.modalidade_representantes?.filiais?.nome || ''
+      const transformedData = data?.map(item => {
+        const atletaData = Array.isArray(item.atletas) ? item.atletas[0] : item.atletas;
+        const chamadaData = Array.isArray(item.chamadas) ? item.chamadas[0] : item.chamadas;
+        
+        return {
+          ...item,
+          atleta: {
+            nome_completo: atletaData?.nome_completo || '',
+            email: atletaData?.email || '',
+            numero_identificador: null
+          },
+          chamada: chamadaData ? {
+            id: chamadaData.id,
+            descricao: chamadaData.descricao,
+            data_hora_inicio: chamadaData.data_hora_inicio,
+            data_hora_fim: chamadaData.data_hora_fim,
+            observacoes: chamadaData.observacoes,
+            modalidade_representantes: {
+              modalidades: {
+                nome: Array.isArray(chamadaData.modalidade_representantes) 
+                  ? chamadaData.modalidade_representantes[0]?.modalidades?.[0]?.nome || ''
+                  : chamadaData.modalidade_representantes?.modalidades?.[0]?.nome || ''
+              },
+              filiais: {
+                nome: Array.isArray(chamadaData.modalidade_representantes) 
+                  ? chamadaData.modalidade_representantes[0]?.filiais?.[0]?.nome || ''
+                  : chamadaData.modalidade_representantes?.filiais?.[0]?.nome || ''
+              }
             }
-          }
-        } : undefined
-      })) || [];
+          } : undefined
+        };
+      }) || [];
 
       return transformedData as SessionAttendance[];
     },
@@ -217,11 +232,12 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
 
       const athletes = inscricoesData.map(item => {
         const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
+        const atletaData = Array.isArray(item.atletas) ? item.atletas[0] : item.atletas;
         
         return {
-          id: item.atletas?.id || '',
-          nome_completo: item.atletas?.nome_completo || '',
-          email: item.atletas?.email || '',
+          id: atletaData?.id || '',
+          nome_completo: atletaData?.nome_completo || '',
+          email: atletaData?.email || '',
           numero_identificador: pagamento?.numero_identificador || null,
         };
       });
