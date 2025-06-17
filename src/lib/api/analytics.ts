@@ -84,12 +84,13 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
           dependentes: totalUsers?.filter(u => u.tipo_perfil === 'dependente').length || 0
         });
 
-        // Get registrations for this event including dependents
+        // Get registrations for this event including dependents with payment info
         const { data: registrations, error: regError } = await supabase
           .from('inscricoes_modalidades')
           .select(`
             status,
-            usuarios!inscricoes_modalidades_atleta_id_fkey(filial_id, tipo_perfil)
+            usuarios!inscricoes_modalidades_atleta_id_fkey(filial_id, tipo_perfil),
+            pagamentos(status, valor)
           `)
           .eq('evento_id', eventId)
           .eq('usuarios.filial_id', filial.id);
@@ -101,12 +102,15 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
 
         console.log(`Registrations (including dependents) for filial ${filial.nome}:`, registrations?.length || 0);
 
-        // Calculate status counts including dependents
+        // Calculate status counts including dependents and their payment status
         const statusCounts = {
           confirmado: 0,
           pendente: 0,
           cancelado: 0
         };
+
+        let totalPago = 0;
+        let totalPendente = 0;
 
         registrations?.forEach(reg => {
           // Fix the type access - usuarios is a single object, not an array
@@ -115,20 +119,22 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
             if (reg.status in statusCounts) {
               statusCounts[reg.status as keyof typeof statusCounts]++;
             }
+
+            // Calculate payment totals including dependents
+            if (Array.isArray(reg.pagamentos)) {
+              reg.pagamentos.forEach((pagamento: any) => {
+                if (pagamento.status === 'confirmado') {
+                  totalPago += Number(pagamento.valor) || 0;
+                } else if (pagamento.status === 'pendente') {
+                  totalPendente += Number(pagamento.valor) || 0;
+                }
+              });
+            }
           }
         });
 
         console.log(`Status counts for filial ${filial.nome}:`, statusCounts);
-
-        // Get revenue data
-        const { data: revenueData, error: revenueError } = await supabase
-          .from('pagamentos')
-          .select('valor, status')
-          .eq('evento_id', eventId)
-          .eq('filial_id', filial.id);
-
-        const totalPago = revenueData?.filter(p => p.status === 'confirmado').reduce((sum, p) => sum + p.valor, 0) || 0;
-        const totalPendente = revenueData?.filter(p => p.status === 'pendente').reduce((sum, p) => sum + p.valor, 0) || 0;
+        console.log(`Payment totals for filial ${filial.nome}:`, { totalPago, totalPendente });
 
         const totalInscritosGeral = statusCounts.confirmado + statusCounts.pendente + statusCounts.cancelado;
 
