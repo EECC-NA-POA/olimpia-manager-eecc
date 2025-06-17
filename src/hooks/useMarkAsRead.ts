@@ -25,7 +25,7 @@ export function useMarkAsRead() {
       console.error('Error marking notification as read:', error, variables);
       
       // Se for erro de RLS, ainda assim invalidar o cache para simular que foi lida
-      if (error.code === '42501') {
+      if (error && typeof error === 'object' && 'code' in error && error.code === '42501') {
         console.log('Invalidating cache despite RLS error');
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
       }

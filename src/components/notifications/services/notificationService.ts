@@ -172,7 +172,7 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
     console.error('Error in markNotificationAsRead:', error);
     
     // Como último recurso, retornar sucesso para não quebrar a UX
-    if (error.code === '42501') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === '42501') {
       console.log('RLS error handled gracefully');
       return { success: true, message: 'RLS limitation' };
     }
