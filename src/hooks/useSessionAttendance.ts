@@ -45,7 +45,7 @@ export const useSessionAttendance = (chamadaId: number | null) => {
           observacoes,
           created_at,
           updated_at,
-          atleta:usuarios!atleta_id (
+          atleta:usuarios (
             nome_completo,
             email,
             numero_identificador
@@ -90,7 +90,7 @@ export const useAthletesForAttendance = (modalidadeRepId: number | null) => {
         .from('inscricoes_modalidades')
         .select(`
           atleta_id,
-          usuarios!atleta_id (
+          usuarios (
             id,
             nome_completo,
             email,

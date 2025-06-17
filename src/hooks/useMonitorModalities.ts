@@ -42,12 +42,12 @@ export const useMonitorModalities = () => {
           filial_id,
           evento_id,
           created_at,
-          modalidades!inner (
+          modalidades (
             id,
             nome,
             categoria
           ),
-          filiais!inner (
+          filiais (
             id,
             nome,
             cidade,
