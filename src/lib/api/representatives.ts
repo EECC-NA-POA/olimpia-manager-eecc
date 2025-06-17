@@ -76,9 +76,9 @@ export const fetchModalitiesWithRepresentatives = async (filialId: string, event
       nome: modality.nome,
       representative: rep && rep.usuarios ? {
         atleta_id: rep.atleta_id,
-        nome_completo: rep.usuarios.nome_completo,
-        email: rep.usuarios.email,
-        telefone: rep.usuarios.telefone
+        nome_completo: (rep.usuarios as any).nome_completo,
+        email: (rep.usuarios as any).email,
+        telefone: (rep.usuarios as any).telefone
       } : undefined
     };
   }) || [];
@@ -108,9 +108,9 @@ export const fetchRegisteredAthletesForModality = async (filialId: string, modal
 
   return data?.map(item => ({
     id: item.atleta_id,
-    nome_completo: item.usuarios.nome_completo,
-    email: item.usuarios.email,
-    telefone: item.usuarios.telefone
+    nome_completo: (item.usuarios as any).nome_completo,
+    email: (item.usuarios as any).email,
+    telefone: (item.usuarios as any).telefone
   })) || [];
 };
 
