@@ -34,7 +34,7 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
 
         console.log('User data:', userData);
 
-        // Consulta 1: Notificações destinadas à filial do usuário
+        // Consulta 1: Notificações destinadas à filial do usuário (APENAS VISÍVEIS)
         console.log('Executing destined notifications query...');
         const { data: destinedNotifications, error: destinedError } = await supabase
           .from('notificacoes')
@@ -52,13 +52,13 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
             notificacao_destinatarios!inner(filial_id)
           `)
           .eq('evento_id', eventId)
-          .eq('visivel', true)
+          .eq('visivel', true) // FILTRO IMPORTANTE: apenas notificações visíveis
           .eq('notificacao_destinatarios.filial_id', userData.filial_id)
           .order('criado_em', { ascending: false });
 
         console.log('Destined notifications result:', { destinedNotifications, destinedError });
 
-        // Consulta 2: Notificações criadas pelo próprio usuário
+        // Consulta 2: Notificações criadas pelo próprio usuário (todas, visíveis e não visíveis)
         console.log('Executing authored notifications query...');
         const { data: authoredNotifications, error: authoredError } = await supabase
           .from('notificacoes')
@@ -90,8 +90,20 @@ export function useNotifications({ eventId, userId }: UseNotificationsProps) {
           throw authoredError;
         }
 
-        // Combinar e remover duplicatas
-        const allNotifications = [...(destinedNotifications || []), ...(authoredNotifications || [])];
+        // Para usuários atletas: combinar notificações destinadas (apenas visíveis) + suas próprias (todas)
+        // Para usuários não-atletas: apenas suas próprias notificações
+        let allNotifications: any[] = [];
+        
+        // Se o usuário está vendo como atleta, incluir notificações destinadas (apenas visíveis)
+        if (destinedNotifications) {
+          allNotifications = [...destinedNotifications];
+        }
+        
+        // Sempre incluir notificações criadas pelo próprio usuário (todas)
+        if (authoredNotifications) {
+          allNotifications = [...allNotifications, ...authoredNotifications];
+        }
+
         console.log('All notifications before deduplication:', allNotifications);
         
         const uniqueNotifications = allNotifications.filter((notification, index, self) => 

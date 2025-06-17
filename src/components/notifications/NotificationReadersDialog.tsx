@@ -66,7 +66,19 @@ export function NotificationReadersDialog({
       }
 
       console.log('Notification readers data:', data);
-      return data as NotificationReader[];
+      
+      // Transformar os dados para corresponder à interface NotificationReader
+      const transformedData: NotificationReader[] = data?.map((item: any) => ({
+        id: item.id,
+        lido_em: item.lido_em,
+        usuario: {
+          nome_completo: item.usuario?.nome_completo || 'Nome não disponível',
+          email: item.usuario?.email || 'Email não disponível',
+          filial: item.usuario?.filial ? { nome: item.usuario.filial.nome } : null
+        }
+      })) || [];
+
+      return transformedData;
     },
     enabled: !!notificationId && isOpen,
   });
