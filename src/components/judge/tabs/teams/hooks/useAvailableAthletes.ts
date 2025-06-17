@@ -52,10 +52,16 @@ export function useAvailableAthletes(
         .eq('modalidade_id', selectedModalityId)
         .eq('status', 'confirmado');
 
-      // For delegation representatives OR non-organizers, filter by branch
-      if ((isDelegationRep || !isOrganizer) && user?.filial_id) {
-        console.log('Applying branch filter for filial_id:', user.filial_id);
+      // CRITICAL: For delegation representatives, ALWAYS filter by branch
+      // For organizers, show all athletes
+      if (isDelegationRep && user?.filial_id) {
+        console.log('Applying DELEGATION REP branch filter for filial_id:', user.filial_id);
         enrollmentsQuery = enrollmentsQuery.eq('usuarios.filial_id', user.filial_id);
+      } else if (!isOrganizer && user?.filial_id) {
+        console.log('Applying NON-ORGANIZER branch filter for filial_id:', user.filial_id);
+        enrollmentsQuery = enrollmentsQuery.eq('usuarios.filial_id', user.filial_id);
+      } else {
+        console.log('NO BRANCH FILTER APPLIED - showing all athletes (organizer mode)');
       }
 
       const { data: enrollments, error } = await enrollmentsQuery;
@@ -72,7 +78,11 @@ export function useAvailableAthletes(
 
       // Filter out athletes already in teams and format the data
       const availableAthletes: AthleteOption[] = enrollments
-        .filter(enrollment => !athletesInTeams.includes(enrollment.atleta_id))
+        .filter(enrollment => {
+          const isInTeam = athletesInTeams.includes(enrollment.atleta_id);
+          console.log(`Athlete ${enrollment.atleta_id} in team: ${isInTeam}`);
+          return !isInTeam;
+        })
         .map(enrollment => {
           const usuario = Array.isArray(enrollment.usuarios) 
             ? enrollment.usuarios[0] 
@@ -91,7 +101,9 @@ export function useAvailableAthletes(
             nome: usuario?.nome_completo,
             filial_id: usuario?.filial_id,
             filial_nome: filial?.nome,
-            user_filial_id: user?.filial_id
+            user_filial_id: user?.filial_id,
+            isDelegationRep,
+            isOrganizer
           });
 
           return {
@@ -104,6 +116,8 @@ export function useAvailableAthletes(
         });
 
       console.log('Available athletes after filtering:', availableAthletes);
+      console.log('Final athlete count:', availableAthletes.length);
+      
       return availableAthletes;
     },
     enabled: !!eventId && !!selectedModalityId,
