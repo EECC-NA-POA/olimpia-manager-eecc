@@ -11,8 +11,9 @@ export function useTeamMutations(eventId: string | null, branchId?: string, edit
   const teamMutation = useMutation({
     mutationFn: async (teamData: TeamFormData) => {
       const formattedData = {
-        ...teamData,
+        nome: teamData.nome,
         modalidade_id: parseInt(teamData.modalidade_id),
+        observacoes: teamData.observacoes,
       };
       
       if (editingTeam) {

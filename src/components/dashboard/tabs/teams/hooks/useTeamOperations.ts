@@ -7,7 +7,6 @@ import { useTeamMutations } from './useTeamMutations';
 export interface TeamFormData {
   nome: string;
   modalidade_id: string;
-  cor_uniforme?: string;
   observacoes?: string;
 }
 

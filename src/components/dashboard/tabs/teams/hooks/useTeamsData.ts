@@ -13,7 +13,6 @@ export function useTeamsData(eventId: string | null, branchId?: string) {
         .select(`
           id,
           nome,
-          cor_uniforme,
           observacoes,
           modalidade_id,
           modalidades (
@@ -37,7 +36,6 @@ export function useTeamsData(eventId: string | null, branchId?: string) {
         return {
           id: team.id,
           nome: team.nome,
-          cor_uniforme: team.cor_uniforme,
           observacoes: team.observacoes,
           modalidade_id: team.modalidade_id,
           modalidades: {
