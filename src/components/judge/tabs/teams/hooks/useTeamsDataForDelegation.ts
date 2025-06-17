@@ -42,9 +42,13 @@ export function useTeamsDataForDelegation(
 
       if (!teamsData || teamsData.length === 0) return [];
 
+      console.log('Found teams for modality:', teamsData.length, teamsData.map(t => t.nome));
+
       // For each team, get its athletes and filter by branch if specified
       const teamsWithAthletes = await Promise.all(
         teamsData.map(async (team) => {
+          console.log(`Processing team: ${team.nome} (ID: ${team.id})`);
+          
           // Get athletes for this team
           let athletesQuery = supabase
             .from('atletas_equipes')
@@ -75,21 +79,16 @@ export function useTeamsDataForDelegation(
             };
           }
 
-          // Filter athletes by branch if branchId is provided
-          let filteredAthletes = athletesData || [];
-          if (branchId) {
-            filteredAthletes = athletesData?.filter(athlete => {
-              const usuario = Array.isArray(athlete.usuarios) ? athlete.usuarios[0] : athlete.usuarios;
-              return usuario?.filial_id === branchId;
-            }) || [];
-          }
+          console.log(`Athletes in team ${team.nome}:`, athletesData?.length || 0, athletesData);
 
-          // Transform athletes data
-          const atletas = filteredAthletes.map(athlete => {
+          // Transform athletes data - don't filter by branch here, show all athletes
+          const atletas = (athletesData || []).map(athlete => {
             const usuario = Array.isArray(athlete.usuarios) ? athlete.usuarios[0] : athlete.usuarios;
             const filial = usuario?.filiais 
               ? (Array.isArray(usuario.filiais) ? usuario.filiais[0] : usuario.filiais)
               : null;
+
+            console.log(`Processing athlete: ${usuario?.nome_completo} from filial ${usuario?.filial_id}`);
 
             return {
               id: athlete.id,
@@ -102,10 +101,7 @@ export function useTeamsDataForDelegation(
             };
           });
 
-          // If filtering by branch and no athletes from that branch, don't include the team
-          if (branchId && atletas.length === 0) {
-            return null;
-          }
+          console.log(`Team ${team.nome} final athletes:`, atletas.length, atletas.map(a => a.atleta_nome));
 
           const modalidade = Array.isArray(team.modalidades) ? team.modalidades[0] : team.modalidades;
 
@@ -113,8 +109,8 @@ export function useTeamsDataForDelegation(
             id: team.id,
             nome: team.nome,
             modalidade_id: team.modalidade_id,
-            filial_id: branchId || '', // Include filial_id as required by TeamData
-            evento_id: team.evento_id, // Include evento_id as required by TeamData
+            filial_id: branchId || '',
+            evento_id: team.evento_id,
             modalidade_info: {
               id: team.modalidade_id,
               nome: modalidade?.nome || '',
@@ -126,8 +122,12 @@ export function useTeamsDataForDelegation(
         })
       );
 
-      // Filter out null teams (teams with no athletes from the specified branch)
-      return teamsWithAthletes.filter(team => team !== null) as TeamData[];
+      console.log('Final teams with athletes:', teamsWithAthletes.map(t => ({
+        nome: t.nome,
+        atletas: t.atletas.length
+      })));
+
+      return teamsWithAthletes;
     },
     enabled: !!eventId && !!modalityId,
   });
