@@ -37,11 +37,15 @@ export const useModalityAthletes = (modalidadeRepId?: string) => {
             id,
             nome_completo,
             email
+          ),
+          pagamentos!left (
+            numero_identificador
           )
         `)
         .eq('modalidade_id', repData.modalidade_id)
         .eq('evento_id', currentEventId)
-        .eq('status', 'confirmado');
+        .eq('status', 'confirmado')
+        .eq('pagamentos.evento_id', currentEventId);
 
       if (error) {
         console.error('Error fetching modality athletes:', error);
@@ -50,11 +54,12 @@ export const useModalityAthletes = (modalidadeRepId?: string) => {
 
       const athletes = data?.map(item => {
         const usuario = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
+        const pagamento = Array.isArray(item.pagamentos) ? item.pagamentos[0] : item.pagamentos;
         return {
           id: usuario.id,
           nome_completo: usuario.nome_completo,
           email: usuario.email,
-          numero_identificador: null, // Campo não existe na tabela usuarios
+          numero_identificador: pagamento?.numero_identificador || null,
         };
       }) || [];
 
