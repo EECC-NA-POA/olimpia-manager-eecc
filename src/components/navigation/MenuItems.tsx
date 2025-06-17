@@ -27,6 +27,18 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
   const isAthlete = roles.isAthlete;
   const isFilosofoMonitor = roles.isFilosofoMonitor;
   
+  // Log para debug
+  console.log('MenuItems - User roles:', {
+    isAdmin,
+    isOrganizer,
+    isDelegationRep,
+    isAthlete,
+    isFilosofoMonitor,
+    isJudge
+  });
+  
+  console.log('MenuItems - User papeis:', user?.papeis);
+  
   // Check if user can manage events (admin with cadastra_eventos=true)
   const canManageEvents = isAdmin && canCreateEvents;
 
@@ -95,8 +107,12 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
     });
   }
 
-  // 7. Filósofo Monitor - NEW SECTION
+  // 7. Filósofo Monitor - NEW SECTION - SEMPRE MOSTRAR SE TIVER O PAPEL
+  console.log('Checking if should show Filosofo Monitor menu. isFilosofoMonitor:', isFilosofoMonitor);
+  
   if (isFilosofoMonitor) {
+    console.log('Adding Filosofo Monitor menu items');
+    
     menuItems.push({
       path: "/monitor/modalidades",
       label: "Minhas Modalidades",
@@ -117,6 +133,8 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
       icon: <BarChart3 className="h-5 w-5" />,
       tooltip: "Relatórios de Presença"
     });
+  } else {
+    console.log('Not showing Filosofo Monitor menu items - user does not have the role');
   }
   
   // 8. Juiz (Judge)
@@ -169,6 +187,9 @@ export const MenuItems = ({ onLogout, userId }: MenuItemsProps) => {
     action: onLogout,
     className: "text-red-300 hover:text-red-100 hover:bg-red-500/20"
   });
+
+  console.log('MenuItems final count:', menuItems.length);
+  console.log('MenuItems:', menuItems.map(item => item.label));
 
   return (
     <SidebarGroup>

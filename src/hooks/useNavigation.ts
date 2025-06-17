@@ -21,6 +21,7 @@ export const useNavigation = () => {
   // Get all roles codes from the user's roles
   const userRoleCodes = user?.papeis?.map(role => role.codigo) || [];
   console.log('User role codes:', userRoleCodes);
+  console.log('User papeis:', user?.papeis);
 
   // Check for each role type
   const roles: UserRoles = {
@@ -30,8 +31,11 @@ export const useNavigation = () => {
     isPublicGeral: userRoleCodes.includes('PGR'),
     isAdmin: userRoleCodes.includes('ADM'),
     isJudge: userRoleCodes.includes('JUZ'),
-    isFilosofoMonitor: userRoleCodes.includes('FMO') // Novo papel
+    isFilosofoMonitor: userRoleCodes.includes('FMO') || userRoleCodes.includes('FILOSOFO_MONITOR') || userRoleCodes.includes('filosofo_monitor')
   };
+
+  console.log('Detected roles:', roles);
+  console.log('Is Filosofo Monitor?', roles.isFilosofoMonitor);
 
   // Redirect authenticated users without an event to event selection
   useEffect(() => {

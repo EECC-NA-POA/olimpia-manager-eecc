@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,6 +35,11 @@ import Scores from "./pages/Scores";
 import OrganizerDashboard from "./components/OrganizerDashboard";
 import DelegationDashboard from "./components/DelegationDashboard";
 import AthleteRegistrations from "./components/AthleteRegistrations";
+
+// Import Filosofo Monitor components
+import MonitorModalitiesPage from "./components/monitor/MonitorModalitiesPage";
+import MonitorAttendancePage from "./components/monitor/MonitorAttendancePage";
+import MonitorReportsPage from "./components/monitor/MonitorReportsPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -94,6 +100,11 @@ function AppContent() {
                 <Route path="/minhas-inscricoes" element={<AthleteRegistrations />} />
                 <Route path="/organizador" element={<OrganizerDashboard />} />
                 <Route path="/delegacao" element={<DelegationDashboard />} />
+                
+                {/* Filosofo Monitor routes */}
+                <Route path="/monitor/modalidades" element={<MonitorModalitiesPage />} />
+                <Route path="/monitor/chamadas" element={<MonitorAttendancePage />} />
+                <Route path="/monitor/relatorios" element={<MonitorReportsPage />} />
               </Routes>
             </MainNavigation>
           } />
