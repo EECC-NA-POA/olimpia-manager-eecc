@@ -60,19 +60,19 @@ export const useSessionAttendance = (chamadaId: string | null) => {
           status,
           registrado_em,
           registrado_por,
-          atletas!chamada_presencas_atleta_id_fkey (
+          atletas (
             nome_completo,
             email
           ),
-          chamadas!chamada_presencas_chamada_id_fkey (
+          chamadas (
             id,
             descricao,
             data_hora_inicio,
             data_hora_fim,
             observacoes,
-            modalidade_representantes!chamadas_modalidade_rep_id_fkey (
-              modalidades!modalidade_representantes_modalidade_id_fkey (nome),
-              filiais!modalidade_representantes_filial_id_fkey (nome)
+            modalidade_representantes (
+              modalidades (nome),
+              filiais (nome)
             )
           )
         `)
@@ -187,7 +187,7 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
         .from('inscricoes_modalidades')
         .select(`
           atleta_id,
-          atletas!inscricoes_modalidades_atleta_id_fkey (
+          atletas (
             id,
             nome_completo,
             email
