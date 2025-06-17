@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -123,15 +124,15 @@ export default function MonitorAttendancePage() {
         </CardHeader>
         <CardContent>
           <Select
-            value={selectedModalidade?.toString() || ''}
-            onValueChange={(value) => setSelectedModalidade(parseInt(value))}
+            value={selectedModalidade || ''}
+            onValueChange={(value) => setSelectedModalidade(value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione uma modalidade" />
             </SelectTrigger>
             <SelectContent>
               {modalities.map((modality) => (
-                <SelectItem key={modality.id} value={modality.id.toString()}>
+                <SelectItem key={modality.id} value={modality.id}>
                   {modality.modalidades.nome} - {modality.filiais.nome}
                 </SelectItem>
               ))}

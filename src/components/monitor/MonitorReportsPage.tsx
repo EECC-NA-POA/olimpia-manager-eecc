@@ -36,7 +36,7 @@ interface AthleteAttendanceStats {
 }
 
 export default function MonitorReportsPage() {
-  const [selectedModalidade, setSelectedModalidade] = useState<number | null>(null);
+  const [selectedModalidade, setSelectedModalidade] = useState<string | null>(null);
 
   const { data: modalities, isLoading: modalitiesLoading } = useMonitorModalities();
   const { data: sessions } = useMonitorSessions(selectedModalidade || undefined);
@@ -257,15 +257,15 @@ export default function MonitorReportsPage() {
         </CardHeader>
         <CardContent>
           <Select
-            value={selectedModalidade?.toString() || ''}
-            onValueChange={(value) => setSelectedModalidade(parseInt(value))}
+            value={selectedModalidade || ''}
+            onValueChange={(value) => setSelectedModalidade(value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione uma modalidade" />
             </SelectTrigger>
             <SelectContent>
               {modalities.map((modality) => (
-                <SelectItem key={modality.id} value={modality.id.toString()}>
+                <SelectItem key={modality.id} value={modality.id}>
                   {modality.modalidades.nome} - {modality.filiais.nome}
                 </SelectItem>
               ))}
