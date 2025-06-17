@@ -51,8 +51,6 @@ export function useTeamsDataForDelegation(
             .select(`
               id,
               atleta_id,
-              posicao,
-              raia,
               usuarios!inner(
                 nome_completo,
                 tipo_documento,
@@ -68,7 +66,11 @@ export function useTeamsDataForDelegation(
           if (athletesError) {
             console.error('Error fetching team athletes:', athletesError);
             return {
-              ...team,
+              id: team.id,
+              nome: team.nome,
+              modalidade_id: team.modalidade_id,
+              filial_id: branchId || '',
+              evento_id: team.evento_id,
               atletas: []
             };
           }
@@ -92,10 +94,10 @@ export function useTeamsDataForDelegation(
             return {
               id: athlete.id,
               atleta_id: athlete.atleta_id,
-              nome: usuario?.nome_completo || '',
+              atleta_nome: usuario?.nome_completo || '',
               documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
-              posicao: athlete.posicao,
-              raia: athlete.raia,
+              posicao: 1, // Default position
+              raia: undefined,
               filial_nome: filial?.nome || 'N/A'
             };
           });
@@ -111,9 +113,14 @@ export function useTeamsDataForDelegation(
             id: team.id,
             nome: team.nome,
             modalidade_id: team.modalidade_id,
-            modalidade_nome: modalidade?.nome || '',
-            modalidade_categoria: modalidade?.categoria || '',
-            tipo_pontuacao: modalidade?.tipo_pontuacao || 'maior_melhor',
+            filial_id: branchId || '', // Include filial_id as required by TeamData
+            evento_id: team.evento_id, // Include evento_id as required by TeamData
+            modalidade_info: {
+              id: team.modalidade_id,
+              nome: modalidade?.nome || '',
+              categoria: modalidade?.categoria || '',
+              tipo_modalidade: 'coletiva' as 'individual' | 'coletiva'
+            },
             atletas
           };
         })
