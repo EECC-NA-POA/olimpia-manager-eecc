@@ -114,12 +114,14 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
         let totalPendente = 0;
 
         registrations?.forEach(reg => {
-          // Handle usuarios correctly - it's a single object due to the foreign key relationship
+          // Handle usuarios correctly - check the actual structure
           const usuario = reg.usuarios;
-          if (usuario && Array.isArray(usuario)) {
-            // If it's an array, take the first element
-            const firstUser = usuario[0];
-            if (firstUser && ['atleta', 'dependente'].includes(firstUser.tipo_perfil)) {
+          
+          // Type guard to handle both array and single object cases
+          const usuarios = Array.isArray(usuario) ? usuario : [usuario];
+          
+          usuarios.forEach((user: any) => {
+            if (user && ['atleta', 'dependente'].includes(user.tipo_perfil)) {
               if (reg.status in statusCounts) {
                 statusCounts[reg.status as keyof typeof statusCounts]++;
               }
@@ -137,25 +139,7 @@ export const fetchBranchAnalytics = async (eventId: string | null, filterByBranc
                 });
               }
             }
-          } else if (usuario && ['atleta', 'dependente'].includes(usuario.tipo_perfil)) {
-            // If it's a single object
-            if (reg.status in statusCounts) {
-              statusCounts[reg.status as keyof typeof statusCounts]++;
-            }
-
-            // Calculate payment totals including dependents
-            if (Array.isArray(reg.pagamentos)) {
-              reg.pagamentos.forEach((pagamento: any) => {
-                if (pagamento.status === 'confirmado') {
-                  totalPago += Number(pagamento.valor) || 0;
-                } else if (pagamento.status === 'pendente') {
-                  totalPendente += Number(pagamento.valor) || 0;
-                } else if (pagamento.status === 'isento') {
-                  statusCounts.isento++;
-                }
-              });
-            }
-          }
+          });
         });
 
         console.log(`Status counts for filial ${filial.nome}:`, statusCounts);
