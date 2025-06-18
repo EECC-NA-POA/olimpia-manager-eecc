@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, ArrowLeft, Save, Users, UserCheck, UserX, Clock } from "lucide-react";
-import { useMonitorSessions } from "@/hooks/useMonitorSessions";
 import { useSessionAttendance, useAthletesForAttendance, AthleteForAttendance } from "@/hooks/useSessionAttendance";
 import { useMonitorMutations } from "@/hooks/useMonitorMutations";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { LoadingImage } from "@/components/ui/loading-image";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 interface AttendanceSessionDetailProps {
   sessionId: string;
@@ -18,21 +19,40 @@ interface AttendanceSessionDetailProps {
 
 export default function AttendanceSessionDetail({ sessionId, onBack }: AttendanceSessionDetailProps) {
   const [attendanceData, setAttendanceData] = useState<Map<string, { status: string; attendance_id?: string }>>(new Map());
-  const [modalidadeRepId, setModalidadeRepId] = useState<string | null>(null);
 
-  const { data: sessions } = useMonitorSessions(modalidadeRepId);
-  const session = sessions?.find(s => s.id === sessionId);
+  // Buscar dados da sessão diretamente
+  const { data: session, isLoading: sessionLoading } = useQuery({
+    queryKey: ['session-detail', sessionId],
+    queryFn: async () => {
+      console.log('Fetching session details for:', sessionId);
+      
+      const { data, error } = await supabase
+        .from('chamadas')
+        .select(`
+          *,
+          modalidade_representantes!modalidade_rep_id (
+            modalidades!modalidade_representantes_modalidade_id_fkey (nome),
+            filiais!modalidade_representantes_filial_id_fkey (nome)
+          )
+        `)
+        .eq('id', sessionId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching session:', error);
+        throw error;
+      }
+
+      console.log('Session data loaded:', data);
+      return data;
+    },
+    enabled: !!sessionId,
+  });
 
   const { data: existingAttendances, isLoading: attendancesLoading } = useSessionAttendance(sessionId);
-  const { data: athletes, isLoading: athletesLoading } = useAthletesForAttendance(modalidadeRepId);
+  const { data: athletes, isLoading: athletesLoading } = useAthletesForAttendance(session?.modalidade_rep_id || null);
   
   const { saveAttendances } = useMonitorMutations();
-
-  useEffect(() => {
-    if (session) {
-      setModalidadeRepId(session.modalidade_rep_id);
-    }
-  }, [session]);
 
   useEffect(() => {
     if (existingAttendances && athletes) {
@@ -88,10 +108,32 @@ export default function AttendanceSessionDetail({ sessionId, onBack }: Attendanc
     await saveAttendances.mutateAsync(attendancesToSave);
   };
 
-  if (attendancesLoading || athletesLoading || !session) {
+  if (sessionLoading || attendancesLoading || athletesLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <LoadingImage text="Carregando chamada..." />
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="space-y-6 p-4">
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={onBack} size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+          <h1 className="text-xl font-bold text-olimpics-text">Sessão não encontrada</h1>
+        </div>
+        
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-gray-500">
+              A sessão solicitada não foi encontrada.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
