@@ -29,7 +29,7 @@ export const useMonitorModalities = () => {
     queryKey: ['monitor-modalities', user?.id, currentEventId],
     queryFn: async () => {
       if (!user?.id || !currentEventId) {
-        console.log('No user ID or event ID available');
+        console.log('No user ID or event ID available:', { userId: user?.id, eventId: currentEventId });
         return [];
       }
 
@@ -55,19 +55,23 @@ export const useMonitorModalities = () => {
             estado
           )
         `)
-        .eq('atleta_id', user.id);
+        .eq('atleta_id', user.id)
+        .eq('evento_id', currentEventId);
 
       if (error) {
         console.error('Error fetching monitor modalities:', error);
         throw error;
       }
 
-      console.log('Monitor modalities data:', data);
+      console.log('Raw monitor modalities data:', data);
       
-      // Filter by current event and transform the data
-      const filteredData = data?.filter(item => item.evento_id === currentEventId) || [];
+      if (!data || data.length === 0) {
+        console.log('No modalities found for this user and event');
+        return [];
+      }
       
-      const transformedData = filteredData.map(item => ({
+      // Transform the data to match our interface
+      const transformedData = data.map(item => ({
         ...item,
         modalidades: Array.isArray(item.modalidades) ? item.modalidades[0] : item.modalidades,
         filiais: Array.isArray(item.filiais) ? item.filiais[0] : item.filiais
