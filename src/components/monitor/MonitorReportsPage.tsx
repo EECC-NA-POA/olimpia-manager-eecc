@@ -3,316 +3,398 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Download, Calendar, Users, UserCheck, UserX, Clock, Printer } from "lucide-react";
-import { useUserModalityReps } from "@/hooks/useUserModalityReps";
+import { Loader2, BarChart3, Download, FileText, TrendingUp } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useMonitorModalities } from "@/hooks/useMonitorModalities";
 import { useMonitorSessions } from "@/hooks/useMonitorSessions";
-import { useSessionAttendance } from "@/hooks/useSessionAttendance";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+interface AttendanceReport {
+  session_date: string;
+  session_description: string;
+  total_athletes: number;
+  present_count: number;
+  late_count: number;
+  absent_count: number;
+  attendance_rate: number;
+}
+
+interface AthleteAttendanceStats {
+  athlete_id: string;
+  athlete_name: string;
+  athlete_identifier: string;
+  total_sessions: number;
+  present_sessions: number;
+  late_sessions: number;
+  absent_sessions: number;
+  attendance_rate: number;
+}
+
 export default function MonitorReportsPage() {
-  const [selectedModalityRep, setSelectedModalityRep] = useState<string>("");
-  const [selectedSession, setSelectedSession] = useState<string>("");
-  
-  const { data: modalityReps, isLoading: loadingReps } = useUserModalityReps();
-  const { data: sessions, isLoading: loadingSessions } = useMonitorSessions(selectedModalityRep);
-  const { data: attendances, isLoading: loadingAttendances } = useSessionAttendance(selectedSession || null);
+  const [selectedModalidade, setSelectedModalidade] = useState<string | null>(null);
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const { data: modalities, isLoading: modalitiesLoading } = useMonitorModalities();
+  const { data: sessions } = useMonitorSessions(selectedModalidade || undefined);
 
-  const generateCSV = () => {
-    if (!attendances || attendances.length === 0) return;
+  // Buscar relatório de presenças por sessão
+  const { data: sessionReports, isLoading: reportsLoading } = useQuery({
+    queryKey: ['attendance-reports', selectedModalidade],
+    queryFn: async () => {
+      if (!selectedModalidade) return [];
 
-    const headers = ['Nome', 'Email', 'Número Identificador', 'Status', 'Data da Chamada'];
-    const csvData = attendances.map(attendance => [
-      attendance.atleta.nome_completo,
-      attendance.atleta.email,
-      attendance.atleta.numero_identificador || 'N/A',
-      attendance.status,
-      attendance.chamada?.data_hora_inicio ? format(new Date(attendance.chamada.data_hora_inicio), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : 'N/A'
-    ]);
+      const { data, error } = await supabase
+        .from('chamadas')
+        .select(`
+          id,
+          data_hora_inicio,
+          descricao,
+          chamada_presencas (
+            status,
+            atleta_id
+          )
+        `)
+        .eq('modalidade_rep_id', selectedModalidade)
+        .order('data_hora_inicio', { ascending: true });
 
-    const csvContent = [headers, ...csvData]
-      .map(row => row.map(field => `"${field}"`).join(','))
-      .join('\n');
+      if (error) throw error;
+
+      // Buscar total de atletas inscritos
+      const { data: modalidadeData } = await supabase
+        .from('modalidade_representantes')
+        .select('modalidade_id, filial_id, evento_id')
+        .eq('id', selectedModalidade)
+        .single();
+
+      if (!modalidadeData) return [];
+
+      const { data: athletesData } = await supabase
+        .from('inscricoes_modalidades')
+        .select('atleta_id')
+        .eq('modalidade_id', modalidadeData.modalidade_id)
+        .eq('evento_id', modalidadeData.evento_id)
+        .eq('status', 'confirmado');
+
+      const totalAthletes = athletesData?.length || 0;
+
+      return data?.map(session => {
+        const presences = session.chamada_presencas || [];
+        const presentCount = presences.filter(p => p.status === 'presente').length;
+        const lateCount = presences.filter(p => p.status === 'atrasado').length;
+        const absentCount = Math.max(0, totalAthletes - presentCount - lateCount);
+        
+        return {
+          session_date: format(new Date(session.data_hora_inicio), 'dd/MM', { locale: ptBR }),
+          session_description: session.descricao,
+          total_athletes: totalAthletes,
+          present_count: presentCount,
+          late_count: lateCount,
+          absent_count: absentCount,
+          attendance_rate: totalAthletes > 0 ? Math.round((presentCount / totalAthletes) * 100) : 0
+        } as AttendanceReport;
+      }) || [];
+    },
+    enabled: !!selectedModalidade,
+  });
+
+  // Buscar estatísticas por atleta
+  const { data: athleteStats, isLoading: statsLoading } = useQuery({
+    queryKey: ['athlete-stats', selectedModalidade],
+    queryFn: async () => {
+      if (!selectedModalidade || !sessions || sessions.length === 0) return [];
+
+      // Buscar dados dos atletas e suas presenças
+      const { data: modalidadeData } = await supabase
+        .from('modalidade_representantes')
+        .select('modalidade_id, filial_id, evento_id')
+        .eq('id', selectedModalidade)
+        .single();
+
+      if (!modalidadeData) return [];
+
+      const { data: athletesData } = await supabase
+        .from('inscricoes_modalidades')
+        .select(`
+          atleta_id,
+          usuarios!inner (
+            nome_completo,
+            numero_identificador
+          )
+        `)
+        .eq('modalidade_id', modalidadeData.modalidade_id)
+        .eq('evento_id', modalidadeData.evento_id)
+        .eq('status', 'confirmado');
+
+      if (!athletesData) return [];
+
+      const sessionIds = sessions.map(s => s.id);
+      const { data: attendancesData } = await supabase
+        .from('chamada_presencas')
+        .select('chamada_id, atleta_id, status')
+        .in('chamada_id', sessionIds);
+
+      const attendancesByAthlete = new Map();
+      athletesData.forEach(athlete => {
+        const userData = Array.isArray(athlete.usuarios) ? athlete.usuarios[0] : athlete.usuarios;
+        if (userData) {
+          attendancesByAthlete.set(athlete.atleta_id, {
+            athlete_name: userData.nome_completo,
+            athlete_identifier: userData.numero_identificador || 'N/A',
+            total_sessions: sessions.length,
+            present_sessions: 0,
+            late_sessions: 0,
+            absent_sessions: 0
+          });
+        }
+      });
+
+      attendancesData?.forEach(attendance => {
+        const stats = attendancesByAthlete.get(attendance.atleta_id);
+        if (stats) {
+          switch (attendance.status) {
+            case 'presente': stats.present_sessions++; break;
+            case 'atrasado': stats.late_sessions++; break;
+            default: stats.absent_sessions++; break;
+          }
+        }
+      });
+
+      // Calcular ausências para sessões não registradas
+      attendancesByAthlete.forEach((stats, athleteId) => {
+        const recordedSessions = stats.present_sessions + stats.late_sessions + stats.absent_sessions;
+        stats.absent_sessions += Math.max(0, sessions.length - recordedSessions);
+        stats.attendance_rate = stats.total_sessions > 0 
+          ? Math.round((stats.present_sessions / stats.total_sessions) * 100) 
+          : 0;
+      });
+
+      return Array.from(attendancesByAthlete.entries()).map(([athleteId, stats]) => ({
+        athlete_id: athleteId,
+        ...stats
+      })) as AthleteAttendanceStats[];
+    },
+    enabled: !!selectedModalidade && !!sessions,
+  });
+
+  const handleExportCSV = () => {
+    if (!athleteStats) return;
+
+    const csvContent = [
+      ['Nome', 'ID', 'Total Sessões', 'Presenças', 'Atrasos', 'Faltas', 'Taxa de Presença (%)'].join(','),
+      ...athleteStats.map(stat => [
+        stat.athlete_name,
+        stat.athlete_identifier,
+        stat.total_sessions,
+        stat.present_sessions,
+        stat.late_sessions,
+        stat.absent_sessions,
+        stat.attendance_rate
+      ].join(','))
+    ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `relatorio_presenca_${selectedSession}.csv`;
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `relatorio_presencas_${selectedModalidade}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   };
 
-  const selectedSessionData = sessions?.find(s => s.id === selectedSession);
-  const presente = attendances?.filter(a => a.status === 'presente').length || 0;
-  const ausente = attendances?.filter(a => a.status === 'ausente').length || 0;
-  const atrasado = attendances?.filter(a => a.status === 'atrasado').length || 0;
-  const total = attendances?.length || 0;
+  if (modalitiesLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-olimpics-green-primary" />
+      </div>
+    );
+  }
+
+  if (!modalities || modalities.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <BarChart3 className="h-8 w-8 text-olimpics-green-primary" />
+          <h1 className="text-3xl font-bold text-olimpics-text">Relatórios de Presença</h1>
+        </div>
+        
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-gray-500">
+              Você não está cadastrado como monitor de nenhuma modalidade.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <style>
-        {`
-          @media print {
-            body * {
-              visibility: hidden;
-            }
-            .print-area,
-            .print-area * {
-              visibility: visible;
-            }
-            .print-area {
-              position: absolute;
-              left: 0;
-              top: 0;
-              width: 100%;
-            }
-            .no-print {
-              display: none !important;
-            }
-            @page {
-              margin: 2cm;
-            }
-          }
-        `}
-      </style>
-
-      <div className="flex items-center gap-3 no-print">
-        <FileText className="h-8 w-8 text-olimpics-green-primary" />
-        <h1 className="text-3xl font-bold text-olimpics-text">Relatórios de Presença</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <BarChart3 className="h-8 w-8 text-olimpics-green-primary" />
+          <h1 className="text-3xl font-bold text-olimpics-text">Relatórios de Presença</h1>
+        </div>
+        
+        {selectedModalidade && athleteStats && (
+          <Button onClick={handleExportCSV} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Exportar CSV
+          </Button>
+        )}
       </div>
 
-      {/* Filtros */}
-      <Card className="no-print">
+      {/* Seletor de Modalidade */}
+      <Card>
         <CardHeader>
-          <CardTitle>Filtros do Relatório</CardTitle>
+          <CardTitle>Selecionar Modalidade</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Modalidade</label>
-              <Select 
-                value={selectedModalityRep} 
-                onValueChange={(value) => {
-                  setSelectedModalityRep(value);
-                  setSelectedSession(""); // Reset session when modality changes
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma modalidade" />
-                </SelectTrigger>
-                <SelectContent>
-                  {modalityReps?.map((rep) => (
-                    <SelectItem key={rep.id} value={rep.id}>
-                      {rep.modalidades.nome} - {rep.filiais.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Chamada</label>
-              <Select 
-                value={selectedSession} 
-                onValueChange={setSelectedSession}
-                disabled={!selectedModalityRep || loadingSessions}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma chamada" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sessions?.map((session) => (
-                    <SelectItem key={session.id} value={session.id}>
-                      {session.descricao} - {format(new Date(session.data_hora_inicio), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {selectedSession && (
-            <div className="flex gap-2 pt-4 border-t">
-              <Button
-                onClick={handlePrint}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Printer className="h-4 w-4" />
-                Imprimir
-              </Button>
-              <Button
-                onClick={generateCSV}
-                variant="outline"
-                className="flex items-center gap-2"
-                disabled={!attendances || attendances.length === 0}
-              >
-                <Download className="h-4 w-4" />
-                Exportar CSV
-              </Button>
-            </div>
-          )}
+        <CardContent>
+          <Select
+            value={selectedModalidade || ''}
+            onValueChange={(value) => setSelectedModalidade(value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione uma modalidade" />
+            </SelectTrigger>
+            <SelectContent>
+              {modalities.map((modality) => (
+                <SelectItem key={modality.id} value={modality.id}>
+                  {modality.modalidades.nome} - {modality.filiais.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 
-      {/* Relatório */}
-      {selectedSession && selectedSessionData && (
-        <div className="print-area space-y-6">
-          {/* Cabeçalho do Relatório */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">
-                Relatório de Presença - {selectedSessionData.descricao}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-gray-500" />
-                  <span>{format(new Date(selectedSessionData.data_hora_inicio), 'dd/MM/yyyy', { locale: ptBR })}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-gray-500" />
-                  <span>
-                    {format(new Date(selectedSessionData.data_hora_inicio), 'HH:mm', { locale: ptBR })}
-                    {selectedSessionData.data_hora_fim && ` - ${format(new Date(selectedSessionData.data_hora_fim), 'HH:mm', { locale: ptBR })}`}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-gray-500" />
-                  <span>{selectedSessionData.modalidade_representantes?.filiais?.nome}</span>
-                </div>
-              </div>
-              
-              <Badge variant="outline" className="text-sm">
-                {selectedSessionData.modalidade_representantes?.modalidades?.nome}
-              </Badge>
-            </CardContent>
-          </Card>
-
-          {/* Resumo Estatístico */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-olimpics-green-primary">{total}</div>
-                <div className="text-sm text-gray-500">Total</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-green-600">{presente}</div>
-                <div className="text-sm text-gray-500">Presentes</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-yellow-600">{atrasado}</div>
-                <div className="text-sm text-gray-500">Atrasados</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-red-600">{ausente}</div>
-                <div className="text-sm text-gray-500">Ausentes</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Lista Detalhada */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Lista de Presenças</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loadingAttendances ? (
-                <div className="text-center py-8">
-                  <p>Carregando dados de presença...</p>
-                </div>
-              ) : attendances && attendances.length > 0 ? (
-                <div className="space-y-3">
-                  {attendances.map((attendance, index) => (
-                    <div key={attendance.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm text-gray-500 w-8">{index + 1}</span>
-                        <div className="flex-1">
-                          <div className="font-medium">{attendance.atleta.nome_completo}</div>
-                          <div className="text-sm text-gray-500">{attendance.atleta.email}</div>
-                          {attendance.atleta.numero_identificador && (
-                            <Badge variant="outline" className="text-xs mt-1">
-                              ID: {attendance.atleta.numero_identificador}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        {attendance.status === 'presente' && (
-                          <Badge className="bg-green-100 text-green-800 border-green-200">
-                            <UserCheck className="h-3 w-3 mr-1" />
-                            Presente
-                          </Badge>
-                        )}
-                        {attendance.status === 'atrasado' && (
-                          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-                            <Clock className="h-3 w-3 mr-1" />
-                            Atrasado
-                          </Badge>
-                        )}
-                        {attendance.status === 'ausente' && (
-                          <Badge className="bg-red-100 text-red-800 border-red-200">
-                            <UserX className="h-3 w-3 mr-1" />
-                            Ausente
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  Nenhuma presença registrada para esta chamada
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Observações da Chamada */}
-          {(selectedSessionData as any).observacoes && (
+      {selectedModalidade && (
+        <>
+          {/* Gráfico de Evolução das Presenças */}
+          {sessionReports && sessionReports.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Observações</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Evolução da Taxa de Presença
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-700">{(selectedSessionData as any).observacoes}</p>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={sessionReports}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="session_date" />
+                    <YAxis domain={[0, 100]} />
+                    <Tooltip 
+                      formatter={(value: any) => [`${value}%`, 'Taxa de Presença']}
+                      labelFormatter={(label) => `Data: ${label}`}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="attendance_rate" 
+                      stroke="#009B40" 
+                      strokeWidth={2}
+                      dot={{ fill: '#009B40', strokeWidth: 2, r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
           )}
-        </div>
-      )}
 
-      {/* Estado vazio */}
-      {!selectedModalityRep && (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-700 mb-2">Selecione uma modalidade</h3>
-            <p className="text-gray-500">Escolha uma modalidade acima para visualizar os relatórios de presença</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {selectedModalityRep && !selectedSession && (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-700 mb-2">Selecione uma chamada</h3>
-            <p className="text-gray-500">Escolha uma chamada específica para gerar o relatório</p>
-          </CardContent>
-        </Card>
+          {/* Top Atletas por Presença */}
+          {statsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-olimpics-green-primary" />
+            </div>
+          ) : athleteStats && athleteStats.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Estatísticas por Atleta
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Atleta</TableHead>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Presenças</TableHead>
+                      <TableHead>Atrasos</TableHead>
+                      <TableHead>Faltas</TableHead>
+                      <TableHead>Taxa de Presença</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {athleteStats
+                      .sort((a, b) => b.attendance_rate - a.attendance_rate)
+                      .map((stat) => (
+                        <TableRow key={stat.athlete_id}>
+                          <TableCell className="font-medium">
+                            {stat.athlete_name}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {stat.athlete_identifier}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className="bg-green-100 text-green-800">
+                              {stat.present_sessions}/{stat.total_sessions}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className="bg-yellow-100 text-yellow-800">
+                              {stat.late_sessions}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className="bg-red-100 text-red-800">
+                              {stat.absent_sessions}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden"
+                              >
+                                <div 
+                                  className="h-full bg-olimpics-green-primary transition-all"
+                                  style={{ width: `${stat.attendance_rate}%` }}
+                                />
+                              </div>
+                              <span className="text-sm font-medium">
+                                {stat.attendance_rate}%
+                              </span>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <p className="text-gray-500">
+                  Nenhum dado de presença disponível ainda.
+                </p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Registre algumas chamadas de presença para ver os relatórios.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
     </div>
   );

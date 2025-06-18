@@ -15,21 +15,6 @@ export interface SessionAttendance {
     email: string;
     numero_identificador: string | null;
   };
-  chamada?: {
-    id: string;
-    descricao: string;
-    data_hora_inicio: string;
-    data_hora_fim: string | null;
-    observacoes: string | null;
-    modalidade_representantes: {
-      modalidades: {
-        nome: string;
-      };
-      filiais: {
-        nome: string;
-      };
-    };
-  };
 }
 
 export interface AthleteForAttendance {
@@ -40,48 +25,6 @@ export interface AthleteForAttendance {
   status?: 'presente' | 'ausente' | 'atrasado';
   attendance_id?: string;
 }
-
-// Helper function to safely extract modalidade name
-const extractModalidadeName = (modalidadeRepresentantes: any): string => {
-  if (!modalidadeRepresentantes) return '';
-  
-  if (Array.isArray(modalidadeRepresentantes)) {
-    const first = modalidadeRepresentantes[0];
-    if (!first) return '';
-    
-    if (Array.isArray(first.modalidades)) {
-      return first.modalidades[0]?.nome || '';
-    }
-    return first.modalidades?.nome || '';
-  }
-  
-  if (Array.isArray(modalidadeRepresentantes.modalidades)) {
-    return modalidadeRepresentantes.modalidades[0]?.nome || '';
-  }
-  
-  return modalidadeRepresentantes.modalidades?.nome || '';
-};
-
-// Helper function to safely extract filial name
-const extractFilialName = (modalidadeRepresentantes: any): string => {
-  if (!modalidadeRepresentantes) return '';
-  
-  if (Array.isArray(modalidadeRepresentantes)) {
-    const first = modalidadeRepresentantes[0];
-    if (!first) return '';
-    
-    if (Array.isArray(first.filiais)) {
-      return first.filiais[0]?.nome || '';
-    }
-    return first.filiais?.nome || '';
-  }
-  
-  if (Array.isArray(modalidadeRepresentantes.filiais)) {
-    return modalidadeRepresentantes.filiais[0]?.nome || '';
-  }
-  
-  return modalidadeRepresentantes.filiais?.nome || '';
-};
 
 export const useSessionAttendance = (chamadaId: string | null) => {
   const { currentEventId } = useAuth();
@@ -102,20 +45,9 @@ export const useSessionAttendance = (chamadaId: string | null) => {
           status,
           registrado_em,
           registrado_por,
-          usuarios!chamada_presencas_atleta_id_fkey (
+          atleta:usuarios!chamada_presencas_atleta_id_fkey (
             nome_completo,
             email
-          ),
-          chamadas!inner (
-            id,
-            descricao,
-            data_hora_inicio,
-            data_hora_fim,
-            observacoes,
-            modalidade_representantes!inner (
-              modalidades!inner (nome),
-              filiais!inner (nome)
-            )
           )
         `)
         .eq('chamada_id', chamadaId);
@@ -137,72 +69,30 @@ export const useSessionAttendance = (chamadaId: string | null) => {
           .eq('evento_id', currentEventId);
 
         // Transform the data to match our interface
-        const transformedData = data.map(item => {
+        const transformedData = data?.map(item => {
+          const atleta = Array.isArray(item.atleta) ? item.atleta[0] : item.atleta;
           const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
-          // Safely extract athlete data from usuarios table
-          const atletaData = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
-          // Safely extract chamada data
-          const chamadaData = Array.isArray(item.chamadas) ? item.chamadas[0] : item.chamadas;
           
           return {
             ...item,
             atleta: {
-              nome_completo: atletaData?.nome_completo || '',
-              email: atletaData?.email || '',
+              ...atleta,
               numero_identificador: pagamento?.numero_identificador || null
-            },
-            chamada: chamadaData ? {
-              id: chamadaData.id,
-              descricao: chamadaData.descricao,
-              data_hora_inicio: chamadaData.data_hora_inicio,
-              data_hora_fim: chamadaData.data_hora_fim,
-              observacoes: chamadaData.observacoes,
-              modalidade_representantes: {
-                modalidades: {
-                  nome: extractModalidadeName(chamadaData.modalidade_representantes)
-                },
-                filiais: {
-                  nome: extractFilialName(chamadaData.modalidade_representantes)
-                }
-              }
-            } : undefined
+            }
           };
-        });
+        }) || [];
 
         return transformedData as SessionAttendance[];
       }
 
       // Se não há dados ou currentEventId, retornar sem numero_identificador
-      const transformedData = data?.map(item => {
-        // Safely extract athlete data from usuarios table
-        const atletaData = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
-        // Safely extract chamada data
-        const chamadaData = Array.isArray(item.chamadas) ? item.chamadas[0] : item.chamadas;
-        
-        return {
-          ...item,
-          atleta: {
-            nome_completo: atletaData?.nome_completo || '',
-            email: atletaData?.email || '',
-            numero_identificador: null
-          },
-          chamada: chamadaData ? {
-            id: chamadaData.id,
-            descricao: chamadaData.descricao,
-            data_hora_inicio: chamadaData.data_hora_inicio,
-            data_hora_fim: chamadaData.data_hora_fim,
-            observacoes: chamadaData.observacoes,
-            modalidade_representantes: {
-              modalidades: {
-                nome: extractModalidadeName(chamadaData.modalidade_representantes)
-              },
-              filiais: {
-                nome: extractFilialName(chamadaData.modalidade_representantes)
-              }
-            }
-          } : undefined
-        };
-      }) || [];
+      const transformedData = data?.map(item => ({
+        ...item,
+        atleta: {
+          ...(Array.isArray(item.atleta) ? item.atleta[0] : item.atleta),
+          numero_identificador: null
+        }
+      })) || [];
 
       return transformedData as SessionAttendance[];
     },
@@ -240,7 +130,7 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
         .from('inscricoes_modalidades')
         .select(`
           atleta_id,
-          usuarios!inner (
+          usuarios!inscricoes_modalidades_atleta_id_fkey (
             id,
             nome_completo,
             email
@@ -269,14 +159,13 @@ export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
         .eq('evento_id', currentEventId);
 
       const athletes = inscricoesData.map(item => {
+        const usuario = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
         const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
-        // Safely extract athlete data from usuarios table
-        const atletaData = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
         
         return {
-          id: atletaData?.id || '',
-          nome_completo: atletaData?.nome_completo || '',
-          email: atletaData?.email || '',
+          id: usuario.id,
+          nome_completo: usuario.nome_completo,
+          email: usuario.email,
           numero_identificador: pagamento?.numero_identificador || null,
         };
       });

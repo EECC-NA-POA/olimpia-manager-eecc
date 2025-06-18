@@ -95,7 +95,7 @@ export default function MonitorAttendancePage() {
       {/* Seleção de Modalidade */}
       <Card>
         <CardHeader>
-          <CardTitle>Selecione uma Modalidade</CardTitle>
+          <CardTitle>Suas Modalidades como Monitor</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

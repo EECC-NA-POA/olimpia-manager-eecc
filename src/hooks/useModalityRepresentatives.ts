@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
@@ -6,63 +7,6 @@ import {
   setModalityRepresentative,
   removeModalityRepresentative
 } from '@/lib/api/representatives';
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
-
-export interface ModalityRepresentative {
-  id: string;
-  filial_id: string;
-  modalidade_id: number;
-  atleta_id: string;
-  modalidades: {
-    nome: string;
-    categoria: string;
-    tipo_modalidade: string;
-  };
-  filiais: {
-    nome: string;
-  };
-}
-
-export const useModalityRepresentatives = () => {
-  const { user, currentEventId } = useAuth();
-
-  return useQuery({
-    queryKey: ['modality-representatives', user?.id, currentEventId],
-    queryFn: async () => {
-      console.log('Fetching modality representatives for user:', user?.id);
-      
-      if (!user?.id || !currentEventId) {
-        console.log('No user or event ID, returning empty array');
-        return [];
-      }
-
-      const { data: representatives, error } = await supabase
-        .from('modalidade_representantes')
-        .select(`
-          *,
-          modalidades!modalidade_representantes_modalidade_id_fkey (
-            nome,
-            categoria,
-            tipo_modalidade
-          ),
-          filiais!modalidade_representantes_filial_id_fkey (
-            nome
-          )
-        `)
-        .eq('atleta_id', user.id);
-
-      if (error) {
-        console.error('Error fetching modality representatives:', error);
-        throw error;
-      }
-
-      console.log('Modality representatives fetched:', representatives);
-      return representatives as ModalityRepresentative[];
-    },
-    enabled: !!user?.id && !!currentEventId,
-  });
-};
 
 export const useModalitiesWithRepresentatives = (filialId: string | undefined, eventId: string | null) => {
   console.log('useModalitiesWithRepresentatives called with:', { filialId, eventId });

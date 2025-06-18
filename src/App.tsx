@@ -1,65 +1,122 @@
 
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider } from "@/components/providers/AuthProvider";
+import { SessionTimeoutProvider } from "@/components/providers/SessionTimeoutProvider";
 import { GlobalHeader } from "@/components/GlobalHeader";
-import Footer from "@/components/Footer";
-import Index from "@/pages/Index";
-import OlimpiadasNacionais from "@/pages/OlimpiadasNacionais";
-import Login from "@/pages/Login";
-import AthleteProfile from "@/pages/AthleteProfile";
-import Dashboard from "@/pages/Dashboard";
-import JudgeDashboard from "@/pages/JudgeDashboard";
-import MonitorPage from "@/pages/MonitorPage";
-import DelegationPage from "@/pages/DelegationPage";
-import EventsLandingPage from "@/pages/EventsLandingPage";
-import EventSelectionPage from "@/pages/EventSelectionPage";
-import OrganizerPage from "@/pages/OrganizerPage";
-import EventManagement from "@/pages/EventManagement";
-import SessionDetailsPage from "@/components/monitor/SessionDetailsPage";
+import { Footer } from "@/components/Footer";
 import { MainNavigation } from "@/components/MainNavigation";
-import { useAuth } from "@/contexts/AuthContext";
+import { usePrivacyPolicyCheck } from "@/hooks/usePrivacyPolicyCheck";
+import { PrivacyPolicyAcceptanceModal } from "@/components/auth/PrivacyPolicyAcceptanceModal";
+import { FloatingNotificationIcon } from "@/components/notifications/FloatingNotificationIcon";
 
-const queryClient = new QueryClient();
+import Index from "./pages/Index";
+import OlimpiadasNacionais from "./pages/OlimpiadasNacionais";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import EventSelectionPage from "./pages/EventSelectionPage";
+import EventDetailsPage from "./pages/EventDetailsPage";
+import PublicEventPage from "./pages/PublicEventPage";
+import EventsLandingPage from "./pages/EventsLandingPage";
+import JudgeDashboard from "./pages/JudgeDashboard";
+import Administration from "./pages/Administration";
+import EventManagement from "./pages/EventManagement";
+import EventRegulations from "./pages/EventRegulations";
+import Cronograma from "./pages/Cronograma";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
+import RejectedAccess from "./pages/RejectedAccess";
+import AthleteProfile from "./pages/AthleteProfile";
+import Scores from "./pages/Scores";
+import OrganizerDashboard from "./components/OrganizerDashboard";
+import DelegationDashboard from "./components/DelegationDashboard";
+import AthleteRegistrations from "./components/AthleteRegistrations";
+
+// Import Filosofo Monitor component
+import MonitorDashboard from "./components/monitor/MonitorDashboard";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error: any) => {
+        // Não tentar novamente em erros de autenticação
+        if (error?.message?.includes('JWT') || 
+            error?.message?.includes('refresh_token_not_found') || 
+            error?.message?.includes('token') ||
+            error?.message?.includes('invalid session')) {
+          return false;
+        }
+        return failureCount < 3;
+      },
+      staleTime: 5 * 60 * 1000, // 5 minutos
+    },
+  },
+});
 
 function AppContent() {
-  const { user, currentEventId } = useAuth();
+  const { showModal, handleAccept, handleReject } = usePrivacyPolicyCheck();
 
   return (
     <div className="min-h-screen flex flex-col">
       <GlobalHeader />
-      {user && currentEventId ? (
-        <MainNavigation>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/olimpiadas-nacionais" element={<OlimpiadasNacionais />} />
-            <Route path="/athlete" element={<AthleteProfile />} />
-            <Route path="/athlete-profile" element={<AthleteProfile />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/judge" element={<JudgeDashboard />} />
-            <Route path="/monitor" element={<MonitorPage />} />
-            <Route path="/monitor/session/:sessionId" element={<SessionDetailsPage />} />
-            <Route path="/delegation" element={<DelegationPage />} />
-            <Route path="/events" element={<EventsLandingPage />} />
-            <Route path="/event-selection" element={<EventSelectionPage />} />
-            <Route path="/organizer/events" element={<OrganizerPage />} />
-            <Route path="/organizer/events/:eventId" element={<EventManagement />} />
-          </Routes>
-        </MainNavigation>
-      ) : (
-        <main className="flex-1">
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/olimpiadas-nacionais" element={<OlimpiadasNacionais />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/events" element={<EventsLandingPage />} />
-            <Route path="/event-selection" element={<EventSelectionPage />} />
-          </Routes>
-        </main>
-      )}
+      <main className="flex-1">
+        <Routes>
+          {/* Public routes without sidebar */}
+          <Route path="/" element={<Index />} />
+          <Route path="/olimpiadas-nacionais" element={<OlimpiadasNacionais />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/events" element={<EventsLandingPage />} />
+          <Route path="/events/:eventId" element={<EventDetailsPage />} />
+          <Route path="/event/:slug" element={<PublicEventPage />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/esqueci-senha" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/redefinir-senha" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/verificar-email" element={<VerifyEmail />} />
+          <Route path="/acesso-negado" element={<RejectedAccess />} />
+          
+          {/* Event selection without sidebar */}
+          <Route path="/event-selection" element={<EventSelectionPage />} />
+          
+          {/* Protected routes with sidebar */}
+          <Route path="/*" element={
+            <MainNavigation>
+              <Routes>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/athlete-profile" element={<AthleteProfile />} />
+                <Route path="/judge-dashboard" element={<JudgeDashboard />} />
+                <Route path="/administration" element={<Administration />} />
+                <Route path="/event-management" element={<EventManagement />} />
+                <Route path="/regulamento" element={<EventRegulations />} />
+                <Route path="/cronograma" element={<Cronograma />} />
+                <Route path="/scores" element={<Scores />} />
+                <Route path="/minhas-inscricoes" element={<AthleteRegistrations />} />
+                <Route path="/organizador" element={<OrganizerDashboard />} />
+                <Route path="/delegacao" element={<DelegationDashboard />} />
+                
+                {/* Filosofo Monitor consolidated route */}
+                <Route path="/monitor" element={<MonitorDashboard />} />
+              </Routes>
+            </MainNavigation>
+          } />
+        </Routes>
+      </main>
       <Footer />
+      
+      {/* Floating notification icon - only shows when there are unread notifications */}
+      <FloatingNotificationIcon />
+      
+      {showModal && (
+        <PrivacyPolicyAcceptanceModal
+          onAccept={handleAccept}
+          onCancel={handleReject}
+        />
+      )}
     </div>
   );
 }
@@ -69,9 +126,12 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
+        <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <AppContent />
+            <SessionTimeoutProvider>
+              <AppContent />
+            </SessionTimeoutProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

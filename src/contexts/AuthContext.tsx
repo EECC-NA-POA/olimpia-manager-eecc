@@ -1,5 +1,5 @@
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext } from 'react';
 import { AuthContextType } from '@/types/auth';
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -11,6 +11,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
-// Export AuthProvider from the providers directory
-export { AuthProvider } from '@/components/providers/AuthProvider';

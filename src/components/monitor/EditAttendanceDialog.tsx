@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Save, Users, AlertTriangle, UserPlus } from "lucide-react";
+import { Loader2, Save, Users, AlertTriangle } from "lucide-react";
+import { useModalityAthletes } from "@/hooks/useModalityAthletes";
 import { useMonitorMutations } from "@/hooks/useMonitorMutations";
 import { useSessionAttendance, useAthletesForAttendance } from "@/hooks/useSessionAttendance";
 import { MonitorSession } from "@/hooks/useMonitorSessions";
@@ -58,15 +59,15 @@ export default function EditAttendanceDialog({
   }, [session, open]);
 
   useEffect(() => {
-    if (athletes && open) {
+    if (athletes && existingAttendances && open) {
       // Criar mapa das presenças existentes
       const existingAttendanceMap = new Map();
-      existingAttendances?.forEach(attendance => {
+      existingAttendances.forEach(attendance => {
         existingAttendanceMap.set(attendance.atleta_id, attendance.status);
       });
 
-      // Incluir TODOS os atletas inscritos na modalidade, não apenas os que já têm presença registrada
-      const allAthletesAttendance = athletes.map(athlete => ({
+      // Inicializar todos os atletas com status baseado nas presenças existentes ou 'presente' como padrão
+      const initialAttendance = athletes.map(athlete => ({
         id: athlete.id,
         nome_completo: athlete.nome_completo,
         email: athlete.email,
@@ -74,7 +75,7 @@ export default function EditAttendanceDialog({
         status: existingAttendanceMap.get(athlete.id) || 'presente' as const
       }));
       
-      setAthletesAttendance(allAthletesAttendance);
+      setAthletesAttendance(initialAttendance);
     }
   }, [athletes, existingAttendances, open]);
 
@@ -99,8 +100,8 @@ export default function EditAttendanceDialog({
         }
       });
 
-      // Salvar presenças atualizadas para TODOS os atletas
-      if (athletesAttendance.length > 0) {
+      // Salvar presenças atualizadas
+      if (athletes && athletes.length > 0) {
         const attendances = athletesAttendance.map(athlete => ({
           chamada_id: session.id,
           atleta_id: athlete.id,
@@ -130,11 +131,6 @@ export default function EditAttendanceDialog({
   }
 
   const canUpdateSession = sessionForm.data_hora_inicio && sessionForm.descricao;
-  
-  // Atletas que se inscreveram após a criação da chamada
-  const newAthletes = athletesAttendance.filter(athlete => 
-    !existingAttendances?.some(existing => existing.atleta_id === athlete.id)
-  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -204,18 +200,6 @@ export default function EditAttendanceDialog({
                 <strong>Observações registradas:</strong> {sessionForm.observacoes}
                 <br />
                 <span className="text-sm">Lembre-se de atualizar a chamada quando estes atletas realizarem o cadastro no sistema.</span>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Informação sobre novos atletas */}
-          {newAthletes.length > 0 && (
-            <Alert className="border-blue-200 bg-blue-50">
-              <UserPlus className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800">
-                <strong>{newAthletes.length} novo(s) atleta(s) encontrado(s)!</strong>
-                <br />
-                <span className="text-sm">Atletas que se inscreveram após a criação desta chamada serão automaticamente incluídos.</span>
               </AlertDescription>
             </Alert>
           )}

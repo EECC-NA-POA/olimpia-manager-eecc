@@ -1,14 +1,15 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, Clock, Users, Edit, AlertTriangle } from "lucide-react";
-import { useSessionAttendance } from "@/hooks/useSessionAttendance";
+import { Loader2, ArrowLeft, Save, Users, UserCheck, UserX, Clock } from "lucide-react";
 import { useMonitorSessions } from "@/hooks/useMonitorSessions";
-import { LoadingImage } from "@/components/ui/loading-image";
+import { useSessionAttendance, useAthletesForAttendance, AthleteForAttendance } from "@/hooks/useSessionAttendance";
+import { useMonitorMutations } from "@/hooks/useMonitorMutations";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { LoadingImage } from "@/components/ui/loading-image";
 
 interface AttendanceSessionDetailProps {
   sessionId: string;
@@ -16,229 +17,256 @@ interface AttendanceSessionDetailProps {
 }
 
 export default function AttendanceSessionDetail({ sessionId, onBack }: AttendanceSessionDetailProps) {
-  const { data: attendances, isLoading: attendancesLoading } = useSessionAttendance(sessionId);
+  const [attendanceData, setAttendanceData] = useState<Map<string, { status: string; attendance_id?: string }>>(new Map());
+  const [modalidadeRepId, setModalidadeRepId] = useState<string | null>(null);
 
-  if (attendancesLoading) {
+  const { data: sessions } = useMonitorSessions(modalidadeRepId);
+  const session = sessions?.find(s => s.id === sessionId);
+
+  const { data: existingAttendances, isLoading: attendancesLoading } = useSessionAttendance(sessionId);
+  const { data: athletes, isLoading: athletesLoading } = useAthletesForAttendance(modalidadeRepId);
+  
+  const { saveAttendances } = useMonitorMutations();
+
+  useEffect(() => {
+    if (session) {
+      setModalidadeRepId(session.modalidade_rep_id);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    if (existingAttendances && athletes) {
+      const newAttendanceData = new Map();
+      
+      // Primeiro, inicializar todos os atletas com status 'presente' (padrão)
+      athletes.forEach(athlete => {
+        newAttendanceData.set(athlete.id, {
+          status: 'presente',
+          attendance_id: undefined
+        });
+      });
+      
+      // Depois, atualizar com os dados existentes se houver
+      existingAttendances.forEach(attendance => {
+        newAttendanceData.set(attendance.atleta_id, {
+          status: attendance.status,
+          attendance_id: attendance.id
+        });
+      });
+      
+      setAttendanceData(newAttendanceData);
+    } else if (athletes && !existingAttendances) {
+      // Se não há dados existentes, inicializar todos como presente
+      const newAttendanceData = new Map();
+      athletes.forEach(athlete => {
+        newAttendanceData.set(athlete.id, {
+          status: 'presente',
+          attendance_id: undefined
+        });
+      });
+      setAttendanceData(newAttendanceData);
+    }
+  }, [existingAttendances, athletes]);
+
+  const handleStatusChange = (athleteId: string, status: string) => {
+    const current = attendanceData.get(athleteId) || { status: 'presente' };
+    setAttendanceData(new Map(attendanceData.set(athleteId, { ...current, status })));
+  };
+
+  const handleSaveAttendances = async () => {
+    if (!athletes) return;
+
+    const attendancesToSave = athletes.map(athlete => {
+      const data = attendanceData.get(athlete.id) || { status: 'presente' };
+      return {
+        chamada_id: sessionId,
+        atleta_id: athlete.id,
+        status: data.status as 'presente' | 'ausente' | 'atrasado'
+      };
+    });
+
+    await saveAttendances.mutateAsync(attendancesToSave);
+  };
+
+  if (attendancesLoading || athletesLoading || !session) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <LoadingImage text="Carregando detalhes da chamada..." />
+        <LoadingImage text="Carregando chamada..." />
       </div>
     );
   }
 
-  const session = attendances?.[0]?.chamada;
-  
-  if (!session && !attendancesLoading) {
+  if (!athletes || athletes.length === 0) {
     return (
       <div className="space-y-6 p-4">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={onBack}>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={onBack} size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
+          <h1 className="text-xl font-bold text-olimpics-text">{session.descricao}</h1>
         </div>
-        <div className="text-center py-8">
-          <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Chamada não encontrada</h3>
-          <p className="text-gray-500">
-            Não foi possível carregar os detalhes desta chamada.
-          </p>
-        </div>
+        
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-gray-500">
+              Nenhum atleta inscrito encontrado para esta modalidade.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  const presentes = attendances?.filter(a => a.status === 'presente') || [];
-  const ausentes = attendances?.filter(a => a.status === 'ausente') || [];
-  const atrasados = attendances?.filter(a => a.status === 'atrasado') || [];
+  const getStatusCounts = () => {
+    if (!athletes) return { presente: 0, ausente: 0, atrasado: 0, total: 0 };
+    
+    let presente = 0, ausente = 0, atrasado = 0;
+    
+    athletes.forEach(athlete => {
+      const data = attendanceData.get(athlete.id);
+      if (data) {
+        switch (data.status) {
+          case 'presente': presente++; break;
+          case 'atrasado': atrasado++; break;
+          case 'ausente': ausente++; break;
+          default: presente++; break;
+        }
+      } else {
+        presente++;
+      }
+    });
+    
+    return { presente, ausente, atrasado, total: athletes.length };
+  };
+
+  const counts = getStatusCounts();
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-4 p-4">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-olimpics-text">Detalhes da Chamada</h1>
-          {session && (
-            <p className="text-gray-500">
-              {session.modalidade_representantes?.modalidades?.nome} • {session.modalidade_representantes?.filiais?.nome}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <Button variant="outline" onClick={onBack} size="sm" className="flex-shrink-0">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg sm:text-xl font-bold text-olimpics-text truncate">{session.descricao}</h1>
+            <p className="text-xs sm:text-sm text-gray-500">
+              {format(new Date(session.data_hora_inicio), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+              {session.data_hora_fim && ` - ${format(new Date(session.data_hora_fim), 'HH:mm', { locale: ptBR })}`}
             </p>
-          )}
+          </div>
         </div>
+        
+        <Button 
+          onClick={handleSaveAttendances}
+          disabled={saveAttendances.isPending}
+          className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:w-auto"
+          size="sm"
+        >
+          {saveAttendances.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          ) : (
+            <Save className="h-4 w-4 mr-2" />
+          )}
+          Salvar Presenças
+        </Button>
       </div>
 
-      {/* Session Info */}
-      {session && (
+      {/* Resumo de Presenças */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>{session.descricao}</span>
-              <Badge variant="outline">
-                {session.modalidade_representantes?.modalidades?.nome}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-gray-500" />
-                <span className="text-sm">
-                  {format(new Date(session.data_hora_inicio), 'dd/MM/yyyy', { locale: ptBR })}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-gray-500" />
-                <span className="text-sm">
-                  {format(new Date(session.data_hora_inicio), 'HH:mm', { locale: ptBR })}
-                  {session.data_hora_fim && ` - ${format(new Date(session.data_hora_fim), 'HH:mm', { locale: ptBR })}`}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-gray-500" />
-                <span className="text-sm">
-                  {session.modalidade_representantes?.filiais?.nome}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-gray-500" />
-                <span className="text-sm">
-                  {attendances?.length || 0} atleta(s) registrado(s)
-                </span>
-              </div>
-            </div>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-lg sm:text-2xl font-bold text-olimpics-green-primary">{counts.total}</div>
+            <div className="text-xs sm:text-sm text-gray-500">Total</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-lg sm:text-2xl font-bold text-green-600">{counts.presente}</div>
+            <div className="text-xs sm:text-sm text-gray-500">Presentes</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-lg sm:text-2xl font-bold text-yellow-600">{counts.atrasado}</div>
+            <div className="text-xs sm:text-sm text-gray-500">Atrasados</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-lg sm:text-2xl font-bold text-red-600">{counts.ausente}</div>
+            <div className="text-xs sm:text-sm text-gray-500">Ausentes</div>
+          </CardContent>
+        </Card>
+      </div>
 
-            {session.observacoes && (
-              <div className="mt-4 p-3 bg-amber-100 border border-amber-200 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-amber-800">Observações importantes:</p>
-                    <p className="text-sm text-amber-700 mt-1 break-words">{session.observacoes}</p>
+      {/* Lista de Atletas Mobile-Friendly */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Users className="h-5 w-5" />
+            Lista de Presença ({athletes.length} atletas)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4">
+          <div className="space-y-3">
+            {athletes.map((athlete) => {
+              const data = attendanceData.get(athlete.id) || { status: 'presente' };
+              return (
+                <div key={athlete.id} className="border rounded-lg p-3 bg-gray-50">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm sm:text-base truncate">{athlete.nome_completo}</div>
+                      <div className="text-xs sm:text-sm text-gray-500 truncate">{athlete.email}</div>
+                      {athlete.numero_identificador && (
+                        <Badge variant="outline" className="text-xs mt-1">
+                          ID: {athlete.numero_identificador}
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-2 flex-shrink-0">
+                      <Button
+                        size="sm"
+                        variant={data.status === 'presente' ? 'default' : 'outline'}
+                        onClick={() => handleStatusChange(athlete.id, 'presente')}
+                        className={`flex-1 sm:flex-none ${data.status === 'presente' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                      >
+                        <UserCheck className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Presente</span>
+                        <span className="sm:hidden">P</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={data.status === 'atrasado' ? 'default' : 'outline'}
+                        onClick={() => handleStatusChange(athlete.id, 'atrasado')}
+                        className={`flex-1 sm:flex-none ${data.status === 'atrasado' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}`}
+                      >
+                        <Clock className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Atrasado</span>
+                        <span className="sm:hidden">A</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={data.status === 'ausente' ? 'default' : 'outline'}
+                        onClick={() => handleStatusChange(athlete.id, 'ausente')}
+                        className={`flex-1 sm:flex-none ${data.status === 'ausente' ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                      >
+                        <UserX className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Ausente</span>
+                        <span className="sm:hidden">F</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-olimpics-green-primary">{attendances?.length || 0}</div>
-            <div className="text-sm text-gray-500">Total</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{presentes.length}</div>
-            <div className="text-sm text-gray-500">Presentes</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-600">{atrasados.length}</div>
-            <div className="text-sm text-gray-500">Atrasados</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-red-600">{ausentes.length}</div>
-            <div className="text-sm text-gray-500">Ausentes</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Attendance Lists */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Presentes */}
-        <Card className="border-green-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-green-700 flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-600 rounded-full"></div>
-              Presentes ({presentes.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {presentes.map((attendance) => (
-                <div key={attendance.id} className="p-2 bg-green-50 rounded-lg">
-                  <div className="font-medium text-sm">{attendance.atleta.nome_completo}</div>
-                  <div className="text-xs text-gray-500">{attendance.atleta.email}</div>
-                  {attendance.atleta.numero_identificador && (
-                    <Badge variant="outline" className="text-xs mt-1">
-                      ID: {attendance.atleta.numero_identificador}
-                    </Badge>
-                  )}
-                </div>
-              ))}
-              {presentes.length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-4">Nenhum atleta presente</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Atrasados */}
-        <Card className="border-yellow-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-yellow-700 flex items-center gap-2">
-              <div className="w-3 h-3 bg-yellow-600 rounded-full"></div>
-              Atrasados ({atrasados.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {atrasados.map((attendance) => (
-                <div key={attendance.id} className="p-2 bg-yellow-50 rounded-lg">
-                  <div className="font-medium text-sm">{attendance.atleta.nome_completo}</div>
-                  <div className="text-xs text-gray-500">{attendance.atleta.email}</div>
-                  {attendance.atleta.numero_identificador && (
-                    <Badge variant="outline" className="text-xs mt-1">
-                      ID: {attendance.atleta.numero_identificador}
-                    </Badge>
-                  )}
-                </div>
-              ))}
-              {atrasados.length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-4">Nenhum atleta atrasado</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Ausentes */}
-        <Card className="border-red-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-red-700 flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-600 rounded-full"></div>
-              Ausentes ({ausentes.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {ausentes.map((attendance) => (
-                <div key={attendance.id} className="p-2 bg-red-50 rounded-lg">
-                  <div className="font-medium text-sm">{attendance.atleta.nome_completo}</div>
-                  <div className="text-xs text-gray-500">{attendance.atleta.email}</div>
-                  {attendance.atleta.numero_identificador && (
-                    <Badge variant="outline" className="text-xs mt-1">
-                      ID: {attendance.atleta.numero_identificador}
-                    </Badge>
-                  )}
-                </div>
-              ))}
-              {ausentes.length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-4">Nenhum atleta ausente</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
