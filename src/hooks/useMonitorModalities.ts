@@ -7,7 +7,6 @@ export interface MonitorModality {
   id: string;
   modalidade_id: number;
   filial_id: string;
-  evento_id: string;
   atleta_id: string;
   criado_em: string;
   modalidades: {
@@ -41,13 +40,13 @@ export const useMonitorModalities = () => {
           id,
           modalidade_id,
           filial_id,
-          evento_id,
           atleta_id,
           criado_em,
           modalidades!modalidade_representantes_modalidade_id_fkey (
             nome,
             categoria,
-            tipo_modalidade
+            tipo_modalidade,
+            evento_id
           ),
           filiais!modalidade_representantes_filial_id_fkey (
             nome,
@@ -56,7 +55,7 @@ export const useMonitorModalities = () => {
           )
         `)
         .eq('atleta_id', user.id)
-        .eq('evento_id', currentEventId);
+        .eq('modalidades.evento_id', currentEventId);
 
       if (error) {
         console.error('Error fetching monitor modalities:', error);
