@@ -9,6 +9,7 @@ export interface MonitorSession {
   data_hora_fim: string | null;
   descricao: string;
   criado_em: string;
+  criado_por: string;
   modalidade_representantes: {
     modalidades: {
       nome: string;
@@ -30,7 +31,45 @@ export const useMonitorSessions = (modalidadeRepId?: string) => {
         return [];
       }
 
-      // Buscar as chamadas com join mais específico para evitar ambiguidade
+      // Primeiro, buscar informações da modalidade para obter modalidade_id
+      const { data: modalidadeRepData, error: modalidadeRepError } = await supabase
+        .from('modalidade_representantes')
+        .select('modalidade_id')
+        .eq('id', modalidadeRepId)
+        .single();
+
+      if (modalidadeRepError) {
+        console.error('Error fetching modalidade_rep data:', modalidadeRepError);
+        throw modalidadeRepError;
+      }
+
+      if (!modalidadeRepData) {
+        console.log('No modalidade_rep data found');
+        return [];
+      }
+
+      console.log('Found modalidade_id:', modalidadeRepData.modalidade_id);
+
+      // Buscar todos os representantes desta modalidade
+      const { data: allRepsData, error: allRepsError } = await supabase
+        .from('modalidade_representantes')
+        .select('id')
+        .eq('modalidade_id', modalidadeRepData.modalidade_id);
+
+      if (allRepsError) {
+        console.error('Error fetching all reps:', allRepsError);
+        throw allRepsError;
+      }
+
+      if (!allRepsData || allRepsData.length === 0) {
+        console.log('No representatives found for this modality');
+        return [];
+      }
+
+      const allRepIds = allRepsData.map(rep => rep.id);
+      console.log('All representative IDs for this modality:', allRepIds);
+
+      // Buscar todas as chamadas de todos os representantes desta modalidade
       const { data: sessions, error } = await supabase
         .from('chamadas')
         .select(`
@@ -40,7 +79,7 @@ export const useMonitorSessions = (modalidadeRepId?: string) => {
             filiais!modalidade_representantes_filial_id_fkey (nome)
           )
         `)
-        .eq('modalidade_rep_id', modalidadeRepId)
+        .in('modalidade_rep_id', allRepIds)
         .order('data_hora_inicio', { ascending: false });
 
       if (error) {
