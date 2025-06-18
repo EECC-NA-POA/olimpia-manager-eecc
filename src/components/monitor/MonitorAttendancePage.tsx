@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus, Calendar } from "lucide-react";
-import { useModalityRepresentatives } from "@/hooks/useModalityRepresentatives";
+import { useModalitiesWithRepresentatives } from "@/hooks/useModalityRepresentatives";
 import { useMonitorSessions, MonitorSession } from "@/hooks/useMonitorSessions";
 import { LoadingImage } from "@/components/ui/loading-image";
+import { useAuth } from "@/contexts/AuthContext";
 import AttendanceCreationDialog from './AttendanceCreationDialog';
 import EditAttendanceDialog from './EditAttendanceDialog';
 import AttendanceSessionDetail from './AttendanceSessionDetail';
@@ -19,7 +20,8 @@ export default function MonitorAttendancePage() {
   const [selectedSessionForEdit, setSelectedSessionForEdit] = useState<MonitorSession | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
-  const { data: modalities, isLoading: modalitiesLoading } = useModalityRepresentatives();
+  const { currentEventId, user } = useAuth();
+  const { data: modalities, isLoading: modalitiesLoading } = useModalitiesWithRepresentatives(user?.filial_id, currentEventId);
   const { data: sessions, isLoading: sessionsLoading } = useMonitorSessions(selectedModalidadeRepId || undefined);
 
   const handleModalitySelect = (modalidadeRepId: string, modalityName: string) => {

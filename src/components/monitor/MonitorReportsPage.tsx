@@ -47,6 +47,8 @@ export default function MonitorReportsPage() {
     queryFn: async () => {
       if (!selectedModalidade) return [];
 
+      console.log('Fetching attendance reports for modalidade_rep_id:', selectedModalidade);
+
       const { data, error } = await supabase
         .from('chamadas')
         .select(`
@@ -61,16 +63,26 @@ export default function MonitorReportsPage() {
         .eq('modalidade_rep_id', selectedModalidade)
         .order('data_hora_inicio', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching attendance reports:', error);
+        throw error;
+      }
 
-      // Buscar total de atletas inscritos
+      console.log('Raw attendance data:', data);
+
+      // Buscar total de atletas inscritos para esta modalidade específica
       const { data: modalidadeData } = await supabase
         .from('modalidade_representantes')
         .select('modalidade_id, filial_id, evento_id')
         .eq('id', selectedModalidade)
         .single();
 
-      if (!modalidadeData) return [];
+      if (!modalidadeData) {
+        console.log('No modality data found');
+        return [];
+      }
+
+      console.log('Modality data for reports:', modalidadeData);
 
       const { data: athletesData } = await supabase
         .from('inscricoes_modalidades')
@@ -80,8 +92,9 @@ export default function MonitorReportsPage() {
         .eq('status', 'confirmado');
 
       const totalAthletes = athletesData?.length || 0;
+      console.log('Total athletes for this modality:', totalAthletes);
 
-      return data?.map(session => {
+      const reports = data?.map(session => {
         const presences = session.chamada_presencas || [];
         const presentCount = presences.filter(p => p.status === 'presente').length;
         const lateCount = presences.filter(p => p.status === 'atrasado').length;
@@ -97,6 +110,9 @@ export default function MonitorReportsPage() {
           attendance_rate: totalAthletes > 0 ? Math.round((presentCount / totalAthletes) * 100) : 0
         } as AttendanceReport;
       }) || [];
+
+      console.log('Processed attendance reports:', reports);
+      return reports;
     },
     enabled: !!selectedModalidade,
   });
@@ -106,6 +122,8 @@ export default function MonitorReportsPage() {
     queryKey: ['athlete-stats', selectedModalidade],
     queryFn: async () => {
       if (!selectedModalidade || !sessions || sessions.length === 0) return [];
+
+      console.log('Fetching athlete stats for modalidade:', selectedModalidade);
 
       // Buscar dados dos atletas e suas presenças
       const { data: modalidadeData } = await supabase
@@ -121,7 +139,9 @@ export default function MonitorReportsPage() {
         .select(`
           atleta_id,
           usuarios!inner (
-            nome_completo,
+            nome_completo
+          ),
+          pagamentos (
             numero_identificador
           )
         `)
@@ -140,10 +160,12 @@ export default function MonitorReportsPage() {
       const attendancesByAthlete = new Map();
       athletesData.forEach(athlete => {
         const userData = Array.isArray(athlete.usuarios) ? athlete.usuarios[0] : athlete.usuarios;
+        const paymentData = athlete.pagamentos && athlete.pagamentos.length > 0 ? athlete.pagamentos[0] : null;
+        
         if (userData) {
           attendancesByAthlete.set(athlete.atleta_id, {
             athlete_name: userData.nome_completo,
-            athlete_identifier: userData.numero_identificador || 'N/A',
+            athlete_identifier: paymentData?.numero_identificador || 'N/A',
             total_sessions: sessions.length,
             present_sessions: 0,
             late_sessions: 0,
@@ -172,10 +194,13 @@ export default function MonitorReportsPage() {
           : 0;
       });
 
-      return Array.from(attendancesByAthlete.entries()).map(([athleteId, stats]) => ({
+      const result = Array.from(attendancesByAthlete.entries()).map(([athleteId, stats]) => ({
         athlete_id: athleteId,
         ...stats
       })) as AthleteAttendanceStats[];
+
+      console.log('Athlete stats result:', result);
+      return result;
     },
     enabled: !!selectedModalidade && !!sessions,
   });
