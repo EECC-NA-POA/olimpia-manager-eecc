@@ -8,49 +8,32 @@ export interface SessionAttendance {
   chamada_id: string;
   atleta_id: string;
   status: 'presente' | 'ausente' | 'atrasado';
-  registrado_em: string;
   registrado_por: string;
-  atleta: {
-    nome_completo: string;
-    email: string;
-    numero_identificador: string | null;
-  };
+  criado_em: string;
 }
 
 export interface AthleteForAttendance {
   id: string;
   nome_completo: string;
   email: string;
-  numero_identificador: string | null;
-  status?: 'presente' | 'ausente' | 'atrasado';
-  attendance_id?: string;
+  numero_identificador?: string;
 }
 
-export const useSessionAttendance = (chamadaId: string | null) => {
-  const { currentEventId } = useAuth();
-  
+export const useSessionAttendance = (sessionId: string) => {
   return useQuery({
-    queryKey: ['session-attendance', chamadaId],
+    queryKey: ['session-attendance', sessionId],
     queryFn: async () => {
-      if (!chamadaId) return [];
-      
-      console.log('Fetching session attendance for chamada_id:', chamadaId);
-      
+      if (!sessionId) {
+        console.log('No session ID provided for attendance');
+        return [];
+      }
+
+      console.log('Fetching session attendance for chamada_id:', sessionId);
+
       const { data, error } = await supabase
         .from('chamada_presencas')
-        .select(`
-          id,
-          chamada_id,
-          atleta_id,
-          status,
-          registrado_em,
-          registrado_por,
-          atleta:usuarios!chamada_presencas_atleta_id_fkey (
-            nome_completo,
-            email
-          )
-        `)
-        .eq('chamada_id', chamadaId);
+        .select('*')
+        .eq('chamada_id', sessionId);
 
       if (error) {
         console.error('Error fetching session attendance:', error);
@@ -58,120 +41,102 @@ export const useSessionAttendance = (chamadaId: string | null) => {
       }
 
       console.log('Session attendance data:', data);
-      
-      // Buscar dados de pagamento para obter numero_identificador
-      if (data && data.length > 0 && currentEventId) {
-        const atletaIds = data.map(item => item.atleta_id);
-        const { data: pagamentosData } = await supabase
-          .from('pagamentos')
-          .select('atleta_id, numero_identificador')
-          .in('atleta_id', atletaIds)
-          .eq('evento_id', currentEventId);
-
-        // Transform the data to match our interface
-        const transformedData = data?.map(item => {
-          const atleta = Array.isArray(item.atleta) ? item.atleta[0] : item.atleta;
-          const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
-          
-          return {
-            ...item,
-            atleta: {
-              ...atleta,
-              numero_identificador: pagamento?.numero_identificador || null
-            }
-          };
-        }) || [];
-
-        return transformedData as SessionAttendance[];
-      }
-
-      // Se não há dados ou currentEventId, retornar sem numero_identificador
-      const transformedData = data?.map(item => ({
-        ...item,
-        atleta: {
-          ...(Array.isArray(item.atleta) ? item.atleta[0] : item.atleta),
-          numero_identificador: null
-        }
-      })) || [];
-
-      return transformedData as SessionAttendance[];
+      return data as SessionAttendance[];
     },
-    enabled: !!chamadaId,
+    enabled: !!sessionId,
   });
 };
 
 export const useAthletesForAttendance = (modalidadeRepId: string | null) => {
   const { currentEventId } = useAuth();
-  
+
   return useQuery({
     queryKey: ['athletes-for-attendance', modalidadeRepId, currentEventId],
     queryFn: async () => {
-      if (!modalidadeRepId || !currentEventId) return [];
-      
-      console.log('Fetching athletes for attendance, modalidade_rep_id:', modalidadeRepId);
+      if (!modalidadeRepId || !currentEventId) {
+        console.log('Missing modalidadeRepId or currentEventId for athletes fetch');
+        return [];
+      }
+
+      console.log('Fetching athletes for modality rep:', modalidadeRepId);
       console.log('Current event ID:', currentEventId);
-      
-      // Primeiro buscar a modalidade e filial do representante
-      const { data: repData, error: repError } = await supabase
+
+      // Primeiro, buscar informações da modalidade
+      const { data: modalidadeRepData, error: modalidadeRepError } = await supabase
         .from('modalidade_representantes')
-        .select('modalidade_id, filial_id')
+        .select('modalidade_id')
         .eq('id', modalidadeRepId)
         .single();
 
-      if (repError) {
-        console.error('Error fetching representative data:', repError);
-        throw repError;
+      if (modalidadeRepError) {
+        console.error('Error fetching modalidade rep data:', modalidadeRepError);
+        throw modalidadeRepError;
       }
 
-      console.log('Representative data:', repData);
+      if (!modalidadeRepData) {
+        console.log('No modalidade rep data found');
+        return [];
+      }
 
-      // Buscar atletas inscritos na modalidade
-      const { data: inscricoesData, error: inscricoesError } = await supabase
+      console.log('Found modalidade_id:', modalidadeRepData.modalidade_id);
+
+      // Buscar atletas inscritos nesta modalidade
+      const { data: athletesData, error: athletesError } = await supabase
         .from('inscricoes_modalidades')
         .select(`
           atleta_id,
-          usuarios!inscricoes_modalidades_atleta_id_fkey (
+          usuarios!inner (
             id,
             nome_completo,
             email
           )
         `)
-        .eq('modalidade_id', repData.modalidade_id)
+        .eq('modalidade_id', modalidadeRepData.modalidade_id)
         .eq('evento_id', currentEventId)
         .eq('status', 'confirmado');
 
-      if (inscricoesError) {
-        console.error('Error fetching athletes for attendance:', inscricoesError);
-        throw inscricoesError;
+      if (athletesError) {
+        console.error('Error fetching athletes data:', athletesError);
+        throw athletesError;
       }
 
-      if (!inscricoesData || inscricoesData.length === 0) {
-        console.log('No athletes found for attendance');
+      console.log('Athletes data fetched:', athletesData);
+
+      if (!athletesData || athletesData.length === 0) {
+        console.log('No athletes found for this modality');
         return [];
       }
 
-      // Buscar dados de pagamento separadamente usando atleta_id
-      const atletaIds = inscricoesData.map(item => item.atleta_id);
-      const { data: pagamentosData } = await supabase
+      // Buscar números identificadores dos atletas
+      const athleteIds = athletesData.map(item => item.atleta_id);
+      const { data: paymentsData, error: paymentsError } = await supabase
         .from('pagamentos')
         .select('atleta_id, numero_identificador')
-        .in('atleta_id', atletaIds)
-        .eq('evento_id', currentEventId);
+        .in('atleta_id', athleteIds);
 
-      const athletes = inscricoesData.map(item => {
-        const usuario = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
-        const pagamento = pagamentosData?.find(p => p.atleta_id === item.atleta_id);
-        
-        return {
-          id: usuario.id,
-          nome_completo: usuario.nome_completo,
-          email: usuario.email,
-          numero_identificador: pagamento?.numero_identificador || null,
-        };
+      if (paymentsError) {
+        console.log('Error fetching payment data (not critical):', paymentsError);
+      }
+
+      // Criar mapa de números identificadores
+      const paymentMap = new Map();
+      paymentsData?.forEach(payment => {
+        paymentMap.set(payment.atleta_id, payment.numero_identificador);
       });
 
-      console.log('Athletes for attendance:', athletes);
-      return athletes as AthleteForAttendance[];
+      // Transformar dados para o formato esperado
+      const transformedAthletes = athletesData.map(item => {
+        const userData = Array.isArray(item.usuarios) ? item.usuarios[0] : item.usuarios;
+        return {
+          id: item.atleta_id,
+          nome_completo: userData.nome_completo,
+          email: userData.email,
+          numero_identificador: paymentMap.get(item.atleta_id)
+        } as AthleteForAttendance;
+      });
+
+      console.log('Transformed athletes for attendance:', transformedAthletes);
+      return transformedAthletes;
     },
     enabled: !!modalidadeRepId && !!currentEventId,
   });
