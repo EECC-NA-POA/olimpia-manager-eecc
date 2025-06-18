@@ -44,12 +44,12 @@ export const useMonitorModalities = () => {
           evento_id,
           atleta_id,
           criado_em,
-          modalidades:modalidade_id (
+          modalidades!modalidade_representantes_modalidade_id_fkey (
             nome,
             categoria,
             tipo_modalidade
           ),
-          filiais:filial_id (
+          filiais!modalidade_representantes_filial_id_fkey (
             nome,
             cidade,
             estado
