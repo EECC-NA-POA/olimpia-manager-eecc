@@ -44,19 +44,18 @@ export const useMonitorModalities = () => {
           evento_id,
           atleta_id,
           criado_em,
-          modalidades!modalidade_representantes_modalidade_id_fkey (
+          modalidades:modalidade_id (
             nome,
             categoria,
             tipo_modalidade
           ),
-          filiais!modalidade_representantes_filial_id_fkey (
+          filiais:filial_id (
             nome,
             cidade,
             estado
           )
         `)
-        .eq('atleta_id', user.id)
-        .eq('evento_id', currentEventId);
+        .eq('atleta_id', user.id);
 
       if (error) {
         console.error('Error fetching monitor modalities:', error);
@@ -65,13 +64,16 @@ export const useMonitorModalities = () => {
 
       console.log('Monitor modalities data:', data);
       
-      // Transform the data to match our interface
-      const transformedData = data?.map(item => ({
+      // Filter by current event and transform the data
+      const filteredData = data?.filter(item => item.evento_id === currentEventId) || [];
+      
+      const transformedData = filteredData.map(item => ({
         ...item,
         modalidades: Array.isArray(item.modalidades) ? item.modalidades[0] : item.modalidades,
         filiais: Array.isArray(item.filiais) ? item.filiais[0] : item.filiais
-      })) || [];
+      }));
 
+      console.log('Transformed monitor modalities:', transformedData);
       return transformedData as MonitorModality[];
     },
     enabled: !!user?.id && !!currentEventId,
