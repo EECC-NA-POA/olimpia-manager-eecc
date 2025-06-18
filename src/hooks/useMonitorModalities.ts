@@ -9,6 +9,7 @@ export interface MonitorModality {
   filial_id: string;
   evento_id: string;
   atleta_id: string;
+  criado_em: string;
   modalidades: {
     nome: string;
     categoria: string;
@@ -16,6 +17,8 @@ export interface MonitorModality {
   };
   filiais: {
     nome: string;
+    cidade: string;
+    estado: string;
   };
 }
 
@@ -40,13 +43,16 @@ export const useMonitorModalities = () => {
           filial_id,
           evento_id,
           atleta_id,
+          criado_em,
           modalidades!inner (
             nome,
             categoria,
             tipo_modalidade
           ),
           filiais!inner (
-            nome
+            nome,
+            cidade,
+            estado
           )
         `)
         .eq('atleta_id', user.id)
@@ -58,7 +64,15 @@ export const useMonitorModalities = () => {
       }
 
       console.log('Monitor modalities data:', data);
-      return data as MonitorModality[];
+      
+      // Transform the data to match our interface
+      const transformedData = data?.map(item => ({
+        ...item,
+        modalidades: Array.isArray(item.modalidades) ? item.modalidades[0] : item.modalidades,
+        filiais: Array.isArray(item.filiais) ? item.filiais[0] : item.filiais
+      })) || [];
+
+      return transformedData as MonitorModality[];
     },
     enabled: !!user?.id && !!currentEventId,
   });

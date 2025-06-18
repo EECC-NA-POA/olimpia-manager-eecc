@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus, Calendar } from "lucide-react";
-import { useModalitiesWithRepresentatives } from "@/hooks/useModalityRepresentatives";
+import { useMonitorModalities } from "@/hooks/useMonitorModalities";
 import { useMonitorSessions, MonitorSession } from "@/hooks/useMonitorSessions";
 import { LoadingImage } from "@/components/ui/loading-image";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,7 +21,7 @@ export default function MonitorAttendancePage() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   const { currentEventId, user } = useAuth();
-  const { data: modalities, isLoading: modalitiesLoading } = useModalitiesWithRepresentatives(user?.filial_id, currentEventId);
+  const { data: modalities, isLoading: modalitiesLoading } = useMonitorModalities();
   const { data: sessions, isLoading: sessionsLoading } = useMonitorSessions(selectedModalidadeRepId || undefined);
 
   const handleModalitySelect = (modalidadeRepId: string, modalityName: string) => {
