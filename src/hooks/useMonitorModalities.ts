@@ -13,6 +13,7 @@ export interface MonitorModality {
     nome: string;
     categoria: string;
     tipo_modalidade: string;
+    evento_id: string;
   };
   filiais: {
     nome: string;
