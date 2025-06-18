@@ -41,100 +41,134 @@ export default function MonitorReportsPage() {
   const { data: modalities, isLoading: modalitiesLoading } = useMonitorModalities();
   const { data: sessions } = useMonitorSessions(selectedModalidade || undefined);
 
+  console.log('MonitorReportsPage - Modalities data:', modalities);
+  console.log('MonitorReportsPage - Selected modalidade:', selectedModalidade);
+  console.log('MonitorReportsPage - Sessions data:', sessions);
+
   // Buscar relatório de presenças por sessão
   const { data: sessionReports, isLoading: reportsLoading } = useQuery({
     queryKey: ['attendance-reports', selectedModalidade],
     queryFn: async () => {
-      if (!selectedModalidade) return [];
+      if (!selectedModalidade) {
+        console.log('No modalidade selected for reports');
+        return [];
+      }
 
       console.log('Fetching attendance reports for modalidade_rep_id:', selectedModalidade);
 
-      const { data, error } = await supabase
+      // Primeiro, buscar as chamadas para esta modalidade
+      const { data: chamadasData, error: chamadasError } = await supabase
         .from('chamadas')
         .select(`
           id,
           data_hora_inicio,
           descricao,
-          chamada_presencas (
-            status,
-            atleta_id
-          )
+          modalidade_rep_id
         `)
         .eq('modalidade_rep_id', selectedModalidade)
         .order('data_hora_inicio', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching attendance reports:', error);
-        throw error;
+      if (chamadasError) {
+        console.error('Error fetching chamadas:', chamadasError);
+        throw chamadasError;
       }
 
-      console.log('Raw attendance data:', data);
+      console.log('Chamadas data for reports:', chamadasData);
 
-      // Buscar total de atletas inscritos para esta modalidade específica
-      const { data: modalidadeData } = await supabase
-        .from('modalidade_representantes')
-        .select('modalidade_id, filial_id, evento_id')
-        .eq('id', selectedModalidade)
-        .single();
-
-      if (!modalidadeData) {
-        console.log('No modality data found');
+      if (!chamadasData || chamadasData.length === 0) {
+        console.log('No chamadas found for this modalidade');
         return [];
       }
 
-      console.log('Modality data for reports:', modalidadeData);
+      // Buscar presenças para cada chamada
+      const chamadasIds = chamadasData.map(c => c.id);
+      const { data: presencasData, error: presencasError } = await supabase
+        .from('chamada_presencas')
+        .select('chamada_id, status, atleta_id')
+        .in('chamada_id', chamadasIds);
 
-      const { data: athletesData } = await supabase
+      if (presencasError) {
+        console.error('Error fetching presencas:', presencasError);
+        throw presencasError;
+      }
+
+      console.log('Presencas data for reports:', presencasData);
+
+      // Buscar informações da modalidade para obter total de atletas
+      const selectedModality = modalities?.find(m => m.id === selectedModalidade);
+      if (!selectedModality) {
+        console.log('Selected modality not found in modalities list');
+        return [];
+      }
+
+      console.log('Selected modality for total athletes:', selectedModality);
+
+      // Buscar total de atletas inscritos nesta modalidade específica
+      const { data: athletesData, error: athletesError } = await supabase
         .from('inscricoes_modalidades')
         .select('atleta_id')
-        .eq('modalidade_id', modalidadeData.modalidade_id)
-        .eq('evento_id', modalidadeData.evento_id)
+        .eq('modalidade_id', selectedModality.modalidade_id)
+        .eq('evento_id', selectedModality.modalidades.evento_id)
         .eq('status', 'confirmado');
+
+      if (athletesError) {
+        console.error('Error fetching athletes:', athletesError);
+      }
 
       const totalAthletes = athletesData?.length || 0;
       console.log('Total athletes for this modality:', totalAthletes);
 
-      const reports = data?.map(session => {
-        const presences = session.chamada_presencas || [];
+      // Agrupar presenças por chamada
+      const presencasPorChamada = new Map();
+      presencasData?.forEach(presenca => {
+        if (!presencasPorChamada.has(presenca.chamada_id)) {
+          presencasPorChamada.set(presenca.chamada_id, []);
+        }
+        presencasPorChamada.get(presenca.chamada_id).push(presenca);
+      });
+
+      const reports = chamadasData.map(chamada => {
+        const presences = presencasPorChamada.get(chamada.id) || [];
         const presentCount = presences.filter(p => p.status === 'presente').length;
         const lateCount = presences.filter(p => p.status === 'atrasado').length;
         const absentCount = Math.max(0, totalAthletes - presentCount - lateCount);
         
         return {
-          session_date: format(new Date(session.data_hora_inicio), 'dd/MM', { locale: ptBR }),
-          session_description: session.descricao,
+          session_date: format(new Date(chamada.data_hora_inicio), 'dd/MM', { locale: ptBR }),
+          session_description: chamada.descricao,
           total_athletes: totalAthletes,
           present_count: presentCount,
           late_count: lateCount,
           absent_count: absentCount,
           attendance_rate: totalAthletes > 0 ? Math.round((presentCount / totalAthletes) * 100) : 0
         } as AttendanceReport;
-      }) || [];
+      });
 
       console.log('Processed attendance reports:', reports);
       return reports;
     },
-    enabled: !!selectedModalidade,
+    enabled: !!selectedModalidade && !!modalities,
   });
 
   // Buscar estatísticas por atleta
   const { data: athleteStats, isLoading: statsLoading } = useQuery({
     queryKey: ['athlete-stats', selectedModalidade],
     queryFn: async () => {
-      if (!selectedModalidade || !sessions || sessions.length === 0) return [];
+      if (!selectedModalidade || !sessions || sessions.length === 0 || !modalities) {
+        console.log('Missing data for athlete stats:', { selectedModalidade, sessions: sessions?.length, modalities: modalities?.length });
+        return [];
+      }
 
       console.log('Fetching athlete stats for modalidade:', selectedModalidade);
 
-      // Buscar dados dos atletas e suas presenças
-      const { data: modalidadeData } = await supabase
-        .from('modalidade_representantes')
-        .select('modalidade_id, filial_id, evento_id')
-        .eq('id', selectedModalidade)
-        .single();
+      const selectedModality = modalities.find(m => m.id === selectedModalidade);
+      if (!selectedModality) {
+        console.log('Selected modality not found');
+        return [];
+      }
 
-      if (!modalidadeData) return [];
-
-      const { data: athletesData } = await supabase
+      // Buscar atletas inscritos nesta modalidade
+      const { data: athletesData, error: athletesError } = await supabase
         .from('inscricoes_modalidades')
         .select(`
           atleta_id,
@@ -145,17 +179,34 @@ export default function MonitorReportsPage() {
             numero_identificador
           )
         `)
-        .eq('modalidade_id', modalidadeData.modalidade_id)
-        .eq('evento_id', modalidadeData.evento_id)
+        .eq('modalidade_id', selectedModality.modalidade_id)
+        .eq('evento_id', selectedModality.modalidades.evento_id)
         .eq('status', 'confirmado');
 
-      if (!athletesData) return [];
+      if (athletesError) {
+        console.error('Error fetching athletes data:', athletesError);
+        return [];
+      }
 
+      console.log('Athletes data for stats:', athletesData);
+
+      if (!athletesData || athletesData.length === 0) {
+        console.log('No athletes found for this modality');
+        return [];
+      }
+
+      // Buscar presenças de todos os atletas
       const sessionIds = sessions.map(s => s.id);
-      const { data: attendancesData } = await supabase
+      const { data: attendancesData, error: attendancesError } = await supabase
         .from('chamada_presencas')
         .select('chamada_id, atleta_id, status')
         .in('chamada_id', sessionIds);
+
+      if (attendancesError) {
+        console.error('Error fetching attendances:', attendancesError);
+      }
+
+      console.log('Attendances data for stats:', attendancesData);
 
       const attendancesByAthlete = new Map();
       athletesData.forEach(athlete => {
@@ -202,7 +253,7 @@ export default function MonitorReportsPage() {
       console.log('Athlete stats result:', result);
       return result;
     },
-    enabled: !!selectedModalidade && !!sessions,
+    enabled: !!selectedModalidade && !!sessions && !!modalities,
   });
 
   const handleExportCSV = () => {
@@ -332,6 +383,74 @@ export default function MonitorReportsPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Relatório de Sessões */}
+          {reportsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-olimpics-green-primary" />
+            </div>
+          ) : sessionReports && sessionReports.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Relatório por Sessão
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Total Atletas</TableHead>
+                      <TableHead>Presenças</TableHead>
+                      <TableHead>Atrasos</TableHead>
+                      <TableHead>Faltas</TableHead>
+                      <TableHead>Taxa de Presença</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sessionReports.map((report, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{report.session_date}</TableCell>
+                        <TableCell>{report.session_description}</TableCell>
+                        <TableCell>{report.total_athletes}</TableCell>
+                        <TableCell>
+                          <Badge className="bg-green-100 text-green-800">
+                            {report.present_count}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className="bg-yellow-100 text-yellow-800">
+                            {report.late_count}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className="bg-red-100 text-red-800">
+                            {report.absent_count}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-olimpics-green-primary transition-all"
+                                style={{ width: `${report.attendance_rate}%` }}
+                              />
+                            </div>
+                            <span className="text-sm font-medium">
+                              {report.attendance_rate}%
+                            </span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          ) : null}
 
           {/* Top Atletas por Presença */}
           {statsLoading ? (
