@@ -9,8 +9,6 @@ export const eventBasicInfoSchema = z.object({
   pais: z.string().optional(),
   estado: z.string().optional(),
   cidade: z.string().optional(),
-  data_inicio: z.string().optional(),
-  data_fim: z.string().optional(),
   data_inicio_evento: z.string().optional(),
   data_fim_evento: z.string().optional(),
   data_inicio_inscricao: z.string().optional(),
