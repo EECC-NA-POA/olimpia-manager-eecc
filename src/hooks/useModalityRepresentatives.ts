@@ -82,7 +82,7 @@ export const useRepresentativeMutations = (filialId: string | undefined, eventId
       queryClient.invalidateQueries({ queryKey: ['modalities-representatives', filialId, eventId] });
       queryClient.invalidateQueries({ queryKey: ['registered-athletes'] });
       
-      toast.success('Representante definido com sucesso!');
+      toast.success('Representante adicionado com sucesso!');
       console.log('=== SUCCESS HANDLING COMPLETED ===');
     },
     onError: (error: any) => {
@@ -91,17 +91,17 @@ export const useRepresentativeMutations = (filialId: string | undefined, eventId
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
       
-      const errorMessage = error.message || 'Erro desconhecido ao definir representante';
-      toast.error(`Erro ao definir representante: ${errorMessage}`);
+      const errorMessage = error.message || 'Erro desconhecido ao adicionar representante';
+      toast.error(`Erro ao adicionar representante: ${errorMessage}`);
       
       console.log('=== ERROR HANDLING COMPLETED ===');
     },
   });
 
   const removeRepresentative = useMutation({
-    mutationFn: async (modalityId: number) => {
+    mutationFn: async ({ modalityId, atletaId }: { modalityId: number; atletaId: string }) => {
       console.log('=== STARTING REMOVE REPRESENTATIVE MUTATION ===');
-      console.log('Mutation parameters:', { filialId, modalityId });
+      console.log('Mutation parameters:', { filialId, modalityId, atletaId });
       
       if (!filialId) {
         console.error('filialId is required but not provided');
@@ -109,7 +109,7 @@ export const useRepresentativeMutations = (filialId: string | undefined, eventId
       }
       
       console.log('Calling removeModalityRepresentative API...');
-      const result = await removeModalityRepresentative(filialId, modalityId);
+      const result = await removeModalityRepresentative(filialId, modalityId, atletaId);
       console.log('removeModalityRepresentative API result:', result);
       
       console.log('=== REMOVE REPRESENTATIVE MUTATION COMPLETED ===');
