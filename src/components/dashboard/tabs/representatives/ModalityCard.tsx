@@ -28,6 +28,9 @@ export function ModalityCard({
   onRemoveRepresentative,
   onCancelSelection
 }: ModalityCardProps) {
+  // Safely access representatives array with fallback to empty array
+  const representatives = modality.representatives || [];
+  
   return (
     <Card className="border border-gray-200">
       <CardHeader className="pb-3">
@@ -36,9 +39,9 @@ export function ModalityCard({
             <Users className="h-5 w-5 text-olimpics-green-primary" />
             {modality.nome}
           </div>
-          {modality.representatives.length > 0 ? (
+          {representatives.length > 0 ? (
             <Badge variant="secondary" className="bg-green-100 text-green-800">
-              {modality.representatives.length} Representante{modality.representatives.length > 1 ? 's' : ''}
+              {representatives.length} Representante{representatives.length > 1 ? 's' : ''}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-orange-600 border-orange-300">
@@ -48,9 +51,9 @@ export function ModalityCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {modality.representatives.length > 0 ? (
+        {representatives.length > 0 ? (
           <div className="space-y-3">
-            {modality.representatives.map((representative, index) => (
+            {representatives.map((representative, index) => (
               <div key={`${representative.atleta_id}-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="space-y-1">
                   <h4 className="font-medium text-gray-900">
@@ -119,7 +122,7 @@ export function ModalityCard({
                   </SelectTrigger>
                   <SelectContent>
                     {availableAthletes
-                      .filter(athlete => !modality.representatives.some(rep => rep.atleta_id === athlete.id))
+                      .filter(athlete => !representatives.some(rep => rep.atleta_id === athlete.id))
                       .map((athlete) => (
                         <SelectItem key={athlete.id} value={athlete.id}>
                           <div className="flex flex-col">
