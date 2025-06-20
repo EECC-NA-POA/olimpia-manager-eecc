@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 export const formatBirthDate = (date?: Date): string | null => {
   if (!date) return null;

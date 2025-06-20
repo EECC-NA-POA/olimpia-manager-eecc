@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { RegisterFormData } from '../types/form-types';
 import { formatBirthDate, checkExistingUser, prepareUserMetadata } from '../utils/registrationUtils';
-import { supabase } from '@/integrations/supabase/client';
 
 export const useRegisterForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
