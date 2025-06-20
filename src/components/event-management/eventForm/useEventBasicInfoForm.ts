@@ -60,23 +60,50 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
     
     setIsLoading(true);
     try {
-      // Prepare the update data, ensuring proper formatting
-      const updateData = {
+      // Prepare the update data with proper validation for required fields
+      const updateData: any = {
         nome: data.nome,
         descricao: data.descricao,
-        pais: data.pais,
-        estado: data.estado,
-        cidade: data.cidade,
         tipo: data.tipo,
-        data_inicio_evento: data.data_inicio_evento || null,
-        data_fim_evento: data.data_fim_evento || null,
-        data_inicio_inscricao: data.data_inicio_inscricao || null,
-        data_fim_inscricao: data.data_fim_inscricao || null,
         status_evento: data.status_evento,
-        foto_evento: data.foto_evento || null,
         visibilidade_publica: data.visibilidade_publica,
         updated_at: new Date().toISOString()
       };
+
+      // Only include optional fields if they have values
+      if (data.pais && data.pais.trim() !== '') {
+        updateData.pais = data.pais;
+      }
+      
+      if (data.estado && data.estado.trim() !== '') {
+        updateData.estado = data.estado;
+      }
+      
+      if (data.cidade && data.cidade.trim() !== '') {
+        updateData.cidade = data.cidade;
+      }
+      
+      if (data.foto_evento && data.foto_evento.trim() !== '') {
+        updateData.foto_evento = data.foto_evento;
+      }
+
+      // Handle optional date fields
+      if (data.data_inicio_evento && data.data_inicio_evento.trim() !== '') {
+        updateData.data_inicio_evento = data.data_inicio_evento;
+      }
+      
+      if (data.data_fim_evento && data.data_fim_evento.trim() !== '') {
+        updateData.data_fim_evento = data.data_fim_evento;
+      }
+
+      // Handle required date fields - only update if they have values
+      if (data.data_inicio_inscricao && data.data_inicio_inscricao.trim() !== '') {
+        updateData.data_inicio_inscricao = data.data_inicio_inscricao;
+      }
+      
+      if (data.data_fim_inscricao && data.data_fim_inscricao.trim() !== '') {
+        updateData.data_fim_inscricao = data.data_fim_inscricao;
+      }
 
       console.log('Data to be sent to database:', updateData);
 
