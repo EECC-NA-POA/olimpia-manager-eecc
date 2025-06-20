@@ -49,37 +49,57 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
   };
 
   const onSubmit = async (data: EventBasicInfoFormValues) => {
-    if (!eventId) return;
+    if (!eventId) {
+      console.error('Event ID is missing');
+      toast.error('ID do evento não encontrado');
+      return;
+    }
+    
+    console.log('Form data before submission:', data);
+    console.log('Event ID:', eventId);
     
     setIsLoading(true);
     try {
-      const { error } = await supabase
+      // Prepare the update data, ensuring proper formatting
+      const updateData = {
+        nome: data.nome,
+        descricao: data.descricao,
+        pais: data.pais,
+        estado: data.estado,
+        cidade: data.cidade,
+        tipo: data.tipo,
+        data_inicio_evento: data.data_inicio_evento || null,
+        data_fim_evento: data.data_fim_evento || null,
+        data_inicio_inscricao: data.data_inicio_inscricao || null,
+        data_fim_inscricao: data.data_fim_inscricao || null,
+        status_evento: data.status_evento,
+        foto_evento: data.foto_evento || null,
+        visibilidade_publica: data.visibilidade_publica,
+        updated_at: new Date().toISOString()
+      };
+
+      console.log('Data to be sent to database:', updateData);
+
+      const { data: result, error } = await supabase
         .from('eventos')
-        .update({
-          nome: data.nome,
-          descricao: data.descricao,
-          pais: data.pais,
-          estado: data.estado,
-          cidade: data.cidade,
-          tipo: data.tipo,
-          data_inicio_evento: data.data_inicio_evento,
-          data_fim_evento: data.data_fim_evento,
-          data_inicio_inscricao: data.data_inicio_inscricao,
-          data_fim_inscricao: data.data_fim_inscricao,
-          status_evento: data.status_evento,
-          foto_evento: data.foto_evento,
-          visibilidade_publica: data.visibilidade_publica,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', eventId);
+        .update(updateData)
+        .eq('id', eventId)
+        .select();
       
-      if (error) throw error;
+      console.log('Supabase update result:', result);
+      console.log('Supabase update error:', error);
       
+      if (error) {
+        console.error('Database error details:', error);
+        throw error;
+      }
+      
+      console.log('Event updated successfully:', result);
       toast.success('Informações do evento atualizadas com sucesso!');
       onUpdate(); // Refresh data
     } catch (error) {
       console.error('Error updating event:', error);
-      toast.error('Erro ao atualizar informações do evento');
+      toast.error('Erro ao atualizar informações do evento: ' + (error as Error).message);
     } finally {
       setIsLoading(false);
     }
