@@ -60,50 +60,25 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
     
     setIsLoading(true);
     try {
-      // Prepare the update data with proper validation for required fields
-      const updateData: any = {
+      // Prepare the update data - always include all fields, using null for empty values
+      const updateData = {
         nome: data.nome,
         descricao: data.descricao,
         tipo: data.tipo,
         status_evento: data.status_evento,
         visibilidade_publica: data.visibilidade_publica,
+        // Optional fields - set to null if empty, otherwise use the value
+        pais: (data.pais && data.pais.trim() !== '') ? data.pais : null,
+        estado: (data.estado && data.estado.trim() !== '') ? data.estado : null,
+        cidade: (data.cidade && data.cidade.trim() !== '') ? data.cidade : null,
+        foto_evento: (data.foto_evento && data.foto_evento.trim() !== '') ? data.foto_evento : null,
+        // Date fields - set to null if empty, otherwise use the value
+        data_inicio_evento: (data.data_inicio_evento && data.data_inicio_evento.trim() !== '') ? data.data_inicio_evento : null,
+        data_fim_evento: (data.data_fim_evento && data.data_fim_evento.trim() !== '') ? data.data_fim_evento : null,
+        data_inicio_inscricao: (data.data_inicio_inscricao && data.data_inicio_inscricao.trim() !== '') ? data.data_inicio_inscricao : null,
+        data_fim_inscricao: (data.data_fim_inscricao && data.data_fim_inscricao.trim() !== '') ? data.data_fim_inscricao : null,
         updated_at: new Date().toISOString()
       };
-
-      // Only include optional fields if they have values
-      if (data.pais && data.pais.trim() !== '') {
-        updateData.pais = data.pais;
-      }
-      
-      if (data.estado && data.estado.trim() !== '') {
-        updateData.estado = data.estado;
-      }
-      
-      if (data.cidade && data.cidade.trim() !== '') {
-        updateData.cidade = data.cidade;
-      }
-      
-      if (data.foto_evento && data.foto_evento.trim() !== '') {
-        updateData.foto_evento = data.foto_evento;
-      }
-
-      // Handle optional date fields
-      if (data.data_inicio_evento && data.data_inicio_evento.trim() !== '') {
-        updateData.data_inicio_evento = data.data_inicio_evento;
-      }
-      
-      if (data.data_fim_evento && data.data_fim_evento.trim() !== '') {
-        updateData.data_fim_evento = data.data_fim_evento;
-      }
-
-      // Handle required date fields - only update if they have values
-      if (data.data_inicio_inscricao && data.data_inicio_inscricao.trim() !== '') {
-        updateData.data_inicio_inscricao = data.data_inicio_inscricao;
-      }
-      
-      if (data.data_fim_inscricao && data.data_fim_inscricao.trim() !== '') {
-        updateData.data_fim_inscricao = data.data_fim_inscricao;
-      }
 
       console.log('Data to be sent to database:', updateData);
 
