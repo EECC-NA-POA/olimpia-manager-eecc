@@ -14,8 +14,14 @@ export const useRegisterForm = () => {
 
   const handleSubmit = async (values: RegisterFormData) => {
     try {
-      console.log('Starting registration process...');
+      console.log('Starting registration process with values:', values);
       setIsSubmitting(true);
+
+      // Validate required fields
+      if (!values.state || !values.branchId) {
+        toast.error('Por favor, selecione seu estado e sede');
+        return;
+      }
 
       // Get the latest privacy policy version - with improved error handling
       let privacyPolicy;
@@ -29,7 +35,7 @@ export const useRegisterForm = () => {
           .single();
           
         if (error) {
-          console.error('Error fetching privacy policy');
+          console.error('Error fetching privacy policy:', error);
           toast.error('Erro ao verificar política de privacidade. Tente novamente.');
           return;
         }
@@ -41,7 +47,7 @@ export const useRegisterForm = () => {
         
         privacyPolicy = data;
       } catch (err) {
-        console.error('Unexpected error fetching privacy policy');
+        console.error('Unexpected error fetching privacy policy:', err);
         toast.error('Erro ao verificar política de privacidade');
         return;
       }
@@ -56,7 +62,7 @@ export const useRegisterForm = () => {
       // Check for existing user
       const { data: existingUser, error: checkError } = await checkExistingUser(values.email);
       if (checkError) {
-        console.error('Error checking user existence');
+        console.error('Error checking user existence:', checkError);
         toast.error('Erro ao verificar cadastro existente.');
         return;
       }
@@ -66,8 +72,13 @@ export const useRegisterForm = () => {
         return;
       }
 
-      // Prepare user metadata - no longer includes branch ID
-      const userMetadata = prepareUserMetadata(values, formattedBirthDate);
+      // Prepare user metadata - now includes branch ID
+      const userMetadata = {
+        ...prepareUserMetadata(values, formattedBirthDate),
+        filial_id: values.branchId
+      };
+
+      console.log('User metadata prepared:', userMetadata);
 
       // Sign up user with the correct parameters: email, password, userData
       await signUp(values.email, values.password, {
@@ -79,7 +90,7 @@ export const useRegisterForm = () => {
       navigate('/event-selection');
 
     } catch (error: any) {
-      console.error('Registration process error occurred');
+      console.error('Registration process error occurred:', error);
       toast.error('Erro ao realizar cadastro. Por favor, tente novamente.');
     } finally {
       setIsSubmitting(false);
