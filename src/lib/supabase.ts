@@ -1,9 +1,13 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // Use environment variables with fallback values
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://sb.nova-acropole.org.br/';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiLm5vdmEtYWNyb3BvbGUub3JnLmJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODg5NzIwMDAsImV4cCI6MjAwNDU0ODAwMH0.x9Ll0f6bKmCBQWXGrBHtH4zPxEht0Of7XShBxUV8IkJPF8GKjXK4VKeTTt0bAMvbWcF7zUOZA02pdbLahz9Z4eFzhk6EVPwflciK5HasI7Cm7zokA4y3Sg8EG34qseUQZGTUiTjTAf9idr6mcdEEPdKSUvju6PwLJxLRjSF3oRRF6KTHrPyWpyY5rJs7m7QCFd1uMOSBQ7gY4RtTMydqWAgIHJJhxTPxC49A2rMuB0Z';
+
+console.log('Initializing Supabase client...');
+console.log('Supabase URL:', supabaseUrl);
+console.log('Anon Key length:', supabaseAnonKey.length);
+console.log('Anon Key starts with:', supabaseAnonKey.substring(0, 20) + '...');
 
 // Helper to check for invalid tokens in localStorage
 const cleanupInvalidTokens = () => {
@@ -50,6 +54,21 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     }
   }
 });
+
+console.log('Supabase client initialized successfully');
+
+// Test the connection immediately
+supabase.from('filiais').select('count', { count: 'exact', head: true })
+  .then(({ count, error }) => {
+    if (error) {
+      console.error('Supabase connection test failed:', error);
+    } else {
+      console.log('Supabase connection test successful. Filiais count:', count);
+    }
+  })
+  .catch(err => {
+    console.error('Supabase connection test error:', err);
+  });
 
 // Add error handling helper with improved JWT error detection
 export const handleSupabaseError = (error: any) => {
