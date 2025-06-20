@@ -1,4 +1,5 @@
 
+
 -- Função para processar novos usuários automaticamente
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
@@ -39,7 +40,7 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data->>'estado', ''),
     COALESCE(NEW.raw_user_meta_data->>'filial_id', ''),
     NOW(),
-    NEW.email_confirmed_at IS NOT NULL
+    true -- Definir como confirmado automaticamente para instância auto-hospedada
   );
   
   -- Criar papel de atleta por padrão se existe o perfil
@@ -82,5 +83,16 @@ ON public.usuarios
 FOR INSERT 
 WITH CHECK (true);
 
+-- Para instâncias auto-hospedadas: Configurar autoconfirmação
+-- Execute estes comandos SQL para desabilitar confirmação por email:
+
+-- OPÇÃO 1: Atualizar configuração do GoTrue (se aplicável)
+-- UPDATE auth.config SET value = 'true' WHERE name = 'MAILER_AUTOCONFIRM';
+
+-- OPÇÃO 2: Para instâncias Docker, adicione estas variáveis de ambiente:
+-- GOTRUE_MAILER_AUTOCONFIRM=true
+-- GOTRUE_MAILER_TEMPLATES_CONFIRMATION="<html><body>Conta confirmada automaticamente.</body></html>"
+
 -- Comentário explicativo
-COMMENT ON FUNCTION public.handle_new_user() IS 'Processa automaticamente novos usuários criados via Supabase Auth, criando registro na tabela usuarios e atribuindo papel padrão';
+COMMENT ON FUNCTION public.handle_new_user() IS 'Processa automaticamente novos usuários criados via Supabase Auth, criando registro na tabela usuarios e atribuindo papel padrão. Configurado para instâncias auto-hospedadas.';
+

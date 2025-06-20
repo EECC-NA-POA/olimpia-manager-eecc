@@ -61,7 +61,7 @@ export const useRegisterForm = () => {
     } catch (error: any) {
       console.error('Registration process error occurred:', error);
       
-      // Enhanced error handling with more specific messages
+      // Enhanced error handling with specific messages for self-hosted instances
       if (error.message?.includes('User already registered') || 
           error.message?.includes('already registered') ||
           error.message?.includes('duplicate key value violates unique constraint')) {
@@ -70,16 +70,18 @@ export const useRegisterForm = () => {
         toast.error('Email inválido. Por favor, verifique o formato.');
       } else if (error.message?.includes('Password') || error.message?.includes('password')) {
         toast.error('Senha deve ter pelo menos 6 caracteres.');
+      } else if (error.message?.includes('Error sending confirmation email')) {
+        toast.error('Erro de configuração SMTP. Para instâncias auto-hospedadas, configure GOTRUE_MAILER_AUTOCONFIRM=true nas variáveis de ambiente.');
       } else if (error.message?.includes('Database error') || 
                  error.message?.includes('saving new user') ||
                  error.message?.includes('unexpected_failure')) {
-        toast.error('Erro no banco de dados. A trigger SQL precisa ser executada no Supabase. Verifique a documentação.');
+        toast.error('Erro no banco de dados. Execute a trigger SQL no Supabase SQL Editor.');
       } else if (error.message?.includes('JWT') || error.message?.includes('token')) {
         toast.error('Erro de autenticação. Por favor, recarregue a página e tente novamente.');
       } else if (error.message?.includes('trigger') || error.message?.includes('function')) {
         toast.error('Erro de configuração do servidor. A trigger SQL não está configurada corretamente.');
       } else {
-        toast.error(`Erro ao realizar cadastro: ${error.message}. Se o problema persistir, verifique a configuração da trigger SQL.`);
+        toast.error(`Erro no cadastro: ${error.message}. Para instâncias auto-hospedadas, verifique as configurações SMTP ou desabilite confirmação por email.`);
       }
     } finally {
       setIsSubmitting(false);
