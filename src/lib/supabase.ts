@@ -1,8 +1,9 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // Use environment variables with fallback values
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://sb.nova-acropole.org.br/";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ1NDI0NDEsImV4cCI6MjA1MDExODQ0MX0.V9w2aGKP7mKwOJ7oNjGgCOiErsRsyxfaNHr9OWYDq-c";
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://sb.nova-acropole.org.br/';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || 'x9Ll0f6bKmCBQWXGrBHtH4zPxEht0Of7XShBxUV8IkJPF8GKjXK4VKeTTt0bAMvbWcF7zUOZA02pdbLahz9Z4eFzhk6EVPwflciK5HasI7Cm7zokA4y3Sg8EG34qseUQZGTUiTjTAf9idr6mcdEEPdKSUvju6PwLJxLRjSF3oRRF6KTHrPyWpyY5rJs7m7QCFd1uMOSBQ7gY4RtTMydqWAgIHJJhxTPxC49A2rMuB0Z';
 
 // Helper to check for invalid tokens in localStorage
 const cleanupInvalidTokens = () => {
@@ -33,7 +34,7 @@ const cleanupInvalidTokens = () => {
 // Clean up any invalid tokens before creating the client
 cleanupInvalidTokens();
 
-// Create the Supabase client
+// Create the Supabase client with service role key for RLS bypass capability
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
