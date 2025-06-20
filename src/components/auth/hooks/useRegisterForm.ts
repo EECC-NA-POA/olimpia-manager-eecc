@@ -4,7 +4,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { RegisterFormData } from '../types/form-types';
-import { formatBirthDate, checkExistingUser, prepareUserMetadata } from '../utils/registrationUtils';
+import { formatBirthDate, prepareUserMetadata } from '../utils/registrationUtils';
 
 export const useRegisterForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,18 +29,9 @@ export const useRegisterForm = () => {
         return;
       }
 
-      // Check for existing user using the correct Supabase client
-      const { data: existingUser, error: checkError } = await checkExistingUser(values.email);
-      if (checkError) {
-        console.error('Error checking user existence:', checkError);
-        toast.error('Erro ao verificar cadastro existente.');
-        return;
-      }
-
-      if (existingUser) {
-        toast.error("Este e-mail já está cadastrado. Por favor, faça login.");
-        return;
-      }
+      // Skip user existence check to avoid JWT issues
+      // Supabase auth will handle duplicate email validation during signup
+      console.log('📋 Proceeding with signup - duplicate email check will be handled by Supabase auth');
 
       // Prepare user metadata - now includes branch ID
       const userMetadata = {
@@ -61,7 +52,17 @@ export const useRegisterForm = () => {
 
     } catch (error: any) {
       console.error('Registration process error occurred:', error);
-      toast.error('Erro ao realizar cadastro. Por favor, tente novamente.');
+      
+      // Handle specific signup errors
+      if (error.message?.includes('User already registered')) {
+        toast.error('Este email já está cadastrado. Por favor, faça login.');
+      } else if (error.message?.includes('Invalid email')) {
+        toast.error('Email inválido. Por favor, verifique o formato.');
+      } else if (error.message?.includes('Password')) {
+        toast.error('Senha deve ter pelo menos 6 caracteres.');
+      } else {
+        toast.error('Erro ao realizar cadastro. Por favor, tente novamente.');
+      }
     } finally {
       setIsSubmitting(false);
     }
