@@ -57,7 +57,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 console.log('Supabase client initialized successfully');
 
-// Test the connection immediately
+// Test the connection once only
+console.log('Testing Supabase connection...');
 supabase.from('filiais').select('count', { count: 'exact', head: true })
   .then(({ count, error }) => {
     if (error) {
@@ -65,9 +66,6 @@ supabase.from('filiais').select('count', { count: 'exact', head: true })
     } else {
       console.log('Supabase connection test successful. Filiais count:', count);
     }
-  })
-  .catch(err => {
-    console.error('Supabase connection test error:', err);
   });
 
 // Add error handling helper with improved JWT error detection

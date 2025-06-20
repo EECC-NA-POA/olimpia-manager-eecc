@@ -37,8 +37,6 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
       .order('nome', { ascending: true });
     
     console.log('Supabase query completed');
-    console.log('Error:', branchesError);
-    console.log('Data:', branchesData);
     
     if (branchesError) {
       console.error('Error fetching branches by state:', branchesError);
@@ -57,7 +55,6 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
     }
 
     console.log('Branches data retrieved:', branchesData.length, 'records');
-    console.log('Sample data:', branchesData[0]);
 
     // Extract unique states and sort them
     const uniqueStates = Array.from(new Set(branchesData.map(branch => branch.estado)))
@@ -69,7 +66,6 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
     // Group branches by state
     const result = uniqueStates.map(estado => {
       const stateBranches = branchesData.filter(branch => branch.estado === estado);
-      console.log(`State ${estado}: ${stateBranches.length} branches`);
       return {
         estado,
         branches: stateBranches || []
@@ -80,8 +76,6 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
     return result;
   } catch (error) {
     console.error('Error in fetchBranchesByState:', error);
-    console.error('Error type:', typeof error);
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     throw error;
   }
 };
