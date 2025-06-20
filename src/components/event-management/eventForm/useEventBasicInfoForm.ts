@@ -22,7 +22,7 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
     defaultValues: {
       nome: eventData.nome || '',
       descricao: eventData.descricao || '',
-      pais: eventData.pais || 'Brasil',
+      pais: eventData.pais || '',
       estado: eventData.estado || '',
       cidade: eventData.cidade || '',
       tipo: eventData.tipo || 'estadual',
@@ -60,27 +60,27 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
     
     setIsLoading(true);
     try {
-      // Prepare the update data - always include all fields, using null for empty values
+      // Prepare the update data - convert empty strings to null for optional fields
       const updateData = {
         nome: data.nome,
         descricao: data.descricao,
         tipo: data.tipo,
         status_evento: data.status_evento,
         visibilidade_publica: data.visibilidade_publica,
-        // Optional fields - set to null if empty, otherwise use the value
-        pais: (data.pais && data.pais.trim() !== '') ? data.pais : null,
-        estado: (data.estado && data.estado.trim() !== '') ? data.estado : null,
-        cidade: (data.cidade && data.cidade.trim() !== '') ? data.cidade : null,
-        foto_evento: (data.foto_evento && data.foto_evento.trim() !== '') ? data.foto_evento : null,
-        // Date fields - set to null if empty, otherwise use the value
-        data_inicio_evento: (data.data_inicio_evento && data.data_inicio_evento.trim() !== '') ? data.data_inicio_evento : null,
-        data_fim_evento: (data.data_fim_evento && data.data_fim_evento.trim() !== '') ? data.data_fim_evento : null,
-        data_inicio_inscricao: (data.data_inicio_inscricao && data.data_inicio_inscricao.trim() !== '') ? data.data_inicio_inscricao : null,
-        data_fim_inscricao: (data.data_fim_inscricao && data.data_fim_inscricao.trim() !== '') ? data.data_fim_inscricao : null,
+        pais: data.pais && data.pais.trim() !== '' ? data.pais.trim() : null,
+        estado: data.estado && data.estado.trim() !== '' ? data.estado.trim() : null,
+        cidade: data.cidade && data.cidade.trim() !== '' ? data.cidade.trim() : null,
+        foto_evento: data.foto_evento && data.foto_evento.trim() !== '' ? data.foto_evento.trim() : null,
+        data_inicio_evento: data.data_inicio_evento && data.data_inicio_evento.trim() !== '' ? data.data_inicio_evento : null,
+        data_fim_evento: data.data_fim_evento && data.data_fim_evento.trim() !== '' ? data.data_fim_evento : null,
+        data_inicio_inscricao: data.data_inicio_inscricao && data.data_inicio_inscricao.trim() !== '' ? data.data_inicio_inscricao : null,
+        data_fim_inscricao: data.data_fim_inscricao && data.data_fim_inscricao.trim() !== '' ? data.data_fim_inscricao : null,
         updated_at: new Date().toISOString()
       };
 
       console.log('Data to be sent to database:', updateData);
+      console.log('Update data keys:', Object.keys(updateData));
+      console.log('Update data values:', Object.values(updateData));
 
       const { data: result, error } = await supabase
         .from('eventos')
@@ -93,12 +93,20 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
       
       if (error) {
         console.error('Database error details:', error);
+        console.error('Error message:', error.message);
+        console.error('Error details:', error.details);
+        console.error('Error hint:', error.hint);
         throw error;
       }
       
-      console.log('Event updated successfully:', result);
-      toast.success('Informações do evento atualizadas com sucesso!');
-      onUpdate(); // Refresh data
+      if (result && result.length > 0) {
+        console.log('Event updated successfully:', result[0]);
+        toast.success('Informações do evento atualizadas com sucesso!');
+        onUpdate(); // Refresh data
+      } else {
+        console.warn('No rows were updated');
+        toast.warning('Nenhuma alteração foi detectada');
+      }
     } catch (error) {
       console.error('Error updating event:', error);
       toast.error('Erro ao atualizar informações do evento: ' + (error as Error).message);
