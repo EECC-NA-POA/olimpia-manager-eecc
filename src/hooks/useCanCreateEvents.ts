@@ -18,6 +18,8 @@ export function useCanCreateEvents() {
       }
 
       try {
+        console.log('Checking create event permission for user:', user.id);
+        
         const { data, error } = await supabase
           .from('usuarios')
           .select('cadastra_eventos')
@@ -37,12 +39,13 @@ export function useCanCreateEvents() {
             data?.cadastra_eventos === 'true' || 
             data?.cadastra_eventos === 'TRUE';
           
-          console.log('Permission value:', hasPermission);
+          console.log('Can create events:', hasPermission);
           setCanCreateEvents(hasPermission || false);
         }
       } catch (error) {
         console.error('Error in useCanCreateEvents hook:', error);
-        toast.error('Erro ao verificar permissões');
+        // Don't show toast error for permission checks to avoid spam
+        console.warn('Failed to verify event creation permissions');
         setCanCreateEvents(false);
       } finally {
         setIsLoading(false);
