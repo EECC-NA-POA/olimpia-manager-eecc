@@ -21,7 +21,17 @@ export const useBranchSelection = () => {
     refetch
   } = useQuery({
     queryKey: ['branches-by-state'],
-    queryFn: fetchBranchesByState,
+    queryFn: async () => {
+      console.log('Starting fetchBranchesByState query...');
+      try {
+        const result = await fetchBranchesByState();
+        console.log('Query result:', result);
+        return result;
+      } catch (error) {
+        console.error('Query error:', error);
+        throw error;
+      }
+    },
     retry: 3,
     retryDelay: 1000,
     staleTime: 60000, // Cache for 1 minute
@@ -30,10 +40,13 @@ export const useBranchSelection = () => {
 
   // Process branch data and set states list and branches map
   useEffect(() => {
+    console.log('Processing branches data:', branchesByState);
+    
     if (branchesByState && branchesByState.length > 0) {
       console.log('Setting states from data:', branchesByState.length, 'state groups');
       // Extract states list
       const states = branchesByState.map(group => group.estado);
+      console.log('States extracted:', states);
       setStatesList(states);
       
       // Create a map of state -> branches
@@ -41,6 +54,7 @@ export const useBranchSelection = () => {
       branchesByState.forEach(group => {
         branchMap[group.estado] = group.branches;
       });
+      console.log('Branch map created:', branchMap);
       setBranchesMap(branchMap);
     } else {
       console.log('No branches by state data available');
@@ -49,12 +63,25 @@ export const useBranchSelection = () => {
     }
   }, [branchesByState]);
 
+  // Log error details
+  useEffect(() => {
+    if (error) {
+      console.error('Branch selection error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+    }
+  }, [error]);
+
   // Get branches for the selected state
   const branchesForSelectedState = selectedState && branchesMap[selectedState] 
     ? branchesMap[selectedState] 
     : [];
 
   const handleStateChange = (state: string) => {
+    console.log('State selected:', state);
     setSelectedState(state);
   };
 

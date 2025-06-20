@@ -28,6 +28,9 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
   console.log('Fetching branches grouped by state...');
   
   try {
+    // Add more detailed logging to debug the issue
+    console.log('Supabase client configured, attempting to fetch filiais...');
+    
     // Fetch all branches without authentication requirement
     const { data: branchesData, error: branchesError } = await supabase
       .from('filiais')
@@ -36,6 +39,12 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
     
     if (branchesError) {
       console.error('Error fetching branches by state:', branchesError);
+      console.error('Error details:', {
+        code: branchesError.code,
+        message: branchesError.message,
+        details: branchesError.details,
+        hint: branchesError.hint
+      });
       throw branchesError;
     }
 
@@ -45,22 +54,26 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
     }
 
     console.log('Branches data retrieved:', branchesData.length, 'records');
+    console.log('Sample branch data:', branchesData[0]);
 
     // Extract unique states and sort them
     const uniqueStates = Array.from(new Set(branchesData.map(branch => branch.estado)))
       .filter(Boolean)
       .sort();
     
+    console.log('Unique states found:', uniqueStates);
+    
     // Group branches by state
     const result = uniqueStates.map(estado => {
       const stateBranches = branchesData.filter(branch => branch.estado === estado);
+      console.log(`State ${estado} has ${stateBranches.length} branches`);
       return {
         estado,
         branches: stateBranches || []
       };
     });
     
-    console.log('States found:', uniqueStates.length, 'states');
+    console.log('Final result:', result.length, 'states with branches');
     return result;
   } catch (error) {
     console.error('Error in fetchBranchesByState:', error);
