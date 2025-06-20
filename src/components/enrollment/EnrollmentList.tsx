@@ -55,8 +55,9 @@ export const EnrollmentList = ({
   withdrawMutation,
   modalitiesWithRepresentatives = []
 }: EnrollmentListProps) => {
-  const getRepresentativeForModality = (modalityId: number) => {
-    return modalitiesWithRepresentatives.find(m => m.id === modalityId)?.representative;
+  const getRepresentativesForModality = (modalityId: number) => {
+    const modality = modalitiesWithRepresentatives.find(m => m.id === modalityId);
+    return modality?.representatives || [];
   };
 
   return (
@@ -69,13 +70,13 @@ export const EnrollmentList = ({
             <TableHead className="font-semibold">Categoria</TableHead>
             <TableHead className="font-semibold">Status</TableHead>
             <TableHead className="font-semibold">Data de Inscrição</TableHead>
-            <TableHead className="font-semibold">Representante</TableHead>
+            <TableHead className="font-semibold">Representantes</TableHead>
             <TableHead className="font-semibold">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {registeredModalities?.map((registration) => {
-            const representative = getRepresentativeForModality(registration.modalidade?.id);
+            const representatives = getRepresentativesForModality(registration.modalidade?.id);
             
             return (
               <TableRow 
@@ -95,22 +96,26 @@ export const EnrollmentList = ({
                   {formatDate(registration.data_inscricao)}
                 </TableCell>
                 <TableCell>
-                  {representative ? (
-                    <div className="space-y-1">
-                      <div className="font-medium text-sm">
-                        {representative.nome_completo}
-                      </div>
-                      {representative.telefone && (
-                        <a
-                          href={`https://wa.me/${formatPhoneForWhatsApp(representative.telefone)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-green-600 hover:text-green-700 text-sm transition-colors"
-                        >
-                          <Phone className="h-3 w-3" />
-                          {representative.telefone}
-                        </a>
-                      )}
+                  {representatives && representatives.length > 0 ? (
+                    <div className="space-y-2">
+                      {representatives.map((rep: any, index: number) => (
+                        <div key={index} className="space-y-1">
+                          <div className="font-medium text-sm">
+                            {rep.nome_completo}
+                          </div>
+                          {rep.telefone && (
+                            <a
+                              href={`https://wa.me/${formatPhoneForWhatsApp(rep.telefone)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-green-600 hover:text-green-700 text-sm transition-colors"
+                            >
+                              <Phone className="h-3 w-3" />
+                              {rep.telefone}
+                            </a>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <span className="text-gray-500 text-sm">Não definido</span>
