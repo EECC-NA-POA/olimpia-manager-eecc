@@ -1,9 +1,8 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // Use environment variables with fallback values
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://sb.nova-acropole.org.br/';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ1NDI0NDEsImV4cCI6MjA1MDExODQ0MX0.V9w2aGKP7mKwOJ7oNjGgCOiErsRsyxfaNHr9OWYDq-c';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://sb.nova-acropole.org.br/";
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ1NDI0NDEsImV4cCI6MjA1MDExODQ0MX0.V9w2aGKP7mKwOJ7oNjGgCOiErsRsyxfaNHr9OWYDq-c";
 
 // Helper to check for invalid tokens in localStorage
 const cleanupInvalidTokens = () => {
