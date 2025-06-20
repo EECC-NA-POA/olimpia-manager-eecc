@@ -81,34 +81,14 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
 
       console.log('Data to be sent to database:', updateData);
 
-      // First, let's verify the event exists
-      const { data: existingEvent, error: fetchError } = await supabase
-        .from('eventos')
-        .select('*')
-        .eq('id', eventId)
-        .single();
-
-      if (fetchError) {
-        console.error('Error fetching existing event:', fetchError);
-        throw new Error('Erro ao verificar evento existente');
-      }
-
-      if (!existingEvent) {
-        console.error('Event not found with ID:', eventId);
-        throw new Error('Evento não encontrado');
-      }
-
-      console.log('Existing event data:', existingEvent);
-
-      // Perform the update
-      const { data: result, error } = await supabase
+      // Perform the update without .select() to avoid issues
+      const { error, count } = await supabase
         .from('eventos')
         .update(updateData)
-        .eq('id', eventId)
-        .select();
+        .eq('id', eventId);
       
-      console.log('Supabase update result:', result);
       console.log('Supabase update error:', error);
+      console.log('Supabase update count:', count);
       
       if (error) {
         console.error('Database error details:', error);
@@ -118,34 +98,26 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
         throw error;
       }
       
-      // Check if any rows were updated
-      if (result && result.length > 0) {
-        console.log('Event updated successfully:', result[0]);
+      // Check count to see if rows were affected
+      if (count !== null && count > 0) {
+        console.log('Event updated successfully, rows affected:', count);
         toast.success('Informações do evento atualizadas com sucesso!');
         onUpdate(); // Refresh data
       } else {
-        console.warn('No rows were updated - this might indicate the data is the same');
+        // Fallback: Try to fetch the updated record to verify the update worked
+        const { data: verifyData, error: verifyError } = await supabase
+          .from('eventos')
+          .select('*')
+          .eq('id', eventId)
+          .single();
         
-        // Let's compare the data to see if there were actual changes
-        const hasChanges = Object.keys(updateData).some(key => {
-          if (key === 'updated_at') return false; // Skip the updated_at field
-          const currentValue = existingEvent[key];
-          const newValue = updateData[key];
-          
-          // Handle null comparisons
-          if (currentValue === null && newValue === null) return false;
-          if (currentValue === null && newValue === '') return false;
-          if (currentValue === '' && newValue === null) return false;
-          
-          return currentValue !== newValue;
-        });
-        
-        if (hasChanges) {
-          console.log('Changes detected but no rows updated - this is unexpected');
-          toast.warning('Houve um problema ao salvar as alterações. Tente novamente.');
+        if (!verifyError && verifyData) {
+          console.log('Update appears to have worked, verification data:', verifyData);
+          toast.success('Informações do evento atualizadas com sucesso!');
+          onUpdate(); // Refresh data
         } else {
-          console.log('No actual changes detected');
-          toast.info('Nenhuma alteração foi detectada nos dados');
+          console.warn('Update may have failed or no changes were made');
+          toast.warning('Não foi possível confirmar se as alterações foram salvas. Verifique os dados.');
         }
       }
     } catch (error) {
