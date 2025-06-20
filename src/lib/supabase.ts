@@ -7,8 +7,6 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIU
 
 console.log('Initializing Supabase client...');
 console.log('Supabase URL:', supabaseUrl);
-console.log('Anon Key length:', supabaseAnonKey.length);
-console.log('Anon Key starts with:', supabaseAnonKey.substring(0, 20) + '...');
 
 // Helper to check for invalid tokens in localStorage
 const cleanupInvalidTokens = () => {
@@ -58,16 +56,20 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 console.log('Supabase client initialized successfully');
 
-// Test the connection once only
-console.log('Testing Supabase connection...');
-supabase.from('filiais').select('count', { count: 'exact', head: true })
-  .then(({ count, error }) => {
-    if (error) {
-      console.error('Supabase connection test failed:', error);
-    } else {
-      console.log('Supabase connection test successful. Filiais count:', count);
-    }
-  });
+// Test connection only once
+let connectionTested = false;
+if (!connectionTested) {
+  connectionTested = true;
+  console.log('Testing Supabase connection...');
+  supabase.from('filiais').select('count', { count: 'exact', head: true })
+    .then(({ count, error }) => {
+      if (error) {
+        console.error('Supabase connection test failed:', error);
+      } else {
+        console.log('Supabase connection test successful. Filiais count:', count);
+      }
+    });
+}
 
 // Add error handling helper with improved JWT error detection
 export const handleSupabaseError = (error: any) => {
