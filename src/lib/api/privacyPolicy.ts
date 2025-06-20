@@ -1,6 +1,5 @@
 
 import { supabase } from '../supabase';
-import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '@/integrations/supabase/client';
 
 export const fetchActivePrivacyPolicy = async (): Promise<string> => {
   console.log('Fetching active privacy policy...');
@@ -23,9 +22,12 @@ export const fetchActivePrivacyPolicy = async (): Promise<string> => {
         console.log('Permission error, trying alternative approach...');
         
         // Tentativa usando acesso anônimo através da API pública
-        const publicResponse = await fetch(`${SUPABASE_URL}/rest/v1/termos_privacidade?select=termo_texto&ativo=eq.true&order=data_criacao.desc&limit=1`, {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://sb.nova-acropole.org.br/';
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'x9Ll0f6bKmCBQWXGrBHtH4zPxEht0Of7XShBxUV8IkJPF8GKjXK4VKeTTt0bAMvbWcF7zUOZA02pdbLahz9Z4eFzhk6EVPwflciK5HasI7Cm7zokA4y3Sg8EG34qseUQZGTUiTjTAf9idr6mcdEEPdKSUvju6PwLJxLRjSF3oRRF6KTHrPyWpyY5rJs7m7QCFd1uMOSBQ7gY4RtTMydqWAgIHJJhxTPxC49A2rMuB0Z';
+        
+        const publicResponse = await fetch(`${supabaseUrl}/rest/v1/termos_privacidade?select=termo_texto&ativo=eq.true&order=data_criacao.desc&limit=1`, {
           headers: {
-            'apikey': SUPABASE_PUBLISHABLE_KEY,
+            'apikey': supabaseAnonKey,
             'Content-Type': 'application/json'
           }
         });

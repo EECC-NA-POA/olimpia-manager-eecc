@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { eventSchema, EventFormValues } from './EventFormSchema';

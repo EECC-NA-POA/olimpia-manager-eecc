@@ -5,10 +5,10 @@ import {
   checkExistingUser, 
   prepareUserMetadata 
 } from '../registrationUtils';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 // Mock Supabase client
-vi.mock('@/integrations/supabase/client', () => ({
+vi.mock('@/lib/supabase', () => ({
   supabase: {
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
