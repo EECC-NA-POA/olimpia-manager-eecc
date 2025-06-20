@@ -57,13 +57,14 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
     
     console.log('Form data before submission:', data);
     console.log('Event ID:', eventId);
+    console.log('Current event data for comparison:', eventData);
     
     setIsLoading(true);
     try {
-      // Prepare the update data - convert empty strings to null for optional fields
+      // Prepare the update data - handle empty strings properly
       const updateData = {
-        nome: data.nome,
-        descricao: data.descricao,
+        nome: data.nome.trim(),
+        descricao: data.descricao.trim(),
         tipo: data.tipo,
         status_evento: data.status_evento,
         visibilidade_publica: data.visibilidade_publica,
@@ -71,17 +72,35 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
         estado: data.estado && data.estado.trim() !== '' ? data.estado.trim() : null,
         cidade: data.cidade && data.cidade.trim() !== '' ? data.cidade.trim() : null,
         foto_evento: data.foto_evento && data.foto_evento.trim() !== '' ? data.foto_evento.trim() : null,
-        data_inicio_evento: data.data_inicio_evento && data.data_inicio_evento.trim() !== '' ? data.data_inicio_evento : null,
-        data_fim_evento: data.data_fim_evento && data.data_fim_evento.trim() !== '' ? data.data_fim_evento : null,
-        data_inicio_inscricao: data.data_inicio_inscricao && data.data_inicio_inscricao.trim() !== '' ? data.data_inicio_inscricao : null,
-        data_fim_inscricao: data.data_fim_inscricao && data.data_fim_inscricao.trim() !== '' ? data.data_fim_inscricao : null,
+        data_inicio_evento: data.data_inicio_evento && data.data_inicio_evento.trim() !== '' ? data.data_inicio_evento.trim() : null,
+        data_fim_evento: data.data_fim_evento && data.data_fim_evento.trim() !== '' ? data.data_fim_evento.trim() : null,
+        data_inicio_inscricao: data.data_inicio_inscricao && data.data_inicio_inscricao.trim() !== '' ? data.data_inicio_inscricao.trim() : null,
+        data_fim_inscricao: data.data_fim_inscricao && data.data_fim_inscricao.trim() !== '' ? data.data_fim_inscricao.trim() : null,
         updated_at: new Date().toISOString()
       };
 
       console.log('Data to be sent to database:', updateData);
-      console.log('Update data keys:', Object.keys(updateData));
-      console.log('Update data values:', Object.values(updateData));
 
+      // First, let's verify the event exists
+      const { data: existingEvent, error: fetchError } = await supabase
+        .from('eventos')
+        .select('*')
+        .eq('id', eventId)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching existing event:', fetchError);
+        throw new Error('Erro ao verificar evento existente');
+      }
+
+      if (!existingEvent) {
+        console.error('Event not found with ID:', eventId);
+        throw new Error('Evento não encontrado');
+      }
+
+      console.log('Existing event data:', existingEvent);
+
+      // Perform the update
       const { data: result, error } = await supabase
         .from('eventos')
         .update(updateData)
@@ -99,13 +118,35 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
         throw error;
       }
       
+      // Check if any rows were updated
       if (result && result.length > 0) {
         console.log('Event updated successfully:', result[0]);
         toast.success('Informações do evento atualizadas com sucesso!');
         onUpdate(); // Refresh data
       } else {
-        console.warn('No rows were updated');
-        toast.warning('Nenhuma alteração foi detectada');
+        console.warn('No rows were updated - this might indicate the data is the same');
+        
+        // Let's compare the data to see if there were actual changes
+        const hasChanges = Object.keys(updateData).some(key => {
+          if (key === 'updated_at') return false; // Skip the updated_at field
+          const currentValue = existingEvent[key];
+          const newValue = updateData[key];
+          
+          // Handle null comparisons
+          if (currentValue === null && newValue === null) return false;
+          if (currentValue === null && newValue === '') return false;
+          if (currentValue === '' && newValue === null) return false;
+          
+          return currentValue !== newValue;
+        });
+        
+        if (hasChanges) {
+          console.log('Changes detected but no rows updated - this is unexpected');
+          toast.warning('Houve um problema ao salvar as alterações. Tente novamente.');
+        } else {
+          console.log('No actual changes detected');
+          toast.info('Nenhuma alteração foi detectada nos dados');
+        }
       }
     } catch (error) {
       console.error('Error updating event:', error);
