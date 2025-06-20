@@ -10,11 +10,12 @@ export const useAuthOperations = () => {
     try {
       setLoading(true);
       console.log('🚀 Starting signup process for:', email);
-      console.log('📝 User data:', userData);
+      console.log('📝 User data received:', userData);
 
-      // Clean up and validate user data before sending to Supabase
-      const cleanUserData = {
-        nome_completo: userData?.nome || '',
+      // The userData should already be properly formatted from prepareUserMetadata
+      // Just ensure we have the required fields with safe defaults
+      const userMetadata = {
+        nome_completo: userData?.nome_completo || '',
         telefone: userData?.telefone || '',
         ddi: userData?.ddi || '+55',
         tipo_documento: userData?.tipo_documento || 'CPF',
@@ -25,13 +26,13 @@ export const useAuthOperations = () => {
         filial_id: userData?.filial_id || ''
       };
 
-      console.log('📝 Clean user data:', cleanUserData);
+      console.log('📝 Final user metadata for Supabase:', userMetadata);
 
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: cleanUserData
+          data: userMetadata
         }
       });
 

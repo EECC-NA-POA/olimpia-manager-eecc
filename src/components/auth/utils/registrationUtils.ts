@@ -23,9 +23,9 @@ export const checkExistingUser = async (email: string) => {
 };
 
 export const prepareUserMetadata = (values: any, formattedBirthDate: string) => {
-  // Clean and validate all fields to ensure they're strings
+  // Map form fields to the correct database field names
   return {
-    nome: String(values.nome || '').trim(),
+    nome_completo: String(values.nome || '').trim(),
     telefone: String(values.telefone || '').trim(),
     ddi: String(values.ddi || '+55').trim(),
     tipo_documento: String(values.tipo_documento || 'CPF').trim(),
