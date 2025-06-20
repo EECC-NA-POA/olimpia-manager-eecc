@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { supabase, handleSupabaseError } from '@/lib/supabase';
 import { toast } from "sonner";
@@ -11,11 +12,26 @@ export const useAuthOperations = () => {
       console.log('🚀 Starting signup process for:', email);
       console.log('📝 User data:', userData);
 
+      // Clean up and validate user data before sending to Supabase
+      const cleanUserData = {
+        nome_completo: userData?.nome || '',
+        telefone: userData?.telefone || '',
+        ddi: userData?.ddi || '+55',
+        tipo_documento: userData?.tipo_documento || 'CPF',
+        numero_documento: userData?.numero_documento || '',
+        genero: userData?.genero || '',
+        data_nascimento: userData?.data_nascimento || '',
+        estado: userData?.estado || '',
+        filial_id: userData?.filial_id || ''
+      };
+
+      console.log('📝 Clean user data:', cleanUserData);
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: userData?.data || {}
+          data: cleanUserData
         }
       });
 

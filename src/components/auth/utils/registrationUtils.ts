@@ -23,15 +23,16 @@ export const checkExistingUser = async (email: string) => {
 };
 
 export const prepareUserMetadata = (values: any, formattedBirthDate: string) => {
+  // Clean and validate all fields to ensure they're strings
   return {
-    nome: values.nome,
-    telefone: values.telefone,
-    ddi: values.ddi,
-    tipo_documento: values.tipo_documento,
-    numero_documento: values.numero_documento,
-    genero: values.genero,
+    nome: String(values.nome || '').trim(),
+    telefone: String(values.telefone || '').trim(),
+    ddi: String(values.ddi || '+55').trim(),
+    tipo_documento: String(values.tipo_documento || 'CPF').trim(),
+    numero_documento: String(values.numero_documento || '').trim(),
+    genero: String(values.genero || '').trim(),
     data_nascimento: formattedBirthDate,
-    estado: values.state,
-    filial_id: values.branchId
+    estado: String(values.state || '').trim(),
+    filial_id: String(values.branchId || '').trim()
   };
 };

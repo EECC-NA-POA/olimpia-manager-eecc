@@ -35,18 +35,13 @@ export const useRegisterForm = () => {
         return;
       }
 
-      // Prepare user metadata - now includes branch ID
-      const userMetadata = {
-        ...prepareUserMetadata(values, formattedBirthDate),
-        filial_id: values.branchId
-      };
+      // Prepare user metadata with cleaner structure
+      const userMetadata = prepareUserMetadata(values, formattedBirthDate);
 
       console.log('User metadata prepared:', userMetadata);
 
-      // Sign up user with the correct parameters: email, password, userData
-      const result = await signUp(values.email, values.password, {
-        data: userMetadata
-      });
+      // Sign up user with simplified metadata structure
+      const result = await signUp(values.email, values.password, userMetadata);
 
       console.log('Signup result:', result);
 
@@ -67,14 +62,20 @@ export const useRegisterForm = () => {
       console.error('Registration process error occurred:', error);
       
       // Handle specific signup errors
-      if (error.message?.includes('User already registered') || error.message?.includes('already registered')) {
+      if (error.message?.includes('User already registered') || 
+          error.message?.includes('already registered') ||
+          error.message?.includes('duplicate key value violates unique constraint')) {
         toast.error('Este email já está cadastrado. Por favor, faça login.');
       } else if (error.message?.includes('Invalid email')) {
         toast.error('Email inválido. Por favor, verifique o formato.');
       } else if (error.message?.includes('Password') || error.message?.includes('password')) {
         toast.error('Senha deve ter pelo menos 6 caracteres.');
-      } else if (error.message?.includes('Database error')) {
-        toast.error('Erro no banco de dados. Verifique suas informações e tente novamente.');
+      } else if (error.message?.includes('Database error') || 
+                 error.message?.includes('saving new user') ||
+                 error.message?.includes('unexpected_failure')) {
+        toast.error('Erro no sistema. Por favor, tente novamente em alguns instantes.');
+      } else if (error.message?.includes('JWT') || error.message?.includes('token')) {
+        toast.error('Erro de autenticação. Por favor, recarregue a página e tente novamente.');
       } else {
         toast.error('Erro ao realizar cadastro. Por favor, tente novamente.');
       }
