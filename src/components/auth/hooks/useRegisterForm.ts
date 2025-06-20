@@ -29,10 +29,6 @@ export const useRegisterForm = () => {
         return;
       }
 
-      // Skip user existence check to avoid JWT issues
-      // Supabase auth will handle duplicate email validation during signup
-      console.log('📋 Proceeding with signup - duplicate email check will be handled by Supabase auth');
-
       // Prepare user metadata - now includes branch ID
       const userMetadata = {
         ...prepareUserMetadata(values, formattedBirthDate),
@@ -48,25 +44,31 @@ export const useRegisterForm = () => {
 
       console.log('Signup result:', result);
 
-      // If we reach here, signup was successful
-      toast.success('Cadastro realizado com sucesso!');
-      
-      // Wait a bit for the auth state to update, then redirect
-      setTimeout(() => {
-        console.log('Redirecting to event selection after successful signup');
-        navigate('/event-selection', { replace: true });
-      }, 1000);
+      // Check if signup was successful
+      if (result && (result.user || result.session)) {
+        toast.success('Cadastro realizado com sucesso!');
+        
+        // Wait a bit for the auth state to update, then redirect
+        setTimeout(() => {
+          console.log('Redirecting to event selection after successful signup');
+          navigate('/event-selection', { replace: true });
+        }, 1500);
+      } else {
+        throw new Error('Falha no cadastro - nenhum usuário ou sessão retornado');
+      }
 
     } catch (error: any) {
       console.error('Registration process error occurred:', error);
       
       // Handle specific signup errors
-      if (error.message?.includes('User already registered')) {
+      if (error.message?.includes('User already registered') || error.message?.includes('already registered')) {
         toast.error('Este email já está cadastrado. Por favor, faça login.');
       } else if (error.message?.includes('Invalid email')) {
         toast.error('Email inválido. Por favor, verifique o formato.');
-      } else if (error.message?.includes('Password')) {
+      } else if (error.message?.includes('Password') || error.message?.includes('password')) {
         toast.error('Senha deve ter pelo menos 6 caracteres.');
+      } else if (error.message?.includes('Database error')) {
+        toast.error('Erro no banco de dados. Verifique suas informações e tente novamente.');
       } else {
         toast.error('Erro ao realizar cadastro. Por favor, tente novamente.');
       }

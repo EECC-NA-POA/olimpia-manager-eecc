@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { supabase, handleSupabaseError } from '@/lib/supabase';
 import { toast } from "sonner";
@@ -6,7 +5,7 @@ import { toast } from "sonner";
 export const useAuthOperations = () => {
   const [loading, setLoading] = useState(false);
 
-  const signUp = useCallback(async (email: string, password: string, userData?: any): Promise<void> => {
+  const signUp = useCallback(async (email: string, password: string, userData?: any): Promise<any> => {
     try {
       setLoading(true);
       console.log('🚀 Starting signup process for:', email);
@@ -31,8 +30,11 @@ export const useAuthOperations = () => {
         needsConfirmation: !data.session
       });
 
+      // Return the result for the calling code to handle
+      return data;
+
     } catch (error: any) {
-      console.error('Sign up error occurred');
+      console.error('Sign up error occurred:', error);
       const errorMessage = handleSupabaseError(error);
       throw new Error(errorMessage);
     } finally {
