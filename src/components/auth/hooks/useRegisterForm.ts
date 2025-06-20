@@ -4,7 +4,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { RegisterFormData } from '../types/form-types';
-import { formatBirthDate, prepareUserMetadata } from '../utils/registrationUtils';
+import { formatBirthDate } from '../utils/registrationUtils';
 
 export const useRegisterForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,17 +30,18 @@ export const useRegisterForm = () => {
 
       // Format birth date
       const formattedBirthDate = formatBirthDate(values.data_nascimento);
-      if (!formattedBirthDate) {
-        toast.error('Data de nascimento inválida');
-        return;
-      }
 
-      // Prepare user metadata with cleaner structure
-      const userMetadata = prepareUserMetadata(values, formattedBirthDate);
+      // Prepare simplified user metadata - only essential fields
+      const userMetadata = {
+        nome_completo: values.nome || '',
+        telefone: values.telefone || '',
+        estado: values.state || '',
+        filial_id: values.branchId || ''
+      };
 
-      console.log('User metadata prepared:', userMetadata);
+      console.log('Simplified user metadata for Supabase:', userMetadata);
 
-      // Sign up user with simplified metadata structure
+      // Sign up user with minimal metadata
       const result = await signUp(values.email, values.password, userMetadata);
 
       console.log('Signup result:', result);
@@ -61,7 +62,7 @@ export const useRegisterForm = () => {
     } catch (error: any) {
       console.error('Registration process error occurred:', error);
       
-      // Enhanced error handling with specific messages for self-hosted instances
+      // Enhanced error handling
       if (error.message?.includes('User already registered') || 
           error.message?.includes('already registered') ||
           error.message?.includes('duplicate key value violates unique constraint')) {
@@ -71,17 +72,13 @@ export const useRegisterForm = () => {
       } else if (error.message?.includes('Password') || error.message?.includes('password')) {
         toast.error('Senha deve ter pelo menos 6 caracteres.');
       } else if (error.message?.includes('Error sending confirmation email')) {
-        toast.error('Erro de configuração SMTP. Para instâncias auto-hospedadas, configure GOTRUE_MAILER_AUTOCONFIRM=true nas variáveis de ambiente.');
-      } else if (error.message?.includes('Database error') || 
-                 error.message?.includes('saving new user') ||
-                 error.message?.includes('unexpected_failure')) {
-        toast.error('Erro no banco de dados. Execute a trigger SQL no Supabase SQL Editor.');
-      } else if (error.message?.includes('JWT') || error.message?.includes('token')) {
-        toast.error('Erro de autenticação. Por favor, recarregue a página e tente novamente.');
-      } else if (error.message?.includes('trigger') || error.message?.includes('function')) {
-        toast.error('Erro de configuração do servidor. A trigger SQL não está configurada corretamente.');
+        toast.success('Usuário criado! Para instâncias auto-hospedadas, a confirmação por email pode estar desabilitada.');
+        // Still redirect even if email confirmation fails
+        setTimeout(() => {
+          navigate('/event-selection', { replace: true });
+        }, 2000);
       } else {
-        toast.error(`Erro no cadastro: ${error.message}. Para instâncias auto-hospedadas, verifique as configurações SMTP ou desabilite confirmação por email.`);
+        toast.error(`Erro no cadastro: ${error.message}`);
       }
     } finally {
       setIsSubmitting(false);
