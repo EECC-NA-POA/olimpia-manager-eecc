@@ -41,9 +41,17 @@ export function useAdminAccess() {
         if (error) throw error;
 
         // Check if any of the user's roles has the type code "ADM"
-        const hasAdminRole = userRoles?.some(
-          role => role.perfis?.perfis_tipo?.codigo === 'ADM'
-        );
+        const hasAdminRole = userRoles?.some(role => {
+          // Handle the nested relationship correctly
+          const perfis = role.perfis;
+          if (perfis && !Array.isArray(perfis)) {
+            const perfisType = perfis.perfis_tipo;
+            if (perfisType && !Array.isArray(perfisType)) {
+              return perfisType.codigo === 'ADM';
+            }
+          }
+          return false;
+        });
 
         if (!hasAdminRole) {
           toast({
