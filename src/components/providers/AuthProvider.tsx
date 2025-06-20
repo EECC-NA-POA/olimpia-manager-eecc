@@ -19,7 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signOut, signUp, resendVerificationEmail } = useAuthOperations({ setUser, navigate, location });
+  const { signIn, signOut, signUp, resendVerificationEmail } = useAuthOperations();
 
   // Update localStorage when currentEventId changes
   useEffect(() => {
