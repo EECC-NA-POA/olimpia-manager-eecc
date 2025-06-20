@@ -9,6 +9,7 @@ import { PersonalInfoSection } from './form-sections/PersonalInfoSection';
 import { ContactSection } from './form-sections/ContactSection';
 import { AuthSection } from './form-sections/AuthSection';
 import { LocationSelector } from './form-sections/location/LocationSelector';
+import { PrivacyPolicySection } from './form-sections/PrivacyPolicySection';
 import { registerSchema, RegisterFormData } from './types/form-types';
 import { useRegisterForm } from './hooks/useRegisterForm';
 
@@ -42,6 +43,7 @@ export const SignUpForm = () => {
           <ContactSection form={form} />
           <LocationSelector form={form} />
           <AuthSection form={form} />
+          <PrivacyPolicySection form={form} />
         </div>
 
         <div className="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg">

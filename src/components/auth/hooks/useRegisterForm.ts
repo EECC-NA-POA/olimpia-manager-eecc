@@ -22,6 +22,12 @@ export const useRegisterForm = () => {
         return;
       }
 
+      // Validate privacy policy acceptance
+      if (!values.acceptPrivacyPolicy) {
+        toast.error('É necessário aceitar a política de privacidade para continuar');
+        return;
+      }
+
       // Format birth date
       const formattedBirthDate = formatBirthDate(values.data_nascimento);
       if (!formattedBirthDate) {
