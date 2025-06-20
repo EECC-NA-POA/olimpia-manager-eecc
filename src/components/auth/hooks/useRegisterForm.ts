@@ -42,13 +42,20 @@ export const useRegisterForm = () => {
       console.log('User metadata prepared:', userMetadata);
 
       // Sign up user with the correct parameters: email, password, userData
-      await signUp(values.email, values.password, {
+      const result = await signUp(values.email, values.password, {
         data: userMetadata
       });
 
+      console.log('Signup result:', result);
+
       // If we reach here, signup was successful
-      toast.success('Cadastro realizado com sucesso! Por favor, selecione um evento para continuar.');
-      navigate('/event-selection');
+      toast.success('Cadastro realizado com sucesso!');
+      
+      // Wait a bit for the auth state to update, then redirect
+      setTimeout(() => {
+        console.log('Redirecting to event selection after successful signup');
+        navigate('/event-selection', { replace: true });
+      }, 1000);
 
     } catch (error: any) {
       console.error('Registration process error occurred:', error);
