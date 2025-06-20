@@ -82,17 +82,17 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
         console.log('📡 Fallback response status:', publicResponse.status);
         
         if (publicResponse.ok) {
-          const fallbackData = await publicResponse.json();
+          const fallbackData = await publicResponse.json() as Branch[];
           console.log('✅ Fallback data retrieved:', fallbackData.length, 'records');
           if (fallbackData && fallbackData.length > 0) {
             // Process fallback data same way
-            const uniqueStates = Array.from(new Set(fallbackData.map((branch: any) => branch.estado)))
-              .filter(Boolean)
+            const uniqueStates = Array.from(new Set(fallbackData.map((branch: Branch) => branch.estado)))
+              .filter((estado): estado is string => Boolean(estado))
               .sort();
             
             const result = uniqueStates.map(estado => ({
               estado,
-              branches: fallbackData.filter((branch: any) => branch.estado === estado) || []
+              branches: fallbackData.filter((branch: Branch) => branch.estado === estado) || []
             }));
             
             console.log('✅ Fallback result processed:', result.length, 'states');
@@ -121,7 +121,7 @@ export const fetchBranchesByState = async (): Promise<{ estado: string; branches
 
     // Extract unique states and sort them
     const uniqueStates = Array.from(new Set(branchesData.map(branch => branch.estado)))
-      .filter(Boolean)
+      .filter((estado): estado is string => Boolean(estado))
       .sort();
     
     console.log('🗺️ States found:', uniqueStates);
