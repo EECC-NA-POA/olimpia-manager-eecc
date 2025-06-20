@@ -12,16 +12,15 @@ export const useAuthOperations = () => {
       console.log('🚀 Starting signup process for:', email);
       console.log('📝 User data received:', userData);
 
-      // The userData should already be properly formatted from prepareUserMetadata
-      // Just ensure we have the required fields with safe defaults
+      // Ensure we have properly formatted user metadata
       const userMetadata = {
         nome_completo: userData?.nome_completo || '',
         telefone: userData?.telefone || '',
         ddi: userData?.ddi || '+55',
         tipo_documento: userData?.tipo_documento || 'CPF',
         numero_documento: userData?.numero_documento || '',
-        genero: userData?.genero || '',
-        data_nascimento: userData?.data_nascimento || '',
+        genero: userData?.genero || 'Masculino',
+        data_nascimento: userData?.data_nascimento || '1990-01-01',
         estado: userData?.estado || '',
         filial_id: userData?.filial_id || ''
       };
@@ -38,6 +37,19 @@ export const useAuthOperations = () => {
 
       if (error) {
         console.error('❌ Signup error:', error);
+        
+        // Special handling for email confirmation error in self-hosted instances
+        if (error.message?.includes('Error sending confirmation email')) {
+          console.log('📧 Email confirmation error detected - likely self-hosted instance');
+          
+          // Return partial success since user might have been created
+          return {
+            user: { id: 'pending', email: email }, // Placeholder to indicate partial success
+            session: null,
+            emailConfirmationError: true
+          };
+        }
+        
         throw error;
       }
 
@@ -47,7 +59,6 @@ export const useAuthOperations = () => {
         needsConfirmation: !data.session
       });
 
-      // Return the result for the calling code to handle
       return data;
 
     } catch (error: any) {
