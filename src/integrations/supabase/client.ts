@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 export const SUPABASE_URL = "https://sb.nova-acropole.org.br/";
-export const SUPABASE_PUBLISHABLE_KEY = "x9Ll0f6bKmCBQWXGrBHtH4zPxEht0Of7XShBxUV8IkJPF8GKjXK4VKeTTt0bAMvbWcF7zUOZA02pdbLahz9Z4eFzhk6EVPwflciK5HasI7Cm7zokA4y3Sg8EG34qseUQZGTUiTjTAf9idr6mcdEEPdKSUvju6PwLJxLRjSF3oRRF6KTHrPyWpyY5rJs7m7QCFd1uMOSBQ7gY4RtTMydqWAgIHJJhxTPxC49A2rMuB0Z";
+export const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ1NDI0NDEsImV4cCI6MjA1MDExODQ0MX0.V9w2aGKP7mKwOJ7oNjGgCOiErsRsyxfaNHr9OWYDq-c";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
