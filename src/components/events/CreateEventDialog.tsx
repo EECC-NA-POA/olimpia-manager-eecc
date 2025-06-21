@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -102,8 +103,8 @@ export function CreateEventDialog({ open, onOpenChange, onEventCreated }: Create
         }
       }
 
-      // Find or create the Administrator profile for this event
-      console.log('👤 Setting up admin profile for event:', newEvent.id);
+      // Find the Administrator profile created by the trigger
+      console.log('👤 Looking for admin profile created by trigger for event:', newEvent.id);
       
       const { data: adminProfile, error: profileError } = await supabase
         .from('perfis')
@@ -112,56 +113,21 @@ export function CreateEventDialog({ open, onOpenChange, onEventCreated }: Create
         .eq('nome', 'Administração')
         .single();
 
-      let adminProfileId;
-
       if (profileError || !adminProfile) {
-        console.log('📋 Creating new admin profile for event');
-        
-        // Create the profile if it doesn't exist
-        const { data: newAdminProfile, error: createProfileError } = await supabase
-          .from('perfis')
-          .insert({
-            nome: 'Administração',
-            descricao: 'Acesso administrativo ao evento',
-            evento_id: newEvent.id,
-            perfil_tipo_id: '22f7db2c-879a-4697-964c-4445b035c6cd' // Assuming this is the admin profile type ID
-          })
-          .select('id')
-          .single();
-
-        if (createProfileError) {
-          console.error('Error creating admin profile:', createProfileError);
-          toast.error('Evento criado, mas houve um erro ao criar perfil de administração');
-          adminProfileId = null;
-        } else {
-          adminProfileId = newAdminProfile.id;
-          console.log('✅ Admin profile created with ID:', adminProfileId);
-        }
+        console.error('❌ Error finding admin profile created by trigger:', profileError);
+        toast.error('Evento criado, mas houve um erro ao localizar perfil de administração');
       } else {
-        adminProfileId = adminProfile.id;
-        console.log('✅ Using existing admin profile with ID:', adminProfileId);
-      }
-
-      // Assign the current user the Administrator profile for this event
-      if (adminProfileId && user?.id) {
-        console.log('🔐 Assigning admin role to user:', user.id, 'for event:', newEvent.id);
+        console.log('✅ Found admin profile with ID:', adminProfile.id);
         
-        // First check if the role already exists
-        const { data: existingRole } = await supabase
-          .from('papeis_usuarios')
-          .select('id')
-          .eq('usuario_id', user.id)
-          .eq('perfil_id', adminProfileId)
-          .eq('evento_id', newEvent.id)
-          .single();
-
-        if (!existingRole) {
-          // Only insert if role doesn't exist
+        // Assign the current user the Administrator profile for this event
+        if (user?.id) {
+          console.log('🔐 Assigning admin role to user:', user.id, 'for event:', newEvent.id);
+          
           const { error: assignRoleError } = await supabase
             .from('papeis_usuarios')
             .insert({
               usuario_id: user.id,
-              perfil_id: adminProfileId,
+              perfil_id: adminProfile.id,
               evento_id: newEvent.id
             });
 
@@ -171,8 +137,6 @@ export function CreateEventDialog({ open, onOpenChange, onEventCreated }: Create
           } else {
             console.log('✅ Admin role assigned successfully');
           }
-        } else {
-          console.log('ℹ️ Admin role already exists for this user and event');
         }
       }
 
@@ -191,10 +155,6 @@ export function CreateEventDialog({ open, onOpenChange, onEventCreated }: Create
         } else {
           toast.error('Erro: Já existe um registro com essas informações. Verifique os dados e tente novamente.');
         }
-      } else if (error.code === '42P10') {
-        // ON CONFLICT specification error - this shouldn't happen in event creation
-        console.error('Unexpected ON CONFLICT error during event creation');
-        toast.error('Erro interno do sistema. Tente novamente em alguns instantes.');
       } else if (error.message?.includes('duplicate key value') || 
                  error.message?.includes('unique constraint')) {
         toast.error('Erro: Já existe um evento com essas informações. Verifique o nome e tente novamente.');
