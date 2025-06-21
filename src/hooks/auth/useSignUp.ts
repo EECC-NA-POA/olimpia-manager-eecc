@@ -39,41 +39,35 @@ export const useSignUp = () => {
       console.log('📋 Signup response - data:', data, 'error:', error);
 
       // Handle specific email confirmation error for self-hosted instances
-      if (error && error.message?.includes('Error sending confirmation email')) {
-        console.log('📧 Email confirmation error detected for self-hosted instance');
-        
-        // For self-hosted instances, try a different approach - create user without email confirmation
-        try {
-          console.log('🔄 Attempting alternative signup without email confirmation...');
-          
-          // Try signing up with different options
-          const { data: altData, error: altError } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: userMetadata,
-              // Don't require email confirmation for self-hosted
-            }
-          });
-
-          if (altError && !altError.message?.includes('Error sending confirmation email')) {
-            throw altError;
-          }
-
-          if (altData.user) {
-            console.log('✅ Alternative signup successful');
-            return altData;
-          }
-        } catch (altErr) {
-          console.error('❌ Alternative signup also failed:', altErr);
-        }
-
-        // If all else fails, inform user about email configuration
-        throw new Error('Erro de configuração do servidor de email. Entre em contato com o administrador do sistema.');
-      }
-
-      // Handle other errors normally
       if (error) {
+        if (error.message?.includes('Error sending confirmation email')) {
+          console.log('📧 Email confirmation error detected for self-hosted instance');
+          
+          // Check if user was actually created despite email error
+          try {
+            console.log('🔍 Checking if user was created despite email error...');
+            const { data: { user }, error: sessionError } = await supabase.auth.getUser();
+            
+            if (user) {
+              console.log('✅ User was created successfully despite email error');
+              return { user, session: null, needsLogin: false };
+            }
+          } catch (checkError) {
+            console.log('❌ User check failed:', checkError);
+          }
+          
+          // Return specific error for email configuration
+          throw new Error('MAILER_ERROR');
+        }
+        
+        // Handle user already exists error
+        if (error.message?.includes('User already registered') || 
+            error.message?.includes('already registered') ||
+            error.message?.includes('duplicate key value')) {
+          console.log('⚠️ User already exists');
+          throw new Error('USER_EXISTS');
+        }
+        
         console.error('❌ Signup error:', error);
         throw error;
       }
@@ -93,6 +87,12 @@ export const useSignUp = () => {
 
     } catch (error: any) {
       console.error('❌ Sign up error occurred:', error);
+      
+      // Don't transform special errors
+      if (error.message === 'MAILER_ERROR' || error.message === 'USER_EXISTS') {
+        throw error;
+      }
+      
       const errorMessage = handleSupabaseError(error);
       throw new Error(errorMessage);
     } finally {

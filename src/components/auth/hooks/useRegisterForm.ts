@@ -79,16 +79,30 @@ export const useRegisterForm = () => {
       console.error('❌ Registration process error:', error);
       
       // Handle specific error cases
-      if (error.message?.includes('User already registered') || 
-          error.message?.includes('already registered') ||
-          error.message?.includes('duplicate key value violates unique constraint')) {
-        toast.error('Este email já está cadastrado. Por favor, faça login.');
+      if (error.message === 'USER_EXISTS') {
+        toast.error(
+          <div className="space-y-2">
+            <p className="font-semibold">Este email já está cadastrado!</p>
+            <p className="text-sm">Tente fazer login na aba "Login" ao lado.</p>
+          </div>, 
+          { duration: 6000 }
+        );
+      } else if (error.message === 'MAILER_ERROR') {
+        toast.error(
+          <div className="space-y-2">
+            <p className="font-semibold">Problema na configuração do servidor de email</p>
+            <ul className="text-sm space-y-1">
+              <li>• O cadastro pode ter sido criado mesmo assim</li>
+              <li>• Tente fazer login na aba "Login"</li>
+              <li>• Se não conseguir, contate o administrador</li>
+            </ul>
+          </div>, 
+          { duration: 10000 }
+        );
       } else if (error.message?.includes('Invalid email')) {
         toast.error('Email inválido. Por favor, verifique o formato.');
       } else if (error.message?.includes('Password') || error.message?.includes('password')) {
         toast.error('Senha deve ter pelo menos 6 caracteres.');
-      } else if (error.message?.includes('configuração do servidor de email')) {
-        toast.error('Problema na configuração do servidor. Tente fazer login se o cadastro foi criado.');
       } else if (error.message?.includes('JWT') || error.message?.includes('connection')) {
         toast.error('Erro de conexão com o servidor. Verifique sua internet e tente novamente.');
       } else {
