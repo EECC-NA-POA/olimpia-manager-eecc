@@ -205,14 +205,14 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
       }
     }
 
-    // Wait for trigger to complete and then assign roles
-    console.log('⏳ Waiting for trigger to complete and assigning roles...');
+    // Wait for default profiles trigger to complete
+    console.log('⏳ Waiting for default profiles creation...');
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     try {
-      await assignRolesToCreator(newEvent.id as string, userId);
+      await assignRolesToCreatorAndRegister(newEvent.id as string, userId);
     } catch (roleError) {
-      console.error('❌ Error assigning roles, but event was created:', roleError);
+      console.error('❌ Error assigning roles and registering, but event was created:', roleError);
       // Don't throw here either - the event was created successfully
       console.warn('⚠️ Event created but role assignment failed. You can assign roles later in event management.');
     }
@@ -268,8 +268,8 @@ async function createEventBranchRelationships(eventId: string, branchIds: string
   console.log('✅ Branch relationships created successfully');
 }
 
-async function assignRolesToCreator(eventId: string, userId: string) {
-  console.log('👤 Assigning both admin and athlete roles to event creator for event:', eventId);
+async function assignRolesToCreatorAndRegister(eventId: string, userId: string) {
+  console.log('👤 Assigning admin and athlete roles to event creator and registering for event:', eventId);
   
   // Find both admin and athlete profiles created by trigger
   let adminProfile, athleteProfile;
@@ -338,7 +338,23 @@ async function assignRolesToCreator(eventId: string, userId: string) {
 
   console.log('✅ Both admin and athlete roles assigned successfully');
   
-  // Now create the event registration (inscricoes_eventos)
+  // Now get the athlete profile's registration fee to create the event registration
+  console.log('📝 Getting athlete profile registration fee...');
+  
+  const { data: registrationFee, error: feeError } = await supabase
+    .from('taxas_inscricao')
+    .select('id, valor')
+    .eq('perfil_id', athleteProfile.id)
+    .single();
+
+  if (feeError || !registrationFee) {
+    console.error('❌ Error getting registration fee:', feeError);
+    throw new Error('Evento criado e papéis atribuídos, mas houve um erro ao obter taxa de inscrição');
+  }
+
+  console.log('✅ Found registration fee:', registrationFee);
+  
+  // Create the event registration (inscricoes_eventos)
   console.log('📝 Creating event registration for the creator...');
   
   const { error: registrationError } = await supabase
@@ -346,7 +362,8 @@ async function assignRolesToCreator(eventId: string, userId: string) {
     .insert({
       usuario_id: userId,
       evento_id: eventId,
-      status_inscricao: 'confirmada',
+      selected_role: athleteProfile.id,
+      taxa_inscricao_id: registrationFee.id,
       data_inscricao: new Date().toISOString()
     });
 
