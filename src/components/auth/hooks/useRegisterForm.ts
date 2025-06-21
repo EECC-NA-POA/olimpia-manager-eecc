@@ -13,7 +13,7 @@ export const useRegisterForm = () => {
 
   const handleSubmit = async (values: RegisterFormData) => {
     try {
-      console.log('Starting registration process with values:', values);
+      console.log('🎯 Starting registration process with values:', values);
       setIsSubmitting(true);
 
       // Validate required fields
@@ -44,39 +44,33 @@ export const useRegisterForm = () => {
         filial_id: values.branchId || ''
       };
 
-      console.log('User metadata for Supabase:', userMetadata);
+      console.log('📝 User metadata for registration:', userMetadata);
 
-      // Sign up user
+      // Attempt to sign up user
       const result = await signUp(values.email, values.password, userMetadata);
 
-      console.log('Signup result:', result);
+      console.log('📋 Registration result:', result);
 
-      // Check if signup was successful (user created even without email confirmation)
-      if (result && result.user) {
+      // Check if signup was successful (user created)
+      if (result && (result.user || result.emailConfirmationError === false)) {
+        console.log('✅ Registration successful - user created');
         toast.success('Cadastro realizado com sucesso!');
         
         // Redirect after successful signup
         setTimeout(() => {
-          console.log('Redirecting to event selection after successful signup');
+          console.log('🔄 Redirecting to event selection after successful signup');
           navigate('/event-selection', { replace: true });
         }, 1500);
       } else {
+        console.error('❌ Registration failed - no user created');
         throw new Error('Falha no cadastro - usuário não foi criado');
       }
 
     } catch (error: any) {
-      console.error('Registration process error occurred:', error);
+      console.error('❌ Registration process error:', error);
       
-      // Enhanced error handling for self-hosted instances
-      if (error.message?.includes('Error sending confirmation email')) {
-        // For self-hosted instances, user might be created even if email fails
-        toast.success('Usuário criado com sucesso! Email de confirmação não é necessário nesta configuração.');
-        
-        // Still redirect as the user was likely created
-        setTimeout(() => {
-          navigate('/event-selection', { replace: true });
-        }, 2000);
-      } else if (error.message?.includes('User already registered') || 
+      // Handle specific error cases
+      if (error.message?.includes('User already registered') || 
           error.message?.includes('already registered') ||
           error.message?.includes('duplicate key value violates unique constraint')) {
         toast.error('Este email já está cadastrado. Por favor, faça login.');
