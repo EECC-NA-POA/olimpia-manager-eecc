@@ -80,25 +80,13 @@ export const useRegisterForm = () => {
       
       // Handle specific error cases
       if (error.message === 'USER_EXISTS') {
-        toast.error(
-          <div className="space-y-2">
-            <p className="font-semibold">Este email já está cadastrado!</p>
-            <p className="text-sm">Tente fazer login na aba "Login" ao lado.</p>
-          </div>, 
-          { duration: 6000 }
-        );
+        toast.error('Este email já está cadastrado! Tente fazer login na aba "Login" ao lado.', { 
+          duration: 6000 
+        });
       } else if (error.message === 'MAILER_ERROR') {
-        toast.error(
-          <div className="space-y-2">
-            <p className="font-semibold">Problema na configuração do servidor de email</p>
-            <ul className="text-sm space-y-1">
-              <li>• O cadastro pode ter sido criado mesmo assim</li>
-              <li>• Tente fazer login na aba "Login"</li>
-              <li>• Se não conseguir, contate o administrador</li>
-            </ul>
-          </div>, 
-          { duration: 10000 }
-        );
+        toast.error('Problema na configuração do servidor de email. O cadastro pode ter sido criado mesmo assim. Tente fazer login na aba "Login". Se não conseguir, contate o administrador.', { 
+          duration: 10000 
+        });
       } else if (error.message?.includes('Invalid email')) {
         toast.error('Email inválido. Por favor, verifique o formato.');
       } else if (error.message?.includes('Password') || error.message?.includes('password')) {
