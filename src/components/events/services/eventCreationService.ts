@@ -245,10 +245,13 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
 async function createEventBranchRelationships(eventId: string, branchIds: string[]) {
   console.log('🏢 Creating branch relationships for branches:', branchIds);
   
+  // Prepare the data for insertion
   const branchRelationships = branchIds.map(branchId => ({
     evento_id: eventId,
     filial_id: branchId
   }));
+
+  console.log('📝 Branch relationships to insert:', branchRelationships);
 
   const { error: branchError } = await supabase
     .from('eventos_filiais')
