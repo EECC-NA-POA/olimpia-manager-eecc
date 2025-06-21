@@ -74,25 +74,31 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
     console.log('⏳ Creating event in database...');
     const result = await createEventWithTimeout(eventData);
     
-    if ('error' in result && result.error) {
+    if (result && typeof result === 'object' && 'error' in result && result.error) {
       console.error('❌ Database error during event creation:', result.error);
       throw result.error;
     }
 
-    const newEvent = 'data' in result ? result.data : result;
+    // Extract the event data - handle both direct data and wrapped response
+    const newEvent = result && typeof result === 'object' && 'data' in result ? result.data : result;
+    
+    if (!newEvent || typeof newEvent !== 'object' || !('id' in newEvent)) {
+      throw new Error('Erro inesperado: dados do evento não foram retornados corretamente');
+    }
+    
     console.log('✅ Event created successfully:', newEvent);
     console.log('✅ Default profiles should be created automatically by trigger');
     
     // If branches were selected, create the event-branch relationships
     if (data.selectedBranches && data.selectedBranches.length > 0) {
       console.log('🏢 Creating branch relationships...');
-      await createEventBranchRelationships(newEvent.id, data.selectedBranches);
+      await createEventBranchRelationships(newEvent.id as string, data.selectedBranches);
     }
 
     // Assign admin role to creator - wait a bit for trigger to complete
     console.log('⏳ Waiting for trigger to complete and assigning admin role...');
     await new Promise(resolve => setTimeout(resolve, 1000));
-    await assignAdminRoleToCreator(newEvent.id, userId);
+    await assignAdminRoleToCreator(newEvent.id as string, userId);
 
     return newEvent;
   } catch (error: any) {
