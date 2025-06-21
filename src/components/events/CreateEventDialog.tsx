@@ -122,27 +122,33 @@ export function CreateEventDialog({ open, onOpenChange, onEventCreated }: Create
         adminProfileId = adminProfile.id;
       }
 
-      // Assign the current user the Administrator profile for this event using upsert
+      // Assign the current user the Administrator profile for this event
       if (adminProfileId && user?.id) {
-        const { error: assignRoleError } = await supabase
+        // First check if the role already exists
+        const { data: existingRole } = await supabase
           .from('papeis_usuarios')
-          .upsert({
-            usuario_id: user.id,
-            perfil_id: adminProfileId,
-            evento_id: newEvent.id
-          }, {
-            onConflict: 'usuario_id,perfil_id,evento_id'
-          });
+          .select('id')
+          .eq('usuario_id', user.id)
+          .eq('perfil_id', adminProfileId)
+          .eq('evento_id', newEvent.id)
+          .single();
 
-        if (assignRoleError) {
-          console.error('Error assigning admin role to creator:', assignRoleError);
-          // Check if it's a constraint violation (role already exists)
-          if (assignRoleError.message?.includes('duplicate key value') || 
-              assignRoleError.message?.includes('unique constraint')) {
-            console.log('Admin role already exists for this user and event - continuing');
-          } else {
+        if (!existingRole) {
+          // Only insert if role doesn't exist
+          const { error: assignRoleError } = await supabase
+            .from('papeis_usuarios')
+            .insert({
+              usuario_id: user.id,
+              perfil_id: adminProfileId,
+              evento_id: newEvent.id
+            });
+
+          if (assignRoleError) {
+            console.error('Error assigning admin role to creator:', assignRoleError);
             toast.error('Evento criado, mas houve um erro ao atribuir papel de administrador');
           }
+        } else {
+          console.log('Admin role already exists for this user and event');
         }
       }
 
