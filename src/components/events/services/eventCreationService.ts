@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { EventFormValues } from '../EventFormSchema';
 
@@ -195,13 +194,26 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
     // If branches were selected, create the event-branch relationships
     if (data.selectedBranches && data.selectedBranches.length > 0) {
       console.log('🏢 Creating branch relationships...');
-      await createEventBranchRelationships(newEvent.id as string, data.selectedBranches);
+      try {
+        await createEventBranchRelationships(newEvent.id as string, data.selectedBranches);
+      } catch (branchError) {
+        console.error('❌ Error linking branches, but event was created:', branchError);
+        // Don't throw here - the event was created successfully
+        // Just warn the user that branch linking failed
+        console.warn('⚠️ Event created but branch linking failed. You can link branches later in event management.');
+      }
     }
 
     // Assign admin role to creator
     console.log('⏳ Waiting for trigger to complete and assigning admin role...');
     await new Promise(resolve => setTimeout(resolve, 1000));
-    await assignAdminRoleToCreator(newEvent.id as string, userId);
+    try {
+      await assignAdminRoleToCreator(newEvent.id as string, userId);
+    } catch (roleError) {
+      console.error('❌ Error assigning admin role, but event was created:', roleError);
+      // Don't throw here either - the event was created successfully
+      console.warn('⚠️ Event created but admin role assignment failed. You can assign roles later in event management.');
+    }
 
     return newEvent;
   } catch (error: any) {
@@ -242,6 +254,12 @@ async function createEventBranchRelationships(eventId: string, branchIds: string
 
   if (branchError) {
     console.error('❌ Error linking event to branches:', branchError);
+    
+    // Provide more specific error message for RLS issues
+    if (branchError.code === '42501') {
+      throw new Error('Erro de permissão ao vincular filiais. Verifique se você tem permissão para criar eventos e tente novamente.');
+    }
+    
     throw new Error('Evento criado, mas houve um erro ao vincular filiais');
   }
   
