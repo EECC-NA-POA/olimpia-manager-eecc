@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Loader2, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -16,13 +17,15 @@ interface EventSelectionProps {
   onEventSelect: (eventId: string) => void;
   mode: 'registration' | 'login';
   isUnderAge?: boolean;
+  onEventsRefresh?: () => void; // Optional callback for refreshing events
 }
 
 export const EventSelection = ({ 
   selectedEvents, 
   onEventSelect, 
   mode,
-  isUnderAge = false
+  isUnderAge = false,
+  onEventsRefresh
 }: EventSelectionProps) => {
   const navigate = useNavigate();
   const { user, signOut, setCurrentEventId } = useAuth();
@@ -38,8 +41,15 @@ export const EventSelection = ({
   // Only fetch events if privacy policy check is complete and accepted
   const shouldFetchEvents = checkCompleted && !needsAcceptance;
   
-  const { data: events, isLoading } = useEventQuery(user?.id, shouldFetchEvents);
+  const { data: events, isLoading, refetch } = useEventQuery(user?.id, shouldFetchEvents);
   const registerEventMutation = useEventRegistration(user?.id);
+  
+  // Expose refetch function to parent components through callback
+  React.useEffect(() => {
+    if (onEventsRefresh) {
+      onEventsRefresh(refetch);
+    }
+  }, [refetch, onEventsRefresh]);
   
   const handleEventRegistration = async (eventId: string) => {
     try {

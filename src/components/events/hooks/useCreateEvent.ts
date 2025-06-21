@@ -40,7 +40,13 @@ export function useCreateEvent({ onEventCreated, onClose }: UseCreateEventProps)
       toast.success(`Evento "${data.nome}" cadastrado com sucesso!`);
       form.reset();
       onClose();
+      
+      // Trigger event list refresh after successful creation
       if (onEventCreated) onEventCreated();
+      
+      // Also invalidate React Query cache for events
+      window.dispatchEvent(new CustomEvent('eventCreated'));
+      
     } catch (error: any) {
       console.error('❌ Error creating event:', error);
       
