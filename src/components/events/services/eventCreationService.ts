@@ -31,13 +31,15 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
   }
 
   console.log('✅ Event created successfully:', newEvent);
+  console.log('✅ Default profiles should be created automatically by trigger');
   
   // If branches were selected, create the event-branch relationships
   if (data.selectedBranches && data.selectedBranches.length > 0) {
     await createEventBranchRelationships(newEvent.id, data.selectedBranches);
   }
 
-  // Assign admin role to creator
+  // Assign admin role to creator - wait a bit for trigger to complete
+  await new Promise(resolve => setTimeout(resolve, 1000));
   await assignAdminRoleToCreator(newEvent.id, userId);
 
   return newEvent;
@@ -64,15 +66,33 @@ async function createEventBranchRelationships(eventId: string, branchIds: string
 async function assignAdminRoleToCreator(eventId: string, userId: string) {
   console.log('👤 Looking for admin profile created by trigger for event:', eventId);
   
-  const { data: adminProfile, error: profileError } = await supabase
-    .from('perfis')
-    .select('id')
-    .eq('evento_id', eventId)
-    .eq('nome', 'Administração')
-    .single();
+  // Retry logic to wait for trigger to complete
+  let adminProfile;
+  let attempts = 0;
+  const maxAttempts = 5;
+  
+  while (!adminProfile && attempts < maxAttempts) {
+    const { data, error } = await supabase
+      .from('perfis')
+      .select('id')
+      .eq('evento_id', eventId)
+      .eq('nome', 'Administração')
+      .single();
+    
+    if (data) {
+      adminProfile = data;
+      break;
+    }
+    
+    attempts++;
+    if (attempts < maxAttempts) {
+      console.log(`⏳ Admin profile not found yet, retrying in 500ms... (attempt ${attempts}/${maxAttempts})`);
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
 
-  if (profileError || !adminProfile) {
-    console.error('❌ Error finding admin profile created by trigger:', profileError);
+  if (!adminProfile) {
+    console.error('❌ Admin profile not found after trigger execution');
     throw new Error('Evento criado, mas houve um erro ao localizar perfil de administração');
   }
 
