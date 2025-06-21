@@ -1,64 +1,6 @@
+
 import { supabase } from '@/lib/supabase';
 import { EventFormValues } from '../EventFormSchema';
-
-// Enhanced diagnostic function with better error handling
-async function diagnoseEventCreationIssue() {
-  console.log('🔍 Diagnosing event creation issue...');
-  
-  try {
-    // First check if we even have a session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError) {
-      console.error('❌ Session error during diagnosis:', sessionError);
-      return {
-        success: false,
-        error: `Session error: ${sessionError.message}`,
-        hasSession: false
-      };
-    }
-    
-    if (!session) {
-      console.error('❌ No active session found');
-      return {
-        success: false,
-        error: 'No active session found',
-        hasSession: false
-      };
-    }
-    
-    console.log('✅ Active session found:', {
-      userId: session.user.id,
-      email: session.user.email
-    });
-    
-    // Run enhanced diagnosis
-    const { data: diagnosis, error } = await supabase.rpc('diagnose_auth_and_rls');
-    
-    if (error) {
-      console.error('❌ Error running enhanced diagnosis:', error);
-      return {
-        success: false,
-        error: `Diagnosis error: ${error.message}`,
-        hasSession: true
-      };
-    }
-    
-    console.log('📊 Enhanced diagnosis result:', diagnosis);
-    return {
-      success: true,
-      hasSession: true,
-      ...diagnosis
-    };
-  } catch (error) {
-    console.error('❌ Error in diagnosis function:', error);
-    return {
-      success: false,
-      error: `Diagnosis exception: ${error.message}`,
-      hasSession: false
-    };
-  }
-}
 
 // Function to ensure user exists in usuarios table
 async function ensureUserExistsInUsuarios(userId: string) {
@@ -179,27 +121,9 @@ function prepareEventData(data: EventFormValues) {
   return eventData;
 }
 
-// Enhanced event creation with better session handling
+// Simplified event creation without diagnostic dependency
 async function createEventWithTimeout(eventData: any, timeoutMs = 30000) {
-  console.log('⏳ Creating event with enhanced session handling...');
-  
-  // First, run enhanced diagnosis
-  const diagnosis = await diagnoseEventCreationIssue();
-  
-  if (!diagnosis.success) {
-    throw new Error(`Diagnóstico falhou: ${diagnosis.error}`);
-  }
-  
-  if (!diagnosis.hasSession) {
-    throw new Error('Nenhuma sessão ativa encontrada. Faça login novamente.');
-  }
-  
-  console.log('📋 Pre-creation diagnosis:', diagnosis);
-  
-  // Check basic requirements
-  if (!diagnosis.user_exists_in_usuarios && diagnosis.auth_uid) {
-    throw new Error('Usuário não encontrado na tabela usuarios. Entre em contato com o administrador.');
-  }
+  console.log('⏳ Creating event in database...');
   
   const createEventPromise = supabase
     .from('eventos')
@@ -220,15 +144,7 @@ async function createEventWithTimeout(eventData: any, timeoutMs = 30000) {
     
     // Enhanced error handling
     if (error.code === '42501' || error.message?.includes('policy')) {
-      console.log('🔍 RLS policy violation detected, running post-error diagnosis...');
-      const postErrorDiagnosis = await diagnoseEventCreationIssue();
-      
-      if (postErrorDiagnosis.success) {
-        console.log('📊 Post-error diagnosis:', postErrorDiagnosis);
-        throw new Error(`Erro de permissão RLS. Status da sessão: ${postErrorDiagnosis.hasSession ? 'ativa' : 'inativa'}. Usuário autenticado: ${postErrorDiagnosis.auth_uid ? 'sim' : 'não'}.`);
-      }
-      
-      throw new Error(`Erro de permissão: ${error.message}. Verifique se você está logado e tem permissão para criar eventos.`);
+      throw new Error(`Erro de permissão RLS. Verifique se você está logado e tem permissão para criar eventos.`);
     }
     
     throw error;
@@ -236,7 +152,7 @@ async function createEventWithTimeout(eventData: any, timeoutMs = 30000) {
 }
 
 export async function createEventWithProfiles(data: EventFormValues, userId: string) {
-  console.log('🚀 Starting event creation with enhanced session handling');
+  console.log('🚀 Starting event creation');
   console.log('📝 User ID provided:', userId);
   console.log('📝 Event data:', data);
   
@@ -259,7 +175,7 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
       throw new Error('Campos obrigatórios não preenchidos');
     }
 
-    // Create event with enhanced error handling
+    // Create event
     console.log('⏳ Creating event in database...');
     const result = await createEventWithTimeout(eventData);
     
