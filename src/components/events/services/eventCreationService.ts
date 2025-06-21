@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { EventFormValues } from '../EventFormSchema';
 
@@ -204,15 +205,16 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
       }
     }
 
-    // Assign admin role to creator
-    console.log('⏳ Waiting for trigger to complete and assigning admin role...');
+    // Wait for trigger to complete and then assign roles
+    console.log('⏳ Waiting for trigger to complete and assigning roles...');
     await new Promise(resolve => setTimeout(resolve, 1000));
+    
     try {
-      await assignAdminRoleToCreator(newEvent.id as string, userId);
+      await assignRolesToCreator(newEvent.id as string, userId);
     } catch (roleError) {
-      console.error('❌ Error assigning admin role, but event was created:', roleError);
+      console.error('❌ Error assigning roles, but event was created:', roleError);
       // Don't throw here either - the event was created successfully
-      console.warn('⚠️ Event created but admin role assignment failed. You can assign roles later in event management.');
+      console.warn('⚠️ Event created but role assignment failed. You can assign roles later in event management.');
     }
 
     return newEvent;
@@ -266,30 +268,33 @@ async function createEventBranchRelationships(eventId: string, branchIds: string
   console.log('✅ Branch relationships created successfully');
 }
 
-async function assignAdminRoleToCreator(eventId: string, userId: string) {
-  console.log('👤 Looking for admin profile created by trigger for event:', eventId);
+async function assignRolesToCreator(eventId: string, userId: string) {
+  console.log('👤 Assigning both admin and athlete roles to event creator for event:', eventId);
   
-  // Retry logic to wait for trigger to complete
-  let adminProfile;
+  // Find both admin and athlete profiles created by trigger
+  let adminProfile, athleteProfile;
   let attempts = 0;
   const maxAttempts = 5;
   
-  while (!adminProfile && attempts < maxAttempts) {
-    const { data, error } = await supabase
+  while ((!adminProfile || !athleteProfile) && attempts < maxAttempts) {
+    const { data: profiles, error } = await supabase
       .from('perfis')
-      .select('id')
+      .select('id, nome')
       .eq('evento_id', eventId)
-      .eq('nome', 'Administração')
-      .single();
+      .in('nome', ['Administração', 'Atleta']);
     
-    if (data) {
-      adminProfile = data;
+    if (profiles) {
+      adminProfile = profiles.find(p => p.nome === 'Administração');
+      athleteProfile = profiles.find(p => p.nome === 'Atleta');
+    }
+    
+    if (adminProfile && athleteProfile) {
       break;
     }
     
     attempts++;
     if (attempts < maxAttempts) {
-      console.log(`⏳ Admin profile not found yet, retrying in 500ms... (attempt ${attempts}/${maxAttempts})`);
+      console.log(`⏳ Profiles not found yet, retrying in 500ms... (attempt ${attempts}/${maxAttempts})`);
       await new Promise(resolve => setTimeout(resolve, 500));
     }
   }
@@ -299,23 +304,56 @@ async function assignAdminRoleToCreator(eventId: string, userId: string) {
     throw new Error('Evento criado, mas houve um erro ao localizar perfil de administração');
   }
 
-  console.log('✅ Found admin profile with ID:', adminProfile.id);
+  if (!athleteProfile) {
+    console.error('❌ Athlete profile not found after trigger execution');
+    throw new Error('Evento criado, mas houve um erro ao localizar perfil de atleta');
+  }
+
+  console.log('✅ Found profiles:', { adminId: adminProfile.id, athleteId: athleteProfile.id });
   
-  // Assign the current user the Administrator profile for this event
-  console.log('🔐 Assigning admin role to user:', userId, 'for event:', eventId);
+  // Assign both Administrator and Athlete profiles to the creator
+  console.log('🔐 Assigning admin and athlete roles to user:', userId, 'for event:', eventId);
   
-  const { error: assignRoleError } = await supabase
-    .from('papeis_usuarios')
-    .insert({
+  const rolesToAssign = [
+    {
       usuario_id: userId,
       perfil_id: adminProfile.id,
       evento_id: eventId
-    });
+    },
+    {
+      usuario_id: userId,
+      perfil_id: athleteProfile.id,
+      evento_id: eventId
+    }
+  ];
+
+  const { error: assignRoleError } = await supabase
+    .from('papeis_usuarios')
+    .insert(rolesToAssign);
 
   if (assignRoleError) {
-    console.error('❌ Error assigning admin role to creator:', assignRoleError);
-    throw new Error('Evento criado, mas houve um erro ao atribuir papel de administrador');
+    console.error('❌ Error assigning roles to creator:', assignRoleError);
+    throw new Error('Evento criado, mas houve um erro ao atribuir papéis');
   }
 
-  console.log('✅ Admin role assigned successfully');
+  console.log('✅ Both admin and athlete roles assigned successfully');
+  
+  // Now create the event registration (inscricoes_eventos)
+  console.log('📝 Creating event registration for the creator...');
+  
+  const { error: registrationError } = await supabase
+    .from('inscricoes_eventos')
+    .insert({
+      usuario_id: userId,
+      evento_id: eventId,
+      status_inscricao: 'confirmada',
+      data_inscricao: new Date().toISOString()
+    });
+
+  if (registrationError) {
+    console.error('❌ Error creating event registration:', registrationError);
+    throw new Error('Evento criado e papéis atribuídos, mas houve um erro ao criar inscrição no evento');
+  }
+
+  console.log('✅ Event registration created successfully');
 }
