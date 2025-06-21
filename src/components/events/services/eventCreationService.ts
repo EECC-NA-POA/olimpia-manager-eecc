@@ -1,6 +1,26 @@
 import { supabase } from '@/lib/supabase';
 import { EventFormValues } from '../EventFormSchema';
 
+// Function to diagnose RLS issues
+async function diagnoseEventCreationIssue() {
+  console.log('🔍 Diagnosing event creation issue...');
+  
+  try {
+    const { data: diagnosis, error } = await supabase.rpc('diagnose_event_creation_issue');
+    
+    if (error) {
+      console.error('❌ Error running diagnosis:', error);
+      return null;
+    }
+    
+    console.log('📊 Diagnosis result:', diagnosis);
+    return diagnosis;
+  } catch (error) {
+    console.error('❌ Error in diagnosis function:', error);
+    return null;
+  }
+}
+
 // Function to ensure user exists in usuarios table
 async function ensureUserExistsInUsuarios(userId: string) {
   console.log('🔐 Checking if user exists in usuarios table...');
@@ -120,8 +140,35 @@ function prepareEventData(data: EventFormValues) {
   return eventData;
 }
 
-// Function to create event with timeout protection
+// Function to create event with enhanced error handling and diagnosis
 async function createEventWithTimeout(eventData: any, timeoutMs = 30000) {
+  console.log('⏳ Creating event with enhanced error handling...');
+  
+  // First, run diagnosis
+  const diagnosis = await diagnoseEventCreationIssue();
+  
+  if (diagnosis && !diagnosis.success) {
+    throw new Error(`Diagnóstico falhou: ${diagnosis.error}`);
+  }
+  
+  if (diagnosis) {
+    console.log('📋 Pre-creation diagnosis:', {
+      userExists: diagnosis.user_exists_in_usuarios,
+      canCreateEvents: diagnosis.cadastra_eventos,
+      rlsEnabled: diagnosis.rls_enabled_on_eventos,
+      recommendations: diagnosis.recommendations
+    });
+    
+    // Check if user should be able to create events
+    if (!diagnosis.user_exists_in_usuarios) {
+      throw new Error('Usuário não encontrado na tabela usuarios. Entre em contato com o administrador.');
+    }
+    
+    if (!diagnosis.cadastra_eventos) {
+      throw new Error('Usuário não tem permissão para criar eventos. Entre em contato com o administrador.');
+    }
+  }
+  
   const createEventPromise = supabase
     .from('eventos')
     .insert(eventData)
@@ -132,7 +179,30 @@ async function createEventWithTimeout(eventData: any, timeoutMs = 30000) {
     setTimeout(() => reject(new Error('Timeout: A operação demorou mais que 30 segundos')), timeoutMs);
   });
 
-  return Promise.race([createEventPromise, timeoutPromise]);
+  try {
+    const result = await Promise.race([createEventPromise, timeoutPromise]);
+    console.log('✅ Event created successfully:', result);
+    return result;
+  } catch (error: any) {
+    console.error('❌ Error creating event:', error);
+    
+    // Enhanced error handling for RLS issues
+    if (error.code === '42501' || error.message?.includes('policy')) {
+      console.log('🔍 RLS policy violation detected, running post-error diagnosis...');
+      const postErrorDiagnosis = await diagnoseEventCreationIssue();
+      
+      if (postErrorDiagnosis) {
+        console.log('📊 Post-error diagnosis:', postErrorDiagnosis);
+        
+        const recommendations = postErrorDiagnosis.recommendations?.join(', ') || 'Nenhuma recomendação disponível';
+        throw new Error(`Erro de permissão RLS: ${error.message}. Recomendações: ${recommendations}`);
+      }
+      
+      throw new Error(`Erro de permissão: ${error.message}. Verifique se você tem permissão para criar eventos.`);
+    }
+    
+    throw error;
+  }
 }
 
 export async function createEventWithProfiles(data: EventFormValues, userId: string) {
