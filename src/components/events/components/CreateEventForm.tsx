@@ -3,6 +3,7 @@ import { Form } from '@/components/ui/form';
 import { BasicInfoSection } from '../BasicInfoSection';
 import { DateSelectionSection } from '../DateSelectionSection';
 import { EventDetailsSection } from '../EventDetailsSection';
+import { LocationSection } from '../LocationSection';
 import { BranchSelectionSection } from '../BranchSelectionSection';
 import { CreateEventDialogActions } from './CreateEventDialogActions';
 import { useCreateEvent } from '../hooks/useCreateEvent';
@@ -22,6 +23,7 @@ export function CreateEventForm({ branches, onEventCreated, onClose }: CreateEve
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <BasicInfoSection form={form} />
         <DateSelectionSection form={form} />
+        <LocationSection form={form} />
         <EventDetailsSection form={form} />
         <BranchSelectionSection form={form} branches={branches || []} />
         
