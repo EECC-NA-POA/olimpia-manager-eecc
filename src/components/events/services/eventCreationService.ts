@@ -1,39 +1,81 @@
 import { supabase } from '@/lib/supabase';
 import { EventFormValues } from '../EventFormSchema';
 
-// Function to ensure user can create events
-async function ensureUserCanCreateEvents(userId: string) {
-  console.log('🔐 Checking user permissions for event creation...');
+// Function to ensure user exists in usuarios table
+async function ensureUserExistsInUsuarios(userId: string) {
+  console.log('🔐 Checking if user exists in usuarios table...');
   
   try {
-    // Test current permissions
-    const { data: permissionTest, error: testError } = await supabase
-      .rpc('test_event_creation_permission');
-      
-    if (testError) {
-      console.error('❌ Error testing permissions:', testError);
-    } else {
-      console.log('📊 Permission test result:', permissionTest);
+    // Check if user exists in usuarios table
+    const { data: existingUser, error: checkError } = await supabase
+      .from('usuarios')
+      .select('id, email, cadastra_eventos')
+      .eq('id', userId)
+      .single();
+    
+    if (checkError && checkError.code !== 'PGRST116') {
+      console.error('❌ Error checking user existence:', checkError);
+      throw checkError;
     }
     
-    // If user doesn't exist or can't create events, try to fix it
-    if (!permissionTest?.user_exists_in_usuarios || !permissionTest?.can_create_events) {
-      console.log('🔧 Creating/updating user record for event creation...');
+    if (existingUser) {
+      console.log('✅ User exists in usuarios table:', existingUser);
       
-      const { error: createError } = await supabase
-        .rpc('create_user_record_for_event_creation');
-        
-      if (createError) {
-        console.error('❌ Error creating user record:', createError);
-        throw new Error('Não foi possível configurar permissões de usuário para criação de eventos');
+      // Ensure user can create events
+      if (!existingUser.cadastra_eventos) {
+        console.log('🔧 Updating user to allow event creation...');
+        const { error: updateError } = await supabase
+          .from('usuarios')
+          .update({ cadastra_eventos: true })
+          .eq('id', userId);
+          
+        if (updateError) {
+          console.error('❌ Error updating user permissions:', updateError);
+          throw updateError;
+        }
+        console.log('✅ User permissions updated');
       }
       
-      console.log('✅ User record created/updated successfully');
+      return true;
     }
     
+    // User doesn't exist, get auth user data to create record
+    console.log('⚠️ User not found in usuarios table, creating record...');
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !authUser) {
+      throw new Error('Não foi possível obter dados do usuário autenticado');
+    }
+    
+    // Create user record in usuarios table
+    const { error: insertError } = await supabase
+      .from('usuarios')
+      .insert({
+        id: userId,
+        email: authUser.email,
+        nome_completo: authUser.user_metadata?.nome_completo || 'Usuário',
+        telefone: authUser.user_metadata?.telefone || '',
+        ddi: authUser.user_metadata?.ddi || '+55',
+        tipo_documento: authUser.user_metadata?.tipo_documento || 'CPF',
+        numero_documento: authUser.user_metadata?.numero_documento || '',
+        genero: authUser.user_metadata?.genero || '',
+        data_nascimento: authUser.user_metadata?.data_nascimento ? new Date(authUser.user_metadata.data_nascimento) : null,
+        estado: authUser.user_metadata?.estado || '',
+        filial_id: authUser.user_metadata?.filial_id || null,
+        cadastra_eventos: true,
+        confirmado: true
+      });
+    
+    if (insertError) {
+      console.error('❌ Error creating user record:', insertError);
+      throw insertError;
+    }
+    
+    console.log('✅ User record created successfully');
     return true;
+    
   } catch (error) {
-    console.error('❌ Error in ensureUserCanCreateEvents:', error);
+    console.error('❌ Error in ensureUserExistsInUsuarios:', error);
     throw error;
   }
 }
@@ -96,8 +138,8 @@ async function createEventWithTimeout(eventData: any, timeoutMs = 30000) {
 export async function createEventWithProfiles(data: EventFormValues, userId: string) {
   console.log('🚀 Starting event creation with data:', data);
   
-  // Ensure user has permissions to create events
-  await ensureUserCanCreateEvents(userId);
+  // Ensure user exists in usuarios table and can create events
+  await ensureUserExistsInUsuarios(userId);
   
   // Prepare and validate event data
   const eventData = prepareEventData(data);
