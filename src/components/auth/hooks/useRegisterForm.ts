@@ -55,21 +55,12 @@ export const useRegisterForm = () => {
       if (result && result.user) {
         console.log('✅ Registration successful - user created with ID:', result.user.id);
         
-        // For self-hosted instances that don't send confirmation emails
-        if (!result.session) {
-          toast.success('Cadastro realizado com sucesso! Faça login para continuar.');
-          setTimeout(() => {
-            console.log('🔄 Redirecting to login after successful signup');
-            // Stay on login page but switch to login tab
-            window.location.reload();
-          }, 1500);
-        } else {
-          toast.success('Cadastro realizado com sucesso!');
-          setTimeout(() => {
-            console.log('🔄 Redirecting to event selection after successful signup');
-            navigate('/event-selection', { replace: true });
-          }, 1500);
-        }
+        // Always show success message and redirect to login
+        toast.success('Cadastro realizado com sucesso! Faça login para continuar.');
+        setTimeout(() => {
+          console.log('🔄 Redirecting to login after successful signup');
+          navigate('/login', { replace: true });
+        }, 1500);
       } else {
         console.error('❌ Registration failed - no valid result returned');
         throw new Error('Falha no cadastro - resultado inválido');
@@ -83,10 +74,19 @@ export const useRegisterForm = () => {
         toast.error('Este email já está cadastrado! Tente fazer login na aba "Login" ao lado.', { 
           duration: 6000 
         });
+        // Redirect to login after showing error
+        setTimeout(() => {
+          navigate('/login', { replace: true });
+        }, 2000);
       } else if (error.message === 'MAILER_ERROR') {
-        toast.error('Problema na configuração do servidor de email. O cadastro pode ter sido criado mesmo assim. Tente fazer login na aba "Login". Se não conseguir, contate o administrador.', { 
-          duration: 10000 
+        toast.success('Cadastro realizado! Problema no envio do email de confirmação. Faça login para continuar.', { 
+          duration: 8000 
         });
+        // Always redirect to login for email errors since user might be created
+        setTimeout(() => {
+          console.log('🔄 Redirecting to login after email error');
+          navigate('/login', { replace: true });
+        }, 2000);
       } else if (error.message?.includes('Invalid email')) {
         toast.error('Email inválido. Por favor, verifique o formato.');
       } else if (error.message?.includes('Password') || error.message?.includes('password')) {
