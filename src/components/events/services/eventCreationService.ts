@@ -1,23 +1,62 @@
 import { supabase } from '@/lib/supabase';
 import { EventFormValues } from '../EventFormSchema';
 
-// Function to diagnose RLS issues
+// Enhanced diagnostic function with better error handling
 async function diagnoseEventCreationIssue() {
   console.log('🔍 Diagnosing event creation issue...');
   
   try {
-    const { data: diagnosis, error } = await supabase.rpc('diagnose_event_creation_issue');
+    // First check if we even have a session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    if (error) {
-      console.error('❌ Error running diagnosis:', error);
-      return null;
+    if (sessionError) {
+      console.error('❌ Session error during diagnosis:', sessionError);
+      return {
+        success: false,
+        error: `Session error: ${sessionError.message}`,
+        hasSession: false
+      };
     }
     
-    console.log('📊 Diagnosis result:', diagnosis);
-    return diagnosis;
+    if (!session) {
+      console.error('❌ No active session found');
+      return {
+        success: false,
+        error: 'No active session found',
+        hasSession: false
+      };
+    }
+    
+    console.log('✅ Active session found:', {
+      userId: session.user.id,
+      email: session.user.email
+    });
+    
+    // Run enhanced diagnosis
+    const { data: diagnosis, error } = await supabase.rpc('diagnose_auth_and_rls');
+    
+    if (error) {
+      console.error('❌ Error running enhanced diagnosis:', error);
+      return {
+        success: false,
+        error: `Diagnosis error: ${error.message}`,
+        hasSession: true
+      };
+    }
+    
+    console.log('📊 Enhanced diagnosis result:', diagnosis);
+    return {
+      success: true,
+      hasSession: true,
+      ...diagnosis
+    };
   } catch (error) {
     console.error('❌ Error in diagnosis function:', error);
-    return null;
+    return {
+      success: false,
+      error: `Diagnosis exception: ${error.message}`,
+      hasSession: false
+    };
   }
 }
 
@@ -140,33 +179,26 @@ function prepareEventData(data: EventFormValues) {
   return eventData;
 }
 
-// Function to create event with enhanced error handling and diagnosis
+// Enhanced event creation with better session handling
 async function createEventWithTimeout(eventData: any, timeoutMs = 30000) {
-  console.log('⏳ Creating event with enhanced error handling...');
+  console.log('⏳ Creating event with enhanced session handling...');
   
-  // First, run diagnosis
+  // First, run enhanced diagnosis
   const diagnosis = await diagnoseEventCreationIssue();
   
-  if (diagnosis && !diagnosis.success) {
+  if (!diagnosis.success) {
     throw new Error(`Diagnóstico falhou: ${diagnosis.error}`);
   }
   
-  if (diagnosis) {
-    console.log('📋 Pre-creation diagnosis:', {
-      userExists: diagnosis.user_exists_in_usuarios,
-      canCreateEvents: diagnosis.cadastra_eventos,
-      rlsEnabled: diagnosis.rls_enabled_on_eventos,
-      recommendations: diagnosis.recommendations
-    });
-    
-    // Check if user should be able to create events
-    if (!diagnosis.user_exists_in_usuarios) {
-      throw new Error('Usuário não encontrado na tabela usuarios. Entre em contato com o administrador.');
-    }
-    
-    if (!diagnosis.cadastra_eventos) {
-      throw new Error('Usuário não tem permissão para criar eventos. Entre em contato com o administrador.');
-    }
+  if (!diagnosis.hasSession) {
+    throw new Error('Nenhuma sessão ativa encontrada. Faça login novamente.');
+  }
+  
+  console.log('📋 Pre-creation diagnosis:', diagnosis);
+  
+  // Check basic requirements
+  if (!diagnosis.user_exists_in_usuarios && diagnosis.auth_uid) {
+    throw new Error('Usuário não encontrado na tabela usuarios. Entre em contato com o administrador.');
   }
   
   const createEventPromise = supabase
@@ -186,19 +218,17 @@ async function createEventWithTimeout(eventData: any, timeoutMs = 30000) {
   } catch (error: any) {
     console.error('❌ Error creating event:', error);
     
-    // Enhanced error handling for RLS issues
+    // Enhanced error handling
     if (error.code === '42501' || error.message?.includes('policy')) {
       console.log('🔍 RLS policy violation detected, running post-error diagnosis...');
       const postErrorDiagnosis = await diagnoseEventCreationIssue();
       
-      if (postErrorDiagnosis) {
+      if (postErrorDiagnosis.success) {
         console.log('📊 Post-error diagnosis:', postErrorDiagnosis);
-        
-        const recommendations = postErrorDiagnosis.recommendations?.join(', ') || 'Nenhuma recomendação disponível';
-        throw new Error(`Erro de permissão RLS: ${error.message}. Recomendações: ${recommendations}`);
+        throw new Error(`Erro de permissão RLS. Status da sessão: ${postErrorDiagnosis.hasSession ? 'ativa' : 'inativa'}. Usuário autenticado: ${postErrorDiagnosis.auth_uid ? 'sim' : 'não'}.`);
       }
       
-      throw new Error(`Erro de permissão: ${error.message}. Verifique se você tem permissão para criar eventos.`);
+      throw new Error(`Erro de permissão: ${error.message}. Verifique se você está logado e tem permissão para criar eventos.`);
     }
     
     throw error;
@@ -206,22 +236,30 @@ async function createEventWithTimeout(eventData: any, timeoutMs = 30000) {
 }
 
 export async function createEventWithProfiles(data: EventFormValues, userId: string) {
-  console.log('🚀 Starting event creation with data:', data);
+  console.log('🚀 Starting event creation with enhanced session handling');
+  console.log('📝 User ID provided:', userId);
+  console.log('📝 Event data:', data);
   
-  // Ensure user exists in usuarios table and can create events
-  await ensureUserExistsInUsuarios(userId);
-  
-  // Prepare and validate event data
-  const eventData = prepareEventData(data);
-  console.log('📝 Prepared event data (filtered undefined/null):', eventData);
-
-  // Validate required fields
-  if (!eventData.nome || !eventData.descricao || !eventData.tipo) {
-    throw new Error('Campos obrigatórios não preenchidos');
-  }
-
   try {
-    // Create event with timeout protection
+    // Check session first
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      throw new Error('Sessão expirada. Faça login novamente.');
+    }
+    
+    // Ensure user exists in usuarios table and can create events
+    await ensureUserExistsInUsuarios(userId);
+    
+    // Prepare and validate event data
+    const eventData = prepareEventData(data);
+    console.log('📝 Prepared event data:', eventData);
+
+    // Validate required fields
+    if (!eventData.nome || !eventData.descricao || !eventData.tipo) {
+      throw new Error('Campos obrigatórios não preenchidos');
+    }
+
+    // Create event with enhanced error handling
     console.log('⏳ Creating event in database...');
     const result = await createEventWithTimeout(eventData);
     
@@ -230,7 +268,6 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
       throw result.error;
     }
 
-    // Extract the event data - handle both direct data and wrapped response
     const newEvent = result && typeof result === 'object' && 'data' in result ? result.data : result;
     
     if (!newEvent || typeof newEvent !== 'object' || !('id' in newEvent)) {
@@ -238,7 +275,6 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
     }
     
     console.log('✅ Event created successfully:', newEvent);
-    console.log('✅ Default profiles should be created automatically by trigger');
     
     // If branches were selected, create the event-branch relationships
     if (data.selectedBranches && data.selectedBranches.length > 0) {
@@ -246,7 +282,7 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
       await createEventBranchRelationships(newEvent.id as string, data.selectedBranches);
     }
 
-    // Assign admin role to creator - wait a bit for trigger to complete
+    // Assign admin role to creator
     console.log('⏳ Waiting for trigger to complete and assigning admin role...');
     await new Promise(resolve => setTimeout(resolve, 1000));
     await assignAdminRoleToCreator(newEvent.id as string, userId);
@@ -272,7 +308,6 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
       throw new Error('Já existe um evento com essas informações. Verifique o nome.');
     }
     
-    // Re-throw the original error if we can't provide a better message
     throw error;
   }
 }

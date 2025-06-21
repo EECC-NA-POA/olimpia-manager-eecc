@@ -11,67 +11,56 @@ console.log('🔧 Supabase Configuration:', {
   timestamp: new Date().toISOString()
 });
 
-// Test connection function
-const testSupabaseConnection = async () => {
-  try {
-    console.log('🔍 Testing Supabase connection...');
-    const { data, error } = await supabase.from('usuarios').select('count', { count: 'exact', head: true });
-    
-    if (error) {
-      console.error('❌ Supabase connection test failed:', error);
-      return false;
-    }
-    
-    console.log('✅ Supabase connection successful');
-    return true;
-  } catch (error) {
-    console.error('❌ Supabase connection error:', error);
-    return false;
-  }
-};
-
-// Create the Supabase client
+// Create SINGLE Supabase client instance
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     storageKey: 'olimpics_auth_token',
     storage: localStorage,
     autoRefreshToken: true,
-    detectSessionInUrl: true,
+    detectSessionInUrl: false, // Disable to prevent conflicts
     flowType: 'pkce'
   },
   global: {
     headers: {
-      'X-Client-Info': 'lovable-app',
+      'X-Client-Info': 'olimpics-app-v2',
     }
   }
 });
 
-// Test connection on initialization
-testSupabaseConnection();
+// Debug session state
+const debugSession = async () => {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    console.log('🔍 Session Debug:', {
+      hasSession: !!session,
+      userId: session?.user?.id || 'null',
+      email: session?.user?.email || 'none',
+      expiresAt: session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'none',
+      error: error?.message || 'none'
+    });
+    return session;
+  } catch (error) {
+    console.error('❌ Session debug error:', error);
+    return null;
+  }
+};
 
-// Add error handling helper with improved JWT error detection
+// Enhanced error handling
 export const handleSupabaseError = (error: any) => {
-  console.error('Supabase error:', error);
+  console.error('🚨 Supabase error:', error);
   
-  // Check for JWT-related errors with broader pattern matching
-  if (error.message?.includes('JWT') || 
-      error.message?.includes('refresh_token_not_found') || 
-      error.message?.includes('token') ||
-      error.message?.includes('CompactDecodeError') ||
-      error.message?.includes('invalid session')) {
-    
-    console.log('Token issue detected, clearing session');
-    try {
-      // Try to clear the session properly
-      supabase.auth.signOut();
-    } catch (e) {
-      console.error('Error during signout:', e);
-    }
-    
-    // Remove the token from localStorage directly as a fallback
-    localStorage.removeItem('olimpics_auth_token');
-    return 'Sua sessão expirou. Por favor, faça login novamente.';
+  // Check for session-related errors
+  const isSessionError = error.message?.includes('JWT') || 
+                        error.message?.includes('refresh_token_not_found') || 
+                        error.message?.includes('token') ||
+                        error.message?.includes('CompactDecodeError') ||
+                        error.message?.includes('invalid session') ||
+                        error.message?.includes('invalid_grant');
+
+  if (isSessionError) {
+    console.log('⚠️ Session error detected, but NOT clearing session automatically');
+    return 'Erro de sessão detectado. Tente fazer login novamente.';
   }
   
   if (error.message?.includes('Invalid login credentials')) {
@@ -89,54 +78,29 @@ export const handleSupabaseError = (error: any) => {
   return error.message || 'Ocorreu um erro inesperado.';
 };
 
-export const initializeSupabase = async () => {
-  try {
-    console.log('🚀 Initializing Supabase...');
-    
-    // Test connection first
-    const connectionOk = await testSupabaseConnection();
-    if (!connectionOk) {
-      console.warn('⚠️ Supabase connection issues detected');
-    }
-    
-    // Try to get the session
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) {
-      console.error('Error getting session:', error);
-      await supabase.auth.signOut();
-      localStorage.removeItem('olimpics_auth_token');
-    }
-    
-    return session;
-  } catch (error) {
-    console.error('Error initializing Supabase:', error);
+// Session recovery with retry logic
+export const recoverSession = async (maxRetries = 3) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      await supabase.auth.signOut();
-      localStorage.removeItem('olimpics_auth_token');
-    } catch (e) {
-      console.error('Error during cleanup:', e);
+      console.log(`🔄 Session recovery attempt ${attempt}/${maxRetries}`);
+      const session = await debugSession();
+      
+      if (session) {
+        console.log('✅ Session recovered successfully');
+        return session;
+      }
+      
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+    } catch (error) {
+      console.error(`❌ Recovery attempt ${attempt} failed:`, error);
     }
-    return null;
   }
+  
+  console.log('❌ Session recovery failed after all attempts');
+  return null;
 };
 
-export const recoverSession = async () => {
-  try {
-    console.log('Attempting to recover session...');
-    const session = await initializeSupabase();
-    
-    if (session) {
-      console.log('Session recovered successfully');
-      return session;
-    }
-    
-    console.log('No active session found');
-    return null;
-  } catch (error) {
-    console.error('Error in session recovery:', error);
-    return null;
-  }
-};
-
-// Call initialize on import
-initializeSupabase();
+// Initialize and debug on startup
+debugSession();
