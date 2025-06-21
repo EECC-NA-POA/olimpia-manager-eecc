@@ -1,6 +1,42 @@
-
 import { supabase } from '@/lib/supabase';
 import { EventFormValues } from '../EventFormSchema';
+
+// Function to ensure user can create events
+async function ensureUserCanCreateEvents(userId: string) {
+  console.log('🔐 Checking user permissions for event creation...');
+  
+  try {
+    // Test current permissions
+    const { data: permissionTest, error: testError } = await supabase
+      .rpc('test_event_creation_permission');
+      
+    if (testError) {
+      console.error('❌ Error testing permissions:', testError);
+    } else {
+      console.log('📊 Permission test result:', permissionTest);
+    }
+    
+    // If user doesn't exist or can't create events, try to fix it
+    if (!permissionTest?.user_exists_in_usuarios || !permissionTest?.can_create_events) {
+      console.log('🔧 Creating/updating user record for event creation...');
+      
+      const { error: createError } = await supabase
+        .rpc('create_user_record_for_event_creation');
+        
+      if (createError) {
+        console.error('❌ Error creating user record:', createError);
+        throw new Error('Não foi possível configurar permissões de usuário para criação de eventos');
+      }
+      
+      console.log('✅ User record created/updated successfully');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('❌ Error in ensureUserCanCreateEvents:', error);
+    throw error;
+  }
+}
 
 // Function to prepare event data by filtering out undefined/null values
 function prepareEventData(data: EventFormValues) {
@@ -59,6 +95,9 @@ async function createEventWithTimeout(eventData: any, timeoutMs = 30000) {
 
 export async function createEventWithProfiles(data: EventFormValues, userId: string) {
   console.log('🚀 Starting event creation with data:', data);
+  
+  // Ensure user has permissions to create events
+  await ensureUserCanCreateEvents(userId);
   
   // Prepare and validate event data
   const eventData = prepareEventData(data);
