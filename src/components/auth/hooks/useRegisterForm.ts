@@ -54,13 +54,22 @@ export const useRegisterForm = () => {
       // Check if we have a proper result
       if (result && result.user) {
         console.log('✅ Registration successful - user created with ID:', result.user.id);
-        toast.success('Cadastro realizado com sucesso!');
         
-        // Redirect after successful signup
-        setTimeout(() => {
-          console.log('🔄 Redirecting to event selection after successful signup');
-          navigate('/event-selection', { replace: true });
-        }, 1500);
+        // For self-hosted instances that don't send confirmation emails
+        if (!result.session) {
+          toast.success('Cadastro realizado com sucesso! Faça login para continuar.');
+          setTimeout(() => {
+            console.log('🔄 Redirecting to login after successful signup');
+            // Stay on login page but switch to login tab
+            window.location.reload();
+          }, 1500);
+        } else {
+          toast.success('Cadastro realizado com sucesso!');
+          setTimeout(() => {
+            console.log('🔄 Redirecting to event selection after successful signup');
+            navigate('/event-selection', { replace: true });
+          }, 1500);
+        }
       } else {
         console.error('❌ Registration failed - no valid result returned');
         throw new Error('Falha no cadastro - resultado inválido');
@@ -78,6 +87,8 @@ export const useRegisterForm = () => {
         toast.error('Email inválido. Por favor, verifique o formato.');
       } else if (error.message?.includes('Password') || error.message?.includes('password')) {
         toast.error('Senha deve ter pelo menos 6 caracteres.');
+      } else if (error.message?.includes('configuração do servidor de email')) {
+        toast.error('Problema na configuração do servidor. Tente fazer login se o cadastro foi criado.');
       } else if (error.message?.includes('JWT') || error.message?.includes('connection')) {
         toast.error('Erro de conexão com o servidor. Verifique sua internet e tente novamente.');
       } else {
