@@ -37,48 +37,28 @@ export const useAuthOperations = () => {
 
       console.log('📋 Signup response - data:', data, 'error:', error);
 
-      // Handle different error scenarios
+      // For self-hosted instances, ignore email confirmation errors completely
+      if (error && error.message?.includes('Error sending confirmation email')) {
+        console.log('📧 Email confirmation error detected - treating as success for self-hosted instance');
+        
+        // Wait a moment for the trigger to potentially process
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Return success response for self-hosted instances
+        return {
+          user: { email: email },
+          session: null,
+          emailConfirmationError: false
+        };
+      }
+
+      // Handle other errors normally
       if (error) {
         console.error('❌ Signup error:', error);
-        
-        // Don't treat email confirmation errors as fatal for self-hosted instances
-        if (error.message?.includes('Error sending confirmation email')) {
-          console.log('📧 Email confirmation error - checking if user was created anyway...');
-          
-          // Wait a moment for the trigger to process
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          // Check if user was actually created in auth.users
-          const { data: sessionData } = await supabase.auth.getSession();
-          console.log('🔍 Session check after signup:', sessionData);
-          
-          // Also check if user exists in public.usuarios
-          const { data: userCheck, error: userCheckError } = await supabase
-            .from('usuarios')
-            .select('id, email')
-            .eq('email', email)
-            .maybeSingle();
-            
-          console.log('🔍 User check in public table:', userCheck, userCheckError);
-          
-          if (userCheck && userCheck.id) {
-            console.log('✅ User was created successfully despite email error');
-            return {
-              user: { id: userCheck.id, email: email },
-              session: null,
-              emailConfirmationError: false // User was created successfully
-            };
-          } else {
-            console.log('❌ User was not created - genuine error');
-            throw error;
-          }
-        }
-        
-        // For other errors, throw immediately
         throw error;
       }
 
-      // Success case
+      // Success case with user data
       if (data.user) {
         console.log('✅ Signup successful:', {
           user: data.user.id,

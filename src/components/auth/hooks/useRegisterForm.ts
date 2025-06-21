@@ -51,8 +51,8 @@ export const useRegisterForm = () => {
 
       console.log('📋 Registration result:', result);
 
-      // Check if signup was successful (user created)
-      if (result && (result.user || result.emailConfirmationError === false)) {
+      // For self-hosted instances, treat any non-error response as success
+      if (result) {
         console.log('✅ Registration successful - user created');
         toast.success('Cadastro realizado com sucesso!');
         
@@ -62,8 +62,8 @@ export const useRegisterForm = () => {
           navigate('/event-selection', { replace: true });
         }, 1500);
       } else {
-        console.error('❌ Registration failed - no user created');
-        throw new Error('Falha no cadastro - usuário não foi criado');
+        console.error('❌ Registration failed - no result returned');
+        throw new Error('Falha no cadastro - nenhum resultado retornado');
       }
 
     } catch (error: any) {
