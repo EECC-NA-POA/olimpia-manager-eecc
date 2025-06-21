@@ -122,19 +122,27 @@ export function CreateEventDialog({ open, onOpenChange, onEventCreated }: Create
         adminProfileId = adminProfile.id;
       }
 
-      // Assign the current user the Administrator profile for this event
+      // Assign the current user the Administrator profile for this event using upsert
       if (adminProfileId && user?.id) {
         const { error: assignRoleError } = await supabase
           .from('papeis_usuarios')
-          .insert({
+          .upsert({
             usuario_id: user.id,
             perfil_id: adminProfileId,
             evento_id: newEvent.id
+          }, {
+            onConflict: 'usuario_id,perfil_id,evento_id'
           });
 
         if (assignRoleError) {
           console.error('Error assigning admin role to creator:', assignRoleError);
-          toast.error('Evento criado, mas houve um erro ao atribuir papel de administrador');
+          // Check if it's a constraint violation (role already exists)
+          if (assignRoleError.message?.includes('duplicate key value') || 
+              assignRoleError.message?.includes('unique constraint')) {
+            console.log('Admin role already exists for this user and event - continuing');
+          } else {
+            toast.error('Evento criado, mas houve um erro ao atribuir papel de administrador');
+          }
         }
       }
 
@@ -144,7 +152,15 @@ export function CreateEventDialog({ open, onOpenChange, onEventCreated }: Create
       if (onEventCreated) onEventCreated();
     } catch (error: any) {
       console.error('Error creating event:', error);
-      toast.error(`Erro ao cadastrar evento: ${error.message || 'Tente novamente mais tarde'}`);
+      
+      // Handle specific constraint errors
+      if (error.message?.includes('duplicate key value') || 
+          error.message?.includes('unique constraint') ||
+          error.message?.includes('ON CONFLICT')) {
+        toast.error('Erro: Já existe um registro com essas informações. Verifique os dados e tente novamente.');
+      } else {
+        toast.error(`Erro ao cadastrar evento: ${error.message || 'Tente novamente mais tarde'}`);
+      }
     } finally {
       setIsLoading(false);
     }
