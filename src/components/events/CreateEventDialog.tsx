@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -51,6 +50,8 @@ export function CreateEventDialog({ open, onOpenChange, onEventCreated }: Create
   const onSubmit = async (data: EventFormValues) => {
     setIsLoading(true);
     try {
+      console.log('🚀 Starting event creation with data:', data);
+      
       // Format dates to ISO strings
       const eventData = {
         nome: data.nome,
@@ -63,16 +64,29 @@ export function CreateEventDialog({ open, onOpenChange, onEventCreated }: Create
         foto_evento: data.foto_evento
       };
 
+      console.log('📝 Event data to be inserted:', eventData);
+
       const { error, data: newEvent } = await supabase
         .from('eventos')
         .insert(eventData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error inserting event:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        console.error('Error details:', error.details);
+        console.error('Error hint:', error.hint);
+        throw error;
+      }
+
+      console.log('✅ Event created successfully:', newEvent);
       
       // If branches were selected, create the event-branch relationships
       if (data.selectedBranches && data.selectedBranches.length > 0) {
+        console.log('🏢 Creating branch relationships for branches:', data.selectedBranches);
+        
         const branchRelationships = data.selectedBranches.map(branchId => ({
           evento_id: newEvent.id,
           filial_id: branchId
@@ -89,6 +103,8 @@ export function CreateEventDialog({ open, onOpenChange, onEventCreated }: Create
       }
 
       // Find or create the Administrator profile for this event
+      console.log('👤 Setting up admin profile for event:', newEvent.id);
+      
       const { data: adminProfile, error: profileError } = await supabase
         .from('perfis')
         .select('id')
@@ -99,6 +115,8 @@ export function CreateEventDialog({ open, onOpenChange, onEventCreated }: Create
       let adminProfileId;
 
       if (profileError || !adminProfile) {
+        console.log('📋 Creating new admin profile for event');
+        
         // Create the profile if it doesn't exist
         const { data: newAdminProfile, error: createProfileError } = await supabase
           .from('perfis')
@@ -117,13 +135,17 @@ export function CreateEventDialog({ open, onOpenChange, onEventCreated }: Create
           adminProfileId = null;
         } else {
           adminProfileId = newAdminProfile.id;
+          console.log('✅ Admin profile created with ID:', adminProfileId);
         }
       } else {
         adminProfileId = adminProfile.id;
+        console.log('✅ Using existing admin profile with ID:', adminProfileId);
       }
 
       // Assign the current user the Administrator profile for this event
       if (adminProfileId && user?.id) {
+        console.log('🔐 Assigning admin role to user:', user.id, 'for event:', newEvent.id);
+        
         // First check if the role already exists
         const { data: existingRole } = await supabase
           .from('papeis_usuarios')
@@ -146,9 +168,11 @@ export function CreateEventDialog({ open, onOpenChange, onEventCreated }: Create
           if (assignRoleError) {
             console.error('Error assigning admin role to creator:', assignRoleError);
             toast.error('Evento criado, mas houve um erro ao atribuir papel de administrador');
+          } else {
+            console.log('✅ Admin role assigned successfully');
           }
         } else {
-          console.log('Admin role already exists for this user and event');
+          console.log('ℹ️ Admin role already exists for this user and event');
         }
       }
 
@@ -157,13 +181,23 @@ export function CreateEventDialog({ open, onOpenChange, onEventCreated }: Create
       onOpenChange(false);
       if (onEventCreated) onEventCreated();
     } catch (error: any) {
-      console.error('Error creating event:', error);
+      console.error('❌ Error creating event:', error);
       
-      // Handle specific constraint errors
-      if (error.message?.includes('duplicate key value') || 
-          error.message?.includes('unique constraint') ||
-          error.message?.includes('ON CONFLICT')) {
-        toast.error('Erro: Já existe um registro com essas informações. Verifique os dados e tente novamente.');
+      // More specific error handling
+      if (error.code === '23505') {
+        // Unique constraint violation
+        if (error.message?.includes('eventos_nome_key') || error.constraint?.includes('nome')) {
+          toast.error('Erro: Já existe um evento com este nome. Escolha um nome diferente.');
+        } else {
+          toast.error('Erro: Já existe um registro com essas informações. Verifique os dados e tente novamente.');
+        }
+      } else if (error.code === '42P10') {
+        // ON CONFLICT specification error - this shouldn't happen in event creation
+        console.error('Unexpected ON CONFLICT error during event creation');
+        toast.error('Erro interno do sistema. Tente novamente em alguns instantes.');
+      } else if (error.message?.includes('duplicate key value') || 
+                 error.message?.includes('unique constraint')) {
+        toast.error('Erro: Já existe um evento com essas informações. Verifique o nome e tente novamente.');
       } else {
         toast.error(`Erro ao cadastrar evento: ${error.message || 'Tente novamente mais tarde'}`);
       }
