@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Loader2, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -17,7 +17,7 @@ interface EventSelectionProps {
   onEventSelect: (eventId: string) => void;
   mode: 'registration' | 'login';
   isUnderAge?: boolean;
-  onEventsRefresh?: () => void; // Optional callback for refreshing events
+  onEventsRefresh?: (refetchFn: () => void) => void; // Optional callback for refreshing events
 }
 
 export const EventSelection = ({ 

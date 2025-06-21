@@ -25,7 +25,7 @@ export function EventSelectionContent() {
     eventsRefreshRef.current = refetchFn;
   };
 
-  // Function to trigger events refresh (can be called from parent components)
+  // Function to trigger events refresh (can be called from parent components)  
   const refreshEvents = () => {
     if (eventsRefreshRef.current) {
       eventsRefreshRef.current();
