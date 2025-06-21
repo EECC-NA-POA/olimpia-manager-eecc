@@ -9,8 +9,6 @@ import {
 
 import { useBranchData } from '@/hooks/dashboard/useBranchData';
 import { CreateEventForm } from './components/CreateEventForm';
-import { CreateEventDialogActions } from './components/CreateEventDialogActions';
-import { useCreateEvent } from './hooks/useCreateEvent';
 
 interface CreateEventDialogProps {
   open: boolean;
@@ -20,10 +18,6 @@ interface CreateEventDialogProps {
 
 export function CreateEventDialog({ open, onOpenChange, onEventCreated }: CreateEventDialogProps) {
   const { branches } = useBranchData();
-  const { isLoading } = useCreateEvent({ 
-    onEventCreated, 
-    onClose: () => onOpenChange(false) 
-  });
 
   const handleClose = () => onOpenChange(false);
 
@@ -41,11 +35,6 @@ export function CreateEventDialog({ open, onOpenChange, onEventCreated }: Create
           branches={branches || []} 
           onEventCreated={onEventCreated}
           onClose={handleClose}
-        />
-
-        <CreateEventDialogActions 
-          onClose={handleClose}
-          isLoading={isLoading}
         />
       </DialogContent>
     </Dialog>
