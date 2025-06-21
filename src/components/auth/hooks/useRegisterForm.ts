@@ -51,9 +51,9 @@ export const useRegisterForm = () => {
 
       console.log('📋 Registration result:', result);
 
-      // For self-hosted instances, treat any non-error response as success
-      if (result) {
-        console.log('✅ Registration successful - user created');
+      // Check if we have a proper result
+      if (result && result.user) {
+        console.log('✅ Registration successful - user created with ID:', result.user.id);
         toast.success('Cadastro realizado com sucesso!');
         
         // Redirect after successful signup
@@ -62,8 +62,8 @@ export const useRegisterForm = () => {
           navigate('/event-selection', { replace: true });
         }, 1500);
       } else {
-        console.error('❌ Registration failed - no result returned');
-        throw new Error('Falha no cadastro - nenhum resultado retornado');
+        console.error('❌ Registration failed - no valid result returned');
+        throw new Error('Falha no cadastro - resultado inválido');
       }
 
     } catch (error: any) {
@@ -78,6 +78,8 @@ export const useRegisterForm = () => {
         toast.error('Email inválido. Por favor, verifique o formato.');
       } else if (error.message?.includes('Password') || error.message?.includes('password')) {
         toast.error('Senha deve ter pelo menos 6 caracteres.');
+      } else if (error.message?.includes('JWT') || error.message?.includes('connection')) {
+        toast.error('Erro de conexão com o servidor. Verifique sua internet e tente novamente.');
       } else {
         toast.error(`Erro no cadastro: ${error.message}`);
       }

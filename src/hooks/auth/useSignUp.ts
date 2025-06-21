@@ -37,25 +37,43 @@ export const useSignUp = () => {
 
       console.log('📋 Signup response - data:', data, 'error:', error);
 
-      // For self-hosted instances, ignore email confirmation errors completely
-      if (error && error.message?.includes('Error sending confirmation email')) {
-        console.log('📧 Email confirmation error detected - treating as success for self-hosted instance');
-        
-        // Wait a moment for the trigger to potentially process
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Return success response for self-hosted instances
-        return {
-          user: { email: email },
-          session: null,
-          emailConfirmationError: false
-        };
-      }
-
-      // Handle other errors normally
+      // Handle errors properly - don't mask them
       if (error) {
         console.error('❌ Signup error:', error);
-        throw error;
+        
+        // For self-hosted instances, check if it's just an email confirmation issue
+        if (error.message?.includes('Error sending confirmation email')) {
+          console.log('📧 Email confirmation error detected for self-hosted instance');
+          
+          // Check if user was actually created despite email error
+          if (data?.user) {
+            console.log('✅ User was created despite email confirmation error');
+            
+            // Wait for trigger to process
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Verify user creation
+            const { data: userCheck, error: userCheckError } = await supabase
+              .from('usuarios')
+              .select('id, email, nome_completo')
+              .eq('id', data.user.id)
+              .maybeSingle();
+              
+            console.log('📋 User verification:', userCheck, userCheckError);
+            
+            if (userCheck) {
+              console.log('✅ User confirmed in public table');
+              return data;
+            } else {
+              console.error('❌ User not found in public table after creation');
+              throw new Error('Usuário criado mas não encontrado na base de dados. Tente novamente.');
+            }
+          } else {
+            throw new Error('Falha ao criar usuário: ' + error.message);
+          }
+        } else {
+          throw error;
+        }
       }
 
       // Success case with user data
@@ -70,8 +88,8 @@ export const useSignUp = () => {
         if (data.user.id) {
           console.log('🔍 Verifying user creation in public table...');
           
-          // Wait a moment for the trigger to process
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          // Wait for the trigger to process
+          await new Promise(resolve => setTimeout(resolve, 2000));
           
           const { data: userCheck, error: userCheckError } = await supabase
             .from('usuarios')
@@ -82,14 +100,17 @@ export const useSignUp = () => {
           console.log('📋 Public table verification:', userCheck, userCheckError);
           
           if (!userCheck) {
-            console.warn('⚠️ User created in auth but not in public table - trigger may have failed');
+            console.error('❌ User created in auth but not in public table - trigger failed');
+            throw new Error('Usuário criado parcialmente. Entre em contato com o suporte.');
           } else {
             console.log('✅ User confirmed in both auth and public tables');
           }
         }
-      }
 
-      return data;
+        return data;
+      } else {
+        throw new Error('Nenhum usuário foi criado');
+      }
 
     } catch (error: any) {
       console.error('❌ Sign up error occurred:', error);

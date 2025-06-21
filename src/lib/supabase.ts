@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // Use environment variables with fallback values
@@ -8,39 +7,30 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'x9Ll0f6bKmCBQ
 console.log('🔧 Supabase Configuration:', {
   url: supabaseUrl,
   hasAnonKey: !!supabaseAnonKey,
-  anonKeyLength: supabaseAnonKey.length
+  anonKeyLength: supabaseAnonKey.length,
+  timestamp: new Date().toISOString()
 });
 
-// Helper to check for invalid tokens in localStorage
-const cleanupInvalidTokens = () => {
+// Test connection function
+const testSupabaseConnection = async () => {
   try {
-    const storageKey = 'olimpics_auth_token';
-    const storedItem = localStorage.getItem(storageKey);
+    console.log('🔍 Testing Supabase connection...');
+    const { data, error } = await supabase.from('usuarios').select('count', { count: 'exact', head: true });
     
-    if (!storedItem) return;
-    
-    // Try to parse the stored token
-    try {
-      const parsedToken = JSON.parse(storedItem);
-      // Check if token has expected format
-      if (!parsedToken || typeof parsedToken !== 'object' || !parsedToken.access_token) {
-        console.log('Found invalid token format, removing:', storageKey);
-        localStorage.removeItem(storageKey);
-      }
-    } catch (e) {
-      // If we can't parse the token, it's invalid
-      console.error('Invalid token format in localStorage, removing:', e);
-      localStorage.removeItem(storageKey);
+    if (error) {
+      console.error('❌ Supabase connection test failed:', error);
+      return false;
     }
-  } catch (e) {
-    console.error('Error checking localStorage tokens:', e);
+    
+    console.log('✅ Supabase connection successful');
+    return true;
+  } catch (error) {
+    console.error('❌ Supabase connection error:', error);
+    return false;
   }
 };
 
-// Clean up any invalid tokens before creating the client
-cleanupInvalidTokens();
-
-// Create the Supabase client - FIXED: Don't use anon key as Bearer token
+// Create the Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
@@ -56,6 +46,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     }
   }
 });
+
+// Test connection on initialization
+testSupabaseConnection();
 
 // Add error handling helper with improved JWT error detection
 export const handleSupabaseError = (error: any) => {
@@ -96,17 +89,20 @@ export const handleSupabaseError = (error: any) => {
   return error.message || 'Ocorreu um erro inesperado.';
 };
 
-// Initialize Supabase auth state with better error handling
 export const initializeSupabase = async () => {
   try {
-    // First clean up any invalid tokens
-    cleanupInvalidTokens();
+    console.log('🚀 Initializing Supabase...');
+    
+    // Test connection first
+    const connectionOk = await testSupabaseConnection();
+    if (!connectionOk) {
+      console.warn('⚠️ Supabase connection issues detected');
+    }
     
     // Try to get the session
     const { data: { session }, error } = await supabase.auth.getSession();
     if (error) {
       console.error('Error getting session:', error);
-      // Sign out and clean up
       await supabase.auth.signOut();
       localStorage.removeItem('olimpics_auth_token');
     }
@@ -114,7 +110,6 @@ export const initializeSupabase = async () => {
     return session;
   } catch (error) {
     console.error('Error initializing Supabase:', error);
-    // Safe cleanup
     try {
       await supabase.auth.signOut();
       localStorage.removeItem('olimpics_auth_token');
@@ -125,11 +120,10 @@ export const initializeSupabase = async () => {
   }
 };
 
-// Add recovery helper for user session
 export const recoverSession = async () => {
   try {
     console.log('Attempting to recover session...');
-    const session = await initializeSupabase(); // Make sure we're starting clean
+    const session = await initializeSupabase();
     
     if (session) {
       console.log('Session recovered successfully');
