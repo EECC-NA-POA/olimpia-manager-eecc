@@ -55,7 +55,10 @@ export default function MonitorAttendancePage() {
     );
   }
 
-  if (!modalities || modalities.length === 0) {
+  // Filter out modalities with null modalidades data
+  const validModalities = modalities?.filter(modality => modality.modalidades && modality.modalidades.nome) || [];
+
+  if (validModalities.length === 0) {
     return (
       <div className="space-y-6 p-4">
         <div className="text-center py-8">
@@ -101,7 +104,7 @@ export default function MonitorAttendancePage() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {modalities.map((modality) => (
+            {validModalities.map((modality) => (
               <Card
                 key={modality.id}
                 className={`cursor-pointer transition-colors hover:bg-gray-50 ${
