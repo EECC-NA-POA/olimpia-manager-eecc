@@ -22,9 +22,12 @@ export default function MonitorModalitiesPage() {
     );
   }
 
+  // Filter out modalities with null modalidades data
+  const validModalities = modalities?.filter(modality => modality.modalidades && modality.modalidades.nome) || [];
+
   return (
     <div className="space-y-6">
-      {!modalities || modalities.length === 0 ? (
+      {validModalities.length === 0 ? (
         <Card>
           <CardContent className="p-6 text-center">
             <p className="text-gray-500">
@@ -37,7 +40,7 @@ export default function MonitorModalitiesPage() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {modalities.map((modality) => (
+          {validModalities.map((modality) => (
             <Card key={modality.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
