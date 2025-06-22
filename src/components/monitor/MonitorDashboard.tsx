@@ -9,6 +9,8 @@ import MonitorReportsPage from './MonitorReportsPage';
 export default function MonitorDashboard() {
   const [activeTab, setActiveTab] = useState("chamadas");
 
+  console.log('MonitorDashboard rendering with activeTab:', activeTab);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
