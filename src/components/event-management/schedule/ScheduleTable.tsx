@@ -37,7 +37,7 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
     }
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 mt-2">
         <div className="flex items-center gap-1 mb-2">
           <Calendar className="h-3 w-3 text-blue-600" />
           <span className="text-xs font-medium text-blue-600">Atividade Recorrente</span>
@@ -79,28 +79,6 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
     );
   };
 
-  const renderNonRecurrentInfo = (item: ScheduleItem) => {
-    return (
-      <>
-        <TableCell>{formatDate(item.dia)}</TableCell>
-        <TableCell>
-          {item.horario_inicio} {item.horario_fim ? `- ${item.horario_fim}` : ''}
-        </TableCell>
-        <TableCell>{item.local}</TableCell>
-      </>
-    );
-  };
-
-  const renderRecurrentCells = () => {
-    return (
-      <>
-        <TableCell colSpan={3} className="p-0">
-          {/* Conteúdo será renderizado na célula da atividade */}
-        </TableCell>
-      </>
-    );
-  };
-
   return (
     <Table>
       <TableHeader>
@@ -130,11 +108,35 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
                 </div>
               </TableCell>
               
-              {item.recorrente ? (
-                renderRecurrentCells()
-              ) : (
-                renderNonRecurrentInfo(item)
-              )}
+              <TableCell className="align-top">
+                {item.recorrente ? (
+                  <div className="text-sm text-gray-500 italic">
+                    Vários dias
+                  </div>
+                ) : (
+                  formatDate(item.dia)
+                )}
+              </TableCell>
+              
+              <TableCell className="align-top">
+                {item.recorrente ? (
+                  <div className="text-sm text-gray-500 italic">
+                    Vários horários
+                  </div>
+                ) : (
+                  `${item.horario_inicio} ${item.horario_fim ? `- ${item.horario_fim}` : ''}`
+                )}
+              </TableCell>
+              
+              <TableCell className="align-top">
+                {item.recorrente ? (
+                  <div className="text-sm text-gray-500 italic">
+                    Vários locais
+                  </div>
+                ) : (
+                  item.local
+                )}
+              </TableCell>
               
               <TableCell className="align-top">
                 <Badge variant={item.global ? "default" : "secondary"}>
