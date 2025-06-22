@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { EventSelection } from '@/components/auth/EventSelection';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
@@ -12,12 +12,24 @@ export function EventSelectionContent() {
   const navigate = useNavigate();
   const { user, setCurrentEventId } = useAuth();
   const { data: userAge, isLoading: isAgeLoading, error: ageError } = useUserAgeQuery();
+  const eventsRefreshRef = useRef<(() => void) | null>(null);
 
   const handleEventSelect = (eventId: string) => {
     localStorage.setItem('currentEventId', eventId);
     setCurrentEventId(eventId); // Add this line to update context state
     toast.success("Evento selecionado com sucesso!");
     navigate('/athlete-profile');
+  };
+
+  const handleEventsRefresh = (refetchFn: () => void) => {
+    eventsRefreshRef.current = refetchFn;
+  };
+
+  // Function to trigger events refresh (can be called from parent components)  
+  const refreshEvents = () => {
+    if (eventsRefreshRef.current) {
+      eventsRefreshRef.current();
+    }
   };
 
   const isUnder13 = userAge !== null && userAge < 13;
@@ -47,6 +59,7 @@ export function EventSelectionContent() {
         onEventSelect={handleEventSelect}
         mode="login"
         isUnderAge={isUnder13}
+        onEventsRefresh={handleEventsRefresh}
       />
     </div>
   );

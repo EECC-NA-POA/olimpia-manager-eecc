@@ -33,7 +33,14 @@ export default function AthleteProfilePage() {
     );
   }
 
-  const isAthleteProfile = profile.papeis?.some(role => role.nome === 'Atleta');
+  // Verificar se é atleta pelo código do papel ou nome
+  const isAthleteProfile = profile.papeis?.some(role => 
+    role.codigo === 'ATL' || role.nome === 'Atleta'
+  ) || false;
+
+  console.log('Profile data:', profile);
+  console.log('User roles:', profile.papeis);
+  console.log('Is athlete profile:', isAthleteProfile);
 
   return (
     <div className="space-y-8">

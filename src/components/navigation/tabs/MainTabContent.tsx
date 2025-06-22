@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { User, Calendar, BookOpen, ClipboardList, Medal } from 'lucide-react';
+import { User, Calendar, BookOpen, ClipboardList } from 'lucide-react';
 import { NavLink } from '../NavLink';
 
 interface MainTabContentProps {
@@ -41,13 +41,6 @@ export function MainTabContent({ isAthlete }: MainTabContentProps) {
         icon={<ClipboardList className="h-4 w-4" />}
         label="Inscrições"
         isActive={location.pathname === '/athlete-registrations'}
-      />
-      
-      <NavLink 
-        to="/scores"
-        icon={<Medal className="h-4 w-4" />}
-        label="Pontuações"
-        isActive={location.pathname === '/scores'}
       />
     </>
   );

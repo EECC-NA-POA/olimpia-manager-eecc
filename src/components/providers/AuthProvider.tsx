@@ -2,10 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { supabase, handleSupabaseError } from '@/lib/supabase';
+import { supabase, handleSupabaseError, recoverSession } from '@/lib/supabase';
 import { AuthContextType, AuthUser } from '@/types/auth';
 import { PUBLIC_ROUTES, PublicRoute } from '@/constants/routes';
-import { fetchUserProfile, handleAuthRedirect } from '@/services/authService';
+import { fetchUserProfile, handleAuthRedirect, clearUserProfileCache } from '@/services/authService';
 import { AuthContext } from '@/contexts/AuthContext';
 import { useAuthOperations } from '@/hooks/useAuthOperations';
 import { LoadingImage } from '@/components/ui/loading-image';
@@ -19,7 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signOut, signUp, resendVerificationEmail } = useAuthOperations({ setUser, navigate, location });
+  const { signIn, signOut, signUp, resendVerificationEmail } = useAuthOperations();
 
   // Update localStorage when currentEventId changes
   useEffect(() => {
@@ -28,29 +28,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       localStorage.removeItem('currentEventId');
     }
+    clearUserProfileCache();
   }, [currentEventId]);
 
   // Watch for changes to currentEventId in localStorage
   useEffect(() => {
     const handleStorageChange = () => {
       const storedEventId = localStorage.getItem('currentEventId');
-      console.log('Storage event detected');
       if (storedEventId !== currentEventId) {
+        console.log('📦 Event ID changed in localStorage:', storedEventId);
         setCurrentEventId(storedEventId);
       }
     };
 
-    // Add event listener for storage events
     window.addEventListener('storage', handleStorageChange);
     
-    // Also check periodically
     const intervalId = setInterval(() => {
       const storedEventId = localStorage.getItem('currentEventId');
       if (storedEventId !== currentEventId) {
-        console.log('Event ID changed in localStorage');
         setCurrentEventId(storedEventId);
       }
-    }, 1000);
+    }, 5000);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
@@ -58,15 +56,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [currentEventId]);
 
-  useEffect(() => {
-    console.log('Current Event ID updated in AuthContext');
-  }, [currentEventId]);
-
-  // Função para lidar com erros de sessão
-  const handleSessionError = (error: any) => {
-    console.error('Session error detected');
+  // Improved session error handling - don't logout immediately
+  const handleSessionError = async (error: any) => {
+    console.error('🚨 Session error detected:', error);
     
-    // Verifica se é um erro relacionado à sessão/token
     const isSessionError = error.message?.includes('JWT') || 
                           error.message?.includes('refresh_token_not_found') || 
                           error.message?.includes('token') ||
@@ -75,10 +68,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                           error.message?.includes('invalid_grant');
 
     if (isSessionError && !sessionExpired) {
+      console.log('🔄 Attempting session recovery before logout...');
+      
+      // Try to recover session first
+      const recoveredSession = await recoverSession();
+      
+      if (recoveredSession) {
+        console.log('✅ Session recovered, continuing...');
+        return false; // Don't logout
+      }
+      
+      // Only logout if recovery failed
+      console.log('❌ Session recovery failed, logging out...');
       setSessionExpired(true);
       setUser(null);
       localStorage.removeItem('currentEventId');
       setCurrentEventId(null);
+      clearUserProfileCache();
       
       toast.error(
         'Sua sessão expirou. Por favor, faça login novamente.',
@@ -86,35 +92,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
       
       navigate('/login', { replace: true });
+      return true; // Logout occurred
     }
+    
+    return false; // No logout needed
   };
 
   useEffect(() => {
-    console.log('Setting up authentication state...');
-    console.log('Current location:', location.pathname);
-    console.log('Public routes available');
+    console.log('🚀 Setting up authentication state...');
+    console.log('📍 Current location:', location.pathname);
     let mounted = true;
 
     const setupAuth = async () => {
       try {
+        // Get session with enhanced debugging
+        console.log('🔍 Getting current session...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          handleSessionError(error);
-          return;
+          console.error('❌ Error getting session:', error);
+          const logoutOccurred = await handleSessionError(error);
+          if (logoutOccurred) return;
         }
         
-        console.log('Session status:', session ? 'Active' : 'No active session');
+        console.log('📊 Session status:', {
+          hasSession: !!session,
+          userId: session?.user?.id || 'none',
+          email: session?.user?.email || 'none'
+        });
 
+        // Only redirect if no session and not on public route
         if (!session?.user && !PUBLIC_ROUTES.includes(location.pathname as PublicRoute) && 
             location.pathname !== '/reset-password') {
-          console.log('No active session and not on a public route, redirecting to /')
+          console.log('❌ No session and not on public route, redirecting to /');
           navigate('/', { replace: true });
           return;
         }
 
         if (session?.user) {
-          console.log('User session found, fetching profile...');
+          console.log('✅ User session found, fetching profile...');
           const storedEventId = localStorage.getItem('currentEventId');
           if (storedEventId && storedEventId !== currentEventId) {
             setCurrentEventId(storedEventId);
@@ -123,57 +139,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           try {
             const userProfile = await fetchUserProfile(session.user.id);
             if (mounted) {
-              console.log('Setting user with profile data');
+              console.log('✅ User profile loaded successfully');
               setUser({ ...session.user, ...userProfile });
-              setSessionExpired(false); // Reset session expired flag
+              setSessionExpired(false);
             }
           } catch (profileError) {
-            console.error('Error fetching user profile');
-            handleSessionError(profileError);
-            return;
+            console.error('❌ Error fetching user profile:', profileError);
+            const logoutOccurred = await handleSessionError(profileError);
+            if (logoutOccurred) return;
           }
         }
 
+        // Set up auth state change listener with improved error handling
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, session) => {
-            console.log('Auth state changed:', event);
+            console.log('🔄 Auth state changed:', event);
 
             if (event === 'SIGNED_OUT') {
               if (mounted) {
-                console.log('User signed out, clearing state');
+                console.log('👋 User signed out, clearing state');
                 setUser(null);
                 setSessionExpired(false);
                 localStorage.removeItem('currentEventId');
                 setCurrentEventId(null);
+                clearUserProfileCache();
                 navigate('/', { replace: true });
               }
               return;
             }
 
-            if (event === 'TOKEN_REFRESHED') {
-              console.log('Token refreshed successfully');
-              setSessionExpired(false);
-            }
-
             if (session?.user) {
               try {
-                console.log('User session updated, fetching profile');
+                console.log('🔄 User session updated, fetching profile');
                 const userProfile = await fetchUserProfile(session.user.id);
                 if (mounted) {
-                  console.log('Setting updated user with profile data');
+                  console.log('✅ Updated user profile loaded');
                   setUser({ ...session.user, ...userProfile });
                   setSessionExpired(false);
                 }
               } catch (error) {
-                console.error('Error in auth setup');
-                handleSessionError(error);
+                console.error('❌ Error in auth state change:', error);
+                await handleSessionError(error);
               }
-            } else {
+            } else if (!session?.user) {
               if (mounted) {
-                console.log('No user session after auth state change');
+                console.log('❌ No user session after auth state change');
                 setUser(null);
                 if (!PUBLIC_ROUTES.includes(location.pathname as PublicRoute)) {
-                  console.log('Not on a public route, redirecting to /');
                   navigate('/', { replace: true });
                 }
               }
@@ -185,11 +197,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           subscription.unsubscribe();
         };
       } catch (error) {
-        console.error('Error in auth setup');
-        handleSessionError(error);
+        console.error('❌ Error in auth setup:', error);
+        await handleSessionError(error);
       } finally {
         if (mounted) {
-          console.log('Auth setup complete, setting loading to false');
+          console.log('✅ Auth setup complete');
           setLoading(false);
         }
       }
@@ -202,15 +214,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [navigate, location.pathname]);
 
   if (loading) {
-    console.log('Auth is still loading, showing loading state');
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <LoadingImage text="Carregando..." />
+        <LoadingImage text="Carregando autenticação..." />
       </div>
     );
   }
-
-  console.log('Auth provider rendering with user:', user ? 'Logged in' : 'Not logged in');
   
   return (
     <AuthContext.Provider value={{ 

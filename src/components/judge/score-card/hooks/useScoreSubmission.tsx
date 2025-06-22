@@ -37,7 +37,7 @@ export function useScoreSubmission(
       const { scoreData } = prepareScoreData(formData, modalityRule, scoreType);
       console.log('Prepared score data:', JSON.stringify(scoreData, null, 2));
       
-      // Prepare final data structure
+      // Prepare final data structure - NEVER use bateria_id, always numero_bateria
       const finalScoreData = prepareFinalScoreData(
         scoreData,
         formData,
@@ -46,7 +46,13 @@ export function useScoreSubmission(
         modalityId,
         athlete
       );
-      console.log('Final prepared data:', JSON.stringify(finalScoreData, null, 2));
+      
+      // Remove any bateria_id that might have slipped in
+      if ('bateria_id' in finalScoreData) {
+        delete finalScoreData.bateria_id;
+      }
+      
+      console.log('Final prepared data (without bateria_id):', JSON.stringify(finalScoreData, null, 2));
       
       // Save to database
       try {
@@ -78,7 +84,9 @@ export function useScoreSubmission(
       const errorMessage = error?.message || 'Erro desconhecido ao registrar pontuação';
       
       // Show specific error messages
-      if (errorMessage.includes('ON CONFLICT specification')) {
+      if (errorMessage.includes('bateria_id')) {
+        toast.error('Erro de configuração: campo bateria_id não existe. Contacte o suporte técnico.');
+      } else if (errorMessage.includes('ON CONFLICT specification')) {
         toast.error('Erro de configuração do banco de dados. As constraints necessárias não estão configuradas corretamente.');
       } else if (errorMessage.includes('FROM-clause') || errorMessage.includes('missing FROM-clause entry')) {
         toast.error('Erro no trigger do banco de dados. Contacte o administrador sobre o erro SQL.');

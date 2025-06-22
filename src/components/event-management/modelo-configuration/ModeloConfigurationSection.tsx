@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +26,8 @@ export function ModeloConfigurationSection({ eventId }: { eventId: string | null
     setSearchTerm,
     modalityFilter,
     setModalityFilter,
+    categoryFilter,
+    setCategoryFilter,
     useBatteryFilter,
     setUseBatteryFilter,
     sortConfig,
@@ -38,20 +39,33 @@ export function ModeloConfigurationSection({ eventId }: { eventId: string | null
   console.log('ModeloConfigurationSection - filteredAndSortedModelos:', filteredAndSortedModelos);
   console.log('ModeloConfigurationSection - isLoading:', isLoading);
 
-  // Extract unique modalities for filter
-  const modalities = React.useMemo(() => {
+  // Extract unique modalities and categories for filters
+  const { modalities, categories } = React.useMemo(() => {
     const uniqueModalities = new Map();
+    const uniqueCategories = new Set<string>();
+    
     modelos.forEach(modelo => {
       if (modelo.modalidade?.nome && modelo.modalidade_id) {
         uniqueModalities.set(modelo.modalidade_id, {
           id: modelo.modalidade_id,
-          nome: modelo.modalidade.nome
+          nome: modelo.modalidade.nome,
+          categoria: modelo.modalidade.categoria
         });
       }
+      if (modelo.modalidade?.categoria) {
+        uniqueCategories.add(modelo.modalidade.categoria);
+      }
     });
-    return Array.from(uniqueModalities.values()).sort((a, b) => 
-      a.nome.localeCompare(b.nome)
-    );
+    
+    return {
+      modalities: Array.from(uniqueModalities.values()).sort((a, b) => {
+        // Sort by name first, then by category
+        const nameCompare = a.nome.localeCompare(b.nome);
+        if (nameCompare !== 0) return nameCompare;
+        return (a.categoria || '').localeCompare(b.categoria || '');
+      }),
+      categories: Array.from(uniqueCategories).sort()
+    };
   }, [modelos]);
 
   const openConfigDialog = (modelo: any) => {
@@ -97,9 +111,12 @@ export function ModeloConfigurationSection({ eventId }: { eventId: string | null
             onSearchChange={setSearchTerm}
             modalityFilter={modalityFilter}
             onModalityFilterChange={setModalityFilter}
+            categoryFilter={categoryFilter}
+            onCategoryFilterChange={setCategoryFilter}
             useBatteryFilter={useBatteryFilter}
             onUseBatteryFilterChange={setUseBatteryFilter}
             modalities={modalities}
+            categories={categories}
           />
           
           <ModeloConfigurationTable 

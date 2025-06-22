@@ -10,4 +10,5 @@ export interface DynamicSubmissionData {
   notes?: string;
   raia?: number;
   bateriaId?: number;
+  numeroBateria?: number;
 }

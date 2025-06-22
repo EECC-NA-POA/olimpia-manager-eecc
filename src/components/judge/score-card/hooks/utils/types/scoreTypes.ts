@@ -1,4 +1,3 @@
-
 export interface AthleteData {
   atleta_id: string;
   equipe_id?: number;
@@ -24,7 +23,7 @@ export interface ScoreRecordData {
   observacoes: any;
   juiz_id: any;
   data_registro: any;
-  bateria_id: number;
+  numero_bateria: number;
 }
 
 export interface SaveScoreResult {

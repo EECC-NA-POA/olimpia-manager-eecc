@@ -1,29 +1,38 @@
 
-import { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchUserProfiles, fetchBranches } from '@/lib/api';
-import { UserProfilesTable } from '@/components/dashboard/UserProfilesTable';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users, Calendar } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Calendar, FileText, Users, BookOpen, Settings, UserCheck, Shield, CalendarIcon } from 'lucide-react';
+import { LoadingState } from '@/components/dashboard/components/LoadingState';
+import { useEventData } from '@/hooks/useEventData';
+import { EventBasicInfo } from '@/components/event-management/EventBasicInfo';
+import { EventBranchesSection } from '@/components/event-management/EventBranchesSection';
+import { EventScheduleSection } from '@/components/event-management/EventScheduleSection';
+import { EventModalitiesSection } from '@/components/event-management/EventModalitiesSection';
+import { EventRegulationsSection } from '@/components/event-management/EventRegulationsSection';
+import { ModeloConfigurationSection } from '@/components/event-management/modelo-configuration/ModeloConfigurationSection';
+import { EventProfilesSection } from '@/components/event-management/EventProfilesSection';
+import { EventAdministrationSection } from '@/components/event-management/EventAdministrationSection';
 
 export default function Administration() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const currentEventId = localStorage.getItem('currentEventId');
+  const { user, currentEventId } = useAuth();
   const { canCreateEvents, isLoading: isLoadingPermission } = useCanCreateEvents();
-
+  const [activeTab, setActiveTab] = useState('basic-info');
+  const { data: eventData, isLoading: isLoadingEvent, refetch } = useEventData(currentEventId);
+  
   // Check if user has admin profile
   const hasAdminProfile = user?.papeis?.some(role => role.codigo === 'ADM');
-
+  
+  // Redirect if necessary permissions are not present
   useEffect(() => {
-    if (!hasAdminProfile) {
-      toast.error('Acesso restrito a administradores');
+    if (!isLoadingPermission && (!canCreateEvents || !hasAdminProfile)) {
+      toast.error('Você não tem permissão para acessar a administração');
       navigate('/');
     }
 
@@ -31,85 +40,149 @@ export default function Administration() {
       toast.error('Nenhum evento selecionado');
       navigate('/event-selection');
     }
-  }, [hasAdminProfile, navigate, currentEventId]);
+  }, [canCreateEvents, hasAdminProfile, isLoadingPermission, currentEventId, navigate]);
 
-  const { 
-    data: userProfiles,
-    isLoading: isLoadingProfiles,
-    refetch: refetchUserProfiles
-  } = useQuery({
-    queryKey: ['user-profiles', currentEventId],
-    queryFn: () => fetchUserProfiles(currentEventId),
-    enabled: hasAdminProfile && !!currentEventId
-  });
-
-  const { 
-    data: branches
-  } = useQuery({
-    queryKey: ['branches'],
-    queryFn: fetchBranches,
-    enabled: hasAdminProfile
-  });
-
-  // Set up event listener for profile updates
-  useEffect(() => {
-    const handleProfileUpdate = () => {
-      console.log('Profile update detected, refreshing data...');
-      refetchUserProfiles();
-    };
-
-    window.addEventListener('profile-updated', handleProfileUpdate);
-    
-    return () => {
-      window.removeEventListener('profile-updated', handleProfileUpdate);
-    };
-  }, [refetchUserProfiles, queryClient]);
-
-  if (!hasAdminProfile || !currentEventId) {
-    return null;
+  // Loading state
+  if (isLoadingPermission || isLoadingEvent) {
+    return <LoadingState />;
   }
 
-  const totalUsers = userProfiles?.length || 0;
+  // If no event data is found
+  if (!eventData) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-center text-muted-foreground">
+              Não foi possível carregar as informações do evento.
+            </p>
+            <div className="flex justify-center mt-4">
+              <Button onClick={() => refetch()}>Tentar novamente</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-olimpics-text">
           Administração
         </h1>
-        
-        {canCreateEvents && (
-          <Button 
-            onClick={() => navigate('/event-management')}
-            className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:w-auto flex items-center justify-center gap-2 text-sm px-3 py-2"
-            size="sm"
-          >
-            <Calendar className="h-4 w-4" />
-            <span className="whitespace-nowrap">Gerenciar Evento Atual</span>
-          </Button>
-        )}
       </div>
 
       <Card className="border-olimpics-green-primary/20">
         <CardHeader className="bg-olimpics-green-primary/5">
-          <div className="flex items-center gap-3">
-            <Users className="h-6 w-6 text-olimpics-green-primary" />
-            <div>
-              <CardTitle className="text-olimpics-green-primary text-xl">
-                Gerenciamento de Perfis de Usuário
-              </CardTitle>
-              <CardDescription className="mt-1.5">
-                Total de usuários registrados: {totalUsers}
-              </CardDescription>
-            </div>
-          </div>
+          <CardTitle className="text-olimpics-green-primary text-lg sm:text-xl">
+            {eventData.nome}
+          </CardTitle>
         </CardHeader>
+
         <CardContent className="pt-6">
-          <UserProfilesTable
-            data={userProfiles || []}
-            branches={branches || []}
-            isLoading={isLoadingProfiles}
-          />
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <div className="overflow-x-auto">
+              <TabsList className="w-full min-w-max border-b mb-8 bg-background grid grid-cols-2 md:flex md:justify-start md:space-x-2 p-0 h-auto gap-1 md:gap-0">
+                <TabsTrigger 
+                  value="basic-info"
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                >
+                  <FileText className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Informações Básicas</span>
+                  <span className="sm:hidden">Info</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="profiles"
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                >
+                  <UserCheck className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Perfis e Taxas</span>
+                  <span className="sm:hidden">Perfis</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="administration"
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                >
+                  <Shield className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Gerenciar Perfis</span>
+                  <span className="sm:hidden">Perfis</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="branches"
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                >
+                  <Users className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Filiais Vinculadas</span>
+                  <span className="sm:hidden">Filiais</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="regulations"
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                >
+                  <BookOpen className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Regulamento</span>
+                  <span className="sm:hidden">Reg.</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="schedule"
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                >
+                  <CalendarIcon className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Cronograma</span>
+                  <span className="sm:hidden">Agenda</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="modalities"
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                >
+                  <Calendar className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Modalidades</span>
+                  <span className="sm:hidden">Mod.</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="modelo-configuration"
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                >
+                  <Settings className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Configuração de Modelos</span>
+                  <span className="sm:hidden">Config</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="basic-info" className="mt-6">
+              <EventBasicInfo eventId={currentEventId} eventData={eventData} onUpdate={refetch} />
+            </TabsContent>
+
+            <TabsContent value="profiles" className="mt-6">
+              <EventProfilesSection eventId={currentEventId} />
+            </TabsContent>
+
+            <TabsContent value="administration" className="mt-6">
+              <EventAdministrationSection eventId={currentEventId} />
+            </TabsContent>
+
+            <TabsContent value="branches" className="mt-6">
+              <EventBranchesSection eventId={currentEventId} />
+            </TabsContent>
+
+            <TabsContent value="regulations" className="mt-6">
+              <EventRegulationsSection eventId={currentEventId} />
+            </TabsContent>
+
+            <TabsContent value="schedule" className="mt-6">
+              <EventScheduleSection eventId={currentEventId} />
+            </TabsContent>
+
+            <TabsContent value="modalities" className="mt-6">
+              <EventModalitiesSection eventId={currentEventId} />
+            </TabsContent>
+
+            <TabsContent value="modelo-configuration" className="mt-6">
+              <ModeloConfigurationSection eventId={currentEventId} />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>

@@ -1,6 +1,5 @@
 
 import { supabase } from '../supabase';
-import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '@/integrations/supabase/client';
 
 export const fetchActivePrivacyPolicy = async (): Promise<string> => {
   console.log('Fetching active privacy policy...');
@@ -23,9 +22,12 @@ export const fetchActivePrivacyPolicy = async (): Promise<string> => {
         console.log('Permission error, trying alternative approach...');
         
         // Tentativa usando acesso anônimo através da API pública
-        const publicResponse = await fetch(`${SUPABASE_URL}/rest/v1/termos_privacidade?select=termo_texto&ativo=eq.true&order=data_criacao.desc&limit=1`, {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://sb.nova-acropole.org.br/';
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'x9Ll0f6bKmCBQWXGrBHtH4zPxEht0Of7XShBxUV8IkJPF8GKjXK4VKeTTt0bAMvbWcF7zUOZA02pdbLahz9Z4eFzhk6EVPwflciK5HasI7Cm7zokA4y3Sg8EG34qseUQZGTUiTjTAf9idr6mcdEEPdKSUvju6PwLJxLRjSF3oRRF6KTHrPyWpyY5rJs7m7QCFd1uMOSBQ7gY4RtTMydqWAgIHJJhxTPxC49A2rMuB0Z';
+        
+        const publicResponse = await fetch(`${supabaseUrl}/rest/v1/termos_privacidade?select=termo_texto&ativo=eq.true&order=data_criacao.desc&limit=1`, {
           headers: {
-            'apikey': SUPABASE_PUBLISHABLE_KEY,
+            'apikey': supabaseAnonKey,
             'Content-Type': 'application/json'
           }
         });
@@ -56,55 +58,3 @@ export const fetchActivePrivacyPolicy = async (): Promise<string> => {
     return 'Não foi possível carregar a política de privacidade. Por favor, tente novamente mais tarde.';
   }
 };
-
-// Helper function to create the privacy policy acceptance RPC if it doesn't exist
-export const createPrivacyAcceptanceRPC = async () => {
-  try {
-    console.log('Setting up privacy policy acceptance RPC...');
-    
-    // Criar função RPC para registro de aceite de política de privacidade
-    const createFunctionSQL = `
-      CREATE OR REPLACE FUNCTION register_privacy_acceptance(
-        p_user_id UUID, 
-        p_version TEXT, 
-        p_policy_id UUID,
-        p_policy_text TEXT
-      )
-      RETURNS BOOLEAN AS $$
-      BEGIN
-        INSERT INTO logs_aceite_privacidade (
-          usuario_id, 
-          versao_termo, 
-          termo_privacidade_id, 
-          termo_texto
-        )
-        VALUES (
-          p_user_id, 
-          p_version, 
-          p_policy_id, 
-          p_policy_text
-        );
-        RETURN TRUE;
-      EXCEPTION WHEN OTHERS THEN
-        RAISE;
-        RETURN FALSE;
-      END;
-      $$ LANGUAGE plpgsql;
-    `;
-    
-    const { error: createError } = await supabase.rpc('execute_sql', {
-      sql: createFunctionSQL
-    });
-    
-    if (createError) {
-      console.error('Could not create privacy acceptance RPC:', createError);
-    } else {
-      console.log('Created privacy acceptance RPC successfully');
-    }
-  } catch (error) {
-    console.error('Error setting up privacy acceptance RPC:', error);
-  }
-};
-
-// Try to set up the RPC when the application starts
-createPrivacyAcceptanceRPC().catch(console.error);

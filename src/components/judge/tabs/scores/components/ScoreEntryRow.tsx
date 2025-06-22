@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Save, Check, X } from 'lucide-react';
+import { Edit, Save, Check, X, MessageSquare } from 'lucide-react';
 import { Athlete } from '../hooks/useAthletes';
 
 interface ScoreEntry {
@@ -25,7 +25,9 @@ interface ScoreEntryRowProps {
   onCancelEditing: (athleteId: string) => void;
   onSaveScore: (athleteId: string) => void;
   onUpdateEntry: (athleteId: string, field: keyof ScoreEntry, value: string) => void;
+  onOpenNotesDialog: (athlete: Athlete) => void;
   formatScoreValue: (value: number, type: string) => string;
+  selectedBateriaId?: number | null;
 }
 
 export function ScoreEntryRow({
@@ -38,9 +40,22 @@ export function ScoreEntryRow({
   onCancelEditing,
   onSaveScore,
   onUpdateEntry,
-  formatScoreValue
+  onOpenNotesDialog,
+  formatScoreValue,
+  selectedBateriaId
 }: ScoreEntryRowProps) {
   const isEditing = scoreEntry?.isEditing || false;
+
+  // Determine the bateria display
+  const getBateriaDisplay = () => {
+    if (!selectedBateriaId) return '-';
+    
+    if (selectedBateriaId === 999) {
+      return 'Final';
+    }
+    
+    return selectedBateriaId.toString();
+  };
 
   return (
     <TableRow key={athlete.atleta_id}>
@@ -49,6 +64,11 @@ export function ScoreEntryRow({
       </TableCell>
       <TableCell>
         {athlete.filial_nome || '-'}
+      </TableCell>
+      <TableCell>
+        <Badge variant={selectedBateriaId === 999 ? "default" : "secondary"}>
+          {getBateriaDisplay()}
+        </Badge>
       </TableCell>
       <TableCell>
         {isEditing ? (
@@ -94,37 +114,48 @@ export function ScoreEntryRow({
         )}
       </TableCell>
       <TableCell>
-        {isEditing ? (
-          <div className="flex gap-1">
+        <div className="flex gap-1">
+          {isEditing ? (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onSaveScore(athlete.atleta_id)}
+                disabled={isSubmitting}
+                className="h-8 w-8 p-0"
+              >
+                <Check className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onCancelEditing(athlete.atleta_id)}
+                disabled={isSubmitting}
+                className="h-8 w-8 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
             <Button
               size="sm"
               variant="outline"
-              onClick={() => onSaveScore(athlete.atleta_id)}
-              disabled={isSubmitting}
+              onClick={() => onStartEditing(athlete.atleta_id)}
               className="h-8 w-8 p-0"
             >
-              <Check className="h-4 w-4" />
+              {existingScore ? <Edit className="h-4 w-4" /> : <Save className="h-4 w-4" />}
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onCancelEditing(athlete.atleta_id)}
-              disabled={isSubmitting}
-              className="h-8 w-8 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        ) : (
+          )}
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onStartEditing(athlete.atleta_id)}
+            onClick={() => onOpenNotesDialog(athlete)}
             className="h-8 w-8 p-0"
+            title="Adicionar observações"
           >
-            {existingScore ? <Edit className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+            <MessageSquare className="h-4 w-4" />
           </Button>
-        )}
+        </div>
       </TableCell>
     </TableRow>
   );

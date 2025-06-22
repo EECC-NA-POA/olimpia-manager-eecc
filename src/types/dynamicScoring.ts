@@ -1,3 +1,4 @@
+
 export interface ModeloModalidade {
   id: number;
   modalidade_id: number;
@@ -12,7 +13,7 @@ export interface CampoModelo {
   modelo_id: number;
   chave_campo: string;
   rotulo_campo: string;
-  tipo_input: 'number' | 'integer' | 'text' | 'select' | 'calculated';
+  tipo_input: 'number' | 'integer' | 'text' | 'select' | 'calculated' | 'checkbox' | 'configuration';
   obrigatorio: boolean;
   ordem_exibicao: number;
   metadados: {
@@ -20,6 +21,7 @@ export interface CampoModelo {
     max?: number;
     step?: number;
     opcoes?: string[];
+    placeholder?: string;
     // Metadados para campos calculados
     tipo_calculo?: 'colocacao_bateria' | 'colocacao_final' | 'custom';
     campo_referencia?: string;
@@ -30,6 +32,12 @@ export interface CampoModelo {
     formato_resultado?: 'tempo' | 'distancia' | 'pontos';
     mascara?: string;
     unidade_display?: string;
+    // Metadados para configurações de bateria
+    baterias?: boolean;
+    num_raias?: number;
+    permite_final?: boolean;
+    max_baterias?: number;
+    allows_final?: boolean;
   } | null;
 }
 

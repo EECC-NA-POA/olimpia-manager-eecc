@@ -1,29 +1,31 @@
 
 import { supabase } from '@/lib/supabase';
-import type { DynamicSubmissionData } from './types';
+
+interface PontuacaoData {
+  eventId: string;
+  modalityId: number;
+  athleteId: string;
+  equipeId?: number | null;
+  judgeId: string;
+  modeloId: number;
+  raia?: number | null;
+  observacoes?: string | null;
+  numeroBateria?: number | null;
+}
 
 export async function upsertPontuacao(
-  data: DynamicSubmissionData,
-  valorPontuacao: number
+  data: PontuacaoData, 
+  valorPontuacao: number, 
+  usesBaterias: boolean
 ) {
-  console.log('=== UPSERT PONTUACAO START ===');
-  console.log('Data received:', data);
+  console.log('=== UPSERT PONTUAÇÃO ===');
+  console.log('Data for upsert:', data);
   console.log('Valor pontuacao:', valorPontuacao);
+  console.log('Uses baterias:', usesBaterias);
+  console.log('Observacoes received:', data.observacoes);
 
-  // 1. Verificar se já existe pontuação para este atleta
-  const { data: existingScore } = await supabase
-    .from('pontuacoes')
-    .select('id')
-    .eq('evento_id', data.eventId)
-    .eq('modalidade_id', data.modalityId)
-    .eq('atleta_id', data.athleteId)
-    .eq('modelo_id', data.modeloId)
-    .eq('juiz_id', data.judgeId)
-    .eq('numero_bateria', data.bateriaId || null)
-    .maybeSingle();
-
-  // Preparar dados completos da pontuação
-  const pontuacaoData = {
+  // Prepare base pontuacao data - SEMPRE usar numero_bateria, NUNCA bateria_id
+  const pontuacaoData: any = {
     evento_id: data.eventId,
     modalidade_id: data.modalityId,
     atleta_id: data.athleteId,
@@ -31,71 +33,139 @@ export async function upsertPontuacao(
     juiz_id: data.judgeId,
     modelo_id: data.modeloId,
     valor_pontuacao: valorPontuacao,
-    unidade: 'dinâmica',
-    observacoes: data.notes || null,
-    data_registro: new Date().toISOString(),
-    raia: data.raia || null,
-    numero_bateria: data.bateriaId || null
+    unidade: 'pontos',
+    observacoes: data.observacoes || null,
+    data_registro: new Date().toISOString()
   };
 
-  console.log('Pontuacao data to save:', pontuacaoData);
+  // Only add raia if it exists and is not null
+  if (data.raia !== null && data.raia !== undefined) {
+    pontuacaoData.raia = data.raia;
+  }
 
-  if (existingScore) {
-    // Atualizar pontuação existente
-    console.log('=== ATUALIZANDO PONTUAÇÃO EXISTENTE ===');
-    const { data: updatedScore, error: updateError } = await supabase
-      .from('pontuacoes')
-      .update(pontuacaoData)
-      .eq('id', existingScore.id)
-      .select()
-      .single();
+  // Only add numero_bateria if it exists and is not null
+  if (data.numeroBateria !== null && data.numeroBateria !== undefined) {
+    pontuacaoData.numero_bateria = data.numeroBateria;
+  }
 
-    if (updateError) {
-      console.error('Error updating pontuacao:', updateError);
-      throw updateError;
+  console.log('Final pontuacao data for database:', pontuacaoData);
+  console.log('Fields included:', Object.keys(pontuacaoData));
+
+  try {
+    // Check for existing record - using only fields that always exist
+    const searchFields: {
+      evento_id: string;
+      modalidade_id: number;
+      atleta_id: string;
+      juiz_id: string;
+      modelo_id: number;
+      equipe_id?: number | null;
+      numero_bateria?: number | null;
+    } = {
+      evento_id: data.eventId,
+      modalidade_id: data.modalityId,
+      atleta_id: data.athleteId,
+      juiz_id: data.judgeId,
+      modelo_id: data.modeloId
+    };
+
+    // Add equipe_id to search if it exists
+    if (data.equipeId) {
+      searchFields.equipe_id = data.equipeId;
     }
 
-    // Remover tentativas antigas
-    await supabase
-      .from('tentativas_pontuacao')
-      .delete()
-      .eq('pontuacao_id', existingScore.id);
-
-    console.log('Updated pontuacao:', updatedScore);
-    return updatedScore;
-  } else {
-    // Criar nova pontuação
-    console.log('=== CRIANDO NOVA PONTUAÇÃO ===');
-    const { data: newScore, error: pontuacaoError } = await supabase
-      .from('pontuacoes')
-      .insert([pontuacaoData])
-      .select()
-      .single();
-
-    if (pontuacaoError) {
-      console.error('Error creating pontuacao:', pontuacaoError);
-      throw pontuacaoError;
+    // Add numero_bateria to search if it exists
+    if (data.numeroBateria !== null && data.numeroBateria !== undefined) {
+      searchFields.numero_bateria = data.numeroBateria;
     }
 
-    console.log('Created pontuacao:', newScore);
-    return newScore;
+    console.log('Searching for existing record with fields:', searchFields);
+
+    const { data: existing, error: searchError } = await supabase
+      .from('pontuacoes')
+      .select('id')
+      .match(searchFields)
+      .maybeSingle();
+
+    if (searchError) {
+      console.error('Error searching for existing record:', searchError);
+      throw searchError;
+    }
+
+    if (existing) {
+      console.log('Updating existing record with ID:', existing.id);
+      
+      const { data: updated, error: updateError } = await supabase
+        .from('pontuacoes')
+        .update(pontuacaoData)
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Error updating pontuacao:', updateError);
+        throw updateError;
+      }
+
+      console.log('=== PONTUAÇÃO UPDATED SUCCESSFULLY ===');
+      return updated;
+    } else {
+      console.log('Inserting new record');
+      
+      const { data: inserted, error: insertError } = await supabase
+        .from('pontuacoes')
+        .insert(pontuacaoData)
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('Error inserting pontuacao:', insertError);
+        throw insertError;
+      }
+
+      console.log('=== PONTUAÇÃO INSERTED SUCCESSFULLY ===');
+      return inserted;
+    }
+  } catch (error) {
+    console.error('=== ERROR IN UPSERT PONTUAÇÃO ===');
+    console.error('Error details:', error);
+    throw error;
   }
 }
 
-export async function insertTentativas(tentativas: any[]) {
-  if (tentativas.length > 0) {
-    console.log('=== INSERINDO TENTATIVAS ===');
-    console.log('Tentativas to insert:', tentativas);
-    
-    const { error: tentativasError } = await supabase
-      .from('tentativas_pontuacao')
-      .insert(tentativas);
+export async function insertTentativas(tentativas: any[], pontuacaoId: number) {
+  if (!tentativas || tentativas.length === 0) {
+    console.log('No tentativas to insert');
+    return;
+  }
 
-    if (tentativasError) {
-      console.error('Error creating tentativas:', tentativasError);
-      throw tentativasError;
+  console.log('=== INSERTING TENTATIVAS ===');
+  console.log('Tentativas to insert:', tentativas);
+  console.log('Pontuacao ID:', pontuacaoId);
+
+  try {
+    // Add pontuacao_id to each tentativa
+    const tentativasWithId = tentativas.map(tentativa => ({
+      ...tentativa,
+      pontuacao_id: pontuacaoId
+    }));
+
+    const { data, error } = await supabase
+      .from('tentativas_pontuacao')
+      .insert(tentativasWithId)
+      .select();
+
+    if (error) {
+      console.error('Error inserting tentativas:', error);
+      throw error;
     }
 
-    console.log('=== TENTATIVAS CRIADAS COM SUCESSO ===');
+    console.log('=== TENTATIVAS INSERTED SUCCESSFULLY ===');
+    console.log('Inserted tentativas:', data);
+    return data;
+  } catch (error) {
+    console.error('=== ERROR INSERTING TENTATIVAS ===');
+    console.error('Error details:', error);
+    throw error;
   }
 }

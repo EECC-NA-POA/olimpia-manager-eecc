@@ -24,7 +24,7 @@ import { CalculatedFieldConfig } from './campo-dialog/CalculatedFieldConfig';
 const campoSchema = z.object({
   chave_campo: z.string().min(1, 'Chave é obrigatória'),
   rotulo_campo: z.string().min(1, 'Rótulo é obrigatório'),
-  tipo_input: z.enum(['number', 'integer', 'text', 'select', 'calculated']),
+  tipo_input: z.enum(['number', 'integer', 'text', 'select', 'calculated', 'checkbox', 'configuration']),
   obrigatorio: z.boolean(),
   ordem_exibicao: z.coerce.number().min(1),
   min: z.coerce.number().optional(),
@@ -161,6 +161,13 @@ export function CampoModeloDialog({
             metadados.mascara = '###.##';
             break;
         }
+      }
+
+      // Adicionar metadados específicos para checkbox (configurações de bateria)
+      if (data.tipo_input === 'checkbox' && data.chave_campo.toLowerCase().includes('bateria')) {
+        metadados.baterias = true;
+        metadados.num_raias = 8; // Valor padrão
+        metadados.permite_final = true;
       }
 
       const campoData = {

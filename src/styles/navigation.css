@@ -18,17 +18,40 @@
 @media (max-width: 768px) {
   .main-navigation-content {
     padding-top: 80px !important; /* Less padding on mobile since we don't have the top navigation */
-    padding-bottom: 80px !important; /* Add bottom padding for mobile navigation */
+    padding-bottom: 100px !important; /* Increased bottom padding for mobile navigation */
   }
   
   /* Fix bottom navigation spacing */
   body {
-    padding-bottom: 65px; /* Space for the bottom navigation */
+    padding-bottom: 80px !important; /* Space for the bottom navigation */
   }
   
   /* Make sure the judge dashboard has proper spacing on mobile */
   .judge-card {
     margin-bottom: 1rem;
+  }
+  
+  /* Ensure mobile navigation is always visible and properly styled */
+  nav[class*="fixed bottom-0"] {
+    display: block !important;
+    background: white !important;
+    border-top: 1px solid #e5e7eb !important;
+    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    z-index: 50 !important;
+  }
+  
+  /* Fix for pages with sidebars on mobile */
+  .main-content-mobile {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding-bottom: 100px !important;
+  }
+}
+
+/* Desktop: ensure mobile navigation is hidden */
+@media (min-width: 769px) {
+  nav[class*="fixed bottom-0"] {
+    display: none !important;
   }
 }
 
@@ -58,4 +81,24 @@
 
 .tabs-nav .tabs-content {
   padding: 0.5rem 0;
+}
+
+/* Mobile navigation specific styles */
+@media (max-width: 768px) {
+  /* Ensure all pages have proper mobile spacing */
+  .page-container,
+  .dashboard-container,
+  .content-container {
+    padding-bottom: 100px !important;
+    min-height: calc(100vh - 100px) !important;
+  }
+  
+  /* Fix for specific page layouts */
+  .athlete-profile-page,
+  .organizer-dashboard,
+  .delegation-dashboard,
+  .judge-dashboard,
+  .administration-page {
+    margin-bottom: 100px !important;
+  }
 }

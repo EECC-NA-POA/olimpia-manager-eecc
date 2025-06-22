@@ -9,9 +9,12 @@ interface ModeloConfigurationFiltersProps {
   onSearchChange: (value: string) => void;
   modalityFilter: string;
   onModalityFilterChange: (value: string) => void;
+  categoryFilter: string;
+  onCategoryFilterChange: (value: string) => void;
   useBatteryFilter: string;
   onUseBatteryFilterChange: (value: string) => void;
-  modalities: Array<{ id: number; nome: string }>;
+  modalities: Array<{ id: number; nome: string; categoria?: string }>;
+  categories: Array<string>;
 }
 
 export function ModeloConfigurationFilters({
@@ -19,9 +22,12 @@ export function ModeloConfigurationFilters({
   onSearchChange,
   modalityFilter,
   onModalityFilterChange,
+  categoryFilter,
+  onCategoryFilterChange,
   useBatteryFilter,
   onUseBatteryFilterChange,
-  modalities
+  modalities,
+  categories
 }: ModeloConfigurationFiltersProps) {
   return (
     <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -36,7 +42,7 @@ export function ModeloConfigurationFilters({
       </div>
       
       <Select value={modalityFilter} onValueChange={onModalityFilterChange}>
-        <SelectTrigger className="w-full md:w-[220px]">
+        <SelectTrigger className="w-full md:w-[280px]">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
             <SelectValue placeholder="Filtrar por modalidade" />
@@ -46,7 +52,21 @@ export function ModeloConfigurationFilters({
           <SelectItem value="all">Todas as modalidades</SelectItem>
           {modalities.map((modality) => (
             <SelectItem key={modality.id} value={modality.id.toString()}>
-              {modality.nome}
+              {modality.nome}{modality.categoria ? ` - ${modality.categoria}` : ''}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={categoryFilter} onValueChange={onCategoryFilterChange}>
+        <SelectTrigger className="w-full md:w-[180px]">
+          <SelectValue placeholder="Filtrar por categoria" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todas as categorias</SelectItem>
+          {categories.map((category) => (
+            <SelectItem key={category} value={category}>
+              {category}
             </SelectItem>
           ))}
         </SelectContent>

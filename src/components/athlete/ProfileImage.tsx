@@ -20,6 +20,8 @@ const getProfileImage = (gender: string | undefined) => {
 };
 
 export default function ProfileImage({ gender, identificador, isPublicUser }: ProfileImageProps) {
+  console.log('ProfileImage props:', { gender, identificador, isPublicUser });
+  
   return (
     <div className="flex flex-col items-center space-y-4">
       <div className="relative w-48 h-48">
@@ -43,7 +45,7 @@ export default function ProfileImage({ gender, identificador, isPublicUser }: Pr
             {isPublicUser ? 'PERFIL' : 'ID DO ATLETA'}
           </p>
           <p className="text-xl font-bold">
-            {isPublicUser ? 'Público Geral' : identificador}
+            {isPublicUser ? 'Público Geral' : (identificador || 'N/A')}
           </p>
         </div>
       </div>

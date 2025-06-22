@@ -1,11 +1,11 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { useEffect } from 'react';
 
 export const useEventQuery = (userId: string | undefined, enabled: boolean = true) => {
   // Only fetch events if userId is provided and privacy policy is accepted (enabled)
-  return useQuery({
+  const query = useQuery({
     queryKey: ['events', userId],
     queryFn: async () => {
       if (!userId) {
@@ -129,4 +129,20 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
       }
     }
   });
+
+  // Listen for custom event to refetch when a new event is created
+  useEffect(() => {
+    const handleEventCreated = () => {
+      console.log('Event created, refreshing events list...');
+      query.refetch();
+    };
+
+    window.addEventListener('eventCreated', handleEventCreated);
+    return () => window.removeEventListener('eventCreated', handleEventCreated);
+  }, [query.refetch]);
+
+  return {
+    ...query,
+    refetch: query.refetch
+  };
 };

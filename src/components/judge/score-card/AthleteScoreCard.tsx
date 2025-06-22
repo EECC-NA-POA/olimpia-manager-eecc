@@ -13,6 +13,7 @@ import { getInitialValues } from './utils/initialValuesUtils';
 import { AthleteScoreCardProps } from './types';
 import { useBateriaData } from '../tabs/scores/hooks/useBateriaData';
 import { useBateriaScores } from './components/bateria-scores/hooks/useBateriaScores';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ExtendedAthleteScoreCardProps extends AthleteScoreCardProps {
   modalityRule?: any;
@@ -26,6 +27,8 @@ export function AthleteScoreCard({
   scoreType,
   modalityRule
 }: ExtendedAthleteScoreCardProps) {
+  const isMobile = useIsMobile();
+  
   const {
     isExpanded,
     setIsExpanded,
@@ -76,6 +79,7 @@ export function AthleteScoreCard({
     <Card className={`
       overflow-hidden transition-all duration-200
       ${existingScore ? 'border-blue-300 shadow-blue-100' : ''}
+      ${isMobile ? 'mx-2' : ''}
     `}>
       <AthleteCardHeader
         athlete={athlete}
@@ -85,7 +89,7 @@ export function AthleteScoreCard({
         modalityRule={modalityRule}
       />
 
-      <CardContent className="pt-0 space-y-3">
+      <CardContent className={`${isMobile ? 'pt-0 p-3' : 'pt-0'} space-y-3`}>
         {/* Show loading state for baterias */}
         {isLoadingBaterias && (
           <div className="text-sm text-muted-foreground">
@@ -121,8 +125,8 @@ export function AthleteScoreCard({
         {!isLoadingBaterias && !allBateriasFilled && (
           <Button 
             variant={isExpanded ? "outline" : "default"}
-            size="sm" 
-            className="w-full"
+            size={isMobile ? "sm" : "sm"}
+            className={`w-full ${isMobile ? 'text-xs h-8' : ''}`}
             onClick={() => setIsExpanded(!isExpanded)}
           >
             {isExpanded ? "Esconder formulário" : "Registrar nova pontuação"}
@@ -130,15 +134,17 @@ export function AthleteScoreCard({
         )}
 
         {isExpanded && !allBateriasFilled && (
-          <ScoreForm 
-            modalityId={modalityId}
-            initialValues={getInitialValues(existingScore, modalityRule)}
-            onSubmit={handleSubmit}
-            isPending={isPending}
-            modalityRule={modalityRule}
-            eventId={eventId}
-            showModalityInfo={false}
-          />
+          <div className={isMobile ? 'space-y-3' : ''}>
+            <ScoreForm 
+              modalityId={modalityId}
+              initialValues={getInitialValues(existingScore, modalityRule)}
+              onSubmit={handleSubmit}
+              isPending={isPending}
+              modalityRule={modalityRule}
+              eventId={eventId}
+              showModalityInfo={false}
+            />
+          </div>
         )}
       </CardContent>
     </Card>

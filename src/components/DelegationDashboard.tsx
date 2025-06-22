@@ -3,7 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, ListChecks, BarChart, UsersRound } from "lucide-react";
+import { Users, ListChecks, BarChart, Bell, UserCheck } from "lucide-react";
 import { EmptyState } from "./dashboard/components/EmptyState";
 import { LoadingState } from "./dashboard/components/LoadingState";
 import { ErrorState } from "./dashboard/components/ErrorState";
@@ -12,7 +12,8 @@ import { NoEventSelected } from "./dashboard/components/NoEventSelected";
 import { AthletesTab } from "./dashboard/tabs/AthletesTab";
 import { EnrollmentsTab } from "./dashboard/tabs/EnrollmentsTab";
 import { StatisticsTab } from "./dashboard/tabs/StatisticsTab";
-import { TeamsTab } from "./judge/tabs/TeamsTab";
+import { RepresentativesTab } from "./dashboard/tabs/RepresentativesTab";
+import { NotificationManager } from "./notifications/NotificationManager";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
 export default function DelegationDashboard() {
@@ -26,6 +27,7 @@ export default function DelegationDashboard() {
 
   // Check if the user is a delegation representative
   const isDelegationRep = user?.papeis?.some(role => role.codigo === 'RDD') || false;
+  const isOrganizer = user?.papeis?.some(role => role.codigo === 'ORG') || false;
 
   const {
     isRefreshing,
@@ -116,13 +118,26 @@ export default function DelegationDashboard() {
           return <EmptyState title="Nenhuma inscrição confirmada" description="Não há inscrições confirmadas para este evento" />;
         }
         return <EnrollmentsTab enrollments={confirmedEnrollments} />;
-        
-      case "teams":
+
+      case "representatives":
+        if (!user?.filial_id) {
+          return <EmptyState title="Filial não identificada" description="Não foi possível identificar sua filial" />;
+        }
         return (
-          <TeamsTab
-            userId={user?.id || ''}
+          <RepresentativesTab 
+            filialId={user.filial_id} 
+            eventId={currentEventId} 
+          />
+        );
+
+      case "notifications":
+        return (
+          <DelegationNotificationManager
             eventId={currentEventId}
-            isOrganizer={false} // Representante de delegação não tem permissões de organizador
+            userId={user?.id || ''}
+            userBranchId={user?.filial_id}
+            isRepresentanteDelegacao={isDelegationRep}
+            isOrganizer={false}
           />
         );
 
@@ -133,7 +148,11 @@ export default function DelegationDashboard() {
 
   return (
     <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6 px-2 sm:px-4">
-      <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+      <DashboardHeader 
+        onRefresh={handleRefresh} 
+        isRefreshing={isRefreshing} 
+        title="Dashboard da Delegação"
+      />
 
       <Tabs defaultValue="statistics" className="w-full" onValueChange={setActiveTab} value={activeTab}>
         <div className="overflow-x-auto">
@@ -162,13 +181,23 @@ export default function DelegationDashboard() {
               <span className="hidden sm:inline">Inscrições por Modalidade</span>
               <span className="sm:hidden">Inscrições</span>
             </TabsTrigger>
+            {(isDelegationRep || isOrganizer) && (
+              <TabsTrigger 
+                value="representatives"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+              >
+                <UserCheck className="h-3 w-3 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Representantes</span>
+                <span className="sm:hidden">Reps</span>
+              </TabsTrigger>
+            )}
             <TabsTrigger 
-              value="teams"
+              value="notifications"
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
             >
-              <UsersRound className="h-3 w-3 sm:h-5 sm:w-5" />
-              <span className="hidden sm:inline">Equipes</span>
-              <span className="sm:hidden">Equipes</span>
+              <Bell className="h-3 w-3 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Notificações</span>
+              <span className="sm:hidden">Notif</span>
             </TabsTrigger>
           </TabsList>
         </div>
@@ -184,11 +213,43 @@ export default function DelegationDashboard() {
         <TabsContent value="enrollments" className="mt-4 sm:mt-6">
           {renderTabContent("enrollments")}
         </TabsContent>
-        
-        <TabsContent value="teams" className="mt-4 sm:mt-6">
-          {renderTabContent("teams")}
+
+        {(isDelegationRep || isOrganizer) && (
+          <TabsContent value="representatives" className="mt-4 sm:mt-6">
+            {renderTabContent("representatives")}
+          </TabsContent>
+        )}
+
+        <TabsContent value="notifications" className="mt-4 sm:mt-6">
+          {renderTabContent("notifications")}
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+// Componente específico para notificações da delegação que filtra apenas por tipo de autor
+function DelegationNotificationManager({ 
+  eventId, 
+  userId, 
+  userBranchId,
+  isRepresentanteDelegacao = false,
+  isOrganizer = false
+}: {
+  eventId: string;
+  userId: string;
+  userBranchId?: string;
+  isRepresentanteDelegacao?: boolean;
+  isOrganizer?: boolean;
+}) {
+  return (
+    <NotificationManager
+      eventId={eventId}
+      userId={userId}
+      userBranchId={userBranchId}
+      isRepresentanteDelegacao={isRepresentanteDelegacao}
+      isOrganizer={isOrganizer}
+      isDelegationDashboard={true}
+    />
   );
 }

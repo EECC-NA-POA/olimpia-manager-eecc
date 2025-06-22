@@ -1,14 +1,11 @@
-
-import React from 'react';
-import {
-  Table,
-  TableBody,
-} from '@/components/ui/table';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Athlete } from '../hooks/useAthletes';
-import { ScoreTableHeader } from './ScoreTableHeader';
-import { ScoreEntryRow } from './ScoreEntryRow';
+import { AthleteNotesDialog } from './AthleteNotesDialog';
+import { MainScoringTable } from './MainScoringTable';
+import { UnscoredAthletesSection } from './UnscoredAthletesSection';
+import { EmptyAthletesList } from './EmptyAthletesList';
 import { useScoreEntries } from './hooks/useScoreEntries';
 import { useScoreSubmission } from './hooks/useScoreSubmission';
 
@@ -31,6 +28,10 @@ export function AthletesTable({
   modalityRule,
   selectedBateriaId
 }: AthletesTableProps) {
+  const [notesDialogOpen, setNotesDialogOpen] = useState(false);
+  const [selectedAthleteForNotes, setSelectedAthleteForNotes] = useState<Athlete | null>(null);
+  const [selectedUnscored, setSelectedUnscored] = useState<Set<string>>(new Set());
+
   const {
     scoreEntries,
     startEditing,
@@ -42,7 +43,7 @@ export function AthletesTable({
 
   const { submitScoreMutation } = useScoreSubmission();
 
-  // Fetch existing scores (filtered by bateria if selected)
+  // Fetch existing scores (filtered by numero_bateria if selected) - FIXED: usar numero_bateria
   const { data: existingScores = [] } = useQuery({
     queryKey: ['athlete-scores', modalityId, eventId, selectedBateriaId],
     queryFn: async () => {
@@ -55,9 +56,9 @@ export function AthletesTable({
         .eq('modalidade_id', modalityId)
         .in('atleta_id', athletes.map(a => a.atleta_id));
 
-      // Filter by bateria if selected
+      // Filter by numero_bateria if selected - FIXED: usar numero_bateria
       if (selectedBateriaId) {
-        query = query.eq('bateria_id', selectedBateriaId);
+        query = query.eq('numero_bateria', selectedBateriaId);
       }
       
       const { data, error } = await query;
@@ -67,10 +68,47 @@ export function AthletesTable({
         return [];
       }
       
+      console.log('Existing scores for numero_bateria', selectedBateriaId, ':', data);
       return data || [];
     },
     enabled: !!eventId && athletes.length > 0,
   });
+
+  // Separate athletes into scored and unscored for the selected bateria
+  const { scoredAthletes, unscoredAthletes } = React.useMemo(() => {
+    if (!selectedBateriaId) {
+      // If no bateria selected, show all athletes normally
+      const scored = athletes.filter(athlete => 
+        existingScores.some(score => score.atleta_id === athlete.atleta_id)
+      );
+      const unscored = athletes.filter(athlete => 
+        !existingScores.some(score => score.atleta_id === athlete.atleta_id)
+      );
+      
+      return {
+        scoredAthletes: [...scored.sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome))],
+        unscoredAthletes: [...unscored.sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome))]
+      };
+    }
+
+    // For bateria system, separate based on scores in this specific bateria using numero_bateria
+    const scored = athletes.filter(athlete => 
+      existingScores.some(score => 
+        score.atleta_id === athlete.atleta_id && score.numero_bateria === selectedBateriaId
+      )
+    );
+    
+    const unscored = athletes.filter(athlete => 
+      !existingScores.some(score => 
+        score.atleta_id === athlete.atleta_id && score.numero_bateria === selectedBateriaId
+      )
+    );
+
+    return {
+      scoredAthletes: scored.sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome)),
+      unscoredAthletes: unscored.sort((a, b) => a.atleta_nome.localeCompare(b.atleta_nome))
+    };
+  }, [athletes, selectedBateriaId, existingScores]);
 
   const handleStartEditing = (athleteId: string) => {
     startEditing(athleteId, existingScores);
@@ -90,7 +128,7 @@ export function AthletesTable({
         eventId: eventId!,
         judgeId,
         scoreType,
-        bateriaId: selectedBateriaId
+        numeroBateria: selectedBateriaId
       });
       cancelEditing(athleteId);
     } catch (error) {
@@ -98,41 +136,104 @@ export function AthletesTable({
     }
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="border rounded-md">
-        <Table>
-          <ScoreTableHeader scoreType={scoreType} />
-          <TableBody>
-            {athletes.map((athlete) => {
-              const existingScore = existingScores.find(s => s.atleta_id === athlete.atleta_id);
-              const entry = scoreEntries[athlete.atleta_id];
+  const handleOpenNotesDialog = (athlete: Athlete) => {
+    setSelectedAthleteForNotes(athlete);
+    setNotesDialogOpen(true);
+  };
 
-              return (
-                <ScoreEntryRow
-                  key={athlete.atleta_id}
-                  athlete={athlete}
-                  existingScore={existingScore}
-                  scoreEntry={entry}
-                  scoreType={scoreType}
-                  isSubmitting={submitScoreMutation.isPending}
-                  onStartEditing={handleStartEditing}
-                  onCancelEditing={cancelEditing}
-                  onSaveScore={handleSaveScore}
-                  onUpdateEntry={updateEntry}
-                  formatScoreValue={formatScoreValue}
-                />
-              );
-            })}
-          </TableBody>
-        </Table>
+  const getAthleteNotes = (athleteId: string) => {
+    const score = existingScores.find(s => s.atleta_id === athleteId);
+    return score?.observacoes || '';
+  };
+
+  const handleUnscoredSelection = (athleteId: string, checked: boolean) => {
+    const newSelected = new Set(selectedUnscored);
+    if (checked) {
+      newSelected.add(athleteId);
+    } else {
+      newSelected.delete(athleteId);
+    }
+    setSelectedUnscored(newSelected);
+  };
+
+  const handleSelectAllUnscored = () => {
+    const newSelected = new Set(unscoredSectionAthletes.map(athlete => athlete.atleta_id));
+    setSelectedUnscored(newSelected);
+  };
+
+  const handleDeselectAllUnscored = () => {
+    setSelectedUnscored(new Set());
+  };
+
+  const handleAddSelectedToTable = () => {
+    // The selected athletes will now appear in the main table
+    // Clear the selection
+    setSelectedUnscored(new Set());
+  };
+
+  // Athletes to show in the main table (scored + selected unscored)
+  const mainTableAthletes = [
+    ...scoredAthletes,
+    ...unscoredAthletes.filter(athlete => selectedUnscored.has(athlete.atleta_id))
+  ];
+
+  // Athletes to show in the unscored section (unscored - selected)
+  const unscoredSectionAthletes = unscoredAthletes.filter(
+    athlete => !selectedUnscored.has(athlete.atleta_id)
+  );
+
+  return (
+    <>
+      <div className="space-y-4">
+        {/* Main scoring table */}
+        {mainTableAthletes.length > 0 && (
+          <MainScoringTable
+            athletes={mainTableAthletes}
+            existingScores={existingScores}
+            scoreEntries={scoreEntries}
+            scoreType={scoreType}
+            isSubmitting={submitScoreMutation.isPending}
+            selectedBateriaId={selectedBateriaId}
+            onStartEditing={handleStartEditing}
+            onCancelEditing={cancelEditing}
+            onSaveScore={handleSaveScore}
+            onUpdateEntry={updateEntry}
+            onOpenNotesDialog={handleOpenNotesDialog}
+            formatScoreValue={formatScoreValue}
+          />
+        )}
+
+        {/* Empty state */}
+        {mainTableAthletes.length === 0 && unscoredSectionAthletes.length === 0 && (
+          <EmptyAthletesList selectedBateriaId={selectedBateriaId} />
+        )}
+
+        {/* Unscored athletes section - only show if there are unscored athletes and a bateria is selected */}
+        {selectedBateriaId && unscoredSectionAthletes.length > 0 && (
+          <UnscoredAthletesSection
+            athletes={unscoredSectionAthletes}
+            selectedBateriaId={selectedBateriaId}
+            selectedUnscored={selectedUnscored}
+            onUnscoredSelection={handleUnscoredSelection}
+            onSelectAllUnscored={handleSelectAllUnscored}
+            onDeselectAllUnscored={handleDeselectAllUnscored}
+            onAddSelectedToTable={handleAddSelectedToTable}
+          />
+        )}
       </div>
 
-      {athletes.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">Nenhum atleta inscrito nesta modalidade</p>
-        </div>
+      {/* Notes Dialog */}
+      {selectedAthleteForNotes && (
+        <AthleteNotesDialog
+          athleteId={selectedAthleteForNotes.atleta_id}
+          athleteName={selectedAthleteForNotes.atleta_nome}
+          modalityId={modalityId}
+          eventId={eventId!}
+          currentNotes={getAthleteNotes(selectedAthleteForNotes.atleta_id)}
+          open={notesDialogOpen}
+          onOpenChange={setNotesDialogOpen}
+        />
       )}
-    </div>
+    </>
   );
 }

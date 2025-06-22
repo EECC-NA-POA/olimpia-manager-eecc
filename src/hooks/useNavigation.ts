@@ -10,6 +10,7 @@ interface UserRoles {
   isPublicGeral: boolean;
   isAdmin: boolean;
   isJudge: boolean;
+  isFilosofoMonitor: boolean;
 }
 
 export const useNavigation = () => {
@@ -20,6 +21,7 @@ export const useNavigation = () => {
   // Get all roles codes from the user's roles
   const userRoleCodes = user?.papeis?.map(role => role.codigo) || [];
   console.log('User role codes:', userRoleCodes);
+  console.log('User papeis:', user?.papeis);
 
   // Check for each role type
   const roles: UserRoles = {
@@ -28,11 +30,25 @@ export const useNavigation = () => {
     isDelegationRep: userRoleCodes.includes('RDD'),
     isPublicGeral: userRoleCodes.includes('PGR'),
     isAdmin: userRoleCodes.includes('ADM'),
-    isJudge: userRoleCodes.includes('JUZ')
+    isJudge: userRoleCodes.includes('JUZ'),
+    isFilosofoMonitor: userRoleCodes.includes('FMON') || userRoleCodes.includes('FMO') || userRoleCodes.includes('FILOSOFO_MONITOR') || userRoleCodes.includes('filosofo_monitor')
   };
 
-  // Remove automatic redirection - let users stay on event selection page
-  // Users will navigate manually after selecting an event
+  console.log('Detected roles:', roles);
+  console.log('Is Filosofo Monitor?', roles.isFilosofoMonitor);
+  console.log('Checking for FMON code:', userRoleCodes.includes('FMON'));
+
+  // Redirect authenticated users without an event to event selection
+  useEffect(() => {
+    if (user && !currentEventId && 
+        location.pathname !== '/event-selection' && 
+        !location.pathname.startsWith('/event') &&
+        location.pathname !== '/verificar-email' &&
+        location.pathname !== '/reset-password') {
+      console.log('User logged in but no event selected, redirecting to event selection');
+      navigate('/event-selection', { replace: true });
+    }
+  }, [user, currentEventId, location.pathname, navigate]);
 
   return {
     user,

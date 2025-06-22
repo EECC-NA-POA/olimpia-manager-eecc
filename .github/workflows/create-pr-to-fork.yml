@@ -2,16 +2,13 @@
 name: Create PR to Fork Repository
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches: [release]
   workflow_dispatch:
 
 jobs:
   create-pr-to-fork:
     runs-on: ubuntu-latest
-    # Only run when PR was merged (not just closed) and came from main branch
-    if: github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'main'
     
     steps:
       - name: Checkout code
@@ -42,7 +39,7 @@ jobs:
           BRANCH_NAME="sync-from-release-$(date +%Y%m%d-%H%M%S)"
           echo "Creating branch: $BRANCH_NAME"
           
-          # Create new branch based on current release (which now contains merged changes from main)
+          # Create new branch based on current release
           git checkout -b $BRANCH_NAME
           
           # Push to fork using FORK_REPO_TOKEN
@@ -52,38 +49,47 @@ jobs:
           # Save branch name for next step
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
+      - name: Get commit information
+        run: |
+          # Get current commit information
+          COMMIT_HASH=$(git rev-parse HEAD)
+          COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
+          COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')
+          COMMIT_DATE=$(git log -1 --pretty=format:'%ci')
+          
+          # Save for next step
+          echo "COMMIT_HASH=$COMMIT_HASH" >> $GITHUB_ENV
+          echo "COMMIT_AUTHOR=$COMMIT_AUTHOR" >> $GITHUB_ENV
+          echo "COMMIT_MESSAGE=$COMMIT_MESSAGE" >> $GITHUB_ENV
+          echo "COMMIT_DATE=$COMMIT_DATE" >> $GITHUB_ENV
+
       - name: Create Pull Request
         env:
           # Use FORK_REPO_TOKEN for GitHub CLI operations on fork
           GH_TOKEN: ${{ secrets.FORK_REPO_TOKEN }}
         run: |
-          echo "Creating PR from $BRANCH_NAME to main in fork repository..."
+          echo "Creating PR from $BRANCH_NAME to release in fork repository..."
           
-          # Get merged PR info for better description
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
-          MERGE_COMMIT="${{ github.event.pull_request.merge_commit_sha }}"
-          
-          # Create PR body
+          # Create PR body with commit information
           PR_BODY="## Sincronização automática do repositório privado
           
-          **PR Original:** #$PR_NUMBER - $PR_TITLE
-          **Autor:** @$PR_AUTHOR
-          **Merge Commit:** \`$MERGE_COMMIT\`
+          **Commit:** \`$COMMIT_HASH\`
+          **Autor:** @$COMMIT_AUTHOR
+          **Data:** $COMMIT_DATE
+          **Mensagem:** $COMMIT_MESSAGE
           
-          Este PR foi criado automaticamente após o merge do PR #$PR_NUMBER da branch \`main\` para \`release\` no repositório privado.
+          Este PR foi criado automaticamente após um commit na branch \`release\` do repositório privado.
           
           **Repositório origem:** bonanza-ong/olimpia-manager-na
-          **Fluxo:** main → release (repo privado) → main (repo público)
+          **Fluxo:** release (repo privado) → release (repo público)
           **Branch temporária:** $BRANCH_NAME"
           
-          # Try to create the PR
+          # Try to create the PR targeting release branch
           gh pr create \
             --repo EECC-NA-POA/olimpia-manager-eecc \
-            --base main \
+            --base release \
             --head $BRANCH_NAME \
-            --title "🔄 Sincronização: $PR_TITLE" \
+            --title "🔄 Sincronização: $COMMIT_MESSAGE" \
             --body "$PR_BODY" || {
               echo "Failed to create PR. Checking if it already exists..."
               
@@ -113,5 +119,6 @@ jobs:
           echo "✅ Workflow completed successfully!"
           echo "A Pull Request has been created (or updated) in the fork repository."
           echo "Repository: EECC-NA-POA/olimpia-manager-eecc"
-          echo "Target branch: main"
-          echo "Triggered by merge of PR #${{ github.event.pull_request.number }}"
+          echo "Target branch: release"
+          echo "Triggered by commit: $COMMIT_HASH"
+          echo "Commit author: $COMMIT_AUTHOR"

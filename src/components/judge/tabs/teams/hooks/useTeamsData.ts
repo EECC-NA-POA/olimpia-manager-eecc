@@ -13,11 +13,11 @@ export function useTeamsData(
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['teams-data', eventId, selectedModalityId],
+    queryKey: ['teams-data', eventId, selectedModalityId, isOrganizer, user?.filial_id],
     queryFn: async () => {
       if (!eventId || !selectedModalityId) return [];
 
-      console.log('Fetching teams for modality:', selectedModalityId, 'isOrganizer:', isOrganizer, 'userId:', user?.id);
+      console.log('Fetching teams for modality:', selectedModalityId, 'isOrganizer:', isOrganizer, 'userId:', user?.id, 'filialId:', user?.filial_id);
 
       let query = supabase
         .from('equipes')
@@ -31,10 +31,22 @@ export function useTeamsData(
         .eq('evento_id', eventId)
         .eq('modalidade_id', selectedModalityId);
 
-      // For organizers: show ALL teams in this modality regardless of creator
-      // For regular users: show only teams they created
-      if (!isOrganizer) {
-        query = query.eq('created_by', user?.id);
+      // For non-organizers (delegation representatives): show only teams from their branch
+      if (!isOrganizer && user?.filial_id) {
+        // Get users from the same branch
+        const { data: branchUsers } = await supabase
+          .from('usuarios')
+          .select('id')
+          .eq('filial_id', user.filial_id);
+        
+        const branchUserIds = branchUsers?.map(u => u.id) || [];
+        
+        if (branchUserIds.length > 0) {
+          query = query.in('created_by', branchUserIds);
+        } else {
+          // If no users found for the branch, return empty
+          return [];
+        }
       }
 
       const { data: teamsData, error } = await query;
@@ -57,8 +69,8 @@ export function useTeamsData(
       for (const team of teamsData) {
         console.log('Processing team for management:', team);
         
-        // Get team athletes with branch information - removed raia e posicao
-        const { data: athletesData } = await supabase
+        // Get team athletes with branch information
+        let athletesQuery = supabase
           .from('atletas_equipes')
           .select(`
             id,
@@ -67,10 +79,18 @@ export function useTeamsData(
               nome_completo,
               tipo_documento,
               numero_documento,
+              filial_id,
               filiais!inner(nome)
             )
           `)
           .eq('equipe_id', team.id);
+
+        // For delegation representatives, filter athletes by branch too
+        if (!isOrganizer && user?.filial_id) {
+          athletesQuery = athletesQuery.eq('usuarios.filial_id', user.filial_id);
+        }
+
+        const { data: athletesData } = await athletesQuery;
 
         console.log('Athletes data for team', team.id, ':', athletesData);
 
@@ -100,8 +120,8 @@ export function useTeamsData(
               id: athlete.id,
               atleta_id: athlete.atleta_id,
               atleta_nome: usuario?.nome_completo || '',
-              posicao: 0, // Valor padrão já que a coluna não existe
-              raia: 0, // Valor padrão já que a coluna não existe
+              posicao: 0,
+              raia: 0,
               documento: `${usuario?.tipo_documento || ''}: ${usuario?.numero_documento || ''}`,
               filial_nome: filial?.nome || 'N/A',
               numero_identificador: pagamentoData?.numero_identificador || undefined
@@ -113,7 +133,7 @@ export function useTeamsData(
           id: team.id,
           nome: team.nome,
           modalidade_id: team.modalidade_id,
-          filial_id: '', // Not using filial_id from equipes table since it doesn't exist
+          filial_id: '',
           evento_id: team.evento_id,
           modalidade_info: modalityInfo,
           atletas

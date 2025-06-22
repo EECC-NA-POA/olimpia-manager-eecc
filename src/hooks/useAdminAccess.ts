@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 export function useAdminAccess() {
   const navigate = useNavigate();
@@ -41,9 +41,12 @@ export function useAdminAccess() {
         if (error) throw error;
 
         // Check if any of the user's roles has the type code "ADM"
-        const hasAdminRole = userRoles?.some(
-          role => role.perfis?.perfis_tipo?.codigo === 'ADM'
-        );
+        const hasAdminRole = userRoles?.some(role => {
+          // Access the nested data properly
+          const perfis = role.perfis as any;
+          const perfisType = perfis?.perfis_tipo as any;
+          return perfisType?.codigo === 'ADM';
+        });
 
         if (!hasAdminRole) {
           toast({
