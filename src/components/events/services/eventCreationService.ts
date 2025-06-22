@@ -151,9 +151,68 @@ async function createEventWithTimeout(eventData: any, timeoutMs = 30000) {
   }
 }
 
-// Enhanced function to wait for and verify profiles creation
-async function waitForProfilesCreation(eventId: string, maxAttempts = 15, delayMs = 1000) {
-  console.log('⏳ Waiting for profiles creation by trigger...');
+// Create default profiles manually if trigger fails
+async function createDefaultProfiles(eventId: string) {
+  console.log('🔧 Creating default profiles manually...');
+  
+  const defaultProfiles = [
+    {
+      nome: 'Atleta',
+      descricao: 'Perfil padrão para atletas',
+      evento_id: eventId,
+      perfil_tipo_id: '7b46a728-348b-46ba-9233-55cb03e73987'
+    },
+    {
+      nome: 'Administração',
+      descricao: 'Acesso administrativo ao evento',
+      evento_id: eventId,
+      perfil_tipo_id: '0b0e3eec-9191-4703-a709-4a88dbd537b0'
+    }
+  ];
+
+  const { data: profiles, error } = await supabase
+    .from('perfis')
+    .insert(defaultProfiles)
+    .select();
+
+  if (error) {
+    console.error('❌ Error creating default profiles:', error);
+    throw new Error('Erro ao criar perfis padrão para o evento');
+  }
+
+  console.log('✅ Default profiles created manually:', profiles);
+  return profiles;
+}
+
+// Create registration fees for profiles
+async function createRegistrationFees(profiles: any[], eventId: string) {
+  console.log('💰 Creating registration fees...');
+  
+  const registrationFees = profiles.map(profile => ({
+    perfil_id: profile.id,
+    valor: 0.00,
+    isento: false,
+    mostra_card: false,
+    evento_id: eventId
+  }));
+
+  const { data: fees, error } = await supabase
+    .from('taxas_inscricao')
+    .insert(registrationFees)
+    .select();
+
+  if (error) {
+    console.error('❌ Error creating registration fees:', error);
+    throw new Error('Erro ao criar taxas de inscrição');
+  }
+
+  console.log('✅ Registration fees created:', fees);
+  return fees;
+}
+
+// Enhanced function to wait for profiles or create them manually
+async function ensureProfilesExist(eventId: string, maxAttempts = 5, delayMs = 2000) {
+  console.log('⏳ Ensuring profiles exist for event...');
   
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     console.log(`🔍 Checking profiles existence (attempt ${attempt}/${maxAttempts})...`);
@@ -170,25 +229,25 @@ async function waitForProfilesCreation(eventId: string, maxAttempts = 15, delayM
     }
     
     if (profiles && profiles.length >= 2) {
-      console.log('✅ Profiles found:', profiles);
+      console.log('✅ Profiles found via trigger:', profiles);
       
-      // Also verify that taxas_inscricao were created
-      const { data: taxas, error: taxasError } = await supabase
+      // Verify registration fees exist
+      const { data: fees, error: feesError } = await supabase
         .from('taxas_inscricao')
         .select('id, perfil_id')
         .eq('evento_id', eventId);
       
-      if (taxasError) {
-        console.error('❌ Error checking taxas_inscricao:', taxasError);
-        throw new Error('Erro ao verificar criação de taxas de inscrição');
+      if (feesError) {
+        console.error('❌ Error checking registration fees:', feesError);
+        // Continue to create fees manually if needed
       }
       
-      if (taxas && taxas.length >= 2) {
-        console.log('✅ Registration fees created by trigger:', taxas);
-        return profiles;
-      } else {
-        console.log('⚠️ Profiles exist but registration fees not found, continuing...');
+      if (!fees || fees.length < 2) {
+        console.log('⚠️ Creating missing registration fees...');
+        await createRegistrationFees(profiles, eventId);
       }
+      
+      return profiles;
     }
     
     if (attempt < maxAttempts) {
@@ -197,17 +256,22 @@ async function waitForProfilesCreation(eventId: string, maxAttempts = 15, delayM
     }
   }
   
-  throw new Error('Timeout: Perfis não foram criados pelo trigger dentro do tempo esperado');
+  // If trigger didn't work, create profiles manually
+  console.log('⚠️ Trigger failed, creating profiles manually...');
+  const profiles = await createDefaultProfiles(eventId);
+  await createRegistrationFees(profiles, eventId);
+  
+  return profiles;
 }
 
 async function updateRegistrationFees(eventId: string, formData: EventFormValues) {
   console.log('💰 Updating registration fees with custom values...');
   
   try {
-    // Wait for profiles to be created by trigger
-    const profiles = await waitForProfilesCreation(eventId);
+    // Ensure profiles exist (either from trigger or manual creation)
+    const profiles = await ensureProfilesExist(eventId);
     
-    // Update fees for each profile with all fields from taxas_inscricao table
+    // Update fees for each profile
     for (const profile of profiles) {
       const isAthlete = profile.nome === 'Atleta';
       
@@ -262,7 +326,6 @@ async function updateRegistrationFees(eventId: string, formData: EventFormValues
 async function createEventBranchRelationships(eventId: string, branchIds: string[]) {
   console.log('🏢 Creating branch relationships for branches:', branchIds);
   
-  // Prepare the data for insertion
   const branchRelationships = branchIds.map(branchId => ({
     evento_id: eventId,
     filial_id: branchId
@@ -277,7 +340,6 @@ async function createEventBranchRelationships(eventId: string, branchIds: string
   if (branchError) {
     console.error('❌ Error linking event to branches:', branchError);
     
-    // Provide more specific error message for RLS issues
     if (branchError.code === '42501') {
       throw new Error('Erro de permissão ao vincular filiais. Verifique se você tem permissão para criar eventos e tente novamente.');
     }
@@ -300,8 +362,8 @@ async function assignRolesToCreatorAndRegister(eventId: string, userId: string, 
 
   console.log('✅ Found profiles:', { adminId: adminProfile.id, athleteId: athleteProfile.id });
   
-  // Step 1: Assign both Administrator and Athlete profiles to the creator in papeis_usuarios
-  console.log('🔐 Assigning admin and athlete roles to user:', userId, 'for event:', eventId);
+  // Step 1: Assign both Administrator and Athlete profiles to the creator
+  console.log('🔐 Assigning admin and athlete roles to user:', userId);
   
   const rolesToAssign = [
     {
@@ -327,7 +389,7 @@ async function assignRolesToCreatorAndRegister(eventId: string, userId: string, 
 
   console.log('✅ Both admin and athlete roles assigned successfully');
   
-  // Step 2: Get the athlete profile's registration fee to create the event registration
+  // Step 2: Get the athlete profile's registration fee
   console.log('📝 Getting athlete profile registration fee...');
   
   const { data: registrationFee, error: feeError } = await supabase
@@ -343,7 +405,7 @@ async function assignRolesToCreatorAndRegister(eventId: string, userId: string, 
 
   console.log('✅ Found registration fee:', registrationFee);
   
-  // Step 3: Create the event registration (inscricoes_eventos)
+  // Step 3: Create the event registration
   console.log('📝 Creating event registration for the creator...');
   
   const { error: registrationError } = await supabase
@@ -362,8 +424,6 @@ async function assignRolesToCreatorAndRegister(eventId: string, userId: string, 
   }
 
   console.log('✅ Event registration created successfully');
-  
-  // The trigger create_event_payment will automatically create the payment record
   console.log('✅ Payment record will be created automatically by trigger');
 }
 
@@ -408,7 +468,7 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
     
     console.log('✅ Event created successfully:', newEvent);
     
-    // Update registration fees with custom values and wait for profiles
+    // Update registration fees and ensure profiles exist
     const profiles = await updateRegistrationFees(newEvent.id as string, data);
     
     // If branches were selected, create the event-branch relationships
