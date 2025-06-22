@@ -45,14 +45,18 @@ export const useScheduleForm = () => {
       : currentItem.dias_semana.filter(d => d !== dia);
     
     const novosHorarios = { ...currentItem.horarios_por_dia };
+    const novosLocais = { ...currentItem.locais_por_dia };
+    
     if (!checked) {
       delete novosHorarios[dia];
+      delete novosLocais[dia];
     }
     
     setCurrentItem({
       ...currentItem,
       dias_semana: novosDias,
-      horarios_por_dia: novosHorarios
+      horarios_por_dia: novosHorarios,
+      locais_por_dia: novosLocais
     });
   };
 
@@ -67,6 +71,16 @@ export const useScheduleForm = () => {
           ...horarioAtual,
           [tipo]: valor
         }
+      }
+    });
+  };
+
+  const handleLocalChange = (dia: string, local: string) => {
+    setCurrentItem({
+      ...currentItem,
+      locais_por_dia: {
+        ...currentItem.locais_por_dia,
+        [dia]: local
       }
     });
   };
@@ -97,6 +111,7 @@ export const useScheduleForm = () => {
       recorrente: item.recorrente || false,
       dias_semana: item.dias_semana || [],
       horarios_por_dia: item.horarios_por_dia || {},
+      locais_por_dia: item.locais_por_dia || {},
       data_fim_recorrencia: item.data_fim_recorrencia || '',
       modalidades: item.modalidades
     });
@@ -119,6 +134,7 @@ export const useScheduleForm = () => {
     handleModalitiesChange,
     handleDiaToggle,
     handleHorarioChange,
+    handleLocalChange,
     handleDataFimRecorrenciaChange,
     openAddDialog,
     openEditDialog,

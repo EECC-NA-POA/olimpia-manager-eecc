@@ -16,6 +16,7 @@ export const useScheduleData = (eventId: string | null) => {
     handleModalitiesChange,
     handleDiaToggle,
     handleHorarioChange,
+    handleLocalChange,
     handleDataFimRecorrenciaChange,
     openAddDialog,
     openEditDialog,
@@ -46,6 +47,7 @@ export const useScheduleData = (eventId: string | null) => {
     handleModalitiesChange,
     handleDiaToggle,
     handleHorarioChange,
+    handleLocalChange,
     handleDataFimRecorrenciaChange,
     handleSave: handleSaveWithReset,
     handleDelete

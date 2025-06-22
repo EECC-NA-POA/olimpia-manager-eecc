@@ -20,6 +20,7 @@ interface ScheduleDialogProps {
   handleSelectChange: (field: string, value: string | number | boolean) => void;
   handleDiaToggle: (dia: string, checked: boolean) => void;
   handleHorarioChange: (dia: string, tipo: 'inicio' | 'fim', valor: string) => void;
+  handleLocalChange: (dia: string, local: string) => void;
   handleDataFimRecorrenciaChange: (data: string) => void;
   handleSave: () => void;
   isSaving: boolean;
@@ -34,6 +35,7 @@ export const ScheduleDialog: React.FC<ScheduleDialogProps> = ({
   handleSelectChange,
   handleDiaToggle,
   handleHorarioChange,
+  handleLocalChange,
   handleDataFimRecorrenciaChange,
   handleSave,
   isSaving
@@ -51,6 +53,7 @@ export const ScheduleDialog: React.FC<ScheduleDialogProps> = ({
           handleSelectChange={handleSelectChange}
           handleDiaToggle={handleDiaToggle}
           handleHorarioChange={handleHorarioChange}
+          handleLocalChange={handleLocalChange}
           handleDataFimRecorrenciaChange={handleDataFimRecorrenciaChange}
         />
         

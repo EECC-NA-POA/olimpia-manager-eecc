@@ -24,6 +24,7 @@ export function EventScheduleSection({ eventId }: { eventId: string | null }) {
     handleSelectChange,
     handleDiaToggle,
     handleHorarioChange,
+    handleLocalChange,
     handleDataFimRecorrenciaChange,
     handleSave,
     handleDelete
@@ -73,6 +74,7 @@ export function EventScheduleSection({ eventId }: { eventId: string | null }) {
         handleSelectChange={handleSelectChange}
         handleDiaToggle={handleDiaToggle}
         handleHorarioChange={handleHorarioChange}
+        handleLocalChange={handleLocalChange}
         handleDataFimRecorrenciaChange={handleDataFimRecorrenciaChange}
         handleSave={handleSave}
         isSaving={isSaving}

@@ -13,6 +13,7 @@ interface ScheduleFormProps {
   handleSelectChange: (field: string, value: string | number | boolean) => void;
   handleDiaToggle: (dia: string, checked: boolean) => void;
   handleHorarioChange: (dia: string, tipo: 'inicio' | 'fim', valor: string) => void;
+  handleLocalChange: (dia: string, local: string) => void;
   handleDataFimRecorrenciaChange: (data: string) => void;
 }
 
@@ -22,6 +23,7 @@ export const ScheduleForm: React.FC<ScheduleFormProps> = ({
   handleSelectChange,
   handleDiaToggle,
   handleHorarioChange,
+  handleLocalChange,
   handleDataFimRecorrenciaChange
 }) => {
   return (
@@ -93,27 +95,16 @@ export const ScheduleForm: React.FC<ScheduleFormProps> = ({
           </div>
         </div>
       ) : (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="local">Local</Label>
-            <Input
-              id="local"
-              name="local"
-              value={currentItem.local}
-              onChange={handleInputChange}
-              placeholder="Local da atividade"
-            />
-          </div>
-          
-          <RecurrenceSelector
-            diasSemana={currentItem.dias_semana}
-            horariosPorDia={currentItem.horarios_por_dia}
-            dataFimRecorrencia={currentItem.data_fim_recorrencia}
-            onDiaToggle={handleDiaToggle}
-            onHorarioChange={handleHorarioChange}
-            onDataFimChange={handleDataFimRecorrenciaChange}
-          />
-        </div>
+        <RecurrenceSelector
+          diasSemana={currentItem.dias_semana}
+          horariosPorDia={currentItem.horarios_por_dia}
+          locaisPorDia={currentItem.locais_por_dia}
+          dataFimRecorrencia={currentItem.data_fim_recorrencia}
+          onDiaToggle={handleDiaToggle}
+          onHorarioChange={handleHorarioChange}
+          onLocalChange={handleLocalChange}
+          onDataFimChange={handleDataFimRecorrenciaChange}
+        />
       )}
       
       <div className="flex items-center space-x-2">

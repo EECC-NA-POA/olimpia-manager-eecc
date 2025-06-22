@@ -9,18 +9,22 @@ import { diasSemana } from './constants';
 interface RecurrenceSelectorProps {
   diasSemana: string[];
   horariosPorDia: Record<string, { inicio: string; fim: string }>;
+  locaisPorDia: Record<string, string>;
   dataFimRecorrencia: string;
   onDiaToggle: (dia: string, checked: boolean) => void;
   onHorarioChange: (dia: string, tipo: 'inicio' | 'fim', valor: string) => void;
+  onLocalChange: (dia: string, local: string) => void;
   onDataFimChange: (data: string) => void;
 }
 
 export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
   diasSemana: diasSelecionados,
   horariosPorDia,
+  locaisPorDia,
   dataFimRecorrencia,
   onDiaToggle,
   onHorarioChange,
+  onLocalChange,
   onDataFimChange
 }) => {
   return (
@@ -52,17 +56,19 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
 
         {diasSelecionados.length > 0 && (
           <div className="space-y-3">
-            <Label className="text-sm font-medium">Horários por Dia</Label>
+            <Label className="text-sm font-medium">Configuração por Dia</Label>
             {diasSelecionados.map((dia) => {
               const diaLabel = diasSemana.find(d => d.value === dia)?.label || dia;
               const horario = horariosPorDia[dia] || { inicio: '', fim: '' };
+              const local = locaisPorDia[dia] || '';
               
               return (
-                <div key={dia} className="p-3 border rounded-md space-y-2">
+                <div key={dia} className="p-3 border rounded-md space-y-3">
                   <Label className="text-sm font-medium text-blue-700">{diaLabel}</Label>
-                  <div className="grid grid-cols-2 gap-3">
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-xs">Início</Label>
+                      <Label className="text-xs">Horário Início</Label>
                       <Input
                         type="time"
                         value={horario.inicio}
@@ -71,11 +77,21 @@ export const RecurrenceSelector: React.FC<RecurrenceSelectorProps> = ({
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Fim</Label>
+                      <Label className="text-xs">Horário Fim</Label>
                       <Input
                         type="time"
                         value={horario.fim}
                         onChange={(e) => onHorarioChange(dia, 'fim', e.target.value)}
+                        className="text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Local</Label>
+                      <Input
+                        type="text"
+                        value={local}
+                        onChange={(e) => onLocalChange(dia, e.target.value)}
+                        placeholder="Local da atividade"
                         className="text-sm"
                       />
                     </div>

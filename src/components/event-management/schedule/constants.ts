@@ -12,6 +12,7 @@ export const defaultFormValues: ScheduleForm = {
   recorrente: false,
   dias_semana: [],
   horarios_por_dia: {},
+  locais_por_dia: {},
   data_fim_recorrencia: '',
   modalidades: []
 };

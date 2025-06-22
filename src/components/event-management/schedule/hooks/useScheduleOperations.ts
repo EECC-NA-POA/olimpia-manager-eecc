@@ -17,25 +17,63 @@ export const useScheduleOperations = (
     }
     
     // Basic validation
-    if (!currentItem.atividade || !currentItem.dia) {
-      toast.error('Preencha pelo menos a atividade e o dia');
+    if (!currentItem.atividade) {
+      toast.error('Preencha pelo menos o nome da atividade');
       return false;
+    }
+
+    // Validation for recurrent activities
+    if (currentItem.recorrente) {
+      if (currentItem.dias_semana.length === 0) {
+        toast.error('Selecione pelo menos um dia da semana para atividades recorrentes');
+        return false;
+      }
+      
+      // Check if all selected days have schedules and locations
+      for (const dia of currentItem.dias_semana) {
+        const horario = currentItem.horarios_por_dia[dia];
+        const local = currentItem.locais_por_dia[dia];
+        
+        if (!horario?.inicio || !horario?.fim) {
+          toast.error(`Preencha os horários para ${dia}`);
+          return false;
+        }
+        
+        if (!local?.trim()) {
+          toast.error(`Preencha o local para ${dia}`);
+          return false;
+        }
+      }
+    } else {
+      // Validation for non-recurrent activities
+      if (!currentItem.dia) {
+        toast.error('Preencha a data da atividade');
+        return false;
+      }
     }
     
     setIsSaving(true);
     try {
+      const baseData = {
+        atividade: currentItem.atividade,
+        global: currentItem.global,
+        recorrente: currentItem.recorrente,
+        dias_semana: currentItem.recorrente ? currentItem.dias_semana : null,
+        horarios_por_dia: currentItem.recorrente ? currentItem.horarios_por_dia : null,
+        locais_por_dia: currentItem.recorrente ? currentItem.locais_por_dia : null,
+        data_fim_recorrencia: currentItem.recorrente && currentItem.data_fim_recorrencia ? currentItem.data_fim_recorrencia : null,
+        // For non-recurrent activities
+        dia: !currentItem.recorrente ? currentItem.dia : null,
+        horario_inicio: !currentItem.recorrente ? currentItem.horario_inicio : null,
+        horario_fim: !currentItem.recorrente ? currentItem.horario_fim : null,
+        local: !currentItem.recorrente ? currentItem.local : null,
+      };
+
       if (editingId) {
         // Update existing activity
         const { error } = await supabase
           .from('cronograma_atividades')
-          .update({
-            atividade: currentItem.atividade,
-            dia: currentItem.dia,
-            horario_inicio: currentItem.horario_inicio,
-            horario_fim: currentItem.horario_fim,
-            local: currentItem.local,
-            global: currentItem.global
-          })
+          .update(baseData)
           .eq('id', editingId);
         
         if (error) throw error;
@@ -98,12 +136,7 @@ export const useScheduleOperations = (
           .insert({
             cronograma_id: cronogramaId,
             evento_id: eventId,
-            atividade: currentItem.atividade,
-            dia: currentItem.dia,
-            horario_inicio: currentItem.horario_inicio,
-            horario_fim: currentItem.horario_fim,
-            local: currentItem.local,
-            global: currentItem.global
+            ...baseData
           })
           .select()
           .single();
