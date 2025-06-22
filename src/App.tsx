@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -31,12 +30,12 @@ import VerifyEmail from "./pages/VerifyEmail";
 import RejectedAccess from "./pages/RejectedAccess";
 import AthleteProfile from "./pages/AthleteProfile";
 import Scores from "./pages/Scores";
-import OrganizerDashboard from "./components/OrganizerDashboard";
-import DelegationDashboard from "./components/DelegationDashboard";
-import AthleteRegistrations from "./components/AthleteRegistrations";
+import OrganizerDashboard from "@/components/OrganizerDashboard";
+import DelegationDashboard from "@/components/DelegationDashboard";
+import AthleteRegistrations from "@/components/AthleteRegistrations";
 
 // Import Filosofo Monitor component
-import MonitorDashboard from "./components/monitor/MonitorDashboard";
+import MonitorDashboard from "@/components/monitor/MonitorDashboard";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,7 +89,6 @@ function AppContent() {
                 <Route path="/athlete-profile" element={<AthleteProfile />} />
                 <Route path="/judge-dashboard" element={<JudgeDashboard />} />
                 <Route path="/administration" element={<Administration />} />
-                <Route path="/event-management" element={<Administration />} />
                 <Route path="/regulamento" element={<EventRegulations />} />
                 <Route path="/cronograma" element={<Cronograma />} />
                 <Route path="/scores" element={<Scores />} />

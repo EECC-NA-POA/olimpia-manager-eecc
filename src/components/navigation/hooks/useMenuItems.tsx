@@ -20,9 +20,6 @@ export const useMenuItems = (onLogout: () => void) => {
   const isDelegationRep = roles.isDelegationRep;
   const isAthlete = roles.isAthlete;
   const isFilosofoMonitor = roles.isFilosofoMonitor;
-  
-  // Check if user can manage events (admin with cadastra_eventos=true)
-  const canManageEvents = isAdmin && canCreateEvents;
 
   const handleEventSwitch = () => {
     // Clear current event and redirect to event selection
@@ -109,7 +106,7 @@ export const useMenuItems = (onLogout: () => void) => {
     });
   }
   
-  // 9. Administração (Administration)
+  // 9. Administração (Administration) - for admins only
   if (isAdmin) {
     menuItems.push({
       path: "/administration",
@@ -117,19 +114,9 @@ export const useMenuItems = (onLogout: () => void) => {
       icon: <Settings2 className="h-5 w-5" />,
       tooltip: "Administração"
     });
-    
-    // 10. Gerenciar Evento (Event Management) - for admins with event creation permission
-    if (canManageEvents) {
-      menuItems.push({
-        path: "/event-management",
-        label: "Gerenciar Evento",
-        icon: <CalendarIcon className="h-5 w-5" />,
-        tooltip: "Gerenciar Evento"
-      });
-    }
   }
 
-  // 11. Trocar Evento
+  // 10. Trocar Evento
   menuItems.push({
     path: "#",
     label: "Trocar Evento",
@@ -139,7 +126,7 @@ export const useMenuItems = (onLogout: () => void) => {
     action: handleEventSwitch
   });
 
-  // 12. Sair (Logout)
+  // 11. Sair (Logout)
   menuItems.push({
     path: "#",
     label: "Sair",
