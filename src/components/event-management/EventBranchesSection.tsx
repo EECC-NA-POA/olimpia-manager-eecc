@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -265,7 +264,7 @@ export function EventBranchesSection({ eventId }: { eventId: string | null }) {
                           <div className="flex items-center space-x-3">
                             <Checkbox
                               checked={isFullySelected}
-                              ref={(el) => {
+                              ref={(el: HTMLInputElement | null) => {
                                 if (el) el.indeterminate = isPartiallySelected && !isFullySelected;
                               }}
                               onCheckedChange={() => handleToggleState(estado)}
