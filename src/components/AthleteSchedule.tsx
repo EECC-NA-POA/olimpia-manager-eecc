@@ -7,31 +7,7 @@ import { Calendar, Loader2 } from "lucide-react";
 import { ScheduleTable } from './schedule/ScheduleTable';
 import { useAuth } from "@/contexts/AuthContext";
 import { expandRecurrentActivity, getDayLabel } from '@/components/cronograma/utils';
-
-interface ScheduleActivity {
-  id: number;
-  cronograma_atividade_id: number;
-  atividade: string;
-  horario_inicio: string;
-  horario_fim: string;
-  dia: string;
-  local: string;
-  global: boolean;
-  modalidade_nome: string | null;
-  modalidade_status: string | null;
-  atleta_id: string;
-  recorrente?: boolean;
-  dias_semana?: string[];
-  horarios_por_dia?: Record<string, { inicio: string; fim: string }>;
-  locais_por_dia?: Record<string, string>;
-  data_fim_recorrencia?: string;
-}
-
-interface GroupedActivities {
-  [key: string]: {
-    [key: string]: ScheduleActivity[];
-  };
-}
+import { ScheduleActivity, GroupedActivities } from '@/components/cronograma/types';
 
 export default function AthleteSchedule() {
   const { user } = useAuth();
@@ -109,8 +85,8 @@ export default function AthleteSchedule() {
 
   // Group activities by date and time
   const groupedActivities = activities?.reduce((groups: GroupedActivities, activity) => {
-    const date = activity.dia;
-    const time = `${activity.horario_inicio}-${activity.horario_fim}`;
+    const date = activity.dia || '';
+    const time = `${activity.horario_inicio || ''}-${activity.horario_fim || ''}`;
     
     if (!groups[date]) {
       groups[date] = {};
@@ -145,7 +121,7 @@ export default function AthleteSchedule() {
   });
 
   const timeSlots = [...new Set(
-    (activities || []).map(activity => `${activity.horario_inicio}-${activity.horario_fim}`)
+    (activities || []).map(activity => `${activity.horario_inicio || ''}-${activity.horario_fim || ''}`)
   )].sort();
 
   return (

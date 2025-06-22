@@ -4,25 +4,7 @@ import { Clock } from "lucide-react";
 import { ActivityCard } from './ActivityCard';
 import { ScheduleLegend } from './ScheduleLegend';
 import { getDayLabel } from '@/components/cronograma/utils';
-
-interface ScheduleActivity {
-  id: number;
-  cronograma_atividade_id: number;
-  atividade: string;
-  horario_inicio: string;
-  horario_fim: string;
-  dia: string;
-  local: string;
-  global: boolean;
-  modalidade_nome: string | null;
-  modalidade_status: string | null;
-}
-
-interface GroupedActivities {
-  [key: string]: {
-    [key: string]: ScheduleActivity[];
-  };
-}
+import { ScheduleActivity, GroupedActivities } from '@/components/cronograma/types';
 
 interface ScheduleTableProps {
   groupedActivities: GroupedActivities;
