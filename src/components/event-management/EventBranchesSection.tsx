@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/lib/supabase';
@@ -14,8 +14,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Branch {
   id: string;
@@ -25,12 +26,36 @@ interface Branch {
   is_linked: boolean;
 }
 
+interface GroupedBranches {
+  [estado: string]: Branch[];
+}
+
 export function EventBranchesSection({ eventId }: { eventId: string | null }) {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBranches, setSelectedBranches] = useState<Record<string, boolean>>({});
+  const [expandedStates, setExpandedStates] = useState<Record<string, boolean>>({});
+  
+  // Group branches by state
+  const groupedBranches: GroupedBranches = React.useMemo(() => {
+    const filtered = branches.filter(branch => 
+      branch.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      branch.cidade.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      branch.estado.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    return filtered.reduce((groups, branch) => {
+      if (!groups[branch.estado]) {
+        groups[branch.estado] = [];
+      }
+      groups[branch.estado].push(branch);
+      return groups;
+    }, {} as GroupedBranches);
+  }, [branches, searchTerm]);
+
+  const sortedStates = Object.keys(groupedBranches).sort();
   
   // Fetch all branches and check which ones are linked to this event
   useEffect(() => {
@@ -87,6 +112,35 @@ export function EventBranchesSection({ eventId }: { eventId: string | null }) {
       ...prev,
       [branchId]: !prev[branchId]
     }));
+  };
+
+  const handleToggleState = (estado: string) => {
+    const stateBranches = groupedBranches[estado];
+    const allSelected = stateBranches.every(branch => selectedBranches[branch.id]);
+    
+    const newSelections = { ...selectedBranches };
+    stateBranches.forEach(branch => {
+      newSelections[branch.id] = !allSelected;
+    });
+    
+    setSelectedBranches(newSelections);
+  };
+
+  const handleToggleStateExpansion = (estado: string) => {
+    setExpandedStates(prev => ({
+      ...prev,
+      [estado]: !prev[estado]
+    }));
+  };
+
+  const isStateFullySelected = (estado: string): boolean => {
+    return groupedBranches[estado].every(branch => selectedBranches[branch.id]);
+  };
+
+  const isStatePartiallySelected = (estado: string): boolean => {
+    const stateBranches = groupedBranches[estado];
+    const selectedCount = stateBranches.filter(branch => selectedBranches[branch.id]).length;
+    return selectedCount > 0 && selectedCount < stateBranches.length;
   };
   
   const saveChanges = async () => {
@@ -160,12 +214,6 @@ export function EventBranchesSection({ eventId }: { eventId: string | null }) {
       setIsSaving(false);
     }
   };
-
-  const filteredBranches = branches.filter(branch => 
-    branch.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    branch.cidade.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    branch.estado.toLowerCase().includes(searchTerm.toLowerCase())
-  );
   
   if (isLoading) {
     return <LoadingState />;
@@ -173,6 +221,9 @@ export function EventBranchesSection({ eventId }: { eventId: string | null }) {
   
   return (
     <Card>
+      <CardHeader>
+        <CardTitle>Filiais Vinculadas</CardTitle>
+      </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -194,39 +245,79 @@ export function EventBranchesSection({ eventId }: { eventId: string | null }) {
             </Button>
           </div>
           
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">Vincular</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Cidade</TableHead>
-                <TableHead>Estado</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredBranches.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-4">
-                    Nenhuma filial encontrada
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredBranches.map((branch) => (
-                  <TableRow key={branch.id}>
-                    <TableCell>
-                      <Checkbox 
-                        checked={!!selectedBranches[branch.id]} 
-                        onCheckedChange={() => handleToggleBranch(branch.id)}
-                      />
-                    </TableCell>
-                    <TableCell>{branch.nome}</TableCell>
-                    <TableCell>{branch.cidade}</TableCell>
-                    <TableCell>{branch.estado}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <div className="space-y-2">
+            {sortedStates.length === 0 ? (
+              <div className="text-center py-4">
+                <p className="text-muted-foreground">Nenhuma filial encontrada</p>
+              </div>
+            ) : (
+              sortedStates.map((estado) => {
+                const stateBranches = groupedBranches[estado];
+                const isExpanded = expandedStates[estado];
+                const isFullySelected = isStateFullySelected(estado);
+                const isPartiallySelected = isStatePartiallySelected(estado);
+                
+                return (
+                  <Collapsible key={estado} open={isExpanded} onOpenChange={() => handleToggleStateExpansion(estado)}>
+                    <div className="border rounded-lg">
+                      <CollapsibleTrigger className="w-full">
+                        <div className="flex items-center justify-between p-4 hover:bg-gray-50">
+                          <div className="flex items-center space-x-3">
+                            <Checkbox
+                              checked={isFullySelected}
+                              ref={(el) => {
+                                if (el) el.indeterminate = isPartiallySelected && !isFullySelected;
+                              }}
+                              onCheckedChange={() => handleToggleState(estado)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            <span className="font-medium">{estado}</span>
+                            <span className="text-sm text-muted-foreground">
+                              ({stateBranches.filter(b => selectedBranches[b.id]).length}/{stateBranches.length} selecionadas)
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm text-muted-foreground">
+                              {stateBranches.length} filiais
+                            </span>
+                            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          </div>
+                        </div>
+                      </CollapsibleTrigger>
+                      
+                      <CollapsibleContent>
+                        <div className="border-t">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="w-12">Vincular</TableHead>
+                                <TableHead>Nome</TableHead>
+                                <TableHead>Cidade</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {stateBranches.map((branch) => (
+                                <TableRow key={branch.id}>
+                                  <TableCell>
+                                    <Checkbox 
+                                      checked={!!selectedBranches[branch.id]} 
+                                      onCheckedChange={() => handleToggleBranch(branch.id)}
+                                    />
+                                  </TableCell>
+                                  <TableCell>{branch.nome}</TableCell>
+                                  <TableCell>{branch.cidade}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CollapsibleContent>
+                    </div>
+                  </Collapsible>
+                );
+              })
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
