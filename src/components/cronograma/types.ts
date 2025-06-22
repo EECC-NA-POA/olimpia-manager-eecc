@@ -15,6 +15,7 @@ export interface ScheduleActivity {
   dia?: string;
   horario_inicio?: string;
   horario_fim?: string;
+  atleta_id?: string; // Added to make it compatible with AthleteSchedule
 }
 
 export interface GroupedActivities {

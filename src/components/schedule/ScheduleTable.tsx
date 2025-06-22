@@ -41,6 +41,29 @@ export function ScheduleTable({ groupedActivities, dates, timeSlots }: ScheduleT
 
   const columnWidth = `${100 / (dates.length + 1)}%`;
 
+  const groupByCategory = (activities: ScheduleActivity[]) => {
+    const grouped = activities.reduce((acc, activity) => {
+      const category = activity.atividade;
+      
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      
+      const isDuplicate = acc[category].some(
+        existing => existing.cronograma_atividade_id === activity.cronograma_atividade_id &&
+                    existing.modalidade_nome === activity.modalidade_nome
+      );
+      
+      if (!isDuplicate) {
+        acc[category].push(activity);
+      }
+      
+      return acc;
+    }, {} as Record<string, ScheduleActivity[]>);
+
+    return Object.entries(grouped).sort((a, b) => a[0].localeCompare(b[0]));
+  };
+
   return (
     <div className="space-y-4">
       <ScheduleLegend />
@@ -80,6 +103,8 @@ export function ScheduleTable({ groupedActivities, dates, timeSlots }: ScheduleT
                   </td>
                   {dates.map((date) => {
                     const activitiesForSlot = groupedActivities[date]?.[timeSlot] || [];
+                    const groupedByCategory = groupByCategory(activitiesForSlot);
+
                     return (
                       <td 
                         key={`${date}-${timeSlot}`} 
@@ -87,10 +112,11 @@ export function ScheduleTable({ groupedActivities, dates, timeSlots }: ScheduleT
                         style={{ width: columnWidth }}
                       >
                         <div className="space-y-2">
-                          {activitiesForSlot.map((activity) => (
+                          {groupedByCategory.map(([category, activities]) => (
                             <ActivityCard 
-                              key={`${activity.cronograma_atividade_id}-${activity.modalidade_nome || 'no-modality'}`}
-                              activity={activity}
+                              key={category}
+                              category={category}
+                              activities={activities}
                             />
                           ))}
                         </div>
