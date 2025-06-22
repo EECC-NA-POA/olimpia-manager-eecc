@@ -8,7 +8,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { supabase } from "@/lib/supabase";
-import AthleteSchedule from "@/components/AthleteSchedule";
 import { EnrollmentList } from "./enrollment/EnrollmentList";
 import { AvailableModalities } from "./enrollment/AvailableModalities";
 import { EnrollmentHeader } from "./enrollment/EnrollmentHeader";
@@ -115,8 +114,6 @@ export default function AthleteRegistrations() {
           </Card>
         </div>
       </Collapsible>
-
-      <AthleteSchedule />
     </div>
   );
 }
