@@ -25,6 +25,8 @@ export function useCreateEvent({ onEventCreated, onClose }: UseCreateEventProps)
       status_evento: 'ativo',
       visibilidade_publica: true,
       selectedBranches: [],
+      taxa_atleta: 0,
+      taxa_publico_geral: 0,
     },
   });
 

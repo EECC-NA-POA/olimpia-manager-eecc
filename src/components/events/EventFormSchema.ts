@@ -21,6 +21,9 @@ export const eventSchema = z.object({
   visibilidade_publica: z.boolean().default(true),
   foto_evento: z.string().optional(),
   selectedBranches: z.array(z.string().uuid()).optional(),
+  // Novos campos para taxas de inscrição
+  taxa_atleta: z.number().min(0, 'Taxa do atleta deve ser maior ou igual a zero').default(0),
+  taxa_publico_geral: z.number().min(0, 'Taxa do público geral deve ser maior ou igual a zero').default(0),
 }).refine(data => data.data_fim_inscricao >= data.data_inicio_inscricao, {
   message: 'A data de fim das inscrições deve ser posterior à data de início',
   path: ['data_fim_inscricao'],

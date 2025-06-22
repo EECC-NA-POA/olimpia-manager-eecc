@@ -192,6 +192,13 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
     
     console.log('✅ Event created successfully:', newEvent);
     
+    // Wait for default profiles trigger to complete
+    console.log('⏳ Waiting for default profiles creation...');
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Update registration fees with custom values
+    await updateRegistrationFees(newEvent.id as string, data.taxa_atleta, data.taxa_publico_geral);
+    
     // If branches were selected, create the event-branch relationships
     if (data.selectedBranches && data.selectedBranches.length > 0) {
       console.log('🏢 Creating branch relationships...');
@@ -199,21 +206,14 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
         await createEventBranchRelationships(newEvent.id as string, data.selectedBranches);
       } catch (branchError) {
         console.error('❌ Error linking branches, but event was created:', branchError);
-        // Don't throw here - the event was created successfully
-        // Just warn the user that branch linking failed
         console.warn('⚠️ Event created but branch linking failed. You can link branches later in event management.');
       }
     }
-
-    // Wait for default profiles trigger to complete
-    console.log('⏳ Waiting for default profiles creation...');
-    await new Promise(resolve => setTimeout(resolve, 1000));
     
     try {
       await assignRolesToCreatorAndRegister(newEvent.id as string, userId);
     } catch (roleError) {
       console.error('❌ Error assigning roles and registering, but event was created:', roleError);
-      // Don't throw here either - the event was created successfully
       console.warn('⚠️ Event created but role assignment failed. You can assign roles later in event management.');
     }
 
@@ -240,6 +240,49 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
     
     throw error;
   }
+}
+
+async function updateRegistrationFees(eventId: string, taxaAtleta: number, taxaPublicoGeral: number) {
+  console.log('💰 Updating registration fees with custom values...');
+  
+  // Get the profiles to update their fees
+  const { data: profiles, error: profilesError } = await supabase
+    .from('perfis')
+    .select('id, nome')
+    .eq('evento_id', eventId)
+    .in('nome', ['Atleta', 'Administração']);
+
+  if (profilesError) {
+    console.error('❌ Error fetching profiles for fee update:', profilesError);
+    throw new Error('Erro ao buscar perfis para atualizar taxas');
+  }
+
+  if (!profiles || profiles.length === 0) {
+    console.error('❌ No profiles found for fee update');
+    throw new Error('Perfis não encontrados para atualizar taxas');
+  }
+
+  // Update fees for each profile
+  for (const profile of profiles) {
+    const valor = profile.nome === 'Atleta' ? taxaAtleta : taxaPublicoGeral;
+    
+    const { error: updateError } = await supabase
+      .from('taxas_inscricao')
+      .update({ 
+        valor: valor,
+        descricao: `Taxa de inscrição para ${profile.nome} - R$ ${valor.toFixed(2)}`
+      })
+      .eq('perfil_id', profile.id);
+
+    if (updateError) {
+      console.error(`❌ Error updating fee for profile ${profile.nome}:`, updateError);
+      throw new Error(`Erro ao atualizar taxa para perfil ${profile.nome}`);
+    }
+    
+    console.log(`✅ Updated fee for ${profile.nome}: R$ ${valor.toFixed(2)}`);
+  }
+  
+  console.log('✅ Registration fees updated successfully');
 }
 
 async function createEventBranchRelationships(eventId: string, branchIds: string[]) {
@@ -376,4 +419,7 @@ async function assignRolesToCreatorAndRegister(eventId: string, userId: string) 
   }
 
   console.log('✅ Event registration created successfully');
+  
+  // The trigger create_event_payment will automatically create the payment record
+  console.log('✅ Payment record will be created automatically by trigger');
 }

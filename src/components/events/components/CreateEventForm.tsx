@@ -5,6 +5,7 @@ import { DateSelectionSection } from '../DateSelectionSection';
 import { EventDetailsSection } from '../EventDetailsSection';
 import { LocationSection } from '../LocationSection';
 import { BranchSelectionSection } from '../BranchSelectionSection';
+import { RegistrationFeesSection } from '../RegistrationFeesSection';
 import { CreateEventDialogActions } from './CreateEventDialogActions';
 import { useCreateEvent } from '../hooks/useCreateEvent';
 import type { Branch } from '@/types/api';
@@ -24,6 +25,7 @@ export function CreateEventForm({ branches, onEventCreated, onClose }: CreateEve
         <BasicInfoSection form={form} />
         <DateSelectionSection form={form} />
         <LocationSection form={form} />
+        <RegistrationFeesSection form={form} />
         <EventDetailsSection form={form} />
         <BranchSelectionSection form={form} branches={branches || []} />
         
