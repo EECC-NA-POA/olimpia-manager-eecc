@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { StateBranchSelector } from './StateBranchSelector';
+import { useStateBranchSelection } from '../hooks/useStateBranchSelection';
 import { useBranches } from '@/hooks/useBranches';
 
 interface BranchSelectorProps {
@@ -18,6 +19,7 @@ export function BranchSelector({
   userBranchId 
 }: BranchSelectorProps) {
   const { data: branches, isLoading } = useBranches();
+  const { expandedStates, handleToggleState } = useStateBranchSelection();
 
   if (isLoading) {
     return <div className="text-sm text-gray-500">Carregando filiais...</div>;
@@ -26,19 +28,6 @@ export function BranchSelector({
   if (!branches) {
     return <div className="text-sm text-red-500">Erro ao carregar filiais</div>;
   }
-
-  const handleBranchToggle = (branchId: string) => {
-    if (branchId === 'all') {
-      // Se "todas" foi selecionada, limpar outras seleções
-      onBranchChange(['all']);
-    } else {
-      const newSelection = selectedBranches.includes(branchId)
-        ? selectedBranches.filter(id => id !== branchId && id !== 'all')
-        : [...selectedBranches.filter(id => id !== 'all'), branchId];
-      
-      onBranchChange(newSelection);
-    }
-  };
 
   // Se é representante de delegação, só mostrar sua filial
   if (!isOrganizer && userBranchId) {
@@ -55,38 +44,13 @@ export function BranchSelector({
     );
   }
 
-  // Se é organizador, mostrar todas as opções
+  // Se é organizador, usar o novo seletor por estados
   return (
-    <div>
-      <Label className="text-sm font-medium">Destinatários *</Label>
-      <div className="mt-2 space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="all-branches"
-            checked={selectedBranches.includes('all')}
-            onCheckedChange={() => handleBranchToggle('all')}
-          />
-          <Label htmlFor="all-branches" className="font-medium text-green-700">
-            Todas as filiais
-          </Label>
-        </div>
-        
-        <div className="border-t pt-2">
-          {branches.map((branch) => (
-            <div key={branch.id} className="flex items-center space-x-2">
-              <Checkbox
-                id={branch.id}
-                checked={selectedBranches.includes(branch.id)}
-                onCheckedChange={() => handleBranchToggle(branch.id)}
-                disabled={selectedBranches.includes('all')}
-              />
-              <Label htmlFor={branch.id} className="text-sm">
-                {branch.nome} - {branch.cidade}/{branch.estado}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+    <StateBranchSelector
+      selectedBranches={selectedBranches}
+      onBranchChange={onBranchChange}
+      expandedStates={expandedStates}
+      onToggleState={handleToggleState}
+    />
   );
 }
