@@ -131,7 +131,7 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
             numero_identificador: userData.numero_identificador,
             status_confirmacao: userEventRegistration[0].status_confirmacao || 'pendente',
             filial_id: userData.filial_id,
-            filial_nome: userData.filiais?.nome || null,
+            filial_nome: Array.isArray(userData.filiais) ? userData.filiais[0]?.nome : userData.filiais?.nome || null,
             status_pagamento: paymentInfo?.isento ? 'confirmado' : (paymentInfo?.status_pagamento || 'pendente'),
             isento: paymentInfo?.isento || false,
             usuario_registrador_id: paymentInfo?.usuario_registrador_id,
@@ -139,7 +139,7 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
             registrador_email: registradorInfo?.email || null,
             modalidades: userModalities?.map(mod => ({
               id: mod.id.toString(),
-              modalidade: mod.modalidades?.nome || '',
+              modalidade: Array.isArray(mod.modalidades) ? mod.modalidades[0]?.nome : mod.modalidades?.nome || '',
               status: mod.status || 'pendente',
               justificativa_status: mod.justificativa_status || ''
             })) || []
