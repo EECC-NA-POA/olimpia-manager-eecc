@@ -24,6 +24,46 @@ interface ScheduleActivity {
   modalidade_nome: string | null;
   modalidade_status: string | null;
   global: boolean;
+  recorrente?: boolean;
+  dias_semana?: string[];
+  horarios_por_dia?: Record<string, { inicio: string; fim: string }>;
+  locais_por_dia?: Record<string, string>;
+  data_fim_recorrencia?: string;
+  dia?: string;
+  horario_inicio?: string;
+  horario_fim?: string;
+}
+
+// Helper function to expand recurrent activities into daily activities
+function expandRecurrentActivity(activity: ScheduleActivity): ScheduleActivity[] {
+  if (!activity.recorrente || !activity.dias_semana || !Array.isArray(activity.dias_semana)) {
+    return [activity];
+  }
+
+  const diasSemanaMap: Record<string, string> = {
+    'sabado': '2024-12-14', // Example Saturday date
+    'domingo': '2024-12-15'  // Example Sunday date
+  };
+
+  const expandedActivities: ScheduleActivity[] = [];
+
+  activity.dias_semana.forEach(dia => {
+    const horario = activity.horarios_por_dia?.[dia];
+    const local = activity.locais_por_dia?.[dia];
+    
+    if (horario && diasSemanaMap[dia]) {
+      expandedActivities.push({
+        ...activity,
+        dia: diasSemanaMap[dia],
+        horario_inicio: horario.inicio,
+        horario_fim: horario.fim,
+        local: local || activity.local || '',
+        recorrente: false // Mark as non-recurrent for display purposes
+      });
+    }
+  });
+
+  return expandedActivities.length > 0 ? expandedActivities : [activity];
 }
 
 // Custom ActivityCard for the general schedule that always shows green status
@@ -33,6 +73,7 @@ function GeneralScheduleActivityCard({ category, activities }: {
 }) {
   const location = activities[0]?.local || '';
   const isGlobal = activities.some(activity => activity.global);
+  const isRecurrent = activities.some(activity => activity.recorrente);
 
   return (
     <div className={cn(
@@ -42,7 +83,14 @@ function GeneralScheduleActivityCard({ category, activities }: {
         : "border-green-600 bg-green-50"
     )}>
       <div className="space-y-2">
-        <h4 className="font-medium text-olimpics-green-primary">{activities[0].atividade}</h4>
+        <h4 className="font-medium text-olimpics-green-primary">
+          {activities[0].atividade}
+          {isRecurrent && (
+            <Badge variant="outline" className="ml-2 text-xs">
+              Recorrente
+            </Badge>
+          )}
+        </h4>
         <div className="pl-2 space-y-3">
           <div className="text-sm text-gray-600">
             <span>{location}</span>
@@ -193,19 +241,98 @@ export default function Cronograma() {
       console.log('Fetching cronograma activities for event:', currentEventId);
       
       const { data, error } = await supabase
-        .from('vw_cronograma_atividades_por_atleta')
-        .select('*')
+        .from('cronograma_atividades')
+        .select(`
+          id,
+          atividade,
+          dia,
+          horario_inicio,
+          horario_fim,
+          local,
+          global,
+          recorrente,
+          dias_semana,
+          horarios_por_dia,
+          locais_por_dia,
+          data_fim_recorrencia,
+          cronograma_atividade_modalidades(
+            modalidade_id,
+            modalidades(
+              nome,
+              status
+            )
+          )
+        `)
         .eq('evento_id', currentEventId)
-        .order('dia')
-        .order('horario_inicio');
+        .order('dia', { ascending: true })
+        .order('horario_inicio', { ascending: true });
 
       if (error) {
         console.error('Error fetching cronograma:', error);
         throw error;
       }
 
-      console.log('Retrieved cronograma activities:', data);
-      return data || [];  // Ensure we always return an array
+      console.log('Raw cronograma data:', data);
+
+      // Transform and expand the data
+      const transformedActivities: ScheduleActivity[] = [];
+      
+      (data || []).forEach(item => {
+        const modalidades = item.cronograma_atividade_modalidades || [];
+        
+        if (modalidades.length === 0) {
+          // Activity without specific modalities
+          const baseActivity: ScheduleActivity = {
+            id: item.id,
+            cronograma_atividade_id: item.id,
+            atividade: item.atividade,
+            dia: item.dia,
+            horario_inicio: item.horario_inicio,
+            horario_fim: item.horario_fim,
+            local: item.local,
+            global: item.global,
+            modalidade_nome: null,
+            modalidade_status: null,
+            recorrente: item.recorrente || false,
+            dias_semana: item.dias_semana || [],
+            horarios_por_dia: item.horarios_por_dia || {},
+            locais_por_dia: item.locais_por_dia || {},
+            data_fim_recorrencia: item.data_fim_recorrencia || ''
+          };
+          
+          // Expand recurrent activities
+          const expandedActivities = expandRecurrentActivity(baseActivity);
+          transformedActivities.push(...expandedActivities);
+        } else {
+          // Activity with specific modalities
+          modalidades.forEach((mod: any) => {
+            const baseActivity: ScheduleActivity = {
+              id: item.id,
+              cronograma_atividade_id: item.id,
+              atividade: item.atividade,
+              dia: item.dia,
+              horario_inicio: item.horario_inicio,
+              horario_fim: item.horario_fim,
+              local: item.local,
+              global: item.global,
+              modalidade_nome: mod.modalidades?.nome || null,
+              modalidade_status: mod.modalidades?.status || null,
+              recorrente: item.recorrente || false,
+              dias_semana: item.dias_semana || [],
+              horarios_por_dia: item.horarios_por_dia || {},
+              locais_por_dia: item.locais_por_dia || {},
+              data_fim_recorrencia: item.data_fim_recorrencia || ''
+            };
+            
+            // Expand recurrent activities
+            const expandedActivities = expandRecurrentActivity(baseActivity);
+            transformedActivities.push(...expandedActivities);
+          });
+        }
+      });
+
+      console.log('Transformed and expanded activities:', transformedActivities);
+      return transformedActivities;
     },
     enabled: !!currentEventId,
   });
@@ -223,10 +350,7 @@ export default function Cronograma() {
       groups[date][time] = [];
     }
     
-    groups[date][time].push({
-      ...activity,
-      id: activity.cronograma_atividade_id
-    });
+    groups[date][time].push(activity);
     
     return groups;
   }, {});
