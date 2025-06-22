@@ -99,22 +99,41 @@ export const useScheduleForm = () => {
   };
 
   const openEditDialog = (item: ScheduleItem) => {
+    console.log('Opening edit dialog with item:', item); // Debug log
+    
     setEditingId(item.id);
     setCurrentItem({
       cronograma_id: item.cronograma_id,
-      atividade: item.atividade,
-      dia: item.dia,
-      horario_inicio: item.horario_inicio,
-      horario_fim: item.horario_fim,
-      local: item.local,
-      global: item.global,
+      atividade: item.atividade || '',
+      dia: item.dia || '',
+      horario_inicio: item.horario_inicio || '',
+      horario_fim: item.horario_fim || '',
+      local: item.local || '',
+      global: item.global || false,
       recorrente: item.recorrente || false,
-      dias_semana: item.dias_semana || [],
-      horarios_por_dia: item.horarios_por_dia || {},
-      locais_por_dia: item.locais_por_dia || {},
+      dias_semana: Array.isArray(item.dias_semana) ? item.dias_semana : [],
+      horarios_por_dia: item.horarios_por_dia && typeof item.horarios_por_dia === 'object' ? item.horarios_por_dia : {},
+      locais_por_dia: item.locais_por_dia && typeof item.locais_por_dia === 'object' ? item.locais_por_dia : {},
       data_fim_recorrencia: item.data_fim_recorrencia || '',
-      modalidades: item.modalidades
+      modalidades: Array.isArray(item.modalidades) ? item.modalidades : []
     });
+    
+    console.log('Current item set to:', {
+      cronograma_id: item.cronograma_id,
+      atividade: item.atividade || '',
+      dia: item.dia || '',
+      horario_inicio: item.horario_inicio || '',
+      horario_fim: item.horario_fim || '',
+      local: item.local || '',
+      global: item.global || false,
+      recorrente: item.recorrente || false,
+      dias_semana: Array.isArray(item.dias_semana) ? item.dias_semana : [],
+      horarios_por_dia: item.horarios_por_dia && typeof item.horarios_por_dia === 'object' ? item.horarios_por_dia : {},
+      locais_por_dia: item.locais_por_dia && typeof item.locais_por_dia === 'object' ? item.locais_por_dia : {},
+      data_fim_recorrencia: item.data_fim_recorrencia || '',
+      modalidades: Array.isArray(item.modalidades) ? item.modalidades : []
+    }); // Debug log
+    
     setIsDialogOpen(true);
   };
 

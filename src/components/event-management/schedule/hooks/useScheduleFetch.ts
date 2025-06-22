@@ -18,7 +18,7 @@ export const useScheduleFetch = (eventId: string | null) => {
     try {
       console.log('Fetching schedule for event:', eventId);
       
-      // Query cronograma_atividades with join to cronogramas
+      // Query cronograma_atividades with join to cronogramas, including recurrence fields
       const { data, error } = await supabase
         .from('cronograma_atividades')
         .select(`
@@ -32,6 +32,11 @@ export const useScheduleFetch = (eventId: string | null) => {
           ordem,
           global,
           evento_id,
+          recorrente,
+          dias_semana,
+          horarios_por_dia,
+          locais_por_dia,
+          data_fim_recorrencia,
           cronogramas(
             id,
             nome
@@ -72,6 +77,11 @@ export const useScheduleFetch = (eventId: string | null) => {
           ordem: item.ordem,
           global: item.global,
           evento_id: item.evento_id,
+          recorrente: item.recorrente || false,
+          dias_semana: item.dias_semana || [],
+          horarios_por_dia: item.horarios_por_dia || {},
+          locais_por_dia: item.locais_por_dia || {},
+          data_fim_recorrencia: item.data_fim_recorrencia || '',
           modalidades: (item.cronograma_atividade_modalidades || []).map((m: any) => m.modalidade_id)
         };
       });
