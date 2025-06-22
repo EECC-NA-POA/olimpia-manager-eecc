@@ -19,17 +19,17 @@ export default function Cronograma() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-4">
       <VideoSection />
 
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-olimpics-green-primary flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Cronograma Geral do Evento
+        <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+          <CardTitle className="text-olimpics-green-primary flex items-center gap-2 text-lg sm:text-xl">
+            <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="truncate">Cronograma Geral do Evento</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
           <GeneralScheduleTable 
             groupedActivities={groupedActivities}
             dates={dates}

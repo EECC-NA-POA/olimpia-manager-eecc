@@ -66,10 +66,10 @@ export default function AthleteRegistrations() {
   }, {});
 
   return (
-    <div className="container mx-auto py-6 space-y-6 max-w-7xl">
+    <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6 px-2 sm:px-4 max-w-7xl">
       <Alert className="bg-olimpics-green-primary/10 border-olimpics-green-primary text-olimpics-text shadow-sm transition-all duration-200 hover:bg-olimpics-green-primary/15">
-        <Info className="h-5 w-5 text-olimpics-green-primary" />
-        <AlertDescription className="text-sm">
+        <Info className="h-4 w-4 sm:h-5 sm:w-5 text-olimpics-green-primary flex-shrink-0 mt-0.5" />
+        <AlertDescription className="text-xs sm:text-sm leading-relaxed">
           As inscrições nas modalidades devem ser realizadas nesta página! Após a confirmação da inscrição em uma modalidade pelo Representante de Delegação, o atleta não poderá cancelar sua participação nesta modalidade diretamente pelo sistema. Caso seja necessário cancelar uma inscrição já aprovada, o atleta deverá entrar em contato com o seu respectivo Representante de Delegação para solicitar qualquer alteração.
         </AlertDescription>
       </Alert>
@@ -77,7 +77,7 @@ export default function AthleteRegistrations() {
       <Collapsible
         open={isEnrollmentsOpen}
         onOpenChange={setIsEnrollmentsOpen}
-        className="w-full space-y-4"
+        className="w-full space-y-2 sm:space-y-4"
       >
         <div className="relative overflow-hidden rounded-lg bg-[#FEF7CD] p-1 animate-fade-in">
           <div className="absolute inset-0 bg-gradient-to-r from-olimpics-green-primary/5 to-olimpics-green-secondary/5" />
@@ -87,12 +87,12 @@ export default function AthleteRegistrations() {
               registeredModalitiesCount={registeredModalities?.length || 0}
             />
             <CollapsibleContent className="transition-all duration-300">
-              <CardContent>
-                <div className="mb-6 text-center">
-                  <h3 className="text-lg font-semibold text-olimpics-green-primary mb-2">
+              <CardContent className="p-3 sm:p-6">
+                <div className="mb-4 sm:mb-6 text-center">
+                  <h3 className="text-base sm:text-lg font-semibold text-olimpics-green-primary mb-2">
                     Inscreva-se Agora nas Modalidades Olímpicas!
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs sm:text-sm text-gray-600">
                     Escolha suas modalidades e faça parte desta celebração do esporte e filosofia
                   </p>
                 </div>
