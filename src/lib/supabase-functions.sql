@@ -1,5 +1,4 @@
 
-
 -- Função para verificar se o usuário é monitor de uma modalidade
 CREATE OR REPLACE FUNCTION public.verificar_permissao_monitor(modalidade_rep_id_param uuid)
 RETURNS boolean AS $$
@@ -39,6 +38,45 @@ BEGIN
     FROM public.modalidade_representantes mr
     WHERE mr.atleta_id = auth.uid()
   );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Função para verificar se o usuário tem permissão administrativa em um evento
+CREATE OR REPLACE FUNCTION public.verificar_permissao_admin_evento(evento_id_param uuid)
+RETURNS boolean AS $$
+BEGIN
+  -- Verifica se o usuário tem perfil de Administração no evento
+  RETURN EXISTS (
+    SELECT 1
+    FROM public.papeis_usuarios pu
+    JOIN public.perfis p ON p.id = pu.perfil_id
+    WHERE pu.usuario_id = auth.uid()
+      AND pu.evento_id = evento_id_param
+      AND p.nome = 'Administração'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Função RPC para criar cronograma para um evento (bypass RLS)
+CREATE OR REPLACE FUNCTION public.create_cronograma_for_event(
+  p_evento_id uuid,
+  p_nome text
+)
+RETURNS integer AS $$
+DECLARE
+  cronograma_id integer;
+BEGIN
+  -- Verifica se o usuário tem permissão administrativa no evento
+  IF NOT public.verificar_permissao_admin_evento(p_evento_id) THEN
+    RAISE EXCEPTION 'Acesso negado: usuário não tem permissão administrativa para este evento';
+  END IF;
+  
+  -- Insere o novo cronograma
+  INSERT INTO public.cronogramas (nome, evento_id)
+  VALUES (p_nome, p_evento_id)
+  RETURNING id INTO cronograma_id;
+  
+  RETURN cronograma_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -143,8 +181,183 @@ CREATE POLICY presencas_delete_policy
     AND registrado_por = auth.uid()
   );
 
+-- ========== POLÍTICAS PARA CRONOGRAMA_ATIVIDADES ==========
+
+-- Habilitar RLS para cronograma_atividades
+ALTER TABLE public.cronograma_atividades ENABLE ROW LEVEL SECURITY;
+
+-- Remover policies existentes se houver
+DROP POLICY IF EXISTS cronograma_atividades_select_policy ON public.cronograma_atividades;
+DROP POLICY IF EXISTS cronograma_atividades_insert_policy ON public.cronograma_atividades;
+DROP POLICY IF EXISTS cronograma_atividades_update_policy ON public.cronograma_atividades;
+DROP POLICY IF EXISTS cronograma_atividades_delete_policy ON public.cronograma_atividades;
+
+-- Política de SELECT: Usuários podem ver atividades de eventos que participam
+CREATE POLICY cronograma_atividades_select_policy
+  ON public.cronograma_atividades
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.papeis_usuarios pu
+      WHERE pu.usuario_id = auth.uid()
+        AND pu.evento_id = cronograma_atividades.evento_id
+    )
+  );
+
+-- Política de INSERT: Apenas usuários com permissão administrativa podem criar atividades
+CREATE POLICY cronograma_atividades_insert_policy
+  ON public.cronograma_atividades
+  FOR INSERT
+  WITH CHECK (
+    public.verificar_permissao_admin_evento(evento_id)
+  );
+
+-- Política de UPDATE: Apenas usuários com permissão administrativa podem editar atividades
+CREATE POLICY cronograma_atividades_update_policy
+  ON public.cronograma_atividades
+  FOR UPDATE
+  USING (
+    public.verificar_permissao_admin_evento(evento_id)
+  )
+  WITH CHECK (
+    public.verificar_permissao_admin_evento(evento_id)
+  );
+
+-- Política de DELETE: Apenas usuários com permissão administrativa podem excluir atividades
+CREATE POLICY cronograma_atividades_delete_policy
+  ON public.cronograma_atividades
+  FOR DELETE
+  USING (
+    public.verificar_permissao_admin_evento(evento_id)
+  );
+
+-- ========== POLÍTICAS PARA CRONOGRAMA_ATIVIDADE_MODALIDADES ==========
+
+-- Habilitar RLS para cronograma_atividade_modalidades
+ALTER TABLE public.cronograma_atividade_modalidades ENABLE ROW LEVEL SECURITY;
+
+-- Remover policies existentes se houver
+DROP POLICY IF EXISTS cronograma_atividade_modalidades_select_policy ON public.cronograma_atividade_modalidades;
+DROP POLICY IF EXISTS cronograma_atividade_modalidades_insert_policy ON public.cronograma_atividade_modalidades;
+DROP POLICY IF EXISTS cronograma_atividade_modalidades_update_policy ON public.cronograma_atividade_modalidades;
+DROP POLICY IF EXISTS cronograma_atividade_modalidades_delete_policy ON public.cronograma_atividade_modalidades;
+
+-- Política de SELECT: Usuários podem ver relacionamentos de atividades de eventos que participam
+CREATE POLICY cronograma_atividade_modalidades_select_policy
+  ON public.cronograma_atividade_modalidades
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.cronograma_atividades ca
+      JOIN public.papeis_usuarios pu ON pu.evento_id = ca.evento_id
+      WHERE ca.id = cronograma_atividade_modalidades.cronograma_atividade_id
+        AND pu.usuario_id = auth.uid()
+    )
+  );
+
+-- Política de INSERT: Apenas usuários com permissão administrativa podem criar relacionamentos
+CREATE POLICY cronograma_atividade_modalidades_insert_policy
+  ON public.cronograma_atividade_modalidades
+  FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM public.cronograma_atividades ca
+      WHERE ca.id = cronograma_atividade_modalidades.cronograma_atividade_id
+        AND public.verificar_permissao_admin_evento(ca.evento_id)
+    )
+  );
+
+-- Política de UPDATE: Apenas usuários com permissão administrativa podem editar relacionamentos
+CREATE POLICY cronograma_atividade_modalidades_update_policy
+  ON public.cronograma_atividade_modalidades
+  FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.cronograma_atividades ca
+      WHERE ca.id = cronograma_atividade_modalidades.cronograma_atividade_id
+        AND public.verificar_permissao_admin_evento(ca.evento_id)
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM public.cronograma_atividades ca
+      WHERE ca.id = cronograma_atividade_modalidades.cronograma_atividade_id
+        AND public.verificar_permissao_admin_evento(ca.evento_id)
+    )
+  );
+
+-- Política de DELETE: Apenas usuários com permissão administrativa podem excluir relacionamentos
+CREATE POLICY cronograma_atividade_modalidades_delete_policy
+  ON public.cronograma_atividade_modalidades
+  FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.cronograma_atividades ca
+      WHERE ca.id = cronograma_atividade_modalidades.cronograma_atividade_id
+        AND public.verificar_permissao_admin_evento(ca.evento_id)
+    )
+  );
+
+-- ========== POLÍTICAS PARA CRONOGRAMAS ==========
+
+-- Habilitar RLS para cronogramas
+ALTER TABLE public.cronogramas ENABLE ROW LEVEL SECURITY;
+
+-- Remover policies existentes se houver
+DROP POLICY IF EXISTS cronogramas_select_policy ON public.cronogramas;
+DROP POLICY IF EXISTS cronogramas_insert_policy ON public.cronogramas;
+DROP POLICY IF EXISTS cronogramas_update_policy ON public.cronogramas;
+DROP POLICY IF EXISTS cronogramas_delete_policy ON public.cronogramas;
+
+-- Política de SELECT: Usuários podem ver cronogramas de eventos que participam
+CREATE POLICY cronogramas_select_policy
+  ON public.cronogramas
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.papeis_usuarios pu
+      WHERE pu.usuario_id = auth.uid()
+        AND pu.evento_id = cronogramas.evento_id
+    )
+  );
+
+-- Política de INSERT: Apenas usuários com permissão administrativa podem criar cronogramas
+CREATE POLICY cronogramas_insert_policy
+  ON public.cronogramas
+  FOR INSERT
+  WITH CHECK (
+    public.verificar_permissao_admin_evento(evento_id)
+  );
+
+-- Política de UPDATE: Apenas usuários com permissão administrativa podem editar cronogramas
+CREATE POLICY cronogramas_update_policy
+  ON public.cronogramas
+  FOR UPDATE
+  USING (
+    public.verificar_permissao_admin_evento(evento_id)
+  )
+  WITH CHECK (
+    public.verificar_permissao_admin_evento(evento_id)
+  );
+
+-- Política de DELETE: Apenas usuários com permissão administrativa podem excluir cronogramas
+CREATE POLICY cronogramas_delete_policy
+  ON public.cronogramas
+  FOR DELETE
+  USING (
+    public.verificar_permissao_admin_evento(evento_id)
+  );
+
 -- Grant necessário para as funções
 GRANT EXECUTE ON FUNCTION public.verificar_permissao_monitor(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.verificar_permissao_presenca(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.usuario_e_monitor() TO authenticated;
-
+GRANT EXECUTE ON FUNCTION public.verificar_permissao_admin_evento(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.create_cronograma_for_event(uuid, text) TO authenticated;
