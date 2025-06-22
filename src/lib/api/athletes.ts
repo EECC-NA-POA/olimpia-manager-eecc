@@ -98,26 +98,35 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
       });
     }
 
-    // Always check if current user should be included but isn't in the main data
-    const currentUserInData = athletesMap.has(user.id);
-    console.log('Current user found in main data:', currentUserInData);
+    // ALWAYS check if current user should be included
+    console.log('Checking if current user should be included...');
     
-    if (!currentUserInData) {
-      console.log('Current user not found in main view, checking if registered...');
+    // Check if user is registered for this event
+    const { data: userEventData, error: userEventError } = await supabase
+      .from('inscricoes_eventos')
+      .select('*')
+      .eq('usuario_id', user.id)
+      .eq('evento_id', eventId)
+      .maybeSingle();
+    
+    if (userEventError) {
+      console.error('Error checking user event registration:', userEventError);
+    }
+    
+    console.log('User event registration data:', userEventData);
+    
+    if (userEventData) {
+      console.log('Current user is registered for event');
       
-      // Check if user is registered for this event
-      const { data: userEventData } = await supabase
-        .from('inscricoes_eventos')
-        .select('*')
-        .eq('usuario_id', user.id)
-        .eq('evento_id', eventId)
-        .maybeSingle();
+      // Check if user is already in the athletes map
+      const currentUserInData = athletesMap.has(user.id);
+      console.log('Current user found in main data:', currentUserInData);
       
-      if (userEventData) {
-        console.log('User is registered for event, fetching complete data...');
+      if (!currentUserInData) {
+        console.log('Adding current user manually...');
         
         // Get user's complete profile data
-        const { data: userData } = await supabase
+        const { data: userData, error: userDataError } = await supabase
           .from('usuarios')
           .select(`
             id,
@@ -133,7 +142,11 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
           .eq('id', user.id)
           .single();
         
-        if (userData) {
+        if (userDataError) {
+          console.error('Error fetching user data:', userDataError);
+        } else if (userData) {
+          console.log('User profile data:', userData);
+          
           // Get filial data
           let filialData = null;
           if (userData.filial_id) {
@@ -157,6 +170,8 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
             .eq('atleta_id', user.id)
             .eq('evento_id', eventId);
           
+          console.log('User modalities:', userModalities);
+          
           // Get registrador info if exists
           let registradorInfo = null;
           if (userEventData.usuario_registrador_id && userEventData.usuario_registrador_id !== user.id) {
@@ -171,8 +186,9 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
           
           const paymentStatus = userEventData.isento ? 'confirmado' : (userEventData.status_pagamento || 'pendente');
           
-          // Only add if not filtered by branch OR user is in the same branch
+          // Check if user should be included based on branch filter
           const shouldIncludeUser = !filterByBranch || !userBranchId || userData.filial_id === userBranchId;
+          console.log('Should include user based on branch filter:', shouldIncludeUser);
           
           if (shouldIncludeUser) {
             athletesMap.set(user.id, {
@@ -200,14 +216,17 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
               evento_id: eventId
             });
             
-            console.log('Added current user data to map');
+            console.log('Successfully added current user to athletes map');
           }
         }
       }
+    } else {
+      console.log('Current user is not registered for this event');
     }
 
     const athletes = Array.from(athletesMap.values());
     console.log('Final athletes count:', athletes.length);
+    console.log('Athletes list:', athletes.map(a => ({ id: a.id, name: a.nome_atleta })));
     console.log('Current user in final list:', athletes.find(a => a.id === user.id));
     
     return athletes;
