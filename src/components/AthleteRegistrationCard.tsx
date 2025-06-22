@@ -49,7 +49,7 @@ export function AthleteRegistrationCard({
     isDependent
   } = useAthleteCardData(registration);
 
-  // Check if user is exempt
+  // Check if user is exempt using pagamentos table
   useEffect(() => {
     const checkExemptionStatus = async () => {
       if (!isCurrentUser) return;
@@ -58,23 +58,24 @@ export function AthleteRegistrationCard({
         console.log('Checking exemption status for user:', registration.id, 'event:', registration.evento_id);
         
         const { data, error } = await supabase
-          .from('inscricoes_eventos')
+          .from('pagamentos')
           .select('isento')
-          .eq('usuario_id', registration.id)
+          .eq('atleta_id', registration.id)
           .eq('evento_id', registration.evento_id)
           .single();
         
         if (error) {
           console.error('Error checking exemption status:', error);
+          // If no payment record exists, assume not exempt
+          setIsExempt(false);
           return;
         }
         
         console.log('Exemption data:', data);
-        if (data) {
-          setIsExempt(data.isento || false);
-        }
+        setIsExempt(data?.isento || false);
       } catch (error) {
         console.error('Error in checkExemptionStatus:', error);
+        setIsExempt(false);
       }
     };
 
@@ -92,40 +93,52 @@ export function AthleteRegistrationCard({
     });
     
     try {
-      // First, check if the record exists
-      const { data: existingRecord, error: checkError } = await supabase
-        .from('inscricoes_eventos')
-        .select('id, isento')
-        .eq('usuario_id', registration.id)
+      // First, check if payment record exists
+      const { data: existingPayment, error: checkError } = await supabase
+        .from('pagamentos')
+        .select('id, isento, valor')
+        .eq('atleta_id', registration.id)
         .eq('evento_id', registration.evento_id)
         .single();
 
-      if (checkError) {
-        console.error('Error checking existing record:', checkError);
-        throw new Error('Registro de inscrição não encontrado');
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking existing payment record:', checkError);
+        throw new Error('Erro ao verificar registro de pagamento');
       }
 
-      console.log('Existing record:', existingRecord);
+      console.log('Existing payment record:', existingPayment);
 
-      // Update exemption status
-      const { error: exemptError } = await supabase
-        .from('inscricoes_eventos')
-        .update({ isento: checked })
-        .eq('usuario_id', registration.id)
+      // If payment record doesn't exist, we need to create one first
+      if (!existingPayment) {
+        console.log('Payment record not found, cannot update exemption status');
+        throw new Error('Registro de pagamento não encontrado. O pagamento deve ser criado primeiro.');
+      }
+
+      // Update exemption status in pagamentos table
+      const updateData: any = { isento: checked };
+      
+      // If marking as exempt, set value to 0
+      if (checked) {
+        updateData.valor = 0;
+        console.log('Setting payment amount to 0 due to exemption');
+      } else {
+        // If removing exemption, restore original value (you might want to get this from taxas_inscricao)
+        // For now, we'll keep the current logic and let updatePaymentAmount handle it separately
+        console.log('Removing exemption, keeping current payment value');
+      }
+
+      const { error: updateError } = await supabase
+        .from('pagamentos')
+        .update(updateData)
+        .eq('atleta_id', registration.id)
         .eq('evento_id', registration.evento_id);
 
-      if (exemptError) {
-        console.error('Error updating exemption:', exemptError);
-        throw exemptError;
+      if (updateError) {
+        console.error('Error updating exemption in payments:', updateError);
+        throw updateError;
       }
 
       console.log('Exemption updated successfully');
-
-      // If marking as exempt, set payment amount to 0
-      if (checked) {
-        console.log('Setting payment amount to 0');
-        await updatePaymentAmount(registration.id, 0);
-      }
 
       setIsExempt(checked);
       await refetchPayment();
