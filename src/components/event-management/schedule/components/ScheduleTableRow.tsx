@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Edit, Trash } from 'lucide-react';
 import { ScheduleItem } from '../types';
 import { RecurrentActivityRenderer } from './RecurrentActivityRenderer';
-import { RecurrentDaysSummary, RecurrentTimesSummary, RecurrentLocationsSummary } from './RecurrentActivitySummary';
+import { diasSemana } from '../constants';
 
 interface ScheduleTableRowProps {
   item: ScheduleItem;
@@ -14,6 +14,10 @@ interface ScheduleTableRowProps {
   handleDelete: (id: number) => void;
   formatDate: (dateStr: string) => string;
 }
+
+const getDiaLabel = (value: string): string => {
+  return diasSemana.find(d => d.value === value)?.label || value;
+};
 
 export const ScheduleTableRow: React.FC<ScheduleTableRowProps> = ({
   item,
@@ -32,7 +36,15 @@ export const ScheduleTableRow: React.FC<ScheduleTableRowProps> = ({
       
       <TableCell className="align-top">
         {item.recorrente ? (
-          <RecurrentDaysSummary item={item} />
+          <div className="text-sm">
+            <div className="font-medium text-gray-700 mb-1">Dias da Semana</div>
+            <div className="text-xs text-gray-600">
+              {item.dias_semana && item.dias_semana.length > 0 
+                ? item.dias_semana.map(dia => getDiaLabel(dia)).join(', ')
+                : 'Não configurado'
+              }
+            </div>
+          </div>
         ) : (
           item.dia ? formatDate(item.dia) : '-'
         )}
@@ -40,7 +52,20 @@ export const ScheduleTableRow: React.FC<ScheduleTableRowProps> = ({
       
       <TableCell className="align-top">
         {item.recorrente ? (
-          <RecurrentTimesSummary item={item} />
+          <div className="text-sm">
+            <div className="font-medium text-gray-700 mb-1">Horários por Dia</div>
+            <div className="text-xs text-gray-600 space-y-1">
+              {item.horarios_por_dia && Object.keys(item.horarios_por_dia).length > 0 ? (
+                Object.entries(item.horarios_por_dia).map(([dia, horario]) => (
+                  <div key={dia}>
+                    <span className="font-medium">{getDiaLabel(dia)}:</span> {horario.inicio} - {horario.fim}
+                  </div>
+                ))
+              ) : (
+                'Não configurado'
+              )}
+            </div>
+          </div>
         ) : (
           <div>
             {item.horario_inicio || item.horario_fim ? (
@@ -52,7 +77,25 @@ export const ScheduleTableRow: React.FC<ScheduleTableRowProps> = ({
       
       <TableCell className="align-top">
         {item.recorrente ? (
-          <RecurrentLocationsSummary item={item} />
+          <div className="text-sm">
+            <div className="font-medium text-gray-700 mb-1">Locais por Dia</div>
+            <div className="text-xs text-gray-600 space-y-1">
+              {item.locais_por_dia && Object.keys(item.locais_por_dia).length > 0 ? (
+                Object.entries(item.locais_por_dia).map(([dia, local]) => (
+                  <div key={dia}>
+                    <span className="font-medium">{getDiaLabel(dia)}:</span> {local}
+                  </div>
+                ))
+              ) : (
+                'Não configurado'
+              )}
+            </div>
+            {item.data_fim_recorrencia && (
+              <div className="mt-2 text-xs text-gray-500">
+                <span className="font-medium">Até:</span> {formatDate(item.data_fim_recorrencia)}
+              </div>
+            )}
+          </div>
         ) : (
           item.local || '-'
         )}
