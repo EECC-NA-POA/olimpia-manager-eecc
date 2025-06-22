@@ -34,16 +34,25 @@ interface ScheduleActivity {
   horario_fim?: string;
 }
 
+// Helper function to get day label in Portuguese
+const getDayLabel = (dayKey: string): string => {
+  const dayLabels: Record<string, string> = {
+    'segunda': 'Segunda-feira',
+    'terca': 'Terça-feira',
+    'quarta': 'Quarta-feira',
+    'quinta': 'Quinta-feira',
+    'sexta': 'Sexta-feira',
+    'sabado': 'Sábado',
+    'domingo': 'Domingo'
+  };
+  return dayLabels[dayKey] || dayKey;
+};
+
 // Helper function to expand recurrent activities into daily activities
 function expandRecurrentActivity(activity: ScheduleActivity): ScheduleActivity[] {
   if (!activity.recorrente || !activity.dias_semana || !Array.isArray(activity.dias_semana)) {
     return [activity];
   }
-
-  const diasSemanaMap: Record<string, string> = {
-    'sabado': '2024-12-14', // Example Saturday date
-    'domingo': '2024-12-15'  // Example Sunday date
-  };
 
   const expandedActivities: ScheduleActivity[] = [];
 
@@ -51,10 +60,10 @@ function expandRecurrentActivity(activity: ScheduleActivity): ScheduleActivity[]
     const horario = activity.horarios_por_dia?.[dia];
     const local = activity.locais_por_dia?.[dia];
     
-    if (horario && diasSemanaMap[dia]) {
+    if (horario) {
       expandedActivities.push({
         ...activity,
-        dia: diasSemanaMap[dia],
+        dia: dia, // Use the day key directly
         horario_inicio: horario.inicio,
         horario_fim: horario.fim,
         local: local || activity.local || '',
@@ -139,8 +148,7 @@ function GeneralScheduleTable({ groupedActivities, dates, timeSlots }: {
     );
   }
 
-  const weekDays = ["Sábado", "Domingo"];
-  const columnWidth = `${100 / (weekDays.length + 1)}%`;
+  const columnWidth = `${100 / (dates.length + 1)}%`;
 
   const groupByCategory = (activities: ScheduleActivity[]) => {
     const grouped = activities.reduce((acc, activity) => {
@@ -176,13 +184,13 @@ function GeneralScheduleTable({ groupedActivities, dates, timeSlots }: {
             >
               Horário
             </th>
-            {weekDays.map((day) => (
+            {dates.map((day) => (
               <th 
                 key={day} 
                 className="border-b p-4 text-left font-semibold text-olimpics-green-primary"
                 style={{ width: columnWidth }}
               >
-                {day}
+                {getDayLabel(day)}
               </th>
             ))}
           </tr>
@@ -355,8 +363,21 @@ export default function Cronograma() {
     return groups;
   }, {});
 
-  // Get unique dates
-  const dates = Object.keys(groupedActivities || {}).sort();
+  // Get unique dates (now will include all days from recurrent activities)
+  const dates = Object.keys(groupedActivities || {}).sort((a, b) => {
+    // Sort days of week in logical order
+    const dayOrder = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
+    const indexA = dayOrder.indexOf(a);
+    const indexB = dayOrder.indexOf(b);
+    
+    // If both are day keys, sort by day order
+    if (indexA !== -1 && indexB !== -1) {
+      return indexA - indexB;
+    }
+    
+    // If they're dates, sort alphabetically (which works for ISO dates)
+    return a.localeCompare(b);
+  });
 
   // Get unique time slots
   const timeSlots = [...new Set(
