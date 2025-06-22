@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, Users, Calendar } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchUserProfiles, fetchBranches } from '@/lib/api';
 import { UserProfilesTable } from '@/components/dashboard/UserProfilesTable';
@@ -81,22 +81,6 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
 
   return (
     <div className="space-y-6">
-      <Card className="border-olimpics-green-primary/20">
-        <CardHeader className="bg-olimpics-green-primary/5">
-          <div className="flex items-center gap-3">
-            <Shield className="h-6 w-6 text-olimpics-green-primary" />
-            <div>
-              <CardTitle className="text-olimpics-green-primary text-xl">
-                Administração do Evento
-              </CardTitle>
-              <CardDescription className="mt-1.5">
-                Gerencie perfis de usuários e configurações administrativas do evento
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
       <Card className="border-olimpics-green-primary/20">
         <CardHeader className="bg-olimpics-green-primary/5">
           <div className="flex items-center gap-3">
