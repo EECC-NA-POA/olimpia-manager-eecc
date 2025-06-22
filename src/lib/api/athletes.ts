@@ -120,6 +120,11 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
             registradorInfo = registrador;
           }
           
+          // Extract filial name safely
+          const filialNome = userData.filiais && typeof userData.filiais === 'object' 
+            ? (Array.isArray(userData.filiais) ? userData.filiais[0]?.nome : (userData.filiais as any).nome)
+            : null;
+          
           currentUserData = {
             atleta_id: userData.id,
             nome_atleta: userData.nome_completo,
@@ -131,18 +136,25 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
             numero_identificador: userData.numero_identificador,
             status_confirmacao: userEventRegistration[0].status_confirmacao || 'pendente',
             filial_id: userData.filial_id,
-            filial_nome: Array.isArray(userData.filiais) ? userData.filiais[0]?.nome : userData.filiais?.nome || null,
+            filial_nome: filialNome,
             status_pagamento: paymentInfo?.isento ? 'confirmado' : (paymentInfo?.status_pagamento || 'pendente'),
             isento: paymentInfo?.isento || false,
             usuario_registrador_id: paymentInfo?.usuario_registrador_id,
             registrador_nome: registradorInfo?.nome_completo || null,
             registrador_email: registradorInfo?.email || null,
-            modalidades: userModalities?.map(mod => ({
-              id: mod.id.toString(),
-              modalidade: Array.isArray(mod.modalidades) ? mod.modalidades[0]?.nome : mod.modalidades?.nome || '',
-              status: mod.status || 'pendente',
-              justificativa_status: mod.justificativa_status || ''
-            })) || []
+            modalidades: userModalities?.map(mod => {
+              // Extract modalidade name safely
+              const modalidadeNome = mod.modalidades && typeof mod.modalidades === 'object'
+                ? (Array.isArray(mod.modalidades) ? mod.modalidades[0]?.nome : (mod.modalidades as any).nome)
+                : '';
+              
+              return {
+                id: mod.id.toString(),
+                modalidade: modalidadeNome || '',
+                status: mod.status || 'pendente',
+                justificativa_status: mod.justificativa_status || ''
+              };
+            }) || []
           };
           
           console.log('Built current user data:', currentUserData);
