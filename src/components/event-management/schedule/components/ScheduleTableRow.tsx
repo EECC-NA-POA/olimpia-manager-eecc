@@ -25,6 +25,9 @@ export const ScheduleTableRow: React.FC<ScheduleTableRowProps> = ({
   handleDelete,
   formatDate
 }) => {
+  console.log('ScheduleTableRow - item:', item); // Debug log
+  console.log('ScheduleTableRow - recorrente:', item.recorrente); // Debug log
+  
   return (
     <TableRow key={item.id}>
       <TableCell className="align-top">
