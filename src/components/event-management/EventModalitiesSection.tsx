@@ -53,26 +53,33 @@ export function EventModalitiesSection({ eventId }: { eventId: string | null }) 
   return (
     <>
       <Card>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <ModalitiesSearch 
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-              />
+        <CardContent className="px-3 sm:px-6 py-4 sm:py-6">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+              <div className="flex-1 max-w-md">
+                <ModalitiesSearch 
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                />
+              </div>
               <Button 
                 onClick={openAddDialog} 
-                className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary"
+                className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:w-auto text-xs sm:text-sm"
+                size="sm"
               >
-                <Plus className="h-4 w-4 mr-2" /> Adicionar Modalidade
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" /> 
+                <span className="hidden xs:inline">Adicionar Modalidade</span>
+                <span className="xs:hidden">Adicionar</span>
               </Button>
             </div>
             
-            <ModalitiesTable 
-              modalities={filteredModalities}
-              onEdit={openEditDialog}
-              onDelete={handleDelete}
-            />
+            <div className="overflow-x-auto">
+              <ModalitiesTable 
+                modalities={filteredModalities}
+                onEdit={openEditDialog}
+                onDelete={handleDelete}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

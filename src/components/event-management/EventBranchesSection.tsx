@@ -31,11 +31,11 @@ export function EventBranchesSection({ eventId }: { eventId: string | null }) {
   
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Filiais Vinculadas</CardTitle>
+      <CardHeader className="px-3 sm:px-6 py-3 sm:py-6">
+        <CardTitle className="text-base sm:text-lg">Filiais Vinculadas</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+        <div className="space-y-3 sm:space-y-4">
           <BranchesHeader
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
