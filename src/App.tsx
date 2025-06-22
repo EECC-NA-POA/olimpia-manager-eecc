@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { SessionTimeoutProvider } from "@/components/providers/SessionTimeoutProvider";
 import { GlobalHeader } from "@/components/GlobalHeader";
@@ -22,7 +22,6 @@ import EventDetailsPage from "./pages/EventDetailsPage";
 import PublicEventPage from "./pages/PublicEventPage";
 import EventsLandingPage from "./pages/EventsLandingPage";
 import JudgeDashboard from "./pages/JudgeDashboard";
-import Administration from "./pages/Administration";
 import EventManagement from "./pages/EventManagement";
 import EventRegulations from "./pages/EventRegulations";
 import Cronograma from "./pages/Cronograma";
@@ -83,6 +82,9 @@ function AppContent() {
           {/* Event selection without sidebar */}
           <Route path="/event-selection" element={<EventSelectionPage />} />
           
+          {/* Redirect old administration route to event management */}
+          <Route path="/administration" element={<Navigate to="/event-management" replace />} />
+          
           {/* Protected routes with sidebar */}
           <Route path="/*" element={
             <MainNavigation>
@@ -90,7 +92,6 @@ function AppContent() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/athlete-profile" element={<AthleteProfile />} />
                 <Route path="/judge-dashboard" element={<JudgeDashboard />} />
-                <Route path="/administration" element={<Administration />} />
                 <Route path="/event-management" element={<EventManagement />} />
                 <Route path="/regulamento" element={<EventRegulations />} />
                 <Route path="/cronograma" element={<Cronograma />} />
