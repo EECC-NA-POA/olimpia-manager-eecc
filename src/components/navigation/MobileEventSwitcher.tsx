@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { getAvailableEvents } from '@/lib/api';
-import { Event } from '@/types/api';
+import { Event } from '@/lib/types/database';
 import { ChevronDown, Check, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -110,9 +110,9 @@ export function MobileEventSwitcher({ userId }: MobileEventSwitcherProps) {
                     <h4 className="font-medium text-sm line-clamp-2">
                       {event.nome}
                     </h4>
-                    {event.local && (
+                    {event.cidade && (
                       <p className="text-xs text-muted-foreground line-clamp-1">
-                        📍 {event.local}
+                        📍 {event.cidade}
                       </p>
                     )}
                     <div className="flex flex-wrap gap-1">
