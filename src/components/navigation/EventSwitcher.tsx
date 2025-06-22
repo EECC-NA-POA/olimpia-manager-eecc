@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getAvailableEvents } from '@/lib/api';
 import { Event } from '@/types/api';
 import { ChevronDown } from 'lucide-react';
+import { MobileEventSwitcher } from './MobileEventSwitcher';
 
 interface EventSwitcherProps {
   userId: string;
@@ -52,24 +53,35 @@ export function EventSwitcher({ userId, collapsed = false }: EventSwitcherProps)
     return null;
   }
 
+  // Use mobile switcher on small screens
   return (
-    <div className={`${collapsed ? 'hidden' : 'flex'} items-center min-w-[150px] text-sm relative`}>
-      <div className="flex items-center gap-1">
-        <span className="text-white font-medium">Trocar Evento</span>
-        <ChevronDown className="h-4 w-4 text-white" />
+    <>
+      {/* Mobile Event Switcher - shown on screens smaller than md */}
+      <div className="block md:hidden">
+        <MobileEventSwitcher userId={userId} />
       </div>
-      <select
-        value={currentEventId || ''}
-        onChange={handleEventChange}
-        className="absolute inset-0 opacity-0 cursor-pointer w-full"
-        aria-label="Trocar Evento"
-      >
-        {availableEvents.map(event => (
-          <option key={event.id} value={event.id}>
-            {event.nome}
-          </option>
-        ))}
-      </select>
-    </div>
+      
+      {/* Desktop Event Switcher - shown on md screens and larger */}
+      <div className={`${collapsed ? 'hidden' : 'hidden md:flex'} items-center min-w-[180px] text-sm relative`}>
+        <div className="flex items-center gap-1">
+          <span className="text-white font-medium truncate">
+            {selectedEvent?.nome || 'Selecionar Evento'}
+          </span>
+          <ChevronDown className="h-4 w-4 text-white flex-shrink-0" />
+        </div>
+        <select
+          value={currentEventId || ''}
+          onChange={handleEventChange}
+          className="absolute inset-0 opacity-0 cursor-pointer w-full"
+          aria-label="Trocar Evento"
+        >
+          {availableEvents.map(event => (
+            <option key={event.id} value={event.id}>
+              {event.nome}
+            </option>
+          ))}
+        </select>
+      </div>
+    </>
   );
 }
