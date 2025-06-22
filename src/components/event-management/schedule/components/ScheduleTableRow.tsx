@@ -26,7 +26,7 @@ export const ScheduleTableRow: React.FC<ScheduleTableRowProps> = ({
       <TableCell className="align-top">
         <div className="space-y-2">
           <div className="font-medium">{item.atividade}</div>
-          <RecurrentActivityRenderer item={item} formatDate={formatDate} />
+          {item.recorrente && <RecurrentActivityRenderer item={item} formatDate={formatDate} />}
         </div>
       </TableCell>
       
@@ -34,7 +34,7 @@ export const ScheduleTableRow: React.FC<ScheduleTableRowProps> = ({
         {item.recorrente ? (
           <RecurrentDaysSummary item={item} />
         ) : (
-          formatDate(item.dia)
+          item.dia ? formatDate(item.dia) : '-'
         )}
       </TableCell>
       
@@ -42,7 +42,11 @@ export const ScheduleTableRow: React.FC<ScheduleTableRowProps> = ({
         {item.recorrente ? (
           <RecurrentTimesSummary item={item} />
         ) : (
-          `${item.horario_inicio} ${item.horario_fim ? `- ${item.horario_fim}` : ''}`
+          <div>
+            {item.horario_inicio || item.horario_fim ? (
+              `${item.horario_inicio || ''} ${item.horario_fim ? `- ${item.horario_fim}` : ''}`.trim()
+            ) : '-'}
+          </div>
         )}
       </TableCell>
       
@@ -50,7 +54,7 @@ export const ScheduleTableRow: React.FC<ScheduleTableRowProps> = ({
         {item.recorrente ? (
           <RecurrentLocationsSummary item={item} />
         ) : (
-          item.local
+          item.local || '-'
         )}
       </TableCell>
       
