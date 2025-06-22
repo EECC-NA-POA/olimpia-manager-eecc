@@ -2,6 +2,8 @@
 import React from 'react';
 import { Clock } from "lucide-react";
 import { ActivityCard } from './ActivityCard';
+import { ScheduleLegend } from './ScheduleLegend';
+import { getDayLabel } from '@/components/cronograma/utils';
 
 interface ScheduleActivity {
   id: number;
@@ -37,96 +39,70 @@ export function ScheduleTable({ groupedActivities, dates, timeSlots }: ScheduleT
     );
   }
 
-  const weekDays = ["Sábado", "Domingo"];
-  const columnWidth = `${100 / (weekDays.length + 1)}%`;
-
-  // Helper function to group activities by category
-  const groupByCategory = (activities: ScheduleActivity[]) => {
-    const grouped = activities.reduce((acc, activity) => {
-      const category = activity.atividade;
-      
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      
-      // Check if this activity is already included
-      const isDuplicate = acc[category].some(
-        existing => existing.cronograma_atividade_id === activity.cronograma_atividade_id &&
-                    existing.modalidade_nome === activity.modalidade_nome
-      );
-      
-      if (!isDuplicate) {
-        acc[category].push(activity);
-      }
-      
-      return acc;
-    }, {} as Record<string, ScheduleActivity[]>);
-
-    return Object.entries(grouped).sort((a, b) => a[0].localeCompare(b[0]));
-  };
+  const columnWidth = `${100 / (dates.length + 1)}%`;
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse">
-        <thead>
-          <tr>
-            <th 
-              className="border-b p-4 text-left font-semibold text-olimpics-green-primary"
-              style={{ width: columnWidth }}
-            >
-              Horário
-            </th>
-            {weekDays.map((day, index) => (
+    <div className="space-y-4">
+      <ScheduleLegend />
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
               <th 
-                key={day} 
                 className="border-b p-4 text-left font-semibold text-olimpics-green-primary"
                 style={{ width: columnWidth }}
               >
-                {day}
+                Horário
               </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {timeSlots.map(timeSlot => {
-            const [start, end] = timeSlot.split('-');
-            return (
-              <tr key={timeSlot} className="border-b last:border-b-0">
-                <td className="p-4 align-top" style={{ width: columnWidth }}>
-                  <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <Clock className="h-4 w-4 shrink-0" />
-                    <span className="whitespace-nowrap">
-                      {start.slice(0, 5)} - {end.slice(0, 5)}
-                    </span>
-                  </div>
-                </td>
-                {dates.map((date) => {
-                  const activitiesForSlot = groupedActivities[date]?.[timeSlot] || [];
-                  const groupedByCategory = groupByCategory(activitiesForSlot);
-
-                  return (
-                    <td 
-                      key={`${date}-${timeSlot}`} 
-                      className="p-4 align-top"
-                      style={{ width: columnWidth }}
-                    >
-                      <div className="space-y-2">
-                        {groupedByCategory.map(([category, activities]) => (
-                          <ActivityCard 
-                            key={category}
-                            category={category}
-                            activities={activities}
-                          />
-                        ))}
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+              {dates.map((day) => (
+                <th 
+                  key={day} 
+                  className="border-b p-4 text-left font-semibold text-olimpics-green-primary"
+                  style={{ width: columnWidth }}
+                >
+                  {getDayLabel(day)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {timeSlots.map(timeSlot => {
+              const [start, end] = timeSlot.split('-');
+              return (
+                <tr key={timeSlot} className="border-b last:border-b-0">
+                  <td className="p-4 align-top" style={{ width: columnWidth }}>
+                    <div className="flex items-center gap-1 text-sm text-gray-600">
+                      <Clock className="h-4 w-4 shrink-0" />
+                      <span className="whitespace-nowrap">
+                        {start.slice(0, 5)} - {end.slice(0, 5)}
+                      </span>
+                    </div>
+                  </td>
+                  {dates.map((date) => {
+                    const activitiesForSlot = groupedActivities[date]?.[timeSlot] || [];
+                    return (
+                      <td 
+                        key={`${date}-${timeSlot}`} 
+                        className="p-4 align-top"
+                        style={{ width: columnWidth }}
+                      >
+                        <div className="space-y-2">
+                          {activitiesForSlot.map((activity) => (
+                            <ActivityCard 
+                              key={`${activity.cronograma_atividade_id}-${activity.modalidade_nome || 'no-modality'}`}
+                              activity={activity}
+                            />
+                          ))}
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
