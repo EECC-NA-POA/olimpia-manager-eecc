@@ -49,83 +49,132 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
     console.log('Raw athletes data:', data);
     console.log('Number of raw athletes:', data?.length);
     
-    // Check if current user is in the data
-    const currentUserInData = data?.find(record => record.atleta_id === user.id);
-    console.log('Current user found in raw data:', !!currentUserInData);
-
-    // Process the data and ensure current user is included
+    // Process the data
     const athletesMap = new Map<string, AthleteManagement>();
     
-    // If current user is not in the main data, fetch their data separately
+    // Process data from view
+    if (data) {
+      data.forEach(record => {
+        if (!athletesMap.has(record.atleta_id)) {
+          const paymentStatus = record.isento ? 'confirmado' : (record.status_pagamento || 'pendente');
+          
+          athletesMap.set(record.atleta_id, {
+            id: record.atleta_id,
+            nome_atleta: record.nome_atleta,
+            email: record.email,
+            telefone: record.telefone,
+            tipo_documento: record.tipo_documento,
+            numero_documento: record.numero_documento,
+            genero: record.genero,
+            numero_identificador: record.numero_identificador,
+            status_confirmacao: record.status_confirmacao,
+            filial_id: record.filial_id,
+            filial_nome: record.filial_nome,
+            status_pagamento: paymentStatus as 'pendente' | 'confirmado' | 'cancelado',
+            usuario_registrador_id: record.usuario_registrador_id,
+            registrador_nome: record.registrador_nome,
+            registrador_email: record.registrador_email,
+            modalidades: [],
+            evento_id: eventId
+          });
+        }
+
+        // Add modality if exists
+        if (record.modalidade_nome) {
+          const athlete = athletesMap.get(record.atleta_id)!;
+          const modalityExists = athlete.modalidades.some(m => m.id === record.inscricao_id);
+          
+          if (!modalityExists && record.inscricao_id) {
+            const modalityStatus = record.isento ? 'confirmado' : (record.status_inscricao || 'pendente');
+            
+            athlete.modalidades.push({
+              id: record.inscricao_id.toString(),
+              modalidade: record.modalidade_nome,
+              status: modalityStatus,
+              justificativa_status: record.justificativa_status || ''
+            });
+          }
+        }
+      });
+    }
+
+    // Always check if current user should be included but isn't in the main data
+    const currentUserInData = athletesMap.has(user.id);
+    console.log('Current user found in main data:', currentUserInData);
+    
     if (!currentUserInData) {
-      console.log('Current user not found in main view, fetching separately...');
+      console.log('Current user not found in main view, checking if registered...');
       
-      try {
-        // Check if user is registered for this event
-        const { data: userEventData } = await supabase
-          .from('inscricoes_eventos')
-          .select('*')
-          .eq('usuario_id', user.id)
-          .eq('evento_id', eventId)
+      // Check if user is registered for this event
+      const { data: userEventData } = await supabase
+        .from('inscricoes_eventos')
+        .select('*')
+        .eq('usuario_id', user.id)
+        .eq('evento_id', eventId)
+        .maybeSingle();
+      
+      if (userEventData) {
+        console.log('User is registered for event, fetching complete data...');
+        
+        // Get user's complete profile data
+        const { data: userData } = await supabase
+          .from('usuarios')
+          .select(`
+            id,
+            nome_completo,
+            email,
+            telefone,
+            tipo_documento,
+            numero_documento,
+            genero,
+            numero_identificador,
+            filial_id
+          `)
+          .eq('id', user.id)
           .single();
         
-        if (userEventData) {
-          // Get user's complete profile data
-          const { data: userData } = await supabase
-            .from('usuarios')
+        if (userData) {
+          // Get filial data
+          let filialData = null;
+          if (userData.filial_id) {
+            const { data: filial } = await supabase
+              .from('filiais')
+              .select('nome')
+              .eq('id', userData.filial_id)
+              .single();
+            filialData = filial;
+          }
+          
+          // Get user's modalities for this event
+          const { data: userModalities } = await supabase
+            .from('inscricoes_modalidades')
             .select(`
               id,
-              nome_completo,
-              email,
-              telefone,
-              tipo_documento,
-              numero_documento,
-              genero,
-              numero_identificador,
-              filial_id
+              status,
+              justificativa_status,
+              modalidades (nome)
             `)
-            .eq('id', user.id)
-            .single();
+            .eq('atleta_id', user.id)
+            .eq('evento_id', eventId);
           
-          if (userData) {
-            // Get filial data
-            let filialData = null;
-            if (userData.filial_id) {
-              const { data: filial } = await supabase
-                .from('filiais')
-                .select('nome')
-                .eq('id', userData.filial_id)
-                .single();
-              filialData = filial;
-            }
+          // Get registrador info if exists
+          let registradorInfo = null;
+          if (userEventData.usuario_registrador_id && userEventData.usuario_registrador_id !== user.id) {
+            const { data: registrador } = await supabase
+              .from('usuarios')
+              .select('nome_completo, email')
+              .eq('id', userEventData.usuario_registrador_id)
+              .single();
             
-            // Get user's modalities for this event
-            const { data: userModalities } = await supabase
-              .from('inscricoes_modalidades')
-              .select(`
-                id,
-                status,
-                justificativa_status,
-                modalidades (nome)
-              `)
-              .eq('atleta_id', user.id)
-              .eq('evento_id', eventId);
-            
-            // Get registrador info if exists
-            let registradorInfo = null;
-            if (userEventData.usuario_registrador_id && userEventData.usuario_registrador_id !== user.id) {
-              const { data: registrador } = await supabase
-                .from('usuarios')
-                .select('nome_completo, email')
-                .eq('id', userEventData.usuario_registrador_id)
-                .single();
-              
-              registradorInfo = registrador;
-            }
-            
-            const paymentStatus = userEventData.isento ? 'confirmado' : (userEventData.status_pagamento || 'pendente');
-            
-            // Add current user to the map
+            registradorInfo = registrador;
+          }
+          
+          const paymentStatus = userEventData.isento ? 'confirmado' : (userEventData.status_pagamento || 'pendente');
+          
+          // Only add if not filtered by branch OR user is in the same branch
+          const shouldIncludeUser = !filterByBranch || !userBranchId || userData.filial_id === userBranchId;
+          
+          if (shouldIncludeUser) {
             athletesMap.set(user.id, {
               id: userData.id,
               nome_atleta: userData.nome_completo,
@@ -154,54 +203,7 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
             console.log('Added current user data to map');
           }
         }
-      } catch (userError) {
-        console.error('Error fetching current user data:', userError);
       }
-    }
-
-    // Process remaining data from view
-    if (data) {
-      data.forEach(record => {
-        if (!athletesMap.has(record.atleta_id)) {
-          const paymentStatus = record.isento ? 'confirmado' : (record.status_pagamento || 'pendente');
-          
-          athletesMap.set(record.atleta_id, {
-            id: record.atleta_id,
-            nome_atleta: record.nome_atleta,
-            email: record.email,
-            telefone: record.telefone,
-            tipo_documento: record.tipo_documento,
-            numero_documento: record.numero_documento,
-            genero: record.genero,
-            numero_identificador: record.numero_identificador,
-            status_confirmacao: record.status_confirmacao,
-            filial_id: record.filial_id,
-            filial_nome: record.filial_nome,
-            status_pagamento: paymentStatus as 'pendente' | 'confirmado' | 'cancelado',
-            usuario_registrador_id: record.usuario_registrador_id,
-            registrador_nome: record.registrador_nome,
-            registrador_email: record.registrador_email,
-            modalidades: [],
-            evento_id: eventId
-          });
-        }
-
-        if (record.modalidade_nome) {
-          const athlete = athletesMap.get(record.atleta_id)!;
-          const modalityExists = athlete.modalidades.some(m => m.id === record.inscricao_id);
-          
-          if (!modalityExists && record.inscricao_id) {
-            const modalityStatus = record.isento ? 'confirmado' : (record.status_inscricao || 'pendente');
-            
-            athlete.modalidades.push({
-              id: record.inscricao_id.toString(),
-              modalidade: record.modalidade_nome,
-              status: modalityStatus,
-              justificativa_status: record.justificativa_status || ''
-            });
-          }
-        }
-      });
     }
 
     const athletes = Array.from(athletesMap.values());
