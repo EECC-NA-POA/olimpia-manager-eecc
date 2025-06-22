@@ -95,12 +95,17 @@ export function EventProfilesSection({ eventId }: EventProfilesSectionProps) {
   const { data: profileTypes = [] } = useQuery({
     queryKey: ['profile-types'],
     queryFn: async () => {
+      console.log('Fetching profile types...');
       const { data, error } = await supabase
         .from('perfis_tipo')
         .select('*')
         .order('descricao');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profile types:', error);
+        throw error;
+      }
+      console.log('Profile types fetched:', data);
       return data as ProfileType[];
     },
   });
@@ -109,8 +114,13 @@ export function EventProfilesSection({ eventId }: EventProfilesSectionProps) {
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ['event-profiles', eventId],
     queryFn: async () => {
-      if (!eventId) return [];
+      if (!eventId) {
+        console.log('No eventId provided');
+        return [];
+      }
 
+      console.log('Fetching profiles for event:', eventId);
+      
       const { data, error } = await supabase
         .from('perfis')
         .select(`
@@ -136,7 +146,13 @@ export function EventProfilesSection({ eventId }: EventProfilesSectionProps) {
         .eq('evento_id', eventId)
         .order('nome');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profiles:', error);
+        throw error;
+      }
+      
+      console.log('Profiles fetched:', data);
+      console.log('Number of profiles found:', data?.length || 0);
       return data as Profile[];
     },
     enabled: !!eventId,
@@ -288,6 +304,9 @@ export function EventProfilesSection({ eventId }: EventProfilesSectionProps) {
       </Card>
     );
   }
+
+  console.log('Rendering profiles section with profiles:', profiles);
+  console.log('Is loading:', isLoading);
 
   return (
     <div className="space-y-6">
