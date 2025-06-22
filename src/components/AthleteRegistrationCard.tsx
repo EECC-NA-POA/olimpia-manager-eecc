@@ -55,18 +55,26 @@ export function AthleteRegistrationCard({
       if (!isCurrentUser) return;
       
       try {
-        const { data } = await supabase
+        console.log('Checking exemption status for user:', registration.id, 'event:', registration.evento_id);
+        
+        const { data, error } = await supabase
           .from('inscricoes_eventos')
           .select('isento')
           .eq('usuario_id', registration.id)
           .eq('evento_id', registration.evento_id)
           .single();
         
+        if (error) {
+          console.error('Error checking exemption status:', error);
+          return;
+        }
+        
+        console.log('Exemption data:', data);
         if (data) {
           setIsExempt(data.isento || false);
         }
       } catch (error) {
-        console.error('Error checking exemption status:', error);
+        console.error('Error in checkExemptionStatus:', error);
       }
     };
 
@@ -77,7 +85,28 @@ export function AthleteRegistrationCard({
     if (!isCurrentUser) return;
     
     setIsUpdatingExemption(true);
+    console.log('Updating exemption status:', { 
+      userId: registration.id, 
+      eventId: registration.evento_id, 
+      checked 
+    });
+    
     try {
+      // First, check if the record exists
+      const { data: existingRecord, error: checkError } = await supabase
+        .from('inscricoes_eventos')
+        .select('id, isento')
+        .eq('usuario_id', registration.id)
+        .eq('evento_id', registration.evento_id)
+        .single();
+
+      if (checkError) {
+        console.error('Error checking existing record:', checkError);
+        throw new Error('Registro de inscrição não encontrado');
+      }
+
+      console.log('Existing record:', existingRecord);
+
       // Update exemption status
       const { error: exemptError } = await supabase
         .from('inscricoes_eventos')
@@ -85,10 +114,16 @@ export function AthleteRegistrationCard({
         .eq('usuario_id', registration.id)
         .eq('evento_id', registration.evento_id);
 
-      if (exemptError) throw exemptError;
+      if (exemptError) {
+        console.error('Error updating exemption:', exemptError);
+        throw exemptError;
+      }
+
+      console.log('Exemption updated successfully');
 
       // If marking as exempt, set payment amount to 0
       if (checked) {
+        console.log('Setting payment amount to 0');
         await updatePaymentAmount(registration.id, 0);
       }
 
@@ -104,9 +139,9 @@ export function AthleteRegistrationCard({
       });
 
       toast.success(checked ? 'Marcado como isento com sucesso!' : 'Isenção removida com sucesso!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating exemption:', error);
-      toast.error('Erro ao atualizar status de isenção');
+      toast.error('Erro ao atualizar status de isenção: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setIsUpdatingExemption(false);
     }
