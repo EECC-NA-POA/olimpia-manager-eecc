@@ -23,7 +23,6 @@ import PublicEventPage from "./pages/PublicEventPage";
 import EventsLandingPage from "./pages/EventsLandingPage";
 import JudgeDashboard from "./pages/JudgeDashboard";
 import Administration from "./pages/Administration";
-import EventManagement from "./pages/EventManagement";
 import EventRegulations from "./pages/EventRegulations";
 import Cronograma from "./pages/Cronograma";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -91,7 +90,7 @@ function AppContent() {
                 <Route path="/athlete-profile" element={<AthleteProfile />} />
                 <Route path="/judge-dashboard" element={<JudgeDashboard />} />
                 <Route path="/administration" element={<Administration />} />
-                <Route path="/event-management" element={<EventManagement />} />
+                <Route path="/event-management" element={<Administration />} />
                 <Route path="/regulamento" element={<EventRegulations />} />
                 <Route path="/cronograma" element={<Cronograma />} />
                 <Route path="/scores" element={<Scores />} />
