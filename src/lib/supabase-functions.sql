@@ -1,4 +1,6 @@
 
+-- ... keep existing code (verification functions and policies) the same ...
+
 -- Função para verificar se o usuário é monitor de uma modalidade
 CREATE OR REPLACE FUNCTION public.verificar_permissao_monitor(modalidade_rep_id_param uuid)
 RETURNS boolean AS $$
@@ -57,7 +59,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Função RPC para criar cronograma para um evento (bypass RLS)
+-- Drop e recria a função RPC para criar cronograma (corrige tipo de retorno)
+DROP FUNCTION IF EXISTS public.create_cronograma_for_event(uuid, text);
+
 CREATE OR REPLACE FUNCTION public.create_cronograma_for_event(
   p_evento_id uuid,
   p_nome text
@@ -79,6 +83,21 @@ BEGIN
   RETURN cronograma_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ========== ALTERAÇÕES NA TABELA CRONOGRAMA_ATIVIDADES ==========
+-- Remove constraints NOT NULL para permitir atividades recorrentes
+
+ALTER TABLE public.cronograma_atividades 
+ALTER COLUMN horario_inicio DROP NOT NULL;
+
+ALTER TABLE public.cronograma_atividades 
+ALTER COLUMN horario_fim DROP NOT NULL;
+
+ALTER TABLE public.cronograma_atividades 
+ALTER COLUMN local DROP NOT NULL;
+
+ALTER TABLE public.cronograma_atividades 
+ALTER COLUMN dia DROP NOT NULL;
 
 -- Policies para a tabela chamadas
 ALTER TABLE public.chamadas ENABLE ROW LEVEL SECURITY;
