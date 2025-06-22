@@ -29,6 +29,15 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
       console.log('User branch ID:', userBranchId);
     }
 
+    // First, let's check if the current user is registered in the event
+    const { data: userEventRegistration } = await supabase
+      .from('inscricoes_eventos')
+      .select('*')
+      .eq('usuario_id', user.id)
+      .eq('evento_id', eventId);
+    
+    console.log('User event registration check:', userEventRegistration);
+
     let query = supabase
       .from('vw_athletes_management')
       .select('*')
@@ -47,6 +56,11 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
 
     console.log('Raw athletes data:', data);
     console.log('Number of raw athletes:', data?.length);
+    console.log('Looking for current user ID in results:', user.id);
+    
+    // Log if current user appears in the raw data
+    const currentUserInData = data?.find(record => record.atleta_id === user.id);
+    console.log('Current user found in raw data:', currentUserInData);
 
     if (!data) {
       console.log('No athletes data returned');
@@ -56,6 +70,8 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
     const athletesMap = new Map<string, AthleteManagement>();
 
     data.forEach(record => {
+      console.log('Processing record for athlete ID:', record.atleta_id, 'Current user ID:', user.id);
+      
       if (!athletesMap.has(record.atleta_id)) {
         const paymentStatus = record.isento ? 'confirmado' : (record.status_pagamento || 'pendente');
         
@@ -99,6 +115,7 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
 
     const athletes = Array.from(athletesMap.values());
     console.log('Processed athletes:', athletes.length);
+    console.log('Current user in final athletes list:', athletes.find(a => a.id === user.id));
     
     return athletes;
   } catch (error) {
