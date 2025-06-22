@@ -263,10 +263,7 @@ export function EventBranchesSection({ eventId }: { eventId: string | null }) {
                         <div className="flex items-center justify-between p-4 hover:bg-gray-50">
                           <div className="flex items-center space-x-3">
                             <Checkbox
-                              checked={isFullySelected}
-                              ref={(el: HTMLInputElement | null) => {
-                                if (el) el.indeterminate = isPartiallySelected && !isFullySelected;
-                              }}
+                              checked={isFullySelected ? true : isPartiallySelected ? 'indeterminate' : false}
                               onCheckedChange={() => handleToggleState(estado)}
                               onClick={(e) => e.stopPropagation()}
                             />
