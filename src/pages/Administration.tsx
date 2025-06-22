@@ -23,7 +23,7 @@ export default function Administration() {
   const navigate = useNavigate();
   const { user, currentEventId } = useAuth();
   const { canCreateEvents, isLoading: isLoadingPermission } = useCanCreateEvents();
-  const [activeTab, setActiveTab] = useState('administration');
+  const [activeTab, setActiveTab] = useState('basic-info');
   const { data: eventData, isLoading: isLoadingEvent, refetch } = useEventData(currentEventId);
   
   // Check if user has admin profile
@@ -85,14 +85,6 @@ export default function Administration() {
             <div className="overflow-x-auto">
               <TabsList className="w-full min-w-max border-b mb-8 bg-background grid grid-cols-2 md:flex md:justify-start md:space-x-2 p-0 h-auto gap-1 md:gap-0">
                 <TabsTrigger 
-                  value="administration"
-                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
-                >
-                  <Shield className="h-3 w-3 md:h-4 md:w-4" />
-                  <span className="hidden sm:inline">Administração</span>
-                  <span className="sm:hidden">Admin</span>
-                </TabsTrigger>
-                <TabsTrigger 
                   value="basic-info"
                   className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
                 >
@@ -107,6 +99,14 @@ export default function Administration() {
                   <UserCheck className="h-3 w-3 md:h-4 md:w-4" />
                   <span className="hidden sm:inline">Perfis e Taxas</span>
                   <span className="sm:hidden">Perfis</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="administration"
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                >
+                  <Shield className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Administração</span>
+                  <span className="sm:hidden">Admin</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="branches"
@@ -151,16 +151,16 @@ export default function Administration() {
               </TabsList>
             </div>
 
-            <TabsContent value="administration" className="mt-6">
-              <EventAdministrationSection eventId={currentEventId} />
-            </TabsContent>
-
             <TabsContent value="basic-info" className="mt-6">
               <EventBasicInfo eventId={currentEventId} eventData={eventData} onUpdate={refetch} />
             </TabsContent>
 
             <TabsContent value="profiles" className="mt-6">
               <EventProfilesSection eventId={currentEventId} />
+            </TabsContent>
+
+            <TabsContent value="administration" className="mt-6">
+              <EventAdministrationSection eventId={currentEventId} />
             </TabsContent>
 
             <TabsContent value="branches" className="mt-6">
