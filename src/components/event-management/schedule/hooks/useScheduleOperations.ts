@@ -106,28 +106,48 @@ export const useScheduleOperations = (
         
         if (!cronogramaId) {
           // First, check if there's already a cronograma for this event
-          const { data: existingCronograma } = await supabase
+          const { data: existingCronograma, error: fetchError } = await supabase
             .from('cronogramas')
             .select('id')
             .eq('evento_id', eventId)
             .limit(1)
-            .single();
+            .maybeSingle();
+          
+          if (fetchError) {
+            console.error('Error fetching existing cronograma:', fetchError);
+            throw fetchError;
+          }
           
           if (existingCronograma) {
             cronogramaId = existingCronograma.id;
           } else {
-            // Create a default cronograma for this event
+            // Create a default cronograma for this event using RPC function to bypass RLS
             const { data: cronogramaData, error: cronogramaError } = await supabase
-              .from('cronogramas')
-              .insert({
-                nome: 'Cronograma Principal',
-                evento_id: eventId
-              })
-              .select()
-              .single();
+              .rpc('create_cronograma_for_event', {
+                p_evento_id: eventId,
+                p_nome: 'Cronograma Principal'
+              });
             
-            if (cronogramaError) throw cronogramaError;
-            cronogramaId = cronogramaData.id;
+            if (cronogramaError) {
+              console.error('Error creating cronograma via RPC:', cronogramaError);
+              // Fallback: try direct insert
+              const { data: fallbackData, error: fallbackError } = await supabase
+                .from('cronogramas')
+                .insert({
+                  nome: 'Cronograma Principal',
+                  evento_id: eventId
+                })
+                .select()
+                .single();
+              
+              if (fallbackError) {
+                console.error('Error creating cronograma via fallback:', fallbackError);
+                throw fallbackError;
+              }
+              cronogramaId = fallbackData.id;
+            } else {
+              cronogramaId = cronogramaData;
+            }
           }
         }
         
