@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { EventFormValues } from '../EventFormSchema';
 
@@ -151,125 +150,115 @@ async function createEventWithTimeout(eventData: any, timeoutMs = 30000) {
   }
 }
 
-// Create default profiles manually if trigger fails
-async function createDefaultProfiles(eventId: string) {
-  console.log('🔧 Creating default profiles manually...');
-  
-  const defaultProfiles = [
-    {
-      nome: 'Atleta',
-      descricao: 'Perfil padrão para atletas',
-      evento_id: eventId,
-      perfil_tipo_id: '7b46a728-348b-46ba-9233-55cb03e73987'
-    },
-    {
-      nome: 'Administração',
-      descricao: 'Acesso administrativo ao evento',
-      evento_id: eventId,
-      perfil_tipo_id: '0b0e3eec-9191-4703-a709-4a88dbd537b0'
-    }
-  ];
-
-  const { data: profiles, error } = await supabase
-    .from('perfis')
-    .insert(defaultProfiles)
-    .select();
-
-  if (error) {
-    console.error('❌ Error creating default profiles:', error);
-    throw new Error('Erro ao criar perfis padrão para o evento');
-  }
-
-  console.log('✅ Default profiles created manually:', profiles);
-  return profiles;
-}
-
-// Create registration fees for profiles
-async function createRegistrationFees(profiles: any[], eventId: string) {
-  console.log('💰 Creating registration fees...');
-  
-  const registrationFees = profiles.map(profile => ({
-    perfil_id: profile.id,
-    valor: 0.00,
-    isento: false,
-    mostra_card: false,
-    evento_id: eventId
-  }));
-
-  const { data: fees, error } = await supabase
-    .from('taxas_inscricao')
-    .insert(registrationFees)
-    .select();
-
-  if (error) {
-    console.error('❌ Error creating registration fees:', error);
-    throw new Error('Erro ao criar taxas de inscrição');
-  }
-
-  console.log('✅ Registration fees created:', fees);
-  return fees;
-}
-
-// Enhanced function to wait for profiles or create them manually
-async function ensureProfilesExist(eventId: string, maxAttempts = 5, delayMs = 2000) {
-  console.log('⏳ Ensuring profiles exist for event...');
+// Enhanced function to wait for profiles with better handling
+async function waitForProfilesCreation(eventId: string, maxAttempts = 8, delayMs = 1500) {
+  console.log('⏳ Waiting for profiles to be created by trigger...');
   
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    console.log(`🔍 Checking profiles existence (attempt ${attempt}/${maxAttempts})...`);
+    console.log(`🔍 Checking profiles (attempt ${attempt}/${maxAttempts})...`);
     
-    const { data: profiles, error } = await supabase
-      .from('perfis')
-      .select('id, nome')
-      .eq('evento_id', eventId)
-      .in('nome', ['Atleta', 'Administração']);
-    
-    if (error) {
-      console.error('❌ Error checking profiles:', error);
-      throw new Error('Erro ao verificar criação de perfis');
-    }
-    
-    if (profiles && profiles.length >= 2) {
-      console.log('✅ Profiles found via trigger:', profiles);
+    try {
+      const { data: profiles, error } = await supabase
+        .from('perfis')
+        .select('id, nome')
+        .eq('evento_id', eventId)
+        .in('nome', ['Atleta', 'Administração']);
       
-      // Verify registration fees exist
-      const { data: fees, error: feesError } = await supabase
-        .from('taxas_inscricao')
-        .select('id, perfil_id')
-        .eq('evento_id', eventId);
-      
-      if (feesError) {
-        console.error('❌ Error checking registration fees:', feesError);
-        // Continue to create fees manually if needed
+      if (error) {
+        console.error('❌ Error checking profiles:', error);
+        if (attempt === maxAttempts) {
+          throw error;
+        }
+        continue;
       }
       
-      if (!fees || fees.length < 2) {
-        console.log('⚠️ Creating missing registration fees...');
-        await createRegistrationFees(profiles, eventId);
+      if (profiles && profiles.length >= 2) {
+        console.log('✅ Profiles found:', profiles);
+        
+        // Verify registration fees exist
+        const { data: fees, error: feesError } = await supabase
+          .from('taxas_inscricao')
+          .select('id, perfil_id, evento_id')
+          .eq('evento_id', eventId);
+        
+        if (feesError) {
+          console.error('❌ Error checking registration fees:', feesError);
+        }
+        
+        if (!fees || fees.length < 2) {
+          console.log('⚠️ Registration fees missing, will be created during update');
+        }
+        
+        return profiles;
       }
       
-      return profiles;
-    }
-    
-    if (attempt < maxAttempts) {
-      console.log(`⏳ Profiles not ready yet, waiting ${delayMs}ms before retry...`);
+      if (attempt < maxAttempts) {
+        console.log(`⏳ Profiles not ready yet, waiting ${delayMs}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+      
+    } catch (error) {
+      console.error(`❌ Error on attempt ${attempt}:`, error);
+      if (attempt === maxAttempts) {
+        throw error;
+      }
       await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
   
-  // If trigger didn't work, create profiles manually
-  console.log('⚠️ Trigger failed, creating profiles manually...');
-  const profiles = await createDefaultProfiles(eventId);
-  await createRegistrationFees(profiles, eventId);
+  throw new Error('Profiles were not created after maximum attempts');
+}
+
+// Create profiles manually if trigger completely fails
+async function createProfilesManually(eventId: string) {
+  console.log('🔧 Creating profiles manually as fallback...');
   
-  return profiles;
+  try {
+    // Create profiles using service role context
+    const { data: profiles, error: profilesError } = await supabase
+      .from('perfis')
+      .insert([
+        {
+          nome: 'Atleta',
+          descricao: 'Perfil padrão para atletas',
+          evento_id: eventId,
+          perfil_tipo_id: '7b46a728-348b-46ba-9233-55cb03e73987'
+        },
+        {
+          nome: 'Administração',
+          descricao: 'Acesso administrativo ao evento',
+          evento_id: eventId,
+          perfil_tipo_id: '0b0e3eec-9191-4703-a709-4a88dbd537b0'
+        }
+      ])
+      .select();
+
+    if (profilesError) {
+      console.error('❌ Error creating profiles manually:', profilesError);
+      throw new Error('Falha ao criar perfis manualmente');
+    }
+
+    console.log('✅ Profiles created manually:', profiles);
+    return profiles;
+  } catch (error) {
+    console.error('❌ Manual profile creation failed:', error);
+    throw error;
+  }
 }
 
 async function updateRegistrationFees(eventId: string, formData: EventFormValues) {
-  console.log('💰 Updating registration fees with custom values...');
+  console.log('💰 Updating registration fees...');
   
   try {
-    // Ensure profiles exist (either from trigger or manual creation)
-    const profiles = await ensureProfilesExist(eventId);
+    let profiles;
+    
+    try {
+      // First, try to wait for trigger-created profiles
+      profiles = await waitForProfilesCreation(eventId);
+    } catch (error) {
+      console.log('⚠️ Trigger failed, creating profiles manually...');
+      profiles = await createProfilesManually(eventId);
+    }
     
     // Update fees for each profile
     for (const profile of profiles) {
@@ -301,14 +290,17 @@ async function updateRegistrationFees(eventId: string, formData: EventFormValues
         if (formData.link_formulario_publico_geral) taxaData.link_formulario = formData.link_formulario_publico_geral;
       }
       
-      const { error: updateError } = await supabase
+      // Use upsert to handle both insert and update
+      const { error: upsertError } = await supabase
         .from('taxas_inscricao')
-        .update(taxaData)
-        .eq('perfil_id', profile.id);
+        .upsert(
+          { ...taxaData, perfil_id: profile.id },
+          { onConflict: 'perfil_id' }
+        );
 
-      if (updateError) {
-        console.error(`❌ Error updating fee for profile ${profile.nome}:`, updateError);
-        throw new Error(`Erro ao atualizar taxa para perfil ${profile.nome}`);
+      if (upsertError) {
+        console.error(`❌ Error upserting fee for profile ${profile.nome}:`, upsertError);
+        throw new Error(`Erro ao configurar taxa para perfil ${profile.nome}`);
       }
       
       console.log(`✅ Updated fee for ${profile.nome}: R$ ${taxaData.valor.toFixed(2)}`);
