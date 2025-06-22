@@ -121,7 +121,7 @@ function prepareEventData(data: EventFormValues) {
   return eventData;
 }
 
-// Simplified event creation without diagnostic dependency
+// Enhanced event creation with better error handling
 async function createEventWithTimeout(eventData: any, timeoutMs = 30000) {
   console.log('⏳ Creating event in database...');
   
@@ -151,75 +151,112 @@ async function createEventWithTimeout(eventData: any, timeoutMs = 30000) {
   }
 }
 
+// Enhanced function to wait for and verify profiles creation
+async function waitForProfilesCreation(eventId: string, maxAttempts = 15, delayMs = 1000) {
+  console.log('⏳ Waiting for profiles creation by trigger...');
+  
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    console.log(`🔍 Checking profiles existence (attempt ${attempt}/${maxAttempts})...`);
+    
+    const { data: profiles, error } = await supabase
+      .from('perfis')
+      .select('id, nome')
+      .eq('evento_id', eventId)
+      .in('nome', ['Atleta', 'Administração']);
+    
+    if (error) {
+      console.error('❌ Error checking profiles:', error);
+      throw new Error('Erro ao verificar criação de perfis');
+    }
+    
+    if (profiles && profiles.length >= 2) {
+      console.log('✅ Profiles found:', profiles);
+      
+      // Also verify that taxas_inscricao were created
+      const { data: taxas, error: taxasError } = await supabase
+        .from('taxas_inscricao')
+        .select('id, perfil_id')
+        .eq('evento_id', eventId);
+      
+      if (taxasError) {
+        console.error('❌ Error checking taxas_inscricao:', taxasError);
+        throw new Error('Erro ao verificar criação de taxas de inscrição');
+      }
+      
+      if (taxas && taxas.length >= 2) {
+        console.log('✅ Registration fees created by trigger:', taxas);
+        return profiles;
+      } else {
+        console.log('⚠️ Profiles exist but registration fees not found, continuing...');
+      }
+    }
+    
+    if (attempt < maxAttempts) {
+      console.log(`⏳ Profiles not ready yet, waiting ${delayMs}ms before retry...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  
+  throw new Error('Timeout: Perfis não foram criados pelo trigger dentro do tempo esperado');
+}
+
 async function updateRegistrationFees(eventId: string, formData: EventFormValues) {
   console.log('💰 Updating registration fees with custom values...');
   
-  // Wait a bit more for trigger completion
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // Get the profiles to update their fees
-  const { data: profiles, error: profilesError } = await supabase
-    .from('perfis')
-    .select('id, nome')
-    .eq('evento_id', eventId)
-    .in('nome', ['Atleta', 'Administração']);
-
-  if (profilesError) {
-    console.error('❌ Error fetching profiles for fee update:', profilesError);
-    throw new Error('Erro ao buscar perfis para atualizar taxas');
-  }
-
-  if (!profiles || profiles.length === 0) {
-    console.error('❌ No profiles found for fee update');
-    throw new Error('Perfis não encontrados para atualizar taxas');
-  }
-
-  console.log('📝 Found profiles for fee update:', profiles);
-
-  // Update fees for each profile with all fields from taxas_inscricao table
-  for (const profile of profiles) {
-    const isAthlete = profile.nome === 'Atleta';
+  try {
+    // Wait for profiles to be created by trigger
+    const profiles = await waitForProfilesCreation(eventId);
     
-    const taxaData: any = {
-      valor: isAthlete ? formData.taxa_atleta : formData.taxa_publico_geral,
-      isento: isAthlete ? formData.isento_atleta : formData.isento_publico_geral,
-      mostra_card: isAthlete ? formData.mostra_card_atleta : formData.mostra_card_publico_geral,
-      evento_id: eventId
-    };
+    // Update fees for each profile with all fields from taxas_inscricao table
+    for (const profile of profiles) {
+      const isAthlete = profile.nome === 'Atleta';
+      
+      const taxaData: any = {
+        valor: isAthlete ? formData.taxa_atleta : formData.taxa_publico_geral,
+        isento: isAthlete ? formData.isento_atleta : formData.isento_publico_geral,
+        mostra_card: isAthlete ? formData.mostra_card_atleta : formData.mostra_card_publico_geral,
+        evento_id: eventId
+      };
 
-    // Add optional fields if they exist
-    if (isAthlete) {
-      if (formData.pix_key_atleta) taxaData.pix_key = formData.pix_key_atleta;
-      if (formData.data_limite_inscricao_atleta) {
-        taxaData.data_limite_inscricao = formData.data_limite_inscricao_atleta.toISOString().split('T')[0];
+      // Add optional fields if they exist
+      if (isAthlete) {
+        if (formData.pix_key_atleta) taxaData.pix_key = formData.pix_key_atleta;
+        if (formData.data_limite_inscricao_atleta) {
+          taxaData.data_limite_inscricao = formData.data_limite_inscricao_atleta.toISOString().split('T')[0];
+        }
+        if (formData.contato_nome_atleta) taxaData.contato_nome = formData.contato_nome_atleta;
+        if (formData.contato_telefone_atleta) taxaData.contato_telefone = formData.contato_telefone_atleta;
+        if (formData.link_formulario_atleta) taxaData.link_formulario = formData.link_formulario_atleta;
+      } else {
+        if (formData.pix_key_publico_geral) taxaData.pix_key = formData.pix_key_publico_geral;
+        if (formData.data_limite_inscricao_publico_geral) {
+          taxaData.data_limite_inscricao = formData.data_limite_inscricao_publico_geral.toISOString().split('T')[0];
+        }
+        if (formData.contato_nome_publico_geral) taxaData.contato_nome = formData.contato_nome_publico_geral;
+        if (formData.contato_telefone_publico_geral) taxaData.contato_telefone = formData.contato_telefone_publico_geral;
+        if (formData.link_formulario_publico_geral) taxaData.link_formulario = formData.link_formulario_publico_geral;
       }
-      if (formData.contato_nome_atleta) taxaData.contato_nome = formData.contato_nome_atleta;
-      if (formData.contato_telefone_atleta) taxaData.contato_telefone = formData.contato_telefone_atleta;
-      if (formData.link_formulario_atleta) taxaData.link_formulario = formData.link_formulario_atleta;
-    } else {
-      if (formData.pix_key_publico_geral) taxaData.pix_key = formData.pix_key_publico_geral;
-      if (formData.data_limite_inscricao_publico_geral) {
-        taxaData.data_limite_inscricao = formData.data_limite_inscricao_publico_geral.toISOString().split('T')[0];
+      
+      const { error: updateError } = await supabase
+        .from('taxas_inscricao')
+        .update(taxaData)
+        .eq('perfil_id', profile.id);
+
+      if (updateError) {
+        console.error(`❌ Error updating fee for profile ${profile.nome}:`, updateError);
+        throw new Error(`Erro ao atualizar taxa para perfil ${profile.nome}`);
       }
-      if (formData.contato_nome_publico_geral) taxaData.contato_nome = formData.contato_nome_publico_geral;
-      if (formData.contato_telefone_publico_geral) taxaData.contato_telefone = formData.contato_telefone_publico_geral;
-      if (formData.link_formulario_publico_geral) taxaData.link_formulario = formData.link_formulario_publico_geral;
+      
+      console.log(`✅ Updated fee for ${profile.nome}: R$ ${taxaData.valor.toFixed(2)}`);
     }
     
-    const { error: updateError } = await supabase
-      .from('taxas_inscricao')
-      .update(taxaData)
-      .eq('perfil_id', profile.id);
-
-    if (updateError) {
-      console.error(`❌ Error updating fee for profile ${profile.nome}:`, updateError);
-      throw new Error(`Erro ao atualizar taxa para perfil ${profile.nome}`);
-    }
+    console.log('✅ Registration fees updated successfully');
+    return profiles;
     
-    console.log(`✅ Updated fee for ${profile.nome}: R$ ${taxaData.valor.toFixed(2)}`);
+  } catch (error) {
+    console.error('❌ Error in updateRegistrationFees:', error);
+    throw error;
   }
-  
-  console.log('✅ Registration fees updated successfully');
 }
 
 async function createEventBranchRelationships(eventId: string, branchIds: string[]) {
@@ -251,45 +288,14 @@ async function createEventBranchRelationships(eventId: string, branchIds: string
   console.log('✅ Branch relationships created successfully');
 }
 
-async function assignRolesToCreatorAndRegister(eventId: string, userId: string) {
+async function assignRolesToCreatorAndRegister(eventId: string, userId: string, profiles: any[]) {
   console.log('👤 Assigning admin and athlete roles to event creator and registering for event:', eventId);
   
-  // Find both admin and athlete profiles created by trigger
-  let adminProfile, athleteProfile;
-  let attempts = 0;
-  const maxAttempts = 10;
-  
-  while ((!adminProfile || !athleteProfile) && attempts < maxAttempts) {
-    const { data: profiles, error } = await supabase
-      .from('perfis')
-      .select('id, nome')
-      .eq('evento_id', eventId)
-      .in('nome', ['Administração', 'Atleta']);
-    
-    if (profiles) {
-      adminProfile = profiles.find(p => p.nome === 'Administração');
-      athleteProfile = profiles.find(p => p.nome === 'Atleta');
-    }
-    
-    if (adminProfile && athleteProfile) {
-      break;
-    }
-    
-    attempts++;
-    if (attempts < maxAttempts) {
-      console.log(`⏳ Profiles not found yet, retrying in 500ms... (attempt ${attempts}/${maxAttempts})`);
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-  }
+  const adminProfile = profiles.find(p => p.nome === 'Administração');
+  const athleteProfile = profiles.find(p => p.nome === 'Atleta');
 
-  if (!adminProfile) {
-    console.error('❌ Admin profile not found after trigger execution');
-    throw new Error('Evento criado, mas houve um erro ao localizar perfil de administração');
-  }
-
-  if (!athleteProfile) {
-    console.error('❌ Athlete profile not found after trigger execution');
-    throw new Error('Evento criado, mas houve um erro ao localizar perfil de atleta');
+  if (!adminProfile || !athleteProfile) {
+    throw new Error('Perfis de administração ou atleta não encontrados');
   }
 
   console.log('✅ Found profiles:', { adminId: adminProfile.id, athleteId: athleteProfile.id });
@@ -402,12 +408,8 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
     
     console.log('✅ Event created successfully:', newEvent);
     
-    // Wait for default profiles trigger to complete
-    console.log('⏳ Waiting for default profiles creation...');
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Update registration fees with custom values and all fields
-    await updateRegistrationFees(newEvent.id as string, data);
+    // Update registration fees with custom values and wait for profiles
+    const profiles = await updateRegistrationFees(newEvent.id as string, data);
     
     // If branches were selected, create the event-branch relationships
     if (data.selectedBranches && data.selectedBranches.length > 0) {
@@ -416,7 +418,7 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
     }
     
     // Assign roles to creator and register them in the event
-    await assignRolesToCreatorAndRegister(newEvent.id as string, userId);
+    await assignRolesToCreatorAndRegister(newEvent.id as string, userId, profiles);
 
     return newEvent;
   } catch (error: any) {
