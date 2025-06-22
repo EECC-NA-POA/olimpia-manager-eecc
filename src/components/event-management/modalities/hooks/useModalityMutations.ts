@@ -12,63 +12,100 @@ export function useModalityMutations(eventId: string | null) {
     editingId: string | null,
     onSuccess: (modality: Modality) => void
   ) => {
-    if (!eventId) return;
+    if (!eventId) return false;
     
     // Basic validation
     if (!modalityData.nome) {
       toast.error('O nome da modalidade é obrigatório');
-      return;
+      return false;
     }
     
     setIsSaving(true);
     try {
       if (editingId) {
-        // Update existing item
-        const { error } = await supabase
-          .from('modalidades')
-          .update({
-            nome: modalityData.nome,
-            tipo_pontuacao: modalityData.tipo_pontuacao,
-            tipo_modalidade: modalityData.tipo_modalidade,
-            categoria: modalityData.categoria,
-            status: modalityData.status,
-            limite_vagas: modalityData.limite_vagas,
-            grupo: modalityData.grupo,
-            faixa_etaria: modalityData.faixa_etaria
-          })
-          .eq('id', editingId);
+        // Update existing item using RPC function
+        const { data, error } = await supabase
+          .rpc('atualizar_modalidade', {
+            modalidade_id: parseInt(editingId),
+            nome_modalidade: modalityData.nome,
+            tipo_pontuacao_modalidade: modalityData.tipo_pontuacao,
+            tipo_modalidade_modalidade: modalityData.tipo_modalidade,
+            categoria_modalidade: modalityData.categoria,
+            status_modalidade: modalityData.status,
+            limite_vagas_modalidade: modalityData.limite_vagas,
+            grupo_modalidade: modalityData.grupo,
+            faixa_etaria_modalidade: modalityData.faixa_etaria
+          });
         
-        if (error) throw error;
+        if (error) {
+          console.error('RPC update error:', error);
+          // Fallback to direct update if RPC doesn't exist
+          const { error: directError } = await supabase
+            .from('modalidades')
+            .update({
+              nome: modalityData.nome,
+              tipo_pontuacao: modalityData.tipo_pontuacao,
+              tipo_modalidade: modalityData.tipo_modalidade,
+              categoria: modalityData.categoria,
+              status: modalityData.status,
+              limite_vagas: modalityData.limite_vagas,
+              grupo: modalityData.grupo,
+              faixa_etaria: modalityData.faixa_etaria
+            })
+            .eq('id', editingId);
+          
+          if (directError) throw directError;
+        }
         
         onSuccess({ 
           id: editingId, 
           evento_id: eventId, 
-          vagas_ocupadas: 0, // This will be updated by the refetch
+          vagas_ocupadas: 0,
           ...modalityData 
         } as Modality);
         toast.success('Modalidade atualizada com sucesso!');
       } else {
-        // Create new item
+        // Create new item using RPC function
         const { data, error } = await supabase
-          .from('modalidades')
-          .insert({
-            evento_id: eventId,
-            nome: modalityData.nome,
-            tipo_pontuacao: modalityData.tipo_pontuacao,
-            tipo_modalidade: modalityData.tipo_modalidade,
-            categoria: modalityData.categoria,
-            status: modalityData.status,
-            limite_vagas: modalityData.limite_vagas,
-            vagas_ocupadas: 0,
-            grupo: modalityData.grupo,
-            faixa_etaria: modalityData.faixa_etaria
-          })
-          .select();
+          .rpc('criar_modalidade', {
+            evento_id_param: eventId,
+            nome_modalidade: modalityData.nome,
+            tipo_pontuacao_modalidade: modalityData.tipo_pontuacao,
+            tipo_modalidade_modalidade: modalityData.tipo_modalidade,
+            categoria_modalidade: modalityData.categoria,
+            status_modalidade: modalityData.status,
+            limite_vagas_modalidade: modalityData.limite_vagas,
+            grupo_modalidade: modalityData.grupo,
+            faixa_etaria_modalidade: modalityData.faixa_etaria
+          });
         
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          onSuccess(data[0] as Modality);
+        if (error) {
+          console.error('RPC create error:', error);
+          // Fallback to direct insert if RPC doesn't exist
+          const { data: insertData, error: directError } = await supabase
+            .from('modalidades')
+            .insert({
+              evento_id: eventId,
+              nome: modalityData.nome,
+              tipo_pontuacao: modalityData.tipo_pontuacao,
+              tipo_modalidade: modalityData.tipo_modalidade,
+              categoria: modalityData.categoria,
+              status: modalityData.status,
+              limite_vagas: modalityData.limite_vagas,
+              vagas_ocupadas: 0,
+              grupo: modalityData.grupo,
+              faixa_etaria: modalityData.faixa_etaria
+            })
+            .select();
+          
+          if (directError) throw directError;
+          
+          if (insertData && insertData.length > 0) {
+            onSuccess(insertData[0] as Modality);
+          }
+        } else if (data) {
+          // RPC returned data successfully
+          onSuccess(data as Modality);
         }
         
         toast.success('Modalidade adicionada com sucesso!');
@@ -90,12 +127,22 @@ export function useModalityMutations(eventId: string | null) {
     }
     
     try {
-      const { error } = await supabase
-        .from('modalidades')
-        .delete()
-        .eq('id', id);
+      // Try RPC function first
+      const { error: rpcError } = await supabase
+        .rpc('excluir_modalidade', {
+          modalidade_id: parseInt(id)
+        });
       
-      if (error) throw error;
+      if (rpcError) {
+        console.error('RPC delete error:', rpcError);
+        // Fallback to direct delete
+        const { error: directError } = await supabase
+          .from('modalidades')
+          .delete()
+          .eq('id', id);
+        
+        if (directError) throw directError;
+      }
       
       onSuccess();
       toast.success('Modalidade excluída com sucesso!');
