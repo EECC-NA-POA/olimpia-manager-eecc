@@ -32,8 +32,25 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
   };
 
   const renderRecurrentInfo = (item: ScheduleItem) => {
-    if (!item.recorrente || !item.dias_semana || !item.horarios_por_dia || !item.locais_por_dia) {
+    console.log('Rendering recurrent info for item:', item);
+    
+    if (!item.recorrente) {
       return null;
+    }
+
+    // Check if we have the required recurrent data
+    if (!item.dias_semana || !Array.isArray(item.dias_semana) || item.dias_semana.length === 0) {
+      return (
+        <div className="space-y-2 mt-2">
+          <div className="flex items-center gap-1 mb-2">
+            <Calendar className="h-3 w-3 text-blue-600" />
+            <span className="text-xs font-medium text-blue-600">Atividade Recorrente</span>
+          </div>
+          <div className="text-xs text-gray-500 italic">
+            Dados de recorrência não configurados
+          </div>
+        </div>
+      );
     }
 
     return (
@@ -66,6 +83,14 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
                   <span>{local}</span>
                 </div>
               )}
+              
+              {(!horario || !local) && (
+                <div className="text-xs text-gray-500 italic">
+                  {!horario && 'Horário não configurado'} 
+                  {!horario && !local && ' - '}
+                  {!local && 'Local não configurado'}
+                </div>
+              )}
             </div>
           );
         })}
@@ -73,6 +98,98 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
         {item.data_fim_recorrencia && (
           <div className="text-xs text-gray-500 mt-2">
             Até: {formatDate(item.data_fim_recorrencia)}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderRecurrentSummary = (item: ScheduleItem) => {
+    if (!item.recorrente || !item.dias_semana || !Array.isArray(item.dias_semana)) {
+      return <div className="text-sm text-gray-500 italic">Dados não configurados</div>;
+    }
+
+    const diasCount = item.dias_semana.length;
+    const diasLabels = item.dias_semana.map(dia => getDiaLabel(dia)).join(', ');
+    
+    return (
+      <div className="text-sm">
+        <div className="font-medium text-gray-700 mb-1">
+          {diasCount} dia{diasCount > 1 ? 's' : ''}
+        </div>
+        <div className="text-xs text-gray-500">
+          {diasLabels}
+        </div>
+      </div>
+    );
+  };
+
+  const renderRecurrentTimesSummary = (item: ScheduleItem) => {
+    if (!item.recorrente || !item.horarios_por_dia) {
+      return <div className="text-sm text-gray-500 italic">Horários não configurados</div>;
+    }
+
+    const horariosUnicos = new Set();
+    Object.values(item.horarios_por_dia).forEach(horario => {
+      if (horario && horario.inicio && horario.fim) {
+        horariosUnicos.add(`${horario.inicio} - ${horario.fim}`);
+      }
+    });
+
+    if (horariosUnicos.size === 0) {
+      return <div className="text-sm text-gray-500 italic">Horários não configurados</div>;
+    }
+
+    return (
+      <div className="text-sm">
+        {horariosUnicos.size === 1 ? (
+          <div className="text-gray-700">
+            {Array.from(horariosUnicos)[0]}
+          </div>
+        ) : (
+          <div>
+            <div className="font-medium text-gray-700 mb-1">
+              {horariosUnicos.size} horários diferentes
+            </div>
+            <div className="text-xs text-gray-500">
+              {Array.from(horariosUnicos).join(', ')}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderRecurrentLocationsSummary = (item: ScheduleItem) => {
+    if (!item.recorrente || !item.locais_por_dia) {
+      return <div className="text-sm text-gray-500 italic">Locais não configurados</div>;
+    }
+
+    const locaisUnicos = new Set();
+    Object.values(item.locais_por_dia).forEach(local => {
+      if (local && local.trim()) {
+        locaisUnicos.add(local.trim());
+      }
+    });
+
+    if (locaisUnicos.size === 0) {
+      return <div className="text-sm text-gray-500 italic">Locais não configurados</div>;
+    }
+
+    return (
+      <div className="text-sm">
+        {locaisUnicos.size === 1 ? (
+          <div className="text-gray-700">
+            {Array.from(locaisUnicos)[0]}
+          </div>
+        ) : (
+          <div>
+            <div className="font-medium text-gray-700 mb-1">
+              {locaisUnicos.size} locais diferentes
+            </div>
+            <div className="text-xs text-gray-500">
+              {Array.from(locaisUnicos).join(', ')}
+            </div>
           </div>
         )}
       </div>
@@ -110,9 +227,7 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
               
               <TableCell className="align-top">
                 {item.recorrente ? (
-                  <div className="text-sm text-gray-500 italic">
-                    Vários dias
-                  </div>
+                  renderRecurrentSummary(item)
                 ) : (
                   formatDate(item.dia)
                 )}
@@ -120,9 +235,7 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
               
               <TableCell className="align-top">
                 {item.recorrente ? (
-                  <div className="text-sm text-gray-500 italic">
-                    Vários horários
-                  </div>
+                  renderRecurrentTimesSummary(item)
                 ) : (
                   `${item.horario_inicio} ${item.horario_fim ? `- ${item.horario_fim}` : ''}`
                 )}
@@ -130,9 +243,7 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
               
               <TableCell className="align-top">
                 {item.recorrente ? (
-                  <div className="text-sm text-gray-500 italic">
-                    Vários locais
-                  </div>
+                  renderRecurrentLocationsSummary(item)
                 ) : (
                   item.local
                 )}
