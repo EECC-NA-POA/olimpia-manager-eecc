@@ -59,8 +59,12 @@ export function StateBranchSelector({
     onBranchChange(newSelection);
   };
 
-  const handleSelectAllBranches = () => {
-    onBranchChange(['all']);
+  const handleSelectAllBranches = (checked: boolean) => {
+    if (checked) {
+      onBranchChange(['all']);
+    } else {
+      onBranchChange([]);
+    }
   };
 
   const handleStateToggle = (estado: string) => {
@@ -90,6 +94,8 @@ export function StateBranchSelector({
     return selectedCount > 0 && selectedCount < stateBranchIds.length;
   };
 
+  const isAllSelected = selectedBranches.includes('all');
+
   return (
     <div>
       <Label className="text-sm font-medium">Destinatários *</Label>
@@ -98,7 +104,7 @@ export function StateBranchSelector({
         <div className="flex items-center space-x-2 pb-2 border-b">
           <Checkbox
             id="all-branches"
-            checked={selectedBranches.includes('all')}
+            checked={isAllSelected}
             onCheckedChange={handleSelectAllBranches}
           />
           <Label htmlFor="all-branches" className="font-medium text-green-700">
@@ -124,7 +130,7 @@ export function StateBranchSelector({
                           checked={isFullySelected ? true : isPartiallySelected ? 'indeterminate' : false}
                           onCheckedChange={() => handleStateToggle(estado)}
                           onClick={(e) => e.stopPropagation()}
-                          disabled={selectedBranches.includes('all')}
+                          disabled={isAllSelected}
                         />
                         <span className="font-medium text-sm">{estado}</span>
                         <span className="text-xs text-muted-foreground">
@@ -150,7 +156,7 @@ export function StateBranchSelector({
                               id={branch.id}
                               checked={selectedBranches.includes(branch.id)}
                               onCheckedChange={() => handleBranchToggle(branch.id)}
-                              disabled={selectedBranches.includes('all')}
+                              disabled={isAllSelected}
                             />
                             <Label htmlFor={branch.id} className="text-sm">
                               {branch.nome} - {branch.cidade}
