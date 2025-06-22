@@ -27,11 +27,11 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
   handleDelete,
   formatDate
 }) => {
-  const getDiaLabel = (value: string) => {
+  const getDiaLabel = (value: string): string => {
     return diasSemana.find(d => d.value === value)?.label || value;
   };
 
-  const renderRecurrentInfo = (item: ScheduleItem) => {
+  const renderRecurrentInfo = (item: ScheduleItem): React.ReactNode => {
     console.log('Rendering recurrent info for item:', item);
     
     if (!item.recorrente) {
@@ -104,7 +104,7 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
     );
   };
 
-  const renderRecurrentSummary = (item: ScheduleItem) => {
+  const renderRecurrentSummary = (item: ScheduleItem): React.ReactNode => {
     if (!item.recorrente || !item.dias_semana || !Array.isArray(item.dias_semana)) {
       return <div className="text-sm text-gray-500 italic">Dados não configurados</div>;
     }
@@ -124,12 +124,12 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
     );
   };
 
-  const renderRecurrentTimesSummary = (item: ScheduleItem) => {
+  const renderRecurrentTimesSummary = (item: ScheduleItem): React.ReactNode => {
     if (!item.recorrente || !item.horarios_por_dia) {
       return <div className="text-sm text-gray-500 italic">Horários não configurados</div>;
     }
 
-    const horariosUnicos = new Set();
+    const horariosUnicos = new Set<string>();
     Object.values(item.horarios_por_dia).forEach(horario => {
       if (horario && horario.inicio && horario.fim) {
         horariosUnicos.add(`${horario.inicio} - ${horario.fim}`);
@@ -160,12 +160,12 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
     );
   };
 
-  const renderRecurrentLocationsSummary = (item: ScheduleItem) => {
+  const renderRecurrentLocationsSummary = (item: ScheduleItem): React.ReactNode => {
     if (!item.recorrente || !item.locais_por_dia) {
       return <div className="text-sm text-gray-500 italic">Locais não configurados</div>;
     }
 
-    const locaisUnicos = new Set();
+    const locaisUnicos = new Set<string>();
     Object.values(item.locais_por_dia).forEach(local => {
       if (local && local.trim()) {
         locaisUnicos.add(local.trim());
