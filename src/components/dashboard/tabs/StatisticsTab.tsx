@@ -66,9 +66,9 @@ export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
   // Check if data is valid and properly structured 
   if (!data || !Array.isArray(data) || data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <p className="text-lg text-muted-foreground">Não há dados estatísticos disponíveis</p>
-        <p className="text-sm text-muted-foreground">Verifique se existem inscrições registradas para este evento</p>
+      <div className="flex flex-col items-center justify-center h-32 sm:h-64 px-4">
+        <p className="text-base sm:text-lg text-muted-foreground text-center">Não há dados estatísticos disponíveis</p>
+        <p className="text-xs sm:text-sm text-muted-foreground text-center mt-1">Verifique se existem inscrições registradas para este evento</p>
       </div>
     );
   }
@@ -83,9 +83,9 @@ export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
   // If no data after filtering, show no data message
   if (!filteredData || filteredData.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <p className="text-lg text-muted-foreground">Não há dados estatísticos disponíveis para esta filial</p>
-        <p className="text-sm text-muted-foreground">Verifique se existem inscrições confirmadas para esta filial</p>
+      <div className="flex flex-col items-center justify-center h-32 sm:h-64 px-4">
+        <p className="text-base sm:text-lg text-muted-foreground text-center">Não há dados estatísticos disponíveis para esta filial</p>
+        <p className="text-xs sm:text-sm text-muted-foreground text-center mt-1">Verifique se existem inscrições confirmadas para esta filial</p>
       </div>
     );
   }
@@ -110,13 +110,13 @@ export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
   console.log("Branch registrations chart data:", branchRegistrationsData);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-8 px-1 sm:px-0">
       {/* Summary Cards Section */}
       <SummaryCards totals={summaryCardsTotals} />
 
-      {/* Charts Section - Using a consistent layout */}
-      <div className="space-y-8">
-        {/* Payment Status Bar Chart - Battery style - Full width */}
+      {/* Charts Section - Mobile optimized layout */}
+      <div className="space-y-4 sm:space-y-8">
+        {/* Payment Status Bar Chart - Full width */}
         <div className="w-full">
           <PaymentStatusBarChart 
             data={paymentStatusData} 
