@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -30,7 +31,7 @@ export const useExemptionStatus = ({
         
         const { data, error } = await supabase
           .from('pagamentos')
-          .select('isento')
+          .select('isento, status')
           .eq('atleta_id', userId)
           .eq('evento_id', eventId)
           .single();
@@ -43,7 +44,8 @@ export const useExemptionStatus = ({
         }
         
         console.log('Exemption data:', data);
-        setIsExempt(data?.isento || false);
+        // Consider exempt if either isento flag is true OR status is "isento"
+        setIsExempt(data?.isento || data?.status === 'isento');
       } catch (error) {
         console.error('Error in checkExemptionStatus:', error);
         setIsExempt(false);
@@ -67,7 +69,7 @@ export const useExemptionStatus = ({
       // First, check if payment record exists
       const { data: existingPayment, error: checkError } = await supabase
         .from('pagamentos')
-        .select('id, isento, valor')
+        .select('id, isento, valor, status')
         .eq('atleta_id', userId)
         .eq('evento_id', eventId)
         .single();
@@ -86,17 +88,13 @@ export const useExemptionStatus = ({
       }
 
       // Update exemption status in pagamentos table
-      const updateData: any = { isento: checked };
-      
-      // If marking as exempt, set value to 0
-      if (checked) {
-        updateData.valor = 0;
-        console.log('Setting payment amount to 0 due to exemption');
-      } else {
-        // If removing exemption, restore original value (you might want to get this from taxas_inscricao)
-        // For now, we'll keep the current logic and let updatePaymentAmount handle it separately
-        console.log('Removing exemption, keeping current payment value');
-      }
+      const updateData: any = { 
+        isento: checked,
+        status: checked ? 'isento' : 'pendente', // Set status to "isento" when exempt, "pendente" when not
+        valor: checked ? 0 : existingPayment.valor // Set value to 0 when exempt, restore original when not
+      };
+
+      console.log('Updating payment with data:', updateData);
 
       const { error: updateError } = await supabase
         .from('pagamentos')

@@ -16,6 +16,7 @@ export function calculateTotals(data: BranchAnalytics[]) {
   let totalConfirmados = 0;
   let totalPendentes = 0;
   let totalCancelados = 0;
+  let totalIsentos = 0;
 
   data.forEach(branchData => {
     totalGeral += branchData.total_inscritos_geral;
@@ -29,6 +30,8 @@ export function calculateTotals(data: BranchAnalytics[]) {
         totalPendentes += status.quantidade;
       } else if (status.status_pagamento === 'cancelado') {
         totalCancelados += status.quantidade;
+      } else if (status.status_pagamento === 'isento') {
+        totalIsentos += status.quantidade;
       }
     });
   });
@@ -38,7 +41,8 @@ export function calculateTotals(data: BranchAnalytics[]) {
     totalModalidades,
     totalConfirmados,
     totalPendentes,
-    totalCancelados
+    totalCancelados,
+    totalIsentos
   };
 }
 
@@ -118,6 +122,7 @@ export function transformPaymentStatusData(data: any[], colorMap: Record<string,
   let totalConfirmado = 0;
   let totalPendente = 0;
   let totalCancelado = 0;
+  let totalIsento = 0;
   
   data.forEach(branchData => {
     if (branchData.inscritos_por_status_pagamento && Array.isArray(branchData.inscritos_por_status_pagamento)) {
@@ -128,12 +133,14 @@ export function transformPaymentStatusData(data: any[], colorMap: Record<string,
           totalPendente += status.quantidade;
         } else if (status.status_pagamento === 'cancelado') {
           totalCancelado += status.quantidade;
+        } else if (status.status_pagamento === 'isento') {
+          totalIsento += status.quantidade;
         }
       });
     }
   });
   
-  const totalAll = totalConfirmado + totalPendente + totalCancelado;
+  const totalAll = totalConfirmado + totalPendente + totalCancelado + totalIsento;
   
   // For the battery chart we need percentages
   return [
@@ -142,11 +149,13 @@ export function transformPaymentStatusData(data: any[], colorMap: Record<string,
       confirmado: totalConfirmado,
       pendente: totalPendente,
       cancelado: totalCancelado,
+      isento: totalIsento,
       total: totalAll,
       // Calculate percentages for the battery visualization
       confirmadoPct: totalAll > 0 ? (totalConfirmado / totalAll) * 100 : 0,
       pendentePct: totalAll > 0 ? (totalPendente / totalAll) * 100 : 0,
-      canceladoPct: totalAll > 0 ? (totalCancelado / totalAll) * 100 : 0
+      canceladoPct: totalAll > 0 ? (totalCancelado / totalAll) * 100 : 0,
+      isentoPct: totalAll > 0 ? (totalIsento / totalAll) * 100 : 0
     }
   ];
 }
@@ -159,6 +168,7 @@ export function transformBranchRegistrationsData(data: BranchAnalytics[]): Branc
     name: branchData.filial,
     confirmados: branchData.inscritos_por_status_pagamento.find(status => status.status_pagamento === 'confirmado')?.quantidade || 0,
     pendentes: branchData.inscritos_por_status_pagamento.find(status => status.status_pagamento === 'pendente')?.quantidade || 0,
+    isentos: branchData.inscritos_por_status_pagamento.find(status => status.status_pagamento === 'isento')?.quantidade || 0,
     total: branchData.total_inscritos_geral
   }));
 }

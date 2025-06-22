@@ -23,7 +23,8 @@ const CHART_COLORS = {
 const PAYMENT_STATUS_COLORS = {
   'confirmado': CHART_COLORS.green,
   'pendente': CHART_COLORS.yellow,
-  'cancelado': CHART_COLORS.red
+  'cancelado': CHART_COLORS.red,
+  'isento': CHART_COLORS.blue
 };
 
 // Chart config that matches the ChartConfig type
@@ -43,6 +44,10 @@ const CHART_CONFIG: ChartConfig = {
   cancelado: {
     color: CHART_COLORS.red,
     label: 'Cancelado'
+  },
+  isento: {
+    color: CHART_COLORS.blue,
+    label: 'Isento'
   },
   categories: {
     color: CHART_COLORS.purple,
@@ -98,7 +103,8 @@ export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
   const summaryCardsTotals = {
     inscricoes: calculatedTotals.totalGeral,
     pago: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pago) || 0), 0),
-    pendente: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pendente) || 0), 0)
+    pendente: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pendente) || 0), 0),
+    isento: calculatedTotals.totalIsentos
   };
   console.log("Summary cards totals:", summaryCardsTotals);
 
