@@ -39,6 +39,45 @@ export const useScheduleForm = () => {
     });
   };
 
+  const handleDiaToggle = (dia: string, checked: boolean) => {
+    const novosDias = checked 
+      ? [...currentItem.dias_semana, dia]
+      : currentItem.dias_semana.filter(d => d !== dia);
+    
+    const novosHorarios = { ...currentItem.horarios_por_dia };
+    if (!checked) {
+      delete novosHorarios[dia];
+    }
+    
+    setCurrentItem({
+      ...currentItem,
+      dias_semana: novosDias,
+      horarios_por_dia: novosHorarios
+    });
+  };
+
+  const handleHorarioChange = (dia: string, tipo: 'inicio' | 'fim', valor: string) => {
+    const horarioAtual = currentItem.horarios_por_dia[dia] || { inicio: '', fim: '' };
+    
+    setCurrentItem({
+      ...currentItem,
+      horarios_por_dia: {
+        ...currentItem.horarios_por_dia,
+        [dia]: {
+          ...horarioAtual,
+          [tipo]: valor
+        }
+      }
+    });
+  };
+
+  const handleDataFimRecorrenciaChange = (data: string) => {
+    setCurrentItem({
+      ...currentItem,
+      data_fim_recorrencia: data
+    });
+  };
+
   const openAddDialog = () => {
     setEditingId(null);
     setCurrentItem(defaultFormValues);
@@ -55,6 +94,10 @@ export const useScheduleForm = () => {
       horario_fim: item.horario_fim,
       local: item.local,
       global: item.global,
+      recorrente: item.recorrente || false,
+      dias_semana: item.dias_semana || [],
+      horarios_por_dia: item.horarios_por_dia || {},
+      data_fim_recorrencia: item.data_fim_recorrencia || '',
       modalidades: item.modalidades
     });
     setIsDialogOpen(true);
@@ -74,6 +117,9 @@ export const useScheduleForm = () => {
     handleInputChange,
     handleSelectChange,
     handleModalitiesChange,
+    handleDiaToggle,
+    handleHorarioChange,
+    handleDataFimRecorrenciaChange,
     openAddDialog,
     openEditDialog,
     resetForm

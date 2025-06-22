@@ -22,6 +22,9 @@ export function EventScheduleSection({ eventId }: { eventId: string | null }) {
     openEditDialog,
     handleInputChange,
     handleSelectChange,
+    handleDiaToggle,
+    handleHorarioChange,
+    handleDataFimRecorrenciaChange,
     handleSave,
     handleDelete
   } = useScheduleData(eventId);
@@ -68,6 +71,9 @@ export function EventScheduleSection({ eventId }: { eventId: string | null }) {
         currentItem={currentItem}
         handleInputChange={handleInputChange}
         handleSelectChange={handleSelectChange}
+        handleDiaToggle={handleDiaToggle}
+        handleHorarioChange={handleHorarioChange}
+        handleDataFimRecorrenciaChange={handleDataFimRecorrenciaChange}
         handleSave={handleSave}
         isSaving={isSaving}
       />
