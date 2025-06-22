@@ -151,7 +151,7 @@ async function createEventWithTimeout(eventData: any, timeoutMs = 30000) {
   }
 }
 
-async function updateRegistrationFees(eventId: string, taxaAtleta: number, taxaPublicoGeral: number) {
+async function updateRegistrationFees(eventId: string, formData: EventFormValues) {
   console.log('💰 Updating registration fees with custom values...');
   
   // Wait a bit more for trigger completion
@@ -176,16 +176,39 @@ async function updateRegistrationFees(eventId: string, taxaAtleta: number, taxaP
 
   console.log('📝 Found profiles for fee update:', profiles);
 
-  // Update fees for each profile
+  // Update fees for each profile with all fields from taxas_inscricao table
   for (const profile of profiles) {
-    const valor = profile.nome === 'Atleta' ? taxaAtleta : taxaPublicoGeral;
+    const isAthlete = profile.nome === 'Atleta';
+    
+    const taxaData: any = {
+      valor: isAthlete ? formData.taxa_atleta : formData.taxa_publico_geral,
+      isento: isAthlete ? formData.isento_atleta : formData.isento_publico_geral,
+      mostra_card: isAthlete ? formData.mostra_card_atleta : formData.mostra_card_publico_geral,
+      evento_id: eventId
+    };
+
+    // Add optional fields if they exist
+    if (isAthlete) {
+      if (formData.pix_key_atleta) taxaData.pix_key = formData.pix_key_atleta;
+      if (formData.data_limite_inscricao_atleta) {
+        taxaData.data_limite_inscricao = formData.data_limite_inscricao_atleta.toISOString().split('T')[0];
+      }
+      if (formData.contato_nome_atleta) taxaData.contato_nome = formData.contato_nome_atleta;
+      if (formData.contato_telefone_atleta) taxaData.contato_telefone = formData.contato_telefone_atleta;
+      if (formData.link_formulario_atleta) taxaData.link_formulario = formData.link_formulario_atleta;
+    } else {
+      if (formData.pix_key_publico_geral) taxaData.pix_key = formData.pix_key_publico_geral;
+      if (formData.data_limite_inscricao_publico_geral) {
+        taxaData.data_limite_inscricao = formData.data_limite_inscricao_publico_geral.toISOString().split('T')[0];
+      }
+      if (formData.contato_nome_publico_geral) taxaData.contato_nome = formData.contato_nome_publico_geral;
+      if (formData.contato_telefone_publico_geral) taxaData.contato_telefone = formData.contato_telefone_publico_geral;
+      if (formData.link_formulario_publico_geral) taxaData.link_formulario = formData.link_formulario_publico_geral;
+    }
     
     const { error: updateError } = await supabase
       .from('taxas_inscricao')
-      .update({ 
-        valor: valor,
-        descricao: `Taxa de inscrição para ${profile.nome} - R$ ${valor.toFixed(2)}`
-      })
+      .update(taxaData)
       .eq('perfil_id', profile.id);
 
     if (updateError) {
@@ -193,7 +216,7 @@ async function updateRegistrationFees(eventId: string, taxaAtleta: number, taxaP
       throw new Error(`Erro ao atualizar taxa para perfil ${profile.nome}`);
     }
     
-    console.log(`✅ Updated fee for ${profile.nome}: R$ ${valor.toFixed(2)}`);
+    console.log(`✅ Updated fee for ${profile.nome}: R$ ${taxaData.valor.toFixed(2)}`);
   }
   
   console.log('✅ Registration fees updated successfully');
@@ -383,8 +406,8 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
     console.log('⏳ Waiting for default profiles creation...');
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    // Update registration fees with custom values
-    await updateRegistrationFees(newEvent.id as string, data.taxa_atleta, data.taxa_publico_geral);
+    // Update registration fees with custom values and all fields
+    await updateRegistrationFees(newEvent.id as string, data);
     
     // If branches were selected, create the event-branch relationships
     if (data.selectedBranches && data.selectedBranches.length > 0) {

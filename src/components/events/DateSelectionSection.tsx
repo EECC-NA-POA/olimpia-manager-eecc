@@ -1,5 +1,6 @@
 
 import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,7 @@ export function DateSelectionSection({ form }: DateSelectionSectionProps) {
                       className={"w-full pl-3 text-left font-normal"}
                     >
                       {field.value ? (
-                        format(field.value, "P")
+                        format(field.value, "dd/MM/yyyy", { locale: ptBR })
                       ) : (
                         <span>Selecione uma data</span>
                       )}
@@ -48,6 +49,7 @@ export function DateSelectionSection({ form }: DateSelectionSectionProps) {
                     disabled={(date) => date < new Date()}
                     initialFocus
                     className={cn("p-3 pointer-events-auto")}
+                    locale={ptBR}
                   />
                 </PopoverContent>
               </Popover>
@@ -70,7 +72,7 @@ export function DateSelectionSection({ form }: DateSelectionSectionProps) {
                       className={"w-full pl-3 text-left font-normal"}
                     >
                       {field.value ? (
-                        format(field.value, "P")
+                        format(field.value, "dd/MM/yyyy", { locale: ptBR })
                       ) : (
                         <span>Selecione uma data</span>
                       )}
@@ -86,6 +88,7 @@ export function DateSelectionSection({ form }: DateSelectionSectionProps) {
                     disabled={(date) => date < new Date()}
                     initialFocus
                     className={cn("p-3 pointer-events-auto")}
+                    locale={ptBR}
                   />
                 </PopoverContent>
               </Popover>
@@ -108,7 +111,7 @@ export function DateSelectionSection({ form }: DateSelectionSectionProps) {
                       className={"w-full pl-3 text-left font-normal"}
                     >
                       {field.value ? (
-                        format(field.value, "P")
+                        format(field.value, "dd/MM/yyyy", { locale: ptBR })
                       ) : (
                         <span>Selecione uma data</span>
                       )}
@@ -123,6 +126,7 @@ export function DateSelectionSection({ form }: DateSelectionSectionProps) {
                     onSelect={field.onChange}
                     initialFocus
                     className={cn("p-3 pointer-events-auto")}
+                    locale={ptBR}
                   />
                 </PopoverContent>
               </Popover>
@@ -148,7 +152,7 @@ export function DateSelectionSection({ form }: DateSelectionSectionProps) {
                       className={"w-full pl-3 text-left font-normal"}
                     >
                       {field.value ? (
-                        format(field.value, "P")
+                        format(field.value, "dd/MM/yyyy", { locale: ptBR })
                       ) : (
                         <span>Selecione uma data</span>
                       )}
@@ -163,6 +167,7 @@ export function DateSelectionSection({ form }: DateSelectionSectionProps) {
                     onSelect={field.onChange}
                     initialFocus
                     className={cn("p-3 pointer-events-auto")}
+                    locale={ptBR}
                   />
                 </PopoverContent>
               </Popover>

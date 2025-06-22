@@ -21,12 +21,16 @@ export function useCreateEvent({ onEventCreated, onClose }: UseCreateEventProps)
     defaultValues: {
       nome: '',
       descricao: '',
-      tipo: 'estadual',
+      tipo: undefined, // Inicia vazio para seleção
       status_evento: 'ativo',
-      visibilidade_publica: true,
+      visibilidade_publica: false, // Inicia desmarcado
       selectedBranches: [],
       taxa_atleta: 0,
       taxa_publico_geral: 0,
+      isento_atleta: false,
+      mostra_card_atleta: false,
+      isento_publico_geral: false,
+      mostra_card_publico_geral: false,
     },
   });
 

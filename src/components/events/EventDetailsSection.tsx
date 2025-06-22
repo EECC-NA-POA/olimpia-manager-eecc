@@ -59,7 +59,7 @@ export function EventDetailsSection({ form }: EventDetailsSectionProps) {
           control={form.control}
           name="visibilidade_publica"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 md:col-span-2">
               <div className="space-y-0.5">
                 <FormLabel className="text-base">
                   Visibilidade Pública
