@@ -1,4 +1,4 @@
-name: Create PR to Fork Repository
+name: Sync to Fork and Create PR
 
 on:
   push:
@@ -6,42 +6,41 @@ on:
   workflow_dispatch:
 
 jobs:
-  create-pr-to-fork:
+  sync-to-fork:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout 'release' branch
+      # 1) Checkout sem gravar credenciais do GITHUB_TOKEN
+      - name: Checkout 'release' (no creds)
         uses: actions/checkout@v4
         with:
           ref: release
-          token: ${{ secrets.GITHUB_TOKEN }} 
-          fetch-depth: 0 # fetch-depth: 0 é crucial para ter todo o histórico
+          fetch-depth: 0
+          persist-credentials: false    # << desabilita o helper automático
 
-      - name: Create and Push Branch to Fork
-        env:
-          FORK_REPO_TOKEN: ${{ secrets.FORK_REPO_TOKEN }}
+      # 2) Configurar usuário Git
+      - name: Setup Git user
         run: |
-          # 1. Configurar o Git (usuário e e-mail)
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Garante que o Git use o helper de credenciais padrão,
-          # que deve ser o que processa a URL com o token.
-          git config --global credential.helper store
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # 3. Criar uma branch única a partir da 'release'
-          BRANCH_NAME="sync-from-release-$(date +%Y%m%d-%H%M%S)"
-          echo "Creating branch: $BRANCH_NAME"
-          git checkout -b "$BRANCH_NAME"
+      # 3) Criar branch
+      - name: Create branch
+        id: new_branch
+        run: |
+          BRANCH="sync-release-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b $BRANCH
+          echo "BRANCH_NAME=$BRANCH" >> $GITHUB_ENV
 
-          # 4. Fazer o push da nova branch para o fork
-          echo "Pushing branch to fork..."
-          # AQUI: Usamos a URL completa com o token diretamente no comando push.
-          # Isso deve forçar a autenticação para esta operação específica.
-          git push -u "https://x-access-token:${FORK_REPO_TOKEN}@github.com/EECC-NA-POA/olimpia-manager-eecc.git" "$BRANCH_NAME"
+      # 4) Adicionar remote apontando pro fork usando o PAT
+      - name: Add fork remote
+        run: |
+          git remote add fork \
+            https://x-access-token:${{ secrets.FORK_REPO_TOKEN }}@github.com/EECC-NA-POA/olimpia-manager-eecc.git
 
-          # 5. Salvar o nome da branch para o próximo passo
-          echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
+      # 5) Push direto para esse remote
+      - name: Push to fork
+        run: |
+          git push -u fork ${{ env.BRANCH_NAME }}
 
       - name: Get Last Commit Information
         id: commit_info
