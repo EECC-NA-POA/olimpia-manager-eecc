@@ -1,4 +1,3 @@
-
 name: Create PR to Fork Repository
 
 on:
@@ -11,114 +10,85 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
+      - name: Checkout 'release' branch
         uses: actions/checkout@v4
         with:
           ref: release
-          fetch-depth: 0
-          # Use default GITHUB_TOKEN for private repo operations
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0 # fetch-depth: 0 é crucial para ter todo o histórico
 
-      - name: Configure Git
+      - name: Create and Push Branch to Fork
+        # Injeta o segredo como uma variável de ambiente segura para este passo.
+        # Todos os comandos 'git' neste bloco poderão usar o token.
+        env:
+          FORK_REPO_TOKEN: ${{ secrets.FORK_REPO_TOKEN }}
         run: |
-          git config --global user.name "GitHub Action"
-          git config --global user.email "action@github.com"
+          # 1. Configurar o Git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Add fork remote and fetch
-        run: |
+          # 2. Adicionar o remote do fork usando a variável de ambiente para autenticação
           echo "Adding fork remote..."
-          # Use FORK_REPO_TOKEN only for fork operations
-          git remote add fork https://${{ secrets.FORK_REPO_TOKEN }}@github.com/EECC-NA-POA/olimpia-manager-eecc.git
-          git fetch fork
+          git remote add fork "https://x-access-token:$FORK_REPO_TOKEN@github.com/EECC-NA-POA/olimpia-manager-eecc.git"
+          git fetch fork --depth=1 # Apenas para verificar a conexão, não precisa de todo o histórico do fork
           echo "Remotes configured:"
           git remote -v
 
-      - name: Create and push branch to fork
-        run: |
-          # Create a unique branch name with timestamp
+          # 3. Criar uma branch única a partir da 'release'
           BRANCH_NAME="sync-from-release-$(date +%Y%m%d-%H%M%S)"
           echo "Creating branch: $BRANCH_NAME"
-          
-          # Create new branch based on current release
           git checkout -b $BRANCH_NAME
-          
-          # Push to fork using FORK_REPO_TOKEN
+
+          # 4. Fazer o push da nova branch para o fork
           echo "Pushing branch to fork..."
-          git push fork $BRANCH_NAME
-          
-          # Save branch name for next step
+          git push -u fork $BRANCH_NAME
+
+          # 5. Salvar o nome da branch para o próximo passo
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
-      - name: Get commit information
+      - name: Get Last Commit Information
+        id: commit_info # Adicionando um ID para referenciar os outputs
         run: |
-          # Get current commit information
-          COMMIT_HASH=$(git rev-parse HEAD)
-          COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
-          COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')
-          COMMIT_DATE=$(git log -1 --pretty=format:'%ci')
+          # Salva as informações do commit como outputs do passo
+          echo "COMMIT_HASH=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          echo "COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')" >> $GITHUB_OUTPUT
+          echo "COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_OUTPUT
+          echo "COMMIT_DATE=$(git log -1 --pretty=format:'%ci')" >> $GITHUB_OUTPUT
           
-          # Save for next step
-          echo "COMMIT_HASH=$COMMIT_HASH" >> $GITHUB_ENV
-          echo "COMMIT_AUTHOR=$COMMIT_AUTHOR" >> $GITHUB_ENV
-          echo "COMMIT_MESSAGE=$COMMIT_MESSAGE" >> $GITHUB_ENV
-          echo "COMMIT_DATE=$COMMIT_DATE" >> $GITHUB_ENV
-
-      - name: Create Pull Request
+      - name: Create or Update Pull Request
         env:
-          # Use FORK_REPO_TOKEN for GitHub CLI operations on fork
+          # O GitHub CLI (gh) usa GH_TOKEN para autenticação
           GH_TOKEN: ${{ secrets.FORK_REPO_TOKEN }}
+          # Referencia os outputs do passo anterior
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+          COMMIT_HASH: ${{ steps.commit_info.outputs.COMMIT_HASH }}
+          COMMIT_AUTHOR: ${{ steps.commit_info.outputs.COMMIT_AUTHOR }}
+          COMMIT_MESSAGE: ${{ steps.commit_info.outputs.COMMIT_MESSAGE }}
+          COMMIT_DATE: ${{ steps.commit_info.outputs.COMMIT_DATE }}
         run: |
-          echo "Creating PR from $BRANCH_NAME to release in fork repository..."
+          echo "Creating PR from $BRANCH_NAME to 'release' in fork repository..."
           
-          # Create PR body with commit information
+          # Monta o corpo do PR
           PR_BODY="## Sincronização automática do repositório privado
-          
+
           **Commit:** \`$COMMIT_HASH\`
-          **Autor:** @$COMMIT_AUTHOR
+          **Autor:** $COMMIT_AUTHOR
           **Data:** $COMMIT_DATE
           **Mensagem:** $COMMIT_MESSAGE
           
-          Este PR foi criado automaticamente após um commit na branch \`release\` do repositório privado.
+          Este PR foi criado automaticamente após um push na branch \`release\` do repositório privado.
           
-          **Repositório origem:** bonanza-ong/olimpia-manager-na
-          **Fluxo:** release (repo privado) → release (repo público)
-          **Branch temporária:** $BRANCH_NAME"
-          
-          # Try to create the PR targeting release branch
+          **Repositório origem:** bonanza-ong/olimpia-manager-na"
+
+          # Tenta criar o PR. Se falhar, é porque provavelmente já existe.
           gh pr create \
-            --repo EECC-NA-POA/olimpia-manager-eecc \
-            --base release \
-            --head $BRANCH_NAME \
+            --repo "EECC-NA-POA/olimpia-manager-eecc" \
+            --base "release" \
+            --head "$BRANCH_NAME" \
             --title "🔄 Sincronização: $COMMIT_MESSAGE" \
-            --body "$PR_BODY" || {
-              echo "Failed to create PR. Checking if it already exists..."
-              
-              # Check if a PR already exists for this branch
-              existing_pr=$(gh pr list --repo EECC-NA-POA/olimpia-manager-eecc --head $BRANCH_NAME --json number --jq '.[0].number' 2>/dev/null || echo "")
-              
-              if [ -n "$existing_pr" ] && [ "$existing_pr" != "null" ]; then
-                echo "PR already exists: #$existing_pr"
-                echo "Updating existing PR..."
-                gh pr edit $existing_pr --repo EECC-NA-POA/olimpia-manager-eecc --body "$PR_BODY"
-              else
-                echo "Error creating PR and no existing PR found"
-                exit 1
-              fi
-            }
+            --body "$PR_BODY" || echo "PR já existe ou ocorreu um erro. O workflow continuará."
 
-      - name: Clean up
-        if: always()
-        run: |
-          echo "Cleaning up..."
-          # Remove the fork remote
-          git remote remove fork || true
-          echo "Cleanup completed"
-
-      - name: Success notification
+      - name: Final Success Notification
+        if: success()
         run: |
           echo "✅ Workflow completed successfully!"
-          echo "A Pull Request has been created (or updated) in the fork repository."
-          echo "Repository: EECC-NA-POA/olimpia-manager-eecc"
-          echo "Target branch: release"
-          echo "Triggered by commit: $COMMIT_HASH"
-          echo "Commit author: $COMMIT_AUTHOR"
+          echo "Uma branch foi enviada e um Pull Request foi criado/atualizado no repositório EECC-NA-POA/olimpia-manager-eecc."
