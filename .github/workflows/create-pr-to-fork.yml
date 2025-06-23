@@ -28,7 +28,10 @@ jobs:
 
           # 2. Adicionar o remote do fork usando a variável de ambiente para autenticação
           echo "Adding fork remote..."
-          git remote add fork "https://x-access-token:$FORK_REPO_TOKEN@github.com/EECC-NA-POA/olimpia-manager-eecc.git"
+          # Use o token na URL ao adicionar o remote
+          # Substitua 'github.com' pelo seu nome de usuário ou 'x-access-token'
+          # Se o token é um PAT, 'x-access-token' é o username genérico
+          git remote add fork "https://x-access-token:${FORK_REPO_TOKEN}@github.com/EECC-NA-POA/olimpia-manager-eecc.git"
           git fetch fork --depth=1 # Apenas para verificar a conexão, não precisa de todo o histórico do fork
           echo "Remotes configured:"
           git remote -v
@@ -40,7 +43,8 @@ jobs:
 
           # 4. Fazer o push da nova branch para o fork
           echo "Pushing branch to fork..."
-          git push -u fork $BRANCH_NAME
+          # Agora, o remote 'fork' já tem a autenticação configurada
+          git push -u fork "$BRANCH_NAME"
 
           # 5. Salvar o nome da branch para o próximo passo
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
