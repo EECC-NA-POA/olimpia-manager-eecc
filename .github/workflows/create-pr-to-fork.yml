@@ -28,10 +28,10 @@ jobs:
 
           # 2. Adicionar o remote do fork usando a variável de ambiente para autenticação
           echo "Adding fork remote..."
-          # Use o token na URL ao adicionar o remote
-          # Substitua 'github.com' pelo seu nome de usuário ou 'x-access-token'
-          # Se o token é um PAT, 'x-access-token' é o username genérico
+          # ESTA É A LINHA CRUCIAL PARA INCLUIR O TOKEN NA URL DO REPOSITÓRIO REMOTO
+          # O 'x-access-token' é um "username" especial para autenticação com PATs.
           git remote add fork "https://x-access-token:${FORK_REPO_TOKEN}@github.com/EECC-NA-POA/olimpia-manager-eecc.git"
+          
           git fetch fork --depth=1 # Apenas para verificar a conexão, não precisa de todo o histórico do fork
           echo "Remotes configured:"
           git remote -v
@@ -39,7 +39,7 @@ jobs:
           # 3. Criar uma branch única a partir da 'release'
           BRANCH_NAME="sync-from-release-$(date +%Y%m%d-%H%M%S)"
           echo "Creating branch: $BRANCH_NAME"
-          git checkout -b $BRANCH_NAME
+          git checkout -b "$BRANCH_NAME" # Usar aspas para garantir que o nome da branch seja interpretado corretamente
 
           # 4. Fazer o push da nova branch para o fork
           echo "Pushing branch to fork..."
@@ -47,22 +47,24 @@ jobs:
           git push -u fork "$BRANCH_NAME"
 
           # 5. Salvar o nome da branch para o próximo passo
-          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV" # Usar aspas para garantir que o nome da variável seja interpretado corretamente
 
       - name: Get Last Commit Information
         id: commit_info # Adicionando um ID para referenciar os outputs
         run: |
           # Salva as informações do commit como outputs do passo
-          echo "COMMIT_HASH=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-          echo "COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')" >> $GITHUB_OUTPUT
-          echo "COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_OUTPUT
-          echo "COMMIT_DATE=$(git log -1 --pretty=format:'%ci')" >> $GITHUB_OUTPUT
+          echo "COMMIT_HASH=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')" >> "$GITHUB_OUTPUT"
+          echo "COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> "$GITHUB_OUTPUT"
+          echo "COMMIT_DATE=$(git log -1 --pretty=format:'%ci')" >> "$GITHUB_OUTPUT"
           
       - name: Create or Update Pull Request
+        # O GitHub CLI (gh) usa GH_TOKEN para autenticação,
+        # mas ele também pode usar o GITHUB_TOKEN padrão ou o FORK_REPO_TOKEN que definimos.
+        # Estamos explicitamente usando o FORK_REPO_TOKEN aqui.
         env:
-          # O GitHub CLI (gh) usa GH_TOKEN para autenticação
           GH_TOKEN: ${{ secrets.FORK_REPO_TOKEN }}
-          # Referencia os outputs do passo anterior
+          # Referencia as variáveis de ambiente e outputs dos passos anteriores
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
           COMMIT_HASH: ${{ steps.commit_info.outputs.COMMIT_HASH }}
           COMMIT_AUTHOR: ${{ steps.commit_info.outputs.COMMIT_AUTHOR }}
@@ -84,6 +86,7 @@ jobs:
           **Repositório origem:** bonanza-ong/olimpia-manager-na"
 
           # Tenta criar o PR. Se falhar, é porque provavelmente já existe.
+          # O '--repo' especifica o repositório onde o PR será criado.
           gh pr create \
             --repo "EECC-NA-POA/olimpia-manager-eecc" \
             --base "release" \
