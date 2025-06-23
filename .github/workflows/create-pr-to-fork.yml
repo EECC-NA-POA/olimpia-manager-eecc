@@ -17,7 +17,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false    # << desabilita o helper automático
 
-      # 2) Configurar usuário Git
+      #2) Configurar usuário Git
       - name: Setup Git user
         run: |
           git config user.name "github-actions[bot]"
