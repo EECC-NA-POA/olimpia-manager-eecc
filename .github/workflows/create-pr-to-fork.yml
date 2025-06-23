@@ -16,33 +16,17 @@ jobs:
           ref: release
           fetch-depth: 0 # fetch-depth: 0 é crucial para ter todo o histórico
 
-      - name: Configure Git for External Push
+      - name: Create and Push Branch to Fork
         env:
           FORK_REPO_TOKEN: ${{ secrets.FORK_REPO_TOKEN }}
         run: |
-          # Configura o Git para usar o token como credencial para GitHub.com
-          # Isso é mais robusto do que incluir o token diretamente na URL do remote,
-          # pois o Git usará este helper para qualquer operação em github.com
-          git config --global url."https://x-access-token:${FORK_REPO_TOKEN}@github.com/".insteadOf "https://github.com/"
-          
           # 1. Configurar o Git (usuário e e-mail)
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # 2. Adicionar o remote do fork. Agora que o helper de credenciais está configurado,
-          # o Git usará o token automaticamente ao interagir com este remote.
-          echo "Adding fork remote..."
-          # A URL é a normal, pois a autenticação será tratada pelo helper configurado acima
-          git remote add fork "https://github.com/EECC-NA-POA/olimpia-manager-eecc.git"
-          
-          git fetch fork --depth=1 # Apenas para verificar a conexão, não precisa de todo o histórico do fork
-          echo "Remotes configured:"
-          git remote -v
+          # 2. Não vamos adicionar o remote 'fork' separadamente com uma URL limpa.
+          # Em vez disso, usaremos a URL completa com o token diretamente no push.
 
-      - name: Create and Push Branch to Fork
-        env:
-          FORK_REPO_TOKEN: ${{ secrets.FORK_REPO_TOKEN }} # Mantemos para garantir que esteja disponível, se necessário
-        run: |
           # 3. Criar uma branch única a partir da 'release'
           BRANCH_NAME="sync-from-release-$(date +%Y%m%d-%H%M%S)"
           echo "Creating branch: $BRANCH_NAME"
@@ -50,8 +34,9 @@ jobs:
 
           # 4. Fazer o push da nova branch para o fork
           echo "Pushing branch to fork..."
-          # Agora, o remote 'fork' se autenticará usando o helper configurado no passo anterior
-          git push -u fork "$BRANCH_NAME"
+          # AQUI: Usamos a URL completa com o token diretamente no comando push.
+          # Isso deve forçar a autenticação para esta operação específica.
+          git push -u "https://x-access-token:${FORK_REPO_TOKEN}@github.com/EECC-NA-POA/olimpia-manager-eecc.git" "$BRANCH_NAME"
 
           # 5. Salvar o nome da branch para o próximo passo
           echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV" # Usar aspas para garantir que o nome da variável seja interpretado corretamente
