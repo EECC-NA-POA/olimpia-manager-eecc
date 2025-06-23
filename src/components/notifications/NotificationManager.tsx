@@ -26,22 +26,24 @@ export function NotificationManager({
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-olimpics-orange-primary" />
-            Gerenciamento de Notificações
+    <div className="space-y-3 sm:space-y-6 px-1 sm:px-0">
+      <Card className="shadow-sm">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-3 sm:pb-6 px-3 sm:px-6 pt-3 sm:pt-6">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-olimpics-orange-primary flex-shrink-0" />
+            <span className="truncate">Gerenciamento de Notificações</span>
           </CardTitle>
           <Button 
             onClick={() => setIsCreateDialogOpen(true)}
-            className="gap-2"
+            className="gap-1 sm:gap-2 text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto whitespace-nowrap"
+            size="sm"
           >
-            <Plus className="h-4 w-4" />
-            Nova Notificação
+            <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">Nova Notificação</span>
+            <span className="xs:hidden">Nova</span>
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
           <NotificationsList 
             eventId={eventId} 
             userId={userId}

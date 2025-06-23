@@ -59,30 +59,32 @@ export function TabbedNavigation({ user, roles }: TabbedNavigationProps) {
 
   return (
     <div className="w-full bg-olimpics-green-primary text-white z-40 shadow-md">
-      <div className="container px-4 py-1">
-        <div className="flex justify-between items-center">
-          <NavigationTabs 
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            isAdmin={isAdmin}
-            isOrganizer={isOrganizer}
-            isDelegationRep={isDelegationRep}
-            isJudge={isJudge}
-            isAthlete={isAthlete}
-            canManageEvents={canManageEvents}
-          />
+      <div className="container px-2 sm:px-4 py-1">
+        <div className="flex justify-between items-center gap-2">
+          <div className="flex-1 min-w-0">
+            <NavigationTabs 
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              isAdmin={isAdmin}
+              isOrganizer={isOrganizer}
+              isDelegationRep={isDelegationRep}
+              isJudge={isJudge}
+              isAthlete={isAthlete}
+              canManageEvents={canManageEvents}
+            />
+          </div>
 
-          <div className="flex items-center gap-2 ml-2 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <EventSwitcher userId={user.id} collapsed={false} />
             <Button
               onClick={handleLogout}
               variant="ghost"
               size="sm"
-              className="text-red-300 hover:text-red-100 hover:bg-red-500/20"
+              className="text-red-300 hover:text-red-100 hover:bg-red-500/20 px-2 sm:px-3 py-1.5 sm:py-2"
               title="Sair"
             >
-              <LogOut className="h-4 w-4" />
-              <span className="sr-only sm:not-sr-only sm:ml-1">Sair</span>
+              <LogOut className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="sr-only sm:not-sr-only sm:ml-1 text-xs sm:text-sm">Sair</span>
             </Button>
           </div>
         </div>

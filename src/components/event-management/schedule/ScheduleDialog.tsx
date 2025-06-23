@@ -18,6 +18,10 @@ interface ScheduleDialogProps {
   currentItem: ScheduleFormType;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (field: string, value: string | number | boolean) => void;
+  handleDiaToggle: (dia: string, checked: boolean) => void;
+  handleHorarioChange: (dia: string, tipo: 'inicio' | 'fim', valor: string) => void;
+  handleLocalChange: (dia: string, local: string) => void;
+  handleDataFimRecorrenciaChange: (data: string) => void;
   handleSave: () => void;
   isSaving: boolean;
 }
@@ -29,12 +33,16 @@ export const ScheduleDialog: React.FC<ScheduleDialogProps> = ({
   currentItem,
   handleInputChange,
   handleSelectChange,
+  handleDiaToggle,
+  handleHorarioChange,
+  handleLocalChange,
+  handleDataFimRecorrenciaChange,
   handleSave,
   isSaving
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
@@ -43,6 +51,10 @@ export const ScheduleDialog: React.FC<ScheduleDialogProps> = ({
           currentItem={currentItem}
           handleInputChange={handleInputChange}
           handleSelectChange={handleSelectChange}
+          handleDiaToggle={handleDiaToggle}
+          handleHorarioChange={handleHorarioChange}
+          handleLocalChange={handleLocalChange}
+          handleDataFimRecorrenciaChange={handleDataFimRecorrenciaChange}
         />
         
         <DialogFooter>

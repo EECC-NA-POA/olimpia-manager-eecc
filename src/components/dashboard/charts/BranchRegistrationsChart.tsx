@@ -20,6 +20,7 @@ export interface BranchRegistrationData {
   name: string;
   confirmados: number;
   pendentes: number;
+  isentos?: number;
   total: number;
 }
 
@@ -126,6 +127,20 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
                 activeDot={{ r: 6 }}
                 strokeDasharray="5 5"
               />
+              {/* Add line for exempt athletes if data exists */}
+              {data.some(item => item.isentos && item.isentos > 0) && (
+                <Line 
+                  yAxisId="left"
+                  type="monotone" 
+                  dataKey="isentos" 
+                  name="Isentos" 
+                  stroke={chartColors.blue} 
+                  strokeWidth={2} 
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                  strokeDasharray="10 5"
+                />
+              )}
             </ComposedChart>
           </ResponsiveContainer>
         </ChartContainer>

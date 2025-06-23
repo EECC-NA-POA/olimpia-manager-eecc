@@ -14,6 +14,10 @@ export const useScheduleData = (eventId: string | null) => {
     handleInputChange,
     handleSelectChange,
     handleModalitiesChange,
+    handleDiaToggle,
+    handleHorarioChange,
+    handleLocalChange,
+    handleDataFimRecorrenciaChange,
     openAddDialog,
     openEditDialog,
     resetForm
@@ -41,6 +45,10 @@ export const useScheduleData = (eventId: string | null) => {
     handleInputChange,
     handleSelectChange,
     handleModalitiesChange,
+    handleDiaToggle,
+    handleHorarioChange,
+    handleLocalChange,
+    handleDataFimRecorrenciaChange,
     handleSave: handleSaveWithReset,
     handleDelete
   };

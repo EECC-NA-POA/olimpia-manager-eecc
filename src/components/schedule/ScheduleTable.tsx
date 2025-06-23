@@ -2,25 +2,9 @@
 import React from 'react';
 import { Clock } from "lucide-react";
 import { ActivityCard } from './ActivityCard';
-
-interface ScheduleActivity {
-  id: number;
-  cronograma_atividade_id: number;
-  atividade: string;
-  horario_inicio: string;
-  horario_fim: string;
-  dia: string;
-  local: string;
-  global: boolean;
-  modalidade_nome: string | null;
-  modalidade_status: string | null;
-}
-
-interface GroupedActivities {
-  [key: string]: {
-    [key: string]: ScheduleActivity[];
-  };
-}
+import { ScheduleLegend } from './ScheduleLegend';
+import { getDayLabel } from '@/components/cronograma/utils';
+import { ScheduleActivity, GroupedActivities } from '@/components/cronograma/types';
 
 interface ScheduleTableProps {
   groupedActivities: GroupedActivities;
@@ -37,10 +21,6 @@ export function ScheduleTable({ groupedActivities, dates, timeSlots }: ScheduleT
     );
   }
 
-  const weekDays = ["Sábado", "Domingo"];
-  const columnWidth = `${100 / (weekDays.length + 1)}%`;
-
-  // Helper function to group activities by category
   const groupByCategory = (activities: ScheduleActivity[]) => {
     const grouped = activities.reduce((acc, activity) => {
       const category = activity.atividade;
@@ -49,7 +29,6 @@ export function ScheduleTable({ groupedActivities, dates, timeSlots }: ScheduleT
         acc[category] = [];
       }
       
-      // Check if this activity is already included
       const isDuplicate = acc[category].some(
         existing => existing.cronograma_atividade_id === activity.cronograma_atividade_id &&
                     existing.modalidade_nome === activity.modalidade_nome
@@ -65,51 +44,35 @@ export function ScheduleTable({ groupedActivities, dates, timeSlots }: ScheduleT
     return Object.entries(grouped).sort((a, b) => a[0].localeCompare(b[0]));
   };
 
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse">
-        <thead>
-          <tr>
-            <th 
-              className="border-b p-4 text-left font-semibold text-olimpics-green-primary"
-              style={{ width: columnWidth }}
-            >
-              Horário
-            </th>
-            {weekDays.map((day, index) => (
-              <th 
-                key={day} 
-                className="border-b p-4 text-left font-semibold text-olimpics-green-primary"
-                style={{ width: columnWidth }}
-              >
-                {day}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {timeSlots.map(timeSlot => {
-            const [start, end] = timeSlot.split('-');
-            return (
-              <tr key={timeSlot} className="border-b last:border-b-0">
-                <td className="p-4 align-top" style={{ width: columnWidth }}>
-                  <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <Clock className="h-4 w-4 shrink-0" />
-                    <span className="whitespace-nowrap">
-                      {start.slice(0, 5)} - {end.slice(0, 5)}
-                    </span>
-                  </div>
-                </td>
+  // Mobile layout - stack by time slots
+  const renderMobileLayout = () => (
+    <div className="space-y-4">
+      <ScheduleLegend />
+      <div className="space-y-6">
+        {timeSlots.map(timeSlot => {
+          const [start, end] = timeSlot.split('-');
+          return (
+            <div key={timeSlot} className="bg-white rounded-lg border shadow-sm">
+              <div className="bg-olimpics-green-primary text-white p-3 rounded-t-lg">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  <span className="font-semibold">
+                    {start.slice(0, 5)} - {end.slice(0, 5)}
+                  </span>
+                </div>
+              </div>
+              <div className="p-3 space-y-4">
                 {dates.map((date) => {
                   const activitiesForSlot = groupedActivities[date]?.[timeSlot] || [];
                   const groupedByCategory = groupByCategory(activitiesForSlot);
 
+                  if (groupedByCategory.length === 0) return null;
+
                   return (
-                    <td 
-                      key={`${date}-${timeSlot}`} 
-                      className="p-4 align-top"
-                      style={{ width: columnWidth }}
-                    >
+                    <div key={`${date}-${timeSlot}`} className="border-l-4 border-olimpics-green-primary pl-3">
+                      <h4 className="font-semibold text-olimpics-green-primary mb-2">
+                        {getDayLabel(date)}
+                      </h4>
                       <div className="space-y-2">
                         {groupedByCategory.map(([category, activities]) => (
                           <ActivityCard 
@@ -119,14 +82,101 @@ export function ScheduleTable({ groupedActivities, dates, timeSlots }: ScheduleT
                           />
                         ))}
                       </div>
-                    </td>
+                    </div>
                   );
                 })}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
+  );
+
+  // Desktop layout - table format
+  const renderDesktopLayout = () => {
+    const columnWidth = `${100 / (dates.length + 1)}%`;
+
+    return (
+      <div className="space-y-4">
+        <ScheduleLegend />
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse min-w-[800px]">
+            <thead>
+              <tr>
+                <th 
+                  className="border-b p-4 text-left font-semibold text-olimpics-green-primary"
+                  style={{ width: columnWidth }}
+                >
+                  Horário
+                </th>
+                {dates.map((day) => (
+                  <th 
+                    key={day} 
+                    className="border-b p-4 text-left font-semibold text-olimpics-green-primary"
+                    style={{ width: columnWidth }}
+                  >
+                    {getDayLabel(day)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {timeSlots.map(timeSlot => {
+                const [start, end] = timeSlot.split('-');
+                return (
+                  <tr key={timeSlot} className="border-b last:border-b-0">
+                    <td className="p-4 align-top" style={{ width: columnWidth }}>
+                      <div className="flex items-center gap-1 text-sm text-gray-600">
+                        <Clock className="h-4 w-4 shrink-0" />
+                        <span className="whitespace-nowrap">
+                          {start.slice(0, 5)} - {end.slice(0, 5)}
+                        </span>
+                      </div>
+                    </td>
+                    {dates.map((date) => {
+                      const activitiesForSlot = groupedActivities[date]?.[timeSlot] || [];
+                      const groupedByCategory = groupByCategory(activitiesForSlot);
+
+                      return (
+                        <td 
+                          key={`${date}-${timeSlot}`} 
+                          className="p-4 align-top"
+                          style={{ width: columnWidth }}
+                        >
+                          <div className="space-y-2">
+                            {groupedByCategory.map(([category, activities]) => (
+                              <ActivityCard 
+                                key={category}
+                                category={category}
+                                activities={activities}
+                              />
+                            ))}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      {/* Mobile layout - show on screens smaller than lg */}
+      <div className="block lg:hidden">
+        {renderMobileLayout()}
+      </div>
+      
+      {/* Desktop layout - show on lg screens and larger */}
+      <div className="hidden lg:block">
+        {renderDesktopLayout()}
+      </div>
+    </>
   );
 }

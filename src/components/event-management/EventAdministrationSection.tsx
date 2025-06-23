@@ -57,7 +57,7 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-center text-muted-foreground">
+          <p className="text-center text-muted-foreground text-sm">
             Nenhum evento selecionado.
           </p>
         </CardContent>
@@ -69,7 +69,7 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-center text-muted-foreground">
+          <p className="text-center text-muted-foreground text-sm">
             Acesso restrito a administradores.
           </p>
         </CardContent>
@@ -80,27 +80,29 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
   const totalUsers = userProfiles?.length || 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card className="border-olimpics-green-primary/20">
-        <CardHeader className="bg-olimpics-green-primary/5">
-          <div className="flex items-center gap-3">
-            <Users className="h-6 w-6 text-olimpics-green-primary" />
-            <div>
-              <CardTitle className="text-olimpics-green-primary text-xl">
+        <CardHeader className="bg-olimpics-green-primary/5 px-3 sm:px-6 py-3 sm:py-6">
+          <div className="flex items-start sm:items-center gap-3">
+            <Users className="h-5 w-5 sm:h-6 sm:w-6 text-olimpics-green-primary flex-shrink-0 mt-0.5 sm:mt-0" />
+            <div className="min-w-0 flex-1">
+              <CardTitle className="text-olimpics-green-primary text-base sm:text-xl line-clamp-2">
                 Gerenciamento de Perfis de Usuário
               </CardTitle>
-              <CardDescription className="mt-1.5">
+              <CardDescription className="mt-1 sm:mt-1.5 text-xs sm:text-sm">
                 Total de usuários registrados: {totalUsers}
               </CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-6">
-          <UserProfilesTable
-            data={userProfiles || []}
-            branches={branches || []}
-            isLoading={isLoadingProfiles}
-          />
+        <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6 pb-3 sm:pb-6">
+          <div className="overflow-x-auto">
+            <UserProfilesTable
+              data={userProfiles || []}
+              branches={branches || []}
+              isLoading={isLoadingProfiles}
+            />
+          </div>
         </CardContent>
       </Card>
     </div>

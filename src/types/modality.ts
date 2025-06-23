@@ -8,6 +8,7 @@ export interface Modality {
   limite_vagas: number;
   grupo?: string;
   faixa_etaria: string;
+  descricao?: string;
 }
 
 export interface RegisteredModality {

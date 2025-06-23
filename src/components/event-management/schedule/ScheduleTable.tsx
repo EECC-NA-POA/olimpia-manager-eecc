@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -9,8 +8,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Edit, Trash } from 'lucide-react';
 import { ScheduleItem } from './types';
+import { ScheduleTableRow } from './components/ScheduleTableRow';
 
 interface ScheduleTableProps {
   scheduleItems: ScheduleItem[];
@@ -29,7 +28,7 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Atividade</TableHead>
+          <TableHead className="min-w-[200px]">Atividade</TableHead>
           <TableHead>Dia</TableHead>
           <TableHead>Horário</TableHead>
           <TableHead>Local</TableHead>
@@ -46,34 +45,13 @@ export const ScheduleTable: React.FC<ScheduleTableProps> = ({
           </TableRow>
         ) : (
           scheduleItems.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell>{item.atividade}</TableCell>
-              <TableCell>{formatDate(item.dia)}</TableCell>
-              <TableCell>
-                {item.horario_inicio} {item.horario_fim ? `- ${item.horario_fim}` : ''}
-              </TableCell>
-              <TableCell>{item.local}</TableCell>
-              <TableCell>{item.global ? 'Sim' : 'Não'}</TableCell>
-              <TableCell>
-                <div className="flex space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => openEditDialog(item)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleDelete(item.id)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
+            <ScheduleTableRow
+              key={item.id}
+              item={item}
+              openEditDialog={openEditDialog}
+              handleDelete={handleDelete}
+              formatDate={formatDate}
+            />
           ))
         )}
       </TableBody>

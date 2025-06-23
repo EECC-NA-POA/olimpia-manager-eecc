@@ -21,6 +21,11 @@ export interface CronogramaAtividade {
   ordem: number | null;
   global: boolean;
   evento_id: string;
+  recorrente?: boolean;
+  dias_semana?: string[];
+  horarios_por_dia?: Record<string, { inicio: string; fim: string }>;
+  locais_por_dia?: Record<string, string>;
+  data_fim_recorrencia?: string;
   modalidades?: { modalidade_id: number }[];
 }
 
@@ -36,6 +41,11 @@ export interface ScheduleItem {
   ordem: number | null;
   global: boolean;
   evento_id: string;
+  recorrente?: boolean;
+  dias_semana?: string[];
+  horarios_por_dia?: Record<string, { inicio: string; fim: string }>;
+  locais_por_dia?: Record<string, string>;
+  data_fim_recorrencia?: string;
   modalidades: number[];
 }
 
@@ -47,5 +57,10 @@ export interface ScheduleForm {
   horario_fim: string;
   local: string;
   global: boolean;
+  recorrente: boolean;
+  dias_semana: string[];
+  horarios_por_dia: Record<string, { inicio: string; fim: string }>;
+  locais_por_dia: Record<string, string>;
+  data_fim_recorrencia: string;
   modalidades: number[];
 }

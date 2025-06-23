@@ -67,26 +67,38 @@ export function EventRegulationsSection({ eventId }: EventRegulationsSectionProp
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>Regulamentos do Evento</CardTitle>
-          <CardDescription>
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 px-3 sm:px-6 py-3 sm:py-6">
+        <div className="space-y-1">
+          <CardTitle className="text-base sm:text-lg">Regulamentos do Evento</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             Gerencie os regulamentos aplicáveis ao evento
           </CardDescription>
         </div>
-        {!isEditing && (
-          <Button onClick={handleAddNew} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Adicionar Regulamento
-          </Button>
-        )}
-        {isEditing && (
-          <Button variant="outline" onClick={handleBack}>
-            Voltar para Lista
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {!isEditing && (
+            <Button 
+              onClick={handleAddNew} 
+              className="flex items-center gap-2 w-full sm:w-auto text-xs sm:text-sm"
+              size="sm"
+            >
+              <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">Adicionar Regulamento</span>
+              <span className="xs:hidden">Adicionar</span>
+            </Button>
+          )}
+          {isEditing && (
+            <Button 
+              variant="outline" 
+              onClick={handleBack}
+              className="w-full sm:w-auto text-xs sm:text-sm"
+              size="sm"
+            >
+              Voltar para Lista
+            </Button>
+          )}
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
         {isEditing ? (
           <RegulationForm 
             eventId={eventId} 
@@ -105,7 +117,7 @@ export function EventRegulationsSection({ eventId }: EventRegulationsSectionProp
             title="Nenhum regulamento cadastrado"
             description="Adicione um novo regulamento para o evento."
             action={
-              <Button onClick={handleAddNew}>
+              <Button onClick={handleAddNew} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar Regulamento
               </Button>

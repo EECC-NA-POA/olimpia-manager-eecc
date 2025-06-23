@@ -118,60 +118,64 @@ export default function OrganizerDashboard() {
   };
 
   return (
-    <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6 px-2 sm:px-4">
+    <div className="container mx-auto py-2 sm:py-6 space-y-2 sm:space-y-6 px-2 sm:px-4">
       <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
 
       <Tabs defaultValue="statistics" className="w-full" onValueChange={setActiveTab} value={activeTab}>
-        <div className="overflow-x-auto">
-          <TabsList className="w-full min-w-max border-b mb-6 sm:mb-8 bg-background grid grid-cols-2 sm:flex sm:justify-start sm:space-x-2 p-0 h-auto gap-1 sm:gap-0">
+        <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+          <TabsList className="w-full min-w-max bg-background grid grid-cols-4 p-0.5 sm:p-1 h-auto gap-0.5 sm:gap-1 border-b mb-3 sm:mb-8">
             <TabsTrigger 
               value="statistics"
-              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+              className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
             >
-              <BarChart className="h-3 w-3 sm:h-5 sm:w-5" />
+              <BarChart className="h-3 w-3 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="hidden xs:inline sm:hidden">Stats</span>
               <span className="hidden sm:inline">Estatísticas</span>
-              <span className="sm:hidden">Stats</span>
+              <span className="xs:hidden text-[10px]">St</span>
             </TabsTrigger>
             <TabsTrigger 
               value="athletes"
-              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+              className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
             >
-              <Users className="h-3 w-3 sm:h-5 sm:w-5" />
+              <Users className="h-3 w-3 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="hidden xs:inline sm:hidden">Atletas</span>
               <span className="hidden sm:inline">Gerenciar Atletas</span>
-              <span className="sm:hidden">Atletas</span>
+              <span className="xs:hidden text-[10px]">At</span>
             </TabsTrigger>
             <TabsTrigger 
               value="enrollments"
-              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+              className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
             >
-              <ListChecks className="h-3 w-3 sm:h-5 sm:w-5" />
+              <ListChecks className="h-3 w-3 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="hidden xs:inline sm:hidden">Inscrições</span>
               <span className="hidden sm:inline">Inscrições por Modalidade</span>
-              <span className="sm:hidden">Inscrições</span>
+              <span className="xs:hidden text-[10px]">In</span>
             </TabsTrigger>
             <TabsTrigger 
               value="notifications"
-              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+              className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
             >
-              <Bell className="h-3 w-3 sm:h-5 sm:w-5" />
+              <Bell className="h-3 w-3 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="hidden xs:inline sm:hidden">Notif</span>
               <span className="hidden sm:inline">Notificações</span>
-              <span className="sm:hidden">Notif</span>
+              <span className="xs:hidden text-[10px]">No</span>
             </TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="statistics" className="mt-4 sm:mt-6">
+        <TabsContent value="statistics" className="mt-2 sm:mt-6">
           {renderTabContent("statistics")}
         </TabsContent>
 
-        <TabsContent value="athletes" className="mt-4 sm:mt-6">
+        <TabsContent value="athletes" className="mt-2 sm:mt-6">
           {renderTabContent("athletes")}
         </TabsContent>
 
-        <TabsContent value="enrollments" className="mt-4 sm:mt-6">
+        <TabsContent value="enrollments" className="mt-2 sm:mt-6">
           {renderTabContent("enrollments")}
         </TabsContent>
 
-        <TabsContent value="notifications" className="mt-4 sm:mt-6">
+        <TabsContent value="notifications" className="mt-2 sm:mt-6">
           {renderTabContent("notifications")}
         </TabsContent>
       </Tabs>
