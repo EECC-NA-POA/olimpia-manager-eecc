@@ -73,7 +73,7 @@ jobs:
         run: |
           echo "Creating PR from $BRANCH_NAME to 'release' in fork repository..."
           
-          # Monta o corpo do PR
+          #Monta o corpo do PR
           PR_BODY="## Sincronização automática do repositório privado
 
           **Commit:** \`$COMMIT_HASH\`
