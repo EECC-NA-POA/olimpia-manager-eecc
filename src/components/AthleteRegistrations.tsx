@@ -8,13 +8,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { supabase } from "@/lib/supabase";
-import AthleteSchedule from "@/components/AthleteSchedule";
 import { EnrollmentList } from "./enrollment/EnrollmentList";
 import { AvailableModalities } from "./enrollment/AvailableModalities";
 import { EnrollmentHeader } from "./enrollment/EnrollmentHeader";
 import { useAthleteProfile } from "@/hooks/useAthleteProfile";
 import { useRegisteredModalities } from "@/hooks/useRegisteredModalities";
 import { useModalityMutations } from "@/hooks/useModalityMutations";
+import { useModalitiesWithRepresentatives } from "@/hooks/useModalityRepresentatives";
 import { Modality } from "@/types/modality";
 
 export default function AthleteRegistrations() {
@@ -25,6 +25,12 @@ export default function AthleteRegistrations() {
   const { data: athleteProfile, isLoading: profileLoading } = useAthleteProfile(user?.id, currentEventId);
   const { data: registeredModalities, isLoading: registrationsLoading } = useRegisteredModalities(user?.id, currentEventId);
   const { withdrawMutation, registerMutation } = useModalityMutations(user?.id, currentEventId);
+
+  // Fetch modalities with representatives data
+  const { data: modalitiesWithRepresentatives, isLoading: representativesLoading } = useModalitiesWithRepresentatives(
+    athleteProfile?.filial_id,
+    currentEventId
+  );
 
   const { data: allModalities, isLoading: modalitiesLoading } = useQuery({
     queryKey: ['modalities', currentEventId],
@@ -42,7 +48,7 @@ export default function AthleteRegistrations() {
     enabled: !!currentEventId,
   });
 
-  if (modalitiesLoading || registrationsLoading || profileLoading) {
+  if (modalitiesLoading || registrationsLoading || profileLoading || representativesLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin text-olimpics-green-primary" />
@@ -60,55 +66,58 @@ export default function AthleteRegistrations() {
   }, {});
 
   return (
-    <div className="container mx-auto py-6 space-y-6 max-w-7xl">
-      <Alert className="bg-olimpics-green-primary/10 border-olimpics-green-primary text-olimpics-text shadow-sm transition-all duration-200 hover:bg-olimpics-green-primary/15">
-        <Info className="h-5 w-5 text-olimpics-green-primary" />
-        <AlertDescription className="text-sm">
-          As inscrições nas modalidades devem ser realizadas nesta página! Após a confirmação da inscrição em uma modalidade pelo Representante de Delegação, o atleta não poderá cancelar sua participação nesta modalidade diretamente pelo sistema. Caso seja necessário cancelar uma inscrição já aprovada, o atleta deverá entrar em contato com o seu respectivo Representante de Delegação para solicitar qualquer alteração.
-        </AlertDescription>
-      </Alert>
-      
-      <Collapsible
-        open={isEnrollmentsOpen}
-        onOpenChange={setIsEnrollmentsOpen}
-        className="w-full space-y-4"
-      >
-        <div className="relative overflow-hidden rounded-lg bg-[#FEF7CD] p-1 animate-fade-in">
-          <div className="absolute inset-0 bg-gradient-to-r from-olimpics-green-primary/5 to-olimpics-green-secondary/5" />
-          <Card className="transition-all duration-300 hover:shadow-xl border-2 border-olimpics-green-primary/20 bg-white/95 backdrop-blur">
-            <EnrollmentHeader 
-              isOpen={isEnrollmentsOpen}
-              registeredModalitiesCount={registeredModalities?.length || 0}
-            />
-            <CollapsibleContent className="transition-all duration-300">
-              <CardContent>
-                <div className="mb-6 text-center">
-                  <h3 className="text-lg font-semibold text-olimpics-green-primary mb-2">
-                    Inscreva-se Agora nas Modalidades Olímpicas!
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    Escolha suas modalidades e faça parte desta celebração do esporte e filosofia
-                  </p>
-                </div>
+    <div className="min-h-screen pb-20 md:pb-6">
+      <div className="container mx-auto py-2 sm:py-4 lg:py-6 space-y-3 sm:space-y-4 lg:space-y-6 px-2 sm:px-4 max-w-full">
+        <Alert className="bg-olimpics-green-primary/10 border-olimpics-green-primary text-olimpics-text shadow-sm transition-all duration-200 hover:bg-olimpics-green-primary/15">
+          <Info className="h-4 w-4 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-olimpics-green-primary flex-shrink-0 mt-0.5" />
+          <AlertDescription className="text-xs sm:text-sm lg:text-sm leading-relaxed pl-2 sm:pl-0">
+            As inscrições nas modalidades devem ser realizadas nesta página! Após a confirmação da inscrição em uma modalidade pelo Representante de Delegação, o atleta não poderá cancelar sua participação nesta modalidade diretamente pelo sistema. Caso seja necessário cancelar uma inscrição já aprovada, o atleta deverá entrar em contato com o seu respectivo Representante de Delegação para solicitar qualquer alteração.
+          </AlertDescription>
+        </Alert>
+        
+        <Collapsible
+          open={isEnrollmentsOpen}
+          onOpenChange={setIsEnrollmentsOpen}
+          className="w-full space-y-2 sm:space-y-3 lg:space-y-4"
+        >
+          <div className="relative overflow-hidden rounded-lg bg-[#FEF7CD] p-1 animate-fade-in">
+            <div className="absolute inset-0 bg-gradient-to-r from-olimpics-green-primary/5 to-olimpics-green-secondary/5" />
+            <Card className="transition-all duration-300 hover:shadow-xl border-2 border-olimpics-green-primary/20 bg-white/95 backdrop-blur">
+              <EnrollmentHeader 
+                isOpen={isEnrollmentsOpen}
+                registeredModalitiesCount={registeredModalities?.length || 0}
+              />
+              <CollapsibleContent className="transition-all duration-300">
+                <CardContent className="p-2 sm:p-4 lg:p-6">
+                  <div className="mb-3 sm:mb-4 lg:mb-6 text-center">
+                    <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-olimpics-green-primary mb-1 sm:mb-2">
+                      Inscreva-se Agora nas Modalidades Olímpicas!
+                    </h3>
+                    <p className="text-xs sm:text-sm text-gray-600 px-2">
+                      Escolha suas modalidades e faça parte desta celebração do esporte e filosofia
+                    </p>
+                  </div>
 
-                <EnrollmentList
-                  registeredModalities={registeredModalities || []}
-                  withdrawMutation={withdrawMutation}
-                />
+                  <div className="space-y-3 sm:space-y-4 lg:space-y-6">
+                    <EnrollmentList
+                      registeredModalities={registeredModalities || []}
+                      withdrawMutation={withdrawMutation}
+                      modalitiesWithRepresentatives={modalitiesWithRepresentatives || []}
+                    />
 
-                <AvailableModalities
-                  groupedModalities={groupedModalities || {}}
-                  registeredModalities={registeredModalities || []}
-                  registerMutation={registerMutation}
-                  userGender={athleteProfile?.genero?.toLowerCase() || ''}
-                />
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </div>
-      </Collapsible>
-
-      <AthleteSchedule />
+                    <AvailableModalities
+                      groupedModalities={groupedModalities || {}}
+                      registeredModalities={registeredModalities || []}
+                      registerMutation={registerMutation}
+                      userGender={athleteProfile?.genero?.toLowerCase() || ''}
+                    />
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </div>
+        </Collapsible>
+      </div>
     </div>
   );
 }

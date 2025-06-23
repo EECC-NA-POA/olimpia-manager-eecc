@@ -12,7 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/lib/supabase';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 interface ModalityAthletesListProps {
   modalityId: number;
@@ -28,7 +28,6 @@ interface Athlete {
   atleta_email?: string;
   tipo_documento: string;
   numero_documento: string;
-  numero_identificador?: string;
 }
 
 export function ModalityAthletesList({ 
@@ -37,8 +36,6 @@ export function ModalityAthletesList({
   onAthleteSelect,
   selectedAthleteId
 }: ModalityAthletesListProps) {
-  const { toast } = useToast();
-
   // Fetch athletes for the selected modality
   const { data: athletes, isLoading } = useQuery({
     queryKey: ['athletes', modalityId, eventId],
@@ -46,29 +43,32 @@ export function ModalityAthletesList({
       if (!eventId) return [];
       
       const { data, error } = await supabase
-        .from('vw_modalidades_atletas_confirmados')
+        .from('inscricoes_modalidades')
         .select(`
           atleta_id,
-          atleta_nome,
-          tipo_documento,
-          numero_documento,
-          numero_identificador
+          usuarios(
+            nome_completo,
+            tipo_documento,
+            numero_documento
+          )
         `)
         .eq('evento_id', eventId)
         .eq('modalidade_id', modalityId)
-        .order('atleta_nome');
+        .order('atleta_id');
       
       if (error) {
         console.error('Error fetching athletes:', error);
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível carregar os atletas',
-          variant: 'destructive'
-        });
+        toast.error('Não foi possível carregar os atletas');
         return [];
       }
       
-      return data as Athlete[];
+      // Transform the data to match the Athlete interface
+      return data.map((item: any) => ({
+        atleta_id: item.atleta_id,
+        atleta_nome: item.usuarios?.nome_completo || 'Atleta',
+        tipo_documento: item.usuarios?.tipo_documento || 'N/A',
+        numero_documento: item.usuarios?.numero_documento || 'N/A',
+      })) as Athlete[];
     },
     enabled: !!eventId && !!modalityId,
   });

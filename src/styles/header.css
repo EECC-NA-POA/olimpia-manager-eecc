@@ -1,0 +1,23 @@
+
+/* Header styles */
+
+/* Fixed header and navigation combination */
+.fixed.top-0.left-0.right-0.z-50 {
+  position: fixed;
+  z-index: 50;
+}
+
+/* Special style for event selection page */
+body[data-current-route="/event-selection"] .container {
+  padding-top: 0;
+}
+
+/* Ensure header stays on top of sidebar */
+header {
+  z-index: 60 !important;
+}
+
+/* Body padding to account for fixed header */
+body {
+  padding-top: 0;
+}

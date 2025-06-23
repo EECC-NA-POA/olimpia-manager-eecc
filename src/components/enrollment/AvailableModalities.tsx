@@ -1,20 +1,10 @@
-import React from 'react';
-import { Loader2, Plus } from "lucide-react";
+
+import React, { useState } from 'react';
+import { ChevronDown, ChevronUp, Plus, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { UseMutationResult } from "@tanstack/react-query";
 import { Modality, RegisteredModality } from "@/types/modality";
 
@@ -29,141 +19,231 @@ export const AvailableModalities = ({
   groupedModalities,
   registeredModalities,
   registerMutation,
-  userGender,
+  userGender
 }: AvailableModalitiesProps) => {
-  // Improved function to check if a modality is registered
-  const isModalityRegistered = (modalityId: number): boolean => {
-    return registeredModalities.some(
-      registration => registration.modalidade.id === modalityId
-    );
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+
+  const toggleGroup = (group: string) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [group]: !prev[group]
+    }));
   };
 
-  // Check if modality category matches user gender
-  const isModalityAllowedForGender = (modalityCategory: string): boolean => {
-    const category = modalityCategory?.toLowerCase() || '';
-    const gender = userGender?.toLowerCase() || '';
+  const isModalityRegistered = (modalityId: number) => {
+    return registeredModalities.some(reg => reg.modalidade?.id === modalityId);
+  };
 
-    if (!category || !gender) return false;
-
-    if (gender === 'masculino') {
-      return category === 'masculino' || category === 'misto';
-    } else if (gender === 'feminino') {
-      return category === 'feminino' || category === 'misto';
+  const canRegisterForModality = (modality: Modality) => {
+    if (isModalityRegistered(modality.id)) return false;
+    
+    // Check gender restrictions
+    if (modality.categoria && modality.categoria.toLowerCase() !== 'mista') {
+      const modalityGender = modality.categoria.toLowerCase();
+      if (modalityGender === 'masculino' && userGender !== 'masculino') return false;
+      if (modalityGender === 'feminino' && userGender !== 'feminino') return false;
     }
-
-    return false;
+    
+    return true;
   };
 
-  // Filter and process modalities
-  const processedGroups = Object.entries(groupedModalities).reduce<Record<string, Modality[]>>(
-    (acc, [grupo, modalities]) => {
-      // Filter out modalities that are already registered or don't match gender
-      const availableModalities = modalities.filter(
-        modality => 
-          !isModalityRegistered(modality.id) && 
-          isModalityAllowedForGender(modality.categoria || '')
-      );
+  const getModalityTypeLabel = (tipo: string) => {
+    switch (tipo?.toLowerCase()) {
+      case 'individual': return 'Individual';
+      case 'equipe': return 'Equipe';
+      case 'dupla': return 'Dupla';
+      default: return tipo || 'Individual';
+    }
+  };
 
-      // Only include groups that have available modalities
-      if (availableModalities.length > 0) {
-        acc[grupo] = availableModalities;
-      }
+  const getCategoryBadgeVariant = (categoria: string) => {
+    switch (categoria?.toLowerCase()) {
+      case 'masculino': return 'default';
+      case 'feminino': return 'secondary';
+      case 'mista': return 'outline';
+      default: return 'outline';
+    }
+  };
 
-      return acc;
-    },
-    {}
-  );
-
-  // If there are no available modalities at all, show a message
-  if (Object.keys(processedGroups).length === 0) {
+  if (!groupedModalities || Object.keys(groupedModalities).length === 0) {
     return (
-      <div className="mt-8 space-y-4">
-        <h2 className="text-xl font-bold text-olimpics-text">
-          Modalidades Disponíveis
-        </h2>
-        <div className="text-center p-4 text-gray-500">
-          Não há novas modalidades disponíveis para inscrição no momento.
-        </div>
+      <div className="text-center py-4 sm:py-6 lg:py-8 text-muted-foreground">
+        <p className="text-sm sm:text-base">Nenhuma modalidade disponível para inscrição.</p>
       </div>
     );
   }
 
   return (
-    <div className="mt-8 space-y-4">
-      <h2 className="text-xl font-bold text-olimpics-text">
+    <div className="space-y-3 sm:space-y-4">
+      <h3 className="text-base sm:text-lg font-semibold text-olimpics-green-primary">
         Modalidades Disponíveis
-      </h2>
-      <Accordion type="single" collapsible className="space-y-4">
-        {Object.entries(processedGroups).map(([grupo, modalities]) => (
-          <AccordionItem
-            key={grupo}
-            value={grupo}
-            className="border rounded-lg px-4 shadow-sm transition-all duration-200 hover:shadow-md"
-          >
-            <AccordionTrigger className="hover:no-underline py-4">
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-semibold text-olimpics-text">{grupo}</h3>
-                <span className="text-sm text-gray-500">
-                  ({modalities.length} modalidades)
-                </span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="pb-4">
-              <div className="rounded-lg border overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-olimpics-green-primary/5 hover:bg-olimpics-green-primary/10">
-                      <TableHead className="font-semibold">Modalidade</TableHead>
-                      <TableHead className="font-semibold">Tipo</TableHead>
-                      <TableHead className="font-semibold">Categoria</TableHead>
-                      <TableHead className="font-semibold">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {modalities.map((modality) => (
-                      <TableRow
-                        key={modality.id}
-                        className="transition-colors hover:bg-gray-50"
-                      >
-                        <TableCell className="font-medium">
-                          {modality.nome}
-                        </TableCell>
-                        <TableCell className="capitalize">
-                          {modality.tipo_modalidade}
-                        </TableCell>
-                        <TableCell className="capitalize">
-                          {modality.categoria}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="default"
-                            size="sm"
-                            disabled={registerMutation.isPending}
-                            onClick={() => registerMutation.mutate(modality.id)}
-                            className="bg-olimpics-green-primary hover:bg-olimpics-green-primary/90 transition-all duration-200"
-                          >
-                            {registerMutation.isPending ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Processando...
-                              </>
-                            ) : (
-                              <>
-                                <Plus className="h-4 w-4 mr-1" />
-                                Inscrever
-                              </>
+      </h3>
+      
+      <div className="space-y-2 sm:space-y-3">
+        {Object.entries(groupedModalities).map(([group, modalities]) => (
+          <Card key={group} className="overflow-hidden">
+            <Collapsible 
+              open={expandedGroups[group]} 
+              onOpenChange={() => toggleGroup(group)}
+            >
+              <CollapsibleTrigger className="w-full">
+                <CardHeader className="bg-olimpics-green-primary/5 hover:bg-olimpics-green-primary/10 transition-colors py-3 sm:py-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm sm:text-base font-medium text-left">
+                      {group}
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        {modalities.length} modalidades
+                      </Badge>
+                      {expandedGroups[group] ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </div>
+                  </div>
+                </CardHeader>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent>
+                <CardContent className="p-2 sm:p-4">
+                  {/* Mobile Layout */}
+                  <div className="block sm:hidden space-y-3">
+                    {modalities.map((modality) => {
+                      const canRegister = canRegisterForModality(modality);
+                      const isRegistered = isModalityRegistered(modality.id);
+                      
+                      return (
+                        <div 
+                          key={modality.id} 
+                          className={`border rounded-lg p-3 ${
+                            isRegistered ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
+                          }`}
+                        >
+                          <div className="space-y-2">
+                            <h4 className="font-medium text-sm">{modality.nome}</h4>
+                            
+                            <div className="flex flex-wrap gap-1">
+                              <Badge 
+                                variant={getCategoryBadgeVariant(modality.categoria)} 
+                                className="text-xs"
+                              >
+                                {modality.categoria}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {getModalityTypeLabel(modality.tipo_modalidade)}
+                              </Badge>
+                            </div>
+                            
+                            {modality.descricao && (
+                              <p className="text-xs text-muted-foreground line-clamp-2">
+                                {modality.descricao}
+                              </p>
                             )}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+                            
+                            <Button
+                              size="sm"
+                              disabled={!canRegister || registerMutation.isPending}
+                              onClick={() => registerMutation.mutate(modality.id)}
+                              className={`w-full text-xs ${
+                                isRegistered 
+                                  ? 'bg-green-600 hover:bg-green-700' 
+                                  : 'bg-olimpics-green-primary hover:bg-olimpics-green-secondary'
+                              }`}
+                            >
+                              {registerMutation.isPending ? (
+                                <>
+                                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                  Processando...
+                                </>
+                              ) : isRegistered ? (
+                                'Inscrito'
+                              ) : (
+                                <>
+                                  <Plus className="mr-1 h-3 w-3" />
+                                  Inscrever-se
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Desktop Layout */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <div className="grid gap-3 sm:grid-cols-1 lg:grid-cols-2">
+                      {modalities.map((modality) => {
+                        const canRegister = canRegisterForModality(modality);
+                        const isRegistered = isModalityRegistered(modality.id);
+                        
+                        return (
+                          <div 
+                            key={modality.id} 
+                            className={`border rounded-lg p-4 ${
+                              isRegistered ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
+                            }`}
+                          >
+                            <div className="space-y-3">
+                              <div>
+                                <h4 className="font-medium text-base">{modality.nome}</h4>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  <Badge 
+                                    variant={getCategoryBadgeVariant(modality.categoria)} 
+                                    className="text-xs"
+                                  >
+                                    {modality.categoria}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-xs">
+                                    {getModalityTypeLabel(modality.tipo_modalidade)}
+                                  </Badge>
+                                </div>
+                              </div>
+                              
+                              {modality.descricao && (
+                                <p className="text-sm text-muted-foreground">
+                                  {modality.descricao}
+                                </p>
+                              )}
+                              
+                              <Button
+                                size="sm"
+                                disabled={!canRegister || registerMutation.isPending}
+                                onClick={() => registerMutation.mutate(modality.id)}
+                                className={`w-full ${
+                                  isRegistered 
+                                    ? 'bg-green-600 hover:bg-green-700' 
+                                    : 'bg-olimpics-green-primary hover:bg-olimpics-green-secondary'
+                                }`}
+                              >
+                                {registerMutation.isPending ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Processando...
+                                  </>
+                                ) : isRegistered ? (
+                                  'Inscrito'
+                                ) : (
+                                  <>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Inscrever-se
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Collapsible>
+          </Card>
         ))}
-      </Accordion>
+      </div>
     </div>
   );
 };

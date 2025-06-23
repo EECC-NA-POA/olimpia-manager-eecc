@@ -1,0 +1,35 @@
+
+/* Main content area styles */
+
+/* Content positioning and transition */
+main {
+  transition: margin-left 0.2s ease-in-out !important;
+  height: calc(100vh - 104px) !important; /* Set main content height accounting for header and top nav */
+  overflow-y: auto !important; /* Allow scrolling in main content only */
+  padding-top: 104px; /* Account for fixed header + top nav */
+}
+
+/* Special style for home page to ensure scrolling works */
+.home-page {
+  height: auto !important;
+  overflow-y: auto !important;
+  min-height: 100vh !important;
+  padding-bottom: 0 !important; /* Remove the extra padding at the bottom */
+  display: flex;
+  flex-direction: column;
+  margin-top: -16px; /* Increase the negative margin to remove the white space completely */
+}
+
+/* Proper transition for sidebar and main content */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* Fix for mobile view */
+@media (max-width: 768px) {
+  main {
+    height: calc(100vh - 104px) !important; /* Adjust for mobile header + footer */
+  }
+}

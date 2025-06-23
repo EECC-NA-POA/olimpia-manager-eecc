@@ -9,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -19,6 +19,7 @@ const loginSchema = z.object({
 export const LoginForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { signIn, resendVerificationEmail } = useAuth();
+  const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -31,10 +32,15 @@ export const LoginForm = () => {
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
       setIsSubmitting(true);
-      console.log('Attempting login with email:', values.email);
+      console.log('Attempting login...');
       await signIn(values.email, values.password);
+      
+      // After successful login, navigate to event selection
+      console.log('Login successful, navigating to event selection');
+      navigate('/event-selection', { replace: true });
+      
     } catch (error: any) {
-      console.error("Login Error:", error);
+      console.error("Login Error occurred");
       
       // Clear password field for security
       form.setValue('password', '');

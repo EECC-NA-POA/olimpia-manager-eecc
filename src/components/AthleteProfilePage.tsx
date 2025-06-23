@@ -8,23 +8,14 @@ import { useEventData } from "@/hooks/useEventData";
 import { useAthleteProfileData } from "@/hooks/useAthleteProfileData";
 
 export default function AthleteProfilePage() {
-  const { user } = useAuth();
-  const [currentEventId, setCurrentEventId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const eventId = localStorage.getItem('currentEventId');
-    if (eventId) {
-      setCurrentEventId(eventId);
-    }
-    console.log('Current event ID from localStorage:', eventId);
-  }, []);
-
+  const { user, currentEventId } = useAuth();
+  
   const { data: eventData } = useEventData(currentEventId);
   const { data: profile, isLoading: profileLoading } = useAthleteProfileData(user?.id, currentEventId);
 
   if (profileLoading) {
     return (
-      <div className="container mx-auto py-6 space-y-8">
+      <div className="space-y-8">
         <div className="flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-olimpics-green-primary" />
         </div>
@@ -34,7 +25,7 @@ export default function AthleteProfilePage() {
 
   if (!profile) {
     return (
-      <div className="container mx-auto py-6 space-y-8">
+      <div className="space-y-8">
         <div className="text-center text-olimpics-text">
           Perfil não encontrado. Por favor, entre em contato com o suporte.
         </div>
@@ -42,10 +33,17 @@ export default function AthleteProfilePage() {
     );
   }
 
-  const isAthleteProfile = profile.papeis?.some(role => role.nome === 'Atleta');
+  // Verificar se é atleta pelo código do papel ou nome
+  const isAthleteProfile = profile.papeis?.some(role => 
+    role.codigo === 'ATL' || role.nome === 'Atleta'
+  ) || false;
+
+  console.log('Profile data:', profile);
+  console.log('User roles:', profile.papeis);
+  console.log('Is athlete profile:', isAthleteProfile);
 
   return (
-    <div className="container mx-auto py-6 space-y-8">
+    <div className="space-y-8">
       {eventData && <EventHeader eventData={eventData} />}
       
       <AthleteProfile 

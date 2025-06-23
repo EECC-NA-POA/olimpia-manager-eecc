@@ -1,8 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CreditCard } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { CreditCard, ChevronDown, ChevronUp } from 'lucide-react';
 import { useRegistrationFees } from './registration-fees/useRegistrationFees';
 import { RegistrationFeeCard } from './registration-fees/RegistrationFeeCard';
 import type { RegistrationFeesProps } from './registration-fees/types';
@@ -10,6 +12,7 @@ import type { RegistrationFeesProps } from './registration-fees/types';
 export default function RegistrationFees({ eventId, userProfileId }: RegistrationFeesProps) {
   console.log('RegistrationFees component mounted with:', { eventId, userProfileId });
   
+  const [isOpen, setIsOpen] = useState(true);
   const { data: fees, isLoading } = useRegistrationFees(eventId);
 
   console.log('Current fees data:', fees);
@@ -26,7 +29,7 @@ export default function RegistrationFees({ eventId, userProfileId }: Registratio
     console.log('No fees data available');
     return (
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-olimpics-orange-primary" />
             Taxas de Inscrição
@@ -65,32 +68,29 @@ export default function RegistrationFees({ eventId, userProfileId }: Registratio
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5 text-olimpics-orange-primary" />
-          Taxas de Inscrição
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          {/* Regular fees */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {sortedRegularFees.map((fee) => (
-              <RegistrationFeeCard
-                key={fee.id}
-                fee={fee}
-                isUserFee={fee.perfil?.id === userProfileId}
-              />
-            ))}
-          </div>
-
-          {/* Show separator and exempt fees only if there are any */}
-          {exemptFees.length > 0 && (
-            <>
-              <Separator className="my-6" />
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-olimpics-orange-primary" />
+            Taxas de Inscrição
+          </CardTitle>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="gap-2">
+              {isOpen ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+        </CardHeader>
+        <CollapsibleContent>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Regular fees */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {exemptFees.map((fee) => (
+                {sortedRegularFees.map((fee) => (
                   <RegistrationFeeCard
                     key={fee.id}
                     fee={fee}
@@ -98,10 +98,26 @@ export default function RegistrationFees({ eventId, userProfileId }: Registratio
                   />
                 ))}
               </div>
-            </>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+
+              {/* Show separator and exempt fees only if there are any */}
+              {exemptFees.length > 0 && (
+                <>
+                  <Separator className="my-6" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {exemptFees.map((fee) => (
+                      <RegistrationFeeCard
+                        key={fee.id}
+                        fee={fee}
+                        isUserFee={fee.perfil?.id === userProfileId}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }

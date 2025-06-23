@@ -10,14 +10,24 @@ export const useAthleteData = (eventId: string | null, filterByBranch: boolean =
     refetch
   } = useQuery({
     queryKey: ['athlete-management', eventId, filterByBranch],
-    queryFn: () => fetchAthleteManagement(filterByBranch, eventId),
+    queryFn: () => {
+      console.log('useAthleteData query executing with:', { eventId, filterByBranch });
+      return fetchAthleteManagement(filterByBranch, eventId);
+    },
     enabled: !!eventId,
     retry: 1,
+    staleTime: 0, // Force fresh data
     meta: {
       onError: (error: any) => {
         console.error('Error fetching athletes:', error);
       }
     }
+  });
+
+  console.log('useAthleteData result:', { 
+    athletesCount: athletes?.length, 
+    isLoading, 
+    error: error?.message 
   });
 
   return {

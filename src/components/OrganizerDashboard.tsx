@@ -3,7 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, ListChecks, BarChart } from "lucide-react";
+import { Users, ListChecks, BarChart, Bell } from "lucide-react";
 import { EmptyState } from "./dashboard/components/EmptyState";
 import { LoadingState } from "./dashboard/components/LoadingState";
 import { ErrorState } from "./dashboard/components/ErrorState";
@@ -12,6 +12,7 @@ import { NoEventSelected } from "./dashboard/components/NoEventSelected";
 import { AthletesTab } from "./dashboard/tabs/AthletesTab";
 import { EnrollmentsTab } from "./dashboard/tabs/EnrollmentsTab";
 import { StatisticsTab } from "./dashboard/tabs/StatisticsTab";
+import { NotificationManager } from "./notifications/NotificationManager";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
 export default function OrganizerDashboard() {
@@ -48,8 +49,10 @@ export default function OrganizerDashboard() {
           return <ErrorState onRetry={handleRefresh} />;
         }
         if (!branchAnalytics || branchAnalytics.length === 0) {
-          return <EmptyState message="Não há dados estatísticos disponíveis" 
-                            description="Não encontramos dados de análise para exibir neste momento" />;
+          return <EmptyState 
+                    title="Não há dados estatísticos disponíveis" 
+                    description="Não encontramos dados de análise para exibir neste momento" 
+                 />;
         }
         return <StatisticsTab data={branchAnalytics} />;
       
@@ -61,8 +64,10 @@ export default function OrganizerDashboard() {
           return <ErrorState onRetry={handleRefresh} />;
         }
         if (!athletes || athletes.length === 0) {
-          return <EmptyState message="Nenhum atleta encontrado"
-                            description="Não há atletas cadastrados para este evento" />;
+          return <EmptyState 
+                    title="Nenhum atleta encontrado"
+                    description="Não há atletas cadastrados para este evento" 
+                 />;
         }
         return (
           <AthletesTab
@@ -91,10 +96,21 @@ export default function OrganizerDashboard() {
           return <ErrorState onRetry={handleRefresh} />;
         }
         if (!confirmedEnrollments || confirmedEnrollments.length === 0) {
-          return <EmptyState message="Nenhuma inscrição confirmada"
-                            description="Não há inscrições confirmadas para este evento" />;
+          return <EmptyState 
+                    title="Nenhuma inscrição confirmada"
+                    description="Não há inscrições confirmadas para este evento" 
+                 />;
         }
         return <EnrollmentsTab enrollments={confirmedEnrollments} />;
+
+      case "notifications":
+        return (
+          <NotificationManager
+            eventId={currentEventId}
+            userId={user?.id || ''}
+            isOrganizer={true}
+          />
+        );
 
       default:
         return null;
@@ -102,44 +118,65 @@ export default function OrganizerDashboard() {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto py-2 sm:py-6 space-y-2 sm:space-y-6 px-2 sm:px-4">
       <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
 
       <Tabs defaultValue="statistics" className="w-full" onValueChange={setActiveTab} value={activeTab}>
-        <TabsList className="w-full border-b mb-8 bg-background flex justify-start space-x-2 p-0">
-          <TabsTrigger 
-            value="statistics"
-            className="flex items-center gap-2 px-6 py-3 text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
-          >
-            <BarChart className="h-5 w-5" />
-            Estatísticas
-          </TabsTrigger>
-          <TabsTrigger 
-            value="athletes"
-            className="flex items-center gap-2 px-6 py-3 text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
-          >
-            <Users className="h-5 w-5" />
-            Gerenciar Atletas
-          </TabsTrigger>
-          <TabsTrigger 
-            value="enrollments"
-            className="flex items-center gap-2 px-6 py-3 text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none"
-          >
-            <ListChecks className="h-5 w-5" />
-            Inscrições por Modalidade
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+          <TabsList className="w-full min-w-max bg-background grid grid-cols-4 p-0.5 sm:p-1 h-auto gap-0.5 sm:gap-1 border-b mb-3 sm:mb-8">
+            <TabsTrigger 
+              value="statistics"
+              className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+            >
+              <BarChart className="h-3 w-3 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="hidden xs:inline sm:hidden">Stats</span>
+              <span className="hidden sm:inline">Estatísticas</span>
+              <span className="xs:hidden text-[10px]">St</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="athletes"
+              className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+            >
+              <Users className="h-3 w-3 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="hidden xs:inline sm:hidden">Atletas</span>
+              <span className="hidden sm:inline">Gerenciar Atletas</span>
+              <span className="xs:hidden text-[10px]">At</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="enrollments"
+              className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+            >
+              <ListChecks className="h-3 w-3 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="hidden xs:inline sm:hidden">Inscrições</span>
+              <span className="hidden sm:inline">Inscrições por Modalidade</span>
+              <span className="xs:hidden text-[10px]">In</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="notifications"
+              className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+            >
+              <Bell className="h-3 w-3 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="hidden xs:inline sm:hidden">Notif</span>
+              <span className="hidden sm:inline">Notificações</span>
+              <span className="xs:hidden text-[10px]">No</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="statistics" className="mt-6">
+        <TabsContent value="statistics" className="mt-2 sm:mt-6">
           {renderTabContent("statistics")}
         </TabsContent>
 
-        <TabsContent value="athletes" className="mt-6">
+        <TabsContent value="athletes" className="mt-2 sm:mt-6">
           {renderTabContent("athletes")}
         </TabsContent>
 
-        <TabsContent value="enrollments" className="mt-6">
+        <TabsContent value="enrollments" className="mt-2 sm:mt-6">
           {renderTabContent("enrollments")}
+        </TabsContent>
+
+        <TabsContent value="notifications" className="mt-2 sm:mt-6">
+          {renderTabContent("notifications")}
         </TabsContent>
       </Tabs>
     </div>

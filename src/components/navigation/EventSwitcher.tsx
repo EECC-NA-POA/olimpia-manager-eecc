@@ -1,79 +1,87 @@
 
-import { ArrowLeftRight } from 'lucide-react';
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { SidebarMenuItem, SidebarMenuButton } from '../ui/sidebar';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
+import { getAvailableEvents } from '@/lib/api';
+import { Event } from '@/types/api';
+import { ChevronDown } from 'lucide-react';
+import { MobileEventSwitcher } from './MobileEventSwitcher';
 
 interface EventSwitcherProps {
   userId: string;
-  collapsed?: boolean;
+  collapsed?: boolean; 
 }
 
 export function EventSwitcher({ userId, collapsed = false }: EventSwitcherProps) {
-  const { data: userEvents } = useQuery({
-    queryKey: ['user-events', userId],
-    queryFn: async () => {
-      if (!userId) return [];
-      
-      const { data, error } = await supabase
-        .from('inscricoes_eventos')
-        .select(`
-          evento_id,
-          eventos (
-            id,
-            nome,
-            status_evento
-          )
-        `)
-        .eq('usuario_id', userId);
+  const { currentEventId, setCurrentEventId } = useAuth();
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
-      if (error) {
-        console.error('Error fetching user events:', error);
-        throw error;
-      }
-
-      return data.map(item => item.eventos);
-    },
-    enabled: !!userId
+  // Fetch available events
+  const { data: availableEvents, isLoading } = useQuery({
+    queryKey: ['available-events', userId],
+    queryFn: () => getAvailableEvents(userId),
   });
 
-  const handleEventSwitch = (eventId: string) => {
-    localStorage.setItem('currentEventId', eventId);
-    window.location.reload(); // Reload to refresh all queries with new event
+  // Set selected event when events are loaded or currentEventId changes
+  useEffect(() => {
+    if (availableEvents && currentEventId) {
+      const event = availableEvents.find(event => event.id === currentEventId);
+      if (event) setSelectedEvent(event);
+    }
+  }, [availableEvents, currentEventId]);
+
+  const handleEventChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const eventId = e.target.value;
+    setCurrentEventId(eventId);
+    
+    // Update selected event
+    if (availableEvents) {
+      const event = availableEvents.find(event => event.id === eventId);
+      if (event) setSelectedEvent(event);
+    }
   };
 
-  if (!userEvents || userEvents.length <= 1) return null;
+  if (isLoading) {
+    return (
+      <div className={`${collapsed ? 'w-8 h-8' : 'w-auto'} flex items-center justify-center`}>
+        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white"></div>
+      </div>
+    );
+  }
 
+  if (!availableEvents || availableEvents.length === 0) {
+    return null;
+  }
+
+  // Use mobile switcher on small screens
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <SidebarMenuButton
-          className="w-full rounded-lg p-4 flex items-center gap-3 
-            text-white hover:bg-olimpics-green-secondary/20 
-            transition-all duration-200 text-lg font-medium mb-2"
-          tooltip={collapsed ? "Trocar Evento" : undefined}
+    <>
+      {/* Mobile Event Switcher - shown on screens smaller than md */}
+      <div className="block md:hidden">
+        <MobileEventSwitcher userId={userId} />
+      </div>
+      
+      {/* Desktop Event Switcher - shown on md screens and larger */}
+      <div className={`${collapsed ? 'hidden' : 'hidden md:flex'} items-center min-w-[180px] text-sm relative`}>
+        <div className="flex items-center gap-1">
+          <span className="text-white font-medium truncate">
+            {selectedEvent?.nome || 'Selecionar Evento'}
+          </span>
+          <ChevronDown className="h-4 w-4 text-white flex-shrink-0" />
+        </div>
+        <select
+          value={currentEventId || ''}
+          onChange={handleEventChange}
+          className="absolute inset-0 opacity-0 cursor-pointer w-full"
+          aria-label="Trocar Evento"
         >
-          <ArrowLeftRight className="h-7 w-7 flex-shrink-0" />
-          <span className={`whitespace-nowrap ${collapsed ? 'hidden' : 'block'}`}>Trocar Evento</span>
-        </SidebarMenuButton>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        {userEvents.map((event: any) => (
-          <DropdownMenuItem
-            key={event.id}
-            onClick={() => handleEventSwitch(event.id)}
-            className="cursor-pointer"
-          >
-            {event.nome}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          {availableEvents.map(event => (
+            <option key={event.id} value={event.id}>
+              {event.nome}
+            </option>
+          ))}
+        </select>
+      </div>
+    </>
   );
 }

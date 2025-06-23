@@ -10,16 +10,18 @@ interface UserRoles {
   isPublicGeral: boolean;
   isAdmin: boolean;
   isJudge: boolean;
+  isFilosofoMonitor: boolean;
 }
 
 export const useNavigation = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, currentEventId } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
   // Get all roles codes from the user's roles
   const userRoleCodes = user?.papeis?.map(role => role.codigo) || [];
   console.log('User role codes:', userRoleCodes);
+  console.log('User papeis:', user?.papeis);
 
   // Check for each role type
   const roles: UserRoles = {
@@ -28,27 +30,25 @@ export const useNavigation = () => {
     isDelegationRep: userRoleCodes.includes('RDD'),
     isPublicGeral: userRoleCodes.includes('PGR'),
     isAdmin: userRoleCodes.includes('ADM'),
-    isJudge: userRoleCodes.includes('JUZ')
+    isJudge: userRoleCodes.includes('JUZ'),
+    isFilosofoMonitor: userRoleCodes.includes('FMON') || userRoleCodes.includes('FMO') || userRoleCodes.includes('FILOSOFO_MONITOR') || userRoleCodes.includes('filosofo_monitor')
   };
 
+  console.log('Detected roles:', roles);
+  console.log('Is Filosofo Monitor?', roles.isFilosofoMonitor);
+  console.log('Checking for FMON code:', userRoleCodes.includes('FMON'));
+
+  // Redirect authenticated users without an event to event selection
   useEffect(() => {
-    // Only run if we're at the home page (not the root index page)
-    if (user && location.pathname === '/home') {
-      console.log('Navigation - Redirecting based on roles from /home path');
-      
-      if (roles.isAthlete || roles.isPublicGeral) {
-        navigate('/athlete-profile', { replace: true });
-      } else if (roles.isOrganizer) {
-        navigate('/organizer-dashboard', { replace: true });
-      } else if (roles.isDelegationRep) {
-        navigate('/delegation-dashboard', { replace: true });
-      } else if (roles.isAdmin) {
-        navigate('/administration', { replace: true });
-      } else if (roles.isJudge) {
-        navigate('/judge-dashboard', { replace: true });
-      }
+    if (user && !currentEventId && 
+        location.pathname !== '/event-selection' && 
+        !location.pathname.startsWith('/event') &&
+        location.pathname !== '/verificar-email' &&
+        location.pathname !== '/reset-password') {
+      console.log('User logged in but no event selected, redirecting to event selection');
+      navigate('/event-selection', { replace: true });
     }
-  }, [roles, location.pathname, navigate, user]);
+  }, [user, currentEventId, location.pathname, navigate]);
 
   return {
     user,

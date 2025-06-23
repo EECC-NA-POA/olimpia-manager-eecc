@@ -1,328 +1,254 @@
-
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { supabase } from '@/integrations/supabase/client';
-import { TeamFormation } from '@/components/judge/TeamFormation';
-import { useToast } from '@/components/ui/use-toast';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Users } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAllTeamsData } from './teams/hooks/useAllTeamsData';
+import { JudgeTeamsScoringTab } from './teams/components/JudgeTeamsScoringTab';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useTeamManager } from './teams/hooks/useTeamManager';
+import { TeamsTabHeader } from './teams/components/TeamsTabHeader';
+import { ManageTeamsTab } from './teams/components/ManageTeamsTab';
+import { ViewAllTeamsTab } from './teams/components/ViewAllTeamsTab';
 
 interface TeamsTabProps {
   userId: string;
   eventId: string | null;
+  isOrganizer?: boolean;
 }
 
-interface Team {
-  id: number;
-  name: string;
-  athletes: any[];
-}
+export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps) {
+  const { user } = useAuth();
 
-interface Athlete {
-  atleta_id: string;
-  atleta_nome: string;
-  atleta_telefone?: string;
-  atleta_email?: string;
-  tipo_documento: string;
-  numero_documento: string;
-}
+  // No painel do juiz, um usuário com papel de juiz (JUZ) só pode pontuar,
+  // independentemente de outros papéis que possa ter.
+  const isJudge = user?.papeis?.some(role => role.codigo === 'JUZ');
 
-export function TeamsTab({ userId, eventId }: TeamsTabProps) {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [selectedModalityId, setSelectedModalityId] = useState<number | null>(null);
-  const [teamName, setTeamName] = useState('');
-  const [teams, setTeams] = useState<Team[]>([]);
+  // Define se o usuário é representante de delegação APENAS
+  const isDelegationRepOnly = user?.papeis?.some(role => role.codigo === 'RDD')
+  && !user?.papeis?.some(role => role.codigo === 'ORE');
 
-  // Fetch modalities
-  const { data: modalities, isLoading: isLoadingModalities } = useQuery({
-    queryKey: ['modalities', eventId],
-    queryFn: async () => {
-      if (!eventId) return [];
-      
-      // Get modalities with confirmed athlete enrollments
-      const { data, error } = await supabase
-        .from('vw_modalidades_atletas_confirmados')
-        .select('modalidade_id, modalidade_nome, categoria, tipo_modalidade')
-        .eq('evento_id', eventId)
-        .order('modalidade_nome')
-        .limit(100);
-      
-      if (error) {
-        console.error('Error fetching modalities:', error);
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível carregar as modalidades',
-          variant: 'destructive'
-        });
-        return [];
-      }
-      
-      // Remove duplicates (since the view joins with athletes)
-      const uniqueModalities = data.reduce((acc: any[], current: any) => {
-        const x = acc.find(item => item.modalidade_id === current.modalidade_id);
-        if (!x) {
-          return acc.concat([current]);
-        } else {
-          return acc;
-        }
-      }, []);
-      
-      return uniqueModalities;
-    },
-    enabled: !!eventId,
-  });
+  // Filtros e estados para visualização dos times
+  const [modalityFilter, setModalityFilter] = useState<number | null>(null);
+  const [branchFilter, setBranchFilter] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch existing teams for the selected modality
-  const { data: existingTeams, isLoading: isLoadingTeams } = useQuery({
-    queryKey: ['teams', eventId, selectedModalityId],
-    queryFn: async () => {
-      if (!eventId || !selectedModalityId) return [];
-      
-      const { data: teamsData, error: teamsError } = await supabase
-        .from('equipes')
-        .select('id, nome')
-        .eq('evento_id', eventId)
-        .eq('modalidade_id', selectedModalityId)
-        .order('nome');
-      
-      if (teamsError) {
-        console.error('Error fetching teams:', teamsError);
-        return [];
-      }
-      
-      // For each team, fetch its athletes
-      const teamsWithAthletes = await Promise.all(
-        teamsData.map(async (team) => {
-          const { data: athletesData, error: athletesError } = await supabase
-            .from('atletas_equipes')
-            .select(`
-              id,
-              posicao,
-              raia,
-              atleta_id,
-              usuarios!inner(nome_completo, email, telefone, tipo_documento, numero_documento)
-            `)
-            .eq('equipe_id', team.id)
-            .order('posicao');
-          
-          if (athletesError) {
-            console.error(`Error fetching athletes for team ${team.id}:`, athletesError);
-            return { ...team, athletes: [] };
-          }
-          
-          return { ...team, athletes: athletesData || [] };
-        })
-      );
-      
-      return teamsWithAthletes;
-    },
-    enabled: !!eventId && !!selectedModalityId,
-  });
+  // Dados de equipes/modalidades/filiais (para pontuação de juiz)
+  const {
+    teams: allTeams,
+    modalities: allModalities,
+    branches,
+    isLoading: isLoadingAllTeams,
+    error: allTeamsError,
+  } = useAllTeamsData(
+    eventId,
+    modalityFilter,
+    branchFilter,
+    searchTerm,
+    (isOrganizer || isJudge) ? undefined : user?.filial_id // Juiz e Organizador veem todas as equipes.
+  );
 
-  // Fetch athletes available for team formation
-  const { data: availableAthletes } = useQuery({
-    queryKey: ['athletes', eventId, selectedModalityId],
-    queryFn: async () => {
-      if (!eventId || !selectedModalityId) return [];
-      
-      const { data, error } = await supabase
-        .from('vw_modalidades_atletas_confirmados')
-        .select(`
-          atleta_id,
-          atleta_nome,
-          atleta_telefone,
-          atleta_email,
-          tipo_documento,
-          numero_documento
-        `)
-        .eq('evento_id', eventId)
-        .eq('modalidade_id', selectedModalityId);
-      
-      if (error) {
-        console.error('Error fetching athletes:', error);
-        return [];
-      }
-      
-      // Filter out athletes who are already in teams
-      if (existingTeams && existingTeams.length > 0) {
-        const athletesInTeams = new Set();
-        existingTeams.forEach((team: any) => {
-          team.athletes.forEach((athlete: any) => {
-            athletesInTeams.add(athlete.atleta_id);
-          });
-        });
-        
-        return data.filter((athlete: Athlete) => !athletesInTeams.has(athlete.atleta_id));
-      }
-      
-      return data;
-    },
-    enabled: !!eventId && !!selectedModalityId && !!existingTeams,
-  });
+  // Agrupa equipes por modalidade, mesmo as sem atletas (MOSTRAR TODAS!)
+  const transformedTeams = allTeams?.map(team => ({
+    equipe_id: team.id,
+    equipe_nome: team.nome,
+    modalidade_id: team.modalidade_id,
+    modalidade_nome: team.modalidade_info?.nome || '',
+    tipo_pontuacao: (team.modalidade_info as any)?.tipo_pontuacao || 'pontos',
+    categoria: (team.modalidade_info as any)?.categoria || '', // Corrigido: agora puxa da modalidade_info
+    filial_nome: team.filial_id || '',
+    members: Array.isArray(team.atletas)
+      ? team.atletas.map(athlete => ({
+          atleta_id: athlete.atleta_id,
+          atleta_nome: athlete.atleta_nome || '',
+          numero_identificador: athlete.numero_identificador || ''
+        }))
+      : []
+  })) || [];
 
-  // Create team mutation
-  const createTeamMutation = useMutation({
-    mutationFn: async (newTeam: { name: string }) => {
-      if (!eventId || !selectedModalityId) {
-        throw new Error('Missing event ID or modality ID');
-      }
-      
-      const { data, error } = await supabase
-        .from('equipes')
-        .insert({
-          nome: newTeam.name,
-          evento_id: eventId,
-          modalidade_id: selectedModalityId,
-          created_by: userId
-        })
-        .select('id')
-        .single();
-      
-      if (error) {
-        console.error('Error creating team:', error);
-        throw error;
-      }
-      
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams', eventId, selectedModalityId] });
-      setTeamName('');
-      toast({
-        title: 'Equipe criada',
-        description: 'A equipe foi criada com sucesso'
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível criar a equipe',
-        variant: 'destructive'
-      });
-    }
-  });
+  const transformedModalities = allModalities?.map(modality => ({
+    modalidade_id: modality.id,
+    modalidade_nome: modality.nome
+  })) || [];
 
-  // Handle modality selection
-  const handleModalityChange = (value: string) => {
-    setSelectedModalityId(Number(value));
-  };
-
-  // Handle team creation
-  const handleCreateTeam = () => {
-    if (!teamName.trim()) {
-      toast({
-        title: 'Nome obrigatório',
-        description: 'Por favor, informe um nome para a equipe',
-        variant: 'destructive'
-      });
-      return;
-    }
-    
-    createTeamMutation.mutate({ name: teamName });
-  };
-
-  if (isLoadingModalities) {
+  // Exclusivo para Juiz: Só exibe pontuação de equipes, sem abas nem gerenciamento
+  if (!isOrganizer && isJudge) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-10 w-full max-w-sm" />
-        <Skeleton className="h-64 w-full" />
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Pontuação de Equipes
+            </CardTitle>
+            <CardDescription>
+              Visualize as equipes das modalidades coletivas e registre apenas as pontuações. Juízes não podem criar, editar ou excluir equipes e atletas.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <JudgeTeamsScoringTab
+              allTeams={transformedTeams}
+              allModalities={transformedModalities}
+              branches={branches}
+              isLoadingAllTeams={isLoadingAllTeams}
+              allTeamsError={allTeamsError}
+              modalityFilter={modalityFilter}
+              branchFilter={branchFilter}
+              searchTerm={searchTerm}
+              setModalityFilter={setModalityFilter}
+              setBranchFilter={setBranchFilter}
+              setSearchTerm={setSearchTerm}
+              eventId={eventId}
+              judgeId={userId}
+            />
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  if (!modalities || modalities.length === 0) {
+  // For delegation representatives only, show only the "Manage Teams" tab (no scoring)
+  if (isDelegationRepOnly) {
+    const {
+      modalities,
+      teams,
+      availableAthletes,
+      selectedModalityId,
+      setSelectedModalityId,
+      isLoading,
+      createTeam,
+      deleteTeam,
+      addAthlete,
+      removeAthlete,
+      updateAthletePosition,
+      isCreatingTeam,
+      isDeletingTeam,
+      isAddingAthlete,
+      isRemovingAthlete,
+      isUpdatingAthlete,
+      teamToDelete,
+      isDeleteDialogOpen,
+      setIsDeleteDialogOpen,
+      confirmDeleteTeam,
+      cancelDeleteTeam
+    } = useTeamManager(eventId, false);
+
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Nenhuma modalidade disponível</CardTitle>
-          <CardDescription>
-            Não existem modalidades com atletas confirmados para este evento.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="space-y-6">
+        <TeamsTabHeader isOrganizer={false}>
+          <ManageTeamsTab
+            modalities={modalities}
+            teams={teams}
+            availableAthletes={availableAthletes}
+            selectedModalityId={selectedModalityId}
+            setSelectedModalityId={setSelectedModalityId}
+            isLoading={isLoading}
+            createTeam={createTeam}
+            deleteTeam={deleteTeam}
+            addAthlete={addAthlete}
+            removeAthlete={removeAthlete}
+            updateAthletePosition={updateAthletePosition}
+            isCreatingTeam={isCreatingTeam}
+            isDeletingTeam={isDeletingTeam}
+            isAddingAthlete={isAddingAthlete}
+            isRemovingAthlete={isRemovingAthlete}
+            isUpdatingAthlete={isUpdatingAthlete}
+            isOrganizer={false}
+            teamToDelete={teamToDelete}
+            isDeleteDialogOpen={isDeleteDialogOpen}
+            setIsDeleteDialogOpen={setIsDeleteDialogOpen}
+            confirmDeleteTeam={confirmDeleteTeam}
+            cancelDeleteTeam={cancelDeleteTeam}
+          />
+        </TeamsTabHeader>
+      </div>
     );
   }
 
+  // ORGANIZADOR: gerenciamento completo
+  const {
+    modalities,
+    teams,
+    availableAthletes,
+    selectedModalityId,
+    setSelectedModalityId,
+    isLoading,
+    createTeam,
+    deleteTeam,
+    addAthlete,
+    removeAthlete,
+    updateAthletePosition,
+    isCreatingTeam,
+    isDeletingTeam,
+    isAddingAthlete,
+    isRemovingAthlete,
+    isUpdatingAthlete,
+    teamToDelete,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    confirmDeleteTeam,
+    cancelDeleteTeam
+  } = useTeamManager(eventId, true);
+
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Formação de Equipes</CardTitle>
-          <CardDescription>
-            Selecione uma modalidade para gerenciar equipes
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <div>
-              <label className="text-sm font-medium">Modalidade</label>
-              <Select onValueChange={handleModalityChange}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione uma modalidade" />
-                </SelectTrigger>
-                <SelectContent>
-                  {modalities.map((modality: any) => (
-                    <SelectItem 
-                      key={modality.modalidade_id} 
-                      value={modality.modalidade_id.toString()}
-                    >
-                      {modality.modalidade_nome} - {modality.categoria}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {selectedModalityId && (
-              <>
-                <div className="flex items-end gap-2">
-                  <div className="flex-1">
-                    <label className="text-sm font-medium">Nova Equipe</label>
-                    <Input 
-                      placeholder="Nome da equipe" 
-                      value={teamName}
-                      onChange={(e) => setTeamName(e.target.value)}
-                    />
-                  </div>
-                  <Button 
-                    onClick={handleCreateTeam}
-                    disabled={createTeamMutation.isPending}
-                  >
-                    {createTeamMutation.isPending ? 'Criando...' : 'Criar Equipe'}
-                  </Button>
-                </div>
-                
-                {isLoadingTeams ? (
-                  <Skeleton className="h-64 w-full" />
-                ) : (
-                  <TeamFormation 
-                    teams={existingTeams || []}
-                    availableAthletes={availableAthletes || []}
-                    eventId={eventId}
-                    modalityId={selectedModalityId}
-                  />
-                )}
-              </>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <TeamsTabHeader isOrganizer={isOrganizer}>
+        <Tabs defaultValue={isOrganizer ? "manage" : "manage"} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="manage">
+              {isOrganizer ? "Gerenciar Equipes" : "Gerenciar Minhas Equipes"}
+            </TabsTrigger>
+            <TabsTrigger value="view-all">
+              {isOrganizer ? "Visualizar Todas as Equipes" : "Pontuar Equipes"}
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="manage">
+            <ManageTeamsTab
+              modalities={modalities}
+              teams={teams}
+              availableAthletes={availableAthletes}
+              selectedModalityId={selectedModalityId}
+              setSelectedModalityId={setSelectedModalityId}
+              isLoading={isLoading}
+              createTeam={createTeam}
+              deleteTeam={deleteTeam}
+              addAthlete={addAthlete}
+              removeAthlete={removeAthlete}
+              updateAthletePosition={updateAthletePosition}
+              isCreatingTeam={isCreatingTeam}
+              isDeletingTeam={isDeletingTeam}
+              isAddingAthlete={isAddingAthlete}
+              isRemovingAthlete={isRemovingAthlete}
+              isUpdatingAthlete={isUpdatingAthlete}
+              isOrganizer={isOrganizer}
+              teamToDelete={teamToDelete}
+              isDeleteDialogOpen={isDeleteDialogOpen}
+              setIsDeleteDialogOpen={setIsDeleteDialogOpen}
+              confirmDeleteTeam={confirmDeleteTeam}
+              cancelDeleteTeam={cancelDeleteTeam}
+            />
+          </TabsContent>
+          
+          <TabsContent value="view-all">
+            <ViewAllTeamsTab
+              allTeams={transformedTeams}
+              allModalities={transformedModalities}
+              branches={branches}
+              isLoadingAllTeams={isLoadingAllTeams}
+              allTeamsError={allTeamsError}
+              modalityFilter={modalityFilter}
+              branchFilter={branchFilter}
+              searchTerm={searchTerm}
+              setModalityFilter={setModalityFilter}
+              setBranchFilter={setBranchFilter}
+              setSearchTerm={setSearchTerm}
+              isOrganizer={isOrganizer}
+              eventId={eventId}
+              judgeId={userId}
+            />
+          </TabsContent>
+        </Tabs>
+      </TeamsTabHeader>
     </div>
   );
 }

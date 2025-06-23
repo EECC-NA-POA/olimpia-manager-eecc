@@ -16,7 +16,7 @@ interface UserProfile {
   perfis: {
     id: number;
     nome: string;
-  };
+  } | null;
 }
 
 const EXCLUSIVE_PROFILES = ['Atleta', 'Público Geral'];
@@ -70,10 +70,10 @@ export const useUserProfiles = (user: any, open: boolean, onOpenChange: (open: b
       
       return typedData.map(item => ({
         perfil_id: item.perfil_id,
-        perfis: {
-          id: item.perfis?.id ?? 0,
-          nome: item.perfis?.nome ?? ''
-        }
+        perfis: item.perfis ? {
+          id: item.perfis.id,
+          nome: item.perfis.nome
+        } : null
       }));
     },
     enabled: open && !!user?.id && !!currentEventId
@@ -87,14 +87,14 @@ export const useUserProfiles = (user: any, open: boolean, onOpenChange: (open: b
 
   // Find the user's current exclusive profile (if any)
   const currentExclusiveProfile = userProfiles.find(p => 
-    EXCLUSIVE_PROFILES.includes(p.perfis.nome)
+    p.perfis && EXCLUSIVE_PROFILES.includes(p.perfis.nome)
   );
 
   // Filter available profiles based on current exclusive profile
   const filteredProfiles = availableProfiles?.filter(profile => {
     if (EXCLUSIVE_PROFILES.includes(profile.nome)) {
       // If user has an exclusive profile, only show that one
-      if (currentExclusiveProfile) {
+      if (currentExclusiveProfile && currentExclusiveProfile.perfis) {
         return profile.nome === currentExclusiveProfile.perfis.nome;
       }
     }

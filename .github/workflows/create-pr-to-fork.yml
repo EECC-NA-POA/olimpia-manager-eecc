@@ -1,0 +1,86 @@
+name: Sync to Fork and Create PR
+
+on:
+  push:
+    branches: [release]
+  workflow_dispatch:
+
+jobs:
+  sync-to-fork:
+    runs-on: ubuntu-latest
+    steps:
+      # 1) Checkout sem gravar credenciais do GITHUB_TOKEN
+      - name: Checkout 'release' (no creds)
+        uses: actions/checkout@v4
+        with:
+          ref: release
+          fetch-depth: 0
+          persist-credentials: false    # << desabilita o helper automático
+
+      # 2) Configurar usuário Git
+      - name: Setup Git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      # 3) Criar branch
+      - name: Create branch
+        id: new_branch
+        run: |
+          BRANCH="sync-release-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b $BRANCH
+          echo "BRANCH_NAME=$BRANCH" >> $GITHUB_ENV
+
+      # 4) Adicionar remote apontando pro fork usando o PAT
+      - name: Add fork remote
+        run: |
+          git remote add fork \
+            https://x-access-token:${{ secrets.FORK_REPO_TOKEN }}@github.com/EECC-NA-POA/olimpia-manager-eecc.git
+
+      # 5) Push direto para esse remote
+      - name: Push to fork
+        run: |
+          git push -u fork ${{ env.BRANCH_NAME }}
+
+      - name: Get Last Commit Information
+        id: commit_info
+        run: |
+          echo "COMMIT_HASH=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')" >> "$GITHUB_OUTPUT"
+          echo "COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> "$GITHUB_OUTPUT"
+          echo "COMMIT_DATE=$(git log -1 --pretty=format:'%ci')" >> "$GITHUB_OUTPUT"
+          
+      - name: Create or Update Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.FORK_REPO_TOKEN }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+          COMMIT_HASH: ${{ steps.commit_info.outputs.COMMIT_HASH }}
+          COMMIT_AUTHOR: ${{ steps.commit_info.outputs.COMMIT_AUTHOR }}
+          COMMIT_MESSAGE: ${{ steps.commit_info.outputs.COMMIT_MESSAGE }}
+          COMMIT_DATE: ${{ steps.commit_info.outputs.COMMIT_DATE }}
+        run: |
+          echo "Creating PR from $BRANCH_NAME to 'release' in fork repository..."
+          
+          PR_BODY="## Sincronização automática do repositório privado
+
+          **Commit:** \`$COMMIT_HASH\`
+          **Autor:** $COMMIT_AUTHOR
+          **Data:** $COMMIT_DATE
+          **Mensagem:** $COMMIT_MESSAGE
+          
+          Este PR foi criado automaticamente após um push na branch \`release\` do repositório privado.
+          
+          **Repositório origem:** bonanza-ong/olimpia-manager-na"
+
+          gh pr create \
+            --repo "EECC-NA-POA/olimpia-manager-eecc" \
+            --base "release" \
+            --head "$BRANCH_NAME" \
+            --title "🔄 Sincronização: $COMMIT_MESSAGE" \
+            --body "$PR_BODY" || echo "PR já existe ou ocorreu um erro. O workflow continuará."
+
+      - name: Final Success Notification
+        if: success()
+        run: |
+          echo "✅ Workflow completed successfully!"
+          echo "Uma branch foi enviada e um Pull Request foi criado/atualizado no repositório EECC-NA-POA/olimpia-manager-eecc."

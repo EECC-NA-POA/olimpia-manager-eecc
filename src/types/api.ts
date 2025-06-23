@@ -26,6 +26,16 @@ export interface AthleteManagement {
   evento_id: string;
 }
 
+export interface Event {
+  id: string;
+  nome: string;
+  descricao?: string;
+  data_inicio?: string;
+  data_fim?: string;
+  local?: string;
+  status?: string;
+}
+
 export interface Branch {
   id: string;
   nome: string;

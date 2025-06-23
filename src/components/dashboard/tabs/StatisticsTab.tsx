@@ -23,7 +23,8 @@ const CHART_COLORS = {
 const PAYMENT_STATUS_COLORS = {
   'confirmado': CHART_COLORS.green,
   'pendente': CHART_COLORS.yellow,
-  'cancelado': CHART_COLORS.red
+  'cancelado': CHART_COLORS.red,
+  'isento': CHART_COLORS.blue
 };
 
 // Chart config that matches the ChartConfig type
@@ -43,6 +44,10 @@ const CHART_CONFIG: ChartConfig = {
   cancelado: {
     color: CHART_COLORS.red,
     label: 'Cancelado'
+  },
+  isento: {
+    color: CHART_COLORS.blue,
+    label: 'Isento'
   },
   categories: {
     color: CHART_COLORS.purple,
@@ -66,9 +71,9 @@ export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
   // Check if data is valid and properly structured 
   if (!data || !Array.isArray(data) || data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <p className="text-lg text-muted-foreground">Não há dados estatísticos disponíveis</p>
-        <p className="text-sm text-muted-foreground">Verifique se existem inscrições registradas para este evento</p>
+      <div className="flex flex-col items-center justify-center h-32 sm:h-64 px-2 sm:px-4">
+        <p className="text-sm sm:text-base lg:text-lg text-muted-foreground text-center">Não há dados estatísticos disponíveis</p>
+        <p className="text-xs sm:text-sm text-muted-foreground text-center mt-1">Verifique se existem inscrições registradas para este evento</p>
       </div>
     );
   }
@@ -83,9 +88,9 @@ export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
   // If no data after filtering, show no data message
   if (!filteredData || filteredData.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <p className="text-lg text-muted-foreground">Não há dados estatísticos disponíveis para esta filial</p>
-        <p className="text-sm text-muted-foreground">Verifique se existem inscrições confirmadas para esta filial</p>
+      <div className="flex flex-col items-center justify-center h-32 sm:h-64 px-2 sm:px-4">
+        <p className="text-sm sm:text-base lg:text-lg text-muted-foreground text-center">Não há dados estatísticos disponíveis para esta filial</p>
+        <p className="text-xs sm:text-sm text-muted-foreground text-center mt-1">Verifique se existem inscrições confirmadas para esta filial</p>
       </div>
     );
   }
@@ -98,7 +103,8 @@ export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
   const summaryCardsTotals = {
     inscricoes: calculatedTotals.totalGeral,
     pago: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pago) || 0), 0),
-    pendente: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pendente) || 0), 0)
+    pendente: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pendente) || 0), 0),
+    isento: calculatedTotals.totalIsentos
   };
   console.log("Summary cards totals:", summaryCardsTotals);
 
@@ -110,14 +116,16 @@ export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
   console.log("Branch registrations chart data:", branchRegistrationsData);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-3 sm:space-y-6 lg:space-y-8 px-1 sm:px-2 lg:px-0">
       {/* Summary Cards Section */}
-      <SummaryCards totals={summaryCardsTotals} />
+      <div className="w-full">
+        <SummaryCards totals={summaryCardsTotals} />
+      </div>
 
-      {/* Charts Section - Using a consistent layout */}
-      <div className="space-y-8">
-        {/* Payment Status Bar Chart - Battery style - Full width */}
-        <div className="w-full">
+      {/* Charts Section - Mobile optimized layout */}
+      <div className="space-y-3 sm:space-y-6 lg:space-y-8">
+        {/* Payment Status Bar Chart - Full width */}
+        <div className="w-full overflow-hidden">
           <PaymentStatusBarChart 
             data={paymentStatusData} 
             chartConfig={CHART_CONFIG} 
@@ -127,7 +135,7 @@ export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
         </div>
 
         {/* Branch Registrations Chart - Full width */}
-        <div className="w-full">
+        <div className="w-full overflow-hidden">
           <BranchRegistrationsChart 
             data={branchRegistrationsData} 
             chartColors={CHART_COLORS} 

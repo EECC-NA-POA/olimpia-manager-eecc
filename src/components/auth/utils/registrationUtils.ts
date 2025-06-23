@@ -1,57 +1,32 @@
 
-import { format, isValid, parse } from 'date-fns';
-import { RegisterFormData } from '../types/form-types';
 import { supabase } from '@/lib/supabase';
 
-export const formatBirthDate = (birthDateValue: Date | string): string | null => {
-  try {
-    let birthDate: Date;
-    
-    if (typeof birthDateValue === 'string') {
-      birthDate = parse(birthDateValue, 'dd/MM/yyyy', new Date());
-    } else {
-      birthDate = birthDateValue;
-    }
-
-    if (!isValid(birthDate)) {
-      return null;
-    }
-
-    return format(birthDate, 'yyyy-MM-dd');
-  } catch (error) {
-    console.error('Error formatting birth date:', error);
-    return null;
-  }
-};
-
-export const formatPhoneNumber = (ddi: string, telefone: string | undefined): string => {
-  const cleanedPhoneNumber = telefone ? telefone.replace(/\D/g, '') : '';
-  return `${ddi}${cleanedPhoneNumber}`;
+export const formatBirthDate = (date?: Date): string | null => {
+  if (!date) return null;
+  return date.toISOString().split('T')[0];
 };
 
 export const checkExistingUser = async (email: string) => {
-  return await supabase
-    .from('usuarios')
-    .select('id')
-    .eq('email', email)
-    .maybeSingle();
+  try {
+    console.log('🔍 Checking existing user for email:', email);
+    
+    // For self-hosted instances, skip user existence check
+    // Let the signup process handle duplicates
+    console.log('📋 Skipping user existence check - will let signup handle duplicates');
+    
+    return { data: null, error: null };
+  } catch (error) {
+    console.error('Error in checkExistingUser:', error);
+    return { data: null, error };
+  }
 };
 
-export const prepareUserMetadata = (values: RegisterFormData, formattedBirthDate: string) => {
-  // Explicitly exclude password and confirmPassword
-  const {
-    password,
-    confirmPassword,
-    ...safeData
-  } = values;
-
+export const prepareUserMetadata = (values: any, formattedBirthDate?: string | null) => {
+  // Simplified metadata - only essential fields that we know work
   return {
-    nome_completo: safeData.nome,
-    telefone: formatPhoneNumber(safeData.ddi, safeData.telefone),
-    filial_id: safeData.branchId || null,
-    tipo_documento: safeData.tipo_documento,
-    numero_documento: safeData.numero_documento ? safeData.numero_documento.replace(/\D/g, '') : '',
-    genero: safeData.genero,
-    data_nascimento: formattedBirthDate
+    nome_completo: String(values.nome || '').trim(),
+    telefone: String(values.telefone || '').trim(),
+    estado: String(values.state || '').trim(),
+    filial_id: String(values.branchId || '').trim()
   };
 };

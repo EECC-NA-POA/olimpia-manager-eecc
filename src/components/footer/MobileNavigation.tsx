@@ -1,5 +1,5 @@
 
-import { ArrowLeftRight, LogOut } from "lucide-react";
+import { ArrowLeftRight, LogOut, UserCheck } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { NavigationItem } from "./navigation-items";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigation } from "@/hooks/useNavigation";
+import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 interface MobileNavigationProps {
   navigationItems: NavigationItem[];
@@ -30,51 +33,72 @@ const MobileNavigation = ({
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-lg md:hidden">
       <div className="grid grid-cols-5 gap-1 px-2 py-2">
-        {navigationItems.map((item) => (
+        {navigationItems.slice(0, 4).map((item) => (
           <button
             key={item.path}
             onClick={() => navigate(item.path)}
             className={cn(
-              "flex flex-col items-center justify-center p-2 text-xs rounded-lg transition-colors",
+              "flex flex-col items-center justify-center p-2 text-xs rounded-lg transition-colors min-h-[60px]",
               currentPath === item.path
                 ? "text-olimpics-green-primary bg-olimpics-green-primary/10"
                 : "text-gray-500 hover:text-olimpics-green-primary hover:bg-olimpics-green-primary/5"
             )}
           >
             <item.icon className="w-5 h-5 mb-1" />
-            <span>{item.label}</span>
+            <span className="text-center leading-tight">{item.label}</span>
           </button>
         ))}
-        {userEvents && userEvents.length > 1 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex flex-col items-center justify-center p-2 text-xs text-gray-500 rounded-lg hover:text-olimpics-green-primary hover:bg-olimpics-green-primary/5">
-                <ArrowLeftRight className="w-5 h-5 mb-1" />
-                <span>Trocar</span>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 mb-2" sideOffset={40}>
-              {userEvents.map((event: any) => (
-                <DropdownMenuItem
-                  key={event.id}
-                  onClick={() => onEventSwitch(event.id)}
-                  className="cursor-pointer"
-                >
-                  {event.nome}
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex flex-col items-center justify-center p-2 text-xs text-gray-500 rounded-lg hover:text-olimpics-green-primary hover:bg-olimpics-green-primary/5 min-h-[60px]">
+              <ArrowLeftRight className="w-5 h-5 mb-1" />
+              <span className="text-center leading-tight">Mais</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 mb-2 bg-white shadow-lg border" sideOffset={40}>
+            {/* Extra menu items that didn't fit */}
+            {navigationItems.slice(4).map((item) => (
+              <DropdownMenuItem
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className="cursor-pointer"
+              >
+                <item.icon className="w-4 h-4 mr-2" />
+                {item.label}
+              </DropdownMenuItem>
+            ))}
+            
+            {/* Event switching */}
+            {userEvents && userEvents.length > 1 && (
+              <>
+                <DropdownMenuItem className="font-medium cursor-default text-muted-foreground">
+                  Alterar Evento
                 </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-        <button
-          onClick={onLogout}
-          className="flex flex-col items-center justify-center p-2 text-xs text-red-500 rounded-lg hover:bg-red-50"
-        >
-          <LogOut className="w-5 h-5 mb-1" />
-          <span>Sair</span>
-        </button>
+                {userEvents.map((event: any) => (
+                  <DropdownMenuItem
+                    key={event.id}
+                    onClick={() => onEventSwitch(event.id)}
+                    className="cursor-pointer ml-2"
+                  >
+                    {event.nome}
+                  </DropdownMenuItem>
+                ))}
+              </>
+            )}
+            
+            {/* Logout option */}
+            <DropdownMenuItem
+              onClick={onLogout}
+              className="cursor-pointer text-red-500 hover:text-red-700"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sair
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </nav>
   );
@@ -87,11 +111,51 @@ export const MobileNavigationLink = () => {
   const location = useLocation();
   const { roles } = useNavigation();
   
-  // If user is not logged in, don't render navigation
-  if (!user) {
+  // Always call hooks unconditionally - use enabled to control execution
+  const { data: userEvents = [] } = useQuery({
+    queryKey: ['user-events', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('inscricoes_eventos')
+        .select(`
+          evento_id,
+          eventos (
+            id,
+            nome,
+            status_evento
+          )
+        `)
+        .eq('usuario_id', user!.id);
+
+      if (error) {
+        console.error('Error fetching user events:', error);
+        throw error;
+      }
+
+      return data.map(item => item.eventos);
+    },
+    enabled: !!user?.id && location.pathname !== '/event-selection'
+  });
+  
+  // Don't show mobile navigation on event selection page or when no user
+  if (!user || location.pathname === '/event-selection') {
     return null;
   }
   
+  // Handle logout reliably
+  const handleLogout = async () => {
+    try {
+      console.log('MobileNavigation - Handling logout');
+      localStorage.removeItem('currentEventId');
+      await signOut();
+      toast.success('Logout realizado com sucesso!');
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error('MobileNavigation - Error during logout:', error);
+      toast.error("Erro ao fazer logout");
+    }
+  };
+
   // Define navigation items to match desktop menu order
   const navigationItems = [];
   
@@ -111,25 +175,25 @@ export const MobileNavigationLink = () => {
     icon: function CalendarIcon(props: any) { return <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>; }
   });
   
+  // Regulamento - available for all roles
+  navigationItems.push({
+    label: "Regulamento",
+    path: "/regulamento",
+    icon: function BookIcon(props: any) { return <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>; }
+  });
+  
   // Minhas Inscrições - available for all roles
   navigationItems.push({
     label: "Inscrições",
-    path: "/athlete-registrations",
+    path: "/minhas-inscricoes",
     icon: function ClipboardIcon(props: any) { return <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/></svg>; }
-  });
-  
-  // Pontuações - available for all roles
-  navigationItems.push({
-    label: "Pontuações",
-    path: "/scores",
-    icon: function MedalIcon(props: any) { return <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.11"/><path d="M15 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/></svg>; }
   });
   
   // Role-specific items
   if (roles.isOrganizer) {
     navigationItems.push({
       label: "Organizador",
-      path: "/organizer-dashboard",
+      path: "/organizador",
       icon: function UsersIcon(props: any) { return <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>; }
     });
   }
@@ -137,8 +201,17 @@ export const MobileNavigationLink = () => {
   if (roles.isDelegationRep) {
     navigationItems.push({
       label: "Delegação",
-      path: "/delegation-dashboard",
+      path: "/delegacao",
       icon: function UsersIcon(props: any) { return <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>; }
+    });
+  }
+
+  // Filósofo Monitor - ÚNICA ENTRADA (matching desktop menu)
+  if (roles.isFilosofoMonitor) {
+    navigationItems.push({
+      label: "Filósofo Monitor",
+      path: "/monitor",
+      icon: UserCheck
     });
   }
   
@@ -159,22 +232,15 @@ export const MobileNavigationLink = () => {
   }
   
   // Default props
-  const defaultProps: MobileNavigationProps = {
+  const defaultProps = {
     navigationItems: navigationItems,
     currentPath: location.pathname,
-    userEvents: [],
+    userEvents: userEvents || [],
     onEventSwitch: (eventId: string) => {
       localStorage.setItem('currentEventId', eventId);
       window.location.reload();
     },
-    onLogout: async () => {
-      try {
-        await signOut();
-        navigate('/');
-      } catch (error) {
-        console.error('Error during logout:', error);
-      }
-    }
+    onLogout: handleLogout // Use our consistent logout handler
   };
   
   return <MobileNavigation {...defaultProps} />;
