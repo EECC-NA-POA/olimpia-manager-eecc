@@ -36,19 +36,28 @@ export const fetchUserProfiles = async (eventId: string | null) => {
       id,
       nome_completo,
       email,
+      numero_documento,
+      tipo_documento,
       filial_id,
+      created_at,
       filiais:filial_id (
         nome
       ),
-      papeis_usuarios (
+      papeis_usuarios!inner (
         perfil_id,
         evento_id,
         perfis:perfil_id (
           nome
         )
+      ),
+      pagamentos (
+        status,
+        valor,
+        created_at
       )
     `)
     .in('id', userIds)
+    .eq('papeis_usuarios.evento_id', eventId)
     .order('nome_completo');
 
   if (usersError) {
@@ -66,20 +75,32 @@ export const fetchUserProfiles = async (eventId: string | null) => {
       papel.evento_id === eventId
     ) || [];
 
+    // Get the most recent payment status
+    const latestPayment = user.pagamentos?.sort((a: any, b: any) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )[0];
+
     return {
       id: user.id,
       nome_completo: user.nome_completo,
       email: user.email,
+      numero_documento: user.numero_documento,
+      tipo_documento: user.tipo_documento,
       filial_id: user.filial_id,
+      created_at: user.created_at,
       filial_nome: user.filiais?.nome || 'Sem filial',
       profiles: eventRoles.map((papel: any) => ({
         perfil_id: papel.perfil_id,
         perfil_nome: papel.perfis?.nome || ''
-      }))
+      })),
+      pagamentos: user.pagamentos ? user.pagamentos.map((pagamento: any) => ({
+        status: pagamento.status
+      })) : []
     };
   });
 
   console.log('Formatted users count:', formattedUsers.length);
+  console.log('Formatted users sample:', formattedUsers[0]);
   return formattedUsers;
 };
 

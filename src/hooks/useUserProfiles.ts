@@ -79,11 +79,23 @@ export const useUserProfiles = (user: any, open: boolean, onOpenChange: (open: b
     enabled: open && !!user?.id && !!currentEventId
   });
 
+  // Fix the infinite loop by using a proper dependency array and condition
   useEffect(() => {
-    if (userProfiles) {
-      setSelectedProfiles(userProfiles.map(p => p.perfil_id));
+    if (open && userProfiles && userProfiles.length > 0) {
+      const profileIds = userProfiles.map(p => p.perfil_id);
+      // Only update if the profiles are actually different
+      setSelectedProfiles(prev => {
+        const prevSorted = [...prev].sort();
+        const newSorted = [...profileIds].sort();
+        if (JSON.stringify(prevSorted) !== JSON.stringify(newSorted)) {
+          return profileIds;
+        }
+        return prev;
+      });
+    } else if (open && userProfiles && userProfiles.length === 0) {
+      setSelectedProfiles([]);
     }
-  }, [userProfiles]);
+  }, [open, userProfiles]);
 
   // Find the user's current exclusive profile (if any)
   const currentExclusiveProfile = userProfiles.find(p => 

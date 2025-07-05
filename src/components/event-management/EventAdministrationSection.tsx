@@ -85,16 +85,16 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
     id: profile.id,
     nome_completo: profile.nome_completo,
     email: profile.email,
-    numero_documento: null, // Not available in current API
-    tipo_documento: null, // Not available in current API
+    numero_documento: profile.numero_documento,
+    tipo_documento: profile.tipo_documento,
     filial_id: profile.filial_id,
-    created_at: new Date().toISOString(), // Default since not available
+    created_at: profile.created_at,
     papeis: profile.profiles?.map((p: any) => ({
       id: p.perfil_id,
       nome: p.perfil_nome,
       codigo: p.perfil_nome || ''
     })) || [],
-    pagamentos: [] // Not available in current API
+    pagamentos: profile.pagamentos || []
   })) || [];
 
   // Convert branches to match expected format
