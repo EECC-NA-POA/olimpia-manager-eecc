@@ -8,12 +8,7 @@ import { UserProfileModal } from '@/components/dashboard/UserProfileModal';
 import { UserDeletionDialog } from '@/components/admin/UserDeletionDialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { UserProfile, Branch } from './types';
-
-interface UsersTableProps {
-  data: UserProfile[];
-  branches: Branch[];
-}
+import { UserProfile, Branch, UsersTableProps } from './types';
 
 export function UsersTable({ data, branches }: UsersTableProps) {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -118,7 +113,6 @@ export function UsersTable({ data, branches }: UsersTableProps) {
       {selectedUser && (
         <UserProfileModal
           user={selectedUser}
-          branches={branches}
           open={!!selectedUser}
           onOpenChange={(open) => !open && setSelectedUser(null)}
         />

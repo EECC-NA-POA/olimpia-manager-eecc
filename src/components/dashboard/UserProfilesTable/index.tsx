@@ -90,8 +90,8 @@ export const UserProfilesTable = ({ data, branches, isLoading }: UserProfilesTab
       </div>
 
       <UsersTable 
-        paginatedUsers={paginatedUsers}
-        setSelectedUser={setSelectedUser}
+        data={paginatedUsers}
+        branches={branches}
       />
 
       {filteredUsers.length > itemsPerPage && (
