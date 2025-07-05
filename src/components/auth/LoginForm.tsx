@@ -32,21 +32,28 @@ export const LoginForm = () => {
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
       setIsSubmitting(true);
-      console.log('Attempting login...');
+      console.log('🔐 Attempting login for:', values.email);
+      console.log('🔐 Login process starting...');
+      
       await signIn(values.email, values.password);
       
-      // After successful login, navigate to event selection
-      console.log('Login successful, navigating to event selection');
+      console.log('✅ Login successful, navigating to event selection');
       navigate('/event-selection', { replace: true });
       
     } catch (error: any) {
-      console.error("Login Error occurred");
+      console.error('❌ Login Error Details:', {
+        message: error.message,
+        code: error.code,
+        status: error.status,
+        name: error.name,
+        stack: error.stack
+      });
       
       // Clear password field for security
       form.setValue('password', '');
       
       if (error.message?.includes('Invalid login credentials')) {
-        // Show a more user-friendly message for invalid credentials
+        console.log('🔍 Invalid credentials detected');
         toast.error(
           <div className="flex flex-col gap-2">
             <p>Email ou senha incorretos</p>
@@ -67,6 +74,7 @@ export const LoginForm = () => {
           </div>
         );
       } else if (error.message?.toLowerCase().includes("email not confirmed")) {
+        console.log('📧 Email not confirmed detected');
         toast.error(
           <div className="flex flex-col gap-2">
             <p>Email não confirmado. Por favor, verifique sua caixa de entrada.</p>
@@ -80,12 +88,18 @@ export const LoginForm = () => {
           </div>
         );
       } else if (error.message?.includes("too many requests")) {
+        console.log('🚫 Rate limit detected');
         toast.error("Muitas tentativas de login. Por favor, aguarde alguns minutos.");
+      } else if (error.message?.includes("JWT") || error.message?.includes("connection")) {
+        console.log('🌐 Connection issue detected');
+        toast.error("Erro de conexão com o servidor. Verifique sua internet e tente novamente.");
       } else {
+        console.log('🔥 Generic error detected:', error.message);
         toast.error("Erro ao fazer login. Por favor, tente novamente mais tarde.");
       }
     } finally {
       setIsSubmitting(false);
+      console.log('🔐 Login process finished');
     }
   };
 
