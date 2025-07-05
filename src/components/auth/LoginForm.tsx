@@ -55,25 +55,7 @@ export const LoginForm = () => {
       if (error.message?.includes('Invalid login credentials') || 
           error.message?.includes('Email ou senha incorretos')) {
         console.log('🔍 Invalid credentials detected');
-        toast.error(
-          <div className="flex flex-col gap-2">
-            <p>Email ou senha incorretos</p>
-            <div className="text-sm flex flex-col gap-2">
-              <Link 
-                to="/forgot-password"
-                className="text-olimpics-green-primary hover:text-olimpics-green-secondary underline"
-              >
-                Esqueceu sua senha?
-              </Link>
-              <Link 
-                to="/"
-                className="text-olimpics-green-primary hover:text-olimpics-green-secondary"
-              >
-                Não possui uma conta? Registre-se aqui
-              </Link>
-            </div>
-          </div>
-        );
+        toast.error("Email ou senha incorretos");
       } else if (error.message?.toLowerCase().includes("email not confirmed")) {
         console.log('📧 Email not confirmed detected');
         toast.error(
