@@ -18,7 +18,7 @@ export interface UserProfile {
 }
 
 export interface Branch {
-  id: number;
+  id: string; // Changed to string to match api.ts
   nome: string;
   cidade?: string;
   estado?: string;

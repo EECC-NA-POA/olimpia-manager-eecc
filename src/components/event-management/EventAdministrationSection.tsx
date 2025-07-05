@@ -80,6 +80,31 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
 
   const totalUsers = userProfiles?.length || 0;
 
+  // Convert API data to match UserProfile interface
+  const formattedUserProfiles = userProfiles?.map((profile: any) => ({
+    id: profile.id,
+    nome_completo: profile.nome_completo,
+    email: profile.email,
+    numero_documento: null, // Not available in current API
+    tipo_documento: null, // Not available in current API
+    filial_id: profile.filial_id,
+    created_at: new Date().toISOString(), // Default since not available
+    papeis: profile.profiles?.map((p: any) => ({
+      id: p.perfil_id,
+      nome: p.perfil_nome,
+      codigo: p.perfil_nome || ''
+    })) || [],
+    pagamentos: [] // Not available in current API
+  })) || [];
+
+  // Convert branches to match expected format
+  const formattedBranches = branches?.map((branch: any) => ({
+    id: String(branch.id),
+    nome: branch.nome,
+    cidade: branch.cidade,
+    estado: branch.estado
+  })) || [];
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <Card className="border-olimpics-green-primary/20">
@@ -102,8 +127,8 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
         <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6 pb-3 sm:pb-6">
           <div className="overflow-x-auto">
             <UserProfilesTable
-              data={userProfiles || []}
-              branches={branches || []}
+              data={formattedUserProfiles}
+              branches={formattedBranches}
               isLoading={isLoadingProfiles}
             />
           </div>

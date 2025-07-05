@@ -24,7 +24,7 @@ export function UsersTable({ data, branches }: UsersTableProps) {
 
   const getBranchName = (branchId: number | null) => {
     if (!branchId) return 'N/A';
-    const branch = branches.find(b => b.id === branchId);
+    const branch = branches.find(b => String(b.id) === String(branchId));
     return branch ? branch.nome : 'Filial não encontrada';
   };
 

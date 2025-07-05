@@ -31,7 +31,7 @@ export const UserProfilesTable = ({ data, branches, isLoading }: UserProfilesTab
     const matchesSearch = 
       user.nome_completo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesBranch = branchFilter === "all" || user.filial_id === branchFilter;
+    const matchesBranch = branchFilter === "all" || String(user.filial_id) === branchFilter;
     return matchesSearch && matchesBranch;
   });
 
