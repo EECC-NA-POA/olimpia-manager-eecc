@@ -6,6 +6,7 @@ import { Users } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchUserProfiles, fetchBranches } from '@/lib/api';
 import { UserProfilesTable } from '@/components/dashboard/UserProfilesTable';
+import { UserCreationDialog } from '@/components/admin/UserCreationDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
@@ -92,6 +93,9 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
               <CardDescription className="mt-1 sm:mt-1.5 text-xs sm:text-sm">
                 Total de usuários registrados: {totalUsers}
               </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <UserCreationDialog />
             </div>
           </div>
         </CardHeader>
