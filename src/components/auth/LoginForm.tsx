@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -52,7 +51,9 @@ export const LoginForm = () => {
       // Clear password field for security
       form.setValue('password', '');
       
-      if (error.message?.includes('Invalid login credentials')) {
+      // Check for invalid credentials - both English and Portuguese messages
+      if (error.message?.includes('Invalid login credentials') || 
+          error.message?.includes('Email ou senha incorretos')) {
         console.log('🔍 Invalid credentials detected');
         toast.error(
           <div className="flex flex-col gap-2">
