@@ -29,7 +29,7 @@ export const fetchUserProfiles = async (eventId: string | null) => {
   const userIds = registeredUsers.map(registration => registration.usuario_id);
   console.log(`Found ${userIds.length} registered users for event ${eventId}`);
 
-  // Now fetch the detailed user information for these users
+  // Now fetch the detailed user information for these users - removed created_at since it doesn't exist
   const { data: users, error: usersError } = await supabase
     .from('usuarios')
     .select(`
@@ -39,7 +39,7 @@ export const fetchUserProfiles = async (eventId: string | null) => {
       numero_documento,
       tipo_documento,
       filial_id,
-      created_at,
+      data_criacao,
       filiais:filial_id (
         nome
       )
@@ -81,11 +81,11 @@ export const fetchUserProfiles = async (eventId: string | null) => {
       usuario_id,
       status,
       valor,
-      created_at
+      data_criacao
     `)
     .eq('evento_id', eventId)
     .in('usuario_id', userIds)
-    .order('created_at', { ascending: false });
+    .order('data_criacao', { ascending: false });
 
   if (paymentsError) {
     console.error('Error fetching payments:', paymentsError);
@@ -110,7 +110,7 @@ export const fetchUserProfiles = async (eventId: string | null) => {
       numero_documento: user.numero_documento,
       tipo_documento: user.tipo_documento,
       filial_id: user.filial_id,
-      created_at: user.created_at,
+      created_at: user.data_criacao, // Use data_criacao instead of created_at
       filial_nome: user.filiais?.nome || 'Sem filial',
       profiles: eventRoles.map((papel: any) => ({
         perfil_id: papel.perfil_id,
@@ -119,7 +119,7 @@ export const fetchUserProfiles = async (eventId: string | null) => {
       pagamentos: userPaymentsList.map((pagamento: any) => ({
         status: pagamento.status,
         valor: pagamento.valor,
-        created_at: pagamento.created_at
+        created_at: pagamento.data_criacao
       }))
     };
   });
