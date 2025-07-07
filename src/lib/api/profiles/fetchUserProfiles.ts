@@ -61,8 +61,8 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
     return [];
   }
 
-  // Fetch user profiles for this event separately
-  const { data: userProfiles, error: profilesError } = await supabase
+  // Fetch user profiles for this event separately - removed the filter by userIds to get all profiles
+  const { data: allUserProfiles, error: profilesError } = await supabase
     .from('papeis_usuarios')
     .select(`
       usuario_id,
@@ -71,15 +71,21 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
         nome
       )
     `)
-    .eq('evento_id', eventId)
-    .in('usuario_id', userIds);
+    .eq('evento_id', eventId);
 
   if (profilesError) {
     console.error('Error fetching user profiles:', profilesError);
     throw profilesError;
   }
 
-  console.log('User profiles data:', userProfiles);
+  console.log('All user profiles data:', allUserProfiles);
+
+  // Filter profiles for registered users only
+  const userProfiles = allUserProfiles?.filter(profile => 
+    userIds.includes(profile.usuario_id)
+  ) || [];
+
+  console.log('Filtered user profiles data:', userProfiles);
 
   // Fetch payments for these users - using atleta_id instead of usuario_id
   const { data: userPayments, error: paymentsError } = await supabase
