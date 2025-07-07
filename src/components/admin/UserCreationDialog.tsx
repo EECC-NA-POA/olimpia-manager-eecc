@@ -1,16 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserPlus, Eye, EyeOff, RefreshCw } from 'lucide-react';
+import { UserPlus, Eye, EyeOff, RefreshCw, Copy, Check } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUserManagement } from '@/hooks/useUserManagement';
 import { CreateUserData } from '@/services/userManagementService';
+import { toast } from 'sonner';
 
 const userCreationSchema = z.object({
   nome_completo: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
@@ -42,6 +42,7 @@ const generateRandomPassword = (): string => {
 export function UserCreationDialog({ trigger }: UserCreationDialogProps) {
   const [open, setOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordCopied, setPasswordCopied] = useState(false);
   const { createUser, isCreating } = useUserManagement();
 
   const {
@@ -65,6 +66,24 @@ export function UserCreationDialog({ trigger }: UserCreationDialogProps) {
   const handleGenerateNewPassword = () => {
     const newPassword = generateRandomPassword();
     setValue('senha', newPassword);
+    setPasswordCopied(false); // Reset copy status when generating new password
+  };
+
+  // Copiar senha para a área de transferência
+  const handleCopyPassword = async () => {
+    try {
+      await navigator.clipboard.writeText(senha);
+      setPasswordCopied(true);
+      toast.success('Senha copiada para a área de transferência!');
+      
+      // Reset copy status after 2 seconds
+      setTimeout(() => {
+        setPasswordCopied(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Erro ao copiar senha:', error);
+      toast.error('Erro ao copiar senha');
+    }
   };
 
   // Gerar senha aleatória quando o diálogo abre
@@ -89,6 +108,7 @@ export function UserCreationDialog({ trigger }: UserCreationDialogProps) {
     if (!newOpen) {
       reset();
       setShowPassword(false);
+      setPasswordCopied(false);
     }
   };
 
@@ -221,6 +241,24 @@ export function UserCreationDialog({ trigger }: UserCreationDialogProps) {
                     )}
                   </Button>
                 </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCopyPassword}
+                  className="gap-2"
+                >
+                  {passwordCopied ? (
+                    <>
+                      <Check className="h-4 w-4 text-green-500" />
+                      Copiado
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4" />
+                      Copiar
+                    </>
+                  )}
+                </Button>
                 <Button
                   type="button"
                   variant="outline"
