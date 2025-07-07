@@ -28,7 +28,7 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
 
   // Extract the user IDs from the registered users
   const userIds = registeredUsers.map(registration => registration.usuario_id);
-  console.log(`Found ${userIds.length} registered users for event ${eventId}`);
+  console.log(`Found ${userIds.length} registered users for event ${eventId}:`, userIds);
 
   // Now fetch the detailed user information for these users
   const { data: users, error: usersError } = await supabase
@@ -54,8 +54,12 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
   }
 
   console.log('Raw users data:', users);
+  console.log('Number of users fetched:', users?.length || 0);
 
-  if (!users) return [];
+  if (!users || users.length === 0) {
+    console.warn('No users found with the registered IDs');
+    return [];
+  }
 
   // Fetch user profiles for this event separately
   const { data: userProfiles, error: profilesError } = await supabase
@@ -75,6 +79,8 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
     throw profilesError;
   }
 
+  console.log('User profiles data:', userProfiles);
+
   // Fetch payments for these users - using atleta_id instead of usuario_id
   const { data: userPayments, error: paymentsError } = await supabase
     .from('pagamentos')
@@ -93,6 +99,8 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
     // Don't throw error for payments, just log it
   }
 
+  console.log('User payments data:', userPayments);
+
   const formattedUsers = users.map((user: any) => {
     // Get the user's roles for this event
     const eventRoles = userProfiles?.filter((papel: any) => 
@@ -107,7 +115,7 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
     // Get the most recent payment status
     const latestPayment = userPaymentsList.length > 0 ? userPaymentsList[0] : null;
 
-    return {
+    const formattedUser = {
       id: user.id,
       nome_completo: user.nome_completo,
       email: user.email,
@@ -128,9 +136,12 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
       // Add latest payment status for easy access
       status_pagamento: latestPayment?.status || 'pendente'
     };
+
+    console.log(`Formatted user ${user.nome_completo}:`, formattedUser);
+    return formattedUser;
   });
 
-  console.log('Formatted users count:', formattedUsers.length);
-  console.log('Formatted users sample:', formattedUsers[0]);
+  console.log('Final formatted users count:', formattedUsers.length);
+  console.log('All formatted users:', formattedUsers);
   return formattedUsers;
 };
