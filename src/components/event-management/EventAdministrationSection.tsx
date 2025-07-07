@@ -94,7 +94,9 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
       nome: p.perfil_nome,
       codigo: p.perfil_nome || ''
     })) || [],
-    pagamentos: profile.pagamentos || []
+    pagamentos: profile.pagamentos || [],
+    // Use the calculated status_pagamento from the API
+    status_pagamento: profile.status_pagamento || 'pendente'
   })) || [];
 
   // Convert branches to match expected format

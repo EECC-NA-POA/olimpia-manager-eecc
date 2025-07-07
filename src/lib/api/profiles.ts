@@ -29,7 +29,7 @@ export const fetchUserProfiles = async (eventId: string | null) => {
   const userIds = registeredUsers.map(registration => registration.usuario_id);
   console.log(`Found ${userIds.length} registered users for event ${eventId}`);
 
-  // Now fetch the detailed user information for these users - removed created_at since it doesn't exist
+  // Now fetch the detailed user information for these users
   const { data: users, error: usersError } = await supabase
     .from('usuarios')
     .select(`
@@ -74,17 +74,17 @@ export const fetchUserProfiles = async (eventId: string | null) => {
     throw profilesError;
   }
 
-  // Fetch payments for these users
+  // Fetch payments for these users - using atleta_id instead of usuario_id
   const { data: userPayments, error: paymentsError } = await supabase
     .from('pagamentos')
     .select(`
-      usuario_id,
+      atleta_id,
       status,
       valor,
       data_criacao
     `)
     .eq('evento_id', eventId)
-    .in('usuario_id', userIds)
+    .in('atleta_id', userIds)
     .order('data_criacao', { ascending: false });
 
   if (paymentsError) {
@@ -98,10 +98,13 @@ export const fetchUserProfiles = async (eventId: string | null) => {
       papel.usuario_id === user.id
     ) || [];
 
-    // Get the user's payments
+    // Get the user's payments - using atleta_id for matching
     const userPaymentsList = userPayments?.filter((payment: any) => 
-      payment.usuario_id === user.id
+      payment.atleta_id === user.id
     ) || [];
+
+    // Get the most recent payment status
+    const latestPayment = userPaymentsList.length > 0 ? userPaymentsList[0] : null;
 
     return {
       id: user.id,
@@ -110,7 +113,7 @@ export const fetchUserProfiles = async (eventId: string | null) => {
       numero_documento: user.numero_documento,
       tipo_documento: user.tipo_documento,
       filial_id: user.filial_id,
-      created_at: user.data_criacao, // Use data_criacao instead of created_at
+      created_at: user.data_criacao,
       filial_nome: user.filiais?.nome || 'Sem filial',
       profiles: eventRoles.map((papel: any) => ({
         perfil_id: papel.perfil_id,
@@ -120,7 +123,9 @@ export const fetchUserProfiles = async (eventId: string | null) => {
         status: pagamento.status,
         valor: pagamento.valor,
         created_at: pagamento.data_criacao
-      }))
+      })),
+      // Add latest payment status for easy access
+      status_pagamento: latestPayment?.status || 'pendente'
     };
   });
 
