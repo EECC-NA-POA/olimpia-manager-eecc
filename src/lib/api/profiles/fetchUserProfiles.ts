@@ -10,25 +10,25 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
     return [];
   }
 
-  // Query all users registered in this event through inscricoes_eventos
-  const { data: registeredUsers, error: registeredUsersError } = await supabase
-    .from('inscricoes_eventos')
+  // Query all users registered in this event through papeis_usuarios
+  const { data: userRoles, error: userRolesError } = await supabase
+    .from('papeis_usuarios')
     .select('usuario_id')
     .eq('evento_id', eventId);
 
-  if (registeredUsersError) {
-    console.error('Error fetching registered users:', registeredUsersError);
-    throw registeredUsersError;
+  if (userRolesError) {
+    console.error('Error fetching user roles:', userRolesError);
+    throw userRolesError;
   }
 
-  if (!registeredUsers || registeredUsers.length === 0) {
-    console.log('No registered users found for this event');
+  if (!userRoles || userRoles.length === 0) {
+    console.log('No users found for this event');
     return [];
   }
 
-  // Extract the user IDs from the registered users
-  const userIds = registeredUsers.map(registration => registration.usuario_id);
-  console.log(`Found ${userIds.length} registered users for event ${eventId}:`, userIds);
+  // Extract the unique user IDs from the user roles
+  const userIds = [...new Set(userRoles.map(role => role.usuario_id))];
+  console.log(`Found ${userIds.length} unique users for event ${eventId}:`, userIds);
 
   // Now fetch the detailed user information for these users
   const { data: users, error: usersError } = await supabase
@@ -61,7 +61,7 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
     return [];
   }
 
-  // Fetch user profiles for this event separately - removed the filter by userIds to get all profiles
+  // Fetch user profiles for this event
   const { data: allUserProfiles, error: profilesError } = await supabase
     .from('papeis_usuarios')
     .select(`
