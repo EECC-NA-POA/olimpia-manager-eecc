@@ -1,11 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,8 +17,8 @@ const userCreationSchema = z.object({
   email: z.string().email('Email inválido'),
   senha: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
   telefone: z.string().min(10, 'Telefone deve ter pelo menos 10 caracteres'),
-  tipo_documento: z.enum(['CPF', 'RG', 'CNH', 'Passaporte']),
-  numero_documento: z.string().min(5, 'Documento deve ter pelo menos 5 caracteres'),
+  tipo_documento: z.literal('CPF'),
+  numero_documento: z.string().min(11, 'CPF deve ter 11 dígitos').max(14, 'CPF inválido'),
   genero: z.enum(['Masculino', 'Feminino', 'Outro']),
   data_nascimento: z.string().min(1, 'Data de nascimento é obrigatória')
 });
@@ -29,8 +29,19 @@ interface UserCreationDialogProps {
   trigger?: React.ReactNode;
 }
 
+// Função para gerar senha aleatória
+const generateRandomPassword = (): string => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*';
+  let password = '';
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+};
+
 export function UserCreationDialog({ trigger }: UserCreationDialogProps) {
   const [open, setOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { createUser, isCreating } = useUserManagement();
 
   const {
@@ -41,8 +52,27 @@ export function UserCreationDialog({ trigger }: UserCreationDialogProps) {
     reset,
     formState: { errors }
   } = useForm<UserCreationFormData>({
-    resolver: zodResolver(userCreationSchema)
+    resolver: zodResolver(userCreationSchema),
+    defaultValues: {
+      tipo_documento: 'CPF',
+      senha: generateRandomPassword()
+    }
   });
+
+  const senha = watch('senha');
+
+  // Gerar nova senha aleatória
+  const handleGenerateNewPassword = () => {
+    const newPassword = generateRandomPassword();
+    setValue('senha', newPassword);
+  };
+
+  // Gerar senha aleatória quando o diálogo abre
+  useEffect(() => {
+    if (open) {
+      setValue('senha', generateRandomPassword());
+    }
+  }, [open, setValue]);
 
   const onSubmit = async (data: UserCreationFormData) => {
     try {
@@ -58,6 +88,7 @@ export function UserCreationDialog({ trigger }: UserCreationDialogProps) {
     setOpen(newOpen);
     if (!newOpen) {
       reset();
+      setShowPassword(false);
     }
   };
 
@@ -78,7 +109,7 @@ export function UserCreationDialog({ trigger }: UserCreationDialogProps) {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="nome_completo">Nome Completo</Label>
               <Input
                 id="nome_completo"
@@ -104,19 +135,6 @@ export function UserCreationDialog({ trigger }: UserCreationDialogProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="senha">Senha</Label>
-              <Input
-                id="senha"
-                type="password"
-                {...register('senha')}
-                placeholder="Senha do usuário"
-              />
-              {errors.senha && (
-                <p className="text-sm text-red-500">{errors.senha.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="telefone">Telefone</Label>
               <Input
                 id="telefone"
@@ -129,25 +147,16 @@ export function UserCreationDialog({ trigger }: UserCreationDialogProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tipo_documento">Tipo de Documento</Label>
-              <Select onValueChange={(value) => setValue('tipo_documento', value as any)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CPF">CPF</SelectItem>
-                  <SelectItem value="RG">RG</SelectItem>
-                  <SelectItem value="CNH">CNH</SelectItem>
-                  <SelectItem value="Passaporte">Passaporte</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.tipo_documento && (
-                <p className="text-sm text-red-500">{errors.tipo_documento.message}</p>
-              )}
+              <Label>Tipo de Documento</Label>
+              <Input
+                value="CPF"
+                disabled
+                className="bg-gray-100"
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="numero_documento">Número do Documento</Label>
+              <Label htmlFor="numero_documento">Número do CPF</Label>
               <Input
                 id="numero_documento"
                 {...register('numero_documento')}
@@ -184,6 +193,46 @@ export function UserCreationDialog({ trigger }: UserCreationDialogProps) {
               />
               {errors.data_nascimento && (
                 <p className="text-sm text-red-500">{errors.data_nascimento.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="senha">Senha (gerada automaticamente)</Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    id="senha"
+                    type={showPassword ? "text" : "password"}
+                    {...register('senha')}
+                    className="pr-10"
+                    readOnly
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGenerateNewPassword}
+                  className="gap-2"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Nova Senha
+                </Button>
+              </div>
+              {errors.senha && (
+                <p className="text-sm text-red-500">{errors.senha.message}</p>
               )}
             </div>
           </div>
