@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -22,18 +21,7 @@ export interface UserDeletionOptions {
 class UserManagementService {
   async checkUserExists(email: string, documento?: string) {
     try {
-      // Verificar se existe em auth.users
-      const { data: authUser, error: authError } = await supabase
-        .from('auth.users')
-        .select('email')
-        .eq('email', email)
-        .single();
-
-      if (authError && authError.code !== 'PGRST116') {
-        throw authError;
-      }
-
-      // Verificar se existe em public.usuarios
+      // Verificar se existe em public.usuarios (não em auth.users via query)
       let publicUserByEmail = null;
       let publicUserByDoc = null;
 
@@ -62,7 +50,7 @@ class UserManagementService {
       }
 
       return {
-        existsInAuth: !!authUser,
+        existsInAuth: false, // Não podemos verificar auth.users via query direta
         existsInPublicByEmail: !!publicUserByEmail,
         existsInPublicByDocument: !!publicUserByDoc
       };
@@ -76,10 +64,6 @@ class UserManagementService {
     try {
       // Verificar existência antes de criar
       const exists = await this.checkUserExists(userData.email, userData.numero_documento);
-      
-      if (exists.existsInAuth) {
-        throw new Error('Já existe um usuário com este email no sistema de autenticação');
-      }
       
       if (exists.existsInPublicByEmail) {
         throw new Error('Já existe um usuário com este email na base de dados');
