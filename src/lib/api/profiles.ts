@@ -42,22 +42,9 @@ export const fetchUserProfiles = async (eventId: string | null) => {
       created_at,
       filiais:filial_id (
         nome
-      ),
-      papeis_usuarios!inner (
-        perfil_id,
-        evento_id,
-        perfis:perfil_id (
-          nome
-        )
-      ),
-      pagamentos (
-        status,
-        valor,
-        created_at
       )
     `)
     .in('id', userIds)
-    .eq('papeis_usuarios.evento_id', eventId)
     .order('nome_completo');
 
   if (usersError) {
@@ -69,16 +56,52 @@ export const fetchUserProfiles = async (eventId: string | null) => {
 
   if (!users) return [];
 
+  // Fetch user profiles for this event separately
+  const { data: userProfiles, error: profilesError } = await supabase
+    .from('papeis_usuarios')
+    .select(`
+      usuario_id,
+      perfil_id,
+      perfis:perfil_id (
+        nome
+      )
+    `)
+    .eq('evento_id', eventId)
+    .in('usuario_id', userIds);
+
+  if (profilesError) {
+    console.error('Error fetching user profiles:', profilesError);
+    throw profilesError;
+  }
+
+  // Fetch payments for these users
+  const { data: userPayments, error: paymentsError } = await supabase
+    .from('pagamentos')
+    .select(`
+      usuario_id,
+      status,
+      valor,
+      created_at
+    `)
+    .eq('evento_id', eventId)
+    .in('usuario_id', userIds)
+    .order('created_at', { ascending: false });
+
+  if (paymentsError) {
+    console.error('Error fetching payments:', paymentsError);
+    // Don't throw error for payments, just log it
+  }
+
   const formattedUsers = users.map((user: any) => {
-    // Filter the user's roles to only include those for the current event
-    const eventRoles = user.papeis_usuarios?.filter((papel: any) => 
-      papel.evento_id === eventId
+    // Get the user's roles for this event
+    const eventRoles = userProfiles?.filter((papel: any) => 
+      papel.usuario_id === user.id
     ) || [];
 
-    // Get the most recent payment status
-    const latestPayment = user.pagamentos?.sort((a: any, b: any) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    )[0];
+    // Get the user's payments
+    const userPaymentsList = userPayments?.filter((payment: any) => 
+      payment.usuario_id === user.id
+    ) || [];
 
     return {
       id: user.id,
@@ -93,9 +116,11 @@ export const fetchUserProfiles = async (eventId: string | null) => {
         perfil_id: papel.perfil_id,
         perfil_nome: papel.perfis?.nome || ''
       })),
-      pagamentos: user.pagamentos ? user.pagamentos.map((pagamento: any) => ({
-        status: pagamento.status
-      })) : []
+      pagamentos: userPaymentsList.map((pagamento: any) => ({
+        status: pagamento.status,
+        valor: pagamento.valor,
+        created_at: pagamento.created_at
+      }))
     };
   });
 
