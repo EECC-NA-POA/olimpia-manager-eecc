@@ -29,6 +29,7 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
   // Extract the unique user IDs from the user roles
   const userIds = [...new Set(userRoles.map(role => role.usuario_id))];
   console.log(`Found ${userIds.length} unique users for event ${eventId}:`, userIds);
+  console.log('UserRoles data:', userRoles);
 
   // Now fetch the detailed user information for these users
   const { data: users, error: usersError } = await supabase
