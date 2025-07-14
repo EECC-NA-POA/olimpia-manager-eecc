@@ -24,6 +24,7 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
   
   console.log('EventAdministrationSection - EventId:', eventId);
   console.log('EventAdministrationSection - User:', user);
+  console.log('EventAdministrationSection - User papeis:', user?.papeis);
   console.log('EventAdministrationSection - HasAdminProfile:', hasAdminProfile);
 
   const { 
@@ -37,7 +38,8 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
       console.log('Executing fetchUserProfiles query with eventId:', eventId);
       return fetchUserProfiles(eventId);
     },
-    enabled: hasAdminProfile && !!eventId
+    enabled: !!eventId, // Temporarily remove admin check to debug
+    staleTime: 0 // Force fresh data
   });
   
   console.log('EventAdministrationSection - UserProfiles data:', userProfiles);
