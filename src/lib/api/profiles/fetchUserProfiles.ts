@@ -10,165 +10,152 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
     return [];
   }
 
-  // Query all users registered in this event through inscricoes_eventos
-  console.log('========== STARTING QUERY ==========');
-  console.log('Querying inscricoes_eventos for event:', eventId);
-  console.log('Event ID type:', typeof eventId);
-  
-  const { data: userRoles, error: userRolesError } = await supabase
-    .from('inscricoes_eventos')
-    .select('usuario_id')
-    .eq('evento_id', eventId);
-    
-  console.log('========== PAPEIS_USUARIOS RESULT ==========');
-  console.log('Raw papeis_usuarios query result:', userRoles);
-  console.log('Number of records found:', userRoles?.length || 0);
-  console.log('papeis_usuarios query error:', userRolesError);
-  console.log('============================================');
+  try {
+    // Use the same logic as fetchAthleteManagement - query the view directly
+    const { data: athletesData, error: athletesError } = await supabase
+      .from('vw_athletes_management')
+      .select('*')
+      .eq('evento_id', eventId);
 
-  if (userRolesError) {
-    console.error('Error fetching user roles:', userRolesError);
-    throw userRolesError;
-  }
+    if (athletesError) {
+      console.error('Error fetching athletes from view:', athletesError);
+      throw athletesError;
+    }
 
-  if (!userRoles || userRoles.length === 0) {
-    console.log('No users found for this event');
-    return [];
-  }
+    console.log('Raw athletes data from view:', athletesData);
+    console.log('Number of athletes from view:', athletesData?.length || 0);
 
-  // Extract the unique user IDs from the user roles
-  const userIds = [...new Set(userRoles.map(role => role.usuario_id))];
-  console.log(`Found ${userIds.length} unique users for event ${eventId}:`, userIds);
-  console.log('UserRoles data:', userRoles);
-  
-  // Filter out null/undefined userIds to avoid query issues
-  const validUserIds = userIds.filter(id => id != null && id !== '');
-  console.log(`Valid user IDs after filtering: ${validUserIds.length}`, validUserIds);
-  
-  if (validUserIds.length === 0) {
-    console.warn('No valid user IDs found after filtering');
-    return [];
-  }
+    if (!athletesData || athletesData.length === 0) {
+      console.log('No athletes found for this event');
+      return [];
+    }
 
-  // Now fetch the detailed user information for these users
-  console.log('Executing users query with IDs:', validUserIds);
-  const { data: users, error: usersError } = await supabase
-    .from('usuarios')
-    .select(`
-      id,
-      nome_completo,
-      email,
-      numero_documento,
-      tipo_documento,
-      filial_id,
-      data_criacao,
-      filiais:filial_id (
-        nome
-      )
-    `)
-    .in('id', validUserIds)
-    .order('nome_completo');
+    // Get unique user IDs
+    const userIds = [...new Set(athletesData.map(athlete => athlete.atleta_id))];
+    console.log(`Found ${userIds.length} unique users for event ${eventId}:`, userIds);
 
-  if (usersError) {
-    console.error('Error fetching users:', usersError);
-    throw usersError;
-  }
+    // Now fetch the detailed user information for these users
+    const { data: users, error: usersError } = await supabase
+      .from('usuarios')
+      .select(`
+        id,
+        nome_completo,
+        email,
+        numero_documento,
+        tipo_documento,
+        filial_id,
+        data_criacao,
+        filiais:filial_id (
+          nome
+        )
+      `)
+      .in('id', userIds)
+      .order('nome_completo');
 
-  console.log('Raw users data:', users);
-  console.log('Number of users fetched:', users?.length || 0);
+    if (usersError) {
+      console.error('Error fetching users:', usersError);
+      throw usersError;
+    }
 
-  if (!users || users.length === 0) {
-    console.warn('No users found with the registered IDs');
-    return [];
-  }
+    console.log('Users data:', users);
+    console.log('Number of users fetched:', users?.length || 0);
 
-  // Fetch user profiles for this event
-  const { data: allUserProfiles, error: profilesError } = await supabase
-    .from('papeis_usuarios')
-    .select(`
-      usuario_id,
-      perfil_id,
-      perfis:perfil_id (
-        nome
-      )
-    `)
-    .eq('evento_id', eventId);
+    if (!users || users.length === 0) {
+      console.warn('No users found with the registered IDs');
+      return [];
+    }
 
-  if (profilesError) {
-    console.error('Error fetching user profiles:', profilesError);
-    throw profilesError;
-  }
+    // Fetch user profiles for this event
+    const { data: allUserProfiles, error: profilesError } = await supabase
+      .from('papeis_usuarios')
+      .select(`
+        usuario_id,
+        perfil_id,
+        perfis:perfil_id (
+          nome
+        )
+      `)
+      .eq('evento_id', eventId);
 
-  console.log('All user profiles data:', allUserProfiles);
+    if (profilesError) {
+      console.error('Error fetching user profiles:', profilesError);
+      // Don't throw error for profiles, just log it
+    }
 
-  // Filter profiles for registered users only
-  const userProfiles = allUserProfiles?.filter(profile => 
-    validUserIds.includes(profile.usuario_id)
-  ) || [];
+    console.log('All user profiles data:', allUserProfiles);
 
-  console.log('Filtered user profiles data:', userProfiles);
-
-  // Fetch payments for these users - using atleta_id instead of usuario_id
-  const { data: userPayments, error: paymentsError } = await supabase
-    .from('pagamentos')
-    .select(`
-      atleta_id,
-      status,
-      valor,
-      data_criacao
-    `)
-    .eq('evento_id', eventId)
-    .in('atleta_id', validUserIds)
-    .order('data_criacao', { ascending: false });
-
-  if (paymentsError) {
-    console.error('Error fetching payments:', paymentsError);
-    // Don't throw error for payments, just log it
-  }
-
-  console.log('User payments data:', userPayments);
-
-  const formattedUsers = users.map((user: any) => {
-    // Get the user's roles for this event
-    const eventRoles = userProfiles?.filter((papel: any) => 
-      papel.usuario_id === user.id
+    // Filter profiles for registered users only
+    const userProfiles = allUserProfiles?.filter(profile => 
+      userIds.includes(profile.usuario_id)
     ) || [];
 
-    // Get the user's payments - using atleta_id for matching
-    const userPaymentsList = userPayments?.filter((payment: any) => 
-      payment.atleta_id === user.id
-    ) || [];
+    console.log('Filtered user profiles data:', userProfiles);
 
-    // Get the most recent payment status
-    const latestPayment = userPaymentsList.length > 0 ? userPaymentsList[0] : null;
+    // Fetch payments for these users
+    const { data: userPayments, error: paymentsError } = await supabase
+      .from('pagamentos')
+      .select(`
+        atleta_id,
+        status,
+        valor,
+        data_criacao
+      `)
+      .eq('evento_id', eventId)
+      .in('atleta_id', userIds)
+      .order('data_criacao', { ascending: false });
 
-    const formattedUser = {
-      id: user.id,
-      nome_completo: user.nome_completo,
-      email: user.email,
-      numero_documento: user.numero_documento,
-      tipo_documento: user.tipo_documento,
-      filial_id: user.filial_id,
-      created_at: user.data_criacao,
-      filial_nome: user.filiais?.nome || 'Sem filial',
-      profiles: eventRoles.map((papel: any) => ({
-        perfil_id: papel.perfil_id,
-        perfil_nome: papel.perfis?.nome || ''
-      })),
-      pagamentos: userPaymentsList.map((pagamento: any) => ({
-        status: pagamento.status,
-        valor: pagamento.valor,
-        created_at: pagamento.data_criacao
-      })),
-      // Add latest payment status for easy access
-      status_pagamento: latestPayment?.status || 'pendente'
-    };
+    if (paymentsError) {
+      console.error('Error fetching payments:', paymentsError);
+      // Don't throw error for payments, just log it
+    }
 
-    console.log(`Formatted user ${user.nome_completo}:`, formattedUser);
-    return formattedUser;
-  });
+    console.log('User payments data:', userPayments);
 
-  console.log('Final formatted users count:', formattedUsers.length);
-  console.log('All formatted users:', formattedUsers);
-  return formattedUsers;
+    const formattedUsers = users.map((user: any) => {
+      // Get the user's roles for this event
+      const eventRoles = userProfiles?.filter((papel: any) => 
+        papel.usuario_id === user.id
+      ) || [];
+
+      // Get the user's payments
+      const userPaymentsList = userPayments?.filter((payment: any) => 
+        payment.atleta_id === user.id
+      ) || [];
+
+      // Get the most recent payment status
+      const latestPayment = userPaymentsList.length > 0 ? userPaymentsList[0] : null;
+
+      const formattedUser = {
+        id: user.id,
+        nome_completo: user.nome_completo,
+        email: user.email,
+        numero_documento: user.numero_documento,
+        tipo_documento: user.tipo_documento,
+        filial_id: user.filial_id,
+        created_at: user.data_criacao,
+        filial_nome: user.filiais?.nome || 'Sem filial',
+        profiles: eventRoles.map((papel: any) => ({
+          perfil_id: papel.perfil_id,
+          perfil_nome: papel.perfis?.nome || ''
+        })),
+        pagamentos: userPaymentsList.map((pagamento: any) => ({
+          status: pagamento.status,
+          valor: pagamento.valor,
+          created_at: pagamento.data_criacao
+        })),
+        // Add latest payment status for easy access
+        status_pagamento: latestPayment?.status || 'pendente'
+      };
+
+      console.log(`Formatted user ${user.nome_completo}:`, formattedUser);
+      return formattedUser;
+    });
+
+    console.log('Final formatted users count:', formattedUsers.length);
+    console.log('All formatted users:', formattedUsers);
+    return formattedUsers;
+  } catch (error) {
+    console.error('Error in fetchUserProfiles:', error);
+    throw error;
+  }
 };
