@@ -11,10 +11,14 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
   }
 
   // Query all users registered in this event through papeis_usuarios
+  console.log('Querying papeis_usuarios for event:', eventId);
   const { data: userRoles, error: userRolesError } = await supabase
     .from('papeis_usuarios')
     .select('usuario_id')
     .eq('evento_id', eventId);
+    
+  console.log('Raw papeis_usuarios query result:', userRoles);
+  console.log('papeis_usuarios query error:', userRolesError);
 
   if (userRolesError) {
     console.error('Error fetching user roles:', userRolesError);
