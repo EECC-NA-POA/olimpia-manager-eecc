@@ -10,14 +10,14 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
     return [];
   }
 
-  // Query all users registered in this event through papeis_usuarios
+  // Query all users registered in this event through inscricoes_eventos
   console.log('========== STARTING QUERY ==========');
-  console.log('Querying papeis_usuarios for event:', eventId);
+  console.log('Querying inscricoes_eventos for event:', eventId);
   console.log('Event ID type:', typeof eventId);
   
   const { data: userRoles, error: userRolesError } = await supabase
-    .from('papeis_usuarios')
-    .select('*') // Get all columns to debug
+    .from('inscricoes_eventos')
+    .select('usuario_id')
     .eq('evento_id', eventId);
     
   console.log('========== PAPEIS_USUARIOS RESULT ==========');
