@@ -21,16 +21,28 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
 
   // Check if user has admin profile
   const hasAdminProfile = user?.papeis?.some(role => role.codigo === 'ADM');
+  
+  console.log('EventAdministrationSection - EventId:', eventId);
+  console.log('EventAdministrationSection - User:', user);
+  console.log('EventAdministrationSection - HasAdminProfile:', hasAdminProfile);
 
   const { 
     data: userProfiles,
     isLoading: isLoadingProfiles,
-    refetch: refetchUserProfiles
+    refetch: refetchUserProfiles,
+    error: profilesError
   } = useQuery({
     queryKey: ['user-profiles', eventId],
-    queryFn: () => fetchUserProfiles(eventId),
+    queryFn: () => {
+      console.log('Executing fetchUserProfiles query with eventId:', eventId);
+      return fetchUserProfiles(eventId);
+    },
     enabled: hasAdminProfile && !!eventId
   });
+  
+  console.log('EventAdministrationSection - UserProfiles data:', userProfiles);
+  console.log('EventAdministrationSection - ProfilesError:', profilesError);
+  console.log('EventAdministrationSection - IsLoadingProfiles:', isLoadingProfiles);
 
   const { 
     data: branches
