@@ -30,8 +30,18 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
   const userIds = [...new Set(userRoles.map(role => role.usuario_id))];
   console.log(`Found ${userIds.length} unique users for event ${eventId}:`, userIds);
   console.log('UserRoles data:', userRoles);
+  
+  // Filter out null/undefined userIds to avoid query issues
+  const validUserIds = userIds.filter(id => id != null && id !== '');
+  console.log(`Valid user IDs after filtering: ${validUserIds.length}`, validUserIds);
+  
+  if (validUserIds.length === 0) {
+    console.warn('No valid user IDs found after filtering');
+    return [];
+  }
 
   // Now fetch the detailed user information for these users
+  console.log('Executing users query with IDs:', validUserIds);
   const { data: users, error: usersError } = await supabase
     .from('usuarios')
     .select(`
@@ -46,7 +56,7 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
         nome
       )
     `)
-    .in('id', userIds)
+    .in('id', validUserIds)
     .order('nome_completo');
 
   if (usersError) {
@@ -83,7 +93,7 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
 
   // Filter profiles for registered users only
   const userProfiles = allUserProfiles?.filter(profile => 
-    userIds.includes(profile.usuario_id)
+    validUserIds.includes(profile.usuario_id)
   ) || [];
 
   console.log('Filtered user profiles data:', userProfiles);
@@ -98,7 +108,7 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
       data_criacao
     `)
     .eq('evento_id', eventId)
-    .in('atleta_id', userIds)
+    .in('atleta_id', validUserIds)
     .order('data_criacao', { ascending: false });
 
   if (paymentsError) {
