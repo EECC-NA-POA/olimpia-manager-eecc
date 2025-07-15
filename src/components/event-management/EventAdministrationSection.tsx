@@ -50,10 +50,17 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
   } = useQuery({
     queryKey: ['user-profiles-roles', eventId],
     queryFn: async () => {
-      if (!eventId || !athletes?.length) return [];
+      if (!eventId || !athletes?.length) {
+        console.log('===== NO EVENT ID OR ATHLETES =====');
+        console.log('EventId:', eventId);
+        console.log('Athletes length:', athletes?.length);
+        return [];
+      }
       
       console.log('===== FETCHING USER PROFILES =====');
       const userIds = athletes.map(athlete => athlete.id);
+      console.log('User IDs to fetch profiles for:', userIds);
+      console.log('Event ID:', eventId);
       
       const { data: profilesData, error } = await supabase
         .from('papeis_usuarios')
@@ -68,12 +75,17 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
         .eq('evento_id', eventId)
         .in('usuario_id', userIds);
 
+      console.log('===== PROFILES QUERY RESULT =====');
+      console.log('Profiles data:', profilesData);
+      console.log('Profiles error:', error);
+      console.log('Profiles count:', profilesData?.length || 0);
+      console.log('==================================');
+
       if (error) {
         console.error('Error fetching user profiles:', error);
         return [];
       }
 
-      console.log('User profiles data:', profilesData);
       return profilesData || [];
     },
     enabled: !!eventId && hasAdminProfile && !!athletes?.length,
@@ -143,6 +155,16 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
     const athleteProfiles = userProfiles?.filter((profile: any) => 
       profile.usuario_id === athlete.id
     ) || [];
+
+    console.log(`===== ATHLETE ${athlete.nome_atleta} =====`);
+    console.log('Athlete ID:', athlete.id);
+    console.log('Found profiles:', athleteProfiles);
+    console.log('Profiles mapped:', athleteProfiles.map((profile: any) => ({
+      id: profile.perfil_id,
+      nome: profile.perfis?.nome || '',
+      codigo: profile.perfis?.codigo || ''
+    })));
+    console.log('=======================================');
 
     return {
       id: athlete.id,
