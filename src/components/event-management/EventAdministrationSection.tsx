@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchAthleteManagement, fetchBranches } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 import { UserProfilesTable } from '@/components/dashboard/UserProfilesTable';
 import { UserCreationDialog } from '@/components/admin/UserCreationDialog';
 import { useAuth } from '@/contexts/AuthContext';
@@ -41,11 +42,50 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
     enabled: !!eventId && hasAdminProfile,
     staleTime: 0
   });
+
+  // Fetch user profiles for this event
+  const { 
+    data: userProfiles,
+    isLoading: isLoadingProfiles
+  } = useQuery({
+    queryKey: ['user-profiles-roles', eventId],
+    queryFn: async () => {
+      if (!eventId || !athletes?.length) return [];
+      
+      console.log('===== FETCHING USER PROFILES =====');
+      const userIds = athletes.map(athlete => athlete.id);
+      
+      const { data: profilesData, error } = await supabase
+        .from('papeis_usuarios')
+        .select(`
+          usuario_id,
+          perfil_id,
+          perfis:perfil_id (
+            nome,
+            codigo
+          )
+        `)
+        .eq('evento_id', eventId)
+        .in('usuario_id', userIds);
+
+      if (error) {
+        console.error('Error fetching user profiles:', error);
+        return [];
+      }
+
+      console.log('User profiles data:', profilesData);
+      return profilesData || [];
+    },
+    enabled: !!eventId && hasAdminProfile && !!athletes?.length,
+    staleTime: 0
+  });
   
   console.log('===== ATHLETES DATA =====');
   console.log('Athletes:', athletes);
   console.log('Athletes count:', athletes?.length);
-  console.log('Loading:', isLoadingAthletes);
+  console.log('User Profiles:', userProfiles);
+  console.log('Loading athletes:', isLoadingAthletes);
+  console.log('Loading profiles:', isLoadingProfiles);
   console.log('Error:', athletesError);
   console.log('========================');
 
@@ -59,7 +99,7 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
 
   // Set up event listener for profile updates
   useEffect(() => {
-    const handleProfileUpdate = () => {
+  const handleProfileUpdate = () => {
       console.log('Profile update detected, refreshing data...');
       refetchAthletes();
     };
@@ -98,22 +138,33 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
   const totalUsers = athletes?.length || 0;
 
   // Convert AthleteManagement data to UserProfile format
-  const formattedUserProfiles = athletes?.map((athlete: any) => ({
-    id: athlete.id,
-    nome_completo: athlete.nome_atleta,
-    email: athlete.email,
-    numero_documento: athlete.numero_documento,
-    tipo_documento: athlete.tipo_documento,
-    filial_id: athlete.filial_id,
-    created_at: new Date().toISOString(), // Use current date as fallback
-    papeis: [], // Athletes don't have specific roles in this context
-    pagamentos: athlete.modalidades?.map((mod: any) => ({
-      status: athlete.status_pagamento,
-      valor: 0,
-      created_at: new Date().toISOString()
-    })) || [],
-    status_pagamento: athlete.status_pagamento || 'pendente'
-  })) || [];
+  const formattedUserProfiles = athletes?.map((athlete: any) => {
+    // Get the user's profiles for this event
+    const athleteProfiles = userProfiles?.filter((profile: any) => 
+      profile.usuario_id === athlete.id
+    ) || [];
+
+    return {
+      id: athlete.id,
+      nome_completo: athlete.nome_atleta,
+      email: athlete.email,
+      numero_documento: athlete.numero_documento,
+      tipo_documento: athlete.tipo_documento,
+      filial_id: athlete.filial_id,
+      created_at: new Date().toISOString(), // Use current date as fallback
+      papeis: athleteProfiles.map((profile: any) => ({
+        id: profile.perfil_id,
+        nome: profile.perfis?.nome || '',
+        codigo: profile.perfis?.codigo || ''
+      })),
+      pagamentos: athlete.modalidades?.map((mod: any) => ({
+        status: athlete.status_pagamento,
+        valor: 0,
+        created_at: new Date().toISOString()
+      })) || [],
+      status_pagamento: athlete.status_pagamento || 'pendente'
+    };
+  }) || [];
 
   // Convert branches to match expected format
   const formattedBranches = branches?.map((branch: any) => ({
@@ -147,7 +198,7 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
             <UserProfilesTable
               data={formattedUserProfiles}
               branches={formattedBranches}
-              isLoading={isLoadingAthletes}
+              isLoading={isLoadingAthletes || isLoadingProfiles}
             />
           </div>
         </CardContent>
