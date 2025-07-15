@@ -16,12 +16,7 @@ export const PrivacyPolicySection = ({ form }: PrivacyPolicySectionProps) => {
     setShowPolicyModal(true);
   };
 
-  const handleAcceptPolicy = () => {
-    form.setValue('acceptPrivacyPolicy', true);
-    setShowPolicyModal(false);
-  };
-
-  const handleCancelPolicy = () => {
+  const handleClosePolicy = () => {
     setShowPolicyModal(false);
   };
 
@@ -58,7 +53,7 @@ export const PrivacyPolicySection = ({ form }: PrivacyPolicySectionProps) => {
 
       {showPolicyModal && (
         <PrivacyPolicySectionModal
-          onViewPrivacyPolicy={() => {}}
+          onClose={handleClosePolicy}
         />
       )}
     </>
