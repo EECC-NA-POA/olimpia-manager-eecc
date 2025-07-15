@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchUserProfiles, fetchBranches } from '@/lib/api';
+import { fetchAthleteManagement, fetchBranches } from '@/lib/api';
 import { UserProfilesTable } from '@/components/dashboard/UserProfilesTable';
 import { UserCreationDialog } from '@/components/admin/UserCreationDialog';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,34 +23,31 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
   const hasAdminProfile = user?.papeis?.some(role => role.codigo === 'ADM');
   
   console.log('EventAdministrationSection - EventId:', eventId);
-  console.log('EventAdministrationSection - User:', user);
-  console.log('EventAdministrationSection - User papeis:', user?.papeis);
   console.log('EventAdministrationSection - HasAdminProfile:', hasAdminProfile);
 
+  // Use the SAME query that works in AthletesTab - fetchAthleteManagement
   const { 
-    data: userProfiles,
-    isLoading: isLoadingProfiles,
-    refetch: refetchUserProfiles,
-    error: profilesError
+    data: athletes,
+    isLoading: isLoadingAthletes,
+    refetch: refetchAthletes,
+    error: athletesError
   } = useQuery({
-    queryKey: ['user-profiles', eventId],
+    queryKey: ['athlete-management', eventId, false], // Same key as AthletesTab
     queryFn: () => {
-      console.log('===== USEQUERY EXECUTING =====');
-      console.log('EventId in useQuery:', eventId);
-      console.log('Type of eventId:', typeof eventId);
-      console.log('============================');
-      return fetchUserProfiles(eventId);
+      console.log('===== USING fetchAthleteManagement =====');
+      console.log('EventId:', eventId);
+      return fetchAthleteManagement(false, eventId); // Same function as AthletesTab
     },
-    enabled: !!eventId, // Temporarily remove admin check to debug
-    staleTime: 0 // Force fresh data
+    enabled: !!eventId && hasAdminProfile,
+    staleTime: 0
   });
   
-  console.log('===== COMPONENT STATE =====');
-  console.log('EventAdministrationSection - UserProfiles data:', userProfiles);
-  console.log('EventAdministrationSection - UserProfiles length:', userProfiles?.length);
-  console.log('EventAdministrationSection - ProfilesError:', profilesError);
-  console.log('EventAdministrationSection - IsLoadingProfiles:', isLoadingProfiles);
-  console.log('===========================');
+  console.log('===== ATHLETES DATA =====');
+  console.log('Athletes:', athletes);
+  console.log('Athletes count:', athletes?.length);
+  console.log('Loading:', isLoadingAthletes);
+  console.log('Error:', athletesError);
+  console.log('========================');
 
   const { 
     data: branches
@@ -64,7 +61,7 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
   useEffect(() => {
     const handleProfileUpdate = () => {
       console.log('Profile update detected, refreshing data...');
-      refetchUserProfiles();
+      refetchAthletes();
     };
 
     window.addEventListener('profile-updated', handleProfileUpdate);
@@ -72,7 +69,7 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
     return () => {
       window.removeEventListener('profile-updated', handleProfileUpdate);
     };
-  }, [refetchUserProfiles, queryClient]);
+  }, [refetchAthletes, queryClient]);
 
   if (!eventId) {
     return (
@@ -98,25 +95,24 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
     );
   }
 
-  const totalUsers = userProfiles?.length || 0;
+  const totalUsers = athletes?.length || 0;
 
-  // Convert API data to match UserProfile interface
-  const formattedUserProfiles = userProfiles?.map((profile: any) => ({
-    id: profile.id,
-    nome_completo: profile.nome_completo,
-    email: profile.email,
-    numero_documento: profile.numero_documento,
-    tipo_documento: profile.tipo_documento,
-    filial_id: profile.filial_id,
-    created_at: profile.created_at,
-    papeis: profile.profiles?.map((p: any) => ({
-      id: p.perfil_id,
-      nome: p.perfil_nome,
-      codigo: p.perfil_nome || ''
+  // Convert AthleteManagement data to UserProfile format
+  const formattedUserProfiles = athletes?.map((athlete: any) => ({
+    id: athlete.id,
+    nome_completo: athlete.nome_atleta,
+    email: athlete.email,
+    numero_documento: athlete.numero_documento,
+    tipo_documento: athlete.tipo_documento,
+    filial_id: athlete.filial_id,
+    created_at: new Date().toISOString(), // Use current date as fallback
+    papeis: [], // Athletes don't have specific roles in this context
+    pagamentos: athlete.modalidades?.map((mod: any) => ({
+      status: athlete.status_pagamento,
+      valor: 0,
+      created_at: new Date().toISOString()
     })) || [],
-    pagamentos: profile.pagamentos || [],
-    // Use the calculated status_pagamento from the API
-    status_pagamento: profile.status_pagamento || 'pendente'
+    status_pagamento: athlete.status_pagamento || 'pendente'
   })) || [];
 
   // Convert branches to match expected format
@@ -151,7 +147,7 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
             <UserProfilesTable
               data={formattedUserProfiles}
               branches={formattedBranches}
-              isLoading={isLoadingProfiles}
+              isLoading={isLoadingAthletes}
             />
           </div>
         </CardContent>
