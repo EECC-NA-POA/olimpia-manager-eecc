@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AthleteProfilePage from '@/components/AthleteProfilePage';
-import { usePrivacyPolicyCheck } from '@/hooks/usePrivacyPolicyCheck';
 import { WelcomePolicyBranchModal } from '@/components/auth/WelcomePolicyBranchModal';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { supabase } from '@/lib/supabase';
@@ -14,13 +13,6 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [needsBranchSelection, setNeedsBranchSelection] = useState(false);
-  
-  // Check if the user needs to accept the privacy policy
-  const { 
-    needsAcceptance, 
-    checkCompleted,
-    refetchCheck 
-  } = usePrivacyPolicyCheck();
 
   // Check if user has a branch associated
   useEffect(() => {
@@ -65,14 +57,11 @@ const Dashboard = () => {
       return;
     }
 
-    // Only set loading to false when both auth checks and policy check are done
-    if (checkCompleted) {
-      setIsLoading(false);
-    }
-  }, [user, currentEventId, navigate, checkCompleted]);
+    // Only set loading to false when auth checks are done
+    setIsLoading(false);
+  }, [user, currentEventId, navigate]);
 
   const handlePreferencesComplete = async () => {
-    await refetchCheck();
     // Force reload of user to get updated branch info
     window.location.reload();
   };
@@ -92,7 +81,7 @@ const Dashboard = () => {
   }
   
   // Show the welcome modal if needed
-  const showWelcomeModal = needsAcceptance || needsBranchSelection;
+  const showWelcomeModal = needsBranchSelection;
   
   if (showWelcomeModal) {
     return (

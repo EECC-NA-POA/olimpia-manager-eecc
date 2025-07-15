@@ -8,8 +8,6 @@ import { SessionTimeoutProvider } from "@/components/providers/SessionTimeoutPro
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
 import { MainNavigation } from "@/components/MainNavigation";
-import { usePrivacyPolicyCheck } from "@/hooks/usePrivacyPolicyCheck";
-import { PrivacyPolicyAcceptanceModal } from "@/components/auth/PrivacyPolicyAcceptanceModal";
 import { FloatingNotificationIcon } from "@/components/notifications/FloatingNotificationIcon";
 
 import Index from "./pages/Index";
@@ -56,8 +54,6 @@ const queryClient = new QueryClient({
 });
 
 function AppContent() {
-  const { showModal, handleAccept, handleReject } = usePrivacyPolicyCheck();
-
   return (
     <div className="min-h-screen flex flex-col">
       <GlobalHeader />
@@ -107,13 +103,6 @@ function AppContent() {
       
       {/* Floating notification icon - only shows when there are unread notifications */}
       <FloatingNotificationIcon />
-      
-      {showModal && (
-        <PrivacyPolicyAcceptanceModal
-          onAccept={handleAccept}
-          onCancel={handleReject}
-        />
-      )}
     </div>
   );
 }

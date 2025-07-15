@@ -9,8 +9,6 @@ import { EventCarousel } from "./event-selection/EventCarousel";
 import { useEventQuery } from "./event-selection/useEventQuery";
 import { useEventRegistration } from "./event-selection/useEventRegistration";
 import { toast } from "sonner";
-import { usePrivacyPolicyCheck } from "@/hooks/usePrivacyPolicyCheck";
-import { PrivacyPolicyAcceptanceModal } from "./PrivacyPolicyAcceptanceModal";
 
 interface EventSelectionProps {
   selectedEvents: string[];
@@ -31,17 +29,7 @@ export const EventSelection = ({
   const { user, signOut, setCurrentEventId } = useAuth();
   const [selectedRole, setSelectedRole] = useState<PerfilTipo>('ATL');
   
-  // Check if the user needs to accept the privacy policy
-  const { 
-    needsAcceptance, 
-    checkCompleted,
-    refetchCheck 
-  } = usePrivacyPolicyCheck();
-
-  // Only fetch events if privacy policy check is complete and accepted
-  const shouldFetchEvents = checkCompleted && !needsAcceptance;
-  
-  const { data: events, isLoading, refetch } = useEventQuery(user?.id, shouldFetchEvents);
+  const { data: events, isLoading, refetch } = useEventQuery(user?.id, true);
   const registerEventMutation = useEventRegistration(user?.id);
   
   // Expose refetch function to parent components through callback
@@ -121,20 +109,6 @@ export const EventSelection = ({
       toast.error("Erro ao fazer logout. Tente novamente.");
     }
   };
-  
-  const handlePrivacyPolicyAccept = async () => {
-    await refetchCheck();
-  };
-  
-  // Show the privacy policy acceptance modal if needed
-  if (needsAcceptance) {
-    return (
-      <PrivacyPolicyAcceptanceModal
-        onAccept={handlePrivacyPolicyAccept}
-        onCancel={handleExit}
-      />
-    );
-  }
 
   if (isLoading) {
     return (
