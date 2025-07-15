@@ -43,59 +43,42 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
     staleTime: 0
   });
 
-  // Get ALL users with their complete profile data (same as auth context)
+  // Simple direct query for user profiles
   const { 
-    data: usersWithProfiles,
+    data: allUserProfiles,
     isLoading: isLoadingProfiles
   } = useQuery({
-    queryKey: ['users-with-profiles', eventId],
+    queryKey: ['simple-user-profiles'],
     queryFn: async () => {
-      if (!athletes?.length) return [];
+      console.log('===== SIMPLE PROFILES QUERY =====');
       
-      console.log('===== FETCHING COMPLETE USER PROFILES =====');
-      const userIds = athletes.map(athlete => athlete.id);
-      console.log('User IDs:', userIds);
-      
-      // Get complete user data with all relationships
-      const { data: completeUsers, error } = await supabase
+      // Get all user-profile relationships
+      const { data, error } = await supabase
         .from('usuarios')
         .select(`
           id,
           nome_completo,
-          email,
-          papeis!inner (
+          papeis (
             id,
             nome,
             codigo
           )
-        `)
-        .in('id', userIds);
+        `);
 
-      console.log('===== COMPLETE USERS RESULT =====');
-      console.log('Complete users data:', completeUsers);
-      console.log('Error:', error);
-      console.log('Count:', completeUsers?.length || 0);
-      console.log('================================');
+      console.log('Simple query result:', data);
+      console.log('Simple query error:', error);
+      console.log('==================================');
 
-      if (error) {
-        console.error('Error fetching complete users:', error);
-        return [];
-      }
-
-      return completeUsers || [];
+      return data || [];
     },
-    enabled: !!athletes?.length && hasAdminProfile,
+    enabled: hasAdminProfile,
     staleTime: 0
   });
-  
   console.log('===== COMPONENT STATE =====');
   console.log('Athletes:', athletes);
+  console.log('All user profiles:', allUserProfiles);
   console.log('Athletes count:', athletes?.length);
-  console.log('Users with profiles:', usersWithProfiles);
-  console.log('Users with profiles count:', usersWithProfiles?.length);
-  console.log('Loading athletes:', isLoadingAthletes);
-  console.log('Loading profiles:', isLoadingProfiles);
-  console.log('Error:', athletesError);
+  console.log('Profiles count:', allUserProfiles?.length);
   console.log('========================');
 
   const { 
@@ -148,25 +131,25 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
 
   // Convert AthleteManagement data to UserProfile format
   const formattedUserProfiles = athletes?.map((athlete: any) => {
-    console.log(`===== FORMATTING ATHLETE ${athlete.nome_atleta} =====`);
-    console.log('Athlete ID:', athlete.id);
+    console.log(`===== ATHLETE ${athlete.nome_atleta} =====`);
     
-    // Find user with complete profile data
-    const userWithProfiles = usersWithProfiles?.find((user: any) => user.id === athlete.id);
-    console.log('User with profiles:', userWithProfiles);
+    // Find this user in the profiles data
+    const userProfile = allUserProfiles?.find((user: any) => user.id === athlete.id);
+    console.log('Found user profile:', userProfile);
     
-    // Extract profiles/papeis
-    const profiles = userWithProfiles?.papeis || [];
-    console.log('Extracted profiles:', profiles);
+    // Get profiles - default to Atleta if none found
+    const profiles = userProfile?.papeis || [];
     
-    const formattedProfiles = profiles.map((profile: any) => ({
-      id: profile.id,
-      nome: profile.nome,
-      codigo: profile.codigo
-    }));
+    const formattedProfiles = profiles.length > 0 ? 
+      profiles.map((profile: any) => ({
+        id: profile.id,
+        nome: profile.nome,
+        codigo: profile.codigo
+      })) :
+      [{ id: 1, nome: 'Atleta', codigo: 'ATL' }];
     
-    console.log('Formatted profiles:', formattedProfiles);
-    console.log('=======================================');
+    console.log('Final profiles:', formattedProfiles);
+    console.log('==============================');
 
     return {
       id: athlete.id,
