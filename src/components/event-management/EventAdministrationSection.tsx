@@ -43,48 +43,66 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
     staleTime: 0
   });
 
-  // Fetch user profiles for ALL events (not just this event)
+  // Fetch ALL user profiles (from usuarios table directly with roles)
   const { 
     data: userProfiles,
     isLoading: isLoadingProfiles
   } = useQuery({
-    queryKey: ['user-profiles-all', eventId],
+    queryKey: ['user-profiles-direct', eventId],
     queryFn: async () => {
       if (!athletes?.length) {
-        console.log('===== NO ATHLETES =====');
+        console.log('===== NO ATHLETES FOR PROFILES =====');
         return [];
       }
       
-      console.log('===== FETCHING ALL USER PROFILES =====');
+      console.log('===== FETCHING USER PROFILES DIRECTLY =====');
       const userIds = athletes.map(athlete => athlete.id);
       console.log('User IDs to fetch profiles for:', userIds);
       
-      // Get all profiles for these users (not filtered by event)
-      const { data: profilesData, error } = await supabase
-        .from('papeis_usuarios')
+      // Get users with their roles from auth.users metadata
+      const { data: usersData, error: usersError } = await supabase
+        .from('usuarios')
         .select(`
-          usuario_id,
-          perfil_id,
-          evento_id,
-          perfis:perfil_id (
-            nome,
-            codigo
+          id,
+          papeis:usuario_id (
+            id,
+            codigo,
+            nome
           )
         `)
-        .in('usuario_id', userIds);
+        .in('id', userIds);
 
-      console.log('===== ALL PROFILES QUERY RESULT =====');
-      console.log('Profiles data:', profilesData);
-      console.log('Profiles error:', error);
-      console.log('Profiles count:', profilesData?.length || 0);
-      console.log('==================================');
+      console.log('===== DIRECT USERS QUERY RESULT =====');
+      console.log('Users data:', usersData);
+      console.log('Users error:', usersError);
+      console.log('===================================');
 
-      if (error) {
-        console.error('Error fetching user profiles:', error);
-        return [];
+      if (usersError) {
+        console.error('Error fetching users with roles:', usersError);
+        
+        // Try alternative: get from papeis_usuarios table
+        console.log('===== TRYING PAPEIS_USUARIOS TABLE =====');
+        const { data: roleData, error: roleError } = await supabase
+          .from('papeis_usuarios')
+          .select(`
+            usuario_id,
+            perfil_id,
+            perfis:perfil_id (
+              id,
+              nome,
+              codigo
+            )
+          `)
+          .in('usuario_id', userIds);
+
+        console.log('Papeis usuarios data:', roleData);
+        console.log('Papeis usuarios error:', roleError);
+        console.log('=======================================');
+
+        return roleData || [];
       }
 
-      return profilesData || [];
+      return usersData || [];
     },
     enabled: !!athletes?.length && hasAdminProfile,
     staleTime: 0
@@ -149,26 +167,35 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
 
   // Convert AthleteManagement data to UserProfile format
   const formattedUserProfiles = athletes?.map((athlete: any) => {
-    // Get the user's profiles for this event
-    const athleteProfiles = userProfiles?.filter((profile: any) => 
-      profile.usuario_id === athlete.id
-    ) || [];
-
-    console.log(`===== ATHLETE ${athlete.nome_atleta} =====`);
+    console.log(`===== PROCESSING ATHLETE ${athlete.nome_atleta} =====`);
     console.log('Athlete ID:', athlete.id);
-    console.log('Found profiles:', athleteProfiles);
-    console.log('Profiles mapped:', athleteProfiles.map((profile: any) => ({
-      id: profile.perfil_id,
-      nome: profile.perfis?.nome || '',
-      codigo: profile.perfis?.codigo || ''
-    })));
+    console.log('All user profiles data:', userProfiles);
+    
+    // Try to find profiles for this user - handle both data structures
+    let athleteProfiles = [];
+    
+    if (userProfiles) {
+      // Check if it's from papeis_usuarios table (has usuario_id)
+      if (userProfiles.some((p: any) => p.usuario_id)) {
+        athleteProfiles = userProfiles.filter((profile: any) => 
+          profile.usuario_id === athlete.id
+        );
+        console.log('Found profiles from papeis_usuarios:', athleteProfiles);
+      } 
+      // Check if it's from usuarios table with papeis relation
+      else {
+        const userWithRoles = userProfiles.find((user: any) => user.id === athlete.id);
+        athleteProfiles = (userWithRoles as any)?.papeis || [];
+        console.log('Found profiles from usuarios.papeis:', athleteProfiles);
+      }
+    }
 
-    // TEMP: Add fake profiles if none exist to test display
+    // Format profiles for display
     const finalProfiles = athleteProfiles.length > 0 ? 
       athleteProfiles.map((profile: any) => ({
-        id: profile.perfil_id,
-        nome: profile.perfis?.nome || '',
-        codigo: profile.perfis?.codigo || ''
+        id: profile.perfil_id || profile.id,
+        nome: profile.perfis?.nome || profile.nome || '',
+        codigo: profile.perfis?.codigo || profile.codigo || ''
       })) : 
       [{
         id: 1,
@@ -176,7 +203,7 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
         codigo: 'ATL'
       }];
 
-    console.log('Final profiles for display:', finalProfiles);
+    console.log('Final profiles for', athlete.nome_atleta, ':', finalProfiles);
     console.log('=======================================');
 
     return {
@@ -186,7 +213,7 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
       numero_documento: athlete.numero_documento,
       tipo_documento: athlete.tipo_documento,
       filial_id: athlete.filial_id,
-      created_at: new Date().toISOString(), // Use current date as fallback
+      created_at: new Date().toISOString(),
       papeis: finalProfiles,
       pagamentos: athlete.modalidades?.map((mod: any) => ({
         status: athlete.status_pagamento,
