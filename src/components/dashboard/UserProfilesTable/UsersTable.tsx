@@ -29,6 +29,11 @@ export function UsersTable({ data, branches }: UsersTableProps) {
   };
 
   const getUserRoles = (user: UserProfile) => {
+    console.log(`===== USER ROLES FOR ${user.nome_completo} =====`);
+    console.log('User papeis:', user.papeis);
+    console.log('Papeis length:', user.papeis?.length || 0);
+    console.log('==============================================');
+    
     if (!user.papeis || user.papeis.length === 0) return 'Nenhum perfil';
     return user.papeis.map(papel => papel.nome || papel.codigo).join(', ');
   };
