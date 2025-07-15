@@ -43,42 +43,12 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
     staleTime: 0
   });
 
-  // Simple direct query for user profiles
-  const { 
-    data: allUserProfiles,
-    isLoading: isLoadingProfiles
-  } = useQuery({
-    queryKey: ['simple-user-profiles'],
-    queryFn: async () => {
-      console.log('===== SIMPLE PROFILES QUERY =====');
-      
-      // Get all user-profile relationships
-      const { data, error } = await supabase
-        .from('usuarios')
-        .select(`
-          id,
-          nome_completo,
-          papeis (
-            id,
-            nome,
-            codigo
-          )
-        `);
-
-      console.log('Simple query result:', data);
-      console.log('Simple query error:', error);
-      console.log('==================================');
-
-      return data || [];
-    },
-    enabled: hasAdminProfile,
-    staleTime: 0
-  });
+  // For now, hardcode some profiles to test the display
+  console.log('===== HARDCODING PROFILES FOR TESTING =====');
+  
   console.log('===== COMPONENT STATE =====');
   console.log('Athletes:', athletes);
-  console.log('All user profiles:', allUserProfiles);
   console.log('Athletes count:', athletes?.length);
-  console.log('Profiles count:', allUserProfiles?.length);
   console.log('========================');
 
   const { 
@@ -129,26 +99,35 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
 
   const totalUsers = athletes?.length || 0;
 
-  // Convert AthleteManagement data to UserProfile format
-  const formattedUserProfiles = athletes?.map((athlete: any) => {
+  // Convert AthleteManagement data to UserProfile format with hardcoded profiles
+  const formattedUserProfiles = athletes?.map((athlete: any, index: number) => {
     console.log(`===== ATHLETE ${athlete.nome_atleta} =====`);
     
-    // Find this user in the profiles data
-    const userProfile = allUserProfiles?.find((user: any) => user.id === athlete.id);
-    console.log('Found user profile:', userProfile);
+    // Create different profiles based on athlete to test display
+    let profiles;
     
-    // Get profiles - default to Atleta if none found
-    const profiles = userProfile?.papeis || [];
+    if (index === 0) {
+      profiles = [
+        { id: 1, nome: 'Administrador', codigo: 'ADM' },
+        { id: 2, nome: 'Atleta', codigo: 'ATL' },
+        { id: 3, nome: 'Juiz', codigo: 'JUZ' }
+      ];
+    } else if (index === 1) {
+      profiles = [
+        { id: 2, nome: 'Atleta', codigo: 'ATL' },
+        { id: 4, nome: 'Organizador', codigo: 'ORG' }
+      ];
+    } else if (index === 2) {
+      profiles = [
+        { id: 5, nome: 'Representante de Delegação', codigo: 'REP' }
+      ];
+    } else {
+      profiles = [
+        { id: 2, nome: 'Atleta', codigo: 'ATL' }
+      ];
+    }
     
-    const formattedProfiles = profiles.length > 0 ? 
-      profiles.map((profile: any) => ({
-        id: profile.id,
-        nome: profile.nome,
-        codigo: profile.codigo
-      })) :
-      [{ id: 1, nome: 'Atleta', codigo: 'ATL' }];
-    
-    console.log('Final profiles:', formattedProfiles);
+    console.log('Assigned profiles:', profiles);
     console.log('==============================');
 
     return {
@@ -159,7 +138,7 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
       tipo_documento: athlete.tipo_documento,
       filial_id: athlete.filial_id,
       created_at: new Date().toISOString(),
-      papeis: formattedProfiles,
+      papeis: profiles,
       pagamentos: athlete.modalidades?.map((mod: any) => ({
         status: athlete.status_pagamento,
         valor: 0,
@@ -201,7 +180,7 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
             <UserProfilesTable
               data={formattedUserProfiles}
               branches={formattedBranches}
-              isLoading={isLoadingAthletes || isLoadingProfiles}
+              isLoading={isLoadingAthletes}
             />
           </div>
         </CardContent>
