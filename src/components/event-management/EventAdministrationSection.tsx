@@ -43,75 +43,56 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
     staleTime: 0
   });
 
-  // Fetch ALL user profiles (from usuarios table directly with roles)
+  // Get ALL users with their complete profile data (same as auth context)
   const { 
-    data: userProfiles,
+    data: usersWithProfiles,
     isLoading: isLoadingProfiles
   } = useQuery({
-    queryKey: ['user-profiles-direct', eventId],
+    queryKey: ['users-with-profiles', eventId],
     queryFn: async () => {
-      if (!athletes?.length) {
-        console.log('===== NO ATHLETES FOR PROFILES =====');
-        return [];
-      }
+      if (!athletes?.length) return [];
       
-      console.log('===== FETCHING USER PROFILES DIRECTLY =====');
+      console.log('===== FETCHING COMPLETE USER PROFILES =====');
       const userIds = athletes.map(athlete => athlete.id);
-      console.log('User IDs to fetch profiles for:', userIds);
+      console.log('User IDs:', userIds);
       
-      // Get users with their roles from auth.users metadata
-      const { data: usersData, error: usersError } = await supabase
+      // Get complete user data with all relationships
+      const { data: completeUsers, error } = await supabase
         .from('usuarios')
         .select(`
           id,
-          papeis:usuario_id (
+          nome_completo,
+          email,
+          papeis!inner (
             id,
-            codigo,
-            nome
+            nome,
+            codigo
           )
         `)
         .in('id', userIds);
 
-      console.log('===== DIRECT USERS QUERY RESULT =====');
-      console.log('Users data:', usersData);
-      console.log('Users error:', usersError);
-      console.log('===================================');
+      console.log('===== COMPLETE USERS RESULT =====');
+      console.log('Complete users data:', completeUsers);
+      console.log('Error:', error);
+      console.log('Count:', completeUsers?.length || 0);
+      console.log('================================');
 
-      if (usersError) {
-        console.error('Error fetching users with roles:', usersError);
-        
-        // Try alternative: get from papeis_usuarios table
-        console.log('===== TRYING PAPEIS_USUARIOS TABLE =====');
-        const { data: roleData, error: roleError } = await supabase
-          .from('papeis_usuarios')
-          .select(`
-            usuario_id,
-            perfil_id,
-            perfis:perfil_id (
-              id,
-              nome,
-              codigo
-            )
-          `)
-          .in('usuario_id', userIds);
-
-        console.log('Papeis usuarios data:', roleData);
-        console.log('Papeis usuarios error:', roleError);
-        console.log('=======================================');
-
-        return roleData || [];
+      if (error) {
+        console.error('Error fetching complete users:', error);
+        return [];
       }
 
-      return usersData || [];
+      return completeUsers || [];
     },
     enabled: !!athletes?.length && hasAdminProfile,
     staleTime: 0
   });
   
-  console.log('===== ATHLETES DATA =====');
+  console.log('===== COMPONENT STATE =====');
   console.log('Athletes:', athletes);
   console.log('Athletes count:', athletes?.length);
-  console.log('User Profiles:', userProfiles);
+  console.log('Users with profiles:', usersWithProfiles);
+  console.log('Users with profiles count:', usersWithProfiles?.length);
   console.log('Loading athletes:', isLoadingAthletes);
   console.log('Loading profiles:', isLoadingProfiles);
   console.log('Error:', athletesError);
@@ -167,43 +148,24 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
 
   // Convert AthleteManagement data to UserProfile format
   const formattedUserProfiles = athletes?.map((athlete: any) => {
-    console.log(`===== PROCESSING ATHLETE ${athlete.nome_atleta} =====`);
+    console.log(`===== FORMATTING ATHLETE ${athlete.nome_atleta} =====`);
     console.log('Athlete ID:', athlete.id);
-    console.log('All user profiles data:', userProfiles);
     
-    // Try to find profiles for this user - handle both data structures
-    let athleteProfiles = [];
+    // Find user with complete profile data
+    const userWithProfiles = usersWithProfiles?.find((user: any) => user.id === athlete.id);
+    console.log('User with profiles:', userWithProfiles);
     
-    if (userProfiles) {
-      // Check if it's from papeis_usuarios table (has usuario_id)
-      if (userProfiles.some((p: any) => p.usuario_id)) {
-        athleteProfiles = userProfiles.filter((profile: any) => 
-          profile.usuario_id === athlete.id
-        );
-        console.log('Found profiles from papeis_usuarios:', athleteProfiles);
-      } 
-      // Check if it's from usuarios table with papeis relation
-      else {
-        const userWithRoles = userProfiles.find((user: any) => user.id === athlete.id);
-        athleteProfiles = (userWithRoles as any)?.papeis || [];
-        console.log('Found profiles from usuarios.papeis:', athleteProfiles);
-      }
-    }
-
-    // Format profiles for display
-    const finalProfiles = athleteProfiles.length > 0 ? 
-      athleteProfiles.map((profile: any) => ({
-        id: profile.perfil_id || profile.id,
-        nome: profile.perfis?.nome || profile.nome || '',
-        codigo: profile.perfis?.codigo || profile.codigo || ''
-      })) : 
-      [{
-        id: 1,
-        nome: 'Atleta',
-        codigo: 'ATL'
-      }];
-
-    console.log('Final profiles for', athlete.nome_atleta, ':', finalProfiles);
+    // Extract profiles/papeis
+    const profiles = userWithProfiles?.papeis || [];
+    console.log('Extracted profiles:', profiles);
+    
+    const formattedProfiles = profiles.map((profile: any) => ({
+      id: profile.id,
+      nome: profile.nome,
+      codigo: profile.codigo
+    }));
+    
+    console.log('Formatted profiles:', formattedProfiles);
     console.log('=======================================');
 
     return {
@@ -214,7 +176,7 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
       tipo_documento: athlete.tipo_documento,
       filial_id: athlete.filial_id,
       created_at: new Date().toISOString(),
-      papeis: finalProfiles,
+      papeis: formattedProfiles,
       pagamentos: athlete.modalidades?.map((mod: any) => ({
         status: athlete.status_pagamento,
         valor: 0,
