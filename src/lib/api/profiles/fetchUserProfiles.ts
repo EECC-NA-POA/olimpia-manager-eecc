@@ -3,13 +3,16 @@ import { supabase } from '../../supabase';
 import { UserProfileData, UserRole, UserPayment } from './types';
 
 export const fetchUserProfiles = async (eventId: string | null): Promise<UserProfileData[]> => {
-  console.log('Fetching user profiles for event:', eventId);
+  console.log('===== FETCHUSERPROFILES START =====');
+  console.log('Event ID:', eventId);
+  console.log('Event ID type:', typeof eventId);
   
   if (!eventId) {
-    console.warn('No event ID provided for fetching user profiles');
+    console.warn('===== NO EVENT ID - RETURNING EMPTY =====');
     return [];
   }
 
+  console.log('===== STARTING VW_ATHLETES_MANAGEMENT QUERY =====');
   try {
     // Use the same logic as fetchAthleteManagement - query the view directly
     const { data: athletesData, error: athletesError } = await supabase
@@ -17,13 +20,11 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
       .select('*')
       .eq('evento_id', eventId);
 
-    if (athletesError) {
-      console.error('Error fetching athletes from view:', athletesError);
-      throw athletesError;
-    }
-
-    console.log('Raw athletes data from view:', athletesData);
-    console.log('Number of athletes from view:', athletesData?.length || 0);
+    console.log('===== VW_ATHLETES_MANAGEMENT RESULT =====');
+    console.log('Data:', athletesData);
+    console.log('Error:', athletesError);
+    console.log('Count:', athletesData?.length || 0);
+    console.log('==========================================');
 
     if (!athletesData || athletesData.length === 0) {
       console.log('No athletes found for this event');

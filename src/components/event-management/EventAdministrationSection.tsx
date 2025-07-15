@@ -35,16 +35,22 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
   } = useQuery({
     queryKey: ['user-profiles', eventId],
     queryFn: () => {
-      console.log('Executing fetchUserProfiles query with eventId:', eventId);
+      console.log('===== USEQUERY EXECUTING =====');
+      console.log('EventId in useQuery:', eventId);
+      console.log('Type of eventId:', typeof eventId);
+      console.log('============================');
       return fetchUserProfiles(eventId);
     },
     enabled: !!eventId, // Temporarily remove admin check to debug
     staleTime: 0 // Force fresh data
   });
   
+  console.log('===== COMPONENT STATE =====');
   console.log('EventAdministrationSection - UserProfiles data:', userProfiles);
+  console.log('EventAdministrationSection - UserProfiles length:', userProfiles?.length);
   console.log('EventAdministrationSection - ProfilesError:', profilesError);
   console.log('EventAdministrationSection - IsLoadingProfiles:', isLoadingProfiles);
+  console.log('===========================');
 
   const { 
     data: branches
