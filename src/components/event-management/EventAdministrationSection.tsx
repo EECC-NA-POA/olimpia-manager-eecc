@@ -43,39 +43,37 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
     staleTime: 0
   });
 
-  // Fetch user profiles for this event
+  // Fetch user profiles for ALL events (not just this event)
   const { 
     data: userProfiles,
     isLoading: isLoadingProfiles
   } = useQuery({
-    queryKey: ['user-profiles-roles', eventId],
+    queryKey: ['user-profiles-all', eventId],
     queryFn: async () => {
-      if (!eventId || !athletes?.length) {
-        console.log('===== NO EVENT ID OR ATHLETES =====');
-        console.log('EventId:', eventId);
-        console.log('Athletes length:', athletes?.length);
+      if (!athletes?.length) {
+        console.log('===== NO ATHLETES =====');
         return [];
       }
       
-      console.log('===== FETCHING USER PROFILES =====');
+      console.log('===== FETCHING ALL USER PROFILES =====');
       const userIds = athletes.map(athlete => athlete.id);
       console.log('User IDs to fetch profiles for:', userIds);
-      console.log('Event ID:', eventId);
       
+      // Get all profiles for these users (not filtered by event)
       const { data: profilesData, error } = await supabase
         .from('papeis_usuarios')
         .select(`
           usuario_id,
           perfil_id,
+          evento_id,
           perfis:perfil_id (
             nome,
             codigo
           )
         `)
-        .eq('evento_id', eventId)
         .in('usuario_id', userIds);
 
-      console.log('===== PROFILES QUERY RESULT =====');
+      console.log('===== ALL PROFILES QUERY RESULT =====');
       console.log('Profiles data:', profilesData);
       console.log('Profiles error:', error);
       console.log('Profiles count:', profilesData?.length || 0);
@@ -88,7 +86,7 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
 
       return profilesData || [];
     },
-    enabled: !!eventId && hasAdminProfile && !!athletes?.length,
+    enabled: !!athletes?.length && hasAdminProfile,
     staleTime: 0
   });
   
