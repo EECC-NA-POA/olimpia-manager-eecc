@@ -12,27 +12,38 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
     return [];
   }
 
-  console.log('===== STARTING VW_ATHLETES_MANAGEMENT QUERY =====');
+  console.log('===== STARTING PAPEIS_USUARIOS QUERY =====');
   try {
-    // Use the same logic as fetchAthleteManagement - query the view directly
-    const { data: athletesData, error: athletesError } = await supabase
-      .from('vw_athletes_management')
-      .select('*')
+    // First, get all users who have any profile/role in this event
+    const { data: allUserProfiles, error: profilesError } = await supabase
+      .from('papeis_usuarios')
+      .select(`
+        usuario_id,
+        perfil_id,
+        perfis:perfil_id (
+          nome
+        )
+      `)
       .eq('evento_id', eventId);
 
-    console.log('===== VW_ATHLETES_MANAGEMENT RESULT =====');
-    console.log('Data:', athletesData);
-    console.log('Error:', athletesError);
-    console.log('Count:', athletesData?.length || 0);
-    console.log('==========================================');
+    console.log('===== PAPEIS_USUARIOS RESULT =====');
+    console.log('Data:', allUserProfiles);
+    console.log('Error:', profilesError);
+    console.log('Count:', allUserProfiles?.length || 0);
+    console.log('====================================');
 
-    if (!athletesData || athletesData.length === 0) {
-      console.log('No athletes found for this event');
+    if (profilesError) {
+      console.error('Error fetching user profiles:', profilesError);
+      throw profilesError;
+    }
+
+    if (!allUserProfiles || allUserProfiles.length === 0) {
+      console.log('No user profiles found for this event');
       return [];
     }
 
-    // Get unique user IDs
-    const userIds = [...new Set(athletesData.map(athlete => athlete.atleta_id))];
+    // Get unique user IDs from all profiles
+    const userIds = [...new Set(allUserProfiles.map(profile => profile.usuario_id))];
     console.log(`Found ${userIds.length} unique users for event ${eventId}:`, userIds);
 
     // Now fetch the detailed user information for these users
@@ -66,26 +77,10 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
       return [];
     }
 
-    // Fetch user profiles for this event
-    const { data: allUserProfiles, error: profilesError } = await supabase
-      .from('papeis_usuarios')
-      .select(`
-        usuario_id,
-        perfil_id,
-        perfis:perfil_id (
-          nome
-        )
-      `)
-      .eq('evento_id', eventId);
+    // Use the existing allUserProfiles data we already fetched
+    console.log('Using existing user profiles data:', allUserProfiles);
 
-    if (profilesError) {
-      console.error('Error fetching user profiles:', profilesError);
-      // Don't throw error for profiles, just log it
-    }
-
-    console.log('All user profiles data:', allUserProfiles);
-
-    // Filter profiles for registered users only
+    // Filter profiles for fetched users only (should be all of them since we got userIds from profiles)
     const userProfiles = allUserProfiles?.filter(profile => 
       userIds.includes(profile.usuario_id)
     ) || [];
