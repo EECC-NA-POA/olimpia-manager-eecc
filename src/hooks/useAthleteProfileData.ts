@@ -46,7 +46,7 @@ export const useAthleteProfileData = (userId: string | undefined, currentEventId
       
       let transformedRoles: any[] = [];
       
-      // Strategy 1: Direct query to papeis_usuarios 
+      // Strategy 1: Direct query to papeis_usuarios with proper JOIN
       console.log('📊 Strategy 1: Direct papeis_usuarios query');
       const { data: rolesData, error: rolesError } = await supabase
         .from('papeis_usuarios')
@@ -55,7 +55,9 @@ export const useAthleteProfileData = (userId: string | undefined, currentEventId
           perfis (
             id,
             nome,
-            perfil_tipo_id
+            perfis_tipo (
+              codigo
+            )
           )
         `)
         .eq('usuario_id', userId)
@@ -66,7 +68,7 @@ export const useAthleteProfileData = (userId: string | undefined, currentEventId
       if (rolesData && rolesData.length > 0) {
         transformedRoles = rolesData.map((roleData: any) => ({
           nome: roleData.perfis?.nome || 'Unknown',
-          codigo: roleData.perfis?.perfil_tipo_id || 'UNK'
+          codigo: roleData.perfis?.perfis_tipo?.codigo || 'UNK'
         }));
         console.log('✅ Strategy 1 successful, roles found:', transformedRoles);
       } else {
@@ -84,13 +86,15 @@ export const useAthleteProfileData = (userId: string | undefined, currentEventId
         console.log('📋 Registration fallback result:', { registrationData, regError });
 
         if (registrationData && registrationData.selected_role) {
-          // Get the profile info for the selected role
+          // Get the profile info for the selected role with proper JOIN
           const { data: profileInfo, error: profileError } = await supabase
             .from('perfis')
             .select(`
               id,
               nome,
-              perfil_tipo_id
+              perfis_tipo (
+                codigo
+              )
             `)
             .eq('id', registrationData.selected_role)
             .maybeSingle();
@@ -100,7 +104,7 @@ export const useAthleteProfileData = (userId: string | undefined, currentEventId
           if (profileInfo) {
             transformedRoles = [{
               nome: profileInfo.nome || 'Unknown',
-              codigo: profileInfo.perfil_tipo_id || 'UNK'
+              codigo: (profileInfo.perfis_tipo as any)?.codigo || 'UNK'
             }];
             console.log('✅ Strategy 2 successful, role from registration:', transformedRoles);
             
