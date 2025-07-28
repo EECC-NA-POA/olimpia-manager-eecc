@@ -48,6 +48,15 @@ export default function AthleteProfilePage() {
   console.log('Current event ID:', currentEventId);
   console.log('User ID:', user?.id);
   console.log('Role check data:', roleCheck);
+  console.log('Individual role checks:');
+  profile.papeis?.forEach((role, index) => {
+    console.log(`  Role ${index + 1}:`, {
+      nome: role.nome,
+      codigo: role.codigo,
+      isATL: role.codigo === 'ATL',
+      isAthlete: role.nome === 'Atleta'
+    });
+  });
   console.log('==================================');
 
   return (

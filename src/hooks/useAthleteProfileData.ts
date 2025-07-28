@@ -46,16 +46,16 @@ export const useAthleteProfileData = (userId: string | undefined, currentEventId
       
       let transformedRoles: any[] = [];
       
-      // Strategy 1: Direct query to papeis_usuarios with proper JOIN
-      console.log('📊 Strategy 1: Direct papeis_usuarios query');
+      // Strategy 1: Enhanced query with explicit JOINs  
+      console.log('📊 Strategy 1: Enhanced papeis_usuarios query with explicit JOINs');
       const { data: rolesData, error: rolesError } = await supabase
         .from('papeis_usuarios')
         .select(`
           perfil_id,
-          perfis (
+          perfis!inner (
             id,
             nome,
-            perfis_tipo (
+            perfis_tipo!inner (
               codigo
             )
           )
@@ -63,13 +63,22 @@ export const useAthleteProfileData = (userId: string | undefined, currentEventId
         .eq('usuario_id', userId)
         .eq('evento_id', currentEventId);
 
-      console.log('📋 Direct roles result:', { rolesData, rolesError, count: rolesData?.length || 0 });
+      console.log('📋 Enhanced roles query result:', { 
+        rolesData, 
+        rolesError, 
+        count: rolesData?.length || 0,
+        rawData: rolesData 
+      });
 
       if (rolesData && rolesData.length > 0) {
-        transformedRoles = rolesData.map((roleData: any) => ({
-          nome: roleData.perfis?.nome || 'Unknown',
-          codigo: roleData.perfis?.perfis_tipo?.codigo || 'UNK'
-        }));
+        transformedRoles = rolesData.map((roleData: any) => {
+          console.log('📝 Processing role data:', roleData);
+          return {
+            nome: roleData.perfis?.nome || 'Unknown',
+            codigo: roleData.perfis?.perfis_tipo?.codigo || 'UNK',
+            id: roleData.perfis?.id
+          };
+        });
         console.log('✅ Strategy 1 successful, roles found:', transformedRoles);
       } else {
         // Strategy 2: Fallback to inscricoes_eventos selected_role
@@ -125,41 +134,37 @@ export const useAthleteProfileData = (userId: string | undefined, currentEventId
             }
           }
         } else {
-          // Strategy 3: Create default athlete profile if user is registered
-          console.log('📊 Strategy 3: Create default athlete profile');
+          console.log('❌ No registration or selected_role found');
+        }
+
+        // Strategy 3: Final fallback - check if user is registered and assign default athlete role
+        if (transformedRoles.length === 0) {
+          console.log('📊 Strategy 3: Final fallback - check registration for default role');
           const { data: eventRegistration, error: eventError } = await supabase
             .from('inscricoes_eventos')
-            .select('*')
+            .select('id')
             .eq('usuario_id', userId)
             .eq('evento_id', currentEventId)
             .maybeSingle();
 
-          if (eventRegistration) {
-            // Find default athlete profile for this event
-            const { data: athleteProfile, error: athleteError } = await supabase
-              .from('perfis')
-              .select('*')
-              .eq('evento_id', currentEventId)
-              .eq('perfil_tipo_id', 'ATL')
-              .maybeSingle();
+          console.log('📋 Registration check result:', { eventRegistration, eventError });
 
-            if (athleteProfile) {
-              transformedRoles = [{
-                nome: athleteProfile.nome || 'Atleta',
-                codigo: athleteProfile.perfil_tipo_id || 'ATL'
-              }];
-              console.log('✅ Strategy 3 successful, assigned default athlete role:', transformedRoles);
-            } else {
-              console.log('❌ No athlete profile found for event');
-            }
+          if (eventRegistration) {
+            console.log('✅ User is registered, assigning default athlete role');
+            transformedRoles = [{
+              nome: 'Atleta',
+              codigo: 'ATL',
+              id: 1
+            }];
           } else {
-            console.log('❌ User not registered for event');
+            console.log('❌ User is not registered for this event');
           }
         }
       }
 
       console.log('🎯 Final transformed roles:', transformedRoles);
       console.log('📊 Total roles found:', transformedRoles.length);
+      console.log('🏃‍♂️ Has athlete role:', transformedRoles.some(role => role.codigo === 'ATL' || role.nome === 'Atleta'));
 
       return {
         ...profileData,
