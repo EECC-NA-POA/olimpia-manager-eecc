@@ -376,13 +376,14 @@ CREATE POLICY cronogramas_delete_policy
 
 -- ========== FIX RLS POLICIES FOR ADMIN ACCESS TO USER DATA ==========
 
--- Drop existing policies if they exist
+-- Drop existing restrictive policies
+DROP POLICY IF EXISTS "usuarios_view_own" ON public.usuarios;
 DROP POLICY IF EXISTS "usuarios_admin_access" ON public.usuarios;
 DROP POLICY IF EXISTS "inscricoes_eventos_admin_access" ON public.inscricoes_eventos;
 DROP POLICY IF EXISTS "papeis_usuarios_admin_access" ON public.papeis_usuarios;
 
--- Create new policy that allows administrators to see all users from their events
-CREATE POLICY "usuarios_admin_access" 
+-- Create unified policy that allows both self-access and admin access
+CREATE POLICY "usuarios_access_unified" 
 ON public.usuarios 
 FOR SELECT 
 USING (
