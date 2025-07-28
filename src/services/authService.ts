@@ -78,7 +78,10 @@ export const fetchUserProfile = async (userId: string) => {
 
     if (profileError) {
       console.error('Error fetching user profile via RPC:', profileError);
-      throw profileError;
+      console.log('RPC failed, trying fallback direct queries...');
+      
+      // Fallback: Try direct queries if RPC fails
+      return await fetchUserProfileFallback(userId, currentEventId);
     }
 
     if (!profileData || profileData.length === 0) {
@@ -148,6 +151,78 @@ export const clearUserProfileCache = (userId?: string) => {
 export const forceClearAllCache = () => {
   userProfileCache.clear();
   console.log('FORCE CLEARED ALL PROFILE CACHE');
+};
+
+// Fallback function for when RPC fails
+const fetchUserProfileFallback = async (userId: string, currentEventId: string) => {
+  console.log('=== FALLBACK USER PROFILE FETCH ===');
+  console.log('userId:', userId, 'eventId:', currentEventId);
+  
+  try {
+    // Fetch basic user data
+    const { data: userData, error: userError } = await supabase
+      .from('usuarios')
+      .select('nome_completo, telefone, filial_id, confirmado')
+      .eq('id', userId)
+      .single();
+
+    if (userError) {
+      console.error('Error fetching user data in fallback:', userError);
+      throw userError;
+    }
+
+    // Fetch user roles for the event
+    const { data: rolesData, error: rolesError } = await supabase
+      .from('papeis_usuarios')
+      .select(`
+        perfil_id,
+        perfis!inner (
+          nome,
+          perfis_tipo!inner (
+            codigo,
+            nome
+          )
+        )
+      `)
+      .eq('usuario_id', userId)
+      .eq('evento_id', currentEventId);
+
+    if (rolesError) {
+      console.error('Error fetching roles in fallback:', rolesError);
+      // Continue without roles rather than failing
+    }
+
+    const papeis = rolesData?.map((role: any) => ({
+      nome: role.perfis?.perfis_tipo?.nome || 'Unknown',
+      codigo: role.perfis?.perfis_tipo?.codigo || 'UNK',
+      descricao: null
+    })) || [];
+
+    console.log('Fallback roles found:', papeis);
+    console.log('Fallback role codes:', papeis.map(p => p.codigo));
+
+    const result = {
+      nome_completo: userData.nome_completo,
+      telefone: userData.telefone,
+      filial_id: userData.filial_id,
+      confirmado: userData.confirmado,
+      papeis,
+    };
+
+    console.log('Fallback result:', result);
+    return result;
+
+  } catch (error) {
+    console.error('Error in fallback user profile fetch:', error);
+    // Return minimal profile to prevent complete failure
+    return {
+      nome_completo: null,
+      telefone: null,
+      filial_id: null,
+      confirmado: false,
+      papeis: [],
+    };
+  }
 };
 
 export const handleAuthRedirect = (userProfile: any, pathname: string, navigate: Function) => {
