@@ -71,59 +71,162 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
     const userIds = allUserIds;
     console.log(`Found ${userIds.length} unique users for event ${eventId}:`, userIds);
 
-    // Now fetch the detailed user information for these users
+    // Try multiple approaches to fetch user data
     console.log('===== QUERYING USUARIOS TABLE =====');
     console.log('User IDs to fetch:', userIds);
     
-    const { data: users, error: usersError } = await supabase
-      .from('usuarios')
-      .select(`
-        id,
-        nome_completo,
-        email,
-        numero_documento,
-        tipo_documento,
-        filial_id,
-        data_criacao,
-        filiais:filial_id (
-          nome
-        )
-      `)
-      .in('id', userIds)
-      .order('nome_completo');
+    let users: any[] = [];
+    let usersError: any = null;
+    
+    // Approach 1: Direct query to usuarios table
+    try {
+      console.log('🔄 Trying direct query to usuarios table...');
+      const { data: directUsers, error: directError } = await supabase
+        .from('usuarios')
+        .select(`
+          id,
+          nome_completo,
+          email,
+          numero_documento,
+          tipo_documento,
+          filial_id,
+          data_criacao,
+          filiais:filial_id (
+            nome
+          )
+        `)
+        .in('id', userIds)
+        .order('nome_completo');
 
-    console.log('===== USUARIOS QUERY RESULT =====');
-    console.log('Users data:', users);
-    console.log('Users error:', usersError);
-    console.log('Number of users fetched:', users?.length || 0);
+      users = directUsers || [];
+      usersError = directError;
+      console.log('Direct query result:', { users: users.length, error: directError });
+    } catch (error) {
+      console.error('Direct query failed:', error);
+      usersError = error;
+    }
+
+    // Approach 2: Join via inscricoes_eventos if direct approach fails
+    if (!users || users.length < userIds.length) {
+      console.log('🔄 Trying join via inscricoes_eventos...');
+      
+      try {
+        const { data: joinedUsers, error: joinError } = await supabase
+          .from('inscricoes_eventos')
+          .select(`
+            usuario_id,
+            usuarios:usuario_id(
+              id,
+              nome_completo,
+              email,
+              numero_documento,
+              tipo_documento,
+              filial_id,
+              data_criacao,
+              filiais:filial_id (
+                nome
+              )
+            )
+          `)
+          .eq('evento_id', eventId)
+          .in('usuario_id', userIds);
+
+        if (!joinError && joinedUsers) {
+          const alternativeUsers = joinedUsers
+            .filter(item => item.usuarios)
+            .map(item => item.usuarios);
+          
+          console.log('Join via inscricoes_eventos result:', { users: alternativeUsers.length });
+          
+          if (alternativeUsers.length > users.length) {
+            users = alternativeUsers;
+            usersError = null;
+            console.log('✅ Join approach yielded more results');
+          }
+        }
+      } catch (alternativeError) {
+        console.error('Join query failed:', alternativeError);
+      }
+    }
+
+    // Approach 3: Join via papeis_usuarios if still missing users
+    if (!users || users.length < userIds.length) {
+      console.log('🔄 Trying join via papeis_usuarios...');
+      
+      try {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('papeis_usuarios')
+          .select(`
+            usuario_id,
+            usuarios:usuario_id(
+              id,
+              nome_completo,
+              email,
+              numero_documento,
+              tipo_documento,
+              filial_id,
+              data_criacao,
+              filiais:filial_id (
+                nome
+              )
+            )
+          `)
+          .eq('evento_id', eventId)
+          .in('usuario_id', userIds);
+
+        if (!fallbackError && fallbackData) {
+          const fallbackUsers = fallbackData
+            .filter(item => item.usuarios)
+            .map(item => item.usuarios)
+            .filter((user: any, index: number, self: any[]) => 
+              index === self.findIndex((u: any) => u.id === user.id)
+            ); // Remove duplicates
+          
+          console.log('Join via papeis_usuarios result:', { users: fallbackUsers.length });
+          
+          if (fallbackUsers.length > users.length) {
+            users = fallbackUsers;
+            usersError = null;
+            console.log('✅ Fallback approach yielded more results');
+          }
+        }
+      } catch (fallbackError) {
+        console.error('Fallback query failed:', fallbackError);
+      }
+    }
+
+    console.log('===== FINAL USUARIOS QUERY RESULT =====');
+    console.log('Final users count:', users?.length || 0);
     console.log('Expected vs actual count:', userIds.length, 'vs', users?.length || 0);
-    console.log('==================================');
+    console.log('Final error status:', usersError);
+    console.log('========================================');
 
-    if (usersError) {
-      console.error('Error fetching users:', usersError);
+    if (usersError && (!users || users.length === 0)) {
+      console.error('Error fetching users after all attempts:', usersError);
       throw usersError;
     }
 
-    console.log('Users data:', users);
-    console.log('Number of users fetched:', users?.length || 0);
-
     if (!users || users.length === 0) {
-      console.warn('⚠️ NO USERS FOUND IN usuarios TABLE');
+      console.warn('⚠️ NO USERS FOUND AFTER ALL ATTEMPTS');
       console.warn('Expected:', userIds.length, 'users but got:', users?.length || 0);
       console.warn('Missing user IDs:', userIds);
-      console.warn('This might indicate:');
-      console.warn('1. Users dont exist in usuarios table');
-      console.warn('2. RLS policy blocking access');
-      console.warn('3. Data inconsistency between tables');
+      console.warn('Possible causes:');
+      console.warn('1. RLS policy preventing access to usuarios table');
+      console.warn('2. Users exist in events but not in usuarios table');
+      console.warn('3. Database inconsistency');
       return [];
     }
 
     if (users.length < userIds.length) {
       const foundUserIds = users.map(u => u.id);
       const missingUserIds = userIds.filter(id => !foundUserIds.includes(id));
-      console.warn('⚠️ SOME USERS MISSING FROM usuarios TABLE');
+      console.warn('⚠️ SOME USERS STILL MISSING AFTER ALL ATTEMPTS');
       console.warn('Expected:', userIds.length, 'but found:', users.length);
       console.warn('Missing user IDs:', missingUserIds);
+      console.warn('This suggests RLS policy or data inconsistency issues');
+      
+      // Continue with partial data instead of failing completely
+      console.log('📋 Continuing with partial user data...');
     }
 
     // Use the existing allUserProfiles data we already fetched
@@ -178,7 +281,7 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
         tipo_documento: user.tipo_documento,
         filial_id: user.filial_id,
         created_at: user.data_criacao,
-        filial_nome: user.filiais?.nome || 'Sem filial',
+        filial_nome: user.filiais?.[0]?.nome || 'Sem filial',
         profiles: eventRoles.map((papel: any) => ({
           perfil_id: papel.perfil_id,
           perfil_nome: papel.perfis?.nome || ''
