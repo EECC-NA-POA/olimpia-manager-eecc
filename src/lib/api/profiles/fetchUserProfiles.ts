@@ -72,6 +72,9 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
     console.log(`Found ${userIds.length} unique users for event ${eventId}:`, userIds);
 
     // Now fetch the detailed user information for these users
+    console.log('===== QUERYING USUARIOS TABLE =====');
+    console.log('User IDs to fetch:', userIds);
+    
     const { data: users, error: usersError } = await supabase
       .from('usuarios')
       .select(`
@@ -88,6 +91,13 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
       `)
       .in('id', userIds)
       .order('nome_completo');
+
+    console.log('===== USUARIOS QUERY RESULT =====');
+    console.log('Users data:', users);
+    console.log('Users error:', usersError);
+    console.log('Number of users fetched:', users?.length || 0);
+    console.log('Expected vs actual count:', userIds.length, 'vs', users?.length || 0);
+    console.log('==================================');
 
     if (usersError) {
       console.error('Error fetching users:', usersError);
