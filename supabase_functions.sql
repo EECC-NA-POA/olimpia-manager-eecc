@@ -145,23 +145,13 @@ USING (
   )
 );
 
--- New policy for inscricoes_eventos table
+-- Simplified policy for inscricoes_eventos table - allow users to see their own registrations
 CREATE POLICY inscricoes_eventos_select_policy ON public.inscricoes_eventos
 FOR SELECT
 TO authenticated
 USING (
   -- User can see their own event registrations
   usuario_id = auth.uid()
-  OR
-  -- Or if they have 'Administração' role for that specific event
-  EXISTS (
-    SELECT 1
-    FROM public.papeis_usuarios pu
-    JOIN public.perfis p ON pu.perfil_id = p.id
-    WHERE pu.usuario_id = auth.uid()
-      AND p.nome = 'Administração'
-      AND pu.evento_id = inscricoes_eventos.evento_id
-  )
 );
 
 CREATE POLICY inscricoes_eventos_insert_policy ON public.inscricoes_eventos

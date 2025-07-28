@@ -34,13 +34,17 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
         console.log('Events found:', events.length);
         
         // First, get user registrations from inscricoes_eventos table
+        console.log('Fetching user registrations for userId:', userId);
         const { data: registrations, error: regError } = await supabase
           .from('inscricoes_eventos')
           .select('evento_id')
           .eq('usuario_id', userId);
         
+        console.log('Registrations query result:', { registrations, regError });
+        
         if (regError) {
           console.error('Error fetching user registrations from inscricoes_eventos table:', regError);
+          console.error('RLS Error details:', regError.message, regError.details, regError.hint);
           // Continue with events but mark them as not registered
           return events.map(event => ({
             ...event,
