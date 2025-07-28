@@ -34,13 +34,26 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
         console.log('Events found:', events.length);
         
         // First, get user registrations from inscricoes_eventos table
-        console.log('Fetching user registrations for userId:', userId);
+        console.log('Fetching user registrations for userId:', userId, 'Type:', typeof userId);
+        
+        // Test direct query without RLS first
+        const { data: testRegistrations, error: testError } = await supabase
+          .rpc('get_user_registrations_debug', { user_id: userId });
+        
+        console.log('Test RPC query result:', { testRegistrations, testError });
+        
         const { data: registrations, error: regError } = await supabase
           .from('inscricoes_eventos')
-          .select('evento_id')
+          .select('evento_id, usuario_id, created_at')
           .eq('usuario_id', userId);
         
-        console.log('Registrations query result:', { registrations, regError });
+        console.log('Registrations query result:', { 
+          registrations, 
+          regError, 
+          userId,
+          userIdType: typeof userId,
+          registrationsCount: registrations?.length || 0
+        });
         
         if (regError) {
           console.error('Error fetching user registrations from inscricoes_eventos table:', regError);
