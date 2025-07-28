@@ -18,6 +18,7 @@ import { EventRegulationsSection } from '@/components/event-management/EventRegu
 import { ModeloConfigurationSection } from '@/components/event-management/modelo-configuration/ModeloConfigurationSection';
 import { EventProfilesSection } from '@/components/event-management/EventProfilesSection';
 import { EventAdministrationSection } from '@/components/event-management/EventAdministrationSection';
+import { UserProfilesManagementSection } from '@/components/event-management/user-profiles/UserProfilesManagementSection';
 
 export default function Administration() {
   const navigate = useNavigate();
@@ -172,7 +173,7 @@ export default function Administration() {
                 </TabsContent>
 
                 <TabsContent value="administration" className="mt-2 sm:mt-6">
-                  <EventAdministrationSection eventId={currentEventId} />
+                  <UserProfilesManagementSection eventId={currentEventId} />
                 </TabsContent>
 
                 <TabsContent value="branches" className="mt-2 sm:mt-6">

@@ -59,6 +59,71 @@ $$;
 GRANT EXECUTE ON FUNCTION create_auth_user(text, text, jsonb) TO authenticated;
 GRANT EXECUTE ON FUNCTION delete_auth_user(uuid) TO authenticated;
 
+-- ========== FUNÇÃO RPC PARA BUSCAR USUÁRIOS DO EVENTO (BYPASSA RLS) ==========
+CREATE OR REPLACE FUNCTION get_event_users_admin(p_event_id uuid)
+RETURNS TABLE(
+    id uuid,
+    email text,
+    nome_completo text,
+    telefone text,
+    profiles jsonb,
+    latest_payment_status text
+) 
+SECURITY DEFINER
+AS $$
+BEGIN
+    -- Verificar se o usuário atual tem permissão de administração para este evento
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM public.papeis_usuarios pu
+        JOIN public.perfis p ON pu.perfil_id = p.id
+        WHERE pu.usuario_id = auth.uid() 
+        AND pu.evento_id = p_event_id
+        AND p.nome = 'Administração'
+    ) THEN
+        RAISE EXCEPTION 'Você não tem permissão administrativa para este evento';
+    END IF;
+
+    -- Retornar usuários inscritos no evento com seus perfis
+    RETURN QUERY
+    SELECT DISTINCT
+        u.id,
+        u.email,
+        COALESCE(u.user_metadata->>'nome_completo', u.email) as nome_completo,
+        u.user_metadata->>'telefone' as telefone,
+        COALESCE(
+            (
+                SELECT jsonb_agg(
+                    jsonb_build_object(
+                        'id', pf.id,
+                        'nome', pf.nome
+                    )
+                )
+                FROM public.papeis_usuarios pu2
+                JOIN public.perfis pf ON pu2.perfil_id = pf.id
+                WHERE pu2.usuario_id = u.id 
+                AND pu2.evento_id = p_event_id
+            ),
+            '[]'::jsonb
+        ) as profiles,
+        (
+            SELECT status
+            FROM public.pagamentos pg
+            WHERE pg.usuario_id = u.id 
+            AND pg.evento_id = p_event_id
+            ORDER BY pg.criado_em DESC
+            LIMIT 1
+        ) as latest_payment_status
+    FROM auth.users u
+    INNER JOIN public.inscricoes_eventos ie ON ie.usuario_id = u.id
+    WHERE ie.evento_id = p_event_id
+    ORDER BY nome_completo;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Conceder permissão para executar a função
+GRANT EXECUTE ON FUNCTION get_event_users_admin(uuid) TO authenticated;
+
 -- ========== FIX FINAL PARA RLS POLICIES - 2024-12-28 ==========
 -- Esta é a correção definitiva para o problema de listagem de usuários
 
