@@ -45,19 +45,27 @@ export function UserProfilesTable({ userProfiles, eventId }: UserProfilesTablePr
                 <TableCell>
                   <div>
                     <p className="font-medium">{user.nome_completo}</p>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <a 
+                      href={`mailto:${user.email}`}
+                      className="text-sm text-muted-foreground flex items-center gap-1 hover:text-primary cursor-pointer transition-colors"
+                    >
                       <Mail className="h-3 w-3" />
                       {user.email}
-                    </p>
+                    </a>
                   </div>
                 </TableCell>
                 
                 <TableCell>
                   {user.telefone ? (
-                    <p className="text-sm flex items-center gap-1">
+                    <a
+                      href={`https://wa.me/55${user.telefone.replace(/\D/g, '')}?text=${encodeURIComponent('Olá! Entrando em contato via sistema.')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm flex items-center gap-1 hover:text-green-600 cursor-pointer transition-colors"
+                    >
                       <Phone className="h-3 w-3" />
                       {user.telefone}
-                    </p>
+                    </a>
                   ) : (
                     <span className="text-muted-foreground text-sm">-</span>
                   )}
@@ -78,11 +86,19 @@ export function UserProfilesTable({ userProfiles, eventId }: UserProfilesTablePr
                 </TableCell>
                 
                 <TableCell>
-                  {user.latestPaymentStatus ? (
+                  {user.paymentStatus ? (
                     <Badge 
-                      variant={user.latestPaymentStatus === 'pago' ? 'default' : 'destructive'}
+                      variant={
+                        user.paymentStatus === 'confirmado' ? 'default' :
+                        user.paymentStatus === 'isento' ? 'secondary' :
+                        user.paymentStatus === 'cancelado' ? 'destructive' :
+                        'outline'
+                      }
                     >
-                      {user.latestPaymentStatus}
+                      {user.paymentStatus === 'confirmado' ? 'Confirmado' :
+                       user.paymentStatus === 'isento' ? 'Isento' :
+                       user.paymentStatus === 'cancelado' ? 'Cancelado' :
+                       'Pendente'}
                     </Badge>
                   ) : (
                     <Badge variant="outline">Não informado</Badge>

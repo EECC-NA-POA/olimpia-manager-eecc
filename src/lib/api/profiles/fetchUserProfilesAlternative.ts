@@ -10,6 +10,7 @@ export interface UserProfileDataAlternative {
     nome: string;
   }>;
   latestPaymentStatus?: string;
+  paymentStatus?: string;
 }
 
 export const fetchUserProfilesAlternative = async (eventId: string | null): Promise<UserProfileDataAlternative[]> => {
@@ -104,7 +105,18 @@ export const fetchUserProfilesAlternative = async (eventId: string | null): Prom
         console.error('❌ Erro ao buscar perfis:', profilesError);
       }
 
-      return formatInscricoesUsers(inscricoes, profiles || []);
+      // Get payment status for each user
+      const { data: payments, error: paymentsError } = await supabase
+        .from('pagamentos')
+        .select('atleta_id, status')
+        .in('atleta_id', userIds)
+        .eq('evento_id', eventId);
+
+      if (paymentsError) {
+        console.error('❌ Erro ao buscar pagamentos:', paymentsError);
+      }
+
+      return formatInscricoesUsers(inscricoes, profiles || [], payments || []);
     } else {
       console.log('⚠️ Busca de inscrições retornou array vazio');
     }
@@ -176,8 +188,9 @@ const formatServiceUsers = (users: any[]): UserProfileDataAlternative[] => {
   }));
 };
 
-const formatInscricoesUsers = (inscricoes: any[], profiles: any[]): UserProfileDataAlternative[] => {
+const formatInscricoesUsers = (inscricoes: any[], profiles: any[], payments: any[] = []): UserProfileDataAlternative[] => {
   const profilesMap = new Map<string, any[]>();
+  const paymentsMap = new Map<string, string>();
   
   // Group profiles by user ID
   profiles.forEach(profile => {
@@ -193,11 +206,17 @@ const formatInscricoesUsers = (inscricoes: any[], profiles: any[]): UserProfileD
     }
   });
 
+  // Group payments by user ID
+  payments.forEach(payment => {
+    paymentsMap.set(payment.atleta_id, payment.status);
+  });
+
   return inscricoes.map(inscricao => ({
     id: inscricao.usuarios.id,
     nome_completo: inscricao.usuarios.nome_completo || inscricao.usuarios.email,
     email: inscricao.usuarios.email,
     telefone: inscricao.usuarios.telefone,
-    profiles: profilesMap.get(inscricao.usuario_id) || []
+    profiles: profilesMap.get(inscricao.usuario_id) || [],
+    paymentStatus: paymentsMap.get(inscricao.usuario_id) || 'pendente'
   }));
 };
