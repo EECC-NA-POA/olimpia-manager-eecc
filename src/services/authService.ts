@@ -109,10 +109,10 @@ export const fetchUserProfile = async (userId: string) => {
     }
 
     const papeis = userRolesResult.data?.map((ur: any) => ({
-      nome: ur.perfis.nome,
-      codigo: ur.perfis.perfis_tipo.codigo,
-      descricao: ur.perfis.perfis_tipo.descricao
-    })) as UserRole[] || [];
+      nome: ur.perfis?.nome || 'Perfil sem nome',
+      codigo: ur.perfis?.perfis_tipo?.codigo || 'unknown',
+      descricao: ur.perfis?.perfis_tipo?.descricao || 'Descrição não disponível'
+    })).filter((papel: any) => papel.codigo !== 'unknown') as UserRole[] || [];
     
     console.log('User roles loaded:', papeis.length);
     
