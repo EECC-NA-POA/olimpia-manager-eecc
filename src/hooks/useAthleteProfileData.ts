@@ -41,61 +41,121 @@ export const useAthleteProfileData = (userId: string | undefined, currentEventId
         }
       });
 
-      // Get user roles with detailed debugging
-      console.log('Fetching roles for userId:', userId, 'eventId:', currentEventId);
+      // Enhanced role fetching with multiple strategies
+      console.log('🔍 Fetching roles for userId:', userId, 'eventId:', currentEventId);
       
+      let transformedRoles: any[] = [];
+      
+      // Strategy 1: Direct query to papeis_usuarios 
+      console.log('📊 Strategy 1: Direct papeis_usuarios query');
       const { data: rolesData, error: rolesError } = await supabase
         .from('papeis_usuarios')
         .select(`
+          perfil_id,
           perfis (
+            id,
             nome,
-            perfil_tipo:perfil_tipo_id (
-              codigo
-            )
+            perfil_tipo_id
           )
         `)
         .eq('usuario_id', userId)
         .eq('evento_id', currentEventId);
 
-      console.log('Raw roles query result:', { rolesData, rolesError });
+      console.log('📋 Direct roles result:', { rolesData, rolesError, count: rolesData?.length || 0 });
 
-      if (rolesError) {
-        console.error('Error fetching roles:', rolesError);
-        // Don't throw error, continue with empty roles
-      }
-
-      // Alternative roles query if first one fails or returns empty
-      let alternativeRoles = null;
-      if (!rolesData || rolesData.length === 0) {
-        console.log('No roles found, trying alternative query...');
-        
-        const { data: altRolesData, error: altRolesError } = await supabase
-          .from('papeis_usuarios')
-          .select('*')
+      if (rolesData && rolesData.length > 0) {
+        transformedRoles = rolesData.map((roleData: any) => ({
+          nome: roleData.perfis?.nome || 'Unknown',
+          codigo: roleData.perfis?.perfil_tipo_id || 'UNK'
+        }));
+        console.log('✅ Strategy 1 successful, roles found:', transformedRoles);
+      } else {
+        // Strategy 2: Fallback to inscricoes_eventos selected_role
+        console.log('📊 Strategy 2: Fallback to inscricoes_eventos');
+        const { data: registrationData, error: regError } = await supabase
+          .from('inscricoes_eventos')
+          .select(`
+            selected_role
+          `)
           .eq('usuario_id', userId)
-          .eq('evento_id', currentEventId);
-        
-        console.log('Alternative roles query result:', { altRolesData, altRolesError });
-        alternativeRoles = altRolesData;
+          .eq('evento_id', currentEventId)
+          .maybeSingle();
+
+        console.log('📋 Registration fallback result:', { registrationData, regError });
+
+        if (registrationData && registrationData.selected_role) {
+          // Get the profile info for the selected role
+          const { data: profileInfo, error: profileError } = await supabase
+            .from('perfis')
+            .select(`
+              id,
+              nome,
+              perfil_tipo_id
+            `)
+            .eq('id', registrationData.selected_role)
+            .maybeSingle();
+
+          console.log('📋 Profile info result:', { profileInfo, profileError });
+
+          if (profileInfo) {
+            transformedRoles = [{
+              nome: profileInfo.nome || 'Unknown',
+              codigo: profileInfo.perfil_tipo_id || 'UNK'
+            }];
+            console.log('✅ Strategy 2 successful, role from registration:', transformedRoles);
+            
+            // Auto-create missing papeis_usuarios record
+            console.log('🔧 Auto-creating missing papeis_usuarios record');
+            const { error: insertError } = await supabase
+              .from('papeis_usuarios')
+              .insert({
+                usuario_id: userId,
+                evento_id: currentEventId,
+                perfil_id: registrationData.selected_role
+              });
+            
+            if (insertError) {
+              console.warn('⚠️ Failed to auto-create papeis_usuarios record:', insertError);
+            } else {
+              console.log('✅ Auto-created papeis_usuarios record');
+            }
+          }
+        } else {
+          // Strategy 3: Create default athlete profile if user is registered
+          console.log('📊 Strategy 3: Create default athlete profile');
+          const { data: eventRegistration, error: eventError } = await supabase
+            .from('inscricoes_eventos')
+            .select('*')
+            .eq('usuario_id', userId)
+            .eq('evento_id', currentEventId)
+            .maybeSingle();
+
+          if (eventRegistration) {
+            // Find default athlete profile for this event
+            const { data: athleteProfile, error: athleteError } = await supabase
+              .from('perfis')
+              .select('*')
+              .eq('evento_id', currentEventId)
+              .eq('perfil_tipo_id', 'ATL')
+              .maybeSingle();
+
+            if (athleteProfile) {
+              transformedRoles = [{
+                nome: athleteProfile.nome || 'Atleta',
+                codigo: athleteProfile.perfil_tipo_id || 'ATL'
+              }];
+              console.log('✅ Strategy 3 successful, assigned default athlete role:', transformedRoles);
+            } else {
+              console.log('❌ No athlete profile found for event');
+            }
+          } else {
+            console.log('❌ User not registered for event');
+          }
+        }
       }
 
-      const transformedRoles = (rolesData || [])
-        .filter(roleData => roleData && roleData.perfis)
-        .map((roleData: any) => {
-          try {
-            return {
-              nome: roleData.perfis?.nome || 'Unknown',
-              codigo: roleData.perfis?.perfil_tipo?.codigo || 'UNK'
-            };
-          } catch (error) {
-            console.error('Error transforming role data:', error, roleData);
-            return null;
-          }
-        })
-        .filter(Boolean);
-
-      console.log('Transformed roles:', transformedRoles);
-      console.log('Total roles found:', transformedRoles.length);
+      console.log('🎯 Final transformed roles:', transformedRoles);
+      console.log('📊 Total roles found:', transformedRoles.length);
 
       return {
         ...profileData,
