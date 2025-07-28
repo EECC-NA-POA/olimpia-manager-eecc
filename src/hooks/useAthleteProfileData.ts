@@ -81,7 +81,28 @@ export const useAthleteProfileData = (userId: string | undefined, currentEventId
         });
         console.log('✅ Strategy 1 successful, roles found:', transformedRoles);
       } else {
-        // Strategy 2: Fallback to inscricoes_eventos selected_role
+        // Strategy 1.5: Use RPC function to bypass RLS issues
+        console.log('📊 Strategy 1.5: Using RPC function to bypass RLS');
+        const { data: rpcRoles, error: rpcError } = await supabase
+          .rpc('get_user_roles_with_codes', {
+            p_user_id: userId,
+            p_event_id: currentEventId
+          });
+
+        console.log('📋 RPC roles result:', { rpcRoles, rpcError, count: rpcRoles?.length || 0 });
+
+        if (rpcRoles && rpcRoles.length > 0) {
+          transformedRoles = rpcRoles.map((role: any) => ({
+            nome: role.nome,
+            codigo: role.codigo,
+            id: role.perfil_id
+          }));
+          console.log('✅ Strategy 1.5 successful, roles found via RPC:', transformedRoles);
+        }
+      }
+      
+      // Strategy 2: Fallback to inscricoes_eventos selected_role
+      if (transformedRoles.length === 0) {
         console.log('📊 Strategy 2: Fallback to inscricoes_eventos');
         const { data: registrationData, error: regError } = await supabase
           .from('inscricoes_eventos')

@@ -204,6 +204,45 @@ USING (
   )
 );
 
+-- ========== RPC FUNCTION TO GET USER ROLES WITH CODES (BYPASSES RLS) ==========
+CREATE OR REPLACE FUNCTION get_user_roles_with_codes(p_user_id uuid, p_event_id uuid)
+RETURNS TABLE(
+    perfil_id integer,
+    nome text,
+    codigo text
+) 
+SECURITY DEFINER
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        pu.perfil_id::integer,
+        p.nome::text,
+        pt.codigo::text
+    FROM public.papeis_usuarios pu
+    JOIN public.perfis p ON pu.perfil_id = p.id
+    JOIN public.perfis_tipo pt ON p.perfil_tipo_id = pt.id
+    WHERE pu.usuario_id = p_user_id
+    AND pu.evento_id = p_event_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Grant execute permission
+GRANT EXECUTE ON FUNCTION get_user_roles_with_codes(uuid, uuid) TO authenticated;
+
+-- ========== RLS POLICY FOR PERFIS_TIPO TABLE ==========
+-- Enable RLS on perfis_tipo if not already enabled
+ALTER TABLE public.perfis_tipo ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policy if exists
+DROP POLICY IF EXISTS "perfis_tipo_read_policy" ON public.perfis_tipo;
+
+-- Create permissive read policy for perfis_tipo (this table should be readable by all authenticated users)
+CREATE POLICY "perfis_tipo_read_policy" ON public.perfis_tipo
+FOR SELECT
+TO authenticated
+USING (true);
+
 -- Enable RLS
 ALTER TABLE public.inscricoes_eventos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.papeis_usuarios ENABLE ROW LEVEL SECURITY;
