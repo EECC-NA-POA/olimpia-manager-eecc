@@ -115,70 +115,90 @@ $$ LANGUAGE plpgsql;
 -- Conceder permissão para executar a função
 GRANT EXECUTE ON FUNCTION get_event_users_admin(uuid) TO authenticated;
 
--- ========== FIX FINAL PARA RLS POLICIES - 2024-12-28 ==========
--- Esta é a correção definitiva para o problema de listagem de usuários
-
--- Remover TODAS as políticas conflitantes da tabela usuarios
+-- Row Level Security (RLS) policies
+DROP POLICY IF EXISTS usuarios_final_policy_20241228 ON public.usuarios;
+DROP POLICY IF EXISTS inscricoes_eventos_final_policy ON public.inscricoes_eventos;
+DROP POLICY IF EXISTS papeis_usuarios_final_policy ON public.papeis_usuarios;
 DROP POLICY IF EXISTS "usuarios_view_own" ON public.usuarios;
 DROP POLICY IF EXISTS "usuarios_select_policy" ON public.usuarios;
 DROP POLICY IF EXISTS "usuarios_admin_access" ON public.usuarios;
 DROP POLICY IF EXISTS "usuarios_access_unified" ON public.usuarios;
 DROP POLICY IF EXISTS "usuarios_unified_access" ON public.usuarios;
+DROP POLICY IF EXISTS "inscricoes_eventos_admin_access" ON public.inscricoes_eventos;
+DROP POLICY IF EXISTS "papeis_usuarios_admin_access" ON public.papeis_usuarios;
 
--- Criar a política DEFINITIVA e ÚNICA para a tabela usuarios
-CREATE POLICY "usuarios_final_policy_20241228" 
-ON public.usuarios 
-FOR SELECT 
+-- Create consolidated RLS policies with improved admin access
+CREATE POLICY usuarios_final_policy_20241228 ON public.usuarios
+FOR ALL
+TO authenticated
 USING (
-    auth.uid() = id OR  -- Usuários veem seus próprios dados
-    EXISTS (
-        SELECT 1 
-        FROM public.papeis_usuarios pu
-        JOIN public.perfis p ON pu.perfil_id = p.id
-        WHERE pu.usuario_id = auth.uid() 
-        AND p.nome = 'Administração'
-        AND pu.evento_id IN (
-            SELECT evento_id 
-            FROM public.inscricoes_eventos ie 
-            WHERE ie.usuario_id = usuarios.id
-        )
-    )
+  -- User can see their own data
+  id = auth.uid()
+  OR
+  -- Or if they have 'Administração' role for any event (simplified)
+  EXISTS (
+    SELECT 1
+    FROM public.papeis_usuarios pu
+    JOIN public.perfis p ON pu.perfil_id = p.id
+    WHERE pu.usuario_id = auth.uid()
+      AND p.nome = 'Administração'
+  )
 );
 
--- Garantir que RLS está habilitado nas tabelas relacionadas
+-- New policy for inscricoes_eventos table
+CREATE POLICY inscricoes_eventos_select_policy ON public.inscricoes_eventos
+FOR SELECT
+TO authenticated
+USING (
+  -- User can see their own event registrations
+  usuario_id = auth.uid()
+  OR
+  -- Or if they have 'Administração' role for that specific event
+  EXISTS (
+    SELECT 1
+    FROM public.papeis_usuarios pu
+    JOIN public.perfis p ON pu.perfil_id = p.id
+    WHERE pu.usuario_id = auth.uid()
+      AND p.nome = 'Administração'
+      AND pu.evento_id = inscricoes_eventos.evento_id
+  )
+);
+
+CREATE POLICY inscricoes_eventos_insert_policy ON public.inscricoes_eventos
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  -- Users can only insert their own registrations or if they are admin
+  usuario_id = auth.uid()
+  OR
+  EXISTS (
+    SELECT 1
+    FROM public.papeis_usuarios pu
+    JOIN public.perfis p ON pu.perfil_id = p.id
+    WHERE pu.usuario_id = auth.uid()
+      AND p.nome = 'Administração'
+      AND pu.evento_id = inscricoes_eventos.evento_id
+  )
+);
+
+CREATE POLICY papeis_usuarios_final_policy ON public.papeis_usuarios
+FOR ALL
+TO authenticated
+USING (
+  -- User can see their own roles
+  usuario_id = auth.uid()
+  OR
+  -- Or if they have 'Administração' role for that specific event
+  EXISTS (
+    SELECT 1
+    FROM public.papeis_usuarios pu
+    JOIN public.perfis p ON pu.perfil_id = p.id
+    WHERE pu.usuario_id = auth.uid()
+      AND p.nome = 'Administração'
+      AND pu.evento_id = papeis_usuarios.evento_id
+  )
+);
+
+-- Enable RLS
 ALTER TABLE public.inscricoes_eventos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.papeis_usuarios ENABLE ROW LEVEL SECURITY;
-
--- Política para inscricoes_eventos
-DROP POLICY IF EXISTS "inscricoes_eventos_admin_access" ON public.inscricoes_eventos;
-CREATE POLICY "inscricoes_eventos_final_policy" 
-ON public.inscricoes_eventos 
-FOR SELECT 
-USING (
-    usuario_id = auth.uid() OR
-    EXISTS (
-        SELECT 1 
-        FROM public.papeis_usuarios pu
-        JOIN public.perfis p ON pu.perfil_id = p.id
-        WHERE pu.usuario_id = auth.uid() 
-        AND pu.evento_id = inscricoes_eventos.evento_id
-        AND p.nome = 'Administração'
-    )
-);
-
--- Política para papeis_usuarios
-DROP POLICY IF EXISTS "papeis_usuarios_admin_access" ON public.papeis_usuarios;
-CREATE POLICY "papeis_usuarios_final_policy" 
-ON public.papeis_usuarios 
-FOR SELECT 
-USING (
-    usuario_id = auth.uid() OR
-    EXISTS (
-        SELECT 1 
-        FROM public.papeis_usuarios pu2
-        JOIN public.perfis p ON pu2.perfil_id = p.id
-        WHERE pu2.usuario_id = auth.uid() 
-        AND pu2.evento_id = papeis_usuarios.evento_id
-        AND p.nome = 'Administração'
-    )
-);

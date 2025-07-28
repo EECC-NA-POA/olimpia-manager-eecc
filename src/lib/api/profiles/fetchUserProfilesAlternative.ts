@@ -21,6 +21,36 @@ export const fetchUserProfilesAlternative = async (eventId: string | null): Prom
   console.log('=== NOVA ABORDAGEM: Fetching user profiles for event:', eventId);
 
   try {
+    // First check if user has admin permission
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      console.error('❌ Erro ao obter usuário:', userError);
+      throw new Error('Usuário não autenticado');
+    }
+
+    console.log('Verificando permissões administrativas...');
+    const { data: adminCheck, error: adminError } = await supabase
+      .from('papeis_usuarios')
+      .select(`
+        perfis!inner(nome)
+      `)
+      .eq('usuario_id', user.id)
+      .eq('evento_id', eventId)
+      .eq('perfis.nome', 'Administração')
+      .maybeSingle();
+
+    if (adminError) {
+      console.error('❌ Erro ao verificar permissões:', adminError);
+      throw new Error('Erro ao verificar permissões administrativas');
+    }
+
+    if (!adminCheck) {
+      console.error('❌ Usuário não tem permissão administrativa para este evento');
+      throw new Error('Acesso negado: permissão administrativa necessária');
+    }
+
+    console.log('✅ Permissão administrativa confirmada');
+
     // Estratégia 1: Usar função RPC personalizada
     console.log('Tentando buscar usuários via RPC...');
     
@@ -38,30 +68,45 @@ export const fetchUserProfilesAlternative = async (eventId: string | null): Prom
       console.log('⚠️ RPC retornou array vazio');
     }
 
-    // Estratégia 2: Buscar diretamente com join (mais simples)
-    console.log('Tentando busca direta simplificada...');
+    // Estratégia 2: Buscar através de inscricoes_eventos (mais confiável)
+    console.log('Tentando busca via inscricoes_eventos...');
     
-    const { data: directUsers, error: directError } = await supabase
-      .from('usuarios')
+    const { data: inscricoes, error: inscricoesError } = await supabase
+      .from('inscricoes_eventos')
       .select(`
-        id,
-        email,
-        user_metadata,
-        inscricoes_eventos!inner(evento_id),
-        papeis_usuarios(
-          perfil_id,
-          perfis(id, nome)
+        usuario_id,
+        usuarios!inner(
+          id,
+          email,
+          nome_completo,
+          telefone
         )
       `)
-      .eq('inscricoes_eventos.evento_id', eventId);
+      .eq('evento_id', eventId);
 
-    if (directError) {
-      console.error('❌ Erro na busca direta:', directError);
-    } else if (directUsers && directUsers.length > 0) {
-      console.log('✅ Busca direta funcionou! Usuários encontrados:', directUsers.length);
-      return formatServiceUsers(directUsers);
+    if (inscricoesError) {
+      console.error('❌ Erro na busca de inscrições:', inscricoesError);
+    } else if (inscricoes && inscricoes.length > 0) {
+      console.log('✅ Busca por inscrições funcionou! Usuários encontrados:', inscricoes.length);
+      
+      // Get profiles for each user
+      const userIds = inscricoes.map(i => i.usuario_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('papeis_usuarios')
+        .select(`
+          usuario_id,
+          perfis(id, nome)
+        `)
+        .in('usuario_id', userIds)
+        .eq('evento_id', eventId);
+
+      if (profilesError) {
+        console.error('❌ Erro ao buscar perfis:', profilesError);
+      }
+
+      return formatInscricoesUsers(inscricoes, profiles || []);
     } else {
-      console.log('⚠️ Busca direta retornou array vazio');
+      console.log('⚠️ Busca de inscrições retornou array vazio');
     }
 
     console.error('❌ Todas as estratégias falharam ou retornaram vazio');
@@ -69,7 +114,7 @@ export const fetchUserProfilesAlternative = async (eventId: string | null): Prom
 
   } catch (error) {
     console.error('❌ Erro geral ao buscar usuários:', error);
-    return [];
+    throw error;
   }
 };
 
@@ -128,5 +173,31 @@ const formatServiceUsers = (users: any[]): UserProfileDataAlternative[] => {
       id: pu.perfis.id,
       nome: pu.perfis.nome
     })) || []
+  }));
+};
+
+const formatInscricoesUsers = (inscricoes: any[], profiles: any[]): UserProfileDataAlternative[] => {
+  const profilesMap = new Map<string, any[]>();
+  
+  // Group profiles by user ID
+  profiles.forEach(profile => {
+    const userId = profile.usuario_id;
+    if (!profilesMap.has(userId)) {
+      profilesMap.set(userId, []);
+    }
+    if (profile.perfis) {
+      profilesMap.get(userId)!.push({
+        id: profile.perfis.id,
+        nome: profile.perfis.nome
+      });
+    }
+  });
+
+  return inscricoes.map(inscricao => ({
+    id: inscricao.usuarios.id,
+    nome_completo: inscricao.usuarios.nome_completo || inscricao.usuarios.email,
+    email: inscricao.usuarios.email,
+    telefone: inscricao.usuarios.telefone,
+    profiles: profilesMap.get(inscricao.usuario_id) || []
   }));
 };
