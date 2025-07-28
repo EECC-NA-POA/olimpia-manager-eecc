@@ -64,34 +64,19 @@ export const fetchUserProfile = async (userId: string) => {
       return result;
     }
 
-    // Buscar perfil do usuário e roles em paralelo
-    const [userProfileResult, userRolesResult] = await Promise.all([
-      supabase
-        .from('usuarios')
-        .select('nome_completo, telefone, filial_id, confirmado')
-        .eq('id', userId)
-        .maybeSingle(),
-      supabase
-        .from('papeis_usuarios')
-        .select(`
-          perfis (
-            id,
-            nome,
-            perfil_tipo_id,
-            perfis_tipo (
-              codigo,
-              descricao
-            )
-          )
-        `)
-        .eq('usuario_id', userId)
-        .eq('evento_id', currentEventId)
-    ]);
+    // Use RPC function to bypass RLS issues
+    const { data: profileData, error: profileError } = await supabase
+      .rpc('get_user_profile_safe', {
+        p_user_id: userId,
+        p_event_id: currentEventId
+      });
 
-    if (userProfileResult.error) throw userProfileResult.error;
-    if (userRolesResult.error) throw userRolesResult.error;
+    if (profileError) {
+      console.error('Error fetching user profile via RPC:', profileError);
+      throw profileError;
+    }
 
-    if (!userProfileResult.data) {
+    if (!profileData || profileData.length === 0) {
       console.log('No user profile found');
       const result = {
         confirmado: false,
@@ -108,16 +93,16 @@ export const fetchUserProfile = async (userId: string) => {
       return result;
     }
 
-    const papeis = userRolesResult.data?.map((ur: any) => ({
-      nome: ur.perfis?.nome || 'Perfil sem nome',
-      codigo: ur.perfis?.perfis_tipo?.codigo || 'unknown',
-      descricao: ur.perfis?.perfis_tipo?.descricao || 'Descrição não disponível'
-    })).filter((papel: any) => papel.codigo !== 'unknown') as UserRole[] || [];
+    const userProfile = profileData[0];
+    const papeis = Array.isArray(userProfile.papeis) ? userProfile.papeis : [];
     
     console.log('User roles loaded:', papeis.length);
     
     const result = {
-      ...userProfileResult.data,
+      nome_completo: userProfile.nome_completo,
+      telefone: userProfile.telefone,
+      filial_id: userProfile.filial_id,
+      confirmado: userProfile.confirmado,
       papeis,
     };
     

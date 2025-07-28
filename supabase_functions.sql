@@ -287,6 +287,49 @@ $$ LANGUAGE plpgsql;
 -- Grant execute permission
 GRANT EXECUTE ON FUNCTION get_modelo_configurations(uuid) TO authenticated;
 
+-- ========== RPC FUNCTION TO GET USER PROFILE (BYPASSES RLS) ==========
+CREATE OR REPLACE FUNCTION get_user_profile_safe(p_user_id uuid, p_event_id uuid)
+RETURNS TABLE(
+    nome_completo text,
+    telefone text,
+    filial_id text,
+    confirmado boolean,
+    papeis jsonb
+) 
+SECURITY DEFINER
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        u.nome_completo,
+        u.telefone,
+        u.filial_id,
+        COALESCE(u.confirmado, false) as confirmado,
+        COALESCE(
+            (
+                SELECT jsonb_agg(
+                    jsonb_build_object(
+                        'nome', p.nome,
+                        'codigo', pt.codigo,
+                        'descricao', pt.descricao
+                    )
+                )
+                FROM public.papeis_usuarios pu
+                JOIN public.perfis p ON pu.perfil_id = p.id
+                JOIN public.perfis_tipo pt ON p.perfil_tipo_id = pt.id
+                WHERE pu.usuario_id = p_user_id
+                AND pu.evento_id = p_event_id
+            ),
+            '[]'::jsonb
+        ) as papeis
+    FROM public.usuarios u
+    WHERE u.id = p_user_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Grant execute permission
+GRANT EXECUTE ON FUNCTION get_user_profile_safe(uuid, uuid) TO authenticated;
+
 -- ========== RLS POLICY FOR PERFIS_TIPO TABLE ==========
 -- Enable RLS on perfis_tipo if not already enabled
 ALTER TABLE public.perfis_tipo ENABLE ROW LEVEL SECURITY;
