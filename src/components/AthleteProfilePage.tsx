@@ -6,12 +6,14 @@ import { Loader2 } from "lucide-react";
 import { EventHeader } from "./athlete/EventHeader";
 import { useEventData } from "@/hooks/useEventData";
 import { useAthleteProfileData } from "@/hooks/useAthleteProfileData";
+import { useUserRoleCheck } from "@/hooks/useUserRoleCheck";
 
 export default function AthleteProfilePage() {
   const { user, currentEventId } = useAuth();
   
   const { data: eventData } = useEventData(currentEventId);
   const { data: profile, isLoading: profileLoading } = useAthleteProfileData(user?.id, currentEventId);
+  const { data: roleCheck } = useUserRoleCheck(user?.id, currentEventId);
 
   if (profileLoading) {
     return (
@@ -38,9 +40,15 @@ export default function AthleteProfilePage() {
     role.codigo === 'ATL' || role.nome === 'Atleta'
   ) || false;
 
+  console.log('=== ATHLETE PROFILE PAGE DEBUG ===');
   console.log('Profile data:', profile);
-  console.log('User roles:', profile.papeis);
+  console.log('User roles (papeis):', profile.papeis);
+  console.log('Roles count:', profile.papeis?.length || 0);
   console.log('Is athlete profile:', isAthleteProfile);
+  console.log('Current event ID:', currentEventId);
+  console.log('User ID:', user?.id);
+  console.log('Role check data:', roleCheck);
+  console.log('==================================');
 
   return (
     <div className="space-y-8">

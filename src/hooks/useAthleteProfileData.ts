@@ -41,7 +41,9 @@ export const useAthleteProfileData = (userId: string | undefined, currentEventId
         }
       });
 
-      // Get user roles
+      // Get user roles with detailed debugging
+      console.log('Fetching roles for userId:', userId, 'eventId:', currentEventId);
+      
       const { data: rolesData, error: rolesError } = await supabase
         .from('papeis_usuarios')
         .select(`
@@ -55,17 +57,45 @@ export const useAthleteProfileData = (userId: string | undefined, currentEventId
         .eq('usuario_id', userId)
         .eq('evento_id', currentEventId);
 
+      console.log('Raw roles query result:', { rolesData, rolesError });
+
       if (rolesError) {
         console.error('Error fetching roles:', rolesError);
-        throw rolesError;
+        // Don't throw error, continue with empty roles
       }
 
-      const transformedRoles = (rolesData || []).map((roleData: any) => ({
-        nome: roleData.perfis.nome,
-        codigo: roleData.perfis.perfil_tipo.codigo
-      }));
+      // Alternative roles query if first one fails or returns empty
+      let alternativeRoles = null;
+      if (!rolesData || rolesData.length === 0) {
+        console.log('No roles found, trying alternative query...');
+        
+        const { data: altRolesData, error: altRolesError } = await supabase
+          .from('papeis_usuarios')
+          .select('*')
+          .eq('usuario_id', userId)
+          .eq('evento_id', currentEventId);
+        
+        console.log('Alternative roles query result:', { altRolesData, altRolesError });
+        alternativeRoles = altRolesData;
+      }
+
+      const transformedRoles = (rolesData || [])
+        .filter(roleData => roleData && roleData.perfis)
+        .map((roleData: any) => {
+          try {
+            return {
+              nome: roleData.perfis?.nome || 'Unknown',
+              codigo: roleData.perfis?.perfil_tipo?.codigo || 'UNK'
+            };
+          } catch (error) {
+            console.error('Error transforming role data:', error, roleData);
+            return null;
+          }
+        })
+        .filter(Boolean);
 
       console.log('Transformed roles:', transformedRoles);
+      console.log('Total roles found:', transformedRoles.length);
 
       return {
         ...profileData,
