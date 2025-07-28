@@ -12,9 +12,21 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
     return [];
   }
 
-  console.log('===== STARTING PAPEIS_USUARIOS QUERY =====');
+  console.log('===== STARTING COMBINED USER QUERY =====');
   try {
-    // First, get all users who have any profile/role in this event
+    // First, check how many users are registered in this event via inscricoes_eventos
+    const { data: registeredUsers, error: inscricoesError } = await supabase
+      .from('inscricoes_eventos')
+      .select('usuario_id')
+      .eq('evento_id', eventId);
+
+    console.log('===== INSCRICOES_EVENTOS CHECK =====');
+    console.log('Registered users data:', registeredUsers);
+    console.log('Error:', inscricoesError);
+    console.log('Total registered users count:', registeredUsers?.length || 0);
+    console.log('=====================================');
+
+    // Get all users who have any profile/role in this event
     const { data: allUserProfiles, error: profilesError } = await supabase
       .from('papeis_usuarios')
       .select(`
@@ -37,13 +49,26 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
       throw profilesError;
     }
 
-    if (!allUserProfiles || allUserProfiles.length === 0) {
-      console.log('No user profiles found for this event');
+    // Combine users from both inscricoes_eventos and papeis_usuarios
+    const registeredUserIds = registeredUsers?.map(r => r.usuario_id) || [];
+    const profileUserIds = allUserProfiles?.map(profile => profile.usuario_id) || [];
+    
+    // Get unique user IDs from both sources
+    const allUserIds = [...new Set([...registeredUserIds, ...profileUserIds])];
+    
+    console.log('===== USER ID ANALYSIS =====');
+    console.log('Registered user IDs:', registeredUserIds);
+    console.log('Profile user IDs:', profileUserIds);
+    console.log('Combined unique user IDs:', allUserIds);
+    console.log('Total unique users:', allUserIds.length);
+    console.log('=============================');
+
+    if (allUserIds.length === 0) {
+      console.log('No users found for this event (neither registered nor with profiles)');
       return [];
     }
 
-    // Get unique user IDs from all profiles
-    const userIds = [...new Set(allUserProfiles.map(profile => profile.usuario_id))];
+    const userIds = allUserIds;
     console.log(`Found ${userIds.length} unique users for event ${eventId}:`, userIds);
 
     // Now fetch the detailed user information for these users
