@@ -108,8 +108,22 @@ export const fetchUserProfiles = async (eventId: string | null): Promise<UserPro
     console.log('Number of users fetched:', users?.length || 0);
 
     if (!users || users.length === 0) {
-      console.warn('No users found with the registered IDs');
+      console.warn('⚠️ NO USERS FOUND IN usuarios TABLE');
+      console.warn('Expected:', userIds.length, 'users but got:', users?.length || 0);
+      console.warn('Missing user IDs:', userIds);
+      console.warn('This might indicate:');
+      console.warn('1. Users dont exist in usuarios table');
+      console.warn('2. RLS policy blocking access');
+      console.warn('3. Data inconsistency between tables');
       return [];
+    }
+
+    if (users.length < userIds.length) {
+      const foundUserIds = users.map(u => u.id);
+      const missingUserIds = userIds.filter(id => !foundUserIds.includes(id));
+      console.warn('⚠️ SOME USERS MISSING FROM usuarios TABLE');
+      console.warn('Expected:', userIds.length, 'but found:', users.length);
+      console.warn('Missing user IDs:', missingUserIds);
     }
 
     // Use the existing allUserProfiles data we already fetched
