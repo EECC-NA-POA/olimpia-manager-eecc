@@ -35,7 +35,6 @@ export function UserProfilesTable({ userProfiles, eventId }: UserProfilesTablePr
               <TableHead>Nome</TableHead>
               <TableHead>Contato</TableHead>
               <TableHead>Perfis</TableHead>
-              <TableHead>Status Pagamento</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -83,26 +82,6 @@ export function UserProfilesTable({ userProfiles, eventId }: UserProfilesTablePr
                       <Badge variant="outline">Sem perfil</Badge>
                     )}
                   </div>
-                </TableCell>
-                
-                <TableCell>
-                  {user.paymentStatus ? (
-                    <Badge 
-                      variant={
-                        user.paymentStatus === 'confirmado' ? 'default' :
-                        user.paymentStatus === 'isento' ? 'secondary' :
-                        user.paymentStatus === 'cancelado' ? 'destructive' :
-                        'outline'
-                      }
-                    >
-                      {user.paymentStatus === 'confirmado' ? 'Confirmado' :
-                       user.paymentStatus === 'isento' ? 'Isento' :
-                       user.paymentStatus === 'cancelado' ? 'Cancelado' :
-                       'Pendente'}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline">Não informado</Badge>
-                  )}
                 </TableCell>
                 
                 <TableCell className="text-right">
