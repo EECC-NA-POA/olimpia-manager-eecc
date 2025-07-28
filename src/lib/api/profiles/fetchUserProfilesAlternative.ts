@@ -21,7 +21,7 @@ export const fetchUserProfilesAlternative = async (eventId: string | null): Prom
   console.log('=== NOVA ABORDAGEM: Fetching user profiles for event:', eventId);
 
   try {
-    // Estratégia 1: Usar função RPC personalizada que bypassa RLS
+    // Estratégia 1: Usar função RPC personalizada
     console.log('Tentando buscar usuários via RPC...');
     
     const { data: rpcUsers, error: rpcError } = await supabase
@@ -29,70 +29,42 @@ export const fetchUserProfilesAlternative = async (eventId: string | null): Prom
         p_event_id: eventId 
       });
 
-    if (!rpcError && rpcUsers && rpcUsers.length > 0) {
+    if (rpcError) {
+      console.error('❌ Erro no RPC:', rpcError);
+    } else if (rpcUsers && rpcUsers.length > 0) {
       console.log('✅ RPC funcionou! Usuários encontrados:', rpcUsers.length);
       return formatRpcUsers(rpcUsers);
+    } else {
+      console.log('⚠️ RPC retornou array vazio');
     }
 
-    console.log('⚠️ RPC não funcionou, tentando abordagem direta...');
-
-    // Estratégia 2: Buscar diretamente com join
+    // Estratégia 2: Buscar diretamente com join (mais simples)
+    console.log('Tentando busca direta simplificada...');
+    
     const { data: directUsers, error: directError } = await supabase
-      .from('inscricoes_eventos')
+      .from('usuarios')
       .select(`
-        usuario_id,
-        usuarios!inner(
-          id,
-          email,
-          user_metadata
-        ),
-        papeis_usuarios!left(
+        id,
+        email,
+        user_metadata,
+        inscricoes_eventos!inner(evento_id),
+        papeis_usuarios(
           perfil_id,
-          perfis!inner(
-            id,
-            nome
-          )
+          perfis(id, nome)
         )
       `)
-      .eq('evento_id', eventId);
+      .eq('inscricoes_eventos.evento_id', eventId);
 
-    if (!directError && directUsers && directUsers.length > 0) {
+    if (directError) {
+      console.error('❌ Erro na busca direta:', directError);
+    } else if (directUsers && directUsers.length > 0) {
       console.log('✅ Busca direta funcionou! Usuários encontrados:', directUsers.length);
-      return formatDirectUsers(directUsers);
+      return formatServiceUsers(directUsers);
+    } else {
+      console.log('⚠️ Busca direta retornou array vazio');
     }
 
-    console.log('⚠️ Busca direta falhou, tentando service role...');
-
-    // Estratégia 3: Tentar usar service role se disponível
-    const serviceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-    if (serviceKey) {
-      const { createClient } = await import('@supabase/supabase-js');
-      const serviceClient = createClient(
-        import.meta.env.VITE_SUPABASE_URL,
-        serviceKey
-      );
-
-      const { data: serviceUsers, error: serviceError } = await serviceClient
-        .from('usuarios')
-        .select(`
-          id,
-          email,
-          user_metadata,
-          inscricoes_eventos!inner(evento_id),
-          papeis_usuarios(
-            perfil_id,
-            perfis(id, nome)
-          )
-        `)
-        .eq('inscricoes_eventos.evento_id', eventId);
-
-      if (!serviceError && serviceUsers) {
-        console.log('✅ Service role funcionou! Usuários encontrados:', serviceUsers.length);
-        return formatServiceUsers(serviceUsers);
-      }
-    }
-
-    console.error('❌ Todas as estratégias falharam');
+    console.error('❌ Todas as estratégias falharam ou retornaram vazio');
     return [];
 
   } catch (error) {
