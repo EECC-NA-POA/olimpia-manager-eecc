@@ -80,8 +80,8 @@ BEGIN
     SELECT DISTINCT
         u.id,
         u.email,
-        COALESCE(u.user_metadata->>'nome_completo', u.email) as nome_completo,
-        u.user_metadata->>'telefone' as telefone,
+        COALESCE(u.nome_completo, u.email) as nome_completo,
+        u.telefone as telefone,
         COALESCE(
             (
                 SELECT jsonb_agg(
@@ -105,7 +105,7 @@ BEGIN
             ORDER BY pg.criado_em DESC
             LIMIT 1
         ) as latest_payment_status
-    FROM auth.users u
+    FROM public.usuarios u
     INNER JOIN public.inscricoes_eventos ie ON ie.usuario_id = u.id
     WHERE ie.evento_id = p_event_id
     ORDER BY nome_completo;
