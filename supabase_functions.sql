@@ -243,6 +243,88 @@ FOR SELECT
 TO authenticated
 USING (true);
 
+-- ========== RLS POLICIES FOR MODELOS_MODALIDADE TABLE ==========
+-- Enable RLS on modelos_modalidade
+ALTER TABLE public.modelos_modalidade ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "modelos_modalidade_read_policy" ON public.modelos_modalidade;
+DROP POLICY IF EXISTS "modelos_modalidade_write_policy" ON public.modelos_modalidade;
+
+-- Create read policy for modelos_modalidade (users can read models for events they have access to)
+CREATE POLICY "modelos_modalidade_read_policy" ON public.modelos_modalidade
+FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.modalidades m
+    WHERE m.id = modelos_modalidade.modalidade_id
+    AND EXISTS (
+      SELECT 1 FROM public.papeis_usuarios pu
+      WHERE pu.usuario_id = auth.uid()
+      AND pu.evento_id = m.evento_id
+    )
+  )
+);
+
+-- Create write policy for modelos_modalidade (organizers and admins can write)
+CREATE POLICY "modelos_modalidade_write_policy" ON public.modelos_modalidade
+FOR ALL
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.modalidades m
+    JOIN public.papeis_usuarios pu ON pu.evento_id = m.evento_id
+    JOIN public.perfis p ON pu.perfil_id = p.id
+    JOIN public.perfis_tipo pt ON p.perfil_tipo_id = pt.id
+    WHERE m.id = modelos_modalidade.modalidade_id
+    AND pu.usuario_id = auth.uid()
+    AND pt.codigo IN ('organizador', 'administrador')
+  )
+);
+
+-- ========== RLS POLICIES FOR CAMPOS_MODELO TABLE ==========
+-- Enable RLS on campos_modelo
+ALTER TABLE public.campos_modelo ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "campos_modelo_read_policy" ON public.campos_modelo;
+DROP POLICY IF EXISTS "campos_modelo_write_policy" ON public.campos_modelo;
+
+-- Create read policy for campos_modelo (users can read fields for models they have access to)
+CREATE POLICY "campos_modelo_read_policy" ON public.campos_modelo
+FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.modelos_modalidade mm
+    JOIN public.modalidades m ON mm.modalidade_id = m.id
+    WHERE mm.id = campos_modelo.modelo_id
+    AND EXISTS (
+      SELECT 1 FROM public.papeis_usuarios pu
+      WHERE pu.usuario_id = auth.uid()
+      AND pu.evento_id = m.evento_id
+    )
+  )
+);
+
+-- Create write policy for campos_modelo (organizers and admins can write)
+CREATE POLICY "campos_modelo_write_policy" ON public.campos_modelo
+FOR ALL
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.modelos_modalidade mm
+    JOIN public.modalidades m ON mm.modalidade_id = m.id
+    JOIN public.papeis_usuarios pu ON pu.evento_id = m.evento_id
+    JOIN public.perfis p ON pu.perfil_id = p.id
+    JOIN public.perfis_tipo pt ON p.perfil_tipo_id = pt.id
+    WHERE mm.id = campos_modelo.modelo_id
+    AND pu.usuario_id = auth.uid()
+    AND pt.codigo IN ('organizador', 'administrador')
+  )
+);
+
 -- Enable RLS
 ALTER TABLE public.inscricoes_eventos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.papeis_usuarios ENABLE ROW LEVEL SECURITY;
