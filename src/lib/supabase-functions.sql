@@ -374,6 +374,65 @@ CREATE POLICY cronogramas_delete_policy
     public.verificar_permissao_admin_evento(evento_id)
   );
 
+-- ========== FIX RLS POLICIES FOR ADMIN ACCESS TO USER DATA ==========
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "usuarios_admin_access" ON public.usuarios;
+DROP POLICY IF EXISTS "inscricoes_eventos_admin_access" ON public.inscricoes_eventos;
+DROP POLICY IF EXISTS "papeis_usuarios_admin_access" ON public.papeis_usuarios;
+
+-- Create new policy that allows administrators to see all users from their events
+CREATE POLICY "usuarios_admin_access" 
+ON public.usuarios 
+FOR SELECT 
+USING (
+    auth.uid() = id OR  -- Users can see their own data
+    EXISTS (
+        SELECT 1 
+        FROM public.papeis_usuarios pu
+        JOIN public.perfis p ON pu.perfil_id = p.id
+        WHERE pu.usuario_id = auth.uid() 
+        AND p.nome = 'Administração'
+        AND pu.evento_id IN (
+            SELECT DISTINCT evento_id 
+            FROM public.inscricoes_eventos ie 
+            WHERE ie.usuario_id = usuarios.id
+        )
+    )
+);
+
+-- Fix inscricoes_eventos table RLS for admins
+CREATE POLICY "inscricoes_eventos_admin_access"
+ON public.inscricoes_eventos
+FOR SELECT
+USING (
+    usuario_id = auth.uid() OR  -- Users can see their own registrations
+    EXISTS (
+        SELECT 1 
+        FROM public.papeis_usuarios pu
+        JOIN public.perfis p ON pu.perfil_id = p.id
+        WHERE pu.usuario_id = auth.uid() 
+        AND p.nome = 'Administração'
+        AND pu.evento_id = inscricoes_eventos.evento_id
+    )
+);
+
+-- Fix papeis_usuarios table RLS for admins
+CREATE POLICY "papeis_usuarios_admin_access"
+ON public.papeis_usuarios
+FOR SELECT
+USING (
+    usuario_id = auth.uid() OR  -- Users can see their own roles
+    EXISTS (
+        SELECT 1 
+        FROM public.papeis_usuarios pu2
+        JOIN public.perfis p ON pu2.perfil_id = p.id
+        WHERE pu2.usuario_id = auth.uid() 
+        AND p.nome = 'Administração'
+        AND pu2.evento_id = papeis_usuarios.evento_id
+    )
+);
+
 -- Grant necessário para as funções
 GRANT EXECUTE ON FUNCTION public.verificar_permissao_monitor(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.verificar_permissao_presenca(uuid) TO authenticated;
