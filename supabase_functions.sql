@@ -186,22 +186,24 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY papeis_usuarios_final_policy ON public.papeis_usuarios
+-- Temporarily simple policy to avoid recursion
+DROP POLICY IF EXISTS papeis_usuarios_simple_policy ON public.papeis_usuarios;
+CREATE POLICY papeis_usuarios_simple_policy ON public.papeis_usuarios
+FOR ALL
+TO authenticated
+USING (usuario_id = auth.uid());
+
+-- Now create the corrected policy using the helper function
+DROP POLICY IF EXISTS papeis_usuarios_corrected_policy ON public.papeis_usuarios;
+CREATE POLICY papeis_usuarios_corrected_policy ON public.papeis_usuarios
 FOR ALL
 TO authenticated
 USING (
   -- User can see their own roles
   usuario_id = auth.uid()
   OR
-  -- Or if they have 'Administração' role for that specific event
-  EXISTS (
-    SELECT 1
-    FROM public.papeis_usuarios pu
-    JOIN public.perfis p ON pu.perfil_id = p.id
-    WHERE pu.usuario_id = auth.uid()
-      AND p.nome = 'Administração'
-      AND pu.evento_id = papeis_usuarios.evento_id
-  )
+  -- Or if they are admin for this event (uses helper function to avoid recursion)
+  is_user_admin(auth.uid(), evento_id)
 );
 
 -- ========== RPC FUNCTION TO GET USER ROLES WITH CODES (BYPASSES RLS) ==========
@@ -329,6 +331,26 @@ $$ LANGUAGE plpgsql;
 
 -- Grant execute permission
 GRANT EXECUTE ON FUNCTION get_user_profile_safe(uuid, uuid) TO authenticated;
+
+-- ========== HELPER FUNCTION TO CHECK ADMIN STATUS (AVOIDS RLS RECURSION) ==========
+CREATE OR REPLACE FUNCTION is_user_admin(p_user_id uuid, p_event_id uuid)
+RETURNS boolean
+SECURITY DEFINER
+AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1
+        FROM public.papeis_usuarios pu
+        JOIN public.perfis p ON pu.perfil_id = p.id
+        WHERE pu.usuario_id = p_user_id
+          AND p.nome = 'Administração'
+          AND pu.evento_id = p_event_id
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+-- Grant execute permission
+GRANT EXECUTE ON FUNCTION is_user_admin(uuid, uuid) TO authenticated;
 
 -- ========== RLS POLICY FOR PERFIS_TIPO TABLE ==========
 -- Enable RLS on perfis_tipo if not already enabled
