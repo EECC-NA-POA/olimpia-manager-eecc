@@ -44,7 +44,7 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
         
         const { data: registrations, error: regError } = await supabase
           .from('inscricoes_eventos')
-          .select('evento_id, usuario_id, created_at')
+          .select('evento_id, usuario_id, data_inscricao')
           .eq('usuario_id', userId);
         
         console.log('Registrations query result:', { 
