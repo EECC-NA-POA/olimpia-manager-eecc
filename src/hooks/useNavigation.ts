@@ -25,7 +25,7 @@ export const useNavigation = () => {
 
   // Check for each role type
   const roles: UserRoles = {
-    isOrganizer: userRoleCodes.includes('ORE'),
+    isOrganizer: userRoleCodes.includes('ORG') || userRoleCodes.includes('ORE'), // Support both codes
     isAthlete: userRoleCodes.includes('ATL'),
     isDelegationRep: userRoleCodes.includes('RDD'),
     isPublicGeral: userRoleCodes.includes('PGR'),

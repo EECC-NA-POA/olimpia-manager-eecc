@@ -11,13 +11,18 @@ export const fetchUserProfile = async (userId: string) => {
   try {
     console.log('Fetching user profile data for user:', userId);
     
+    // Force clear cache for debugging role issues
+    userProfileCache.clear();
+    console.log('CLEARED ALL PROFILE CACHE FOR DEBUGGING');
+    
     // Get current event ID from localStorage since roles are now event-specific
     const currentEventId = localStorage.getItem('currentEventId');
+    console.log('Current event ID:', currentEventId);
     const cacheKey = `${userId}-${currentEventId || 'no-event'}`;
     
-    // Verificar cache
+    // Verificar cache (disabled for debugging)
     const cached = userProfileCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION && cached.eventId === currentEventId) {
+    if (false && cached && Date.now() - cached.timestamp < CACHE_DURATION && cached.eventId === currentEventId) {
       console.log('Using cached user profile data');
       return cached.data;
     }
@@ -96,7 +101,12 @@ export const fetchUserProfile = async (userId: string) => {
     const userProfile = profileData[0];
     const papeis = Array.isArray(userProfile.papeis) ? userProfile.papeis : [];
     
+    console.log('=== DETAILED ROLE DEBUG ===');
     console.log('User roles loaded:', papeis.length);
+    console.log('Raw papeis data:', papeis);
+    console.log('Role codes:', papeis.map((p: any) => p.codigo));
+    console.log('Role names:', papeis.map((p: any) => p.nome));
+    console.log('===========================');
     
     const result = {
       nome_completo: userProfile.nome_completo,
@@ -126,10 +136,18 @@ export const clearUserProfileCache = (userId?: string) => {
     // Limpar cache específico do usuário
     const keysToDelete = Array.from(userProfileCache.keys()).filter(key => key.startsWith(userId));
     keysToDelete.forEach(key => userProfileCache.delete(key));
+    console.log(`Cleared profile cache for user: ${userId}`);
   } else {
     // Limpar todo o cache
     userProfileCache.clear();
+    console.log('Cleared all profile cache');
   }
+};
+
+// Force clear all cache (for troubleshooting)
+export const forceClearAllCache = () => {
+  userProfileCache.clear();
+  console.log('FORCE CLEARED ALL PROFILE CACHE');
 };
 
 export const handleAuthRedirect = (userProfile: any, pathname: string, navigate: Function) => {
