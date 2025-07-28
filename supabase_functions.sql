@@ -230,6 +230,63 @@ $$ LANGUAGE plpgsql;
 -- Grant execute permission
 GRANT EXECUTE ON FUNCTION get_user_roles_with_codes(uuid, uuid) TO authenticated;
 
+-- ========== RPC FUNCTION TO GET MODELO CONFIGURATIONS (BYPASSES RLS) ==========
+CREATE OR REPLACE FUNCTION get_modelo_configurations(p_event_id uuid)
+RETURNS TABLE(
+    id integer,
+    modalidade_id integer,
+    codigo_modelo text,
+    descricao text,
+    modalidade_nome text,
+    modalidade_categoria text,
+    campos_modelo jsonb
+) 
+SECURITY DEFINER
+AS $$
+BEGIN
+    -- Check if user has access to this event
+    IF NOT EXISTS (
+        SELECT 1 FROM public.papeis_usuarios pu
+        WHERE pu.usuario_id = auth.uid()
+        AND pu.evento_id = p_event_id
+    ) THEN
+        RAISE EXCEPTION 'Access denied to event';
+    END IF;
+
+    RETURN QUERY
+    SELECT 
+        mm.id::integer,
+        mm.modalidade_id::integer,
+        mm.codigo_modelo::text,
+        mm.descricao::text,
+        m.nome::text as modalidade_nome,
+        m.categoria::text as modalidade_categoria,
+        COALESCE(
+            jsonb_agg(
+                jsonb_build_object(
+                    'id', cm.id,
+                    'chave_campo', cm.chave_campo,
+                    'rotulo_campo', cm.rotulo_campo,
+                    'tipo_input', cm.tipo_input,
+                    'obrigatorio', cm.obrigatorio,
+                    'ordem_exibicao', cm.ordem_exibicao,
+                    'metadados', cm.metadados
+                ) ORDER BY cm.ordem_exibicao
+            ) FILTER (WHERE cm.id IS NOT NULL),
+            '[]'::jsonb
+        ) as campos_modelo
+    FROM public.modelos_modalidade mm
+    JOIN public.modalidades m ON mm.modalidade_id = m.id
+    LEFT JOIN public.campos_modelo cm ON mm.id = cm.modelo_id
+    WHERE m.evento_id = p_event_id
+    GROUP BY mm.id, mm.modalidade_id, mm.codigo_modelo, mm.descricao, m.nome, m.categoria
+    ORDER BY m.nome;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Grant execute permission
+GRANT EXECUTE ON FUNCTION get_modelo_configurations(uuid) TO authenticated;
+
 -- ========== RLS POLICY FOR PERFIS_TIPO TABLE ==========
 -- Enable RLS on perfis_tipo if not already enabled
 ALTER TABLE public.perfis_tipo ENABLE ROW LEVEL SECURITY;
