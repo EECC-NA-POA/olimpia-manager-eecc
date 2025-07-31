@@ -240,7 +240,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
             <PhoneInput form={form} />
 
             {/* Location Section */}
-            <LocationSelector form={form} />
+            <LocationSelector form={form} context="admin" />
 
             {/* Password Section */}
             <FormField

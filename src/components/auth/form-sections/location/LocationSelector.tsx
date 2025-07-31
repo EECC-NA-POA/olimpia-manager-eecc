@@ -10,9 +10,10 @@ import { useBranchSelection } from './useBranchSelection';
 interface LocationSelectorProps {
   form: UseFormReturn<any>;
   disabled?: boolean;
+  context?: string;
 }
 
-export const LocationSelector = ({ form, disabled = false }: LocationSelectorProps) => {
+export const LocationSelector = ({ form, disabled = false, context = 'default' }: LocationSelectorProps) => {
   const {
     statesList,
     branchesForSelectedState,
@@ -21,7 +22,7 @@ export const LocationSelector = ({ form, disabled = false }: LocationSelectorPro
     isLoading,
     error,
     refetch
-  } = useBranchSelection();
+  } = useBranchSelection(context);
 
   const handleStateSelectorChange = useCallback((state: string) => {
     handleStateChange(state);
