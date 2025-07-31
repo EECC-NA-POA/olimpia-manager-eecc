@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { UserDeletionDialog } from '@/components/admin/UserDeletionDialog';
 import { toast } from 'sonner';
+import { fetchBranches } from '@/lib/api';
 
 interface BranchUser {
   id: string;
@@ -43,23 +44,44 @@ export function UsersList({ eventId }: UsersListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const { data: users, isLoading, error } = useQuery({
-    queryKey: ['branch-users', user?.filial_id],
-    queryFn: async () => {
-      if (!user?.filial_id) {
-        throw new Error('Usuário sem filial definida');
-      }
+  // First, get all branches to find the user's actual branch
+  const { data: branches } = useQuery({
+    queryKey: ['branches'],
+    queryFn: fetchBranches,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-      // Validate that filial_id is a valid UUID format
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(user.filial_id)) {
-        console.error('Invalid filial_id detected:', user.filial_id);
-        throw new Error(`ID de filial inválido. Entre em contato com o administrador.`);
+  // Find the user's branch ID by matching with real branches
+  const userBranchId = useMemo(() => {
+    if (!user?.filial_id || !branches) return null;
+    
+    // If filial_id is already a valid UUID and exists in branches, use it
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (uuidRegex.test(user.filial_id)) {
+      const branchExists = branches.find(branch => branch.id === user.filial_id);
+      if (branchExists) {
+        return user.filial_id;
+      }
+    }
+    
+    // If filial_id is invalid, try to find branch by name
+    const branchByName = branches.find(branch => 
+      branch.nome === user.filial_id
+    );
+    
+    return branchByName?.id || null;
+  }, [user?.filial_id, branches]);
+
+  const { data: users, isLoading, error } = useQuery({
+    queryKey: ['branch-users', userBranchId],
+    queryFn: async () => {
+      if (!userBranchId) {
+        throw new Error('Filial não encontrada no sistema');
       }
 
       // Use RPC function to get users with auth status
       const { data, error } = await supabase
-        .rpc('get_users_with_auth_status', { p_filial_id: user.filial_id });
+        .rpc('get_users_with_auth_status', { p_filial_id: userBranchId });
 
       if (error) {
         throw error;
@@ -86,7 +108,7 @@ export function UsersList({ eventId }: UsersListProps) {
         tipo_cadastro: user.tipo_cadastro
       }));
     },
-    enabled: !!user?.filial_id,
+    enabled: !!userBranchId,
   });
 
   // Filter and paginate users
@@ -119,20 +141,20 @@ export function UsersList({ eventId }: UsersListProps) {
   }
 
   if (error) {
-    const isInvalidFilialId = error.message.includes('ID de filial inválido');
+    const isInvalidBranch = error.message.includes('Filial não encontrada');
     
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center max-w-md">
           <p className="text-muted-foreground mb-2">
-            {isInvalidFilialId ? 'Configuração de filial inválida' : 'Erro ao carregar usuários'}
+            {isInvalidBranch ? 'Filial não encontrada' : 'Erro ao carregar usuários'}
           </p>
           <p className="text-sm text-red-600 mb-4">{error.message}</p>
-          {isInvalidFilialId && (
+          {isInvalidBranch && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
               <p className="text-sm text-yellow-800">
-                Sua conta possui uma configuração de filial inválida. 
-                Entre em contato com o administrador do sistema para corrigir este problema.
+                Sua filial não foi encontrada no sistema. 
+                Entre em contato com o administrador para verificar sua configuração.
               </p>
             </div>
           )}
