@@ -175,13 +175,24 @@ class UserManagementService {
           // Não jogar erro aqui pois o principal (public) já foi excluído
         }
       } else {
-        // Excluir apenas de auth.users (mantém histórico)
+        // Excluir apenas de auth.users (mantém histórico) e desativar usuário
         const { error: authError } = await supabase.rpc('delete_auth_user', { 
           user_id: userId 
         });
 
         if (authError) {
           throw new Error('Erro ao excluir usuário do sistema de autenticação: ' + authError.message);
+        }
+
+        // Marcar como inativo na tabela usuarios para manter histórico
+        const { error: updateError } = await supabase
+          .from('usuarios')
+          .update({ ativo: false })
+          .eq('id', userId);
+
+        if (updateError) {
+          console.error('Error deactivating user:', updateError);
+          throw new Error('Erro ao desativar usuário: ' + updateError.message);
         }
       }
 
