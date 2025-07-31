@@ -1,14 +1,13 @@
-import React from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, Mail, Phone } from 'lucide-react';
-import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
+import { UserDeletionDialog } from '@/components/admin/UserDeletionDialog';
 
 interface BranchUser {
   id: string;
@@ -33,7 +32,7 @@ interface UsersListProps {
 
 export function UsersList({ eventId }: UsersListProps) {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
+  const [userToDelete, setUserToDelete] = useState<BranchUser | null>(null);
 
   const { data: users, isLoading, error } = useQuery({
     queryKey: ['branch-users', user?.filial_id],
@@ -71,37 +70,6 @@ export function UsersList({ eventId }: UsersListProps) {
     enabled: !!user?.filial_id,
   });
 
-  const deleteUserMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      // First, deactivate user in usuarios table
-      const { error: updateError } = await supabase
-        .from('usuarios')
-        .update({ ativo: false })
-        .eq('id', userId);
-
-      if (updateError) throw updateError;
-
-      // Then, delete from auth
-      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-      
-      if (authError) {
-        // If auth deletion fails, revert the usuarios table change
-        await supabase
-          .from('usuarios')
-          .update({ ativo: true })
-          .eq('id', userId);
-        throw authError;
-      }
-    },
-    onSuccess: () => {
-      toast.success('Usuário excluído com sucesso!');
-      queryClient.invalidateQueries({ queryKey: ['branch-users'] });
-    },
-    onError: (error) => {
-      console.error('Error deleting user:', error);
-      toast.error('Erro ao excluir usuário: ' + error.message);
-    },
-  });
 
   const handleEmailClick = (email: string) => {
     window.location.href = `mailto:${email}`;
@@ -188,42 +156,27 @@ export function UsersList({ eventId }: UsersListProps) {
                 {branchUser.filiais?.nome || 'N/A'}
               </TableCell>
               <TableCell className="text-right">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      disabled={deleteUserMutation.isPending}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Tem certeza que deseja excluir o usuário <strong>{branchUser.nome_completo}</strong>? 
-                        Esta ação irá remover o acesso de autenticação do usuário e desativá-lo no sistema.
-                        Esta ação não pode ser desfeita.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => deleteUserMutation.mutate(branchUser.id)}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        Excluir
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setUserToDelete(branchUser)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      {userToDelete && (
+        <UserDeletionDialog
+          user={userToDelete}
+          open={!!userToDelete}
+          onOpenChange={(open) => !open && setUserToDelete(null)}
+        />
+      )}
     </div>
   );
 }
