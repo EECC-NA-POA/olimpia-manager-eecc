@@ -11,16 +11,21 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useUserManagement } from '@/hooks/useUserManagement';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Copy } from 'lucide-react';
+import { PhoneInput } from '@/components/auth/form-sections/phone/PhoneInput';
+import { LocationSelector } from '@/components/auth/form-sections/location/LocationSelector';
 
 const createUserSchema = z.object({
   nome_completo: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
   email: z.string().email('Email inválido'),
-  senha: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-  telefone: z.string().min(10, 'Telefone deve ter pelo menos 10 dígitos'),
+  senha: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres'),
+  ddi: z.string().default('+55'),
+  telefone: z.string().min(8, 'Telefone inválido'),
   tipo_documento: z.enum(['CPF', 'RG']),
   numero_documento: z.string().min(1, 'Número do documento é obrigatório'),
   genero: z.enum(['Masculino', 'Feminino']),
   data_nascimento: z.string().min(1, 'Data de nascimento é obrigatória'),
+  state: z.string().min(1, 'Selecione um estado'),
+  branchId: z.string().min(1, 'Selecione uma sede'),
   cadastra_eventos: z.boolean().optional(),
 });
 
@@ -42,11 +47,14 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
       nome_completo: '',
       email: '',
       senha: '',
+      ddi: '+55',
       telefone: '',
       tipo_documento: 'CPF',
       numero_documento: '',
       genero: 'Masculino',
       data_nascimento: '',
+      state: '',
+      branchId: '',
       cadastra_eventos: false,
     },
   });
@@ -80,12 +88,15 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
       // Validate user exists before creating
       await checkUserExists(data.email, data.numero_documento);
       
+      // Format phone number with DDI
+      const fullPhone = `${data.ddi}${data.telefone}`;
+      
       // Create user using the service
       createUser({
         nome_completo: data.nome_completo,
         email: data.email,
         senha: data.senha,
-        telefone: data.telefone,
+        telefone: fullPhone,
         tipo_documento: data.tipo_documento,
         numero_documento: data.numero_documento,
         genero: data.genero,
@@ -117,6 +128,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Personal Info Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -125,7 +137,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
                   <FormItem>
                     <FormLabel>Nome Completo *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Digite o nome completo" {...field} />
+                      <Input placeholder="Seu nome completo" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -134,83 +146,21 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
 
               <FormField
                 control={form.control}
-                name="email"
+                name="data_nascimento"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email *</FormLabel>
+                    <FormLabel>Data de Nascimento *</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="Digite o email" {...field} />
+                      <Input type="date" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+            </div>
 
-              <FormField
-                control={form.control}
-                name="senha"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Senha *</FormLabel>
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <FormControl>
-                          <Input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Digite a senha"
-                            {...field}
-                          />
-                        </FormControl>
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                          {field.value && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={handleCopyPassword}
-                              className={passwordCopied ? "text-green-600" : ""}
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleGeneratePassword}
-                      >
-                        Gerar Senha Aleatória
-                      </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="telefone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telefone *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="(11) 99999-9999" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+            {/* Document Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="tipo_documento"
@@ -240,43 +190,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
                   <FormItem>
                     <FormLabel>Número do Documento *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Digite o número" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="genero"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gênero *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o gênero" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Masculino">Masculino</SelectItem>
-                        <SelectItem value="Feminino">Feminino</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="data_nascimento"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data de Nascimento *</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
+                      <Input placeholder="000.000.000-00" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -284,6 +198,103 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
               />
             </div>
 
+            {/* Gender Section */}
+            <FormField
+              control={form.control}
+              name="genero"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Selecione o Gênero *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o gênero" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Masculino">Masculino</SelectItem>
+                      <SelectItem value="Feminino">Feminino</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Email Section */}
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email *</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="seu@email.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Phone Section */}
+            <PhoneInput form={form} />
+
+            {/* Location Section */}
+            <LocationSelector form={form} />
+
+            {/* Password Section */}
+            <FormField
+              control={form.control}
+              name="senha"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Senha *</FormLabel>
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <FormControl>
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          {...field}
+                        />
+                      </FormControl>
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                        {field.value && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCopyPassword}
+                            className={passwordCopied ? "text-green-600" : ""}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleGeneratePassword}
+                    >
+                      Gerar Senha Aleatória
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Admin Options */}
             <FormField
               control={form.control}
               name="cadastra_eventos"
