@@ -23,10 +23,12 @@ interface BranchUser {
   ativo: boolean;
   confirmado: boolean;
   data_criacao: string;
-  filiais: {
+  filial: {
     nome: string;
+    estado: string;
   } | null;
-  auth_user?: any;
+  auth_exists: boolean;
+  tipo_cadastro: string;
 }
 
 interface UsersListProps {
@@ -47,68 +49,34 @@ export function UsersList({ eventId }: UsersListProps) {
         throw new Error('Usuário sem filial definida');
       }
 
-      // Buscar usuários da tabela usuarios
-      const { data: usuariosData, error: usuariosError } = await supabase
-        .from('usuarios')
-        .select(`
-          id,
-          nome_completo,
-          email,
-          telefone,
-          numero_documento,
-          tipo_documento,
-          genero,
-          data_nascimento,
-          ativo,
-          confirmado,
-          data_criacao,
-          filiais(nome)
-        `)
-        .eq('filial_id', user.filial_id)
-        .order('nome_completo');
+      // Use RPC function to get users with auth status
+      const { data, error } = await supabase
+        .rpc('get_users_with_auth_status', { p_filial_id: user.filial_id });
 
-      if (usuariosError) throw usuariosError;
+      if (error) {
+        throw error;
+      }
 
-      // Buscar todos os usuários de autenticação
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      if (authError) throw authError;
-
-      // Criar mapa dos usuários de autenticação por email
-      const authUsersMap = new Map();
-      authUsers.users.forEach(authUser => {
-        if (authUser.email) {
-          authUsersMap.set(authUser.email, authUser);
-        }
-      });
-
-      // Combinar dados de usuários com dados de autenticação
-      const combinedData = usuariosData?.map(user => ({
-        ...user,
-        filiais: user.filiais ? user.filiais[0] : null,
-        auth_user: user.email ? authUsersMap.get(user.email) || null : null
-      })) || [];
-
-      // Adicionar usuários que existem apenas na autenticação (órfãos)
-      const usuariosEmails = new Set(usuariosData?.map(u => u.email).filter(Boolean) || []);
-      const orphanAuthUsers = authUsers.users
-        .filter((authUser: any) => authUser.email && !usuariosEmails.has(authUser.email))
-        .map((authUser: any) => ({
-          id: authUser.id,
-          nome_completo: authUser.user_metadata?.nome_completo || authUser.email?.split('@')[0] || 'Nome não informado',
-          email: authUser.email || null,
-          telefone: authUser.user_metadata?.telefone || '',
-          numero_documento: authUser.user_metadata?.numero_documento || '',
-          tipo_documento: authUser.user_metadata?.tipo_documento || '',
-          genero: authUser.user_metadata?.genero || '',
-          data_nascimento: authUser.user_metadata?.data_nascimento || '',
-          ativo: true,
-          confirmado: authUser.email_confirmed_at !== null,
-          data_criacao: authUser.created_at,
-          filiais: null,
-          auth_user: authUser
-        }));
-
-      return [...combinedData, ...orphanAuthUsers];
+      // Transform the data to match our BranchUser interface
+      return data.map((user: any): BranchUser => ({
+        id: user.id,
+        nome_completo: user.nome_completo,
+        email: user.email,
+        telefone: user.telefone,
+        numero_documento: user.numero_documento,
+        tipo_documento: user.tipo_documento,
+        genero: user.genero,
+        data_nascimento: user.data_nascimento,
+        ativo: user.ativo,
+        confirmado: user.confirmado,
+        data_criacao: user.data_criacao,
+        filial: user.filial_nome ? {
+          nome: user.filial_nome,
+          estado: user.filial_estado
+        } : null,
+        auth_exists: user.auth_exists,
+        tipo_cadastro: user.tipo_cadastro
+      }));
     },
     enabled: !!user?.filial_id,
   });
@@ -222,20 +190,18 @@ export function UsersList({ eventId }: UsersListProps) {
                 {branchUser.numero_documento} ({branchUser.tipo_documento})
               </TableCell>
               <TableCell>
-                {(() => {
-                  const hasUserRecord = branchUser.telefone && branchUser.numero_documento; // Indica que tem registro completo na tabela usuarios
-                  const hasAuthRecord = branchUser.auth_user;
-                  
-                  if (hasUserRecord && hasAuthRecord) {
-                    return <Badge className="bg-olimpics-green-primary text-white">Completo</Badge>;
-                  } else if (hasUserRecord && !hasAuthRecord) {
-                    return <Badge variant="secondary">Apenas Usuário</Badge>;
-                  } else if (!hasUserRecord && hasAuthRecord) {
-                    return <Badge variant="outline">Apenas Autenticação</Badge>;
-                  } else {
-                    return <Badge variant="destructive">Incompleto</Badge>;
-                  }
-                })()}
+                {branchUser.tipo_cadastro === 'Completo' && (
+                  <Badge className="bg-olimpics-green-primary text-white">Completo</Badge>
+                )}
+                {branchUser.tipo_cadastro === 'Apenas Usuário' && (
+                  <Badge variant="secondary">Apenas Usuário</Badge>
+                )}
+                {branchUser.tipo_cadastro === 'Apenas Auth' && (
+                  <Badge variant="outline">Apenas Auth</Badge>
+                )}
+                {branchUser.tipo_cadastro === 'Incompleto' && (
+                  <Badge variant="destructive">Incompleto</Badge>
+                )}
               </TableCell>
               <TableCell>
                 <Badge variant={branchUser.ativo ? "default" : "destructive"}>
@@ -243,7 +209,7 @@ export function UsersList({ eventId }: UsersListProps) {
                 </Badge>
               </TableCell>
               <TableCell>
-                {branchUser.filiais?.nome || 'N/A'}
+                {branchUser.filial?.nome || 'N/A'}
               </TableCell>
               <TableCell className="text-right">
                 <Button

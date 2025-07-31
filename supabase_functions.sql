@@ -447,6 +447,87 @@ USING (
   )
 );
 
+-- Function to get users with auth status for admin panel
+CREATE OR REPLACE FUNCTION get_users_with_auth_status(p_filial_id UUID DEFAULT NULL)
+RETURNS TABLE (
+    id UUID,
+    nome_completo TEXT,
+    email TEXT,
+    telefone TEXT,
+    numero_documento TEXT,
+    tipo_documento TEXT,
+    genero TEXT,
+    data_nascimento DATE,
+    ativo BOOLEAN,
+    confirmado BOOLEAN,
+    data_criacao TIMESTAMP WITH TIME ZONE,
+    filial_nome TEXT,
+    filial_estado TEXT,
+    auth_exists BOOLEAN,
+    tipo_cadastro TEXT
+) 
+SECURITY DEFINER
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        u.id,
+        u.nome_completo,
+        u.email,
+        u.telefone,
+        u.numero_documento,
+        u.tipo_documento,
+        u.genero,
+        u.data_nascimento,
+        u.ativo,
+        u.confirmado,
+        u.data_criacao,
+        f.nome as filial_nome,
+        f.estado as filial_estado,
+        (au.email IS NOT NULL) as auth_exists,
+        CASE 
+            WHEN u.id IS NOT NULL AND au.email IS NOT NULL THEN 'Completo'
+            WHEN u.id IS NOT NULL AND au.email IS NULL THEN 'Apenas Usuário'
+            WHEN u.id IS NULL AND au.email IS NOT NULL THEN 'Apenas Auth'
+            ELSE 'Incompleto'
+        END as tipo_cadastro
+    FROM usuarios u
+    LEFT JOIN filiais f ON u.filial_id = f.id
+    LEFT JOIN auth.users au ON u.email = au.email
+    WHERE (p_filial_id IS NULL OR u.filial_id = p_filial_id)
+    
+    UNION ALL
+    
+    -- Include orphaned auth users (users in auth.users but not in usuarios table)
+    SELECT 
+        NULL as id,
+        COALESCE(au.raw_user_meta_data->>'nome_completo', au.email) as nome_completo,
+        au.email,
+        au.raw_user_meta_data->>'telefone' as telefone,
+        au.raw_user_meta_data->>'numero_documento' as numero_documento,
+        au.raw_user_meta_data->>'tipo_documento' as tipo_documento,
+        au.raw_user_meta_data->>'genero' as genero,
+        (au.raw_user_meta_data->>'data_nascimento')::DATE as data_nascimento,
+        TRUE as ativo,
+        au.email_confirmed_at IS NOT NULL as confirmado,
+        au.created_at as data_criacao,
+        COALESCE(f.nome, 'Sem filial') as filial_nome,
+        COALESCE(f.estado, 'N/A') as filial_estado,
+        TRUE as auth_exists,
+        'Apenas Auth' as tipo_cadastro
+    FROM auth.users au
+    LEFT JOIN usuarios u ON au.email = u.email
+    LEFT JOIN filiais f ON (au.raw_user_meta_data->>'filial_id')::UUID = f.id
+    WHERE u.email IS NULL
+    AND (p_filial_id IS NULL OR (au.raw_user_meta_data->>'filial_id')::UUID = p_filial_id)
+    
+    ORDER BY nome_completo;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Grant execute permission for the new function
+GRANT EXECUTE ON FUNCTION get_users_with_auth_status(uuid) TO authenticated;
+
 -- Enable RLS
 ALTER TABLE public.inscricoes_eventos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.papeis_usuarios ENABLE ROW LEVEL SECURITY;
