@@ -450,17 +450,17 @@ USING (
 -- Function to get users with auth status for admin panel
 CREATE OR REPLACE FUNCTION get_users_with_auth_status(p_filial_id UUID DEFAULT NULL)
 RETURNS TABLE (
-    id UUID,
+    id TEXT,
     nome_completo TEXT,
     email TEXT,
     telefone TEXT,
     numero_documento TEXT,
     tipo_documento TEXT,
     genero TEXT,
-    data_nascimento DATE,
+    data_nascimento TEXT,
     ativo BOOLEAN,
     confirmado BOOLEAN,
-    data_criacao TIMESTAMP WITH TIME ZONE,
+    data_criacao TEXT,
     filial_nome TEXT,
     filial_estado TEXT,
     auth_exists BOOLEAN,
@@ -471,26 +471,25 @@ AS $$
 BEGIN
     RETURN QUERY
     SELECT 
-        u.id,
-        u.nome_completo,
-        u.email,
-        u.telefone,
-        u.numero_documento,
-        u.tipo_documento,
-        u.genero,
-        u.data_nascimento,
-        u.ativo,
-        u.confirmado,
-        u.data_criacao,
-        f.nome as filial_nome,
-        f.estado as filial_estado,
-        (au.email IS NOT NULL) as auth_exists,
+        u.id::TEXT,
+        u.nome_completo::TEXT,
+        u.email::TEXT,
+        COALESCE(u.telefone, '')::TEXT,
+        COALESCE(u.numero_documento, '')::TEXT,
+        COALESCE(u.tipo_documento, '')::TEXT,
+        COALESCE(u.genero, '')::TEXT,
+        COALESCE(u.data_nascimento::TEXT, '')::TEXT,
+        COALESCE(u.ativo, false)::BOOLEAN,
+        COALESCE(u.confirmado, false)::BOOLEAN,
+        u.data_criacao::TEXT,
+        COALESCE(f.nome, 'N/A')::TEXT,
+        COALESCE(f.estado, 'N/A')::TEXT,
+        (au.email IS NOT NULL)::BOOLEAN,
         CASE 
             WHEN u.id IS NOT NULL AND au.email IS NOT NULL THEN 'Completo'
             WHEN u.id IS NOT NULL AND au.email IS NULL THEN 'Apenas Usuário'
-            WHEN u.id IS NULL AND au.email IS NOT NULL THEN 'Apenas Auth'
             ELSE 'Incompleto'
-        END as tipo_cadastro
+        END::TEXT
     FROM usuarios u
     LEFT JOIN filiais f ON u.filial_id = f.id
     LEFT JOIN auth.users au ON u.email = au.email
@@ -500,21 +499,21 @@ BEGIN
     
     -- Include orphaned auth users (users in auth.users but not in usuarios table)
     SELECT 
-        NULL as id,
-        COALESCE(au.raw_user_meta_data->>'nome_completo', au.email) as nome_completo,
-        au.email,
-        au.raw_user_meta_data->>'telefone' as telefone,
-        au.raw_user_meta_data->>'numero_documento' as numero_documento,
-        au.raw_user_meta_data->>'tipo_documento' as tipo_documento,
-        au.raw_user_meta_data->>'genero' as genero,
-        (au.raw_user_meta_data->>'data_nascimento')::DATE as data_nascimento,
-        TRUE as ativo,
-        au.email_confirmed_at IS NOT NULL as confirmado,
-        au.created_at as data_criacao,
-        COALESCE(f.nome, 'Sem filial') as filial_nome,
-        COALESCE(f.estado, 'N/A') as filial_estado,
-        TRUE as auth_exists,
-        'Apenas Auth' as tipo_cadastro
+        au.id::TEXT,
+        COALESCE(au.raw_user_meta_data->>'nome_completo', au.email, 'Nome não informado')::TEXT,
+        au.email::TEXT,
+        COALESCE(au.raw_user_meta_data->>'telefone', '')::TEXT,
+        COALESCE(au.raw_user_meta_data->>'numero_documento', '')::TEXT,
+        COALESCE(au.raw_user_meta_data->>'tipo_documento', '')::TEXT,
+        COALESCE(au.raw_user_meta_data->>'genero', '')::TEXT,
+        COALESCE(au.raw_user_meta_data->>'data_nascimento', '')::TEXT,
+        true::BOOLEAN,
+        (au.email_confirmed_at IS NOT NULL)::BOOLEAN,
+        au.created_at::TEXT,
+        COALESCE(f.nome, 'Sem filial')::TEXT,
+        COALESCE(f.estado, 'N/A')::TEXT,
+        true::BOOLEAN,
+        'Apenas Auth'::TEXT
     FROM auth.users au
     LEFT JOIN usuarios u ON au.email = u.email
     LEFT JOIN filiais f ON (au.raw_user_meta_data->>'filial_id')::UUID = f.id
