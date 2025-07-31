@@ -45,7 +45,7 @@ export function UsersList({ eventId }: UsersListProps) {
   const itemsPerPage = 10;
 
   // First, get all branches to find the user's actual branch
-  const { data: branches } = useQuery({
+  const { data: branches, isLoading: branchesLoading } = useQuery({
     queryKey: ['branches'],
     queryFn: fetchBranches,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -70,9 +70,9 @@ export function UsersList({ eventId }: UsersListProps) {
     );
     
     return branchByName?.id || null;
-  }, [user?.filial_id, branches]);
+  }, [user?.filial_id, branches, branchesLoading]);
 
-  const { data: users, isLoading, error } = useQuery({
+  const { data: users, isLoading: usersLoading, error } = useQuery({
     queryKey: ['branch-users', userBranchId],
     queryFn: async () => {
       if (!userBranchId) {
@@ -108,8 +108,10 @@ export function UsersList({ eventId }: UsersListProps) {
         tipo_cadastro: user.tipo_cadastro
       }));
     },
-    enabled: !!userBranchId,
+    enabled: !!userBranchId && !!branches && !branchesLoading,
   });
+
+  const isLoading = branchesLoading || usersLoading;
 
   // Filter and paginate users
   const filteredUsers = useMemo(() => {
