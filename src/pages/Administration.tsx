@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Calendar, FileText, Users, BookOpen, Settings, UserCheck, Shield, CalendarIcon } from 'lucide-react';
+import { Calendar, FileText, Users, BookOpen, Settings, UserCheck, Shield, CalendarIcon, UserPlus } from 'lucide-react';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { useEventData } from '@/hooks/useEventData';
 import { EventBasicInfo } from '@/components/event-management/EventBasicInfo';
@@ -20,6 +20,7 @@ import { ModeloConfigurationSection } from '@/components/event-management/modelo
 import { EventProfilesSection } from '@/components/event-management/EventProfilesSection';
 import { EventAdministrationSection } from '@/components/event-management/EventAdministrationSection';
 import { UserProfilesManagementSection } from '@/components/event-management/user-profiles/UserProfilesManagementSection';
+import { UserManagementSection } from '@/components/administration/user-management/UserManagementSection';
 
 export default function Administration() {
   const navigate = useNavigate();
@@ -109,6 +110,15 @@ export default function Administration() {
                     <Shield className="h-4 w-4 flex-shrink-0" />
                     <span>{isMobile ? "Gerenciar" : "Gerenciar Perfis de Usuários"}</span>
                   </TabsTrigger>
+                  {canCreateEvents && (
+                    <TabsTrigger 
+                      value="user-management"
+                      className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                    >
+                      <UserPlus className="h-4 w-4 flex-shrink-0" />
+                      <span>{isMobile ? "Usuários" : "Gestão de Usuários"}</span>
+                    </TabsTrigger>
+                  )}
                   <TabsTrigger 
                     value="branches"
                     className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
@@ -179,6 +189,12 @@ export default function Administration() {
                 <TabsContent value="modelo-configuration" className="mt-2 sm:mt-6">
                   <ModeloConfigurationSection eventId={currentEventId} />
                 </TabsContent>
+
+                {canCreateEvents && (
+                  <TabsContent value="user-management" className="mt-2 sm:mt-6">
+                    <UserManagementSection eventId={currentEventId} />
+                  </TabsContent>
+                )}
               </div>
             </Tabs>
           </CardContent>
