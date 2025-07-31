@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { UserDeletionDialog } from '@/components/admin/UserDeletionDialog';
+import { toast } from 'sonner';
 
 interface BranchUser {
   id: string;
@@ -215,8 +216,18 @@ export function UsersList({ eventId }: UsersListProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => setUserToDelete(branchUser)}
+                  className={`${!branchUser.email 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'text-destructive hover:text-destructive'
+                  }`}
+                  disabled={!branchUser.email}
+                  onClick={() => {
+                    if (!branchUser.email) {
+                      toast.error('Usuário sem email válido não pode ser excluído');
+                      return;
+                    }
+                    setUserToDelete(branchUser);
+                  }}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

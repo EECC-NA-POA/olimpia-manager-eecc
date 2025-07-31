@@ -13,7 +13,7 @@ interface UserDeletionDialogProps {
   user: {
     id: string;
     nome_completo: string;
-    email: string;
+    email: string | null;
     numero_documento: string;
   };
   open: boolean;
@@ -28,6 +28,7 @@ export function UserDeletionDialog({ user, open, onOpenChange }: UserDeletionDia
   const { deleteUser, isDeleting } = useUserManagement();
 
   const isFormValid = 
+    user.email && 
     confirmationEmail === user.email && 
     confirmationDocument === user.numero_documento &&
     (deletionType === 'auth_only' || secondConfirmation);
@@ -73,9 +74,18 @@ export function UserDeletionDialog({ user, open, onOpenChange }: UserDeletionDia
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               <strong>Atenção:</strong> Esta ação não pode ser desfeita. 
-              Usuário: <strong>{user.nome_completo}</strong> ({user.email})
+              Usuário: <strong>{user.nome_completo}</strong> ({user.email || 'Email não disponível'})
             </AlertDescription>
           </Alert>
+
+          {!user.email && (
+            <Alert className="border-red-200 bg-red-50">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800">
+                <strong>ATENÇÃO:</strong> Este usuário não possui email válido e não pode ser excluído.
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div className="space-y-3">
             <Label>Tipo de Exclusão</Label>
@@ -113,7 +123,8 @@ export function UserDeletionDialog({ user, open, onOpenChange }: UserDeletionDia
                 type="email"
                 value={confirmationEmail}
                 onChange={(e) => setConfirmationEmail(e.target.value)}
-                placeholder={user.email}
+                placeholder={user.email || "Email não disponível"}
+                disabled={!user.email}
               />
             </div>
 
