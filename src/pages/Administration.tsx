@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -26,6 +27,7 @@ export default function Administration() {
   const { canCreateEvents, isLoading: isLoadingPermission } = useCanCreateEvents();
   const [activeTab, setActiveTab] = useState('basic-info');
   const { data: eventData, isLoading: isLoadingEvent, refetch } = useEventData(currentEventId);
+  const isMobile = useIsMobile();
   
   // Check if user has admin profile
   const hasAdminProfile = user?.papeis?.some(role => role.codigo === 'ADM');
@@ -88,77 +90,59 @@ export default function Administration() {
                 <TabsList className="w-full min-w-max border-b mb-4 sm:mb-8 bg-background grid grid-cols-2 sm:grid-cols-4 lg:flex lg:justify-start lg:space-x-1 p-0.5 sm:p-1 h-auto gap-0.5 sm:gap-1">
                   <TabsTrigger 
                     value="basic-info"
-                    className="flex items-center gap-1 px-1.5 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
                   >
-                    <FileText className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                    <span className="hidden xs:inline sm:hidden">Info</span>
-                    <span className="hidden sm:inline lg:hidden">Informações</span>
-                    <span className="hidden lg:inline">Informações Básicas</span>
-                    <span className="xs:hidden text-[10px]">In</span>
+                    <FileText className="h-4 w-4 flex-shrink-0" />
+                    <span>{isMobile ? "Info" : "Informações Básicas"}</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="profiles"
-                    className="flex items-center gap-1 px-1.5 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
                   >
-                    <UserCheck className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                    <span className="hidden xs:inline sm:hidden">Perfis</span>
-                    <span className="hidden sm:inline lg:hidden">Perfis</span>
-                    <span className="hidden lg:inline">Perfis e Taxas</span>
-                    <span className="xs:hidden text-[10px]">Pe</span>
+                    <UserCheck className="h-4 w-4 flex-shrink-0" />
+                    <span>{isMobile ? "Perfis" : "Perfis e Taxas"}</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="administration"
-                    className="flex items-center gap-1 px-1.5 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
                   >
-                    <Shield className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                    <span className="hidden xs:inline sm:hidden">Gerenciar</span>
-                    <span className="hidden sm:inline lg:hidden">Gerenciar</span>
-                    <span className="hidden lg:inline">Gerenciar Perfis</span>
-                    <span className="xs:hidden text-[10px]">Ge</span>
+                    <Shield className="h-4 w-4 flex-shrink-0" />
+                    <span>{isMobile ? "Gerenciar" : "Gerenciar Perfis de Usuários"}</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="branches"
-                    className="flex items-center gap-1 px-1.5 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
                   >
-                    <Users className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                    <span className="hidden xs:inline sm:hidden">Filiais</span>
-                    <span className="hidden sm:inline lg:hidden">Filiais</span>
-                    <span className="hidden lg:inline">Filiais Vinculadas</span>
-                    <span className="xs:hidden text-[10px]">Fi</span>
+                    <Users className="h-4 w-4 flex-shrink-0" />
+                    <span>{isMobile ? "Filiais" : "Filiais Vinculadas"}</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="regulations"
-                    className="flex items-center gap-1 px-1.5 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
                   >
-                    <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                    <span className="hidden xs:inline">Regulamento</span>
-                    <span className="xs:hidden text-[10px]">Re</span>
+                    <BookOpen className="h-4 w-4 flex-shrink-0" />
+                    <span>{isMobile ? "Regulamento" : "Regulamento"}</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="schedule"
-                    className="flex items-center gap-1 px-1.5 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
                   >
-                    <CalendarIcon className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                    <span className="hidden xs:inline">Cronograma</span>
-                    <span className="xs:hidden text-[10px]">Cr</span>
+                    <CalendarIcon className="h-4 w-4 flex-shrink-0" />
+                    <span>{isMobile ? "Cronograma" : "Cronograma"}</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="modalities"
-                    className="flex items-center gap-1 px-1.5 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
                   >
-                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                    <span className="hidden xs:inline">Modalidades</span>
-                    <span className="xs:hidden text-[10px]">Mo</span>
+                    <Calendar className="h-4 w-4 flex-shrink-0" />
+                    <span>{isMobile ? "Modalidades" : "Regras de Modalidades"}</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="modelo-configuration"
-                    className="flex items-center gap-1 px-1.5 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
                   >
-                    <Settings className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                    <span className="hidden xs:inline sm:hidden">Config</span>
-                    <span className="hidden sm:inline lg:hidden">Configuração</span>
-                    <span className="hidden lg:inline">Configuração de Modelos</span>
-                    <span className="xs:hidden text-[10px]">Co</span>
+                    <Settings className="h-4 w-4 flex-shrink-0" />
+                    <span>{isMobile ? "Config" : "Configuração de Modelos"}</span>
                   </TabsTrigger>
                 </TabsList>
               </div>
