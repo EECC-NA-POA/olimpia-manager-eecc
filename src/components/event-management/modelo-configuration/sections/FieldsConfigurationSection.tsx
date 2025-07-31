@@ -45,7 +45,7 @@ export function FieldsConfigurationSection({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Campos do Modelo</CardTitle>
-          <Button onClick={onAddCampo} size="sm">
+          <Button onClick={onAddCampo} size="sm" className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary">
             <Plus className="h-4 w-4 mr-1" />
             Adicionar Campo
           </Button>

@@ -19,7 +19,7 @@ export function UserManagementSection({ eventId }: UserManagementSectionProps) {
           <CardTitle>Gestão de Usuários</CardTitle>
           <Button 
             onClick={() => setIsCreateDialogOpen(true)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-olimpics-green-primary hover:bg-olimpics-green-secondary"
           >
             <Plus className="h-4 w-4" />
             Criar Usuário

@@ -79,7 +79,7 @@ export function CamposModeloManager({ modelos }: CamposModeloManagerProps) {
                 <h3 className="font-medium">
                   Campos do Modelo: {selectedModelo.descricao || selectedModelo.codigo_modelo}
                 </h3>
-                <Button size="sm" onClick={handleCreateCampo}>
+                <Button size="sm" onClick={handleCreateCampo} className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary">
                   <Plus className="h-4 w-4 mr-1" />
                   Novo Campo
                 </Button>

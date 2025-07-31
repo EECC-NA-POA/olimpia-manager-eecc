@@ -319,7 +319,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
               <Button type="button" variant="outline" onClick={handleClose}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isCreating}>
+              <Button type="submit" disabled={isCreating} className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary">
                 {isCreating ? 'Criando...' : 'Criar Usuário'}
               </Button>
             </div>
