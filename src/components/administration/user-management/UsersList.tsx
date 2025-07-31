@@ -50,6 +50,12 @@ export function UsersList({ eventId }: UsersListProps) {
         throw new Error('Usuário sem filial definida');
       }
 
+      // Validate that filial_id is a valid UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(user.filial_id)) {
+        throw new Error(`ID de filial inválido: ${user.filial_id}`);
+      }
+
       // Use RPC function to get users with auth status
       const { data, error } = await supabase
         .rpc('get_users_with_auth_status', { p_filial_id: user.filial_id });
