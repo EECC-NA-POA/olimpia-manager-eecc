@@ -143,7 +143,6 @@ export function UsersList({ eventId }: UsersListProps) {
             <TableHead>Email</TableHead>
             <TableHead>Telefone</TableHead>
             <TableHead>Documento</TableHead>
-            <TableHead>Status</TableHead>
             <TableHead>Situação</TableHead>
             <TableHead>Filial</TableHead>
             <TableHead className="text-right">Ações</TableHead>
@@ -181,11 +180,6 @@ export function UsersList({ eventId }: UsersListProps) {
               </TableCell>
               <TableCell>
                 {branchUser.numero_documento} ({branchUser.tipo_documento})
-              </TableCell>
-              <TableCell>
-                <Badge variant={branchUser.confirmado ? "default" : "secondary"}>
-                  {branchUser.confirmado ? "Confirmado" : "Pendente"}
-                </Badge>
               </TableCell>
               <TableCell>
                 <Badge variant={branchUser.ativo ? "default" : "destructive"}>
