@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Mail, Phone } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { Trash2, Mail, Phone, Search } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
@@ -33,6 +35,9 @@ interface UsersListProps {
 export function UsersList({ eventId }: UsersListProps) {
   const { user } = useAuth();
   const [userToDelete, setUserToDelete] = useState<BranchUser | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const { data: users, isLoading, error } = useQuery({
     queryKey: ['branch-users', user?.filial_id],
@@ -58,7 +63,6 @@ export function UsersList({ eventId }: UsersListProps) {
           filiais(nome)
         `)
         .eq('filial_id', user.filial_id)
-        .eq('ativo', true)
         .order('nome_completo');
 
       if (error) throw error;
@@ -70,6 +74,21 @@ export function UsersList({ eventId }: UsersListProps) {
     enabled: !!user?.filial_id,
   });
 
+  // Filter and paginate users
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+    
+    return users.filter(user => {
+      const searchLower = searchTerm.toLowerCase();
+      const matchesName = user.nome_completo.toLowerCase().includes(searchLower);
+      const matchesDocument = user.numero_documento.toLowerCase().includes(searchLower);
+      return matchesName || matchesDocument;
+    });
+  }, [users, searchTerm]);
+
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
 
   const handleEmailClick = (email: string) => {
     window.location.href = `mailto:${email}`;
@@ -101,8 +120,23 @@ export function UsersList({ eventId }: UsersListProps) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
+    <div className="space-y-4">
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar por nome ou CPF..."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="pl-10"
+        />
+      </div>
+
+      <div className="overflow-x-auto">
+        <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Nome</TableHead>
@@ -110,12 +144,13 @@ export function UsersList({ eventId }: UsersListProps) {
             <TableHead>Telefone</TableHead>
             <TableHead>Documento</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Situação</TableHead>
             <TableHead>Filial</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users.map((branchUser) => (
+          {paginatedUsers.map((branchUser) => (
             <TableRow key={branchUser.id}>
               <TableCell className="font-medium">
                 {branchUser.nome_completo}
@@ -153,6 +188,11 @@ export function UsersList({ eventId }: UsersListProps) {
                 </Badge>
               </TableCell>
               <TableCell>
+                <Badge variant={branchUser.ativo ? "default" : "destructive"}>
+                  {branchUser.ativo ? "Ativo" : "Inativo"}
+                </Badge>
+              </TableCell>
+              <TableCell>
                 {branchUser.filiais?.nome || 'N/A'}
               </TableCell>
               <TableCell className="text-right">
@@ -169,6 +209,53 @@ export function UsersList({ eventId }: UsersListProps) {
           ))}
         </TableBody>
       </Table>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage > 1) setCurrentPage(currentPage - 1);
+                  }}
+                  className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCurrentPage(page);
+                    }}
+                    isActive={currentPage === page}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              
+              <PaginationItem>
+                <PaginationNext 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                  }}
+                  className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       {userToDelete && (
         <UserDeletionDialog

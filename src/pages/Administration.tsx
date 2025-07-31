@@ -110,15 +110,6 @@ export default function Administration() {
                     <Shield className="h-4 w-4 flex-shrink-0" />
                     <span>{isMobile ? "Gerenciar" : "Gerenciar Perfis de Usuários"}</span>
                   </TabsTrigger>
-                  {canCreateEvents && (
-                    <TabsTrigger 
-                      value="user-management"
-                      className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
-                    >
-                      <UserPlus className="h-4 w-4 flex-shrink-0" />
-                      <span>{isMobile ? "Usuários" : "Gestão de Usuários"}</span>
-                    </TabsTrigger>
-                  )}
                   <TabsTrigger 
                     value="branches"
                     className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
@@ -154,6 +145,15 @@ export default function Administration() {
                     <Settings className="h-4 w-4 flex-shrink-0" />
                     <span>{isMobile ? "Config" : "Configuração de Modelos"}</span>
                   </TabsTrigger>
+                  {canCreateEvents && (
+                    <TabsTrigger 
+                      value="user-management"
+                      className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                    >
+                      <UserPlus className="h-4 w-4 flex-shrink-0" />
+                      <span>{isMobile ? "Usuários" : "Gestão de Usuários"}</span>
+                    </TabsTrigger>
+                  )}
                 </TabsList>
               </div>
 
