@@ -95,6 +95,10 @@ export function UsersList({ eventId }: UsersListProps) {
         .rpc('get_users_with_auth_status', { p_filial_id: userBranchId });
 
       if (error) {
+        console.error('Error calling get_users_with_auth_status:', error);
+        if (error.message.includes('algum-id') || error.message.includes('Invalid input syntax for type uuid')) {
+          throw new Error('Dados corrompidos detectados. Execute o script SQL de limpeza para corrigir os IDs de filial inválidos.');
+        }
         throw error;
       }
 

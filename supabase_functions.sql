@@ -305,7 +305,13 @@ BEGIN
     SELECT 
         u.nome_completo,
         u.telefone,
-        u.filial_id,
+        CASE 
+            WHEN u.filial_id IS NOT NULL THEN u.filial_id::text
+            WHEN au.raw_user_meta_data->>'filial_id' IS NOT NULL 
+                 AND au.raw_user_meta_data->>'filial_id' ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+            THEN au.raw_user_meta_data->>'filial_id'
+            ELSE NULL
+        END as filial_id,
         COALESCE(u.confirmado, false) as confirmado,
         COALESCE(
             (
@@ -325,6 +331,7 @@ BEGIN
             '[]'::jsonb
         ) as papeis
     FROM public.usuarios u
+    LEFT JOIN auth.users au ON u.email = au.email
     WHERE u.id = p_user_id;
 END;
 $$ LANGUAGE plpgsql;
