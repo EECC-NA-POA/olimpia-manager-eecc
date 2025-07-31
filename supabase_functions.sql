@@ -516,9 +516,17 @@ BEGIN
         'Apenas Auth'::TEXT
     FROM auth.users au
     LEFT JOIN usuarios u ON au.email = u.email
-    LEFT JOIN filiais f ON (au.raw_user_meta_data->>'filial_id')::UUID = f.id
+    LEFT JOIN filiais f ON (
+        au.raw_user_meta_data->>'filial_id' IS NOT NULL 
+        AND au.raw_user_meta_data->>'filial_id' ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+        AND (au.raw_user_meta_data->>'filial_id')::UUID = f.id
+    )
     WHERE u.email IS NULL
-    AND (p_filial_id IS NULL OR (au.raw_user_meta_data->>'filial_id')::UUID = p_filial_id)
+    AND (p_filial_id IS NULL OR (
+        au.raw_user_meta_data->>'filial_id' IS NOT NULL 
+        AND au.raw_user_meta_data->>'filial_id' ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+        AND (au.raw_user_meta_data->>'filial_id')::UUID = p_filial_id
+    ))
     
     ORDER BY nome_completo;
 END;
