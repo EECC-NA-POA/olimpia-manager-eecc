@@ -26,6 +26,7 @@ interface BranchUser {
   filiais: {
     nome: string;
   } | null;
+  auth_user?: any;
 }
 
 interface UsersListProps {
@@ -46,7 +47,8 @@ export function UsersList({ eventId }: UsersListProps) {
         throw new Error('Usuário sem filial definida');
       }
 
-      const { data, error } = await supabase
+      // Buscar usuários da tabela usuarios
+      const { data: usuariosData, error: usuariosError } = await supabase
         .from('usuarios')
         .select(`
           id,
@@ -65,11 +67,48 @@ export function UsersList({ eventId }: UsersListProps) {
         .eq('filial_id', user.filial_id)
         .order('nome_completo');
 
-      if (error) throw error;
-      return data?.map(user => ({
+      if (usuariosError) throw usuariosError;
+
+      // Buscar todos os usuários de autenticação
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      if (authError) throw authError;
+
+      // Criar mapa dos usuários de autenticação por email
+      const authUsersMap = new Map();
+      authUsers.users.forEach(authUser => {
+        if (authUser.email) {
+          authUsersMap.set(authUser.email, authUser);
+        }
+      });
+
+      // Combinar dados de usuários com dados de autenticação
+      const combinedData = usuariosData?.map(user => ({
         ...user,
-        filiais: user.filiais ? user.filiais[0] : null
+        filiais: user.filiais ? user.filiais[0] : null,
+        auth_user: user.email ? authUsersMap.get(user.email) || null : null
       })) || [];
+
+      // Adicionar usuários que existem apenas na autenticação (órfãos)
+      const usuariosEmails = new Set(usuariosData?.map(u => u.email).filter(Boolean) || []);
+      const orphanAuthUsers = authUsers.users
+        .filter((authUser: any) => authUser.email && !usuariosEmails.has(authUser.email))
+        .map((authUser: any) => ({
+          id: authUser.id,
+          nome_completo: authUser.user_metadata?.nome_completo || authUser.email?.split('@')[0] || 'Nome não informado',
+          email: authUser.email || null,
+          telefone: authUser.user_metadata?.telefone || '',
+          numero_documento: authUser.user_metadata?.numero_documento || '',
+          tipo_documento: authUser.user_metadata?.tipo_documento || '',
+          genero: authUser.user_metadata?.genero || '',
+          data_nascimento: authUser.user_metadata?.data_nascimento || '',
+          ativo: true,
+          confirmado: authUser.email_confirmed_at !== null,
+          data_criacao: authUser.created_at,
+          filiais: null,
+          auth_user: authUser
+        }));
+
+      return [...combinedData, ...orphanAuthUsers];
     },
     enabled: !!user?.filial_id,
   });
@@ -143,6 +182,7 @@ export function UsersList({ eventId }: UsersListProps) {
             <TableHead>Email</TableHead>
             <TableHead>Telefone</TableHead>
             <TableHead>Documento</TableHead>
+            <TableHead>Tipo de Cadastro</TableHead>
             <TableHead>Situação</TableHead>
             <TableHead>Filial</TableHead>
             <TableHead className="text-right">Ações</TableHead>
@@ -180,6 +220,22 @@ export function UsersList({ eventId }: UsersListProps) {
               </TableCell>
               <TableCell>
                 {branchUser.numero_documento} ({branchUser.tipo_documento})
+              </TableCell>
+              <TableCell>
+                {(() => {
+                  const hasUserRecord = branchUser.telefone && branchUser.numero_documento; // Indica que tem registro completo na tabela usuarios
+                  const hasAuthRecord = branchUser.auth_user;
+                  
+                  if (hasUserRecord && hasAuthRecord) {
+                    return <Badge className="bg-olimpics-green-primary text-white">Completo</Badge>;
+                  } else if (hasUserRecord && !hasAuthRecord) {
+                    return <Badge variant="secondary">Apenas Usuário</Badge>;
+                  } else if (!hasUserRecord && hasAuthRecord) {
+                    return <Badge variant="outline">Apenas Autenticação</Badge>;
+                  } else {
+                    return <Badge variant="destructive">Incompleto</Badge>;
+                  }
+                })()}
               </TableCell>
               <TableCell>
                 <Badge variant={branchUser.ativo ? "default" : "destructive"}>
