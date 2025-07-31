@@ -51,25 +51,36 @@ export function UsersList({ eventId }: UsersListProps) {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Find the user's branch ID by matching with real branches
-  const userBranchId = useMemo(() => {
-    if (!user?.filial_id || !branches) return null;
-    
-    // If filial_id is already a valid UUID and exists in branches, use it
+  // Validate if filial_id is a valid UUID
+  const isValidUUID = (id: string) => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (uuidRegex.test(user.filial_id)) {
-      const branchExists = branches.find(branch => branch.id === user.filial_id);
-      if (branchExists) {
-        return user.filial_id;
+    return uuidRegex.test(id);
+  };
+
+  // Determine the user's branch ID with enhanced validation
+  const { userBranchId, branchValidationError } = useMemo(() => {
+    if (!user?.filial_id || !branches) {
+      return { userBranchId: null, branchValidationError: null };
+    }
+    
+    // Check if filial_id is a valid UUID
+    if (isValidUUID(user.filial_id)) {
+      const branchById = branches.find(branch => branch.id === user.filial_id);
+      if (branchById) {
+        return { userBranchId: branchById.id, branchValidationError: null };
+      } else {
+        return { 
+          userBranchId: null, 
+          branchValidationError: `Filial com ID ${user.filial_id} não encontrada no sistema.` 
+        };
       }
     }
     
-    // If filial_id is invalid, try to find branch by name
-    const branchByName = branches.find(branch => 
-      branch.nome === user.filial_id
-    );
-    
-    return branchByName?.id || null;
+    // If filial_id is not a valid UUID, it's likely corrupted data
+    return { 
+      userBranchId: null, 
+      branchValidationError: `Filial inválida: "${user.filial_id}". Entre em contato com o administrador para corrigir sua configuração de filial.` 
+    };
   }, [user?.filial_id, branches, branchesLoading]);
 
   const { data: users, isLoading: usersLoading, error } = useQuery({
@@ -140,6 +151,23 @@ export function UsersList({ eventId }: UsersListProps) {
 
   if (isLoading) {
     return <LoadingState />;
+  }
+
+  // Show branch validation error if exists
+  if (branchValidationError) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center max-w-md">
+          <p className="text-muted-foreground mb-2">Problema de Configuração</p>
+          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+            <p className="text-sm text-red-800 mb-2">
+              <strong>Erro na configuração da filial:</strong>
+            </p>
+            <p className="text-sm text-red-600">{branchValidationError}</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
