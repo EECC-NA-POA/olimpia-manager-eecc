@@ -53,7 +53,8 @@ export function UsersList({ eventId }: UsersListProps) {
       // Validate that filial_id is a valid UUID format
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(user.filial_id)) {
-        throw new Error(`ID de filial inválido: ${user.filial_id}`);
+        console.error('Invalid filial_id detected:', user.filial_id);
+        throw new Error(`ID de filial inválido. Entre em contato com o administrador.`);
       }
 
       // Use RPC function to get users with auth status
@@ -118,9 +119,24 @@ export function UsersList({ eventId }: UsersListProps) {
   }
 
   if (error) {
+    const isInvalidFilialId = error.message.includes('ID de filial inválido');
+    
     return (
-      <div className="text-center py-8">
-        <p className="text-destructive">Erro ao carregar usuários: {error.message}</p>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center max-w-md">
+          <p className="text-muted-foreground mb-2">
+            {isInvalidFilialId ? 'Configuração de filial inválida' : 'Erro ao carregar usuários'}
+          </p>
+          <p className="text-sm text-red-600 mb-4">{error.message}</p>
+          {isInvalidFilialId && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+              <p className="text-sm text-yellow-800">
+                Sua conta possui uma configuração de filial inválida. 
+                Entre em contato com o administrador do sistema para corrigir este problema.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
