@@ -10,6 +10,7 @@ export interface CreateUserData {
   numero_documento: string;
   genero: string;
   data_nascimento: string;
+  cadastra_eventos?: boolean;
 }
 
 export interface UserDeletionOptions {
@@ -95,6 +96,14 @@ class UserManagementService {
       // Usar o ID retornado para criar em public.usuarios
       const userId = authResult;
       
+      // Get current user's filial_id
+      const { data: currentUser } = await supabase.auth.getUser();
+      const { data: userProfile } = await supabase
+        .from('usuarios')
+        .select('filial_id')
+        .eq('id', currentUser.user?.id)
+        .single();
+
       const { error: publicError } = await supabase
         .from('usuarios')
         .insert({
@@ -106,8 +115,11 @@ class UserManagementService {
           numero_documento: userData.numero_documento,
           genero: userData.genero,
           data_nascimento: userData.data_nascimento,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          filial_id: userProfile?.filial_id,
+          usuario_registrador_id: currentUser.user?.id,
+          cadastra_eventos: userData.cadastra_eventos || false,
+          confirmado: true, // Auto-confirm users created by admin
+          ativo: true
         });
 
       if (publicError) {

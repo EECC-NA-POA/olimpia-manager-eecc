@@ -2,16 +2,14 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useUserManagement } from '@/hooks/useUserManagement';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
 import { Eye, EyeOff, Copy } from 'lucide-react';
 
 const createUserSchema = z.object({
@@ -34,8 +32,7 @@ interface CreateUserDialogProps {
 }
 
 export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
+  const { createUser, isCreating, checkUserExists } = useUserManagement();
   const [showPassword, setShowPassword] = useState(false);
   const [passwordCopied, setPasswordCopied] = useState(false);
 
@@ -78,70 +75,30 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
     }
   };
 
-  const createUserMutation = useMutation({
-    mutationFn: async (formData: CreateUserFormData) => {
-      if (!user?.filial_id) {
-        throw new Error('Usuário sem filial definida');
-      }
-
-      // Create user in auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.senha,
-        options: {
-          data: {
-            nome_completo: formData.nome_completo,
-          }
-        }
+  const onSubmit = async (data: CreateUserFormData) => {
+    try {
+      // Validate user exists before creating
+      await checkUserExists(data.email, data.numero_documento);
+      
+      // Create user using the service
+      createUser({
+        nome_completo: data.nome_completo,
+        email: data.email,
+        senha: data.senha,
+        telefone: data.telefone,
+        tipo_documento: data.tipo_documento,
+        numero_documento: data.numero_documento,
+        genero: data.genero,
+        data_nascimento: data.data_nascimento,
+        cadastra_eventos: data.cadastra_eventos || false,
       });
 
-      if (authError) throw authError;
-
-      if (!authData.user) {
-        throw new Error('Falha ao criar usuário na autenticação');
-      }
-
-      // Create user in usuarios table
-      const { error: insertError } = await supabase
-        .from('usuarios')
-        .insert({
-          id: authData.user.id,
-          nome_completo: formData.nome_completo,
-          email: formData.email,
-          telefone: formData.telefone,
-          tipo_documento: formData.tipo_documento,
-          numero_documento: formData.numero_documento,
-          genero: formData.genero,
-          data_nascimento: formData.data_nascimento,
-          filial_id: user.filial_id,
-          usuario_registrador_id: user.id,
-          cadastra_eventos: formData.cadastra_eventos || false,
-          confirmado: true, // Auto-confirm users created by admin
-          ativo: true,
-        });
-
-      if (insertError) {
-        // If insert fails, try to delete the auth user
-        await supabase.auth.admin.deleteUser(authData.user.id);
-        throw insertError;
-      }
-
-      return authData.user;
-    },
-    onSuccess: () => {
-      toast.success('Usuário criado com sucesso!');
-      queryClient.invalidateQueries({ queryKey: ['branch-users'] });
+      // Reset form and close dialog on success
       form.reset();
       onOpenChange(false);
-    },
-    onError: (error) => {
+    } catch (error: any) {
       console.error('Error creating user:', error);
-      toast.error('Erro ao criar usuário: ' + error.message);
-    },
-  });
-
-  const onSubmit = (data: CreateUserFormData) => {
-    createUserMutation.mutate(data);
+    }
   };
 
   const handleClose = () => {
@@ -351,8 +308,8 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
               <Button type="button" variant="outline" onClick={handleClose}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={createUserMutation.isPending}>
-                {createUserMutation.isPending ? 'Criando...' : 'Criar Usuário'}
+              <Button type="submit" disabled={isCreating}>
+                {isCreating ? 'Criando...' : 'Criar Usuário'}
               </Button>
             </div>
           </form>
