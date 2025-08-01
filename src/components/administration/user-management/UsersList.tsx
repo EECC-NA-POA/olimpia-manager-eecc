@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
-import { Trash2, Mail, Phone, Search } from 'lucide-react';
+import { Trash2, Mail, Phone, Search, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
@@ -117,8 +118,8 @@ export function UsersList({ eventId }: UsersListProps) {
         id: userData.id,
         nome_completo: userData.nome_completo,
         email: userData.email,
-        telefone: userData.telefone,
-        numero_documento: userData.documento_numero,
+        telefone: userData.telefone || '',
+        numero_documento: userData.documento_numero || '',
         tipo_documento: userData.tipo_documento || 'N/A',
         genero: userData.genero || 'N/A',
         data_nascimento: userData.data_nascimento || '',
@@ -138,14 +139,14 @@ export function UsersList({ eventId }: UsersListProps) {
 
   const isLoading = branchesLoading || usersLoading;
 
-  // Filter and paginate users
+  // Filter and paginate users with null-safe filtering
   const filteredUsers = useMemo(() => {
     if (!users) return [];
     
     return users.filter(user => {
       const searchLower = searchTerm.toLowerCase();
-      const matchesName = user.nome_completo.toLowerCase().includes(searchLower);
-      const matchesDocument = user.numero_documento.toLowerCase().includes(searchLower);
+      const matchesName = user.nome_completo?.toLowerCase()?.includes(searchLower) || false;
+      const matchesDocument = user.numero_documento?.toLowerCase()?.includes(searchLower) || false;
       return matchesName || matchesDocument;
     });
   }, [users, searchTerm]);
@@ -161,6 +162,12 @@ export function UsersList({ eventId }: UsersListProps) {
   const handlePhoneClick = (phone: string) => {
     const cleanPhone = phone.replace(/\D/g, '');
     window.open(`https://wa.me/55${cleanPhone}`, '_blank');
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setSelectedBranchFilter(null);
+    setCurrentPage(1);
   };
 
   if (isLoading) {
@@ -210,7 +217,17 @@ export function UsersList({ eventId }: UsersListProps) {
   if (!users || users.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">Nenhum usuário encontrado na sua filial.</p>
+        <p className="text-muted-foreground mb-4">Nenhum usuário encontrado na sua filial.</p>
+        {(searchTerm || selectedBranchFilter) && (
+          <Button 
+            variant="outline" 
+            onClick={handleClearFilters}
+            className="flex items-center gap-2"
+          >
+            <X className="h-4 w-4" />
+            Limpar filtros
+          </Button>
+        )}
       </div>
     );
   }
@@ -231,156 +248,198 @@ export function UsersList({ eventId }: UsersListProps) {
             className="pl-10 border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary/30"
           />
         </div>
-        <BranchFilter 
-          branches={branches || []}
-          selectedBranchId={selectedBranchFilter}
-          onBranchChange={(branchId) => {
-            setSelectedBranchFilter(branchId);
-            setCurrentPage(1);
-          }}
-          isMaster={user?.is_master || false}
-        />
-      </div>
-
-      <div className="overflow-x-auto">
-        <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Telefone</TableHead>
-            <TableHead>Documento</TableHead>
-            <TableHead>Tipo de Cadastro</TableHead>
-            <TableHead>Situação</TableHead>
-            <TableHead>Filial</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {paginatedUsers.map((branchUser) => (
-            <TableRow key={branchUser.id}>
-              <TableCell className="font-medium">
-                {branchUser.nome_completo}
-              </TableCell>
-              <TableCell>
-                {branchUser.email ? (
-                  <Button
-                    variant="link"
-                    className="p-0 h-auto font-normal text-left justify-start"
-                    onClick={() => handleEmailClick(branchUser.email!)}
-                  >
-                    <Mail className="h-4 w-4 mr-1" />
-                    {branchUser.email}
-                  </Button>
-                ) : (
-                  <span className="text-muted-foreground">Não informado</span>
-                )}
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="link"
-                  className="p-0 h-auto font-normal text-left justify-start"
-                  onClick={() => handlePhoneClick(branchUser.telefone)}
-                >
-                  <Phone className="h-4 w-4 mr-1" />
-                  {branchUser.telefone}
-                </Button>
-              </TableCell>
-              <TableCell>
-                {branchUser.numero_documento} ({branchUser.tipo_documento})
-              </TableCell>
-              <TableCell>
-                {branchUser.tipo_cadastro === 'Completo' && (
-                  <Badge className="bg-olimpics-green-primary text-white">Completo</Badge>
-                )}
-                {branchUser.tipo_cadastro === 'Apenas Usuário' && (
-                  <Badge variant="secondary">Apenas Usuário</Badge>
-                )}
-                {branchUser.tipo_cadastro === 'Apenas Auth' && (
-                  <Badge variant="outline">Apenas Auth</Badge>
-                )}
-                {branchUser.tipo_cadastro === 'Incompleto' && (
-                  <Badge variant="destructive">Incompleto</Badge>
-                )}
-              </TableCell>
-              <TableCell>
-                <Badge variant={branchUser.ativo ? "default" : "destructive"}>
-                  {branchUser.ativo ? "Ativo" : "Inativo"}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                {branchUser.filial?.nome || 'N/A'}
-              </TableCell>
-              <TableCell className="text-right">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={`${!branchUser.email 
-                    ? 'opacity-50 cursor-not-allowed' 
-                    : 'text-destructive hover:text-destructive'
-                  }`}
-                  disabled={!branchUser.email}
-                  onClick={() => {
-                    if (!branchUser.email) {
-                      toast.error('Usuário sem email válido não pode ser excluído');
-                      return;
-                    }
-                    setUserToDelete(branchUser);
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-4">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious 
-                  href="#" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (currentPage > 1) setCurrentPage(currentPage - 1);
-                  }}
-                  className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
-                />
-              </PaginationItem>
-              
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setCurrentPage(page);
-                    }}
-                    isActive={currentPage === page}
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-              
-              <PaginationItem>
-                <PaginationNext 
-                  href="#" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-                  }}
-                  className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+        <div className="flex gap-2">
+          <BranchFilter 
+            branches={branches || []}
+            selectedBranchId={selectedBranchFilter}
+            onBranchChange={(branchId) => {
+              setSelectedBranchFilter(branchId);
+              setCurrentPage(1);
+            }}
+            isMaster={user?.is_master || false}
+          />
+          {(searchTerm || selectedBranchFilter) && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleClearFilters}
+              className="flex items-center gap-2"
+            >
+              <X className="h-4 w-4" />
+              Limpar
+            </Button>
+          )}
         </div>
+      </div>
+
+      {/* No results message */}
+      {filteredUsers.length === 0 && users.length > 0 && (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground mb-4">
+            Nenhum usuário encontrado com os filtros aplicados.
+          </p>
+          <Button 
+            variant="outline" 
+            onClick={handleClearFilters}
+            className="flex items-center gap-2"
+          >
+            <X className="h-4 w-4" />
+            Limpar filtros
+          </Button>
+        </div>
+      )}
+
+      {/* Table */}
+      {filteredUsers.length > 0 && (
+        <>
+          <div className="overflow-x-auto">
+            <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Telefone</TableHead>
+                <TableHead>Documento</TableHead>
+                <TableHead>Tipo de Cadastro</TableHead>
+                <TableHead>Situação</TableHead>
+                <TableHead>Filial</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedUsers.map((branchUser) => (
+                <TableRow key={branchUser.id}>
+                  <TableCell className="font-medium">
+                    {branchUser.nome_completo}
+                  </TableCell>
+                  <TableCell>
+                    {branchUser.email ? (
+                      <Button
+                        variant="link"
+                        className="p-0 h-auto font-normal text-left justify-start"
+                        onClick={() => handleEmailClick(branchUser.email!)}
+                      >
+                        <Mail className="h-4 w-4 mr-1" />
+                        {branchUser.email}
+                      </Button>
+                    ) : (
+                      <span className="text-muted-foreground">Não informado</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {branchUser.telefone ? (
+                      <Button
+                        variant="link"
+                        className="p-0 h-auto font-normal text-left justify-start"
+                        onClick={() => handlePhoneClick(branchUser.telefone)}
+                      >
+                        <Phone className="h-4 w-4 mr-1" />
+                        {branchUser.telefone}
+                      </Button>
+                    ) : (
+                      <span className="text-muted-foreground">Não informado</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {branchUser.numero_documento && branchUser.tipo_documento 
+                      ? `${branchUser.numero_documento} (${branchUser.tipo_documento})`
+                      : 'Não informado'
+                    }
+                  </TableCell>
+                  <TableCell>
+                    {branchUser.tipo_cadastro === 'Completo' && (
+                      <Badge className="bg-olimpics-green-primary text-white">Completo</Badge>
+                    )}
+                    {branchUser.tipo_cadastro === 'Apenas Usuário' && (
+                      <Badge variant="secondary">Apenas Usuário</Badge>
+                    )}
+                    {branchUser.tipo_cadastro === 'Apenas Auth' && (
+                      <Badge variant="outline">Apenas Auth</Badge>
+                    )}
+                    {branchUser.tipo_cadastro === 'Incompleto' && (
+                      <Badge variant="destructive">Incompleto</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={branchUser.ativo ? "default" : "destructive"}>
+                      {branchUser.ativo ? "Ativo" : "Inativo"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {branchUser.filial?.nome || 'N/A'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={`${!branchUser.email 
+                        ? 'opacity-50 cursor-not-allowed' 
+                        : 'text-destructive hover:text-destructive'
+                      }`}
+                      disabled={!branchUser.email}
+                      onClick={() => {
+                        if (!branchUser.email) {
+                          toast.error('Usuário sem email válido não pode ser excluído');
+                          return;
+                        }
+                        setUserToDelete(branchUser);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-4">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      href="#" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage > 1) setCurrentPage(currentPage - 1);
+                      }}
+                      className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+                    />
+                  </PaginationItem>
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCurrentPage(page);
+                        }}
+                        isActive={currentPage === page}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      href="#" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                      }}
+                      className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </>
       )}
 
       {userToDelete && (
