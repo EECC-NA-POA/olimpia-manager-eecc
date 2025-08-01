@@ -31,7 +31,7 @@ export const fetchUserProfile = async (userId: string) => {
       console.log('No current event ID found');
       const { data: userProfile, error: profileError } = await supabase
         .from('usuarios')
-        .select('nome_completo, telefone, filial_id, confirmado')
+        .select('nome_completo, telefone, filial_id, confirmado, master')
         .eq('id', userId)
         .maybeSingle();
 
@@ -56,6 +56,7 @@ export const fetchUserProfile = async (userId: string) => {
 
       const result = {
         ...userProfile,
+        is_master: userProfile?.master || false,
         papeis: [] as UserRole[],
       };
       
@@ -115,6 +116,7 @@ export const fetchUserProfile = async (userId: string) => {
       telefone: userProfile.telefone,
       filial_id: userProfile.filial_id,
       confirmado: userProfile.confirmado,
+      is_master: userProfile.master || false,
       papeis,
     };
     
@@ -161,7 +163,7 @@ const fetchUserProfileFallback = async (userId: string, currentEventId: string) 
     // Fetch basic user data
     const { data: userData, error: userError } = await supabase
       .from('usuarios')
-      .select('nome_completo, telefone, filial_id, confirmado')
+      .select('nome_completo, telefone, filial_id, confirmado, master')
       .eq('id', userId)
       .single();
 
@@ -210,6 +212,7 @@ const fetchUserProfileFallback = async (userId: string, currentEventId: string) 
       telefone: userData.telefone,
       filial_id: userData.filial_id,
       confirmado: userData.confirmado,
+      is_master: userData.master || false,
       papeis,
     };
 

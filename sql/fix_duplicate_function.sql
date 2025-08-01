@@ -24,7 +24,8 @@ WHERE proname = 'get_users_with_auth_status';
 
 -- PASSO 3: Criar uma única versão limpa da função
 CREATE OR REPLACE FUNCTION get_users_with_auth_status(
-    p_filial_id UUID DEFAULT NULL
+    p_filial_id UUID DEFAULT NULL,
+    p_is_master BOOLEAN DEFAULT FALSE
 )
 RETURNS TABLE (
     id UUID,
@@ -67,7 +68,19 @@ BEGIN
     FROM public.usuarios u
     LEFT JOIN public.filiais f ON u.filial_id = f.id
     LEFT JOIN auth.users au ON u.id = au.id
-    WHERE (p_filial_id IS NULL OR u.filial_id = p_filial_id)
+    WHERE 
+        -- Filtrar apenas usuários ativos
+        u.ativo = true
+        -- Se for master, mostrar todos os usuários. Se não, apenas da filial específica
+        AND (
+            (p_is_master = true) OR 
+            (p_is_master = false AND u.filial_id = p_filial_id) OR
+            (p_is_master = false AND p_filial_id IS NULL AND u.filial_id = (
+                SELECT filial_id FROM usuarios WHERE id = auth.uid()
+            ))
+        )
+        -- Se uma filial específica foi solicitada (para filtro), aplicar o filtro
+        AND (p_filial_id IS NULL OR u.filial_id = p_filial_id OR p_is_master = false)
     ORDER BY u.nome_completo;
 END;
 $$;

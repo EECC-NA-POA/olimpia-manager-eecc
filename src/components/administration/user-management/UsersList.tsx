@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { UserDeletionDialog } from '@/components/admin/UserDeletionDialog';
+import { BranchFilter } from './BranchFilter';
 import { toast } from 'sonner';
 import { fetchBranches } from '@/lib/api';
 
@@ -42,6 +43,7 @@ export function UsersList({ eventId }: UsersListProps) {
   const [userToDelete, setUserToDelete] = useState<BranchUser | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedBranchFilter, setSelectedBranchFilter] = useState<string | null>(null);
   const itemsPerPage = 10;
 
   // First, get all branches to find the user's actual branch
@@ -84,15 +86,23 @@ export function UsersList({ eventId }: UsersListProps) {
   }, [user?.filial_id, branches, branchesLoading]);
 
   const { data: users, isLoading: usersLoading, error } = useQuery({
-    queryKey: ['branch-users', userBranchId],
+    queryKey: ['branch-users', userBranchId, selectedBranchFilter, user?.is_master],
     queryFn: async () => {
-      if (!userBranchId) {
+      const isMaster = user?.is_master || false;
+      
+      if (!isMaster && !userBranchId) {
         throw new Error('Filial não encontrada no sistema');
       }
 
+      // For master users, use selectedBranchFilter; for regular users, use userBranchId
+      const branchIdToUse = isMaster ? selectedBranchFilter : userBranchId;
+
       // Use RPC function to get users with auth status
       const { data, error } = await supabase
-        .rpc('get_users_with_auth_status', { p_filial_id: userBranchId });
+        .rpc('get_users_with_auth_status', { 
+          p_filial_id: branchIdToUse,
+          p_is_master: isMaster
+        });
 
       if (error) {
         console.error('Error calling get_users_with_auth_status:', error);
@@ -103,27 +113,27 @@ export function UsersList({ eventId }: UsersListProps) {
       }
 
       // Transform the data to match our BranchUser interface
-      return data.map((user: any): BranchUser => ({
-        id: user.id,
-        nome_completo: user.nome_completo,
-        email: user.email,
-        telefone: user.telefone,
-        numero_documento: user.numero_documento,
-        tipo_documento: user.tipo_documento,
-        genero: user.genero,
-        data_nascimento: user.data_nascimento,
-        ativo: user.ativo,
-        confirmado: user.confirmado,
-        data_criacao: user.data_criacao,
-        filial: user.filial_nome ? {
-          nome: user.filial_nome,
-          estado: user.filial_estado
+      return data.map((userData: any): BranchUser => ({
+        id: userData.id,
+        nome_completo: userData.nome_completo,
+        email: userData.email,
+        telefone: userData.telefone,
+        numero_documento: userData.documento_numero,
+        tipo_documento: userData.tipo_documento || 'N/A',
+        genero: userData.genero || 'N/A',
+        data_nascimento: userData.data_nascimento || '',
+        ativo: userData.ativo,
+        confirmado: userData.confirmado || false,
+        data_criacao: userData.data_criacao,
+        filial: userData.filial_nome ? {
+          nome: userData.filial_nome,
+          estado: userData.filial_estado
         } : null,
-        auth_exists: user.auth_exists,
-        tipo_cadastro: user.tipo_cadastro
+        auth_exists: userData.has_auth,
+        tipo_cadastro: userData.has_auth ? 'Completo' : 'Apenas Usuário'
       }));
     },
-    enabled: !!userBranchId && !!branches && !branchesLoading,
+    enabled: (!!userBranchId || !!user?.is_master) && !!branches && !branchesLoading,
   });
 
   const isLoading = branchesLoading || usersLoading;
@@ -207,17 +217,28 @@ export function UsersList({ eventId }: UsersListProps) {
 
   return (
     <div className="space-y-4">
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por nome ou CPF..."
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
+      {/* Search and Filters */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome ou documento..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="pl-10 border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary/30"
+          />
+        </div>
+        <BranchFilter 
+          branches={branches || []}
+          selectedBranchId={selectedBranchFilter}
+          onBranchChange={(branchId) => {
+            setSelectedBranchFilter(branchId);
             setCurrentPage(1);
           }}
-          className="pl-10"
+          isMaster={user?.is_master || false}
         />
       </div>
 
