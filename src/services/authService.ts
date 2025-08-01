@@ -69,9 +69,63 @@ export const fetchUserProfile = async (userId: string) => {
       return result;
     }
 
-    // Use fallback method for better debugging of role loading
-    console.log('Using fallback method for debugging role loading...');
-    return await fetchUserProfileFallback(userId, currentEventId);
+    // First try RPC function
+    console.log('Attempting to fetch user profile via RPC...');
+    const { data: profileData, error: profileError } = await supabase
+      .rpc('get_user_profile_safe', {
+        p_user_id: userId,
+        p_event_id: currentEventId
+      });
+
+    if (profileError) {
+      console.error('RPC failed with error:', profileError);
+      console.log('Falling back to direct queries...');
+      return await fetchUserProfileFallback(userId, currentEventId);
+    }
+
+    if (!profileData || profileData.length === 0) {
+      console.log('RPC returned no data, trying fallback...');
+      return await fetchUserProfileFallback(userId, currentEventId);
+    }
+
+    const userProfile = profileData[0];
+    let papeis = [];
+    
+    // Parse papeis from JSONB
+    if (userProfile.papeis && Array.isArray(userProfile.papeis)) {
+      papeis = userProfile.papeis;
+    } else if (userProfile.papeis && typeof userProfile.papeis === 'string') {
+      try {
+        papeis = JSON.parse(userProfile.papeis);
+      } catch (e) {
+        console.error('Error parsing papeis JSON:', e);
+        papeis = [];
+      }
+    }
+    
+    console.log('=== RPC PROFILE LOADED ===');
+    console.log('User roles found:', papeis.length);
+    console.log('Raw papeis data:', papeis);
+    console.log('Role codes:', papeis.map((p: any) => p.codigo));
+    console.log('Role names:', papeis.map((p: any) => p.nome));
+    console.log('==========================');
+    
+    const result = {
+      nome_completo: userProfile.nome_completo,
+      telefone: userProfile.telefone,
+      filial_id: userProfile.filial_id,
+      confirmado: userProfile.confirmado,
+      papeis,
+    };
+    
+    // Cache do resultado
+    userProfileCache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now(),
+      eventId: currentEventId
+    });
+    
+    return result;
   } catch (error) {
     console.error('Error fetching user profile data');
     throw error;
@@ -116,21 +170,26 @@ const fetchUserProfileFallback = async (userId: string, currentEventId: string) 
       throw userError;
     }
 
-    // Fetch user roles for the event
+    // Fetch user roles for the event with better error handling
+    console.log('Fetching roles for user:', userId, 'event:', currentEventId);
     const { data: rolesData, error: rolesError } = await supabase
       .from('papeis_usuarios')
       .select(`
         perfil_id,
         perfis!inner (
           nome,
+          perfil_tipo_id,
           perfis_tipo!inner (
             codigo,
-            nome
+            nome,
+            descricao
           )
         )
       `)
       .eq('usuario_id', userId)
       .eq('evento_id', currentEventId);
+
+    console.log('Roles query result:', { rolesData, rolesError });
 
     if (rolesError) {
       console.error('Error fetching roles in fallback:', rolesError);
