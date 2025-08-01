@@ -8,178 +8,81 @@ export const useAthleteProfileData = (userId: string | undefined, currentEventId
     queryKey: ['athlete-profile', userId, currentEventId],
     queryFn: async () => {
       if (!userId || !currentEventId) return null;
-      console.log('Fetching athlete profile for:', userId, 'event:', currentEventId);
+      console.log('=== FETCHING ATHLETE PROFILE DATA ===');
+      console.log('User ID:', userId, 'Event ID:', currentEventId);
 
-      // Get profile data including payment status from the view
-      const { data: profileData, error: profileError } = await supabase
-        .from('view_perfil_atleta')
-        .select('*')
-        .eq('atleta_id', userId)
-        .eq('evento_id', currentEventId)
-        .maybeSingle();
+      // Strategy 1: Use the updated get_user_profile_safe function
+      console.log('Strategy 1: Using get_user_profile_safe function...');
+      const { data: profileDataArray, error: profileError } = await supabase
+        .rpc('get_user_profile_safe', { p_user_id: userId });
+
+      let profileData = null;
+      if (profileDataArray && profileDataArray.length > 0) {
+        profileData = profileDataArray[0];
+      }
 
       if (profileError) {
-        console.error('Error fetching profile:', profileError);
-        throw profileError;
+        console.error('Error from get_user_profile_safe:', profileError);
+        
+        // Strategy 2: Fallback to view_perfil_atleta
+        console.log('Strategy 2: Fallback to view_perfil_atleta...');
+        const { data: viewData, error: viewError } = await supabase
+          .from('view_perfil_atleta')
+          .select('*')
+          .eq('id', userId)
+          .single();
+
+        if (viewError) {
+          console.error('Error fetching from view_perfil_atleta:', viewError);
+          return null;
+        }
+
+        profileData = viewData;
       }
 
       if (!profileData) {
-        console.log('No profile data found for event');
+        console.log('No profile data found');
         return null;
       }
 
-      console.log('Retrieved profile data:', {
-        userId,
-        eventId: currentEventId,
-        numero_identificador: profileData.numero_identificador,
-        pagamento_status: profileData.pagamento_status,
-        payment_info: {
-          status: profileData.pagamento_status,
-          valor: profileData.pagamento_valor,
-          data_criacao: profileData.pagamento_data_criacao,
-          data_validacao: profileData.data_validacao
-        }
-      });
+      console.log('Profile data retrieved:', profileData);
 
-      // Enhanced role fetching with multiple strategies
-      console.log('🔍 Fetching roles for userId:', userId, 'eventId:', currentEventId);
-      
-      let transformedRoles: any[] = [];
-      
-      // Strategy 1: Enhanced query with explicit JOINs  
-      console.log('📊 Strategy 1: Enhanced papeis_usuarios query with explicit JOINs');
-      const { data: rolesData, error: rolesError } = await supabase
-        .from('papeis_usuarios')
-        .select(`
-          perfil_id,
-          perfis!inner (
-            id,
-            nome,
-            perfis_tipo!inner (
-              codigo
-            )
-          )
-        `)
-        .eq('usuario_id', userId)
-        .eq('evento_id', currentEventId);
-
-      console.log('📋 Enhanced roles query result:', { 
-        rolesData, 
-        rolesError, 
-        count: rolesData?.length || 0,
-        rawData: rolesData 
-      });
-
-      if (rolesData && rolesData.length > 0) {
-        transformedRoles = rolesData.map((roleData: any) => {
-          console.log('📝 Processing role data:', roleData);
-          return {
-            nome: roleData.perfis?.nome || 'Unknown',
-            codigo: roleData.perfis?.perfis_tipo?.codigo || 'UNK',
-            id: roleData.perfis?.id
-          };
-        });
-        console.log('✅ Strategy 1 successful, roles found:', transformedRoles);
-      } else {
-        // Strategy 1.5: Use RPC function to bypass RLS issues
-        console.log('📊 Strategy 1.5: Using RPC function to bypass RLS');
-        const { data: rpcRoles, error: rpcError } = await supabase
-          .rpc('get_user_roles_with_codes', {
-            p_user_id: userId,
-            p_event_id: currentEventId
-          });
-
-        console.log('📋 RPC roles result:', { rpcRoles, rpcError, count: rpcRoles?.length || 0 });
-
-        if (rpcRoles && rpcRoles.length > 0) {
-          transformedRoles = rpcRoles.map((role: any) => ({
-            nome: role.nome,
-            codigo: role.codigo,
-            id: role.perfil_id
-          }));
-          console.log('✅ Strategy 1.5 successful, roles found via RPC:', transformedRoles);
+      // Parse papeis if it's from the RPC function (should be jsonb)
+      let transformedRoles = [];
+      if (profileData.papeis) {
+        if (typeof profileData.papeis === 'string') {
+          try {
+            transformedRoles = JSON.parse(profileData.papeis);
+          } catch (e) {
+            console.error('Error parsing papeis JSON:', e);
+            transformedRoles = [];
+          }
+        } else if (Array.isArray(profileData.papeis)) {
+          transformedRoles = profileData.papeis;
+        } else {
+          console.log('Papeis data type:', typeof profileData.papeis);
+          transformedRoles = [];
         }
       }
-      
-      // Strategy 2: Fallback to inscricoes_eventos selected_role
+
+      // If no roles found, check registration status and assign default Atleta role
       if (transformedRoles.length === 0) {
-        console.log('📊 Strategy 2: Fallback to inscricoes_eventos');
-        const { data: registrationData, error: regError } = await supabase
-          .from('inscricoes_eventos')
-          .select(`
-            selected_role
-          `)
-          .eq('usuario_id', userId)
+        console.log('No roles found, checking registration status...');
+        
+        const { data: registrationData, error: registrationError } = await supabase
+          .from('inscricoes_modalidades')
+          .select('*')
+          .eq('atleta_id', userId)
           .eq('evento_id', currentEventId)
-          .maybeSingle();
+          .limit(1);
 
-        console.log('📋 Registration fallback result:', { registrationData, regError });
-
-        if (registrationData && registrationData.selected_role) {
-          // Get the profile info for the selected role with proper JOIN
-          const { data: profileInfo, error: profileError } = await supabase
-            .from('perfis')
-            .select(`
-              id,
-              nome,
-              perfis_tipo (
-                codigo
-              )
-            `)
-            .eq('id', registrationData.selected_role)
-            .maybeSingle();
-
-          console.log('📋 Profile info result:', { profileInfo, profileError });
-
-          if (profileInfo) {
-            transformedRoles = [{
-              nome: profileInfo.nome || 'Unknown',
-              codigo: (profileInfo.perfis_tipo as any)?.codigo || 'UNK'
-            }];
-            console.log('✅ Strategy 2 successful, role from registration:', transformedRoles);
-            
-            // Auto-create missing papeis_usuarios record
-            console.log('🔧 Auto-creating missing papeis_usuarios record');
-            const { error: insertError } = await supabase
-              .from('papeis_usuarios')
-              .insert({
-                usuario_id: userId,
-                evento_id: currentEventId,
-                perfil_id: registrationData.selected_role
-              });
-            
-            if (insertError) {
-              console.warn('⚠️ Failed to auto-create papeis_usuarios record:', insertError);
-            } else {
-              console.log('✅ Auto-created papeis_usuarios record');
-            }
-          }
-        } else {
-          console.log('❌ No registration or selected_role found');
-        }
-
-        // Strategy 3: Final fallback - check if user is registered and assign default athlete role
-        if (transformedRoles.length === 0) {
-          console.log('📊 Strategy 3: Final fallback - check registration for default role');
-          const { data: eventRegistration, error: eventError } = await supabase
-            .from('inscricoes_eventos')
-            .select('id')
-            .eq('usuario_id', userId)
-            .eq('evento_id', currentEventId)
-            .maybeSingle();
-
-          console.log('📋 Registration check result:', { eventRegistration, eventError });
-
-          if (eventRegistration) {
-            console.log('✅ User is registered, assigning default athlete role');
-            transformedRoles = [{
-              nome: 'Atleta',
-              codigo: 'ATL',
-              id: 1
-            }];
-          } else {
-            console.log('❌ User is not registered for this event');
-          }
+        if (!registrationError && registrationData && registrationData.length > 0) {
+          console.log('User has registrations, assigning default Atleta role');
+          transformedRoles = [{
+            id: null,
+            nome: 'Atleta',
+            codigo: 'ATL'
+          }];
         }
       }
 
@@ -189,7 +92,7 @@ export const useAthleteProfileData = (userId: string | undefined, currentEventId
 
       return {
         ...profileData,
-        id: profileData.atleta_id,
+        id: profileData.id || userId,
         papeis: transformedRoles,
         pagamento_status: profileData.pagamento_status?.toLowerCase() || 'pendente'
       } as AthleteProfileData;
