@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Trash2, AlertTriangle } from 'lucide-react';
 import { useUserManagement } from '@/hooks/useUserManagement';
+import { cleanDocumentNumber } from '@/utils/documentValidation';
 
 interface UserDeletionDialogProps {
   user: {
@@ -27,10 +28,16 @@ export function UserDeletionDialog({ user, open, onOpenChange }: UserDeletionDia
   const [secondConfirmation, setSecondConfirmation] = useState(false);
   const { deleteUser, isDeleting } = useUserManagement();
 
+  // Normalizar dados para validação
+  const normalizedUserEmail = (user.email || '').toLowerCase().trim();
+  const normalizedConfirmationEmail = confirmationEmail.toLowerCase().trim();
+  const normalizedUserDocument = cleanDocumentNumber(user.numero_documento || '');
+  const normalizedConfirmationDocument = cleanDocumentNumber(confirmationDocument || '');
+
   const isFormValid = 
     user.email && 
-    confirmationEmail === user.email && 
-    confirmationDocument === user.numero_documento &&
+    normalizedConfirmationEmail === normalizedUserEmail && 
+    normalizedConfirmationDocument === normalizedUserDocument &&
     (deletionType === 'auth_only' || secondConfirmation);
 
   const handleDelete = async () => {
@@ -126,16 +133,22 @@ export function UserDeletionDialog({ user, open, onOpenChange }: UserDeletionDia
                 placeholder={user.email || "Email não disponível"}
                 disabled={!user.email}
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Digite exatamente: <span className="font-mono">{user.email}</span>
+              </p>
             </div>
 
             <div>
-              <Label htmlFor="confirm_document">Confirme o documento do usuário</Label>
+              <Label htmlFor="confirm_document">Confirme o documento do usuário (apenas números)</Label>
               <Input
                 id="confirm_document"
                 value={confirmationDocument}
                 onChange={(e) => setConfirmationDocument(e.target.value)}
-                placeholder={user.numero_documento}
+                placeholder="Apenas números"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Digite apenas os números: <span className="font-mono">{cleanDocumentNumber(user.numero_documento || '')}</span>
+              </p>
             </div>
           </div>
 

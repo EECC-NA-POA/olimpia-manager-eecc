@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { cleanDocumentNumber } from '@/utils/documentValidation';
 
 export interface CreateUserData {
   nome_completo: string;
@@ -156,11 +157,33 @@ class UserManagementService {
         numero_documento: userDetail.numero_documento || ''
       };
 
-      // Validar confirmação
-      if (user.email !== options.confirmationEmail || 
-          user.numero_documento !== options.confirmationDocument) {
+      // Normalizar dados para comparação
+      const normalizedUserEmail = (user.email || '').toLowerCase().trim();
+      const normalizedConfirmationEmail = (options.confirmationEmail || '').toLowerCase().trim();
+      const normalizedUserDocument = cleanDocumentNumber(user.numero_documento || '');
+      const normalizedConfirmationDocument = cleanDocumentNumber(options.confirmationDocument || '');
+
+      console.log('🔍 DEBUG - Dados de validação:', {
+        userEmail: normalizedUserEmail,
+        confirmationEmail: normalizedConfirmationEmail,
+        userDocument: normalizedUserDocument,
+        confirmationDocument: normalizedConfirmationDocument,
+        isAuthOnly,
+        exists_in_usuarios: userDetail.exists_in_usuarios,
+        exists_in_auth: userDetail.exists_in_auth
+      });
+
+      // Validar confirmação com dados normalizados
+      if (normalizedUserEmail !== normalizedConfirmationEmail || 
+          normalizedUserDocument !== normalizedConfirmationDocument) {
+        console.error('❌ Validação falhou:', {
+          emailMatch: normalizedUserEmail === normalizedConfirmationEmail,
+          documentMatch: normalizedUserDocument === normalizedConfirmationDocument
+        });
         throw new Error('Email ou documento de confirmação não conferem');
       }
+
+      console.log('✅ Validação passou - prosseguindo com exclusão');
 
       if (isAuthOnly) {
         // Para usuários apenas auth, excluir apenas da auth.users
