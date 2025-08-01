@@ -69,64 +69,9 @@ export const fetchUserProfile = async (userId: string) => {
       return result;
     }
 
-    // Use RPC function to bypass RLS issues
-    const { data: profileData, error: profileError } = await supabase
-      .rpc('get_user_profile_safe', {
-        p_user_id: userId,
-        p_event_id: currentEventId
-      });
-
-    if (profileError) {
-      console.error('Error fetching user profile via RPC:', profileError);
-      console.log('RPC failed, trying fallback direct queries...');
-      
-      // Fallback: Try direct queries if RPC fails
-      return await fetchUserProfileFallback(userId, currentEventId);
-    }
-
-    if (!profileData || profileData.length === 0) {
-      console.log('No user profile found');
-      const result = {
-        confirmado: false,
-        papeis: [] as UserRole[],
-      };
-      
-      // Cache do resultado
-      userProfileCache.set(cacheKey, {
-        data: result,
-        timestamp: Date.now(),
-        eventId: currentEventId
-      });
-      
-      return result;
-    }
-
-    const userProfile = profileData[0];
-    const papeis = Array.isArray(userProfile.papeis) ? userProfile.papeis : [];
-    
-    console.log('=== DETAILED ROLE DEBUG ===');
-    console.log('User roles loaded:', papeis.length);
-    console.log('Raw papeis data:', papeis);
-    console.log('Role codes:', papeis.map((p: any) => p.codigo));
-    console.log('Role names:', papeis.map((p: any) => p.nome));
-    console.log('===========================');
-    
-    const result = {
-      nome_completo: userProfile.nome_completo,
-      telefone: userProfile.telefone,
-      filial_id: userProfile.filial_id,
-      confirmado: userProfile.confirmado,
-      papeis,
-    };
-    
-    // Cache do resultado
-    userProfileCache.set(cacheKey, {
-      data: result,
-      timestamp: Date.now(),
-      eventId: currentEventId
-    });
-    
-    return result;
+    // Use fallback method for better debugging of role loading
+    console.log('Using fallback method for debugging role loading...');
+    return await fetchUserProfileFallback(userId, currentEventId);
   } catch (error) {
     console.error('Error fetching user profile data');
     throw error;
