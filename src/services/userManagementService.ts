@@ -138,31 +138,23 @@ class UserManagementService {
 
   async deleteUser(userId: string, options: UserDeletionOptions) {
     try {
-      // Primeiro buscar na tabela usuarios
-      const { data: userFromUsuarios, error: userError } = await supabase
-        .from('usuarios')
-        .select('email, numero_documento')
-        .eq('id', userId)
-        .single();
+      // Buscar dados do usuário usando função SQL segura
+      const { data: userDetails, error: userError } = await supabase.rpc(
+        'get_user_details_for_deletion', 
+        { p_user_id: userId }
+      );
 
-      let user = userFromUsuarios;
-      let isAuthOnly = false;
-
-      // Se não encontrou na tabela usuarios, buscar na auth.users (usuário apenas auth)
-      if (userError || !user) {
-        const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId);
-        
-        if (authError || !authUser.user) {
-          throw new Error('Usuário não encontrado em nenhuma das tabelas');
-        }
-
-        // Usuário existe apenas na auth
-        isAuthOnly = true;
-        user = {
-          email: authUser.user.email || '',
-          numero_documento: authUser.user.user_metadata?.documento || authUser.user.user_metadata?.numero_documento || ''
-        };
+      if (userError || !userDetails || userDetails.length === 0) {
+        throw new Error('Usuário não encontrado em nenhuma das tabelas');
       }
+
+      const userDetail = userDetails[0];
+      const isAuthOnly = userDetail.is_auth_only;
+      
+      const user = {
+        email: userDetail.email || '',
+        numero_documento: userDetail.numero_documento || ''
+      };
 
       // Validar confirmação
       if (user.email !== options.confirmationEmail || 
