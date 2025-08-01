@@ -29,11 +29,11 @@ export const fetchUserProfile = async (userId: string) => {
     
     if (!currentEventId) {
       console.log('No current event ID found');
-      const { data: userProfile, error: profileError } = await supabase
-        .from('usuarios')
-        .select('nome_completo, telefone, filial_id, confirmado')
-        .eq('id', userId)
-        .maybeSingle();
+    const { data: userProfile, error: profileError } = await supabase
+      .from('usuarios')
+      .select('nome_completo, telefone, filial_id, confirmado, master')
+      .eq('id', userId)
+      .maybeSingle();
 
       if (profileError) throw profileError;
 
@@ -116,6 +116,7 @@ export const fetchUserProfile = async (userId: string) => {
       telefone: userProfile.telefone,
       filial_id: userProfile.filial_id,
       confirmado: userProfile.confirmado,
+      master: userProfile.master || false,
       papeis,
     };
     
@@ -162,7 +163,7 @@ const fetchUserProfileFallback = async (userId: string, currentEventId: string) 
     // Fetch basic user data
     const { data: userData, error: userError } = await supabase
       .from('usuarios')
-      .select('nome_completo, telefone, filial_id, confirmado')
+      .select('nome_completo, telefone, filial_id, confirmado, master')
       .eq('id', userId)
       .single();
 
@@ -206,6 +207,7 @@ const fetchUserProfileFallback = async (userId: string, currentEventId: string) 
       telefone: userData.telefone,
       filial_id: userData.filial_id,
       confirmado: userData.confirmado,
+      master: userData.master || false,
       papeis,
     };
 

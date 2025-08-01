@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
-import { Trash2, Mail, Phone, Search } from 'lucide-react';
+import { Trash2, Mail, Phone, Search, Info } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { UserDeletionDialog } from '@/components/admin/UserDeletionDialog';
 import { toast } from 'sonner';
 import { fetchBranches } from '@/lib/api';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface BranchUser {
   id: string;
@@ -44,11 +45,15 @@ export function UsersList({ eventId }: UsersListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // First, get all branches to find the user's actual branch
+  // Check if user is master
+  const isMasterUser = user?.master || false;
+
+  // Get all branches (only needed for non-master users)
   const { data: branches, isLoading: branchesLoading } = useQuery({
     queryKey: ['branches'],
     queryFn: fetchBranches,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !isMasterUser, // Only fetch branches for non-master users
   });
 
   // Validate if filial_id is a valid UUID
@@ -57,8 +62,12 @@ export function UsersList({ eventId }: UsersListProps) {
     return uuidRegex.test(id);
   };
 
-  // Determine the user's branch ID with enhanced validation
+  // Determine the user's branch ID with enhanced validation (only for non-master users)
   const { userBranchId, branchValidationError } = useMemo(() => {
+    if (isMasterUser) {
+      return { userBranchId: null, branchValidationError: null }; // Master users don't need branch validation
+    }
+
     if (!user?.filial_id || !branches) {
       return { userBranchId: null, branchValidationError: null };
     }
@@ -81,18 +90,23 @@ export function UsersList({ eventId }: UsersListProps) {
       userBranchId: null, 
       branchValidationError: `Filial inválida: "${user.filial_id}". Entre em contato com o administrador para corrigir sua configuração de filial.` 
     };
-  }, [user?.filial_id, branches, branchesLoading]);
+  }, [user?.filial_id, branches, branchesLoading, isMasterUser]);
 
   const { data: users, isLoading: usersLoading, error } = useQuery({
-    queryKey: ['branch-users', userBranchId],
+    queryKey: ['branch-users', userBranchId, isMasterUser],
     queryFn: async () => {
-      if (!userBranchId) {
+      if (!isMasterUser && !userBranchId) {
         throw new Error('Filial não encontrada no sistema');
       }
 
+      console.log(isMasterUser ? '🔑 Fetching all users (master user)' : `🏢 Fetching users for branch: ${userBranchId}`);
+
       // Use RPC function to get users with auth status
       const { data, error } = await supabase
-        .rpc('get_users_with_auth_status', { p_filial_id: userBranchId });
+        .rpc('get_users_with_auth_status', { 
+          p_filial_id: isMasterUser ? null : userBranchId,
+          p_is_master: isMasterUser
+        });
 
       if (error) {
         console.error('Error calling get_users_with_auth_status:', error);
@@ -123,10 +137,10 @@ export function UsersList({ eventId }: UsersListProps) {
         tipo_cadastro: user.tipo_cadastro
       }));
     },
-    enabled: !!userBranchId && !!branches && !branchesLoading,
+    enabled: isMasterUser || (!!userBranchId && !!branches && !branchesLoading),
   });
 
-  const isLoading = branchesLoading || usersLoading;
+  const isLoading = (isMasterUser ? false : branchesLoading) || usersLoading;
 
   // Filter and paginate users
   const filteredUsers = useMemo(() => {
@@ -157,8 +171,8 @@ export function UsersList({ eventId }: UsersListProps) {
     return <LoadingState />;
   }
 
-  // Show branch validation error if exists
-  if (branchValidationError) {
+  // Show branch validation error if exists (only for non-master users)
+  if (!isMasterUser && branchValidationError) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center max-w-md">
@@ -207,18 +221,35 @@ export function UsersList({ eventId }: UsersListProps) {
 
   return (
     <div className="space-y-4">
+      {/* Master User Alert */}
+      {isMasterUser && (
+        <Alert className="border-blue-200 bg-blue-50">
+          <Info className="h-4 w-4 text-blue-600" />
+          <AlertTitle className="text-blue-800">Modo Administrador Master</AlertTitle>
+          <AlertDescription className="text-blue-700">
+            Você está visualizando todos os usuários do sistema. Como usuário master, você pode gerenciar qualquer usuário independente da filial.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por nome ou CPF..."
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="pl-10"
-        />
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome ou CPF..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="pl-10"
+          />
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {filteredUsers.length} usuários encontrados
+          {isMasterUser && <span className="ml-2 text-blue-600 font-medium">(todos os usuários)</span>}
+        </div>
       </div>
 
       <div className="overflow-x-auto">
