@@ -138,15 +138,30 @@ class UserManagementService {
 
   async deleteUser(userId: string, options: UserDeletionOptions) {
     try {
-      // Buscar dados do usuário para validação
-      const { data: user, error: userError } = await supabase
+      // Primeiro buscar na tabela usuarios
+      const { data: userFromUsuarios, error: userError } = await supabase
         .from('usuarios')
         .select('email, numero_documento')
         .eq('id', userId)
         .single();
 
+      let user = userFromUsuarios;
+      let isAuthOnly = false;
+
+      // Se não encontrou na tabela usuarios, buscar na auth.users (usuário apenas auth)
       if (userError || !user) {
-        throw new Error('Usuário não encontrado');
+        const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId);
+        
+        if (authError || !authUser.user) {
+          throw new Error('Usuário não encontrado em nenhuma das tabelas');
+        }
+
+        // Usuário existe apenas na auth
+        isAuthOnly = true;
+        user = {
+          email: authUser.user.email || '',
+          numero_documento: authUser.user.user_metadata?.documento || authUser.user.user_metadata?.numero_documento || ''
+        };
       }
 
       // Validar confirmação
@@ -155,27 +170,8 @@ class UserManagementService {
         throw new Error('Email ou documento de confirmação não conferem');
       }
 
-      if (options.deleteFromBoth) {
-        // Excluir de ambas as tabelas (cascata completa)
-        const { error: publicError } = await supabase
-          .from('usuarios')
-          .delete()
-          .eq('id', userId);
-
-        if (publicError) {
-          throw new Error('Erro ao excluir usuário da base de dados: ' + publicError.message);
-        }
-
-        const { error: authError } = await supabase.rpc('delete_auth_user', { 
-          user_id: userId 
-        });
-
-        if (authError) {
-          console.error('Error deleting from auth.users:', authError);
-          // Não jogar erro aqui pois o principal (public) já foi excluído
-        }
-      } else {
-        // Excluir apenas de auth.users (mantém histórico) e desativar usuário
+      if (isAuthOnly) {
+        // Para usuários apenas auth, excluir apenas da auth.users
         const { error: authError } = await supabase.rpc('delete_auth_user', { 
           user_id: userId 
         });
@@ -183,16 +179,47 @@ class UserManagementService {
         if (authError) {
           throw new Error('Erro ao excluir usuário do sistema de autenticação: ' + authError.message);
         }
+      } else {
+        // Lógica original para usuários completos
+        if (options.deleteFromBoth) {
+          // Excluir de ambas as tabelas (cascata completa)
+          const { error: publicError } = await supabase
+            .from('usuarios')
+            .delete()
+            .eq('id', userId);
 
-        // Marcar como inativo na tabela usuarios para manter histórico
-        const { error: updateError } = await supabase
-          .from('usuarios')
-          .update({ ativo: false })
-          .eq('id', userId);
+          if (publicError) {
+            throw new Error('Erro ao excluir usuário da base de dados: ' + publicError.message);
+          }
 
-        if (updateError) {
-          console.error('Error deactivating user:', updateError);
-          throw new Error('Erro ao desativar usuário: ' + updateError.message);
+          const { error: authError } = await supabase.rpc('delete_auth_user', { 
+            user_id: userId 
+          });
+
+          if (authError) {
+            console.error('Error deleting from auth.users:', authError);
+            // Não jogar erro aqui pois o principal (public) já foi excluído
+          }
+        } else {
+          // Excluir apenas de auth.users (mantém histórico) e desativar usuário
+          const { error: authError } = await supabase.rpc('delete_auth_user', { 
+            user_id: userId 
+          });
+
+          if (authError) {
+            throw new Error('Erro ao excluir usuário do sistema de autenticação: ' + authError.message);
+          }
+
+          // Marcar como inativo na tabela usuarios para manter histórico
+          const { error: updateError } = await supabase
+            .from('usuarios')
+            .update({ ativo: false })
+            .eq('id', userId);
+
+          if (updateError) {
+            console.error('Error deactivating user:', updateError);
+            throw new Error('Erro ao desativar usuário: ' + updateError.message);
+          }
         }
       }
 
