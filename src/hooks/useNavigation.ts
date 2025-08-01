@@ -39,12 +39,16 @@ export const useNavigation = () => {
   console.log('Checking for FMON code:', userRoleCodes.includes('FMON'));
 
   // Redirect authenticated users without an event to event selection
+  // But not during logout process
   useEffect(() => {
     if (user && !currentEventId && 
         location.pathname !== '/event-selection' && 
         !location.pathname.startsWith('/event') &&
         location.pathname !== '/verificar-email' &&
-        location.pathname !== '/reset-password') {
+        location.pathname !== '/reset-password' &&
+        location.pathname !== '/' &&
+        location.pathname !== '/login' &&
+        location.pathname !== '/signup') {
       console.log('User logged in but no event selected, redirecting to event selection');
       navigate('/event-selection', { replace: true });
     }
