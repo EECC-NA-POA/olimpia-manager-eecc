@@ -20,23 +20,8 @@ export const useNavigation = () => {
 
   // Get all roles codes from the user's roles
   const userRoleCodes = user?.papeis?.map(role => role.codigo) || [];
-  console.log('=== USE NAVIGATION DEBUG ===');
-  console.log('User:', user);
-  console.log('User ID:', user?.id);
-  console.log('User papeis (raw):', user?.papeis);
   console.log('User role codes:', userRoleCodes);
-  console.log('Papeis type:', typeof user?.papeis);
-  console.log('Papeis is array:', Array.isArray(user?.papeis));
-  if (user?.papeis) {
-    console.log('Papeis length:', user.papeis.length);
-    user.papeis.forEach((papel, index) => {
-      console.log(`Papel ${index}:`, {
-        codigo: papel.codigo,
-        nome: papel.nome
-      });
-    });
-  }
-  console.log('=========================');
+  console.log('User papeis:', user?.papeis);
 
   // Check for each role type
   const roles: UserRoles = {

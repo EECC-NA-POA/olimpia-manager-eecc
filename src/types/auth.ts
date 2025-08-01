@@ -16,7 +16,6 @@ export interface AuthUser extends User {
   tipo_documento?: string;
   numero_documento?: string;
   genero?: string;
-  master?: boolean;
 }
 
 export interface AuthContextType {

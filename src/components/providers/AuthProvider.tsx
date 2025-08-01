@@ -157,16 +157,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (event === 'SIGNED_OUT') {
               if (mounted) {
-                 console.log('👋 User signed out, clearing state');
-                 setUser(null);
-                 setSessionExpired(false);
-                 localStorage.removeItem('currentEventId');
-                 setCurrentEventId(null);
-                 clearUserProfileCache();
-                 // Don't redirect if already on public route to avoid infinite redirects
-                 if (!['/', '/login', '/event-selection'].includes(location.pathname)) {
-                   navigate('/', { replace: true });
-                 }
+                console.log('👋 User signed out, clearing state');
+                setUser(null);
+                setSessionExpired(false);
+                localStorage.removeItem('currentEventId');
+                setCurrentEventId(null);
+                clearUserProfileCache();
+                navigate('/', { replace: true });
               }
               return;
             }

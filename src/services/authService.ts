@@ -29,11 +29,11 @@ export const fetchUserProfile = async (userId: string) => {
     
     if (!currentEventId) {
       console.log('No current event ID found');
-    const { data: userProfile, error: profileError } = await supabase
-      .from('usuarios')
-      .select('nome_completo, telefone, filial_id, confirmado, master')
-      .eq('id', userId)
-      .maybeSingle();
+      const { data: userProfile, error: profileError } = await supabase
+        .from('usuarios')
+        .select('nome_completo, telefone, filial_id, confirmado')
+        .eq('id', userId)
+        .maybeSingle();
 
       if (profileError) throw profileError;
 
@@ -69,27 +69,26 @@ export const fetchUserProfile = async (userId: string) => {
       return result;
     }
 
-    // Use the corrected RPC function to get user profile with roles
-    console.log('🔍 Fetching user profile via updated get_user_profile_safe...');
+    // Use RPC function to bypass RLS issues
     const { data: profileData, error: profileError } = await supabase
       .rpc('get_user_profile_safe', {
-        p_user_id: userId
+        p_user_id: userId,
+        p_event_id: currentEventId
       });
 
     if (profileError) {
-      console.error('❌ Error fetching user profile via RPC:', profileError);
-      console.log('🔄 RPC failed, trying fallback direct queries...');
+      console.error('Error fetching user profile via RPC:', profileError);
+      console.log('RPC failed, trying fallback direct queries...');
       
       // Fallback: Try direct queries if RPC fails
       return await fetchUserProfileFallback(userId, currentEventId);
     }
 
     if (!profileData || profileData.length === 0) {
-      console.log('⚠️ No user profile found via RPC');
+      console.log('No user profile found');
       const result = {
         confirmado: false,
         papeis: [] as UserRole[],
-        master: false,
       };
       
       // Cache do resultado
@@ -103,42 +102,20 @@ export const fetchUserProfile = async (userId: string) => {
     }
 
     const userProfile = profileData[0];
-    console.log('📊 Raw profile data from RPC:', userProfile);
-    
-    // Handle roles - should come as JSONB from the updated function
-    let papeis: UserRole[] = [];
-    if (userProfile.papeis) {
-      if (typeof userProfile.papeis === 'string') {
-        try {
-          papeis = JSON.parse(userProfile.papeis);
-          console.log('✅ Successfully parsed papeis from string');
-        } catch (e) {
-          console.error('❌ Error parsing papeis JSON:', e);
-          papeis = [];
-        }
-      } else if (Array.isArray(userProfile.papeis)) {
-        papeis = userProfile.papeis;
-        console.log('✅ Papeis already in array format');
-      } else {
-        console.warn('⚠️ Unexpected papeis format:', typeof userProfile.papeis);
-        papeis = [];
-      }
-    }
+    const papeis = Array.isArray(userProfile.papeis) ? userProfile.papeis : [];
     
     console.log('=== DETAILED ROLE DEBUG ===');
-    console.log('🎭 User roles loaded:', papeis.length);
-    console.log('🎭 Raw papeis data:', papeis);
-    console.log('🎭 Role codes:', papeis.map((p: any) => p.codigo));
-    console.log('🎭 Role names:', papeis.map((p: any) => p.nome));
-    console.log('🎭 Current event context:', currentEventId);
+    console.log('User roles loaded:', papeis.length);
+    console.log('Raw papeis data:', papeis);
+    console.log('Role codes:', papeis.map((p: any) => p.codigo));
+    console.log('Role names:', papeis.map((p: any) => p.nome));
     console.log('===========================');
     
     const result = {
       nome_completo: userProfile.nome_completo,
       telefone: userProfile.telefone,
       filial_id: userProfile.filial_id,
-      confirmado: userProfile.confirmado || false,
-      master: userProfile.master || false,
+      confirmado: userProfile.confirmado,
       papeis,
     };
     
@@ -185,7 +162,7 @@ const fetchUserProfileFallback = async (userId: string, currentEventId: string) 
     // Fetch basic user data
     const { data: userData, error: userError } = await supabase
       .from('usuarios')
-      .select('nome_completo, telefone, filial_id, confirmado, master')
+      .select('nome_completo, telefone, filial_id, confirmado')
       .eq('id', userId)
       .single();
 
@@ -229,7 +206,6 @@ const fetchUserProfileFallback = async (userId: string, currentEventId: string) 
       telefone: userData.telefone,
       filial_id: userData.filial_id,
       confirmado: userData.confirmado,
-      master: userData.master || false,
       papeis,
     };
 
