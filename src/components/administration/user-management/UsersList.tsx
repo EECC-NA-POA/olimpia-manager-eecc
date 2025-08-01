@@ -131,11 +131,27 @@ export function UsersList({ eventId }: UsersListProps) {
           estado: userData.filial_estado
         } : null,
         auth_exists: userData.has_auth,
-        tipo_cadastro: userData.has_auth && userData.nome_completo !== 'Usuário Auth' 
-          ? 'Completo' 
-          : userData.has_auth && userData.nome_completo === 'Usuário Auth'
-          ? 'Apenas Auth'
-          : 'Apenas Usuário'
+        tipo_cadastro: (() => {
+          // Se tem campos específicos de usuarios (como data_criacao completa ou confirmado definido)
+          // e tem auth = Completo
+          if (userData.has_auth && userData.data_criacao && userData.confirmado !== undefined) {
+            return 'Completo';
+          }
+          // Se não tem auth mas tem dados de usuario = Apenas Usuário  
+          if (!userData.has_auth && userData.data_criacao) {
+            return 'Apenas Usuário';
+          }
+          // Se tem auth mas nome padrão ou dados limitados = Apenas Auth
+          if (userData.has_auth && (
+            userData.nome_completo === 'Usuário Auth' || 
+            !userData.data_criacao ||
+            userData.confirmado === undefined
+          )) {
+            return 'Apenas Auth';
+          }
+          // Fallback
+          return userData.has_auth ? 'Completo' : 'Apenas Usuário';
+        })()
       }));
     },
     enabled: (!!userBranchId || !!user?.is_master) && !!branches && !branchesLoading,
