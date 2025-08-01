@@ -17,7 +17,7 @@ export function useUserManagement() {
     onSuccess: () => {
       toast.success('Usuário criado com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['user-profiles'] });
-      queryClient.invalidateQueries({ queryKey: ['system-users'] });
+      queryClient.invalidateQueries({ queryKey: ['branch-users'] });
     },
     onError: (error: Error) => {
       toast.error('Erro ao criar usuário: ' + error.message);
@@ -38,7 +38,7 @@ export function useUserManagement() {
         : 'Usuário excluído do sistema de autenticação (histórico mantido)!';
       toast.success(message);
       queryClient.invalidateQueries({ queryKey: ['user-profiles'] });
-      queryClient.invalidateQueries({ queryKey: ['system-users'] });
+      queryClient.invalidateQueries({ queryKey: ['branch-users'] });
     },
     onError: (error: Error) => {
       toast.error('Erro ao excluir usuário: ' + error.message);
