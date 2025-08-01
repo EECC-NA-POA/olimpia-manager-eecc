@@ -131,7 +131,11 @@ export function UsersList({ eventId }: UsersListProps) {
           estado: userData.filial_estado
         } : null,
         auth_exists: userData.has_auth,
-        tipo_cadastro: userData.has_auth ? 'Completo' : 'Apenas Usuário'
+        tipo_cadastro: userData.has_auth && userData.nome_completo !== 'Usuário Auth' 
+          ? 'Completo' 
+          : userData.has_auth && userData.nome_completo === 'Usuário Auth'
+          ? 'Apenas Auth'
+          : 'Apenas Usuário'
       }));
     },
     enabled: (!!userBranchId || !!user?.is_master) && !!branches && !branchesLoading,
