@@ -13,6 +13,14 @@ export const useSignOut = () => {
       // Clear any stored event ID first
       localStorage.removeItem('currentEventId');
 
+      // Get current session to check if it exists
+      const { data: session } = await supabase.auth.getSession();
+      
+      if (!session?.session) {
+        console.log('⚠️ No active session found, treating as successful logout');
+        return; // Exit successfully - user is already logged out
+      }
+
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -20,7 +28,8 @@ export const useSignOut = () => {
         
         // If session not found, consider it as successful logout
         if (error.message?.includes('session_not_found') || 
-            error.message?.includes('Session from session_id claim in JWT does not exist')) {
+            error.message?.includes('Session from session_id claim in JWT does not exist') ||
+            error.message?.includes('Auth session missing')) {
           console.log('⚠️ Session already invalid, treating as successful logout');
           return; // Exit successfully
         }
@@ -31,11 +40,12 @@ export const useSignOut = () => {
       console.log('✅ Signout successful');
       
     } catch (error: any) {
-      console.error('Sign out error occurred');
+      console.error('Sign out error occurred:', error);
       
-      // If session not found, don't throw error - treat as successful
+      // If session not found or missing, don't throw error - treat as successful
       if (error.message?.includes('session_not_found') || 
-          error.message?.includes('Session from session_id claim in JWT does not exist')) {
+          error.message?.includes('Session from session_id claim in JWT does not exist') ||
+          error.message?.includes('Auth session missing')) {
         console.log('⚠️ Session already invalid during catch, treating as successful logout');
         return; // Exit successfully
       }
