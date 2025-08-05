@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { getNavigationItems } from "./footer/navigation-items";
+
 import SocialLinks from "./footer/SocialLinks";
 import { MobileNavigationLink } from "./footer/MobileNavigation";
 
