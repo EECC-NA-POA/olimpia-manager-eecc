@@ -224,31 +224,31 @@ CREATE POLICY cronograma_atividades_select_policy
     )
   );
 
--- Política de INSERT: Apenas usuários com permissão administrativa podem criar atividades
+-- Política de INSERT: Usuários com permissão administrativa ou monitores podem criar atividades
 CREATE POLICY cronograma_atividades_insert_policy
   ON public.cronograma_atividades
   FOR INSERT
   WITH CHECK (
-    public.verificar_permissao_admin_evento(evento_id)
+    public.verificar_permissao_admin_evento(evento_id) OR public.usuario_e_monitor()
   );
 
--- Política de UPDATE: Apenas usuários com permissão administrativa podem editar atividades
+-- Política de UPDATE: Usuários com permissão administrativa ou monitores podem editar atividades
 CREATE POLICY cronograma_atividades_update_policy
   ON public.cronograma_atividades
   FOR UPDATE
   USING (
-    public.verificar_permissao_admin_evento(evento_id)
+    public.verificar_permissao_admin_evento(evento_id) OR public.usuario_e_monitor()
   )
   WITH CHECK (
-    public.verificar_permissao_admin_evento(evento_id)
+    public.verificar_permissao_admin_evento(evento_id) OR public.usuario_e_monitor()
   );
 
--- Política de DELETE: Apenas usuários com permissão administrativa podem excluir atividades
+-- Política de DELETE: Usuários com permissão administrativa ou monitores podem excluir atividades
 CREATE POLICY cronograma_atividades_delete_policy
   ON public.cronograma_atividades
   FOR DELETE
   USING (
-    public.verificar_permissao_admin_evento(evento_id)
+    public.verificar_permissao_admin_evento(evento_id) OR public.usuario_e_monitor()
   );
 
 -- ========== POLÍTICAS PARA CRONOGRAMA_ATIVIDADE_MODALIDADES ==========
@@ -276,7 +276,7 @@ CREATE POLICY cronograma_atividade_modalidades_select_policy
     )
   );
 
--- Política de INSERT: Apenas usuários com permissão administrativa podem criar relacionamentos
+-- Política de INSERT: Administradores ou monitores que representam a modalidade podem criar relacionamentos
 CREATE POLICY cronograma_atividade_modalidades_insert_policy
   ON public.cronograma_atividade_modalidades
   FOR INSERT
@@ -285,11 +285,20 @@ CREATE POLICY cronograma_atividade_modalidades_insert_policy
       SELECT 1
       FROM public.cronograma_atividades ca
       WHERE ca.id = cronograma_atividade_modalidades.cronograma_atividade_id
-        AND public.verificar_permissao_admin_evento(ca.evento_id)
+        AND (
+          public.verificar_permissao_admin_evento(ca.evento_id)
+          OR 
+          EXISTS (
+            SELECT 1
+            FROM public.modalidade_representantes mr
+            WHERE mr.modalidade_id = cronograma_atividade_modalidades.modalidade_id
+              AND mr.atleta_id = auth.uid()
+          )
+        )
     )
   );
 
--- Política de UPDATE: Apenas usuários com permissão administrativa podem editar relacionamentos
+-- Política de UPDATE: Administradores ou monitores que representam a modalidade podem editar relacionamentos
 CREATE POLICY cronograma_atividade_modalidades_update_policy
   ON public.cronograma_atividade_modalidades
   FOR UPDATE
@@ -298,7 +307,16 @@ CREATE POLICY cronograma_atividade_modalidades_update_policy
       SELECT 1
       FROM public.cronograma_atividades ca
       WHERE ca.id = cronograma_atividade_modalidades.cronograma_atividade_id
-        AND public.verificar_permissao_admin_evento(ca.evento_id)
+        AND (
+          public.verificar_permissao_admin_evento(ca.evento_id)
+          OR 
+          EXISTS (
+            SELECT 1
+            FROM public.modalidade_representantes mr
+            WHERE mr.modalidade_id = cronograma_atividade_modalidades.modalidade_id
+              AND mr.atleta_id = auth.uid()
+          )
+        )
     )
   )
   WITH CHECK (
@@ -306,11 +324,20 @@ CREATE POLICY cronograma_atividade_modalidades_update_policy
       SELECT 1
       FROM public.cronograma_atividades ca
       WHERE ca.id = cronograma_atividade_modalidades.cronograma_atividade_id
-        AND public.verificar_permissao_admin_evento(ca.evento_id)
+        AND (
+          public.verificar_permissao_admin_evento(ca.evento_id)
+          OR 
+          EXISTS (
+            SELECT 1
+            FROM public.modalidade_representantes mr
+            WHERE mr.modalidade_id = cronograma_atividade_modalidades.modalidade_id
+              AND mr.atleta_id = auth.uid()
+          )
+        )
     )
   );
 
--- Política de DELETE: Apenas usuários com permissão administrativa podem excluir relacionamentos
+-- Política de DELETE: Administradores ou monitores que representam a modalidade podem excluir relacionamentos
 CREATE POLICY cronograma_atividade_modalidades_delete_policy
   ON public.cronograma_atividade_modalidades
   FOR DELETE
@@ -319,7 +346,16 @@ CREATE POLICY cronograma_atividade_modalidades_delete_policy
       SELECT 1
       FROM public.cronograma_atividades ca
       WHERE ca.id = cronograma_atividade_modalidades.cronograma_atividade_id
-        AND public.verificar_permissao_admin_evento(ca.evento_id)
+        AND (
+          public.verificar_permissao_admin_evento(ca.evento_id)
+          OR 
+          EXISTS (
+            SELECT 1
+            FROM public.modalidade_representantes mr
+            WHERE mr.modalidade_id = cronograma_atividade_modalidades.modalidade_id
+              AND mr.atleta_id = auth.uid()
+          )
+        )
     )
   );
 
