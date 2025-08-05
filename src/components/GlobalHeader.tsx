@@ -1,6 +1,7 @@
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from 'react';
 
@@ -43,7 +44,12 @@ export function GlobalHeader() {
       isVisible ? 'translate-y-0' : '-translate-y-full'
     }`}>
       <div className="container flex h-full items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          {/* Sidebar trigger - only visible on protected routes */}
+          {user && location.pathname !== '/' && location.pathname !== '/login' && location.pathname !== '/event-selection' && !location.pathname.startsWith('/events') && !location.pathname.startsWith('/event/') && location.pathname !== '/forgot-password' && location.pathname !== '/reset-password' && location.pathname !== '/verify-email' && location.pathname !== '/acesso-negado' && (
+            <SidebarTrigger className="text-olimpics-green-primary hover:text-olimpics-green-secondary lg:hidden" />
+          )}
+          
           <Button
             variant="ghost"
             onClick={handleClick}

@@ -52,11 +52,11 @@ export function MainNavigation({ children }: MainNavigationProps) {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-screen w-full">
         <AppSidebar isHeaderVisible={isHeaderVisible} />
         <SidebarInset className="flex-1">
-          <main className="flex-1 overflow-auto bg-olimpics-background p-6 pt-20">
+          <main className="flex-1 overflow-auto bg-olimpics-background p-4 lg:p-6 pt-20">
             {children}
           </main>
         </SidebarInset>
