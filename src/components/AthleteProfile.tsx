@@ -8,7 +8,6 @@ import ProfileImage from './athlete/ProfileImage';
 import PersonalInfo from './athlete/PersonalInfo';
 import PaymentAndBranchInfo from './athlete/PaymentAndBranchInfo';
 import AccessProfile from './athlete/AccessProfile';
-import Notifications from './athlete/Notifications';
 import RegistrationFees from './athlete/RegistrationFees';
 import { DependentsTable } from './athlete/DependentsTable';
 
@@ -109,14 +108,6 @@ export default function AthleteProfile({ profile, isPublicUser }: AthleteProfile
 
       {currentEventId && !isPublicUser && (
         <DependentsTable userId={profile.id} eventId={currentEventId} />
-      )}
-
-      {/* Seção de Notificações - sempre mostrar se tiver evento atual */}
-      {currentEventId && (
-        <Notifications 
-          eventId={currentEventId}
-          userId={profile.id}
-        />
       )}
 
       <div className="mt-6">

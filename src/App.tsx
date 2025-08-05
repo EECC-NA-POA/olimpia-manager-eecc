@@ -27,6 +27,7 @@ import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import RejectedAccess from "./pages/RejectedAccess";
 import AthleteProfile from "./pages/AthleteProfile";
+import Notifications from "./pages/Notifications";
 import Scores from "./pages/Scores";
 import OrganizerDashboard from "@/components/OrganizerDashboard";
 import DelegationDashboard from "@/components/DelegationDashboard";
@@ -83,6 +84,7 @@ function AppContent() {
               <Routes>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/athlete-profile" element={<AthleteProfile />} />
+                <Route path="/notifications" element={<Notifications />} />
                 <Route path="/judge-dashboard" element={<JudgeDashboard />} />
                 <Route path="/administration" element={<Administration />} />
                 <Route path="/regulamento" element={<EventRegulations />} />

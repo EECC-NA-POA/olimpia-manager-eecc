@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Users, Calendar, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut, UserCheck } from 'lucide-react';
+import { User, Users, Calendar, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut, UserCheck, Bell } from 'lucide-react';
 import { MenuItem } from '../types';
 
 export const useMenuItems = (onLogout: () => void) => {
@@ -58,7 +58,15 @@ export const useMenuItems = (onLogout: () => void) => {
     tooltip: "Regulamento"
   });
   
-  // 4. Minhas Inscrições (My Registrations) - for all roles
+  // 4. Notificações (Notifications) - for all roles
+  menuItems.push({
+    path: "/notifications",
+    label: "Notificações",
+    icon: <Bell className="h-5 w-5" />,
+    tooltip: "Notificações"
+  });
+  
+  // 5. Minhas Inscrições (My Registrations) - for all roles
   menuItems.push({
     path: "/minhas-inscricoes",
     label: "Minhas Inscrições",
@@ -66,7 +74,7 @@ export const useMenuItems = (onLogout: () => void) => {
     tooltip: "Minhas Inscrições"
   });
   
-  // 5. Organizador (Organizer)
+  // 6. Organizador (Organizer)
   if (isOrganizer) {
     menuItems.push({
       path: "/organizador",
@@ -76,7 +84,7 @@ export const useMenuItems = (onLogout: () => void) => {
     });
   }
   
-  // 6. Delegação (Delegation)
+  // 7. Delegação (Delegation)
   if (isDelegationRep) {
     menuItems.push({
       path: "/delegacao",
@@ -86,7 +94,7 @@ export const useMenuItems = (onLogout: () => void) => {
     });
   }
 
-  // 7. Filósofo Monitor - ÚNICA ENTRADA NO MENU
+  // 8. Filósofo Monitor - ÚNICA ENTRADA NO MENU
   if (isFilosofoMonitor) {
     menuItems.push({
       path: "/monitor",
@@ -96,7 +104,7 @@ export const useMenuItems = (onLogout: () => void) => {
     });
   }
   
-  // 8. Juiz (Judge)
+  // 9. Juiz (Judge)
   if (isJudge) {
     menuItems.push({
       path: "/judge-dashboard",
@@ -106,7 +114,7 @@ export const useMenuItems = (onLogout: () => void) => {
     });
   }
   
-  // 9. Administração (Administration) - for admins only
+  // 10. Administração (Administration) - for admins only
   if (isAdmin) {
     menuItems.push({
       path: "/administration",
@@ -116,7 +124,7 @@ export const useMenuItems = (onLogout: () => void) => {
     });
   }
 
-  // 10. Trocar Evento
+  // 11. Trocar Evento
   menuItems.push({
     path: "#",
     label: "Trocar Evento",
@@ -126,7 +134,7 @@ export const useMenuItems = (onLogout: () => void) => {
     action: handleEventSwitch
   });
 
-  // 11. Sair (Logout)
+  // 12. Sair (Logout)
   menuItems.push({
     path: "#",
     label: "Sair",
