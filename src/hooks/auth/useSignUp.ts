@@ -11,17 +11,17 @@ export const useSignUp = () => {
       console.log('🚀 Starting signup process for:', email);
       console.log('📝 User data received:', userData);
 
-      // Ensure we have properly formatted user metadata
+      // Ensure we have properly formatted user metadata with all required fields
       const userMetadata = {
-        nome_completo: userData?.nome_completo || '',
-        telefone: userData?.telefone || '',
-        ddi: userData?.ddi || '+55',
-        tipo_documento: userData?.tipo_documento || 'CPF',
-        numero_documento: userData?.numero_documento || '',
-        genero: userData?.genero || 'Masculino',
+        nome_completo: String(userData?.nome_completo || userData?.nome || '').trim(),
+        telefone: String(userData?.telefone || '').trim(),
+        ddi: String(userData?.ddi || '+55').trim(),
+        tipo_documento: String(userData?.tipo_documento || 'CPF').trim(),
+        numero_documento: String(userData?.numero_documento || '').trim(),
+        genero: String(userData?.genero || 'Masculino').trim(),
         data_nascimento: userData?.data_nascimento || '1990-01-01',
-        estado: userData?.estado || '',
-        filial_id: userData?.filial_id || ''
+        estado: String(userData?.estado || userData?.state || '').trim(),
+        filial_id: String(userData?.filial_id || userData?.branchId || '').trim()
       };
 
       console.log('📝 Final user metadata for Supabase:', userMetadata);
@@ -96,23 +96,30 @@ export const useSignUp = () => {
             // Trigger falhou, criar usuário manualmente na tabela usuarios
             console.log('🔧 Attempting to create user manually in usuarios table...');
             try {
+              // Prepare complete user data for manual insertion
+              const usuarioData = {
+                id: data.user.id,
+                nome_completo: userMetadata.nome_completo || 'Nome não informado',
+                email: data.user.email || '',
+                telefone: userMetadata.telefone,
+                ddi: userMetadata.ddi,
+                tipo_documento: userMetadata.tipo_documento,
+                numero_documento: userMetadata.numero_documento,
+                genero: userMetadata.genero,
+                data_nascimento: userMetadata.data_nascimento,
+                estado: userMetadata.estado,
+                filial_id: userMetadata.filial_id || null,
+                confirmado: false,
+                ativo: true,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              };
+
+              console.log('📝 Inserting user data:', usuarioData);
+              
               const { data: insertData, error: insertError } = await supabase
                 .from('usuarios')
-                .insert({
-                  id: data.user.id,
-                  nome_completo: userMetadata.nome_completo,
-                  email: data.user.email,
-                  telefone: userMetadata.telefone,
-                  ddi: userMetadata.ddi,
-                  tipo_documento: userMetadata.tipo_documento,
-                  numero_documento: userMetadata.numero_documento,
-                  genero: userMetadata.genero,
-                  data_nascimento: userMetadata.data_nascimento,
-                  estado: userMetadata.estado,
-                  filial_id: userMetadata.filial_id,
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                })
+                .insert(usuarioData)
                 .select()
                 .single();
               
