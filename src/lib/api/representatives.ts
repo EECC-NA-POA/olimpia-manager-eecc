@@ -174,6 +174,21 @@ export const setModalityRepresentative = async (filialId: string, modalityId: nu
   console.log('=== SETTING MODALITY REPRESENTATIVE ===');
   console.log('Parameters:', { filialId, modalityId, atletaId });
   
+  // Check RLS permissions before attempting operations
+  console.log('Step 0: Checking RLS permissions...');
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError) {
+    console.error('Auth error - user not authenticated:', userError);
+    throw new Error('Usuário não autenticado. Faça login novamente.');
+  }
+  
+  if (!user) {
+    console.error('No user found in auth context');
+    throw new Error('Usuário não autenticado. Faça login novamente.');
+  }
+  
+  console.log('Current user for RLS validation:', { userId: user.id, email: user.email });
+  
   try {
     // Verify the athlete exists and belongs to the filial
     console.log('Step 1: Verifying athlete exists...');
@@ -273,6 +288,31 @@ export const setModalityRepresentative = async (filialId: string, modalityId: nu
 
     if (error) {
       console.error('Error inserting modality representative:', error);
+      console.error('Full error details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
+      
+      // Check for RLS policy violations
+      if (error.code === '42501' || error.message?.includes('RLS') || error.message?.includes('policy')) {
+        console.error('RLS Policy violation detected');
+        throw new Error('Erro de permissão: Você não tem autorização para adicionar representantes neste evento. Verifique se você possui o perfil adequado e se está vinculado à filial correta.');
+      }
+      
+      // Check for foreign key violations
+      if (error.code === '23503') {
+        console.error('Foreign key violation detected');
+        throw new Error('Erro de dados: Verifique se o atleta, modalidade e filial existem no sistema.');
+      }
+      
+      // Check for unique constraint violations
+      if (error.code === '23505') {
+        console.error('Unique constraint violation detected');
+        throw new Error('Este atleta já é representante desta modalidade.');
+      }
+      
       throw new Error(`Erro ao criar representante: ${error.message}`);
     }
     
@@ -290,6 +330,21 @@ export const removeModalityRepresentative = async (filialId: string, modalityId:
   console.log('=== REMOVING MODALITY REPRESENTATIVE ===');
   console.log('Parameters:', { filialId, modalityId, atletaId });
   
+  // Check RLS permissions before attempting operations
+  console.log('Step 0: Checking RLS permissions...');
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError) {
+    console.error('Auth error - user not authenticated:', userError);
+    throw new Error('Usuário não autenticado. Faça login novamente.');
+  }
+  
+  if (!user) {
+    console.error('No user found in auth context');
+    throw new Error('Usuário não autenticado. Faça login novamente.');
+  }
+  
+  console.log('Current user for RLS validation:', { userId: user.id, email: user.email });
+  
   try {
     const { data, error } = await supabase
       .from('modalidade_representantes')
@@ -301,6 +356,19 @@ export const removeModalityRepresentative = async (filialId: string, modalityId:
 
     if (error) {
       console.error('Error removing modality representative:', error);
+      console.error('Full error details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
+      
+      // Check for RLS policy violations
+      if (error.code === '42501' || error.message?.includes('RLS') || error.message?.includes('policy')) {
+        console.error('RLS Policy violation detected');
+        throw new Error('Erro de permissão: Você não tem autorização para remover representantes neste evento. Verifique se você possui o perfil adequado e se está vinculado à filial correta.');
+      }
+      
       throw new Error(`Erro ao remover representante: ${error.message}`);
     }
     
@@ -310,6 +378,106 @@ export const removeModalityRepresentative = async (filialId: string, modalityId:
   } catch (error) {
     console.error('=== ERROR IN removeModalityRepresentative ===');
     console.error('Error details:', error);
+    throw error;
+  }
+};
+
+export interface OrganizerModalityWithRepresentatives {
+  id: number;
+  nome: string;
+  categoria: string;
+  filial_nome: string;
+  filial_id: string;
+  representatives: {
+    atleta_id: string;
+    nome_completo: string;
+    email: string;
+    telefone: string;
+  }[];
+}
+
+export const fetchAllModalitiesWithRepresentatives = async (eventId: string) => {
+  console.log('fetchAllModalitiesWithRepresentatives called with eventId:', eventId);
+  
+  try {
+    // Get all modalities for the event
+    const { data: modalities, error: modalitiesError } = await supabase
+      .from('modalidades')
+      .select('id, nome, categoria')
+      .eq('evento_id', eventId)
+      .eq('status', 'Ativa');
+
+    if (modalitiesError) {
+      console.error('Error fetching modalities:', modalitiesError);
+      throw modalitiesError;
+    }
+
+    // Get all filiais linked to this event
+    const { data: eventFiliais, error: filiaisError } = await supabase
+      .from('eventos_filiais')
+      .select(`
+        filial_id,
+        filiais!eventos_filiais_filial_id_fkey(id, nome)
+      `)
+      .eq('evento_id', eventId);
+
+    if (filiaisError) {
+      console.error('Error fetching event filiais:', filiaisError);
+      throw filiaisError;
+    }
+
+    // Get all representatives for all modalities in this event
+    const { data: representatives, error: repsError } = await supabase
+      .from('modalidade_representantes')
+      .select(`
+        modalidade_id,
+        atleta_id,
+        filial_id,
+        usuarios!modalidade_representantes_atleta_id_fkey(nome_completo, email, telefone)
+      `);
+
+    if (repsError) {
+      console.error('Error fetching representatives:', repsError);
+      throw repsError;
+    }
+
+    // Create modality-filial combinations
+    const modalitiesWithReps: OrganizerModalityWithRepresentatives[] = [];
+    
+    modalities?.forEach(modality => {
+      eventFiliais?.forEach(eventFilial => {
+        const filialData = Array.isArray(eventFilial.filiais) ? eventFilial.filiais[0] : eventFilial.filiais;
+        
+        // Get representatives for this specific modality-filial combination
+        const modalityReps = representatives?.filter(r => 
+          r.modalidade_id === modality.id && r.filial_id === eventFilial.filial_id
+        ) || [];
+        
+        const representativesList = modalityReps.map(rep => {
+          const userData = Array.isArray(rep.usuarios) ? rep.usuarios[0] : rep.usuarios;
+          return {
+            atleta_id: rep.atleta_id,
+            nome_completo: userData?.nome_completo || '',
+            email: userData?.email || '',
+            telefone: userData?.telefone || ''
+          };
+        }).filter(rep => rep.nome_completo);
+
+        modalitiesWithReps.push({
+          id: modality.id,
+          nome: modality.nome,
+          categoria: modality.categoria || '',
+          filial_nome: filialData?.nome || 'Nome não encontrado',
+          filial_id: eventFilial.filial_id,
+          representatives: representativesList
+        });
+      });
+    });
+
+    console.log('Combined modalities with representatives for organizer:', modalitiesWithReps);
+    return modalitiesWithReps;
+  } catch (error) {
+    console.error('Exception in fetchAllModalitiesWithRepresentatives:', error);
     throw error;
   }
 };

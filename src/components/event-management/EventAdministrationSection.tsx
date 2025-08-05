@@ -4,8 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchUserProfiles, fetchBranches } from '@/lib/api';
+import { fetchBranches } from '@/lib/api';
+import { fetchUserProfiles } from '@/lib/api/profiles';
+import { supabase } from '@/lib/supabase';
 import { UserProfilesTable } from '@/components/dashboard/UserProfilesTable';
+import { UserCreationDialog } from '@/components/admin/UserCreationDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
@@ -20,16 +23,31 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
 
   // Check if user has admin profile
   const hasAdminProfile = user?.papeis?.some(role => role.codigo === 'ADM');
+  
+  console.log('EventAdministrationSection - EventId:', eventId);
+  console.log('EventAdministrationSection - HasAdminProfile:', hasAdminProfile);
 
+  // Use fetchUserProfiles to get all user profiles for the event
   const { 
     data: userProfiles,
     isLoading: isLoadingProfiles,
-    refetch: refetchUserProfiles
+    refetch: refetchProfiles,
+    error: profilesError
   } = useQuery({
     queryKey: ['user-profiles', eventId],
-    queryFn: () => fetchUserProfiles(eventId),
-    enabled: hasAdminProfile && !!eventId
+    queryFn: () => {
+      console.log('===== USING fetchUserProfiles =====');
+      console.log('EventId:', eventId);
+      return fetchUserProfiles(eventId);
+    },
+    enabled: !!eventId && hasAdminProfile,
+    staleTime: 0
   });
+
+  console.log('===== COMPONENT STATE =====');
+  console.log('User Profiles:', userProfiles);
+  console.log('User Profiles count:', userProfiles?.length);
+  console.log('========================');
 
   const { 
     data: branches
@@ -41,9 +59,9 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
 
   // Set up event listener for profile updates
   useEffect(() => {
-    const handleProfileUpdate = () => {
+  const handleProfileUpdate = () => {
       console.log('Profile update detected, refreshing data...');
-      refetchUserProfiles();
+      refetchProfiles();
     };
 
     window.addEventListener('profile-updated', handleProfileUpdate);
@@ -51,7 +69,7 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
     return () => {
       window.removeEventListener('profile-updated', handleProfileUpdate);
     };
-  }, [refetchUserProfiles, queryClient]);
+  }, [refetchProfiles, queryClient]);
 
   if (!eventId) {
     return (
@@ -79,6 +97,20 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
 
   const totalUsers = userProfiles?.length || 0;
 
+  // Use the actual user profiles data from fetchUserProfiles
+  const formattedUserProfiles = userProfiles?.map((profile: any) => ({
+    ...profile,
+    filial_id: Number(profile.filial_id) || 0 // Convert string to number to match expected type
+  })) || [];
+
+  // Convert branches to match expected format
+  const formattedBranches = branches?.map((branch: any) => ({
+    id: String(branch.id),
+    nome: branch.nome,
+    cidade: branch.cidade,
+    estado: branch.estado
+  })) || [];
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <Card className="border-olimpics-green-primary/20">
@@ -93,13 +125,16 @@ export function EventAdministrationSection({ eventId }: EventAdministrationSecti
                 Total de usuários registrados: {totalUsers}
               </CardDescription>
             </div>
+            <div className="flex gap-2">
+              <UserCreationDialog />
+            </div>
           </div>
         </CardHeader>
         <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6 pb-3 sm:pb-6">
           <div className="overflow-x-auto">
             <UserProfilesTable
-              data={userProfiles || []}
-              branches={branches || []}
+              data={formattedUserProfiles}
+              branches={formattedBranches}
               isLoading={isLoadingProfiles}
             />
           </div>

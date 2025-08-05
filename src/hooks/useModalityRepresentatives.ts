@@ -5,8 +5,10 @@ import {
   fetchModalitiesWithRepresentatives,
   fetchRegisteredAthletesForModality,
   setModalityRepresentative,
-  removeModalityRepresentative
+  removeModalityRepresentative,
+  fetchAllModalitiesWithRepresentatives
 } from '@/lib/api/representatives';
+import { validateRepresentativePermission } from '@/lib/utils/permissionValidation';
 
 export const useModalitiesWithRepresentatives = (filialId: string | undefined, eventId: string | null) => {
   console.log('useModalitiesWithRepresentatives called with:', { filialId, eventId });
@@ -58,13 +60,28 @@ export const useRepresentativeMutations = (filialId: string | undefined, eventId
   const setRepresentative = useMutation({
     mutationFn: async ({ modalityId, atletaId }: { modalityId: number; atletaId: string }) => {
       console.log('=== STARTING SET REPRESENTATIVE MUTATION ===');
-      console.log('Mutation parameters:', { filialId, modalityId, atletaId });
+      console.log('Mutation parameters:', { filialId, modalityId, atletaId, eventId });
       
       if (!filialId) {
         console.error('filialId is required but not provided');
         throw new Error('filialId é obrigatório');
       }
       
+      if (!eventId) {
+        console.error('eventId is required but not provided');
+        throw new Error('eventId é obrigatório');
+      }
+      
+      // Validate permissions before attempting the operation
+      console.log('Validating user permissions...');
+      const permissionResult = await validateRepresentativePermission(eventId, filialId);
+      
+      if (!permissionResult.isValid) {
+        console.error('Permission validation failed:', permissionResult.errorMessage);
+        throw new Error(permissionResult.errorMessage || 'Sem permissão para esta operação');
+      }
+      
+      console.log('Permission validation successful. User role:', permissionResult.userRole);
       console.log('Calling setModalityRepresentative API...');
       const result = await setModalityRepresentative(filialId, modalityId, atletaId);
       console.log('setModalityRepresentative API result:', result);
@@ -91,9 +108,23 @@ export const useRepresentativeMutations = (filialId: string | undefined, eventId
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
       
-      const errorMessage = error.message || 'Erro desconhecido ao adicionar representante';
-      toast.error(`Erro ao adicionar representante: ${errorMessage}`);
+      let errorMessage = error.message || 'Erro desconhecido ao adicionar representante';
       
+      // Check for specific error types to provide better user feedback
+      if (error.message?.includes('permissão') || error.message?.includes('autorização')) {
+        console.error('Permission-related error detected');
+        errorMessage = error.message;
+      } else if (error.message?.includes('RLS') || error.message?.includes('policy')) {
+        console.error('RLS policy error detected');
+        errorMessage = 'Erro de permissão: Você não tem autorização para adicionar representantes. Verifique se possui o perfil adequado.';
+      } else if (error.message?.includes('já é representante')) {
+        console.error('Duplicate representative error detected');
+        errorMessage = error.message;
+      } else {
+        console.error('Generic error - may need investigation');
+      }
+      
+      toast.error(errorMessage);
       console.log('=== ERROR HANDLING COMPLETED ===');
     },
   });
@@ -101,13 +132,28 @@ export const useRepresentativeMutations = (filialId: string | undefined, eventId
   const removeRepresentative = useMutation({
     mutationFn: async ({ modalityId, atletaId }: { modalityId: number; atletaId: string }) => {
       console.log('=== STARTING REMOVE REPRESENTATIVE MUTATION ===');
-      console.log('Mutation parameters:', { filialId, modalityId, atletaId });
+      console.log('Mutation parameters:', { filialId, modalityId, atletaId, eventId });
       
       if (!filialId) {
         console.error('filialId is required but not provided');
         throw new Error('filialId é obrigatório');
       }
       
+      if (!eventId) {
+        console.error('eventId is required but not provided');
+        throw new Error('eventId é obrigatório');
+      }
+      
+      // Validate permissions before attempting the operation
+      console.log('Validating user permissions...');
+      const permissionResult = await validateRepresentativePermission(eventId, filialId);
+      
+      if (!permissionResult.isValid) {
+        console.error('Permission validation failed:', permissionResult.errorMessage);
+        throw new Error(permissionResult.errorMessage || 'Sem permissão para esta operação');
+      }
+      
+      console.log('Permission validation successful. User role:', permissionResult.userRole);
       console.log('Calling removeModalityRepresentative API...');
       const result = await removeModalityRepresentative(filialId, modalityId, atletaId);
       console.log('removeModalityRepresentative API result:', result);
@@ -133,9 +179,20 @@ export const useRepresentativeMutations = (filialId: string | undefined, eventId
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
       
-      const errorMessage = error.message || 'Erro desconhecido ao remover representante';
-      toast.error(`Erro ao remover representante: ${errorMessage}`);
+      let errorMessage = error.message || 'Erro desconhecido ao remover representante';
       
+      // Check for specific error types to provide better user feedback
+      if (error.message?.includes('permissão') || error.message?.includes('autorização')) {
+        console.error('Permission-related error detected');
+        errorMessage = error.message;
+      } else if (error.message?.includes('RLS') || error.message?.includes('policy')) {
+        console.error('RLS policy error detected');
+        errorMessage = 'Erro de permissão: Você não tem autorização para remover representantes. Verifique se possui o perfil adequado.';
+      } else {
+        console.error('Generic error - may need investigation');
+      }
+      
+      toast.error(errorMessage);
       console.log('=== ERROR HANDLING COMPLETED ===');
     },
   });
@@ -144,4 +201,126 @@ export const useRepresentativeMutations = (filialId: string | undefined, eventId
     setRepresentative,
     removeRepresentative
   };
+};
+
+export const useAllModalitiesWithRepresentatives = (eventId: string | null) => {
+  console.log('useAllModalitiesWithRepresentatives called with eventId:', eventId);
+  
+  return useQuery({
+    queryKey: ['all-modalities-representatives', eventId],
+    queryFn: async () => {
+      console.log('Fetching all modalities with representatives for organizer...');
+      if (!eventId) {
+        throw new Error('eventId is required');
+      }
+      const result = await fetchAllModalitiesWithRepresentatives(eventId);
+      console.log('All modalities with representatives result:', result);
+      return result;
+    },
+    enabled: !!eventId,
+    retry: (failureCount, error) => {
+      console.error('Query failed:', error);
+      return failureCount < 2;
+    }
+  });
+};
+
+export const useOrganizerRegisteredAthletes = (modalityId: number | null, eventId: string) => {
+  console.log('useOrganizerRegisteredAthletes called with:', { modalityId, eventId });
+  
+  return useQuery({
+    queryKey: ['organizer-registered-athletes', modalityId, eventId],
+    queryFn: async () => {
+      if (!modalityId) return [];
+      
+      // Get the modality details to find the filial
+      const allModalities = await fetchAllModalitiesWithRepresentatives(eventId);
+      const modality = allModalities.find(m => m.id === modalityId);
+      
+      if (!modality || !modality.filial_id) {
+        throw new Error('Modalidade ou filial não encontrada');
+      }
+      
+      return fetchRegisteredAthletesForModality(modality.filial_id, modalityId, eventId);
+    },
+    enabled: !!modalityId && !!eventId,
+    refetchOnWindowFocus: false,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+};
+
+export const useOrganizerRepresentativeMutations = (eventId: string) => {
+  const queryClient = useQueryClient();
+
+  const setRepresentative = useMutation({
+    mutationFn: async ({ modalityId, atletaId }: { modalityId: number; atletaId: string }) => {
+      console.log('Setting representative via organizer:', { modalityId, atletaId, eventId });
+      
+      // Get the modality details to find the filial
+      const allModalities = await fetchAllModalitiesWithRepresentatives(eventId);
+      const modality = allModalities.find(m => m.id === modalityId);
+      
+      if (!modality || !modality.filial_id) {
+        throw new Error('Modalidade ou filial não encontrada');
+      }
+
+      // Validate organizer permission
+      const validation = await validateRepresentativePermission(eventId);
+      if (!validation.isValid) {
+        throw new Error(validation.errorMessage || 'Sem permissão para gerenciar representantes');
+      }
+      
+      if (validation.userRole !== 'Administração') {
+        throw new Error('Apenas administradores podem gerenciar representantes de outras filiais');
+      }
+
+      return setModalityRepresentative(modality.filial_id, modalityId, atletaId);
+    },
+    onSuccess: () => {
+      toast.success('Representante adicionado com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ['all-modalities-representatives'] });
+      queryClient.invalidateQueries({ queryKey: ['organizer-registered-athletes'] });
+    },
+    onError: (error: Error) => {
+      console.error('Error setting representative via organizer:', error);
+      toast.error(error.message || 'Erro ao adicionar representante');
+    },
+  });
+
+  const removeRepresentative = useMutation({
+    mutationFn: async ({ modalityId, atletaId }: { modalityId: number; atletaId: string }) => {
+      console.log('Removing representative via organizer:', { modalityId, atletaId, eventId });
+      
+      // Get the modality details to find the filial
+      const allModalities = await fetchAllModalitiesWithRepresentatives(eventId);
+      const modality = allModalities.find(m => m.id === modalityId);
+      
+      if (!modality || !modality.filial_id) {
+        throw new Error('Modalidade ou filial não encontrada');
+      }
+
+      // Validate organizer permission
+      const validation = await validateRepresentativePermission(eventId);
+      if (!validation.isValid) {
+        throw new Error(validation.errorMessage || 'Sem permissão para gerenciar representantes');
+      }
+      
+      if (validation.userRole !== 'Administração') {
+        throw new Error('Apenas administradores podem gerenciar representantes de outras filiais');
+      }
+
+      return removeModalityRepresentative(modality.filial_id, modalityId, atletaId);
+    },
+    onSuccess: () => {
+      toast.success('Representante removido com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ['all-modalities-representatives'] });
+      queryClient.invalidateQueries({ queryKey: ['organizer-registered-athletes'] });
+    },
+    onError: (error: Error) => {
+      console.error('Error removing representative via organizer:', error);
+      toast.error(error.message || 'Erro ao remover representante');
+    },
+  });
+
+  return { setRepresentative, removeRepresentative };
 };

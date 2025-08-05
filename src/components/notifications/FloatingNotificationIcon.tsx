@@ -25,7 +25,7 @@ export function FloatingNotificationIcon() {
   }
 
   const handleClick = () => {
-    navigate('/athlete-profile');
+    navigate('/notifications');
   };
 
   return (

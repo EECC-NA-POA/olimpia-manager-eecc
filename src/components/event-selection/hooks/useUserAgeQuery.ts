@@ -9,7 +9,6 @@ import { toast } from "sonner";
 export function useUserAgeQuery() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { needsAcceptance, checkCompleted } = usePrivacyPolicyCheck();
   
   return useQuery({
     queryKey: ['user-age', user?.id],
@@ -40,11 +39,8 @@ export function useUserAgeQuery() {
       console.log('Calculated user age:', age);
       return age;
     },
-    enabled: !!user?.id && checkCompleted,
+    enabled: !!user?.id,
     retry: 1, // Only retry once to avoid excessive retries on permanent errors
     staleTime: 1000 * 60 * 10, // 10 minutes
   });
 }
-
-// Import at the top
-import { usePrivacyPolicyCheck } from '@/hooks/usePrivacyPolicyCheck';

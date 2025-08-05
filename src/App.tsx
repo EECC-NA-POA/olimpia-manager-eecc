@@ -8,8 +8,6 @@ import { SessionTimeoutProvider } from "@/components/providers/SessionTimeoutPro
 import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
 import { MainNavigation } from "@/components/MainNavigation";
-import { usePrivacyPolicyCheck } from "@/hooks/usePrivacyPolicyCheck";
-import { PrivacyPolicyAcceptanceModal } from "@/components/auth/PrivacyPolicyAcceptanceModal";
 import { FloatingNotificationIcon } from "@/components/notifications/FloatingNotificationIcon";
 
 import Index from "./pages/Index";
@@ -29,6 +27,7 @@ import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import RejectedAccess from "./pages/RejectedAccess";
 import AthleteProfile from "./pages/AthleteProfile";
+import Notifications from "./pages/Notifications";
 import Scores from "./pages/Scores";
 import OrganizerDashboard from "@/components/OrganizerDashboard";
 import DelegationDashboard from "@/components/DelegationDashboard";
@@ -56,8 +55,6 @@ const queryClient = new QueryClient({
 });
 
 function AppContent() {
-  const { showModal, handleAccept, handleReject } = usePrivacyPolicyCheck();
-
   return (
     <div className="min-h-screen flex flex-col">
       <GlobalHeader />
@@ -87,6 +84,7 @@ function AppContent() {
               <Routes>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/athlete-profile" element={<AthleteProfile />} />
+                <Route path="/notifications" element={<Notifications />} />
                 <Route path="/judge-dashboard" element={<JudgeDashboard />} />
                 <Route path="/administration" element={<Administration />} />
                 <Route path="/regulamento" element={<EventRegulations />} />
@@ -107,13 +105,6 @@ function AppContent() {
       
       {/* Floating notification icon - only shows when there are unread notifications */}
       <FloatingNotificationIcon />
-      
-      {showModal && (
-        <PrivacyPolicyAcceptanceModal
-          onAccept={handleAccept}
-          onCancel={handleReject}
-        />
-      )}
     </div>
   );
 }

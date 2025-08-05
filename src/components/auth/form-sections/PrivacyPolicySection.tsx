@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { UseFormReturn } from 'react-hook-form';
-import { PrivacyPolicyAcceptanceModal } from '../PrivacyPolicyAcceptanceModal';
+import { PrivacyPolicySectionModal } from '../modal-sections/PrivacyPolicySectionModal';
 
 interface PrivacyPolicySectionProps {
   form: UseFormReturn<any>;
@@ -16,12 +16,7 @@ export const PrivacyPolicySection = ({ form }: PrivacyPolicySectionProps) => {
     setShowPolicyModal(true);
   };
 
-  const handleAcceptPolicy = () => {
-    form.setValue('acceptPrivacyPolicy', true);
-    setShowPolicyModal(false);
-  };
-
-  const handleCancelPolicy = () => {
+  const handleClosePolicy = () => {
     setShowPolicyModal(false);
   };
 
@@ -57,9 +52,8 @@ export const PrivacyPolicySection = ({ form }: PrivacyPolicySectionProps) => {
       />
 
       {showPolicyModal && (
-        <PrivacyPolicyAcceptanceModal
-          onAccept={handleAcceptPolicy}
-          onCancel={handleCancelPolicy}
+        <PrivacyPolicySectionModal
+          onClose={handleClosePolicy}
         />
       )}
     </>

@@ -80,6 +80,79 @@ export const useSignUp = () => {
           needsConfirmation: !data.session
         });
 
+        // Verificar se o usuário foi criado na tabela usuarios
+        try {
+          console.log('🔍 Checking if user was created in usuarios table...');
+          const { data: usuarioData, error: usuarioError } = await supabase
+            .from('usuarios')
+            .select('id, nome_completo, email')
+            .eq('id', data.user.id)
+            .single();
+          
+          if (usuarioError) {
+            console.error('❌ Error checking usuarios table:', usuarioError);
+            console.log('🔧 User was created in auth but not in usuarios table - trigger may have failed');
+            
+            // Trigger falhou, criar usuário manualmente na tabela usuarios
+            console.log('🔧 Attempting to create user manually in usuarios table...');
+            try {
+              const { data: insertData, error: insertError } = await supabase
+                .from('usuarios')
+                .insert({
+                  id: data.user.id,
+                  nome_completo: userMetadata.nome_completo,
+                  email: data.user.email,
+                  telefone: userMetadata.telefone,
+                  ddi: userMetadata.ddi,
+                  tipo_documento: userMetadata.tipo_documento,
+                  numero_documento: userMetadata.numero_documento,
+                  genero: userMetadata.genero,
+                  data_nascimento: userMetadata.data_nascimento,
+                  estado: userMetadata.estado,
+                  filial_id: userMetadata.filial_id,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                })
+                .select()
+                .single();
+              
+              if (insertError) {
+                console.error('❌ Failed to create user in usuarios table:', insertError);
+                throw new Error('Falha ao criar usuário na tabela usuarios');
+              } else {
+                console.log('✅ User created manually in usuarios table:', insertData);
+                
+                // Também tentar atribuir papel de ATL (atleta) como faz o trigger
+                try {
+                  const { error: roleError } = await supabase
+                    .from('usuario_papel_evento')
+                    .insert({
+                      usuario_id: data.user.id,
+                      papel: 'ATL',
+                      evento_id: null,
+                      created_at: new Date().toISOString()
+                    });
+                  
+                  if (roleError) {
+                    console.error('❌ Failed to assign ATL role:', roleError);
+                  } else {
+                    console.log('✅ ATL role assigned successfully');
+                  }
+                } catch (roleError) {
+                  console.error('❌ Error assigning ATL role:', roleError);
+                }
+              }
+            } catch (insertError) {
+              console.error('❌ Error creating user manually:', insertError);
+              throw new Error('Falha ao criar usuário no sistema');
+            }
+          } else {
+            console.log('✅ User found in usuarios table:', usuarioData);
+          }
+        } catch (checkError) {
+          console.error('❌ Error checking usuarios table:', checkError);
+        }
+
         return data;
       } else {
         throw new Error('Nenhum usuário foi criado');

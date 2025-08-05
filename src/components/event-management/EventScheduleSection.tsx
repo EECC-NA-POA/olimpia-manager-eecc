@@ -22,6 +22,7 @@ export function EventScheduleSection({ eventId }: { eventId: string | null }) {
     openEditDialog,
     handleInputChange,
     handleSelectChange,
+    handleModalitiesChange,
     handleDiaToggle,
     handleHorarioChange,
     handleLocalChange,
@@ -74,6 +75,7 @@ export function EventScheduleSection({ eventId }: { eventId: string | null }) {
         currentItem={currentItem}
         handleInputChange={handleInputChange}
         handleSelectChange={handleSelectChange}
+        handleModalitiesChange={handleModalitiesChange}
         handleDiaToggle={handleDiaToggle}
         handleHorarioChange={handleHorarioChange}
         handleLocalChange={handleLocalChange}

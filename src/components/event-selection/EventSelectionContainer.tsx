@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePrivacyPolicyCheck } from '@/hooks/usePrivacyPolicyCheck';
 import { WelcomePolicyBranchModal } from '@/components/auth/WelcomePolicyBranchModal';
 import { LoadingImage } from '@/components/ui/loading-image';
 import { EventSelectionHeader } from './EventSelectionHeader';
@@ -16,14 +15,6 @@ export function EventSelectionContainer() {
   const [needsBranchSelection, setNeedsBranchSelection] = useState(false);
   const [existingState, setExistingState] = useState<string | undefined>(undefined);
   const [existingBranchName, setExistingBranchName] = useState<string | undefined>(undefined);
-  
-  // Check if the user needs to accept the privacy policy
-  const { 
-    needsAcceptance, 
-    isLoading: isPolicyCheckLoading,
-    checkCompleted,
-    refetchCheck 
-  } = usePrivacyPolicyCheck();
 
   // Check if user has a branch associated and get state if they do
   useEffect(() => {
@@ -63,18 +54,6 @@ export function EventSelectionContainer() {
     }
   }, [user]);
 
-  // Tempo máximo de carregamento para a verificação da política
-  useEffect(() => {
-    // Se o carregamento estiver demorando muito, forçamos a conclusão
-    const loadingTimer = setTimeout(() => {
-      if (!checkCompleted) {
-        console.log('Privacy policy check taking too long, forcing completion');
-      }
-    }, 3000);
-    
-    return () => clearTimeout(loadingTimer);
-  }, [checkCompleted]);
-
   const handleLogout = async () => {
     try {
       console.log('EventSelectionContainer - Handling logout...');
@@ -98,7 +77,6 @@ export function EventSelectionContainer() {
   };
 
   const handlePreferencesComplete = async () => {
-    await refetchCheck();
     // Reload to get updated user info
     window.location.reload();
   };
@@ -108,27 +86,8 @@ export function EventSelectionContainer() {
     return null;
   }
 
-  // Mostrar um estado de carregamento breve durante a verificação da política
-  // Limitamos a apenas 1.5 segundos para não confundir o usuário
-  if (isPolicyCheckLoading && !checkCompleted) {
-    return (
-      <div className="min-h-screen bg-cover bg-center bg-no-repeat pt-16"
-        style={{ 
-          backgroundImage: 'url(/lovable-uploads/7f5d4c54-bc15-4310-ac7a-ecd055bda99b.png)',
-          backgroundColor: 'rgba(0, 155, 64, 0.05)',
-          backgroundBlendMode: 'overlay',
-          boxShadow: 'inset 0 0 0 2000px rgba(0, 155, 64, 0.05)'
-        }}
-      >
-        <div className="flex flex-col items-center justify-center h-screen">
-          <LoadingImage text="Verificando termos de privacidade..." />
-        </div>
-      </div>
-    );
-  }
-
   // Show the welcome modal if needed
-  const showWelcomeModal = needsAcceptance || needsBranchSelection;
+  const showWelcomeModal = needsBranchSelection;
   if (showWelcomeModal) {
     return (
       <div className="min-h-screen bg-cover bg-center bg-no-repeat pt-16"

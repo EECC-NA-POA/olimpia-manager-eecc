@@ -23,8 +23,7 @@ export function EventSelectionHeader({ onLogout }: EventSelectionHeaderProps) {
       </h1>
       
       <div className="flex justify-center sm:justify-end">
-        {/* Mostrar o botão independentemente do estado de carregamento durante o desenvolvimento */}
-        {(!permissionLoading && canCreateEvents) || (DEBUG_MODE && !permissionLoading) ? (
+        {!permissionLoading && canCreateEvents && (
           <Button 
             onClick={() => setCreateEventDialogOpen(true)}
             className="bg-olimpics-green-primary hover:bg-olimpics-green-primary/90 w-full sm:w-auto"
@@ -33,7 +32,7 @@ export function EventSelectionHeader({ onLogout }: EventSelectionHeaderProps) {
             <Plus className="mr-2 h-4 w-4" />
             <span className="text-sm">Criar Evento</span>
           </Button>
-        ) : null}
+        )}
       </div>
       
       {createEventDialogOpen && (

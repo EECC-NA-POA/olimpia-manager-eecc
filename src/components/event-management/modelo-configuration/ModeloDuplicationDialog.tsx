@@ -83,6 +83,7 @@ export function ModeloDuplicationDialog({
             <Button 
               onClick={handleDuplicate} 
               disabled={!selectedModalidadeId || isLoading}
+              className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary"
             >
               {isLoading ? 'Duplicando...' : 'Duplicar Modelo'}
             </Button>
