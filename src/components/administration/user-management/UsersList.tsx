@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { UserDeletionDialog } from '@/components/admin/UserDeletionDialog';
 import { BranchFilter } from './BranchFilter';
+import { UserTypesSummary } from './UserTypesSummary';
 import { toast } from 'sonner';
 import { fetchBranches } from '@/lib/api';
 
@@ -131,27 +132,7 @@ export function UsersList({ eventId }: UsersListProps) {
           estado: userData.filial_estado
         } : null,
         auth_exists: userData.has_auth,
-        tipo_cadastro: (() => {
-          // Se tem campos específicos de usuarios (como data_criacao completa ou confirmado definido)
-          // e tem auth = Completo
-          if (userData.has_auth && userData.data_criacao && userData.confirmado !== undefined) {
-            return 'Completo';
-          }
-          // Se não tem auth mas tem dados de usuario = Apenas Usuário  
-          if (!userData.has_auth && userData.data_criacao) {
-            return 'Apenas Usuário';
-          }
-          // Se tem auth mas nome padrão ou dados limitados = Apenas Auth
-          if (userData.has_auth && (
-            userData.nome_completo === 'Usuário Auth' || 
-            !userData.data_criacao ||
-            userData.confirmado === undefined
-          )) {
-            return 'Apenas Auth';
-          }
-          // Fallback
-          return userData.has_auth ? 'Completo' : 'Apenas Usuário';
-        })()
+        tipo_cadastro: userData.tipo_cadastro || 'Desconhecido'
       }));
     },
     enabled: (!!userBranchId || !!user?.is_master) && !!branches && !branchesLoading,
@@ -159,7 +140,7 @@ export function UsersList({ eventId }: UsersListProps) {
 
   const isLoading = branchesLoading || usersLoading;
 
-  // Filter and paginate users with null-safe filtering
+      // Filter and paginate users with null-safe filtering
   const filteredUsers = useMemo(() => {
     if (!users) return [];
     
@@ -167,7 +148,9 @@ export function UsersList({ eventId }: UsersListProps) {
       const searchLower = searchTerm.toLowerCase();
       const matchesName = user.nome_completo?.toLowerCase()?.includes(searchLower) || false;
       const matchesDocument = user.numero_documento?.toLowerCase()?.includes(searchLower) || false;
-      return matchesName || matchesDocument;
+      const matchesEmail = user.email?.toLowerCase()?.includes(searchLower) || false;
+      const matchesTipo = user.tipo_cadastro?.toLowerCase()?.includes(searchLower) || false;
+      return matchesName || matchesDocument || matchesEmail || matchesTipo;
     });
   }, [users, searchTerm]);
 
@@ -254,12 +237,17 @@ export function UsersList({ eventId }: UsersListProps) {
 
   return (
     <div className="space-y-4">
+      {/* User Types Summary */}
+      {users && users.length > 0 && (
+        <UserTypesSummary users={users} />
+      )}
+      
       {/* Search and Filters */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nome ou documento..."
+            placeholder="Buscar por nome, email, documento ou tipo..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -368,16 +356,24 @@ export function UsersList({ eventId }: UsersListProps) {
                   </TableCell>
                   <TableCell>
                     {branchUser.tipo_cadastro === 'Completo' && (
-                      <Badge className="bg-olimpics-green-primary text-white">Completo</Badge>
+                      <Badge className="bg-olimpics-green-primary text-white">
+                        ✓ Completo
+                      </Badge>
                     )}
                     {branchUser.tipo_cadastro === 'Apenas Usuário' && (
-                      <Badge variant="secondary">Apenas Usuário</Badge>
+                      <Badge variant="secondary" className="bg-blue-500 text-white">
+                        👤 Apenas Usuário
+                      </Badge>
                     )}
                     {branchUser.tipo_cadastro === 'Apenas Auth' && (
-                      <Badge variant="outline">Apenas Auth</Badge>
+                      <Badge variant="outline" className="border-olimpics-orange-primary text-olimpics-orange-primary">
+                        🔑 Apenas Auth
+                      </Badge>
                     )}
-                    {branchUser.tipo_cadastro === 'Incompleto' && (
-                      <Badge variant="destructive">Incompleto</Badge>
+                    {!['Completo', 'Apenas Usuário', 'Apenas Auth'].includes(branchUser.tipo_cadastro) && (
+                      <Badge variant="destructive">
+                        ❌ {branchUser.tipo_cadastro}
+                      </Badge>
                     )}
                   </TableCell>
                   <TableCell>
