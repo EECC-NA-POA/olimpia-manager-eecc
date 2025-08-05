@@ -6,25 +6,30 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScheduleForm as ScheduleFormType } from './types';
 import { RecurrenceSelector } from './RecurrenceSelector';
+import { ModalitySelector } from './ModalitySelector';
 
 interface ScheduleFormProps {
   currentItem: ScheduleFormType;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (field: string, value: string | number | boolean) => void;
+  handleModalitiesChange: (modalidades: number[]) => void;
   handleDiaToggle: (dia: string, checked: boolean) => void;
   handleHorarioChange: (dia: string, tipo: 'inicio' | 'fim', valor: string) => void;
   handleLocalChange: (dia: string, local: string) => void;
   handleDataFimRecorrenciaChange: (data: string) => void;
+  availableModalidades?: number[]; // For monitors
 }
 
 export const ScheduleForm: React.FC<ScheduleFormProps> = ({
   currentItem,
   handleInputChange,
   handleSelectChange,
+  handleModalitiesChange,
   handleDiaToggle,
   handleHorarioChange,
   handleLocalChange,
-  handleDataFimRecorrenciaChange
+  handleDataFimRecorrenciaChange,
+  availableModalidades
 }) => {
   return (
     <div className="space-y-4 py-4">
@@ -115,6 +120,14 @@ export const ScheduleForm: React.FC<ScheduleFormProps> = ({
         />
         <Label htmlFor="global">Atividade global (para todas as modalidades)</Label>
       </div>
+
+      {!currentItem.global && (
+        <ModalitySelector
+          selectedModalidades={currentItem.modalidades}
+          onModalitiesChange={handleModalitiesChange}
+          availableModalidades={availableModalidades}
+        />
+      )}
     </div>
   );
 };

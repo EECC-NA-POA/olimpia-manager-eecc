@@ -163,6 +163,18 @@ export const useMonitorScheduleData = (modalidadeFilter?: number | null) => {
 
   // Override handleSave with validation
   const handleSave = async () => {
+    // Prevent monitors from creating global activities
+    if (currentItem.global) {
+      toast.error('Monitores não podem criar atividades globais');
+      return;
+    }
+
+    // Atividades não globais devem ter pelo menos uma modalidade
+    if (!currentItem.global && currentItem.modalidades.length === 0) {
+      toast.error('Atividades não globais devem ter pelo menos uma modalidade selecionada');
+      return;
+    }
+
     // Validate that monitor is only creating/editing activities for their modalidades
     if (!currentItem.global && currentItem.modalidades.length > 0) {
       const invalidModalidades = currentItem.modalidades.filter(modalidadeId => 
@@ -173,12 +185,6 @@ export const useMonitorScheduleData = (modalidadeFilter?: number | null) => {
         toast.error('Você só pode criar atividades para modalidades que representa');
         return;
       }
-    }
-
-    // Prevent monitors from creating global activities
-    if (currentItem.global) {
-      toast.error('Monitores não podem criar atividades globais');
-      return;
     }
 
     const success = await originalHandleSave(currentItem, editingId);

@@ -26,6 +26,7 @@ export const MonitorSchedulePage: React.FC = () => {
     openEditDialog,
     handleInputChange,
     handleSelectChange,
+    handleModalitiesChange,
     handleDiaToggle,
     handleHorarioChange,
     handleLocalChange,
@@ -144,20 +145,22 @@ export const MonitorSchedulePage: React.FC = () => {
       </Card>
 
       {/* Modal de Criação/Edição */}
-      <ScheduleDialog
-        isOpen={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        title={getDialogTitle()}
-        currentItem={currentItem}
-        handleInputChange={handleInputChange}
-        handleSelectChange={handleSelectChange}
-        handleDiaToggle={handleDiaToggle}
-        handleHorarioChange={handleHorarioChange}
-        handleLocalChange={handleLocalChange}
-        handleDataFimRecorrenciaChange={handleDataFimRecorrenciaChange}
-        handleSave={handleSave}
-        isSaving={isSaving}
-      />
+        <ScheduleDialog
+          isOpen={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          title={getDialogTitle()}
+          currentItem={currentItem}
+          handleInputChange={handleInputChange}
+          handleSelectChange={handleSelectChange}
+          handleModalitiesChange={handleModalitiesChange}
+          handleDiaToggle={handleDiaToggle}
+          handleHorarioChange={handleHorarioChange}
+          handleLocalChange={handleLocalChange}
+          handleDataFimRecorrenciaChange={handleDataFimRecorrenciaChange}
+          handleSave={handleSave}
+          isSaving={isSaving}
+          availableModalidades={modalidades?.map(m => m.modalidade_id)}
+        />
     </div>
   );
 };
