@@ -175,7 +175,14 @@ class UserManagementService {
         { p_user_id: userId }
       );
 
-      if (userError || !userDetails || userDetails.length === 0) {
+      console.log('🔍 DEBUG - Resultado da função SQL:', { userDetails, userError });
+
+      if (userError) {
+        console.error('❌ Erro na função SQL:', userError);
+        throw new Error('Erro ao buscar dados do usuário: ' + userError.message);
+      }
+
+      if (!userDetails || userDetails.length === 0) {
         throw new Error('Usuário não encontrado em nenhuma das tabelas');
       }
 
