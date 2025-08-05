@@ -7,6 +7,7 @@ import {
   setModalityRepresentative,
   removeModalityRepresentative
 } from '@/lib/api/representatives';
+import { validateRepresentativePermission } from '@/lib/utils/permissionValidation';
 
 export const useModalitiesWithRepresentatives = (filialId: string | undefined, eventId: string | null) => {
   console.log('useModalitiesWithRepresentatives called with:', { filialId, eventId });
@@ -58,13 +59,28 @@ export const useRepresentativeMutations = (filialId: string | undefined, eventId
   const setRepresentative = useMutation({
     mutationFn: async ({ modalityId, atletaId }: { modalityId: number; atletaId: string }) => {
       console.log('=== STARTING SET REPRESENTATIVE MUTATION ===');
-      console.log('Mutation parameters:', { filialId, modalityId, atletaId });
+      console.log('Mutation parameters:', { filialId, modalityId, atletaId, eventId });
       
       if (!filialId) {
         console.error('filialId is required but not provided');
         throw new Error('filialId é obrigatório');
       }
       
+      if (!eventId) {
+        console.error('eventId is required but not provided');
+        throw new Error('eventId é obrigatório');
+      }
+      
+      // Validate permissions before attempting the operation
+      console.log('Validating user permissions...');
+      const permissionResult = await validateRepresentativePermission(eventId, filialId);
+      
+      if (!permissionResult.isValid) {
+        console.error('Permission validation failed:', permissionResult.errorMessage);
+        throw new Error(permissionResult.errorMessage || 'Sem permissão para esta operação');
+      }
+      
+      console.log('Permission validation successful. User role:', permissionResult.userRole);
       console.log('Calling setModalityRepresentative API...');
       const result = await setModalityRepresentative(filialId, modalityId, atletaId);
       console.log('setModalityRepresentative API result:', result);
@@ -91,9 +107,23 @@ export const useRepresentativeMutations = (filialId: string | undefined, eventId
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
       
-      const errorMessage = error.message || 'Erro desconhecido ao adicionar representante';
-      toast.error(`Erro ao adicionar representante: ${errorMessage}`);
+      let errorMessage = error.message || 'Erro desconhecido ao adicionar representante';
       
+      // Check for specific error types to provide better user feedback
+      if (error.message?.includes('permissão') || error.message?.includes('autorização')) {
+        console.error('Permission-related error detected');
+        errorMessage = error.message;
+      } else if (error.message?.includes('RLS') || error.message?.includes('policy')) {
+        console.error('RLS policy error detected');
+        errorMessage = 'Erro de permissão: Você não tem autorização para adicionar representantes. Verifique se possui o perfil adequado.';
+      } else if (error.message?.includes('já é representante')) {
+        console.error('Duplicate representative error detected');
+        errorMessage = error.message;
+      } else {
+        console.error('Generic error - may need investigation');
+      }
+      
+      toast.error(errorMessage);
       console.log('=== ERROR HANDLING COMPLETED ===');
     },
   });
@@ -101,13 +131,28 @@ export const useRepresentativeMutations = (filialId: string | undefined, eventId
   const removeRepresentative = useMutation({
     mutationFn: async ({ modalityId, atletaId }: { modalityId: number; atletaId: string }) => {
       console.log('=== STARTING REMOVE REPRESENTATIVE MUTATION ===');
-      console.log('Mutation parameters:', { filialId, modalityId, atletaId });
+      console.log('Mutation parameters:', { filialId, modalityId, atletaId, eventId });
       
       if (!filialId) {
         console.error('filialId is required but not provided');
         throw new Error('filialId é obrigatório');
       }
       
+      if (!eventId) {
+        console.error('eventId is required but not provided');
+        throw new Error('eventId é obrigatório');
+      }
+      
+      // Validate permissions before attempting the operation
+      console.log('Validating user permissions...');
+      const permissionResult = await validateRepresentativePermission(eventId, filialId);
+      
+      if (!permissionResult.isValid) {
+        console.error('Permission validation failed:', permissionResult.errorMessage);
+        throw new Error(permissionResult.errorMessage || 'Sem permissão para esta operação');
+      }
+      
+      console.log('Permission validation successful. User role:', permissionResult.userRole);
       console.log('Calling removeModalityRepresentative API...');
       const result = await removeModalityRepresentative(filialId, modalityId, atletaId);
       console.log('removeModalityRepresentative API result:', result);
@@ -133,9 +178,20 @@ export const useRepresentativeMutations = (filialId: string | undefined, eventId
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
       
-      const errorMessage = error.message || 'Erro desconhecido ao remover representante';
-      toast.error(`Erro ao remover representante: ${errorMessage}`);
+      let errorMessage = error.message || 'Erro desconhecido ao remover representante';
       
+      // Check for specific error types to provide better user feedback
+      if (error.message?.includes('permissão') || error.message?.includes('autorização')) {
+        console.error('Permission-related error detected');
+        errorMessage = error.message;
+      } else if (error.message?.includes('RLS') || error.message?.includes('policy')) {
+        console.error('RLS policy error detected');
+        errorMessage = 'Erro de permissão: Você não tem autorização para remover representantes. Verifique se possui o perfil adequado.';
+      } else {
+        console.error('Generic error - may need investigation');
+      }
+      
+      toast.error(errorMessage);
       console.log('=== ERROR HANDLING COMPLETED ===');
     },
   });

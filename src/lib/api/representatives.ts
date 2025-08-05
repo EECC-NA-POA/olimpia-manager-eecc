@@ -174,6 +174,21 @@ export const setModalityRepresentative = async (filialId: string, modalityId: nu
   console.log('=== SETTING MODALITY REPRESENTATIVE ===');
   console.log('Parameters:', { filialId, modalityId, atletaId });
   
+  // Check RLS permissions before attempting operations
+  console.log('Step 0: Checking RLS permissions...');
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError) {
+    console.error('Auth error - user not authenticated:', userError);
+    throw new Error('Usuário não autenticado. Faça login novamente.');
+  }
+  
+  if (!user) {
+    console.error('No user found in auth context');
+    throw new Error('Usuário não autenticado. Faça login novamente.');
+  }
+  
+  console.log('Current user for RLS validation:', { userId: user.id, email: user.email });
+  
   try {
     // Verify the athlete exists and belongs to the filial
     console.log('Step 1: Verifying athlete exists...');
@@ -273,6 +288,31 @@ export const setModalityRepresentative = async (filialId: string, modalityId: nu
 
     if (error) {
       console.error('Error inserting modality representative:', error);
+      console.error('Full error details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
+      
+      // Check for RLS policy violations
+      if (error.code === '42501' || error.message?.includes('RLS') || error.message?.includes('policy')) {
+        console.error('RLS Policy violation detected');
+        throw new Error('Erro de permissão: Você não tem autorização para adicionar representantes neste evento. Verifique se você possui o perfil adequado e se está vinculado à filial correta.');
+      }
+      
+      // Check for foreign key violations
+      if (error.code === '23503') {
+        console.error('Foreign key violation detected');
+        throw new Error('Erro de dados: Verifique se o atleta, modalidade e filial existem no sistema.');
+      }
+      
+      // Check for unique constraint violations
+      if (error.code === '23505') {
+        console.error('Unique constraint violation detected');
+        throw new Error('Este atleta já é representante desta modalidade.');
+      }
+      
       throw new Error(`Erro ao criar representante: ${error.message}`);
     }
     
@@ -290,6 +330,21 @@ export const removeModalityRepresentative = async (filialId: string, modalityId:
   console.log('=== REMOVING MODALITY REPRESENTATIVE ===');
   console.log('Parameters:', { filialId, modalityId, atletaId });
   
+  // Check RLS permissions before attempting operations
+  console.log('Step 0: Checking RLS permissions...');
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError) {
+    console.error('Auth error - user not authenticated:', userError);
+    throw new Error('Usuário não autenticado. Faça login novamente.');
+  }
+  
+  if (!user) {
+    console.error('No user found in auth context');
+    throw new Error('Usuário não autenticado. Faça login novamente.');
+  }
+  
+  console.log('Current user for RLS validation:', { userId: user.id, email: user.email });
+  
   try {
     const { data, error } = await supabase
       .from('modalidade_representantes')
@@ -301,6 +356,19 @@ export const removeModalityRepresentative = async (filialId: string, modalityId:
 
     if (error) {
       console.error('Error removing modality representative:', error);
+      console.error('Full error details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
+      
+      // Check for RLS policy violations
+      if (error.code === '42501' || error.message?.includes('RLS') || error.message?.includes('policy')) {
+        console.error('RLS Policy violation detected');
+        throw new Error('Erro de permissão: Você não tem autorização para remover representantes neste evento. Verifique se você possui o perfil adequado e se está vinculado à filial correta.');
+      }
+      
       throw new Error(`Erro ao remover representante: ${error.message}`);
     }
     
