@@ -40,13 +40,20 @@ export function useMonitorReports() {
         throw new Error('User not authenticated');
       }
 
+      console.log('useMonitorReports: Starting query for user:', user.id);
+
       // Get monitor's modality representative IDs
       const { data: modalidadeReps, error: repsError } = await supabase
         .from('modalidade_representantes')
-        .select('id, modalidade_id, modalidades(nome)')
-        .eq('usuario_id', user.id);
+        .select('id, modalidade_id, modalidades!modalidade_representantes_modalidade_id_fkey(nome)')
+        .eq('atleta_id', user.id);
 
-      if (repsError) throw repsError;
+      if (repsError) {
+        console.error('useMonitorReports: Error fetching modalidade reps:', repsError);
+        throw repsError;
+      }
+
+      console.log('useMonitorReports: Found modalidade reps:', modalidadeReps);
 
       if (!modalidadeReps || modalidadeReps.length === 0) {
         return {
@@ -71,7 +78,7 @@ export function useMonitorReports() {
           data_hora_fim,
           modalidade_rep_id,
           modalidade_representantes!inner(
-            modalidades(nome)
+            modalidades!modalidade_representantes_modalidade_id_fkey(nome)
           ),
           chamada_presencas(
             id,
@@ -81,7 +88,12 @@ export function useMonitorReports() {
         .in('modalidade_rep_id', modalidadeRepIds)
         .order('data_hora_inicio', { ascending: false });
 
-      if (sessionsError) throw sessionsError;
+      if (sessionsError) {
+        console.error('useMonitorReports: Error fetching sessions:', sessionsError);
+        throw sessionsError;
+      }
+
+      console.log('useMonitorReports: Found sessions:', sessions);
 
       if (!sessions || sessions.length === 0) {
         return {

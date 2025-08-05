@@ -9,17 +9,21 @@ import MonitorAttendancePage from './MonitorAttendancePage';
 import MonitorReportsPage from './MonitorReportsPage';
 import { MonitorSchedulePage } from './MonitorSchedulePage';
 import { useMonitorModalities } from '@/hooks/useMonitorModalities';
+import { useMonitorReports } from '@/hooks/useMonitorReports';
 
 export default function MonitorDashboard() {
   const [activeTab, setActiveTab] = useState("chamadas");
-  const { data: modalities, isLoading } = useMonitorModalities();
+  const { data: modalities, isLoading: modalitiesLoading } = useMonitorModalities();
+  const { data: reports, isLoading: reportsLoading } = useMonitorReports();
 
   console.log('MonitorDashboard rendering with activeTab:', activeTab);
+  console.log('MonitorDashboard modalities:', modalities);
+  console.log('MonitorDashboard reports:', reports);
 
   const stats = {
     totalModalities: modalities?.length || 0,
-    activeModalities: modalities?.filter(m => m.criado_em && new Date(m.criado_em) <= new Date()).length || 0,
-    pendingSessions: 0 // This could be calculated from sessions data
+    activeModalities: modalities?.length || 0, // All modalities assigned to monitor are considered active
+    pendingSessions: 0 // Could be enhanced with session scheduling data
   };
 
   return (
