@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { validateAdminPermission } from '@/lib/security/roleValidation';
 import { toast } from 'sonner';
 import { cleanDocumentNumber } from '@/utils/documentValidation';
 
@@ -64,6 +65,35 @@ class UserManagementService {
 
   async createUser(userData: CreateUserData) {
     try {
+      // Security check: Only admins can create users
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      // Check if current user has admin permissions
+      const { data: adminRoles, error: roleError } = await supabase
+        .from('papeis_usuarios')
+        .select(`
+          perfis!inner(
+            nome
+          )
+        `)
+        .eq('usuario_id', user.id);
+
+      if (roleError) {
+        console.error('Error checking admin permissions:', roleError);
+        throw new Error('Erro ao verificar permissões');
+      }
+
+      const hasAdminRole = adminRoles?.some((role: any) => 
+        role.perfis?.nome === 'Administração'
+      );
+
+      if (!hasAdminRole) {
+        throw new Error('Acesso negado: Apenas administradores podem criar usuários');
+      }
+
       // Verificar existência antes de criar
       const exists = await this.checkUserExists(userData.email, userData.numero_documento);
       

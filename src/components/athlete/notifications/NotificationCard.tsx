@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow, differenceInHours, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { sanitizeFirstLine } from '@/lib/security/htmlSanitizer';
 import type { Notification } from '@/types/notifications';
 
 interface NotificationCardProps {
@@ -70,7 +71,7 @@ export function NotificationCard({ notification, onClick }: NotificationCardProp
           <div 
             className="text-gray-600 text-sm leading-relaxed ql-editor"
             dangerouslySetInnerHTML={{ 
-              __html: getFirstLineWithFormatting(notification.mensagem) 
+              __html: sanitizeFirstLine(notification.mensagem) 
             }}
           />
           

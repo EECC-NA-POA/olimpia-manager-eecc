@@ -1,11 +1,24 @@
 
 import { supabase } from '../../supabase';
+import { validateProfileModification, validateProfileAssignment } from '@/lib/security/roleValidation';
 
 export const updateUserProfiles = async (userId: string, profileIds: number[]): Promise<void> => {
   const currentEventId = localStorage.getItem('currentEventId');
   
   if (!currentEventId) {
     throw new Error('No event selected');
+  }
+
+  // Security validation: Check if user can modify this profile
+  const canModify = await validateProfileModification(userId, currentEventId);
+  if (!canModify) {
+    throw new Error('Acesso negado: Você não tem permissão para modificar este perfil');
+  }
+
+  // Security validation: Check for privilege escalation
+  const isAssignmentSafe = await validateProfileAssignment(profileIds, currentEventId);
+  if (!isAssignmentSafe) {
+    throw new Error('Acesso negado: Você não tem permissão para atribuir estes perfis');
   }
 
   console.log('Updating user profiles:', {

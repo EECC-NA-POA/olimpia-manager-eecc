@@ -1,5 +1,6 @@
 
 import { supabase } from '../../supabase';
+import { validateProfileModification, validateProfileAssignment } from '@/lib/security/roleValidation';
 
 export const swapUserProfile = async (
   userId: string,
@@ -7,6 +8,17 @@ export const swapUserProfile = async (
   newProfileId: number,
   oldProfileId: number
 ): Promise<void> => {
+  // Security validation: Check if user can modify this profile
+  const canModify = await validateProfileModification(userId, eventId);
+  if (!canModify) {
+    throw new Error('Acesso negado: Você não tem permissão para modificar este perfil');
+  }
+
+  // Security validation: Check for privilege escalation
+  const isAssignmentSafe = await validateProfileAssignment([newProfileId], eventId);
+  if (!isAssignmentSafe) {
+    throw new Error('Acesso negado: Você não tem permissão para atribuir este perfil');
+  }
   console.log('Starting swapUserProfile function...', {
     userId,
     eventId,

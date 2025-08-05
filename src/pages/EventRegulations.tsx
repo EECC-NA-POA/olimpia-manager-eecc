@@ -8,6 +8,7 @@ import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { EmptyState } from '@/components/dashboard/components/EmptyState';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
+import { sanitizeHtml } from '@/lib/security/htmlSanitizer';
 import { EventRegulation } from '@/lib/types/database';
 import { useEventData } from '@/hooks/useEventData';
 import '../styles/regulation-display.css';
@@ -147,7 +148,7 @@ const EventRegulations = () => {
                 {regulation.is_regulamento_texto !== false && regulation.regulamento_texto ? (
                   <div 
                     className="regulation-content mt-4 text-left"
-                    dangerouslySetInnerHTML={{ __html: regulation.regulamento_texto }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(regulation.regulamento_texto) }}
                   />
                 ) : regulation.is_regulamento_texto === false && !regulation.regulamento_link ? (
                   <p className="text-center text-muted-foreground py-4">

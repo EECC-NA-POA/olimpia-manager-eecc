@@ -11,6 +11,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Eye, EyeOff, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { sanitizeHtml } from '@/lib/security/htmlSanitizer';
 import { NotificationReadersDialog } from './NotificationReadersDialog';
 
 interface NotificationsListProps {
@@ -151,7 +152,7 @@ export function NotificationsList({ eventId, userId, isDelegationDashboard = fal
                 <div 
                   className="ql-editor"
                   style={{ padding: 0 }}
-                  dangerouslySetInnerHTML={{ __html: notification.mensagem }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(notification.mensagem) }}
                 />
               </CardContent>
             </Card>
