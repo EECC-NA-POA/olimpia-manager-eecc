@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCheck, Calendar, ClipboardList, FileText, TrendingUp, Users, Clock } from "lucide-react";
+import { UserCheck, Calendar, ClipboardList, FileText, TrendingUp, Users, Clock, CalendarDays } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import MonitorModalitiesPage from './MonitorModalitiesPage';
 import MonitorAttendancePage from './MonitorAttendancePage';
 import MonitorReportsPage from './MonitorReportsPage';
+import { MonitorSchedulePage } from './MonitorSchedulePage';
 import { useMonitorModalities } from '@/hooks/useMonitorModalities';
 
 export default function MonitorDashboard() {
@@ -62,7 +63,7 @@ export default function MonitorDashboard() {
         </div>
 
         {/* Modern Navigation Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             {
               id: "chamadas",
@@ -79,6 +80,14 @@ export default function MonitorDashboard() {
               icon: Calendar,
               color: "olimpics-orange-primary",
               badge: stats.totalModalities > 0 ? stats.totalModalities : null
+            },
+            {
+              id: "cronograma",
+              title: "Cronograma",
+              subtitle: "Gerenciar atividades",
+              icon: CalendarDays,
+              color: "primary",
+              badge: null
             },
             {
               id: "relatorios",
@@ -130,6 +139,7 @@ export default function MonitorDashboard() {
           <TabsList className="sr-only">
             <TabsTrigger value="chamadas">Chamadas</TabsTrigger>
             <TabsTrigger value="modalidades">Modalidades</TabsTrigger>
+            <TabsTrigger value="cronograma">Cronograma</TabsTrigger>
             <TabsTrigger value="relatorios">Relatórios</TabsTrigger>
           </TabsList>
 
@@ -142,6 +152,12 @@ export default function MonitorDashboard() {
           <TabsContent value="modalidades" className="mt-6 space-y-6">
             <div className="animate-fade-in">
               <MonitorModalitiesPage />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="cronograma" className="mt-6 space-y-6">
+            <div className="animate-fade-in">
+              <MonitorSchedulePage />
             </div>
           </TabsContent>
 
