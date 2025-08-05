@@ -3,7 +3,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { SessionTimeoutProvider } from "@/components/providers/SessionTimeoutProvider";
 import { GlobalHeader } from "@/components/GlobalHeader";
@@ -119,10 +118,7 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <SessionTimeoutProvider>
-              {/* Move SidebarProvider to wrap the entire app */}
-              <SidebarProvider defaultOpen={false}>
-                <AppContent />
-              </SidebarProvider>
+              <AppContent />
             </SessionTimeoutProvider>
           </AuthProvider>
         </BrowserRouter>

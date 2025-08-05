@@ -1,7 +1,7 @@
 
 import { useNavigation } from '@/hooks/useNavigation';
 import { useState, useEffect } from 'react';
-import { SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from './navigation/AppSidebar';
 
 interface MainNavigationProps {
@@ -52,13 +52,15 @@ export function MainNavigation({ children }: MainNavigationProps) {
   }
 
   return (
-    <div className="flex min-h-screen w-full">
-      <AppSidebar isHeaderVisible={isHeaderVisible} />
-      <SidebarInset className="flex-1">
-        <main className="flex-1 overflow-auto bg-olimpics-background p-4 lg:p-6 pt-20">
-          {children}
-        </main>
-      </SidebarInset>
-    </div>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        <AppSidebar isHeaderVisible={isHeaderVisible} />
+        <SidebarInset className="flex-1">
+          <main className="flex-1 overflow-auto bg-olimpics-background p-6 pt-20">
+            {children}
+          </main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   );
 }

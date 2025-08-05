@@ -42,9 +42,8 @@ export function AppSidebar({ isHeaderVisible }: AppSidebarProps) {
 
   return (
     <Sidebar 
-      className="bg-olimpics-green-primary text-white border-none mt-16 group-data-[side=left]:border-r"
+      className="bg-olimpics-green-primary text-white border-none mt-16"
       collapsible="icon"
-      side="left"
     >
       {/* Logo section - sempre visível */}
       <div className="bg-olimpics-green-primary border-b border-olimpics-green-secondary/30 h-16">
@@ -65,7 +64,7 @@ export function AppSidebar({ isHeaderVisible }: AppSidebarProps) {
           <h2 className="text-lg font-semibold text-white group-data-[collapsible=icon]:hidden">
             Menu Principal
           </h2>
-          {/* Remove o trigger interno - será controlado pelo header global */}
+          <SidebarTrigger className="text-white hover:bg-olimpics-green-secondary/20" />
         </div>
       </SidebarHeader>
       
