@@ -3,7 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, ListChecks, BarChart, Bell } from "lucide-react";
+import { Users, ListChecks, BarChart, Bell, UserCheck } from "lucide-react";
 import { EmptyState } from "./dashboard/components/EmptyState";
 import { LoadingState } from "./dashboard/components/LoadingState";
 import { ErrorState } from "./dashboard/components/ErrorState";
@@ -12,6 +12,7 @@ import { NoEventSelected } from "./dashboard/components/NoEventSelected";
 import { AthletesTab } from "./dashboard/tabs/AthletesTab";
 import { EnrollmentsTab } from "./dashboard/tabs/EnrollmentsTab";
 import { StatisticsTab } from "./dashboard/tabs/StatisticsTab";
+import { OrganizerRepresentativesTab } from "./dashboard/tabs/OrganizerRepresentativesTab";
 import { NotificationManager } from "./notifications/NotificationManager";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
@@ -103,6 +104,9 @@ export default function OrganizerDashboard() {
         }
         return <EnrollmentsTab enrollments={confirmedEnrollments} />;
 
+      case "representatives":
+        return <OrganizerRepresentativesTab eventId={currentEventId} />;
+
       case "notifications":
         return (
           <NotificationManager
@@ -123,7 +127,7 @@ export default function OrganizerDashboard() {
 
       <Tabs defaultValue="statistics" className="w-full" onValueChange={setActiveTab} value={activeTab}>
         <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
-          <TabsList className="w-full min-w-max bg-background grid grid-cols-4 p-0.5 sm:p-1 h-auto gap-0.5 sm:gap-1 border-b mb-3 sm:mb-8">
+          <TabsList className="w-full min-w-max bg-background grid grid-cols-5 p-0.5 sm:p-1 h-auto gap-0.5 sm:gap-1 border-b mb-3 sm:mb-8">
             <TabsTrigger 
               value="statistics"
               className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
@@ -152,6 +156,15 @@ export default function OrganizerDashboard() {
               <span className="xs:hidden text-[10px]">In</span>
             </TabsTrigger>
             <TabsTrigger 
+              value="representatives"
+              className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+            >
+              <UserCheck className="h-3 w-3 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="hidden xs:inline sm:hidden">Repr</span>
+              <span className="hidden sm:inline">Representantes</span>
+              <span className="xs:hidden text-[10px]">Re</span>
+            </TabsTrigger>
+            <TabsTrigger 
               value="notifications"
               className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
             >
@@ -173,6 +186,10 @@ export default function OrganizerDashboard() {
 
         <TabsContent value="enrollments" className="mt-2 sm:mt-6">
           {renderTabContent("enrollments")}
+        </TabsContent>
+
+        <TabsContent value="representatives" className="mt-2 sm:mt-6">
+          {renderTabContent("representatives")}
         </TabsContent>
 
         <TabsContent value="notifications" className="mt-2 sm:mt-6">

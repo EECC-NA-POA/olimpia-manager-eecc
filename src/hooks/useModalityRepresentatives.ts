@@ -5,7 +5,8 @@ import {
   fetchModalitiesWithRepresentatives,
   fetchRegisteredAthletesForModality,
   setModalityRepresentative,
-  removeModalityRepresentative
+  removeModalityRepresentative,
+  fetchAllModalitiesWithRepresentatives
 } from '@/lib/api/representatives';
 import { validateRepresentativePermission } from '@/lib/utils/permissionValidation';
 
@@ -200,4 +201,26 @@ export const useRepresentativeMutations = (filialId: string | undefined, eventId
     setRepresentative,
     removeRepresentative
   };
+};
+
+export const useAllModalitiesWithRepresentatives = (eventId: string | null) => {
+  console.log('useAllModalitiesWithRepresentatives called with eventId:', eventId);
+  
+  return useQuery({
+    queryKey: ['all-modalities-representatives', eventId],
+    queryFn: async () => {
+      console.log('Fetching all modalities with representatives for organizer...');
+      if (!eventId) {
+        throw new Error('eventId is required');
+      }
+      const result = await fetchAllModalitiesWithRepresentatives(eventId);
+      console.log('All modalities with representatives result:', result);
+      return result;
+    },
+    enabled: !!eventId,
+    retry: (failureCount, error) => {
+      console.error('Query failed:', error);
+      return failureCount < 2;
+    }
+  });
 };
