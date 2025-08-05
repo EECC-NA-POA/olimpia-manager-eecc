@@ -16,6 +16,7 @@ interface UserDeletionDialogProps {
     nome_completo: string;
     email: string | null;
     numero_documento: string;
+    isAuthOnly?: boolean;
   };
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -37,7 +38,7 @@ export function UserDeletionDialog({ user, open, onOpenChange }: UserDeletionDia
   const isFormValid = 
     user.email && 
     normalizedConfirmationEmail === normalizedUserEmail && 
-    normalizedConfirmationDocument === normalizedUserDocument &&
+    (user.isAuthOnly && !user.numero_documento ? true : normalizedConfirmationDocument === normalizedUserDocument) &&
     (deletionType === 'auth_only' || secondConfirmation);
 
   const handleDelete = async () => {
@@ -82,6 +83,11 @@ export function UserDeletionDialog({ user, open, onOpenChange }: UserDeletionDia
             <AlertDescription>
               <strong>Atenção:</strong> Esta ação não pode ser desfeita. 
               Usuário: <strong>{user.nome_completo}</strong> ({user.email || 'Email não disponível'})
+              {user.isAuthOnly && (
+                <span className="block mt-1 text-amber-700 bg-amber-100 px-2 py-1 rounded text-sm">
+                  🔒 Este usuário existe apenas no sistema de autenticação (Auth Only)
+                </span>
+              )}
             </AlertDescription>
           </Alert>
 
@@ -138,18 +144,25 @@ export function UserDeletionDialog({ user, open, onOpenChange }: UserDeletionDia
               </p>
             </div>
 
-            <div>
-              <Label htmlFor="confirm_document">Confirme o documento do usuário (apenas números)</Label>
-              <Input
-                id="confirm_document"
-                value={confirmationDocument}
-                onChange={(e) => setConfirmationDocument(e.target.value)}
-                placeholder="Apenas números"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Digite apenas os números: <span className="font-mono">{cleanDocumentNumber(user.numero_documento || '')}</span>
-              </p>
-            </div>
+            {(!user.isAuthOnly || user.numero_documento) && (
+              <div>
+                <Label htmlFor="confirm_document">Confirme o documento do usuário (apenas números)</Label>
+                <Input
+                  id="confirm_document"
+                  value={confirmationDocument}
+                  onChange={(e) => setConfirmationDocument(e.target.value)}
+                  placeholder="Apenas números"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Digite apenas os números: <span className="font-mono">{cleanDocumentNumber(user.numero_documento || '')}</span>
+                </p>
+              </div>
+            )}
+            {user.isAuthOnly && !user.numero_documento && (
+              <div className="text-sm text-muted-foreground bg-gray-50 p-2 rounded">
+                💡 Este usuário auth-only não possui documento cadastrado - confirmação de documento não necessária.
+              </div>
+            )}
           </div>
 
           {deletionType === 'both' && (
