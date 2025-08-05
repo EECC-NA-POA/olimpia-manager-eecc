@@ -2,15 +2,67 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, TrendingUp, Calendar, Users, Clock, BarChart3, PieChart, Activity } from "lucide-react";
+import { FileText, TrendingUp, Calendar, Users, Clock, BarChart3, PieChart, Activity, Loader2 } from "lucide-react";
+import { useMonitorReports } from '@/hooks/useMonitorReports';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export default function MonitorReportsPage() {
-  // Mock data for demonstration
-  const reportStats = {
-    totalSessions: 12,
-    totalAttendees: 156,
-    averageAttendance: 85,
-    lastSession: "2024-01-15"
+  const { data: reportData, isLoading, error } = useMonitorReports();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Carregando relatórios...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-destructive">Erro ao carregar relatórios</p>
+          <p className="text-sm text-muted-foreground mt-1">Tente novamente mais tarde</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!reportData) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-muted-foreground">Nenhum dado disponível</p>
+          <p className="text-sm text-muted-foreground mt-1">Realize algumas chamadas para ver os relatórios</p>
+        </div>
+      </div>
+    );
+  }
+
+  const formatLastSession = (dateString: string | null) => {
+    if (!dateString) return 'Nunca';
+    try {
+      return format(new Date(dateString), 'dd/MM', { locale: ptBR });
+    } catch {
+      return 'Data inválida';
+    }
+  };
+
+  const getRelativeTime = (dateString: string) => {
+    const now = new Date();
+    const sessionDate = new Date(dateString);
+    const diffInHours = Math.floor((now.getTime() - sessionDate.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Há poucos minutos';
+    if (diffInHours < 24) return `${diffInHours}h atrás`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays === 1) return '1 dia atrás';
+    if (diffInDays < 7) return `${diffInDays} dias atrás`;
+    
+    return format(sessionDate, 'dd/MM/yyyy', { locale: ptBR });
   };
 
   return (
@@ -41,7 +93,7 @@ export default function MonitorReportsPage() {
                 <Calendar className="h-5 w-5 text-olimpics-green-primary" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-olimpics-green-primary">{reportStats.totalSessions}</div>
+                <div className="text-2xl font-bold text-olimpics-green-primary">{reportData.totalSessions}</div>
                 <div className="text-sm text-muted-foreground">Sessões Realizadas</div>
               </div>
             </div>
@@ -55,7 +107,7 @@ export default function MonitorReportsPage() {
                 <Users className="h-5 w-5 text-olimpics-orange-primary" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-olimpics-orange-primary">{reportStats.totalAttendees}</div>
+                <div className="text-2xl font-bold text-olimpics-orange-primary">{reportData.totalPresences}</div>
                 <div className="text-sm text-muted-foreground">Total de Presenças</div>
               </div>
             </div>
@@ -69,7 +121,7 @@ export default function MonitorReportsPage() {
                 <TrendingUp className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-blue-600">{reportStats.averageAttendance}%</div>
+                <div className="text-2xl font-bold text-blue-600">{reportData.averageAttendance}%</div>
                 <div className="text-sm text-muted-foreground">Taxa de Presença</div>
               </div>
             </div>
@@ -83,7 +135,7 @@ export default function MonitorReportsPage() {
                 <Clock className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <div className="text-lg font-bold text-purple-600">15/01</div>
+                <div className="text-lg font-bold text-purple-600">{formatLastSession(reportData.lastSession)}</div>
                 <div className="text-sm text-muted-foreground">Última Sessão</div>
               </div>
             </div>
@@ -103,25 +155,30 @@ export default function MonitorReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                { name: "Futebol", attendance: 92, total: 24 },
-                { name: "Basquete", attendance: 78, total: 18 },
-                { name: "Vôlei", attendance: 85, total: 20 },
-                { name: "Natação", attendance: 95, total: 16 }
-              ].map((item) => (
-                <div key={item.name} className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium">{item.name}</span>
-                    <span className="text-muted-foreground">{item.attendance}% ({item.total} atletas)</span>
+              {reportData.modalityStats.length > 0 ? (
+                reportData.modalityStats.map((modality) => (
+                  <div key={modality.modalidade_nome} className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium">{modality.modalidade_nome}</span>
+                      <span className="text-muted-foreground">
+                        {modality.attendance_rate}% ({modality.total_presences}/{modality.total_attendees})
+                      </span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div 
+                        className="bg-olimpics-green-primary h-2 rounded-full transition-all duration-500" 
+                        style={{ width: `${modality.attendance_rate}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div 
-                      className="bg-olimpics-green-primary h-2 rounded-full transition-all duration-500" 
-                      style={{ width: `${item.attendance}%` }}
-                    />
-                  </div>
+                ))
+              ) : (
+                <div className="text-center text-muted-foreground py-8">
+                  <BarChart3 className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>Nenhuma modalidade com dados ainda</p>
+                  <p className="text-xs">Realize chamadas para ver as estatísticas</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
@@ -136,27 +193,32 @@ export default function MonitorReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                { action: "Chamada realizada", modality: "Futebol", time: "2h atrás", present: 22, total: 24 },
-                { action: "Sessão finalizada", modality: "Basquete", time: "1 dia atrás", present: 16, total: 18 },
-                { action: "Chamada realizada", modality: "Vôlei", time: "2 dias atrás", present: 19, total: 20 },
-                { action: "Sessão iniciada", modality: "Natação", time: "3 dias atrás", present: 15, total: 16 }
-              ].map((activity, index) => (
-                <div key={index} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-                  <div className="p-1.5 bg-olimpics-green-primary/10 rounded-full">
-                    <Clock className="h-3 w-3 text-olimpics-green-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">{activity.action}</div>
-                    <div className="text-xs text-muted-foreground">{activity.modality} • {activity.time}</div>
-                    {activity.present && (
+              {reportData.recentActivities.length > 0 ? (
+                reportData.recentActivities.map((activity) => (
+                  <div key={activity.id} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+                    <div className="p-1.5 bg-olimpics-green-primary/10 rounded-full">
+                      <Clock className="h-3 w-3 text-olimpics-green-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">
+                        {activity.data_hora_fim ? 'Sessão finalizada' : 'Sessão realizada'}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {activity.modalidade_nome} • {getRelativeTime(activity.data_hora_inicio)}
+                      </div>
                       <Badge variant="secondary" className="text-xs mt-1">
-                        {activity.present}/{activity.total} presentes
+                        {activity.total_presentes}/{activity.total_atletas} presentes
                       </Badge>
-                    )}
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center text-muted-foreground py-8">
+                  <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>Nenhuma atividade recente</p>
+                  <p className="text-xs">Suas próximas sessões aparecerão aqui</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
