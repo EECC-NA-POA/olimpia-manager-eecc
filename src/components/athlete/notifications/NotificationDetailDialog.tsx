@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { format, differenceInHours, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { sanitizeHtml } from '@/lib/security/htmlSanitizer';
 import { useMarkAsRead } from '@/hooks/useMarkAsRead';
 import type { Notification } from '@/types/notifications';
 
@@ -119,7 +120,7 @@ export function NotificationDetailDialog({
               <div 
                 className="ql-editor text-left"
                 style={{ padding: 0 }}
-                dangerouslySetInnerHTML={{ __html: notification.mensagem }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(notification.mensagem) }}
               />
             </div>
           </DialogDescription>

@@ -78,7 +78,7 @@ export function EventRegulationsSection({ eventId }: EventRegulationsSectionProp
           {!isEditing && (
             <Button 
               onClick={handleAddNew} 
-              className="flex items-center gap-2 w-full sm:w-auto text-xs sm:text-sm"
+              className="flex items-center gap-2 w-full sm:w-auto text-xs sm:text-sm bg-olimpics-green-primary hover:bg-olimpics-green-secondary"
               size="sm"
             >
               <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -117,7 +117,7 @@ export function EventRegulationsSection({ eventId }: EventRegulationsSectionProp
             title="Nenhum regulamento cadastrado"
             description="Adicione um novo regulamento para o evento."
             action={
-              <Button onClick={handleAddNew} size="sm">
+              <Button onClick={handleAddNew} size="sm" className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary">
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar Regulamento
               </Button>

@@ -105,7 +105,7 @@ export function ModelosList({
               <Link className="h-4 w-4 mr-1" />
               Reutilizar
             </Button>
-            <Button size="sm" onClick={onCreateModelo}>
+            <Button size="sm" onClick={onCreateModelo} className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary">
               <Plus className="h-4 w-4 mr-1" />
               Novo Modelo
             </Button>

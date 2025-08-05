@@ -12,11 +12,8 @@ export function GlobalHeader() {
   const [lastScrollY, setLastScrollY] = useState(0);
   
   const handleClick = () => {
-    // Only navigate to home page if not logged in
-    if (!user) {
-      navigate('/');
-    }
-    // If user is logged in, don't navigate away to prevent sidebar from disappearing
+    // Always navigate to home page when clicking "Olímpia Manager"
+    navigate('/');
   };
 
   useEffect(() => {

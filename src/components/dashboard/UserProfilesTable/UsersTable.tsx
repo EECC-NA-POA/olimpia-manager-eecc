@@ -1,79 +1,140 @@
 
-import { Button } from "@/components/ui/button";
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow 
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { UserCog } from "lucide-react";
-import { UsersTableProps } from "./types";
+import React, { useState } from 'react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Eye, Trash2 } from 'lucide-react';
+import { UserProfileModal } from '@/components/dashboard/UserProfileModal';
+import { UserDeletionDialog } from '@/components/admin/UserDeletionDialog';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { UserProfile, Branch, UsersTableProps } from './types';
 
-export const UsersTable = ({ paginatedUsers, setSelectedUser }: UsersTableProps) => {
+export function UsersTable({ data, branches }: UsersTableProps) {
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy', { locale: ptBR });
+    } catch {
+      return 'Data inválida';
+    }
+  };
+
+  const getBranchName = (branchId: number | null) => {
+    if (!branchId) return 'N/A';
+    const branch = branches.find(b => String(b.id) === String(branchId));
+    return branch ? branch.nome : 'Filial não encontrada';
+  };
+
+  const getUserRoles = (user: UserProfile) => {
+    console.log(`===== USER ROLES FOR ${user.nome_completo} =====`);
+    console.log('User papeis:', user.papeis);
+    console.log('Papeis length:', user.papeis?.length || 0);
+    console.log('==============================================');
+    
+    if (!user.papeis || user.papeis.length === 0) return 'Nenhum perfil';
+    return user.papeis.map(papel => papel.nome || papel.codigo).join(', ');
+  };
+
+  const getPaymentStatus = (user: UserProfile) => {
+    if (!user.pagamentos || user.pagamentos.length === 0) {
+      return <Badge variant="secondary">Sem pagamento</Badge>;
+    }
+
+    const payment = user.pagamentos[0];
+    const statusMap = {
+      'pendente': <Badge variant="outline">Pendente</Badge>,
+      'confirmado': <Badge variant="default" className="bg-green-600">Confirmado</Badge>,
+      'cancelado': <Badge variant="destructive">Cancelado</Badge>,
+      'isento': <Badge variant="secondary" className="bg-blue-600">Isento</Badge>
+    };
+
+    return statusMap[payment.status as keyof typeof statusMap] || 
+           <Badge variant="secondary">{payment.status}</Badge>;
+  };
+
   return (
-    <div className="rounded-md border shadow-sm">
-      <Table>
-        <TableHeader className="bg-muted/30">
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Filial</TableHead>
-            <TableHead>Perfis</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {paginatedUsers.length > 0 ? (
-            paginatedUsers.map((user) => (
-              <TableRow key={user.id} className="hover:bg-muted/40 transition-colors">
+    <>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50">
+              <TableHead className="font-semibold text-gray-900">Nome</TableHead>
+              <TableHead className="font-semibold text-gray-900">Email</TableHead>
+              <TableHead className="font-semibold text-gray-900">Documento</TableHead>
+              <TableHead className="font-semibold text-gray-900">Filial</TableHead>
+              <TableHead className="font-semibold text-gray-900">Perfis</TableHead>
+              <TableHead className="font-semibold text-gray-900">Status Pagamento</TableHead>
+              <TableHead className="font-semibold text-gray-900">Data Criação</TableHead>
+              <TableHead className="font-semibold text-gray-900">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((user) => (
+              <TableRow key={user.id} className="hover:bg-gray-50">
                 <TableCell className="font-medium">{user.nome_completo}</TableCell>
-                <TableCell>{user.email || "—"}</TableCell>
+                <TableCell>{user.email}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="bg-muted/30">
-                    {user.filial_nome}
-                  </Badge>
+                  {user.numero_documento ? 
+                    `${user.tipo_documento || 'CPF'}: ${user.numero_documento}` : 
+                    'N/A'
+                  }
                 </TableCell>
+                <TableCell>{getBranchName(user.filial_id)}</TableCell>
+                <TableCell className="max-w-xs truncate" title={getUserRoles(user)}>
+                  {getUserRoles(user)}
+                </TableCell>
+                <TableCell>{getPaymentStatus(user)}</TableCell>
+                <TableCell>{formatDate(user.created_at)}</TableCell>
                 <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {user.profiles?.length > 0 ? (
-                      user.profiles.map((profile: any, index: number) => (
-                        <Badge 
-                          key={`${user.id}-${profile.perfil_id}-${index}`}
-                          className="bg-olimpics-green-primary/20 text-olimpics-green-primary border-none"
-                        >
-                          {profile.perfil_nome}
-                        </Badge>
-                      ))
-                    ) : (
-                      <span className="text-muted-foreground text-sm italic">Sem perfis</span>
-                    )}
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedUser(user)}
+                      title="Ver detalhes"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setUserToDelete(user)}
+                      title="Excluir usuário"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-olimpics-green-primary/30 text-olimpics-green-primary hover:bg-olimpics-green-primary/10"
-                    onClick={() => setSelectedUser(user)}
-                  >
-                    <UserCog className="h-4 w-4 mr-2" />
-                    Gerenciar Perfis
-                  </Button>
-                </TableCell>
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                Nenhum usuário encontrado com os filtros selecionados.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {selectedUser && (
+        <UserProfileModal
+          user={selectedUser}
+          open={!!selectedUser}
+          onOpenChange={(open) => !open && setSelectedUser(null)}
+        />
+      )}
+
+      {userToDelete && (
+        <UserDeletionDialog
+          user={{
+            id: userToDelete.id,
+            nome_completo: userToDelete.nome_completo,
+            email: userToDelete.email,
+            numero_documento: userToDelete.numero_documento || ''
+          }}
+          open={!!userToDelete}
+          onOpenChange={(open) => !open && setUserToDelete(null)}
+        />
+      )}
+    </>
   );
-};
+}

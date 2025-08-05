@@ -18,7 +18,7 @@ export function ModeloConfigurationDialogActions({
       <Button variant="outline" onClick={onCancel}>
         Cancelar
       </Button>
-      <Button onClick={onSave} disabled={isSaving}>
+      <Button onClick={onSave} disabled={isSaving} className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary">
         {isSaving ? 'Salvando...' : 'Salvar Configuração'}
       </Button>
     </div>

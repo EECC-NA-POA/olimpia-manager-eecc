@@ -18,12 +18,14 @@ interface ScheduleDialogProps {
   currentItem: ScheduleFormType;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (field: string, value: string | number | boolean) => void;
+  handleModalitiesChange: (modalidades: number[]) => void;
   handleDiaToggle: (dia: string, checked: boolean) => void;
   handleHorarioChange: (dia: string, tipo: 'inicio' | 'fim', valor: string) => void;
   handleLocalChange: (dia: string, local: string) => void;
   handleDataFimRecorrenciaChange: (data: string) => void;
   handleSave: () => void;
   isSaving: boolean;
+  availableModalidades?: number[]; // For monitors
 }
 
 export const ScheduleDialog: React.FC<ScheduleDialogProps> = ({
@@ -33,12 +35,14 @@ export const ScheduleDialog: React.FC<ScheduleDialogProps> = ({
   currentItem,
   handleInputChange,
   handleSelectChange,
+  handleModalitiesChange,
   handleDiaToggle,
   handleHorarioChange,
   handleLocalChange,
   handleDataFimRecorrenciaChange,
   handleSave,
-  isSaving
+  isSaving,
+  availableModalidades
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -51,10 +55,12 @@ export const ScheduleDialog: React.FC<ScheduleDialogProps> = ({
           currentItem={currentItem}
           handleInputChange={handleInputChange}
           handleSelectChange={handleSelectChange}
+          handleModalitiesChange={handleModalitiesChange}
           handleDiaToggle={handleDiaToggle}
           handleHorarioChange={handleHorarioChange}
           handleLocalChange={handleLocalChange}
           handleDataFimRecorrenciaChange={handleDataFimRecorrenciaChange}
+          availableModalidades={availableModalidades}
         />
         
         <DialogFooter>

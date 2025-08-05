@@ -1,29 +1,48 @@
 
-import React from "react";
-import { Info } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PolicyContent } from "@/components/auth/privacy-policy/PolicyContent";
+import { fetchActivePrivacyPolicy } from "@/lib/api/privacyPolicy";
 
 interface PrivacyPolicySectionModalProps {
-  onViewPrivacyPolicy: () => void;
+  onClose: () => void;
 }
 
-export const PrivacyPolicySectionModal = ({ onViewPrivacyPolicy }: PrivacyPolicySectionModalProps) => {
+export const PrivacyPolicySectionModal = ({ onClose }: PrivacyPolicySectionModalProps) => {
+  const [policyContent, setPolicyContent] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
+
+  const loadPolicy = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const content = await fetchActivePrivacyPolicy();
+      setPolicyContent(content);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPolicy();
+  }, []);
+
   return (
-    <div className="p-4 bg-muted/50 rounded-md">
-      <div className="flex items-center gap-2">
-        <Info className="h-5 w-5 text-olimpics-green-primary" />
-        <h3 className="font-medium">Termos de Privacidade</h3>
-      </div>
-      <p className="text-sm mt-2 text-muted-foreground">
-        Para utilizar nosso sistema, você precisa aceitar nossa política de privacidade.
-        {" "}
-        <button 
-          type="button"
-          onClick={onViewPrivacyPolicy}
-          className="text-olimpics-green-primary hover:underline font-medium"
-        >
-          Clique aqui para ler os termos
-        </button>
-      </p>
-    </div>
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Política de Privacidade</DialogTitle>
+        </DialogHeader>
+        <PolicyContent
+          isLoading={isLoading}
+          error={error}
+          policyContent={policyContent}
+          onRetryLoad={loadPolicy}
+        />
+      </DialogContent>
+    </Dialog>
   );
 };
