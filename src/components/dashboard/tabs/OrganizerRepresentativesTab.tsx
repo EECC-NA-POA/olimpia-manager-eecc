@@ -1,17 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { LoadingState } from "../components/LoadingState";
 import { ErrorState } from "../components/ErrorState";
 import { EmptyState } from "../components/EmptyState";
-import { useAllModalitiesWithRepresentatives } from "@/hooks/useModalityRepresentatives";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Users, Building2, Trophy } from "lucide-react";
+import {
+  useAllModalitiesWithRepresentatives,
+  useOrganizerRegisteredAthletes,
+  useOrganizerRepresentativeMutations
+} from "@/hooks/useModalityRepresentatives";
+import { OrganizerModalitiesByCategory } from './representatives/OrganizerModalitiesByCategory';
 
 interface OrganizerRepresentativesTabProps {
   eventId: string;
 }
 
 export function OrganizerRepresentativesTab({ eventId }: OrganizerRepresentativesTabProps) {
+  const [selectedModalityForChange, setSelectedModalityForChange] = useState<number | null>(null);
+  
+  console.log('OrganizerRepresentativesTab props:', { eventId });
+
   const {
     data: modalities,
     isLoading,
@@ -19,9 +25,31 @@ export function OrganizerRepresentativesTab({ eventId }: OrganizerRepresentative
     refetch
   } = useAllModalitiesWithRepresentatives(eventId);
 
-  console.log('OrganizerRepresentativesTab data:', modalities);
+  const {
+    data: availableAthletes,
+    isLoading: athletesLoading
+  } = useOrganizerRegisteredAthletes(selectedModalityForChange, eventId);
 
+  const { setRepresentative, removeRepresentative } = useOrganizerRepresentativeMutations(eventId);
+
+  console.log('Modalities data:', modalities);
+  console.log('Loading state:', isLoading);
+  console.log('Error state:', error);
+
+  const handleAddRepresentative = (modalityId: number, atletaId: string) => {
+    console.log('Adding representative:', { modalityId, atletaId });
+    setRepresentative.mutate({ modalityId, atletaId });
+    setSelectedModalityForChange(null);
+  };
+
+  const handleRemoveRepresentative = (modalityId: number, atletaId: string) => {
+    console.log('Removing representative:', { modalityId, atletaId });
+    removeRepresentative.mutate({ modalityId, atletaId });
+  };
+
+  // Validate required props
   if (!eventId) {
+    console.error('Missing required props:', { eventId });
     return (
       <EmptyState
         title="Dados insuficientes"
@@ -31,6 +59,7 @@ export function OrganizerRepresentativesTab({ eventId }: OrganizerRepresentative
   }
 
   if (isLoading) {
+    console.log('Loading modalities...');
     return <LoadingState />;
   }
 
@@ -40,6 +69,7 @@ export function OrganizerRepresentativesTab({ eventId }: OrganizerRepresentative
   }
 
   if (!modalities || modalities.length === 0) {
+    console.log('No modalities found');
     return (
       <EmptyState
         title="Nenhuma modalidade encontrada"
@@ -48,111 +78,31 @@ export function OrganizerRepresentativesTab({ eventId }: OrganizerRepresentative
     );
   }
 
-  // Group modalities by filial and then by category
-  const groupedData = modalities.reduce((acc, modality) => {
-    const filialKey = modality.filial_id || 'sem-filial';
-    const filialName = modality.filial_nome || 'Sem filial';
-    
-    if (!acc[filialKey]) {
-      acc[filialKey] = {
-        filial_nome: filialName,
-        categories: {}
-      };
-    }
-    
-    const category = modality.categoria || 'Sem categoria';
-    if (!acc[filialKey].categories[category]) {
-      acc[filialKey].categories[category] = [];
-    }
-    
-    acc[filialKey].categories[category].push(modality);
-    return acc;
-  }, {} as Record<string, { filial_nome: string; categories: Record<string, typeof modalities> }>);
+  console.log('Rendering modalities:', modalities.length);
 
   return (
     <div className="space-y-6">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-olimpics-text mb-2">
-          Visão Geral de Representantes por Filial
+          Gestão de Representantes por Modalidade
         </h2>
         <p className="text-gray-600">
-          Visualize todos os representantes designados para as modalidades de cada filial neste evento.
+          Defina atletas representantes para cada modalidade de todas as filiais. 
+          Você pode adicionar múltiplos representantes por modalidade. 
+          Apenas atletas inscritos e confirmados na modalidade podem ser selecionados como representantes.
         </p>
       </div>
 
-      <div className="space-y-6">
-        {Object.entries(groupedData).map(([filialId, filialData]) => (
-          <Card key={filialId} className="border-l-4 border-l-olimpics-green-primary">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-olimpics-text">
-                <Building2 className="h-5 w-5" />
-                {filialData.filial_nome}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {Object.entries(filialData.categories).map(([category, categoryModalities]) => (
-                  <div key={category} className="space-y-3">
-                    <h4 className="font-semibold text-olimpics-text flex items-center gap-2">
-                      <Trophy className="h-4 w-4" />
-                      {category}
-                    </h4>
-                    
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {categoryModalities.map((modality) => (
-                        <Card key={`${modality.id}-${filialId}`} className="border border-gray-200">
-                          <CardContent className="p-4">
-                            <div className="space-y-3">
-                              <div className="flex items-start justify-between">
-                                <h5 className="font-medium text-sm text-olimpics-text line-clamp-2">
-                                  {modality.nome}
-                                </h5>
-                                <Badge 
-                                  variant={modality.representatives.length > 0 ? "default" : "secondary"}
-                                  className="text-xs shrink-0 ml-2"
-                                >
-                                  {modality.representatives.length} rep.
-                                </Badge>
-                              </div>
-                              
-                              {modality.representatives.length > 0 ? (
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-1 text-xs text-gray-600">
-                                    <Users className="h-3 w-3" />
-                                    Representantes:
-                                  </div>
-                                  <div className="space-y-1">
-                                    {modality.representatives.map((rep, index) => (
-                                      <div key={`${rep.atleta_id}-${index}`} className="text-xs p-2 bg-gray-50 rounded">
-                                        <div className="font-medium text-olimpics-text">{rep.nome_completo}</div>
-                                        {rep.email && (
-                                          <div className="text-gray-600 truncate">{rep.email}</div>
-                                        )}
-                                        {rep.telefone && (
-                                          <div className="text-gray-600">{rep.telefone}</div>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="text-xs text-gray-500 italic flex items-center gap-1">
-                                  <Users className="h-3 w-3" />
-                                  Nenhum representante designado
-                                </div>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <OrganizerModalitiesByCategory
+        modalities={modalities}
+        availableAthletes={availableAthletes}
+        athletesLoading={athletesLoading}
+        selectedModalityForChange={selectedModalityForChange}
+        onSetSelectedModality={setSelectedModalityForChange}
+        onAddRepresentative={handleAddRepresentative}
+        onRemoveRepresentative={handleRemoveRepresentative}
+        onCancelSelection={() => setSelectedModalityForChange(null)}
+      />
     </div>
   );
 }
