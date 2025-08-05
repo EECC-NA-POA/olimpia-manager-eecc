@@ -412,6 +412,20 @@ export const fetchAllModalitiesWithRepresentatives = async (eventId: string) => 
       throw modalitiesError;
     }
 
+    // Get all filiais linked to this event
+    const { data: eventFiliais, error: filiaisError } = await supabase
+      .from('eventos_filiais')
+      .select(`
+        filial_id,
+        filiais!eventos_filiais_filial_id_fkey(id, nome)
+      `)
+      .eq('evento_id', eventId);
+
+    if (filiaisError) {
+      console.error('Error fetching event filiais:', filiaisError);
+      throw filiaisError;
+    }
+
     // Get all representatives for all modalities in this event
     const { data: representatives, error: repsError } = await supabase
       .from('modalidade_representantes')
@@ -419,7 +433,6 @@ export const fetchAllModalitiesWithRepresentatives = async (eventId: string) => 
         modalidade_id,
         atleta_id,
         filial_id,
-        filiais!modalidade_representantes_filial_id_fkey(nome),
         usuarios!modalidade_representantes_atleta_id_fkey(nome_completo, email, telefone)
       `);
 
@@ -428,61 +441,37 @@ export const fetchAllModalitiesWithRepresentatives = async (eventId: string) => 
       throw repsError;
     }
 
-    // Group data by filial and modality
+    // Create modality-filial combinations
     const modalitiesWithReps: OrganizerModalityWithRepresentatives[] = [];
     
     modalities?.forEach(modality => {
-      const modalityReps = representatives?.filter(r => r.modalidade_id === modality.id) || [];
-      
-      // Group representatives by filial for this modality
-      const filialGroups = modalityReps.reduce((acc, rep) => {
-        const filialId = rep.filial_id;
-        if (!acc[filialId]) {
-          const filialData = Array.isArray(rep.filiais) ? rep.filiais[0] : rep.filiais;
-          acc[filialId] = {
-            filial_id: filialId,
-            filial_nome: filialData?.nome || 'Nome não encontrado',
-            representatives: []
-          };
-        }
+      eventFiliais?.forEach(eventFilial => {
+        const filialData = Array.isArray(eventFilial.filiais) ? eventFilial.filiais[0] : eventFilial.filiais;
         
-        const userData = Array.isArray(rep.usuarios) ? rep.usuarios[0] : rep.usuarios;
-        const filialData = Array.isArray(rep.filiais) ? rep.filiais[0] : rep.filiais;
-        if (userData?.nome_completo) {
-          acc[filialId].representatives.push({
+        // Get representatives for this specific modality-filial combination
+        const modalityReps = representatives?.filter(r => 
+          r.modalidade_id === modality.id && r.filial_id === eventFilial.filial_id
+        ) || [];
+        
+        const representativesList = modalityReps.map(rep => {
+          const userData = Array.isArray(rep.usuarios) ? rep.usuarios[0] : rep.usuarios;
+          return {
             atleta_id: rep.atleta_id,
-            nome_completo: userData.nome_completo,
-            email: userData.email || '',
-            telefone: userData.telefone || ''
-          });
-        }
-        
-        return acc;
-      }, {} as Record<string, { filial_id: string; filial_nome: string; representatives: any[] }>);
+            nome_completo: userData?.nome_completo || '',
+            email: userData?.email || '',
+            telefone: userData?.telefone || ''
+          };
+        }).filter(rep => rep.nome_completo);
 
-      // Create entries for each filial that has representatives for this modality
-      Object.values(filialGroups).forEach(filialGroup => {
         modalitiesWithReps.push({
           id: modality.id,
           nome: modality.nome,
           categoria: modality.categoria || '',
-          filial_nome: filialGroup.filial_nome,
-          filial_id: filialGroup.filial_id,
-          representatives: filialGroup.representatives
+          filial_nome: filialData?.nome || 'Nome não encontrado',
+          filial_id: eventFilial.filial_id,
+          representatives: representativesList
         });
       });
-
-      // If no representatives, add modality with empty representatives for visibility
-      if (modalityReps.length === 0) {
-        modalitiesWithReps.push({
-          id: modality.id,
-          nome: modality.nome,
-          categoria: modality.categoria || '',
-          filial_nome: 'Sem filial',
-          filial_id: '',
-          representatives: []
-        });
-      }
     });
 
     console.log('Combined modalities with representatives for organizer:', modalitiesWithReps);
