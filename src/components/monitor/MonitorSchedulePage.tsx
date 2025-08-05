@@ -100,7 +100,9 @@ export const MonitorSchedulePage: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as modalidades</SelectItem>
-                    {modalidades.map((modalidade) => (
+                    {modalidades
+                      .filter(modalidade => modalidade.modalidades?.nome) // Filter out entries with null modalidades
+                      .map((modalidade) => (
                       <SelectItem key={modalidade.modalidade_id} value={modalidade.modalidade_id.toString()}>
                         {modalidade.modalidades.nome}
                       </SelectItem>
