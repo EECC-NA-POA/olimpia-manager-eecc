@@ -21,5 +21,5 @@ export interface AthleteProfileData {
 export interface Event {
   id: string;
   nome: string;
-  status_evento: 'ativo' | 'encerrado' | 'suspenso' | 'em_teste';
+  status_evento: 'ativo' | 'encerrado' | 'suspenso' | 'em_teste' | 'encerrado_oculto';
 }

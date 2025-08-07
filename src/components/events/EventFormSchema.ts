@@ -19,7 +19,7 @@ export const eventSchema = z.object({
   pais: z.string().optional(),
   estado: z.string().optional(),
   cidade: z.string().optional(),
-  status_evento: z.enum(['ativo', 'encerrado', 'suspenso']),
+  status_evento: z.enum(['ativo', 'encerrado', 'suspenso', 'encerrado_oculto']),
   visibilidade_publica: z.boolean().default(false),
   foto_evento: z.string().optional(),
   selectedBranches: z.array(z.string().uuid()).optional(),

@@ -15,7 +15,7 @@ export interface Event {
   data_fim: string | null;
   created_at: string | null;
   updated_at: string | null;
-  status_evento: 'ativo' | 'encerrado' | 'suspenso' | 'em_teste';
+  status_evento: 'ativo' | 'encerrado' | 'suspenso' | 'em_teste' | 'encerrado_oculto';
   visibilidade_publica: boolean;
   slug_pagina: string | null;
 }
