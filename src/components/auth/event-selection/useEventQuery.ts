@@ -141,8 +141,9 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
     },
     enabled: !!userId && enabled,
     retry: 1,
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60, // 1 minute
+    refetchOnWindowFocus: true,
+    refetchOnMount: 'always',
+    staleTime: 0,
     meta: {
       onSuccess: (data: any[]) => {
         console.log(`Successfully fetched ${data.length} events`);

@@ -1,5 +1,5 @@
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { PerfilTipo } from "@/lib/types/database";
@@ -47,6 +47,7 @@ const mapRoleToProfileName = (role: PerfilTipo): string => {
 };
 
 export const useEventRegistration = (userId: string | undefined) => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ eventId, selectedRole }: EventRegistrationParams): Promise<RegistrationResult> => {
       if (!userId) {
@@ -78,6 +79,8 @@ export const useEventRegistration = (userId: string | undefined) => {
         }
 
         console.log('Registration process completed successfully');
+        // Invalidate events query so UI reflects registration status
+        await queryClient.invalidateQueries({ queryKey: ['events', userId] });
         return { success: true, isExisting: false };
 
       } catch (error: any) {
