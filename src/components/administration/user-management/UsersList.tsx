@@ -417,7 +417,7 @@ const handleBranchChange = async (userId: string, newBranchId: string) => {
                           <SelectContent>
                             {branches?.map((b) => (
                               <SelectItem key={b.id} value={b.id}>
-                                {b.nome}{b.sigla ? ` (${b.sigla})` : ''}
+                                {b.nome}
                               </SelectItem>
                             ))}
                           </SelectContent>
