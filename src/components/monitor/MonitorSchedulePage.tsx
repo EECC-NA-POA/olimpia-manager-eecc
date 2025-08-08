@@ -115,6 +115,8 @@ export const MonitorSchedulePage: React.FC = () => {
             <Button 
               onClick={openAddDialog}
               className="bg-primary hover:bg-primary/90"
+              disabled={modalidades.length === 0}
+              title={modalidades.length === 0 ? 'Você não possui modalidades vinculadas' : undefined}
             >
               <Plus className="h-4 w-4 mr-2" />
               Nova Atividade

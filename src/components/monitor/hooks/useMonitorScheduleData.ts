@@ -114,9 +114,7 @@ export const useMonitorScheduleData = (modalidadeFilter?: number | null) => {
   };
 
   useEffect(() => {
-    if (monitorModalityIds.length > 0) {
-      fetchMonitorSchedule();
-    }
+    fetchMonitorSchedule();
   }, [currentEventId, user, monitorModalityIds.length]);
 
   // Use existing form logic
@@ -142,11 +140,17 @@ export const useMonitorScheduleData = (modalidadeFilter?: number | null) => {
 
   // Override openAddDialog to set default modalidades for monitors
   const openAddDialog = () => {
+    // Prevent adding when monitor has no modalities linked
+    if (monitorModalityIds.length === 0) {
+      toast.error('Você não possui modalidades vinculadas. Contate o organizador.');
+      return;
+    }
+
     originalOpenAddDialog();
     // Pre-select monitor's modalidades for new activities
     if (modalidadeFilter) {
       handleModalitiesChange([modalidadeFilter]);
-    } else if (monitorModalityIds.length > 0) {
+    } else {
       handleModalitiesChange(monitorModalityIds);
     }
   };
