@@ -14,7 +14,9 @@ export const useMonitorScheduleData = (modalidadeFilter?: number | null) => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Get modality IDs that this monitor represents
-  const monitorModalityIds = monitorModalities.map(m => m.modalidade_id);
+  const monitorModalityIds = monitorModalities
+    .map((m: any) => m?.modalidade_id)
+    .filter((id: any): id is number => typeof id === 'number' && !Number.isNaN(id));
 
   const fetchMonitorSchedule = async () => {
     if (!currentEventId || !user || monitorModalityIds.length === 0) {
