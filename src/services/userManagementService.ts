@@ -212,9 +212,9 @@ class UserManagementService {
 
       // Validar confirmação com dados normalizados
       const emailMatches = normalizedUserEmail === normalizedConfirmationEmail;
-      const documentMatches = normalizedUserDocument
-        ? normalizedUserDocument === normalizedConfirmationDocument
-        : true; // Se não há documento cadastrado, não exigir confirmação de documento
+      const documentMatches = isAuthOnly
+        ? true // Para auth-only, não exigir confirmação de documento
+        : (normalizedUserDocument ? normalizedUserDocument === normalizedConfirmationDocument : true);
 
       if (!emailMatches || !documentMatches) {
         console.error('❌ Validação falhou:', {

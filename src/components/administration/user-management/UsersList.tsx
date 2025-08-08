@@ -503,7 +503,10 @@ const handleBranchChange = async (userId: string, newBranchId: string) => {
 
       {userToDelete && (
         <UserDeletionDialog
-          user={userToDelete}
+          user={{
+            ...userToDelete,
+            isAuthOnly: userToDelete.tipo_cadastro === 'Apenas Auth',
+          }}
           open={!!userToDelete}
           onOpenChange={(open) => !open && setUserToDelete(null)}
         />
