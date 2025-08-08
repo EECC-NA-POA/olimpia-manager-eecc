@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,7 @@ import { BranchFilter } from './BranchFilter';
 import { UserTypesSummary } from './UserTypesSummary';
 import { toast } from 'sonner';
 import { fetchBranches } from '@/lib/api';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface BranchUser {
   id: string;
@@ -46,7 +47,28 @@ export function UsersList({ eventId }: UsersListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedBranchFilter, setSelectedBranchFilter] = useState<string | null>(null);
-  const itemsPerPage = 10;
+const itemsPerPage = 10;
+
+const queryClient = useQueryClient();
+const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+
+const handleBranchChange = async (userId: string, newBranchId: string) => {
+  try {
+    setUpdatingUserId(userId);
+    const { error } = await supabase
+      .from('usuarios')
+      .update({ filial_id: newBranchId })
+      .eq('id', userId);
+    if (error) throw error;
+    toast.success('Filial atualizada com sucesso');
+    await queryClient.invalidateQueries({ queryKey: ['branch-users'] });
+  } catch (err: any) {
+    console.error('Erro ao atualizar filial:', err);
+    toast.error('Erro ao atualizar filial: ' + (err?.message || ''));
+  } finally {
+    setUpdatingUserId(null);
+  }
+};
 
   // First, get all branches to find the user's actual branch
   const { data: branches, isLoading: branchesLoading } = useQuery({
@@ -382,7 +404,28 @@ export function UsersList({ eventId }: UsersListProps) {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {branchUser.filial?.nome || 'N/A'}
+                    {user?.is_master ? (
+                      <div className="min-w-[220px]">
+                        <Select
+                          value={(branches?.find(b => b.nome === branchUser.filial?.nome && (b.estado === (branchUser.filial?.estado || b.estado)))?.id) || ''}
+                          onValueChange={(value) => handleBranchChange(branchUser.id, value)}
+                          disabled={updatingUserId === branchUser.id || !branches || branchUser.tipo_cadastro === 'Apenas Auth'}
+                        >
+                          <SelectTrigger className="border-olimpics-green-primary/20 focus:ring-olimpics-green-primary/30">
+                            <SelectValue placeholder={branchUser.filial?.nome || 'Selecionar filial'} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {branches?.map((b) => (
+                              <SelectItem key={b.id} value={b.id}>
+                                {b.nome}{b.sigla ? ` (${b.sigla})` : ''}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      branchUser.filial?.nome || 'N/A'
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
