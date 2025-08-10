@@ -140,7 +140,7 @@ export const useMonitorScheduleData = (modalidadeFilter?: number | null) => {
   // Use existing operations but with monitor-specific validation
   const { isSaving, handleSave: originalHandleSave, handleDelete: originalHandleDelete } = useScheduleOperations(currentEventId, fetchMonitorSchedule);
 
-  // Override openAddDialog to set default modalidades for monitors
+  // Override openAddDialog to ensure empty form
   const openAddDialog = () => {
     // Prevent adding when monitor has no modalities linked
     if (monitorModalityIds.length === 0) {
@@ -149,11 +149,7 @@ export const useMonitorScheduleData = (modalidadeFilter?: number | null) => {
     }
 
     originalOpenAddDialog();
-    // Iniciar com nenhuma modalidade selecionada
-    handleModalitiesChange([]);
   };
-
-  // Override openEditDialog with permission check
   const openEditDialog = (item: ScheduleItem) => {
     // Check if monitor can edit this activity
     if (!item.global && !item.modalidades.some(modalidadeId => monitorModalityIds.includes(modalidadeId))) {

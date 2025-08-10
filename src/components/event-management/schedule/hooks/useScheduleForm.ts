@@ -33,10 +33,10 @@ export const useScheduleForm = () => {
   };
 
   const handleModalitiesChange = (modalidades: number[]) => {
-    setCurrentItem({
-      ...currentItem,
+    setCurrentItem(prev => ({
+      ...prev,
       modalidades
-    });
+    }));
   };
 
   const handleDiaToggle = (dia: string, checked: boolean) => {
