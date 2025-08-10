@@ -12,6 +12,7 @@ import {
 import { AthleteManagement } from "@/lib/api";
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useReadOnlyEvent } from "@/hooks/useReadOnlyEvent";
 
 interface PaginatedAthleteListProps {
   athletes: AthleteManagement[];
@@ -31,7 +32,9 @@ export function PaginatedAthleteList({
   delegationOnly = false
 }: PaginatedAthleteListProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const { user } = useAuth();
+  const { user, currentEventId } = useAuth();
+  const { data: readOnlyData } = useReadOnlyEvent(user?.id, currentEventId);
+  const isReadOnly = !!readOnlyData?.isReadOnly;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -113,6 +116,7 @@ export function PaginatedAthleteList({
             onStatusChange={onStatusChange}
             onPaymentStatusChange={onPaymentStatusChange}
             isCurrentUser={currentUserId === athlete.id}
+            readOnly={isReadOnly}
           />
         ))}
       </div>

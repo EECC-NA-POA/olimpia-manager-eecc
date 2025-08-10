@@ -59,10 +59,11 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
           console.error('Error fetching user registrations from inscricoes_eventos table:', regError);
           console.error('RLS Error details:', regError.message, regError.details, regError.hint);
           // Continue with events but mark them as not registered
-          return events.map(event => ({
-            ...event,
-            isRegistered: false
-          }));
+        const mapped = events.map(event => ({
+          ...event,
+          isRegistered: false
+        }));
+        return mapped.filter(e => !(e.status_evento === 'encerrado' && !e.isRegistered));
         }
         
         // Get user branch ID to check for branch permissions
@@ -102,7 +103,7 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
           console.log('User registered in events:', registeredEventIds);
           
           // Add isRegistered flag to each event and check branch permission
-          return events.map(event => {
+          const mappedEvents = events.map(event => {
             // Check if user is registered in this event
             const isRegistered = registeredEventIds.includes(event.id);
             
@@ -116,11 +117,12 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
               hasBranchPermission
             };
           });
+          return mappedEvents.filter(e => !(e.status_evento === 'encerrado' && !e.isRegistered));
         }
         
         // If no registrations found, return events with isRegistered = false
         // But still include branch permission info
-        return events.map(event => {
+        const mapped = events.map(event => {
           const hasBranchPermission = !userBranchId || 
             branchPermissions.some(perm => perm.evento_id === event.id);
             
@@ -130,6 +132,7 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
             hasBranchPermission
           };
         });
+        return mapped.filter(e => !(e.status_evento === 'encerrado' && !e.isRegistered));
       } catch (error: any) {
         console.error('Error in useEventQuery:', error);
         toast.error('Erro ao carregar eventos');
@@ -138,8 +141,9 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
     },
     enabled: !!userId && enabled,
     retry: 1,
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60, // 1 minute
+    refetchOnWindowFocus: true,
+    refetchOnMount: 'always',
+    staleTime: 0,
     meta: {
       onSuccess: (data: any[]) => {
         console.log(`Successfully fetched ${data.length} events`);

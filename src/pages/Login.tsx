@@ -1,12 +1,22 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { SignUpForm } from '@/components/auth/SignUpForm';
 import { PhilosopherQuotes } from '@/components/auth/PhilosopherQuotes';
+import { useSearchParams } from 'react-router-dom';
 
 export default function Login() {
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') === 'register' ? 'register' : 'login';
+  const [activeTab, setActiveTab] = React.useState<string>(initialTab);
+
+  useEffect(() => {
+    const t = searchParams.get('tab');
+    if (t === 'register' || t === 'login') setActiveTab(t);
+  }, [searchParams]);
+
   return (
     <div 
       className="min-h-screen relative"
@@ -47,7 +57,7 @@ export default function Login() {
           </div>
         </div>
 
-        <Tabs defaultValue="login" className="w-full max-w-2xl mx-auto">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-2xl mx-auto">
           <TabsList className="grid w-full grid-cols-2 bg-white/90 backdrop-blur-sm border border-white/20">
             <TabsTrigger 
               value="login"

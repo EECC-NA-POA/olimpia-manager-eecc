@@ -9,10 +9,17 @@ import { useMonitorScheduleData } from './hooks/useMonitorScheduleData';
 import { useMonitorModalities } from '@/hooks/useMonitorModalities';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 export const MonitorSchedulePage: React.FC = () => {
   const [selectedModalidade, setSelectedModalidade] = useState<string>('all');
   const { data: modalidades = [], isLoading: modalidadesLoading } = useMonitorModalities();
+  const validModalidades = modalidades.filter(modalidade => modalidade.modalidades?.nome);
+  
+  // Estado para confirmação de exclusão
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const {
     scheduleItems,
@@ -35,13 +42,31 @@ export const MonitorSchedulePage: React.FC = () => {
     handleDelete
   } = useMonitorScheduleData(selectedModalidade === 'all' ? null : Number(selectedModalidade));
 
-  const formatDate = (dateStr: string) => {
-    try {
-      return format(new Date(dateStr), 'dd/MM/yyyy', { locale: ptBR });
-    } catch {
-      return dateStr;
-    }
-  };
+const formatDate = (dateStr: string) => {
+  try {
+    return format(new Date(dateStr), 'dd/MM/yyyy', { locale: ptBR });
+  } catch {
+    return dateStr;
+  }
+};
+
+// Fluxo de exclusão com confirmação
+const requestDelete = (id: number) => {
+  setDeleteId(id);
+  setIsDeleteOpen(true);
+};
+
+const confirmDelete = async () => {
+  if (deleteId == null) return;
+  setIsDeleting(true);
+  try {
+    await handleDelete(deleteId);
+    setIsDeleteOpen(false);
+    setDeleteId(null);
+  } finally {
+    setIsDeleting(false);
+  }
+};
 
   const filteredItems = selectedModalidade === 'all' 
     ? scheduleItems 
@@ -101,9 +126,7 @@ export const MonitorSchedulePage: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as modalidades</SelectItem>
-                    {modalidades
-                      .filter(modalidade => modalidade.modalidades?.nome) // Filter out entries with null modalidades
-                      .map((modalidade) => (
+                    {validModalidades.map((modalidade) => (
                       <SelectItem key={modalidade.modalidade_id} value={modalidade.modalidade_id.toString()}>
                         {modalidade.modalidades.nome}
                       </SelectItem>
@@ -115,6 +138,8 @@ export const MonitorSchedulePage: React.FC = () => {
             <Button 
               onClick={openAddDialog}
               className="bg-primary hover:bg-primary/90"
+              disabled={validModalidades.length === 0}
+              title={validModalidades.length === 0 ? 'Você não possui modalidades vinculadas' : undefined}
             >
               <Plus className="h-4 w-4 mr-2" />
               Nova Atividade
@@ -137,7 +162,7 @@ export const MonitorSchedulePage: React.FC = () => {
             <ScheduleTable
               scheduleItems={filteredItems}
               openEditDialog={openEditDialog}
-              handleDelete={handleDelete}
+              handleDelete={requestDelete}
               formatDate={formatDate}
             />
           )}
@@ -159,8 +184,30 @@ export const MonitorSchedulePage: React.FC = () => {
           handleDataFimRecorrenciaChange={handleDataFimRecorrenciaChange}
           handleSave={handleSave}
           isSaving={isSaving}
-          availableModalidades={modalidades?.map(m => m.modalidade_id)}
+          availableModalidades={validModalidades.map(m => m.modalidade_id)}
         />
+
+        {/* Confirmação de exclusão */}
+        <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-destructive">Confirmar exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir esta atividade do cronograma? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                {isDeleting ? 'Excluindo...' : 'Excluir'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 };

@@ -9,7 +9,7 @@ export const useResendVerificationEmail = () => {
   const resendVerificationEmail = useCallback(async (email: string): Promise<void> => {
     try {
       setLoading(true);
-      console.log('📧 Resending verification email for:', email);
+      console.log('📧 Resending verification email');
 
       const { error } = await supabase.auth.resend({
         type: 'signup',

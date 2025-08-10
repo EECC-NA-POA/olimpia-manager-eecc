@@ -25,7 +25,7 @@ const PublicEventPage = () => {
       const { data, error } = await supabase
         .from('eventos')
         .select('*')
-        .eq('slug_pagina', slug)
+        .eq('pagina_evento', slug)
         .eq('visibilidade_publica', true)
         .single();
 

@@ -15,6 +15,7 @@ interface ModalitiesTableProps {
   getStatusBadgeStyle: (status: string) => string;
   onJustificationChange: (modalityId: string, value: string) => void;
   onStatusChange: (modalityId: string, status: string) => void;
+  readOnly?: boolean;
 }
 
 export const ModalitiesTable: React.FC<ModalitiesTableProps> = ({
@@ -24,7 +25,8 @@ export const ModalitiesTable: React.FC<ModalitiesTableProps> = ({
   modalityStatuses,
   getStatusBadgeStyle,
   onJustificationChange,
-  onStatusChange
+  onStatusChange,
+  readOnly
 }) => {
   return (
     <Table>
@@ -46,21 +48,22 @@ export const ModalitiesTable: React.FC<ModalitiesTableProps> = ({
               </Badge>
             </TableCell>
             <TableCell>
-              <Input
-                placeholder="Justificativa para alteração"
-                value={justifications[modalidade.id] || ''}
-                onChange={(e) => onJustificationChange(modalidade.id, e.target.value)}
-              />
+            <Input
+              placeholder="Justificativa para alteração"
+              value={justifications[modalidade.id] || ''}
+              onChange={(e) => onJustificationChange(modalidade.id, e.target.value)}
+              disabled={!!readOnly}
+            />
             </TableCell>
             <TableCell>
               <Select
                 value={modalityStatuses[modalidade.id] || modalidade.status}
                 onValueChange={(value) => onStatusChange(modalidade.id, value)}
-                disabled={!justifications[modalidade.id] || isUpdating[modalidade.id]}
+                disabled={!!readOnly || !justifications[modalidade.id] || isUpdating[modalidade.id]}
               >
                 <SelectTrigger className={cn(
                   "w-[180px]",
-                  (!justifications[modalidade.id] || isUpdating[modalidade.id]) && "opacity-50 cursor-not-allowed"
+                  ((!!readOnly) || !justifications[modalidade.id] || isUpdating[modalidade.id]) && "opacity-50 cursor-not-allowed"
                 )}>
                   <SelectValue placeholder="Selecione o status" />
                 </SelectTrigger>

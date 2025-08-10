@@ -7,13 +7,15 @@ interface ExemptionCheckboxProps {
   isExempt: boolean;
   isUpdatingExemption: boolean;
   onExemptionChange: (checked: boolean) => void;
+  disabled?: boolean;
 }
 
 export const ExemptionCheckbox: React.FC<ExemptionCheckboxProps> = ({
   isCurrentUser,
   isExempt,
   isUpdatingExemption,
-  onExemptionChange
+  onExemptionChange,
+  disabled
 }) => {
   if (!isCurrentUser) return null;
 
@@ -24,7 +26,7 @@ export const ExemptionCheckbox: React.FC<ExemptionCheckboxProps> = ({
           id="exempt-checkbox"
           checked={isExempt}
           onCheckedChange={onExemptionChange}
-          disabled={isUpdatingExemption}
+          disabled={isUpdatingExemption || !!disabled}
         />
         <label htmlFor="exempt-checkbox" className="text-sm font-medium text-blue-700">
           Marcar como isento (valor do pagamento será zerado)

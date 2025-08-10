@@ -37,7 +37,7 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
   });
   
   const handleStatusChange = (value: string) => {
-    form.setValue('status_evento', value as 'ativo' | 'encerrado' | 'suspenso' | 'em_teste');
+    form.setValue('status_evento', value as 'ativo' | 'encerrado' | 'suspenso' | 'em_teste' | 'encerrado_oculto');
   };
 
   const handleTipoChange = (value: string) => {

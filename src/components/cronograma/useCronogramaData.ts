@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { ScheduleActivity } from './types';
 import { expandRecurrentActivity } from './utils';
+import { parseISO, isValid, startOfDay, isBefore } from 'date-fns';
 
 export function useCronogramaData() {
   const currentEventId = localStorage.getItem('currentEventId');
@@ -109,44 +110,62 @@ export function useCronogramaData() {
     enabled: !!currentEventId,
   });
 
-  // Group activities by date and time
-  const groupedActivities = activities?.reduce((groups: any, activity) => {
-    const date = activity.dia;
-    const time = `${activity.horario_inicio}-${activity.horario_fim}`;
-    
-    if (!groups[date]) {
-      groups[date] = {};
+// Filter out past punctual (non-recurrent) activities
+const todayStart = startOfDay(new Date());
+const visibleActivities = (activities || []).filter((a: any) => {
+  const isRecurrent = Array.isArray(a.dias_semana) && a.dias_semana.length > 0;
+  if (isRecurrent) return true;
+  if (!a.dia) return true;
+  const key = String(a.dia);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
+    try {
+      const d = parseISO(key);
+      return isValid(d) && !isBefore(d, todayStart);
+    } catch {
+      return true;
     }
-    
-    if (!groups[date][time]) {
-      groups[date][time] = [];
-    }
-    
-    groups[date][time].push(activity);
-    
-    return groups;
-  }, {});
+  }
+  return true;
+});
 
-  // Get unique dates (now will include all days from recurrent activities)
-  const dates = Object.keys(groupedActivities || {}).sort((a, b) => {
-    // Sort days of week in logical order
-    const dayOrder = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
-    const indexA = dayOrder.indexOf(a);
-    const indexB = dayOrder.indexOf(b);
-    
-    // If both are day keys, sort by day order
-    if (indexA !== -1 && indexB !== -1) {
-      return indexA - indexB;
-    }
-    
-    // If they're dates, sort alphabetically (which works for ISO dates)
-    return a.localeCompare(b);
-  });
+// Group activities by date and time
+const groupedActivities = visibleActivities.reduce((groups: any, activity: any) => {
+  const date = activity.dia;
+  const time = `${activity.horario_inicio}-${activity.horario_fim}`;
+  
+  if (!groups[date]) {
+    groups[date] = {};
+  }
+  
+  if (!groups[date][time]) {
+    groups[date][time] = [];
+  }
+  
+  groups[date][time].push(activity);
+  
+  return groups;
+}, {});
 
-  // Get unique time slots
-  const timeSlots = [...new Set(
-    activities?.map((activity: any) => `${activity.horario_inicio}-${activity.horario_fim}`)
-  )].sort();
+// Get unique dates (now will include all days from recurrent activities)
+const dates = Object.keys(groupedActivities || {}).sort((a, b) => {
+  // Sort days of week in logical order
+  const dayOrder = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
+  const indexA = dayOrder.indexOf(a);
+  const indexB = dayOrder.indexOf(b);
+  
+  // If both are day keys, sort by day order
+  if (indexA !== -1 && indexB !== -1) {
+    return indexA - indexB;
+  }
+  
+  // If they're dates, sort alphabetically (which works for ISO dates)
+  return a.localeCompare(b);
+});
+
+// Get unique time slots
+const timeSlots = [...new Set(
+  visibleActivities.map((activity: any) => `${activity.horario_inicio}-${activity.horario_fim}`)
+)].sort();
 
   return {
     activities,

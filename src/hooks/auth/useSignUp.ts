@@ -8,8 +8,8 @@ export const useSignUp = () => {
   const signUp = useCallback(async (email: string, password: string, userData?: any): Promise<any> => {
     try {
       setLoading(true);
-      console.log('🚀 Starting signup process for:', email);
-      console.log('📝 User data received:', userData);
+      console.log('🚀 Starting signup process');
+      console.log('📝 User data received (sanitized)');
 
       // Ensure we have properly formatted user metadata with all required fields
       const userMetadata = {
@@ -24,7 +24,7 @@ export const useSignUp = () => {
         filial_id: String(userData?.filial_id || userData?.branchId || '').trim()
       };
 
-      console.log('📝 Final user metadata for Supabase:', userMetadata);
+      console.log('📝 User metadata prepared for Supabase');
 
       // Attempt to sign up user
       const { data, error } = await supabase.auth.signUp({
@@ -36,7 +36,7 @@ export const useSignUp = () => {
         }
       });
 
-      console.log('📋 Signup response - data:', data, 'error:', error);
+      console.log('📋 Signup response received');
 
       // Handle specific email confirmation error for self-hosted instances
       if (error) {
@@ -74,11 +74,7 @@ export const useSignUp = () => {
 
       // Success case with user data
       if (data.user) {
-        console.log('✅ Signup successful:', {
-          user: data.user.id,
-          session: !!data.session,
-          needsConfirmation: !data.session
-        });
+        console.log('✅ Signup successful');
 
         // Verificar se o usuário foi criado na tabela usuarios
         try {
@@ -115,7 +111,7 @@ export const useSignUp = () => {
                 updated_at: new Date().toISOString()
               };
 
-              console.log('📝 Inserting user data:', usuarioData);
+              console.log('📝 Inserting user data (sanitized)');
               
               const { data: insertData, error: insertError } = await supabase
                 .from('usuarios')
@@ -127,7 +123,7 @@ export const useSignUp = () => {
                 console.error('❌ Failed to create user in usuarios table:', insertError);
                 throw new Error('Falha ao criar usuário na tabela usuarios');
               } else {
-                console.log('✅ User created manually in usuarios table:', insertData);
+                console.log('✅ User created manually in usuarios table');
                 
                 // Também tentar atribuir papel de ATL (atleta) como faz o trigger
                 try {
@@ -154,7 +150,7 @@ export const useSignUp = () => {
               throw new Error('Falha ao criar usuário no sistema');
             }
           } else {
-            console.log('✅ User found in usuarios table:', usuarioData);
+            console.log('✅ User found in usuarios table');
           }
         } catch (checkError) {
           console.error('❌ Error checking usuarios table:', checkError);

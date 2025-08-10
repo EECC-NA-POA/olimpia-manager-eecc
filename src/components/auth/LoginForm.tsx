@@ -31,8 +31,7 @@ export const LoginForm = () => {
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
       setIsSubmitting(true);
-      console.log('🔐 Attempting login for:', values.email);
-      console.log('🔐 Login process starting...');
+      console.log('🔐 Attempting login');
       
       await signIn(values.email, values.password);
       

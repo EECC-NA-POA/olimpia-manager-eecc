@@ -20,6 +20,7 @@ interface EnrollmentListProps {
   registeredModalities: RegisteredModality[];
   withdrawMutation: UseMutationResult<void, Error, number, unknown>;
   modalitiesWithRepresentatives?: any[];
+  readOnly?: boolean;
 }
 
 const formatDate = (dateString: string | null) => {
@@ -54,7 +55,8 @@ const formatPhoneForWhatsApp = (phone: string) => {
 export const EnrollmentList = ({ 
   registeredModalities, 
   withdrawMutation,
-  modalitiesWithRepresentatives = []
+  modalitiesWithRepresentatives = [],
+  readOnly = false
 }: EnrollmentListProps) => {
   const getRepresentativesForModality = (modalityId: number) => {
     const modality = modalitiesWithRepresentatives.find(m => m.id === modalityId);
@@ -123,7 +125,7 @@ export const EnrollmentList = ({
                 <Button
                   variant="destructive"
                   size="sm"
-                  disabled={registration.status !== 'pendente' || withdrawMutation.isPending}
+                  disabled={readOnly || registration.status !== 'pendente' || withdrawMutation.isPending}
                   onClick={() => withdrawMutation.mutate(registration.id)}
                   className="w-full"
                 >
@@ -133,7 +135,7 @@ export const EnrollmentList = ({
                       Processando...
                     </>
                   ) : (
-                    "Desistir"
+                    readOnly ? 'Indisponível' : 'Desistir'
                   )}
                 </Button>
               </CardContent>
@@ -207,7 +209,7 @@ export const EnrollmentList = ({
                     <Button
                       variant="destructive"
                       size="sm"
-                      disabled={registration.status !== 'pendente' || withdrawMutation.isPending}
+                      disabled={readOnly || registration.status !== 'pendente' || withdrawMutation.isPending}
                       onClick={() => withdrawMutation.mutate(registration.id)}
                       className="transition-all duration-200 hover:bg-red-600"
                     >
@@ -217,7 +219,7 @@ export const EnrollmentList = ({
                           Processando...
                         </>
                       ) : (
-                        "Desistir"
+                        readOnly ? 'Indisponível' : 'Desistir'
                       )}
                     </Button>
                   </TableCell>

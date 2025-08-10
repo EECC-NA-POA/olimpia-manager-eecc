@@ -73,14 +73,17 @@ export const validateRepresentativePermission = async (eventId: string, expected
 
     console.log('User roles for event:', userRoles);
 
-    // Check for valid roles
-    const validRoles = ['Administração', 'Representante de Delegação'];
-    const userRole = userRoles?.find((role: any) => {
+    // Determine effective role with admin precedence
+    const roleNames = (userRoles || []).map((role: any) => {
       const perfil = Array.isArray(role.perfis) ? role.perfis[0] : role.perfis;
-      return validRoles.includes(perfil?.nome);
-    });
+      return perfil?.nome as string | undefined;
+    }).filter(Boolean);
 
-    if (!userRole) {
+    const roleName = roleNames.includes('Administração')
+      ? 'Administração'
+      : (roleNames.includes('Representante de Delegação') ? 'Representante de Delegação' : null);
+
+    if (!roleName) {
       console.log('User does not have valid role for representative management');
       return {
         isValid: false,
@@ -90,8 +93,6 @@ export const validateRepresentativePermission = async (eventId: string, expected
       };
     }
 
-    const perfil = Array.isArray(userRole.perfis) ? userRole.perfis[0] : userRole.perfis;
-    const roleName = perfil?.nome;
     console.log('User has valid role:', roleName);
 
     // For Representante de Delegação, validate filial match

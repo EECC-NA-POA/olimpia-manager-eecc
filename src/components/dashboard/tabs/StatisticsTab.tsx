@@ -99,13 +99,23 @@ export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
   const calculatedTotals = calculateTotals(filteredData);
   console.log("Calculated totals:", calculatedTotals);
 
+  // For delegation view, use the single branch record to avoid duplicate aggregation
+  const branchRecord = currentBranchId ? (filteredData.find(item => item.filial_id === currentBranchId) ?? filteredData[0]) : undefined;
+
   // Map the calculated totals to the format expected by SummaryCards
-  const summaryCardsTotals = {
-    inscricoes: calculatedTotals.totalGeral,
-    pago: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pago) || 0), 0),
-    pendente: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pendente) || 0), 0),
-    isento: calculatedTotals.totalIsentos
-  };
+  const summaryCardsTotals = currentBranchId && branchRecord
+    ? {
+        inscricoes: Number(branchRecord.total_inscritos_geral) || 0,
+        pago: Number(branchRecord.valor_total_pago) || 0,
+        pendente: Number(branchRecord.valor_total_pendente) || 0,
+        isento: branchRecord.inscritos_por_status_pagamento?.find(s => s.status_pagamento === 'isento')?.quantidade || 0
+      }
+    : {
+        inscricoes: calculatedTotals.totalGeral,
+        pago: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pago) || 0), 0),
+        pendente: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pendente) || 0), 0),
+        isento: calculatedTotals.totalIsentos
+      };
   console.log("Summary cards totals:", summaryCardsTotals);
 
   // Transform data for charts

@@ -211,11 +211,15 @@ class UserManagementService {
       });
 
       // Validar confirmação com dados normalizados
-      if (normalizedUserEmail !== normalizedConfirmationEmail || 
-          normalizedUserDocument !== normalizedConfirmationDocument) {
+      const emailMatches = normalizedUserEmail === normalizedConfirmationEmail;
+      const documentMatches = isAuthOnly
+        ? true // Para auth-only, não exigir confirmação de documento
+        : (normalizedUserDocument ? normalizedUserDocument === normalizedConfirmationDocument : true);
+
+      if (!emailMatches || !documentMatches) {
         console.error('❌ Validação falhou:', {
-          emailMatch: normalizedUserEmail === normalizedConfirmationEmail,
-          documentMatch: normalizedUserDocument === normalizedConfirmationDocument
+          emailMatch: emailMatches,
+          documentMatch: documentMatches,
         });
         throw new Error('Email ou documento de confirmação não conferem');
       }
