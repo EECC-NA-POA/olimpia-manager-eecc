@@ -96,7 +96,7 @@ export function PublicEventsSections() {
         {/* Encerrados */}
         <div>
           <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold text-white">Eventos PÚblicos Encerrados</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-white">Eventos Públicos Encerrados</h2>
           </div>
           {isLoading ? (
             <div className="text-center text-white/80">Carregando eventos...</div>
