@@ -14,7 +14,7 @@ export const useRegisterForm = () => {
 
   const handleSubmit = async (values: RegisterFormData) => {
     try {
-      console.log('🎯 Starting registration process with values:', values);
+      console.log('🎯 Starting registration process');
       setIsSubmitting(true);
 
       // Validate required fields
@@ -45,17 +45,14 @@ export const useRegisterForm = () => {
         filial_id: values.branchId || ''
       };
 
-      console.log('📝 User metadata for registration:', userMetadata);
-
       // Attempt to sign up user
       const result = await signUp(values.email, values.password, userMetadata);
 
-      console.log('📋 Registration result:', result);
+      
 
       // Check if we have a proper result
       if (result && result.user) {
-        console.log('✅ Registration successful - user created with ID:', result.user.id);
-        
+        console.log('✅ Registration successful');
         // Register privacy policy acceptance
         try {
           await registerPrivacyPolicyAcceptance(result.user.id);
@@ -113,7 +110,7 @@ export const useRegisterForm = () => {
 
   const registerPrivacyPolicyAcceptance = async (userId: string) => {
     try {
-      console.log('Registering privacy policy acceptance for user:', userId);
+      console.log('Registering privacy policy acceptance');
       
       // Get the latest privacy policy
       const { data: latestPolicy, error: policyError } = await supabase

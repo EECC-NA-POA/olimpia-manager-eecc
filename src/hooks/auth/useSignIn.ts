@@ -8,7 +8,7 @@ export const useSignIn = () => {
   const signIn = useCallback(async (email: string, password: string): Promise<void> => {
     try {
       setLoading(true);
-      console.log('🔐 Starting signin process for:', email);
+      console.log('🔐 Starting signin process');
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -20,10 +20,7 @@ export const useSignIn = () => {
         throw error;
       }
 
-      console.log('✅ Signin successful:', {
-        user: data.user?.id,
-        session: !!data.session
-      });
+      console.log('✅ Signin successful');
 
     } catch (error: any) {
       console.error('Sign in error occurred');
