@@ -33,7 +33,8 @@ const Index = () => {
         <HeroSection />
 
         {/* Public Events Sections (Abertos e Encerrados) */}
-        <PublicEventsSections />
+        {/* Public Events Sections (temporariamente oculto até configurar a KEY) */}
+        {false && <PublicEventsSections />}
 
         {/* Features Section */}
         <FeaturesSection />
