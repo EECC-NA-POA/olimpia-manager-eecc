@@ -149,12 +149,8 @@ export const useMonitorScheduleData = (modalidadeFilter?: number | null) => {
     }
 
     originalOpenAddDialog();
-    // Pre-select monitor's modalidades for new activities
-    if (modalidadeFilter) {
-      handleModalitiesChange([modalidadeFilter]);
-    } else {
-      handleModalitiesChange(monitorModalityIds);
-    }
+    // Iniciar com nenhuma modalidade selecionada
+    handleModalitiesChange([]);
   };
 
   // Override openEditDialog with permission check
