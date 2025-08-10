@@ -19,13 +19,15 @@ interface AthleteRegistrationCardProps {
   onStatusChange: (modalityId: string, status: string, justification: string) => Promise<void>;
   onPaymentStatusChange?: (athleteId: string, status: string) => Promise<void>;
   isCurrentUser: boolean;
+  readOnly?: boolean;
 }
 
 export function AthleteRegistrationCard({
   registration,
   onStatusChange,
   onPaymentStatusChange,
-  isCurrentUser
+  isCurrentUser,
+  readOnly = false
 }: AthleteRegistrationCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -137,7 +139,7 @@ export function AthleteRegistrationCard({
             onPaymentStatusChange={onPaymentStatusChange ? (status) => onPaymentStatusChange(registration.id, status) : undefined}
             paymentControlProps={{
               value: localInputAmount,
-              disabled: isUpdatingAmount || isExempt,
+              disabled: isUpdatingAmount || isExempt || readOnly,
               isUpdating: isUpdatingAmount,
               onInputChange: handleAmountInputChange,
               onSave: handleSaveAmount,
@@ -152,6 +154,7 @@ export function AthleteRegistrationCard({
               onJustificationChange: handleJustificationChange,
               onStatusChange: handleStatusChange
             } : undefined}
+            readOnly={readOnly}
           />
 
           <ExemptionCheckbox
@@ -159,6 +162,7 @@ export function AthleteRegistrationCard({
             isExempt={isExempt}
             isUpdatingExemption={isUpdatingExemption}
             onExemptionChange={handleExemptionChange}
+            disabled={readOnly}
           />
         </DialogContent>
       </Dialog>

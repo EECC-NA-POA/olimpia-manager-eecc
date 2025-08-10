@@ -16,11 +16,14 @@ import { useRegisteredModalities } from "@/hooks/useRegisteredModalities";
 import { useModalityMutations } from "@/hooks/useModalityMutations";
 import { useModalitiesWithRepresentatives } from "@/hooks/useModalityRepresentatives";
 import { Modality } from "@/types/modality";
+import { useReadOnlyEvent } from "@/hooks/useReadOnlyEvent";
 
 export default function AthleteRegistrations() {
   const { user } = useAuth();
   const [isEnrollmentsOpen, setIsEnrollmentsOpen] = React.useState(true);
   const currentEventId = localStorage.getItem('currentEventId');
+  const { data: readOnlyData } = useReadOnlyEvent(user?.id, currentEventId);
+  const isReadOnly = !!readOnlyData?.isReadOnly;
 
   const { data: athleteProfile, isLoading: profileLoading } = useAthleteProfile(user?.id, currentEventId);
   const { data: registeredModalities, isLoading: registrationsLoading } = useRegisteredModalities(user?.id, currentEventId);
@@ -74,6 +77,14 @@ export default function AthleteRegistrations() {
             As inscrições nas modalidades devem ser realizadas nesta página! Após a confirmação da inscrição em uma modalidade pelo Representante de Delegação, o atleta não poderá cancelar sua participação nesta modalidade diretamente pelo sistema. Caso seja necessário cancelar uma inscrição já aprovada, o atleta deverá entrar em contato com o seu respectivo Representante de Delegação para solicitar qualquer alteração.
           </AlertDescription>
         </Alert>
+        {isReadOnly && (
+          <Alert className="bg-yellow-100 border-yellow-300 text-yellow-900">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Este evento está encerrado ou suspenso. As ações de inscrição e cancelamento estão desabilitadas. Você ainda pode visualizar seu histórico.
+            </AlertDescription>
+          </Alert>
+        )}
         
         <Collapsible
           open={isEnrollmentsOpen}
@@ -103,6 +114,7 @@ export default function AthleteRegistrations() {
                       registeredModalities={registeredModalities || []}
                       withdrawMutation={withdrawMutation}
                       modalitiesWithRepresentatives={modalitiesWithRepresentatives || []}
+                      readOnly={isReadOnly}
                     />
 
                     <AvailableModalities
@@ -110,6 +122,7 @@ export default function AthleteRegistrations() {
                       registeredModalities={registeredModalities || []}
                       registerMutation={registerMutation}
                       userGender={athleteProfile?.genero?.toLowerCase() || ''}
+                      readOnly={isReadOnly}
                     />
                   </div>
                 </CardContent>

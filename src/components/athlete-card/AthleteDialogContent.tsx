@@ -39,7 +39,7 @@ interface AthleteDialogContentProps {
     onJustificationChange: (modalityId: string, value: string) => void;
     onStatusChange: (modalityId: string, status: string) => void;
   };
-}
+  readOnly?: boolean;
 
 export const AthleteDialogContent: React.FC<AthleteDialogContentProps> = ({
   nome,
@@ -56,7 +56,8 @@ export const AthleteDialogContent: React.FC<AthleteDialogContentProps> = ({
   registradorInfo,
   onPaymentStatusChange,
   paymentControlProps,
-  modalitiesProps
+  modalitiesProps,
+  readOnly
 }) => {
   const hasModalities = modalitiesProps?.modalidades.length > 0;
 
@@ -89,6 +90,7 @@ export const AthleteDialogContent: React.FC<AthleteDialogContentProps> = ({
               <div className="pt-4 border-t border-gray-200">
                 <PaymentStatusControls
                   onPaymentStatusChange={onPaymentStatusChange}
+                  readOnly={readOnly}
                   {...paymentControlProps}
                 />
               </div>
@@ -99,7 +101,7 @@ export const AthleteDialogContent: React.FC<AthleteDialogContentProps> = ({
 
       {hasModalities && modalitiesProps && (
         <ScrollArea className="h-[50vh] w-full rounded-md border p-4">
-          <ModalitiesTable {...modalitiesProps} />
+          <ModalitiesTable {...modalitiesProps} readOnly={readOnly} />
         </ScrollArea>
       )}
     </>
