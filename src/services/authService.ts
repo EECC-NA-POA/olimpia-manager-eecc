@@ -9,7 +9,7 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
 export const fetchUserProfile = async (userId: string) => {
   try {
-    console.log('Fetching user profile data for user:', userId);
+    console.log('Fetching user profile data');
     
     // Force clear cache for debugging role issues
     userProfileCache.clear();
@@ -157,7 +157,7 @@ export const forceClearAllCache = () => {
 // Fallback function for when RPC fails
 const fetchUserProfileFallback = async (userId: string, currentEventId: string) => {
   console.log('=== FALLBACK USER PROFILE FETCH ===');
-  console.log('userId:', userId, 'eventId:', currentEventId);
+  console.log('userId and eventId provided to fallback fetch');
   
   try {
     // Fetch basic user data
@@ -173,7 +173,7 @@ const fetchUserProfileFallback = async (userId: string, currentEventId: string) 
     }
 
     // Fetch user roles for the event with better error handling
-    console.log('Fetching roles for user:', userId, 'event:', currentEventId);
+    console.log('Fetching roles for user (sanitized) and event');
     const { data: rolesData, error: rolesError } = await supabase
       .from('papeis_usuarios')
       .select(`

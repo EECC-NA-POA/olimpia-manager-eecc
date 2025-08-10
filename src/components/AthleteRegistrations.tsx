@@ -16,11 +16,14 @@ import { useRegisteredModalities } from "@/hooks/useRegisteredModalities";
 import { useModalityMutations } from "@/hooks/useModalityMutations";
 import { useModalitiesWithRepresentatives } from "@/hooks/useModalityRepresentatives";
 import { Modality } from "@/types/modality";
+import { useReadOnlyEvent } from "@/hooks/useReadOnlyEvent";
 
 export default function AthleteRegistrations() {
   const { user } = useAuth();
   const [isEnrollmentsOpen, setIsEnrollmentsOpen] = React.useState(true);
   const currentEventId = localStorage.getItem('currentEventId');
+  const { data: readOnlyData } = useReadOnlyEvent(user?.id, currentEventId);
+  const isReadOnly = !!readOnlyData?.isReadOnly;
 
   const { data: athleteProfile, isLoading: profileLoading } = useAthleteProfile(user?.id, currentEventId);
   const { data: registeredModalities, isLoading: registrationsLoading } = useRegisteredModalities(user?.id, currentEventId);
@@ -68,12 +71,14 @@ export default function AthleteRegistrations() {
   return (
     <div className="min-h-screen pb-20 md:pb-6">
       <div className="container mx-auto py-2 sm:py-4 lg:py-6 space-y-3 sm:space-y-4 lg:space-y-6 px-2 sm:px-4 max-w-full">
-        <Alert className="bg-olimpics-green-primary/10 border-olimpics-green-primary text-olimpics-text shadow-sm transition-all duration-200 hover:bg-olimpics-green-primary/15">
-          <Info className="h-4 w-4 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-olimpics-green-primary flex-shrink-0 mt-0.5" />
-          <AlertDescription className="text-xs sm:text-sm lg:text-sm leading-relaxed pl-2 sm:pl-0">
-            As inscrições nas modalidades devem ser realizadas nesta página! Após a confirmação da inscrição em uma modalidade pelo Representante de Delegação, o atleta não poderá cancelar sua participação nesta modalidade diretamente pelo sistema. Caso seja necessário cancelar uma inscrição já aprovada, o atleta deverá entrar em contato com o seu respectivo Representante de Delegação para solicitar qualquer alteração.
-          </AlertDescription>
-        </Alert>
+        {isReadOnly && (
+          <Alert className="bg-yellow-100 border-yellow-300 text-yellow-900">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Este evento está encerrado ou suspenso. As ações de inscrição e cancelamento estão desabilitadas. Você ainda pode visualizar seu histórico.
+            </AlertDescription>
+          </Alert>
+        )}
         
         <Collapsible
           open={isEnrollmentsOpen}
@@ -103,6 +108,7 @@ export default function AthleteRegistrations() {
                       registeredModalities={registeredModalities || []}
                       withdrawMutation={withdrawMutation}
                       modalitiesWithRepresentatives={modalitiesWithRepresentatives || []}
+                      readOnly={isReadOnly}
                     />
 
                     <AvailableModalities
@@ -110,6 +116,7 @@ export default function AthleteRegistrations() {
                       registeredModalities={registeredModalities || []}
                       registerMutation={registerMutation}
                       userGender={athleteProfile?.genero?.toLowerCase() || ''}
+                      readOnly={isReadOnly}
                     />
                   </div>
                 </CardContent>

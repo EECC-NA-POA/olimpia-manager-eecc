@@ -13,11 +13,15 @@ export const useSignOut = () => {
       // Clear any stored event ID
       localStorage.removeItem('currentEventId');
 
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
       
       if (error) {
-        console.error('❌ Signout error:', error);
-        throw error;
+        console.warn('⚠️ Global signout failed, trying local signout');
+        const { error: localError } = await supabase.auth.signOut({ scope: 'local' });
+        if (localError) {
+          console.error('❌ Signout error:', localError);
+          throw localError;
+        }
       }
 
       console.log('✅ Signout successful');

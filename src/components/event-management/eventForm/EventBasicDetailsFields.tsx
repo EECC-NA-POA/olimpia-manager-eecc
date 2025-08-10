@@ -47,6 +47,7 @@ export function EventBasicDetailsFields({
             <SelectItem value="suspenso">Suspenso</SelectItem>
             <SelectItem value="em_teste">Em Teste</SelectItem>
             <SelectItem value="encerrado">Encerrado</SelectItem>
+            <SelectItem value="encerrado_oculto">Encerrado (Oculto)</SelectItem>
           </SelectContent>
         </Select>
       </div>

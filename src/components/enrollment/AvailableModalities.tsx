@@ -13,13 +13,15 @@ interface AvailableModalitiesProps {
   registeredModalities: RegisteredModality[];
   registerMutation: UseMutationResult<void, Error, number, unknown>;
   userGender: string;
+  readOnly?: boolean;
 }
 
 export const AvailableModalities = ({
   groupedModalities,
   registeredModalities,
   registerMutation,
-  userGender
+  userGender,
+  readOnly = false
 }: AvailableModalitiesProps) => {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
@@ -144,7 +146,7 @@ export const AvailableModalities = ({
                             
                             <Button
                               size="sm"
-                              disabled={!canRegister || registerMutation.isPending}
+                              disabled={readOnly || !canRegister || registerMutation.isPending}
                               onClick={() => registerMutation.mutate(modality.id)}
                               className={`w-full text-xs ${
                                 isRegistered 
@@ -162,7 +164,7 @@ export const AvailableModalities = ({
                               ) : (
                                 <>
                                   <Plus className="mr-1 h-3 w-3" />
-                                  Inscrever-se
+                                  {readOnly ? 'Indisponível' : 'Inscrever-se'}
                                 </>
                               )}
                             </Button>
@@ -210,7 +212,7 @@ export const AvailableModalities = ({
                               
                               <Button
                                 size="sm"
-                                disabled={!canRegister || registerMutation.isPending}
+                                disabled={readOnly || !canRegister || registerMutation.isPending}
                                 onClick={() => registerMutation.mutate(modality.id)}
                                 className={`w-full ${
                                   isRegistered 
@@ -228,7 +230,7 @@ export const AvailableModalities = ({
                                 ) : (
                                   <>
                                     <Plus className="mr-2 h-4 w-4" />
-                                    Inscrever-se
+                                    {readOnly ? 'Indisponível' : 'Inscrever-se'}
                                   </>
                                 )}
                               </Button>

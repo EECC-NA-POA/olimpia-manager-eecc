@@ -116,9 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         console.log('📊 Session status:', {
-          hasSession: !!session,
-          userId: session?.user?.id || 'none',
-          email: session?.user?.email || 'none'
+          hasSession: !!session
         });
 
         // Only redirect if no session and not on public route

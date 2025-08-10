@@ -29,14 +29,13 @@ export function EventsLandingContainer() {
   const [sortBy, setSortBy] = useState<SortBy>('date');
 
   const { data: events, isLoading, error } = useQuery({
-    queryKey: ['public-events'],
+    queryKey: ['public-events-view'],
     queryFn: async () => {
-      console.log('Fetching public events with anonymous client...');
+      console.log('Fetching public events from view with anonymous client...');
       
       const { data, error } = await publicSupabase
-        .from('eventos')
+        .from('vw_eventos_publicos_abertos')
         .select('*')
-        .eq('visibilidade_publica', true)
         .order('data_inicio_inscricao', { ascending: false });
 
       if (error) {

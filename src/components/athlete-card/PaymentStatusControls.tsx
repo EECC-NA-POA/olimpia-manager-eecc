@@ -12,6 +12,7 @@ interface PaymentStatusControlsProps {
   onInputChange: (value: string) => void;
   onSave: () => void;
   onBlur: () => void;
+  readOnly?: boolean;
 }
 
 export const PaymentStatusControls: React.FC<PaymentStatusControlsProps> = ({
@@ -21,13 +22,14 @@ export const PaymentStatusControls: React.FC<PaymentStatusControlsProps> = ({
   isUpdating,
   onInputChange,
   onSave,
-  onBlur
+  onBlur,
+  readOnly
 }) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <label className="text-sm text-muted-foreground">Status do pagamento:</label>
-        <Select onValueChange={onPaymentStatusChange}>
+        <Select onValueChange={onPaymentStatusChange} disabled={disabled || !!readOnly}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Alterar status" />
           </SelectTrigger>
@@ -40,7 +42,7 @@ export const PaymentStatusControls: React.FC<PaymentStatusControlsProps> = ({
       </div>
       <PaymentAmountField
         value={value}
-        disabled={disabled}
+        disabled={disabled || !!readOnly}
         isUpdating={isUpdating}
         onInputChange={onInputChange}
         onSave={onSave}

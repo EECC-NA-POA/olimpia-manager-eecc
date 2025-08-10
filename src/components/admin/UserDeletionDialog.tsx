@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,7 +38,7 @@ export function UserDeletionDialog({ user, open, onOpenChange }: UserDeletionDia
   const isFormValid = 
     user.email && 
     normalizedConfirmationEmail === normalizedUserEmail && 
-    (user.isAuthOnly && !user.numero_documento ? true : normalizedConfirmationDocument === normalizedUserDocument) &&
+    (user.isAuthOnly ? true : (normalizedUserDocument ? normalizedConfirmationDocument === normalizedUserDocument : true)) &&
     (deletionType === 'auth_only' || secondConfirmation);
 
   const handleDelete = async () => {
@@ -78,6 +78,9 @@ export function UserDeletionDialog({ user, open, onOpenChange }: UserDeletionDia
         </DialogHeader>
 
         <div className="space-y-4">
+          <DialogDescription>
+            Confirme abaixo as informações para excluir este usuário. Para contas apenas de autenticação, a confirmação de documento é opcional.
+          </DialogDescription>
           <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
@@ -146,7 +149,7 @@ export function UserDeletionDialog({ user, open, onOpenChange }: UserDeletionDia
 
             {(!user.isAuthOnly || user.numero_documento) && (
               <div>
-                <Label htmlFor="confirm_document">Confirme o documento do usuário (apenas números)</Label>
+                <Label htmlFor="confirm_document">Confirme o documento do usuário (apenas números) {user.isAuthOnly && '(opcional para Auth Only)'}</Label>
                 <Input
                   id="confirm_document"
                   value={confirmationDocument}

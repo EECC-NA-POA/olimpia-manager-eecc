@@ -13,7 +13,7 @@ export const eventBasicInfoSchema = z.object({
   data_fim_evento: z.string().optional().nullable(),
   data_inicio_inscricao: z.string().optional().nullable(),
   data_fim_inscricao: z.string().optional().nullable(),
-  status_evento: z.enum(['ativo', 'encerrado', 'suspenso', 'em_teste']),
+  status_evento: z.enum(['ativo', 'encerrado', 'suspenso', 'em_teste', 'encerrado_oculto']),
   foto_evento: z.string().optional().nullable(),
   visibilidade_publica: z.boolean().default(true),
 });

@@ -14,7 +14,7 @@ export const useRegisterForm = () => {
 
   const handleSubmit = async (values: RegisterFormData) => {
     try {
-      console.log('🎯 Starting registration process with values:', values);
+      console.log('🎯 Starting registration process');
       setIsSubmitting(true);
 
       // Validate required fields
@@ -45,17 +45,14 @@ export const useRegisterForm = () => {
         filial_id: values.branchId || ''
       };
 
-      console.log('📝 User metadata for registration:', userMetadata);
-
       // Attempt to sign up user
       const result = await signUp(values.email, values.password, userMetadata);
 
-      console.log('📋 Registration result:', result);
+      
 
       // Check if we have a proper result
       if (result && result.user) {
-        console.log('✅ Registration successful - user created with ID:', result.user.id);
-        
+        console.log('✅ Registration successful');
         // Register privacy policy acceptance
         try {
           await registerPrivacyPolicyAcceptance(result.user.id);
@@ -69,7 +66,7 @@ export const useRegisterForm = () => {
         toast.success('Cadastro realizado com sucesso! Faça login para continuar.');
         setTimeout(() => {
           console.log('🔄 Redirecting to login after successful signup');
-          navigate('/login', { replace: true });
+          navigate('/login?tab=login', { replace: true });
         }, 1500);
       } else {
         console.error('❌ Registration failed - no valid result returned');
@@ -86,7 +83,7 @@ export const useRegisterForm = () => {
         });
         // Redirect to login after showing error
         setTimeout(() => {
-          navigate('/login', { replace: true });
+          navigate('/login?tab=login', { replace: true });
         }, 2000);
       } else if (error.message === 'MAILER_ERROR') {
         toast.success('Cadastro realizado! Problema no envio do email de confirmação. Faça login para continuar.', { 
@@ -95,7 +92,7 @@ export const useRegisterForm = () => {
         // Always redirect to login for email errors since user might be created
         setTimeout(() => {
           console.log('🔄 Redirecting to login after email error');
-          navigate('/login', { replace: true });
+          navigate('/login?tab=login', { replace: true });
         }, 2000);
       } else if (error.message?.includes('Invalid email')) {
         toast.error('Email inválido. Por favor, verifique o formato.');
@@ -113,7 +110,7 @@ export const useRegisterForm = () => {
 
   const registerPrivacyPolicyAcceptance = async (userId: string) => {
     try {
-      console.log('Registering privacy policy acceptance for user:', userId);
+      console.log('Registering privacy policy acceptance');
       
       // Get the latest privacy policy
       const { data: latestPolicy, error: policyError } = await supabase

@@ -14,7 +14,9 @@ export const useMonitorScheduleData = (modalidadeFilter?: number | null) => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Get modality IDs that this monitor represents
-  const monitorModalityIds = monitorModalities.map(m => m.modalidade_id);
+  const monitorModalityIds = monitorModalities
+    .map((m: any) => m?.modalidade_id)
+    .filter((id: any): id is number => typeof id === 'number' && !Number.isNaN(id));
 
   const fetchMonitorSchedule = async () => {
     if (!currentEventId || !user || monitorModalityIds.length === 0) {
@@ -114,9 +116,7 @@ export const useMonitorScheduleData = (modalidadeFilter?: number | null) => {
   };
 
   useEffect(() => {
-    if (monitorModalityIds.length > 0) {
-      fetchMonitorSchedule();
-    }
+    fetchMonitorSchedule();
   }, [currentEventId, user, monitorModalityIds.length]);
 
   // Use existing form logic
@@ -142,11 +142,17 @@ export const useMonitorScheduleData = (modalidadeFilter?: number | null) => {
 
   // Override openAddDialog to set default modalidades for monitors
   const openAddDialog = () => {
+    // Prevent adding when monitor has no modalities linked
+    if (monitorModalityIds.length === 0) {
+      toast.error('Você não possui modalidades vinculadas. Contate o organizador.');
+      return;
+    }
+
     originalOpenAddDialog();
     // Pre-select monitor's modalidades for new activities
     if (modalidadeFilter) {
       handleModalitiesChange([modalidadeFilter]);
-    } else if (monitorModalityIds.length > 0) {
+    } else {
       handleModalitiesChange(monitorModalityIds);
     }
   };
@@ -193,7 +199,7 @@ export const useMonitorScheduleData = (modalidadeFilter?: number | null) => {
     }
   };
 
-  // Override handleDelete with permission check
+  // Override handleDelete with permission check e execução direta (confirmação via UI)
   const handleDelete = async (id: number) => {
     const item = scheduleItems.find(item => item.id === id);
     if (!item) return;
@@ -209,7 +215,20 @@ export const useMonitorScheduleData = (modalidadeFilter?: number | null) => {
       return;
     }
 
-    await originalHandleDelete(id);
+    try {
+      const { error } = await supabase
+        .from('cronograma_atividades')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success('Atividade do cronograma excluída com sucesso!');
+      fetchMonitorSchedule();
+    } catch (error) {
+      console.error('Erro ao excluir atividade do cronograma (monitor):', error);
+      toast.error('Erro ao excluir atividade do cronograma');
+    }
   };
 
   return {
