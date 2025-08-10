@@ -1,6 +1,6 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabasePublic } from '@/lib/supabase-public';
 import type { Event } from '@/lib/types/database';
 
 export interface PublicEventsResult {
@@ -13,8 +13,8 @@ export function usePublicEvents() {
     queryKey: ['public-events'],
     queryFn: async () => {
       const [activeRes, closedRes] = await Promise.all([
-        supabase.from('vw_eventos_publicos_ativos').select('*'),
-        supabase.from('vw_eventos_publicos_encerrados').select('*')
+        supabasePublic.from('vw_eventos_publicos_ativos').select('*'),
+        supabasePublic.from('vw_eventos_publicos_encerrados').select('*')
       ]);
 
       if (activeRes.error) throw activeRes.error;
