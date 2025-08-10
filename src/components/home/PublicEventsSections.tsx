@@ -77,7 +77,7 @@ export function PublicEventsSections() {
                 <Calendar className="h-7 w-7 text-olimpics-orange-primary" />
               </div>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-white">Eventos com Inscrições Abertas</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-white">Eventos Públicos com Inscrições abertas</h2>
           </div>
 
           {isLoading ? (
@@ -96,7 +96,7 @@ export function PublicEventsSections() {
         {/* Encerrados */}
         <div>
           <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold text-white">Eventos Encerrados</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-white">Eventos PÚblicos Encerrados</h2>
           </div>
           {isLoading ? (
             <div className="text-center text-white/80">Carregando eventos...</div>

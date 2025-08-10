@@ -12,18 +12,17 @@ export function usePublicEvents() {
   return useQuery<PublicEventsResult>({
     queryKey: ['public-events'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('eventos')
-        .select('*')
-        .eq('visibilidade_publica', true)
-        .order('data_inicio_inscricao', { ascending: false });
+      const [activeRes, closedRes] = await Promise.all([
+        supabase.from('vw_eventos_publicos_ativos').select('*'),
+        supabase.from('vw_eventos_publicos_encerrados').select('*')
+      ]);
 
-      if (error) throw error;
+      if (activeRes.error) throw activeRes.error;
+      if (closedRes.error) throw closedRes.error;
 
-      const events = (data || []) as Event[];
       return {
-        active: events.filter(e => e.status_evento === 'ativo'),
-        closed: events.filter(e => e.status_evento === 'encerrado'),
+        active: (activeRes.data || []) as Event[],
+        closed: (closedRes.data || []) as Event[],
       };
     },
     staleTime: 60_000,
