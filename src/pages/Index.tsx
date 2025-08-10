@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { HeroSection } from '@/components/home/HeroSection';
-import { ActiveEventsSection } from '@/components/home/ActiveEventsSection';
+import { PublicEventsSections } from '@/components/home/PublicEventsSections';
 import { FeaturesSection } from '@/components/home/FeaturesSection';
 import { AboutSection } from '@/components/home/AboutSection';
+import { HeroSection } from '@/components/home/HeroSection';
 
 const Index = () => {
   return (
@@ -29,10 +29,11 @@ const Index = () => {
       {/* Content with higher z-index */}
       <div className="relative z-20">
         {/* Hero Section */}
+        {/* Mantendo a Hero existente */}
         <HeroSection />
 
-        {/* Active Events Section */}
-        <ActiveEventsSection />
+        {/* Public Events Sections (Abertos e Encerrados) */}
+        <PublicEventsSections />
 
         {/* Features Section */}
         <FeaturesSection />
