@@ -199,7 +199,7 @@ export const useMonitorScheduleData = (modalidadeFilter?: number | null) => {
     }
   };
 
-  // Override handleDelete with permission check
+  // Override handleDelete with permission check e execução direta (confirmação via UI)
   const handleDelete = async (id: number) => {
     const item = scheduleItems.find(item => item.id === id);
     if (!item) return;
@@ -215,7 +215,20 @@ export const useMonitorScheduleData = (modalidadeFilter?: number | null) => {
       return;
     }
 
-    await originalHandleDelete(id);
+    try {
+      const { error } = await supabase
+        .from('cronograma_atividades')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success('Atividade do cronograma excluída com sucesso!');
+      fetchMonitorSchedule();
+    } catch (error) {
+      console.error('Erro ao excluir atividade do cronograma (monitor):', error);
+      toast.error('Erro ao excluir atividade do cronograma');
+    }
   };
 
   return {
