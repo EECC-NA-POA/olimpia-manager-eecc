@@ -1,7 +1,8 @@
 
 import { ScheduleActivity } from './types';
+import { parseISO, format, isValid } from 'date-fns';
 
-// Helper function to get day label in Portuguese
+// Helper function to get day label in Portuguese or format ISO dates to dd/MM/yyyy
 export const getDayLabel = (dayKey: string): string => {
   const dayLabels: Record<string, string> = {
     'segunda': 'Segunda-feira',
@@ -12,6 +13,20 @@ export const getDayLabel = (dayKey: string): string => {
     'sabado': 'Sábado',
     'domingo': 'Domingo'
   };
+
+  // If the key is an ISO date (YYYY-MM-DD), return in Brazilian format
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dayKey)) {
+    try {
+      const d = parseISO(dayKey);
+      if (isValid(d)) {
+        return format(d, 'dd/MM/yyyy');
+      }
+    } catch (e) {
+      // fallback to original key
+    }
+    return dayKey;
+  }
+
   return dayLabels[dayKey] || dayKey;
 };
 
