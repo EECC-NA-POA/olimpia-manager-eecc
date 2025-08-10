@@ -71,12 +71,6 @@ export default function AthleteRegistrations() {
   return (
     <div className="min-h-screen pb-20 md:pb-6">
       <div className="container mx-auto py-2 sm:py-4 lg:py-6 space-y-3 sm:space-y-4 lg:space-y-6 px-2 sm:px-4 max-w-full">
-        <Alert className="bg-olimpics-green-primary/10 border-olimpics-green-primary text-olimpics-text shadow-sm transition-all duration-200 hover:bg-olimpics-green-primary/15">
-          <Info className="h-4 w-4 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-olimpics-green-primary flex-shrink-0 mt-0.5" />
-          <AlertDescription className="text-xs sm:text-sm lg:text-sm leading-relaxed pl-2 sm:pl-0">
-            As inscrições nas modalidades devem ser realizadas nesta página! Após a confirmação da inscrição em uma modalidade pelo Representante de Delegação, o atleta não poderá cancelar sua participação nesta modalidade diretamente pelo sistema. Caso seja necessário cancelar uma inscrição já aprovada, o atleta deverá entrar em contato com o seu respectivo Representante de Delegação para solicitar qualquer alteração.
-          </AlertDescription>
-        </Alert>
         {isReadOnly && (
           <Alert className="bg-yellow-100 border-yellow-300 text-yellow-900">
             <Info className="h-4 w-4" />
