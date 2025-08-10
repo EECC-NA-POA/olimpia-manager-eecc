@@ -241,6 +241,7 @@ export const useMonitorScheduleData = (modalidadeFilter?: number | null) => {
     handleLocalChange,
     handleDataFimRecorrenciaChange,
     handleSave,
-    handleDelete
+    handleDelete,
+    resetForm
   };
 };

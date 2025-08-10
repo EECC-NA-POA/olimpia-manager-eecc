@@ -39,7 +39,8 @@ export const MonitorSchedulePage: React.FC = () => {
     handleLocalChange,
     handleDataFimRecorrenciaChange,
     handleSave,
-    handleDelete
+    handleDelete,
+    resetForm
   } = useMonitorScheduleData(selectedModalidade === 'all' ? null : Number(selectedModalidade));
 
 const formatDate = (dateStr: string) => {
@@ -176,7 +177,10 @@ const confirmDelete = async () => {
       {/* Modal de Criação/Edição */}
         <ScheduleDialog
           isOpen={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) resetForm();
+          }}
           title={getDialogTitle()}
           currentItem={currentItem}
           handleInputChange={handleInputChange}
