@@ -40,7 +40,7 @@ interface AthleteDialogContentProps {
     onStatusChange: (modalityId: string, status: string) => void;
   };
   readOnly?: boolean;
-
+}
 export const AthleteDialogContent: React.FC<AthleteDialogContentProps> = ({
   nome,
   numeroIdentificador,
