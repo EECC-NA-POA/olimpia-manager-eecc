@@ -18,6 +18,7 @@ export interface Event {
   status_evento: 'ativo' | 'encerrado' | 'suspenso' | 'em_teste' | 'encerrado_oculto';
   visibilidade_publica: boolean;
   slug_pagina: string | null;
+  pagina_evento: string | null;
 }
 
 export interface EventBranch {
