@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import ProfileImage from './athlete/ProfileImage';
@@ -77,8 +77,12 @@ export default function AthleteProfile({ profile, isPublicUser }: AthleteProfile
         </Alert>
       )}
 
-      <Card>
-        <CardContent className="p-6">
+      <Card className="border border-olimpics-green-primary/10 shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-olimpics-text">Seu Perfil</CardTitle>
+          <CardDescription>Informações pessoais, pagamento e acesso</CardDescription>
+        </CardHeader>
+        <CardContent className="p-6 pt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <div>
               <ProfileImage 
