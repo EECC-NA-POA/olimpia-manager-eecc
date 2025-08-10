@@ -39,7 +39,7 @@ export function OrganizerModalitiesByCategory({
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {categories.map((category) => (
         <div key={category} className="space-y-4">
-          <div className="sticky top-0 bg-white z-10 pb-2">
+          <div className="sticky top-0 bg-white z-0 pb-2">
             <h3 className="text-lg font-semibold text-olimpics-text border-b-2 border-olimpics-green-primary pb-2 mb-4">
               {category}
             </h3>
