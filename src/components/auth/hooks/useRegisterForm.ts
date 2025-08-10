@@ -69,7 +69,7 @@ export const useRegisterForm = () => {
         toast.success('Cadastro realizado com sucesso! Faça login para continuar.');
         setTimeout(() => {
           console.log('🔄 Redirecting to login after successful signup');
-          navigate('/login', { replace: true });
+          navigate('/login?tab=login', { replace: true });
         }, 1500);
       } else {
         console.error('❌ Registration failed - no valid result returned');
@@ -86,7 +86,7 @@ export const useRegisterForm = () => {
         });
         // Redirect to login after showing error
         setTimeout(() => {
-          navigate('/login', { replace: true });
+          navigate('/login?tab=login', { replace: true });
         }, 2000);
       } else if (error.message === 'MAILER_ERROR') {
         toast.success('Cadastro realizado! Problema no envio do email de confirmação. Faça login para continuar.', { 
@@ -95,7 +95,7 @@ export const useRegisterForm = () => {
         // Always redirect to login for email errors since user might be created
         setTimeout(() => {
           console.log('🔄 Redirecting to login after email error');
-          navigate('/login', { replace: true });
+          navigate('/login?tab=login', { replace: true });
         }, 2000);
       } else if (error.message?.includes('Invalid email')) {
         toast.error('Email inválido. Por favor, verifique o formato.');
