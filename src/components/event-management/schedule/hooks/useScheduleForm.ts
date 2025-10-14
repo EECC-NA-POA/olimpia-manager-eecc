@@ -33,10 +33,10 @@ export const useScheduleForm = () => {
   };
 
   const handleModalitiesChange = (modalidades: number[]) => {
-    setCurrentItem({
-      ...currentItem,
+    setCurrentItem(prev => ({
+      ...prev,
       modalidades
-    });
+    }));
   };
 
   const handleDiaToggle = (dia: string, checked: boolean) => {
@@ -94,7 +94,13 @@ export const useScheduleForm = () => {
 
   const openAddDialog = () => {
     setEditingId(null);
-    setCurrentItem(defaultFormValues);
+    setCurrentItem({
+      ...defaultFormValues,
+      dias_semana: [],
+      horarios_por_dia: {},
+      locais_por_dia: {},
+      modalidades: []
+    });
     setIsDialogOpen(true);
   };
 
@@ -140,7 +146,13 @@ export const useScheduleForm = () => {
   const resetForm = () => {
     setIsDialogOpen(false);
     setEditingId(null);
-    setCurrentItem(defaultFormValues);
+    setCurrentItem({
+      ...defaultFormValues,
+      dias_semana: [],
+      horarios_por_dia: {},
+      locais_por_dia: {},
+      modalidades: []
+    });
   };
 
   return {
