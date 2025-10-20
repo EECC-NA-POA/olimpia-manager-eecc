@@ -122,12 +122,12 @@ export default function OrganizerDashboard() {
   };
 
   return (
-    <div className="container mx-auto py-2 sm:py-6 space-y-2 sm:space-y-6 px-2 sm:px-4">
+    <div className="container mx-auto py-2 sm:py-6 space-y-2 sm:space-y-6 px-2 sm:px-4 max-w-full overflow-x-hidden">
       <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
 
       <Tabs defaultValue="statistics" className="w-full" onValueChange={setActiveTab} value={activeTab}>
-        <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
-          <TabsList className="w-full min-w-max bg-background grid grid-cols-5 p-0.5 sm:p-1 h-auto gap-0.5 sm:gap-1 border-b mb-3 sm:mb-8">
+        <div className="w-full overflow-x-auto">
+          <TabsList className="w-full bg-background grid grid-cols-5 p-0.5 sm:p-1 h-auto gap-0.5 sm:gap-1 border-b mb-3 sm:mb-8">
             <TabsTrigger 
               value="statistics"
               className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
