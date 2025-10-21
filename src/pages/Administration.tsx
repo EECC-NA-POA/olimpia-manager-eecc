@@ -87,8 +87,8 @@ export default function Administration() {
 
           <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="w-full overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
-                <TabsList className="w-full border-b mb-4 sm:mb-8 bg-background grid grid-cols-2 sm:grid-cols-4 lg:flex lg:justify-start lg:space-x-1 p-0.5 sm:p-1 h-auto gap-0.5 sm:gap-1">
+              <div className="w-full -mx-3 px-3 sm:mx-0 sm:px-0">
+                <TabsList className="w-full border-b mb-4 sm:mb-8 bg-background grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 p-0.5 sm:p-1 h-auto gap-0.5 sm:gap-1">
                   <TabsTrigger 
                     value="basic-info"
                     className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
