@@ -49,27 +49,28 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
 
   return (
     <Card className="hover:shadow-lg transition-shadow w-full">
-      <CardHeader>
-        <CardTitle>Inscrições por Filial</CardTitle>
-        <CardDescription>
+      <CardHeader className="p-3 sm:p-6">
+        <CardTitle className="text-sm sm:text-lg">Inscrições por Filial</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
           Filiais com maior número de inscrições por status
         </CardDescription>
       </CardHeader>
-      <CardContent className="p-2 sm:p-6">
-        <ChartContainer config={chartConfig} className="h-[400px] sm:h-[500px] lg:h-[600px] w-full">
+      <CardContent className="p-1 sm:p-6">
+        <ChartContainer config={chartConfig} className="h-[350px] sm:h-[500px] lg:h-[600px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
               data={data}
-              margin={{ top: 20, right: 5, left: 0, bottom: 80 }}
+              margin={{ top: 15, right: 2, left: -5, bottom: 70 }}
             >
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
               <XAxis 
                 dataKey="name" 
                 angle={-45} 
                 textAnchor="end" 
-                height={80}
+                height={70}
                 interval={0}
-                tick={{ fontSize: 9 }}
+                tick={{ fontSize: 8 }}
+                className="text-[8px] sm:text-xs"
               />
               <YAxis 
                 yAxisId="left"
@@ -77,24 +78,25 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
                   value: 'Inscrições', 
                   angle: -90, 
                   position: 'insideLeft',
-                  style: { textAnchor: 'middle', fontSize: '10px' },
-                  offset: 5
+                  style: { textAnchor: 'middle', fontSize: '9px' },
+                  offset: 10
                 }}
-                tick={{ fontSize: 9 }}
-                width={40}
+                tick={{ fontSize: 8 }}
+                width={35}
+                className="text-[8px] sm:text-xs"
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend 
                 verticalAlign="top" 
                 wrapperStyle={{ 
-                  paddingBottom: 10,
-                  fontSize: '10px',
+                  paddingBottom: 8,
+                  fontSize: '9px',
                   display: 'flex',
                   justifyContent: 'center',
                   width: '100%'
                 }}
                 layout="horizontal"
-                iconSize={10}
+                iconSize={8}
               />
               
               {/* Total bar showing combined value */}
@@ -103,7 +105,7 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
                 dataKey="total" 
                 name="Total" 
                 fill={chartColors.blue} 
-                barSize={20}
+                barSize={15}
                 radius={[4, 4, 0, 0]}
               />
               

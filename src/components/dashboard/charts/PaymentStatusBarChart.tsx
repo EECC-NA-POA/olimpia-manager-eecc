@@ -65,11 +65,11 @@ export function PaymentStatusBarChart({
 
   return (
     <Card className="hover:shadow-lg transition-shadow w-full">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+      <CardHeader className="p-3 sm:p-6">
+        <CardTitle className="text-sm sm:text-lg">{title}</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">{description}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 sm:space-y-6 p-3 sm:p-6">
         <div className="space-y-6">
           {/* Battery-style visualization */}
           <div className="space-y-2">
@@ -121,7 +121,7 @@ export function PaymentStatusBarChart({
           </div>
 
           {/* Additional detailed breakdown using horizontal bars */}
-          <div className="h-[200px] sm:h-[250px] pt-4">
+          <div className="h-[180px] sm:h-[220px] pt-2 sm:pt-4">
             <ChartContainer config={chartConfig} className="w-full h-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
@@ -131,25 +131,27 @@ export function PaymentStatusBarChart({
                     { name: 'Cancelado', value: data[0].cancelado, color: '#EF4444' }
                   ]}
                   layout="vertical"
-                  margin={{ top: 10, right: 5, left: 5, bottom: 10 }}
+                  margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} className="opacity-30" />
                   <XAxis 
                     type="number" 
-                    label={{ value: 'Inscrições', position: 'insideBottom', offset: -5, className: 'text-xs sm:text-sm' }} 
-                    tick={{ fontSize: 10 }}
+                    label={{ value: 'Inscrições', position: 'insideBottom', offset: -2, className: 'text-[8px] sm:text-xs' }} 
+                    tick={{ fontSize: 8 }}
+                    className="text-[8px] sm:text-xs"
                   />
                   <YAxis 
                     type="category" 
                     dataKey="name" 
-                    tick={{ fontSize: 10 }}
-                    width={60}
+                    tick={{ fontSize: 9 }}
+                    width={55}
+                    className="text-[9px] sm:text-xs"
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar 
                     dataKey="value" 
                     name="Quantidade" 
-                    barSize={30}
+                    barSize={25}
                     radius={[0, 4, 4, 0]}
                   >
                     {[
