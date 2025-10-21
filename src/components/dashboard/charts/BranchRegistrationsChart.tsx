@@ -60,7 +60,7 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
               data={data}
-              margin={{ top: 20, right: 40, left: 40, bottom: 100 }}
+              margin={{ top: 20, right: 10, left: 10, bottom: 100 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
@@ -78,9 +78,10 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
                   angle: -90, 
                   position: 'insideLeft',
                   style: { textAnchor: 'middle' },
-                  offset: -10
+                  offset: 0
                 }}
                 tick={{ fontSize: 11 }}
+                width={50}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend 

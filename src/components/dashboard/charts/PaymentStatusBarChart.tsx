@@ -131,7 +131,7 @@ export function PaymentStatusBarChart({
                     { name: 'Cancelado', value: data[0].cancelado, color: '#EF4444' }
                   ]}
                   layout="vertical"
-                  margin={{ top: 20, right: 30, left: 100, bottom: 20 }}
+                  margin={{ top: 20, right: 10, left: 20, bottom: 20 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                   <XAxis 
@@ -141,8 +141,8 @@ export function PaymentStatusBarChart({
                   <YAxis 
                     type="category" 
                     dataKey="name" 
-                    tick={{ fontSize: 14 }}
-                    width={90}
+                    tick={{ fontSize: 12 }}
+                    width={70}
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar 
