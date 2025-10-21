@@ -147,7 +147,7 @@ export default function DelegationDashboard() {
   };
 
   return (
-    <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6 px-2 sm:px-4">
+    <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6 px-2 sm:px-4 max-w-full overflow-x-hidden">
       <DashboardHeader 
         onRefresh={handleRefresh} 
         isRefreshing={isRefreshing} 
@@ -155,8 +155,8 @@ export default function DelegationDashboard() {
       />
 
       <Tabs defaultValue="statistics" className="w-full" onValueChange={setActiveTab} value={activeTab}>
-        <div className="overflow-x-auto">
-          <TabsList className="w-full min-w-max border-b mb-6 sm:mb-8 bg-background grid grid-cols-2 sm:flex sm:justify-start sm:space-x-2 p-0 h-auto gap-1 sm:gap-0">
+        <div className="w-full overflow-x-auto">
+          <TabsList className="w-full border-b mb-6 sm:mb-8 bg-background grid grid-cols-2 sm:flex sm:justify-start sm:space-x-2 p-0 h-auto gap-1 sm:gap-0">
             <TabsTrigger 
               value="statistics"
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"

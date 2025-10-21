@@ -39,10 +39,15 @@ export const MonitorSchedulePage: React.FC = () => {
     handleLocalChange,
     handleDataFimRecorrenciaChange,
     handleSave,
-    handleDelete
+    handleDelete,
+    resetForm
   } = useMonitorScheduleData(selectedModalidade === 'all' ? null : Number(selectedModalidade));
 
 const formatDate = (dateStr: string) => {
+  if (!dateStr) return '';
+  // Handle plain date (YYYY-MM-DD) without timezone to avoid off-by-one
+  const m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
   try {
     return format(new Date(dateStr), 'dd/MM/yyyy', { locale: ptBR });
   } catch {
@@ -172,7 +177,10 @@ const confirmDelete = async () => {
       {/* Modal de Criação/Edição */}
         <ScheduleDialog
           isOpen={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) resetForm();
+          }}
           title={getDialogTitle()}
           currentItem={currentItem}
           handleInputChange={handleInputChange}

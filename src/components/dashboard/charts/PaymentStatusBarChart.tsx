@@ -65,31 +65,31 @@ export function PaymentStatusBarChart({
 
   return (
     <Card className="hover:shadow-lg transition-shadow w-full">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+      <CardHeader className="p-3 sm:p-6">
+        <CardTitle className="text-sm sm:text-lg">{title}</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">{description}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 sm:space-y-6 p-3 sm:p-6">
         <div className="space-y-6">
           {/* Battery-style visualization */}
           <div className="space-y-2">
-            <div className="flex justify-between text-sm font-medium">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-2 text-xs sm:text-sm font-medium">
+              <div className="flex items-center">
                 <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span>
                 Confirmado: {formatNumber(data[0].confirmado)} ({confirmadoPct.toFixed(1)}%)
               </div>
-              <div>
+              <div className="flex items-center">
                 <span className="inline-block w-3 h-3 rounded-full bg-yellow-500 mr-1"></span>
                 Pendente: {formatNumber(data[0].pendente)} ({pendentePct.toFixed(1)}%)
               </div>
-              <div>
+              <div className="flex items-center">
                 <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span>
                 Cancelado: {formatNumber(data[0].cancelado)} ({canceladoPct.toFixed(1)}%)
               </div>
             </div>
             
             {/* The battery visualization */}
-            <div className="relative h-10 w-full rounded-full bg-gray-200 overflow-hidden">
+            <div className="relative h-8 sm:h-10 w-full rounded-full bg-gray-200 overflow-hidden">
               {/* Confirmed segment */}
               <div 
                 className="absolute left-0 top-0 h-full bg-green-500" 
@@ -115,13 +115,13 @@ export function PaymentStatusBarChart({
               ></div>
             </div>
             
-            <div className="text-center text-sm text-muted-foreground">
+            <div className="text-center text-xs sm:text-sm text-muted-foreground">
               Total de Inscrições: {formatNumber(data[0].total)}
             </div>
           </div>
 
           {/* Additional detailed breakdown using horizontal bars */}
-          <div className="h-[250px] pt-4">
+          <div className="h-[180px] sm:h-[220px] pt-2 sm:pt-4">
             <ChartContainer config={chartConfig} className="w-full h-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
@@ -131,24 +131,27 @@ export function PaymentStatusBarChart({
                     { name: 'Cancelado', value: data[0].cancelado, color: '#EF4444' }
                   ]}
                   layout="vertical"
-                  margin={{ top: 20, right: 30, left: 100, bottom: 20 }}
+                  margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} className="opacity-30" />
                   <XAxis 
                     type="number" 
-                    label={{ value: 'Número de Inscrições', position: 'insideBottom', offset: -10 }} 
+                    label={{ value: 'Inscrições', position: 'insideBottom', offset: -2, className: 'text-[8px] sm:text-xs' }} 
+                    tick={{ fontSize: 8 }}
+                    className="text-[8px] sm:text-xs"
                   />
                   <YAxis 
                     type="category" 
                     dataKey="name" 
-                    tick={{ fontSize: 14 }}
-                    width={90}
+                    tick={{ fontSize: 9 }}
+                    width={55}
+                    className="text-[9px] sm:text-xs"
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar 
                     dataKey="value" 
                     name="Quantidade" 
-                    barSize={40}
+                    barSize={25}
                     radius={[0, 4, 4, 0]}
                   >
                     {[

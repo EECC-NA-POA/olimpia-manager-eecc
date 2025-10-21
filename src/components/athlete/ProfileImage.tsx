@@ -25,17 +25,9 @@ export default function ProfileImage({ gender, identificador, isPublicUser }: Pr
   return (
     <div className="flex flex-col items-center space-y-4">
       <div className="relative w-48 h-48">
-        <div 
-          className="absolute inset-0 bg-contain bg-center bg-no-repeat opacity-10"
-          style={{ 
-            backgroundImage: 'url("/lovable-uploads/LOGO_COMITE_PIERRE_COUBERTIN.png")',
-            backgroundSize: '80%',
-            backgroundPosition: 'center'
-          }}
-        />
         <img
           src={getProfileImage(gender)}
-          alt="Profile"
+          alt="Foto do perfil do usuário"
           className="w-full h-full rounded-full object-cover border-4 border-olimpics-green-primary relative z-10"
         />
       </div>

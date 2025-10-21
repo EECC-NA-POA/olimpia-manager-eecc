@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { ScheduleActivity } from './types';
 import { expandRecurrentActivity } from './utils';
-import { parseISO, isValid, startOfDay, isBefore } from 'date-fns';
+import { parseISO, isValid, startOfDay, isBefore, addDays } from 'date-fns';
 
 export function useCronogramaData() {
   const currentEventId = localStorage.getItem('currentEventId');
@@ -120,7 +120,8 @@ const visibleActivities = (activities || []).filter((a: any) => {
   if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
     try {
       const d = parseISO(key);
-      return isValid(d) && !isBefore(d, todayStart);
+      // Keep visible until one day after the activity date
+      return isValid(d) && !isBefore(addDays(d, 1), todayStart);
     } catch {
       return true;
     }

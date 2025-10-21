@@ -15,6 +15,27 @@ export default function AthleteProfilePage() {
   const { data: profile, isLoading: profileLoading } = useAthleteProfileData(user?.id, currentEventId);
   const { data: roleCheck } = useUserRoleCheck(user?.id, currentEventId);
 
+  // SEO: title, description, canonical
+  useEffect(() => {
+    document.title = 'Perfil do Usuário | EECC';
+
+    const metaDesc = (document.querySelector('meta[name="description"]') as HTMLMetaElement) || (() => {
+      const m = document.createElement('meta');
+      m.name = 'description';
+      document.head.appendChild(m);
+      return m;
+    })();
+    metaDesc.content = 'Perfil do usuário: dados pessoais, acesso e pagamentos.';
+
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', window.location.href);
+  }, []);
+
   if (profileLoading) {
     return (
       <div className="space-y-8">
@@ -60,13 +81,21 @@ export default function AthleteProfilePage() {
   console.log('==================================');
 
   return (
-    <div className="space-y-8">
+    <main className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
+      <header className="rounded-xl border border-olimpics-green-primary/10 bg-olimpics-green-primary/5 p-6 shadow-sm">
+        <h1 className="text-2xl font-bold text-olimpics-text">Perfil do Usuário</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Visualize seus dados pessoais, acessos e informações do evento.</p>
+      </header>
+
       {eventData && <EventHeader eventData={eventData} />}
-      
-      <AthleteProfile 
-        profile={profile}
-        isPublicUser={!isAthleteProfile}
-      />
-    </div>
+
+      <section aria-labelledby="perfil-section">
+        <h2 id="perfil-section" className="sr-only">Detalhes do Perfil</h2>
+        <AthleteProfile 
+          profile={profile}
+          isPublicUser={!isAthleteProfile}
+        />
+      </section>
+    </main>
   );
 }
