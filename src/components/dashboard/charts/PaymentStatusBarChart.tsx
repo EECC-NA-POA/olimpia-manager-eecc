@@ -73,23 +73,23 @@ export function PaymentStatusBarChart({
         <div className="space-y-6">
           {/* Battery-style visualization */}
           <div className="space-y-2">
-            <div className="flex justify-between text-sm font-medium">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-2 text-xs sm:text-sm font-medium">
+              <div className="flex items-center">
                 <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span>
                 Confirmado: {formatNumber(data[0].confirmado)} ({confirmadoPct.toFixed(1)}%)
               </div>
-              <div>
+              <div className="flex items-center">
                 <span className="inline-block w-3 h-3 rounded-full bg-yellow-500 mr-1"></span>
                 Pendente: {formatNumber(data[0].pendente)} ({pendentePct.toFixed(1)}%)
               </div>
-              <div>
+              <div className="flex items-center">
                 <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span>
                 Cancelado: {formatNumber(data[0].cancelado)} ({canceladoPct.toFixed(1)}%)
               </div>
             </div>
             
             {/* The battery visualization */}
-            <div className="relative h-10 w-full rounded-full bg-gray-200 overflow-hidden">
+            <div className="relative h-8 sm:h-10 w-full rounded-full bg-gray-200 overflow-hidden">
               {/* Confirmed segment */}
               <div 
                 className="absolute left-0 top-0 h-full bg-green-500" 
@@ -115,13 +115,13 @@ export function PaymentStatusBarChart({
               ></div>
             </div>
             
-            <div className="text-center text-sm text-muted-foreground">
+            <div className="text-center text-xs sm:text-sm text-muted-foreground">
               Total de Inscrições: {formatNumber(data[0].total)}
             </div>
           </div>
 
           {/* Additional detailed breakdown using horizontal bars */}
-          <div className="h-[250px] pt-4">
+          <div className="h-[200px] sm:h-[250px] pt-4">
             <ChartContainer config={chartConfig} className="w-full h-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
@@ -131,24 +131,25 @@ export function PaymentStatusBarChart({
                     { name: 'Cancelado', value: data[0].cancelado, color: '#EF4444' }
                   ]}
                   layout="vertical"
-                  margin={{ top: 20, right: 10, left: 20, bottom: 20 }}
+                  margin={{ top: 10, right: 5, left: 5, bottom: 10 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                   <XAxis 
                     type="number" 
-                    label={{ value: 'Número de Inscrições', position: 'insideBottom', offset: -10 }} 
+                    label={{ value: 'Inscrições', position: 'insideBottom', offset: -5, className: 'text-xs sm:text-sm' }} 
+                    tick={{ fontSize: 10 }}
                   />
                   <YAxis 
                     type="category" 
                     dataKey="name" 
-                    tick={{ fontSize: 12 }}
-                    width={70}
+                    tick={{ fontSize: 10 }}
+                    width={60}
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar 
                     dataKey="value" 
                     name="Quantidade" 
-                    barSize={40}
+                    barSize={30}
                     radius={[0, 4, 4, 0]}
                   >
                     {[

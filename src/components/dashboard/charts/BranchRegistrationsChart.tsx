@@ -55,45 +55,46 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
           Filiais com maior número de inscrições por status
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig} className="h-[600px] w-full">
+      <CardContent className="p-2 sm:p-6">
+        <ChartContainer config={chartConfig} className="h-[400px] sm:h-[500px] lg:h-[600px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
               data={data}
-              margin={{ top: 20, right: 10, left: 10, bottom: 100 }}
+              margin={{ top: 20, right: 5, left: 0, bottom: 80 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="name" 
                 angle={-45} 
                 textAnchor="end" 
-                height={100}
+                height={80}
                 interval={0}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 9 }}
               />
               <YAxis 
                 yAxisId="left"
                 label={{ 
-                  value: 'Número de Inscrições', 
+                  value: 'Inscrições', 
                   angle: -90, 
                   position: 'insideLeft',
-                  style: { textAnchor: 'middle' },
-                  offset: 0
+                  style: { textAnchor: 'middle', fontSize: '10px' },
+                  offset: 5
                 }}
-                tick={{ fontSize: 11 }}
-                width={50}
+                tick={{ fontSize: 9 }}
+                width={40}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend 
                 verticalAlign="top" 
                 wrapperStyle={{ 
-                  paddingBottom: 20,
-                  fontSize: '12px',
+                  paddingBottom: 10,
+                  fontSize: '10px',
                   display: 'flex',
                   justifyContent: 'center',
                   width: '100%'
                 }}
                 layout="horizontal"
+                iconSize={10}
               />
               
               {/* Total bar showing combined value */}
@@ -102,7 +103,7 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
                 dataKey="total" 
                 name="Total" 
                 fill={chartColors.blue} 
-                barSize={30}
+                barSize={20}
                 radius={[4, 4, 0, 0]}
               />
               
@@ -113,9 +114,9 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
                 dataKey="confirmados" 
                 name="Confirmados" 
                 stroke={chartColors.green} 
-                strokeWidth={2} 
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
+                strokeWidth={1.5} 
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
               />
               <Line 
                 yAxisId="left"
@@ -123,9 +124,9 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
                 dataKey="pendentes" 
                 name="Pendentes" 
                 stroke={chartColors.yellow} 
-                strokeWidth={2} 
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
+                strokeWidth={1.5} 
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
                 strokeDasharray="5 5"
               />
               {/* Add line for exempt athletes if data exists */}
@@ -136,9 +137,9 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
                   dataKey="isentos" 
                   name="Isentos" 
                   stroke={chartColors.blue} 
-                  strokeWidth={2} 
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
+                  strokeWidth={1.5} 
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
                   strokeDasharray="10 5"
                 />
               )}
