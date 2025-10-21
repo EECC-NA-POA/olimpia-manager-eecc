@@ -126,11 +126,11 @@ export default function OrganizerDashboard() {
       <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
 
       <Tabs defaultValue="statistics" className="w-full" onValueChange={setActiveTab} value={activeTab}>
-        <div className="w-full">
-          <TabsList className="w-full bg-background grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 p-0.5 sm:p-1 h-auto gap-0.5 sm:gap-1 border-b mb-3 sm:mb-8">
+        <div className="w-full overflow-hidden">
+          <TabsList className="w-full bg-background flex flex-wrap justify-start p-0.5 sm:p-1 h-auto gap-0.5 sm:gap-1 border-b mb-3 sm:mb-8">
             <TabsTrigger 
               value="statistics"
-              className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none flex-shrink-0"
             >
               <BarChart className="h-3 w-3 sm:h-5 sm:w-5 flex-shrink-0" />
               <span className="hidden xs:inline sm:hidden">Stats</span>
@@ -139,7 +139,7 @@ export default function OrganizerDashboard() {
             </TabsTrigger>
             <TabsTrigger 
               value="athletes"
-              className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none flex-shrink-0"
             >
               <Users className="h-3 w-3 sm:h-5 sm:w-5 flex-shrink-0" />
               <span className="hidden xs:inline sm:hidden">Atletas</span>
@@ -148,7 +148,7 @@ export default function OrganizerDashboard() {
             </TabsTrigger>
             <TabsTrigger 
               value="enrollments"
-              className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none flex-shrink-0"
             >
               <ListChecks className="h-3 w-3 sm:h-5 sm:w-5 flex-shrink-0" />
               <span className="hidden xs:inline sm:hidden">Inscrições</span>
@@ -157,7 +157,7 @@ export default function OrganizerDashboard() {
             </TabsTrigger>
             <TabsTrigger 
               value="representatives"
-              className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none flex-shrink-0"
             >
               <UserCheck className="h-3 w-3 sm:h-5 sm:w-5 flex-shrink-0" />
               <span className="hidden xs:inline sm:hidden">Repr</span>
@@ -166,7 +166,7 @@ export default function OrganizerDashboard() {
             </TabsTrigger>
             <TabsTrigger 
               value="notifications"
-              className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none flex-shrink-0"
             >
               <Bell className="h-3 w-3 sm:h-5 sm:w-5 flex-shrink-0" />
               <span className="hidden xs:inline sm:hidden">Notif</span>
