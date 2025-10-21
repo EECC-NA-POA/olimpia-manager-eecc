@@ -126,8 +126,8 @@ export default function OrganizerDashboard() {
       <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
 
       <Tabs defaultValue="statistics" className="w-full" onValueChange={setActiveTab} value={activeTab}>
-        <div className="w-full overflow-x-auto">
-          <TabsList className="w-full bg-background grid grid-cols-5 p-0.5 sm:p-1 h-auto gap-0.5 sm:gap-1 border-b mb-3 sm:mb-8">
+        <div className="w-full">
+          <TabsList className="w-full bg-background grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 p-0.5 sm:p-1 h-auto gap-0.5 sm:gap-1 border-b mb-3 sm:mb-8">
             <TabsTrigger 
               value="statistics"
               className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap min-w-0"
