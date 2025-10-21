@@ -71,7 +71,7 @@ export default function Administration() {
 
   return (
     <div className="min-h-screen pb-20 md:pb-6">
-      <div className="space-y-4 sm:space-y-6 px-2 sm:px-4 max-w-full">
+      <div className="space-y-4 sm:space-y-6 px-2 sm:px-4 max-w-full overflow-x-hidden">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-olimpics-text">
             Administração
@@ -87,8 +87,8 @@ export default function Administration() {
 
           <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
-                <TabsList className="w-full min-w-max border-b mb-4 sm:mb-8 bg-background grid grid-cols-2 sm:grid-cols-4 lg:flex lg:justify-start lg:space-x-1 p-0.5 sm:p-1 h-auto gap-0.5 sm:gap-1">
+              <div className="w-full -mx-3 px-3 sm:mx-0 sm:px-0">
+                <TabsList className="w-full border-b mb-4 sm:mb-8 bg-background grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 p-0.5 sm:p-1 h-auto gap-0.5 sm:gap-1">
                   <TabsTrigger 
                     value="basic-info"
                     className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"

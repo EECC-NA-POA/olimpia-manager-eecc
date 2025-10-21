@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 
 import SocialLinks from "./footer/SocialLinks";
 import { MobileNavigationLink } from "./footer/MobileNavigation";
+import { VersionBadge } from "./VersionBadge";
 
 export const Footer = () => {
   const { user, signOut } = useAuth();
@@ -27,9 +28,12 @@ export const Footer = () => {
       {/* Standard footer for desktop */}
       <footer className="w-full bg-white/80 backdrop-blur-sm border-t py-4 px-4 mt-auto hidden md:block">
         <div className="container mx-auto flex justify-between items-center">
-          <span className="text-xs text-gray-500">
-            Desenvolvido por: Olimar Teixeira Borges
-          </span>
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-gray-500">
+              Desenvolvido por: Olimar Teixeira Borges
+            </span>
+            <VersionBadge />
+          </div>
           <SocialLinks />
         </div>
       </footer>

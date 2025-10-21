@@ -126,16 +126,16 @@ export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
   console.log("Branch registrations chart data:", branchRegistrationsData);
 
   return (
-    <div className="space-y-3 sm:space-y-6 lg:space-y-8 px-1 sm:px-2 lg:px-0">
+    <div className="space-y-3 sm:space-y-6 lg:space-y-8 max-w-full overflow-x-hidden">
       {/* Summary Cards Section */}
       <div className="w-full">
         <SummaryCards totals={summaryCardsTotals} />
       </div>
 
       {/* Charts Section - Mobile optimized layout */}
-      <div className="space-y-3 sm:space-y-6 lg:space-y-8">
+      <div className="space-y-3 sm:space-y-6 lg:space-y-8 max-w-full">
         {/* Payment Status Bar Chart - Full width */}
-        <div className="w-full overflow-hidden">
+        <div className="w-full max-w-full overflow-x-hidden">
           <PaymentStatusBarChart 
             data={paymentStatusData} 
             chartConfig={CHART_CONFIG} 
@@ -145,7 +145,7 @@ export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
         </div>
 
         {/* Branch Registrations Chart - Full width */}
-        <div className="w-full overflow-hidden">
+        <div className="w-full max-w-full overflow-x-hidden">
           <BranchRegistrationsChart 
             data={branchRegistrationsData} 
             chartColors={CHART_COLORS} 

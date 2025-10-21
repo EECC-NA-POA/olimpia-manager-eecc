@@ -49,50 +49,54 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
 
   return (
     <Card className="hover:shadow-lg transition-shadow w-full">
-      <CardHeader>
-        <CardTitle>Inscrições por Filial</CardTitle>
-        <CardDescription>
+      <CardHeader className="p-3 sm:p-6">
+        <CardTitle className="text-sm sm:text-lg">Inscrições por Filial</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
           Filiais com maior número de inscrições por status
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig} className="h-[600px] w-full">
+      <CardContent className="p-1 sm:p-6">
+        <ChartContainer config={chartConfig} className="h-[350px] sm:h-[500px] lg:h-[600px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
               data={data}
-              margin={{ top: 20, right: 40, left: 40, bottom: 100 }}
+              margin={{ top: 15, right: 2, left: -5, bottom: 70 }}
             >
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
               <XAxis 
                 dataKey="name" 
                 angle={-45} 
                 textAnchor="end" 
-                height={100}
+                height={70}
                 interval={0}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 8 }}
+                className="text-[8px] sm:text-xs"
               />
               <YAxis 
                 yAxisId="left"
                 label={{ 
-                  value: 'Número de Inscrições', 
+                  value: 'Inscrições', 
                   angle: -90, 
                   position: 'insideLeft',
-                  style: { textAnchor: 'middle' },
-                  offset: -10
+                  style: { textAnchor: 'middle', fontSize: '9px' },
+                  offset: 10
                 }}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: 8 }}
+                width={35}
+                className="text-[8px] sm:text-xs"
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend 
                 verticalAlign="top" 
                 wrapperStyle={{ 
-                  paddingBottom: 20,
-                  fontSize: '12px',
+                  paddingBottom: 8,
+                  fontSize: '9px',
                   display: 'flex',
                   justifyContent: 'center',
                   width: '100%'
                 }}
                 layout="horizontal"
+                iconSize={8}
               />
               
               {/* Total bar showing combined value */}
@@ -101,7 +105,7 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
                 dataKey="total" 
                 name="Total" 
                 fill={chartColors.blue} 
-                barSize={30}
+                barSize={15}
                 radius={[4, 4, 0, 0]}
               />
               
@@ -112,9 +116,9 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
                 dataKey="confirmados" 
                 name="Confirmados" 
                 stroke={chartColors.green} 
-                strokeWidth={2} 
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
+                strokeWidth={1.5} 
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
               />
               <Line 
                 yAxisId="left"
@@ -122,9 +126,9 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
                 dataKey="pendentes" 
                 name="Pendentes" 
                 stroke={chartColors.yellow} 
-                strokeWidth={2} 
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
+                strokeWidth={1.5} 
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
                 strokeDasharray="5 5"
               />
               {/* Add line for exempt athletes if data exists */}
@@ -135,9 +139,9 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
                   dataKey="isentos" 
                   name="Isentos" 
                   stroke={chartColors.blue} 
-                  strokeWidth={2} 
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
+                  strokeWidth={1.5} 
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
                   strokeDasharray="10 5"
                 />
               )}
