@@ -4,8 +4,8 @@
 /* Content positioning and transition */
 main {
   transition: margin-left 0.2s ease-in-out !important;
-  min-height: calc(100vh - 4rem) !important;
-  padding-top: 5rem !important; /* 4rem header + 1rem spacing */
+  min-height: calc(100vh - var(--app-header-height)) !important;
+  padding-top: calc(var(--app-header-height) + 1rem) !important; /* header + spacing */
   padding-bottom: 2rem !important;
 }
 

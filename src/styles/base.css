@@ -1,5 +1,9 @@
 
 /* Base styles */
+:root {
+  --app-header-height: 64px;
+}
+
 #root {
   margin: 0 auto;
   text-align: center;
