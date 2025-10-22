@@ -4,9 +4,15 @@
 /* Content positioning and transition */
 main {
   transition: margin-left 0.2s ease-in-out !important;
-  height: calc(100vh - 104px) !important; /* Set main content height accounting for header and top nav */
-  overflow-y: auto !important; /* Allow scrolling in main content only */
-  padding-top: 104px; /* Account for fixed header + top nav */
+  min-height: calc(100vh - 4rem) !important;
+  padding-top: 5rem !important; /* 4rem header + 1rem spacing */
+  padding-bottom: 2rem !important;
+}
+
+/* Main content inside MainNavigation */
+.main-navigation-content {
+  min-height: 100vh !important;
+  width: 100% !important;
 }
 
 /* Special style for home page to ensure scrolling works */
@@ -27,9 +33,20 @@ main {
   transition-duration: 200ms;
 }
 
-/* Fix for mobile view */
+/* Tablet and mobile adjustments */
+@media (max-width: 1024px) {
+  main {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
 @media (max-width: 768px) {
   main {
-    height: calc(100vh - 104px) !important; /* Adjust for mobile header + footer */
+    padding-bottom: 6rem !important; /* Space for mobile nav */
+  }
+  
+  [data-sidebar="sidebar"] {
+    display: none !important; /* Hide sidebar on mobile */
   }
 }
