@@ -61,26 +61,52 @@ export function useDynamicScoringSubmission() {
 
         console.log('Base data for DB (usando numero_bateria):', baseDataForDb);
 
-        // Handle team scoring
+        // Handle team scoring - Register score for ALL team members
         if (data.equipeId) {
           console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
 
-          const teamDataForDb = {
-            ...baseDataForDb,
-            athleteId: data.athleteId,
-            equipeId: data.equipeId,
-          };
+          // Fetch all team members
+          const { data: teamMembers, error: teamMembersError } = await supabase
+            .from('inscricoes_modalidades')
+            .select('atleta_id')
+            .eq('equipe_id', data.equipeId)
+            .eq('modalidade_id', data.modalityId)
+            .eq('evento_id', data.eventId);
 
-          console.log('Team data for DB:', teamDataForDb);
+          if (teamMembersError) {
+            console.error('Error fetching team members:', teamMembersError);
+            throw new Error('Erro ao buscar membros da equipe');
+          }
 
-          const pontuacao = await upsertPontuacao(teamDataForDb, valorPontuacao, false);
-          console.log('=== TEAM SCORE SAVED ===');
+          if (!teamMembers || teamMembers.length === 0) {
+            console.error('No team members found for team:', data.equipeId);
+            throw new Error('Nenhum membro encontrado para esta equipe');
+          }
 
-          const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
-          await insertTentativas(tentativas, pontuacao.id);
+          console.log(`Found ${teamMembers.length} team members. Registering score for each...`);
 
-          console.log('=== TEAM SUBMISSION COMPLETED ===');
-          return pontuacao;
+          // Register score for each team member
+          const savedScores = [];
+          for (const member of teamMembers) {
+            const teamDataForDb = {
+              ...baseDataForDb,
+              athleteId: member.atleta_id,
+              equipeId: data.equipeId,
+            };
+
+            console.log('Saving score for team member:', member.atleta_id);
+
+            const pontuacao = await upsertPontuacao(teamDataForDb, valorPontuacao, false);
+            
+            // Insert tentativas for this athlete
+            const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
+            await insertTentativas(tentativas, pontuacao.id);
+
+            savedScores.push(pontuacao);
+          }
+
+          console.log(`=== TEAM SUBMISSION COMPLETED - ${savedScores.length} scores registered ===`);
+          return savedScores[0]; // Return first score as reference
         }
 
         // Handle individual scoring
