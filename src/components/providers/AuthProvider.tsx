@@ -42,6 +42,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         })
         .catch((err) => {
           console.error('❌ Error reloading profile after event change:', err);
+          // Don't call handleSessionError here - event switching errors shouldn't cause logout
+          // Just log the error and keep the user logged in with their existing profile
+          toast.error('Erro ao carregar perfil do evento. Tente novamente.');
         });
     }
   }, [currentEventId, user?.id]);
@@ -139,18 +142,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (baseUser) {
         // Defer profile fetch to avoid blocking the auth callback
-        setTimeout(async () => {
-          try {
-            const userProfile = await fetchUserProfile(baseUser.id);
-            if (mounted) {
-              setUser({ ...(baseUser as any), ...userProfile });
-              setSessionExpired(false);
+          setTimeout(async () => {
+            try {
+              const userProfile = await fetchUserProfile(baseUser.id);
+              if (mounted) {
+                setUser({ ...(baseUser as any), ...userProfile });
+                setSessionExpired(false);
+              }
+            } catch (err) {
+              console.error('❌ Error loading profile after auth change:', err);
+              // Only handle session errors, not profile loading errors
+              const error = err as any;
+              const isRealSessionError = error.message?.includes('JWT') || 
+                                        error.message?.includes('refresh_token_not_found') || 
+                                        error.message?.includes('invalid session');
+              if (isRealSessionError) {
+                await handleSessionError(err);
+              } else {
+                console.log('Profile loading error, but keeping user logged in');
+                toast.error('Erro ao carregar perfil. Algumas funcionalidades podem estar limitadas.');
+              }
             }
-          } catch (err) {
-            console.error('❌ Error loading profile after auth change:', err);
-            await handleSessionError(err);
-          }
-        }, 0);
+          }, 0);
       }
     });
 
@@ -189,7 +202,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }
             } catch (profileError) {
               console.error('❌ Error fetching user profile:', profileError);
-              await handleSessionError(profileError);
+              // Only handle real session errors, not profile loading errors
+              const error = profileError as any;
+              const isRealSessionError = error.message?.includes('JWT') || 
+                                        error.message?.includes('refresh_token_not_found') || 
+                                        error.message?.includes('invalid session');
+              if (isRealSessionError) {
+                await handleSessionError(profileError);
+              } else {
+                console.log('Profile loading error on init, but keeping user logged in');
+                if (mounted) {
+                  setUser(session.user as any);
+                }
+              }
             }
           }, 0);
         }
