@@ -23,22 +23,38 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
   const queryClient = useQueryClient();
   const [selectedBateriaId, setSelectedBateriaId] = useState<number | null>(null);
   
+  console.log('=== useDynamicBaterias CALLED ===');
+  console.log('Props:', { modalityId, eventId });
+  
   // Get modelo configuration
   const { data: modeloConfig, isLoading: isLoadingConfig } = useModeloConfiguration(modalityId);
   
+  console.log('Modelo configuration:', modeloConfig);
+  console.log('Is loading config?', isLoadingConfig);
+  
   // Check if this modality uses baterias
   const usesBaterias = modeloConfig?.parametros?.baterias === true;
+  console.log('usesBaterias?', usesBaterias, 'from parametros:', modeloConfig?.parametros);
 
   // Fetch existing baterias from pontuacoes table
   const { data: baterias = [], isLoading } = useQuery({
     queryKey: ['dynamic-baterias', modalityId, eventId],
     queryFn: async () => {
+      console.log('=== BATERIAS QUERY FUNCTION EXECUTING ===');
+      console.log('Checking conditions:', { 
+        hasEventId: !!eventId, 
+        hasModalityId: !!modalityId, 
+        usesBaterias,
+        eventId,
+        modalityId
+      });
+      
       if (!eventId || !modalityId || !usesBaterias) {
-        console.log('useDynamicBaterias: Missing parameters or baterias disabled', { modalityId, eventId, usesBaterias });
+        console.log('❌ QUERY SKIPPED - Missing parameters or baterias disabled', { modalityId, eventId, usesBaterias });
         return [];
       }
       
-      console.log('useDynamicBaterias: Fetching baterias for modality:', modalityId, 'event:', eventId);
+      console.log('✅ Fetching baterias for modality:', modalityId, 'event:', eventId);
       
       const { data, error } = await supabase
         .from('pontuacoes')
@@ -85,7 +101,15 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
       return bateriasArray;
     },
     enabled: !!eventId && !!modalityId && usesBaterias,
+    staleTime: 0,
+    refetchOnMount: true
   });
+  
+  console.log('=== BATERIAS QUERY STATE ===');
+  console.log('Query enabled?', !!eventId && !!modalityId && usesBaterias);
+  console.log('Is loading?', isLoading);
+  console.log('Baterias count:', baterias.length);
+  console.log('Baterias data:', baterias);
 
   // Create new bateria mutation
   const createBateriaMutation = useMutation({
