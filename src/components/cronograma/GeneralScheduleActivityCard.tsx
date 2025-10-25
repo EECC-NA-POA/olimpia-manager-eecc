@@ -22,11 +22,11 @@ export function GeneralScheduleActivityCard({ category, activities }: GeneralSch
     <div className={cn(
       "p-3 rounded-lg border",
       isGlobal 
-        ? "border-yellow-400 bg-yellow-50" 
-        : "border-green-600 bg-green-50"
+        ? "border-warning bg-warning-background" 
+        : "border-success bg-success-background"
     )}>
       <div className="space-y-2">
-        <h4 className="font-medium text-olimpics-green-primary">
+        <h4 className="font-medium text-foreground">
           {activities[0].atividade}
           {hasRecurrent && (
             <Badge variant="outline" className="ml-2 text-xs">
@@ -35,13 +35,13 @@ export function GeneralScheduleActivityCard({ category, activities }: GeneralSch
           )}
         </h4>
         <div className="pl-2 space-y-3">
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-muted-foreground">
             <span>{location}</span>
           </div>
 
           {punctualActivities.length > 0 && (
             <div className="space-y-1">
-              <div className="text-xs text-gray-500">Pontuais</div>
+              <div className="text-xs text-muted-foreground">Pontuais</div>
               <div className="flex flex-wrap gap-2">
                 {punctualActivities.map((activity) => {
                   const displayName = activity.modalidade_nome || activity.atividade;
@@ -52,8 +52,8 @@ export function GeneralScheduleActivityCard({ category, activities }: GeneralSch
                       className={cn(
                         "whitespace-nowrap",
                         activity.global
-                          ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80"
-                          : "bg-green-100 text-green-800 hover:bg-green-100/80"
+                          ? "bg-warning-background text-warning-foreground hover:bg-warning/10"
+                          : "bg-success-background text-success-foreground hover:bg-success/10"
                       )}
                     >
                       {displayName}
@@ -66,8 +66,8 @@ export function GeneralScheduleActivityCard({ category, activities }: GeneralSch
           )}
 
           {recurrentActivities.length > 0 && (
-            <div className="space-y-1 pt-2 border-t border-green-100">
-              <div className="text-xs text-gray-500">Recorrentes</div>
+            <div className="space-y-1 pt-2 border-t border-border">
+              <div className="text-xs text-muted-foreground">Recorrentes</div>
               <div className="flex flex-wrap gap-2">
                 {recurrentActivities.map((activity) => {
                   const displayName = activity.modalidade_nome || activity.atividade;
@@ -78,8 +78,8 @@ export function GeneralScheduleActivityCard({ category, activities }: GeneralSch
                       className={cn(
                         "whitespace-nowrap",
                         activity.global
-                          ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80"
-                          : "bg-green-100 text-green-800 hover:bg-green-100/80"
+                          ? "bg-warning-background text-warning-foreground hover:bg-warning/10"
+                          : "bg-success-background text-success-foreground hover:bg-success/10"
                       )}
                     >
                       {displayName}

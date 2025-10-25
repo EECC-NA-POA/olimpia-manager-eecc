@@ -18,20 +18,20 @@ export function AthleteCardHeader({
 }: AthleteCardHeaderProps) {
   return (
     <CardHeader className="pb-3 pt-6">
-      <CardTitle className="text-lg font-semibold text-gray-900 group-hover:text-primary transition-colors mb-2">
+      <CardTitle className="text-lg font-semibold text-card-foreground group-hover:text-primary transition-colors mb-2">
         {athleteName}
       </CardTitle>
       <div className="flex items-center gap-2 text-sm">
-        <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium border border-blue-200">
+        <span className="bg-info-background text-info-foreground px-3 py-1 rounded-full text-xs font-medium border border-info/20">
           ID: {athleteIdentifier}
         </span>
         {branchName && (
-          <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium border border-green-200">
+          <span className="bg-success-background text-success-foreground px-3 py-1 rounded-full text-xs font-medium border border-success/20">
             {branchName}
           </span>
         )}
         {branchState && (
-          <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded-full text-xs font-medium border border-purple-200">
+          <span className="bg-accent text-accent-foreground px-2 py-1 rounded-full text-xs font-medium border border-border">
             {branchState}
           </span>
         )}

@@ -80,26 +80,26 @@ export function AthleteRegistrationCard({
   const getStatusBadgeStyle = (status: string): string => {
     switch (status) {
       case 'confirmado':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-success-background text-success-foreground border-success/20';
       case 'pendente':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-warning-background text-warning-foreground border-warning/20';
       case 'cancelado':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-destructive/10 text-destructive-foreground border-destructive/20';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-neutral-background text-neutral-foreground border-neutral/20';
     }
   };
 
   const getStatusColor = (status: string): string => {
     switch (status) {
       case 'confirmado':
-        return 'border-l-4 border-l-green-500 bg-green-50/50';
+        return 'border-l-4 border-l-success bg-success-background/50';
       case 'pendente':
-        return 'border-l-4 border-l-yellow-500 bg-yellow-50/50';
+        return 'border-l-4 border-l-warning bg-warning-background/50';
       case 'cancelado':
-        return 'border-l-4 border-l-red-500 bg-red-50/50';
+        return 'border-l-4 border-l-destructive bg-destructive/5';
       default:
-        return 'border-l-4 border-l-gray-500 bg-gray-50/50';
+        return 'border-l-4 border-l-neutral bg-neutral-background/50';
     }
   };
 

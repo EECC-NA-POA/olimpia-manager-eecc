@@ -24,13 +24,13 @@ export function EventHeader({ eventData }: EventHeaderProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ativo':
-        return 'bg-green-100 text-green-800 hover:bg-green-200';
+        return 'bg-success-background text-success-foreground hover:bg-success/10';
       case 'encerrado':
-        return 'bg-red-100 text-red-800 hover:bg-red-200';
+        return 'bg-destructive/10 text-destructive-foreground hover:bg-destructive/20';
       case 'suspenso':
-        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
+        return 'bg-warning-background text-warning-foreground hover:bg-warning/10';
       default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+        return 'bg-neutral-background text-neutral-foreground hover:bg-neutral/10';
     }
   };
 
