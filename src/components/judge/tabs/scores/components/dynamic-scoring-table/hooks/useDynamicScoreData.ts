@@ -23,6 +23,17 @@ export function useDynamicScoreData({
   athletes = [],
   enabled = true
 }: UseDynamicScoreDataProps) {
+  console.log('=== useDynamicScoreData HOOK CALLED ===');
+  console.log('Parameters:', {
+    modalityId,
+    eventId,
+    modeloId,
+    selectedBateriaId,
+    judgeId,
+    athletesCount: athletes.length,
+    enabled
+  });
+  
   // Fetch campos from the modelo
   const { data: campos = [], isLoading: isLoadingCampos } = useQuery({
     queryKey: ['modelo-campos', modeloId],
@@ -49,7 +60,21 @@ export function useDynamicScoreData({
   const { data: existingScores = [], isLoading: isLoadingScores, refetch: refetchScores } = useQuery({
     queryKey: ['dynamic-scores', modalityId, eventId, selectedBateriaId, judgeId],
     queryFn: async () => {
-      if (!eventId || !modalityId || !judgeId || athletes.length === 0) return [];
+      console.log('=== QUERY FUNCTION EXECUTING ===');
+      console.log('Check conditions:', {
+        hasEventId: !!eventId,
+        hasModalityId: !!modalityId,
+        hasJudgeId: !!judgeId,
+        athletesCount: athletes.length,
+        eventId,
+        modalityId,
+        judgeId
+      });
+      
+      if (!eventId || !modalityId || !judgeId || athletes.length === 0) {
+        console.log('⚠️ QUERY SKIPPED - Missing required parameters');
+        return [];
+      }
       
       console.log('=== FETCHING EXISTING SCORES ===');
       console.log('Params:', { modalityId, eventId, selectedBateriaId, judgeId });
@@ -100,7 +125,14 @@ export function useDynamicScoreData({
       return transformedData;
     },
     enabled: enabled && !!eventId && !!modalityId && !!judgeId && athletes.length > 0,
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: true
   });
+  
+  console.log('=== useDynamicScoreData QUERY STATE ===');
+  console.log('Query enabled?', enabled && !!eventId && !!modalityId && !!judgeId && athletes.length > 0);
+  console.log('Existing scores count:', existingScores.length);
+  console.log('Is loading scores?', isLoadingScores);
 
   return {
     campos,
