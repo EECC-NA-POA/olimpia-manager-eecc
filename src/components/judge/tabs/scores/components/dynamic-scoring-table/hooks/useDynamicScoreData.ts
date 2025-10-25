@@ -58,7 +58,7 @@ export function useDynamicScoreData({
 
   // Fetch existing scores
   const { data: existingScores = [], isLoading: isLoadingScores, refetch: refetchScores } = useQuery({
-    queryKey: ['dynamic-scores', modalityId, eventId, selectedBateriaId, judgeId],
+    queryKey: ['dynamic-scores', modalityId, eventId, modeloId, selectedBateriaId, judgeId],
     queryFn: async () => {
       console.log('=== QUERY FUNCTION EXECUTING ===');
       console.log('Check conditions:', {
@@ -82,7 +82,13 @@ export function useDynamicScoreData({
       let query = supabase
         .from('pontuacoes')
         .select(`
-          *,
+          id,
+          atleta_id,
+          modalidade_id,
+          juiz_id,
+          evento_id,
+          modelo_id,
+          observacoes,
           tentativas_pontuacao(*)
         `)
         .eq('evento_id', eventId)
@@ -90,8 +96,8 @@ export function useDynamicScoreData({
         .eq('juiz_id', judgeId)
         .in('atleta_id', athletes.map(a => a.atleta_id));
 
-      if (selectedBateriaId) {
-        query = query.eq('numero_bateria', selectedBateriaId);
+      if (modeloId) {
+        query = query.eq('modelo_id', modeloId);
       }
       
       const { data, error } = await query;
@@ -122,9 +128,24 @@ export function useDynamicScoreData({
       });
       
       console.log('Transformed scores:', transformedData);
-      return transformedData;
+
+      // Filter by selected bateria using tentativas values (numero_bateria or bateria)
+      const filteredData = selectedBateriaId
+        ? transformedData.filter((pontuacao: any) => {
+            const nb = pontuacao.tentativas?.numero_bateria;
+            const b = pontuacao.tentativas?.bateria;
+            const raw = typeof nb === 'object' && nb !== null
+              ? (nb.valor ?? nb.valor_formatado)
+              : (typeof b === 'object' && b !== null ? (b.valor ?? b.valor_formatado) : (nb ?? b));
+            const num = raw !== undefined && raw !== null ? Number(raw) : undefined;
+            return num !== undefined && Number(selectedBateriaId) === num;
+          })
+        : transformedData;
+
+      console.log('Filtered by selectedBateriaId:', selectedBateriaId, 'Result count:', filteredData.length);
+      return filteredData;
     },
-    enabled: enabled && !!eventId && !!modalityId && !!judgeId && athletes.length > 0,
+    enabled: enabled && !!eventId && !!modalityId && !!judgeId && !!modeloId && athletes.length > 0,
     staleTime: 0, // Always fetch fresh data
     refetchOnMount: true
   });

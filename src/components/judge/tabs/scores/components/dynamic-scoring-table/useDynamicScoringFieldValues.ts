@@ -59,7 +59,7 @@ export function useDynamicScoringFieldValues({
       }
       
       console.log(`Found existing score for ${athleteId}.${fieldKey}:`, { tentativa, value });
-      return value || '';
+      return value ?? '';
     }
 
     console.log(`No value found for ${athleteId}.${fieldKey}, returning empty`);
