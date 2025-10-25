@@ -65,9 +65,11 @@ export function useDynamicScoreData({
         hasEventId: !!eventId,
         hasModalityId: !!modalityId,
         hasJudgeId: !!judgeId,
+        hasModeloId: !!modeloId,
         athletesCount: athletes.length,
         eventId,
         modalityId,
+        modeloId,
         judgeId
       });
       
@@ -145,7 +147,7 @@ export function useDynamicScoreData({
       console.log('Filtered by selectedBateriaId:', selectedBateriaId, 'Result count:', filteredData.length);
       return filteredData;
     },
-    enabled: enabled && !!eventId && !!modalityId && !!judgeId && !!modeloId && athletes.length > 0,
+    enabled: enabled && !!eventId && !!modalityId && !!judgeId && athletes.length > 0,
     staleTime: 0, // Always fetch fresh data
     refetchOnMount: true
   });
@@ -153,6 +155,7 @@ export function useDynamicScoreData({
   console.log('=== useDynamicScoreData QUERY STATE ===');
   console.log('Query enabled?', enabled && !!eventId && !!modalityId && !!judgeId && athletes.length > 0);
   console.log('Existing scores count:', existingScores.length);
+  console.log('Existing scores data:', existingScores);
   console.log('Is loading scores?', isLoadingScores);
 
   return {
