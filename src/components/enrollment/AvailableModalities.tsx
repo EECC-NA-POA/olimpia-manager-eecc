@@ -120,11 +120,11 @@ export const AvailableModalities = ({
                         <div 
                           key={modality.id} 
                           className={`border rounded-lg p-3 ${
-                            isRegistered ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
+                            isRegistered ? 'bg-success-background border-success/20' : 'bg-card border-border'
                           }`}
                         >
                           <div className="space-y-2">
-                            <h4 className="font-medium text-sm">{modality.nome}</h4>
+                            <h4 className="font-medium text-sm text-foreground">{modality.nome}</h4>
                             
                             <div className="flex flex-wrap gap-1">
                               <Badge 
@@ -185,12 +185,12 @@ export const AvailableModalities = ({
                           <div 
                             key={modality.id} 
                             className={`border rounded-lg p-4 ${
-                              isRegistered ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
+                              isRegistered ? 'bg-success-background border-success/20' : 'bg-card border-border'
                             }`}
                           >
                             <div className="space-y-3">
                               <div>
-                                <h4 className="font-medium text-base">{modality.nome}</h4>
+                                <h4 className="font-medium text-base text-foreground">{modality.nome}</h4>
                                 <div className="flex flex-wrap gap-2 mt-2">
                                   <Badge 
                                     variant={getCategoryBadgeVariant(modality.categoria)} 

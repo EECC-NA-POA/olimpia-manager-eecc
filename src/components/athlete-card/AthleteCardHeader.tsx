@@ -27,7 +27,7 @@ export const AthleteCardHeader: React.FC<AthleteCardHeaderProps> = ({
     <div className="space-y-2">
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="text-lg font-semibold">{nome}</h3>
+          <h3 className="text-lg font-semibold text-foreground">{nome}</h3>
           {isCurrentUser && (
             <Badge variant="secondary" className="bg-olimpics-orange-primary text-white">
               Meu Cadastro

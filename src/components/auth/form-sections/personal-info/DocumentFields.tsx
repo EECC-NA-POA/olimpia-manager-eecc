@@ -19,7 +19,7 @@ export const DocumentFields = ({ form }: DocumentFieldsProps) => {
         name="tipo_documento"
         render={({ field }) => (
           <FormItem className={formColumn}>
-            <FormLabel>Tipo de Documento</FormLabel>
+            <FormLabel className="text-gray-700">Tipo de Documento</FormLabel>
             <Select
               onValueChange={field.onChange}
               defaultValue="CPF"
@@ -27,11 +27,11 @@ export const DocumentFields = ({ form }: DocumentFieldsProps) => {
               disabled={true}
             >
               <FormControl>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white text-gray-900">
                   <SelectValue placeholder="CPF" />
                 </SelectTrigger>
               </FormControl>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 <SelectItem value="CPF">CPF</SelectItem>
               </SelectContent>
             </Select>
@@ -45,7 +45,7 @@ export const DocumentFields = ({ form }: DocumentFieldsProps) => {
         name="numero_documento"
         render={({ field }) => (
           <FormItem className={formColumn}>
-            <FormLabel>Número do Documento</FormLabel>
+            <FormLabel className="text-gray-700">Número do Documento</FormLabel>
             <FormControl>
               <InputMask
                 mask="999.999.999-99"
@@ -57,7 +57,7 @@ export const DocumentFields = ({ form }: DocumentFieldsProps) => {
                   <Input
                     {...inputProps}
                     placeholder="000.000.000-00"
-                    className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary"
+                    className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary bg-white text-gray-900"
                   />
                 )}
               </InputMask>

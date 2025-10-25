@@ -1,33 +1,36 @@
 
 /* Base styles */
+:root {
+  --app-header-height: 64px;
+}
+
 #root {
   margin: 0 auto;
   text-align: center;
+  min-height: 100vh;
 }
 
-/* Remove overflow hidden to allow scrolling on home page */
+/* Body base styles */
 body {
-  overflow: auto; /* Changed from hidden to auto */
-  padding-bottom: 0; /* Reset for desktop */
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-bottom: 0;
+  margin: 0;
+  height: 100%;
+  min-height: 100vh;
 }
 
-/* Ensure root and app div allow scrolling */
+/* Ensure root container is properly sized */
 #root,
 #root > div {
   min-height: 100vh;
-  overflow-y: auto !important;
+  width: 100%;
 }
 
-/* Ensure App container doesn't interfere with scrolling */
-#root > div > .flex-col.h-screen.overflow-hidden {
-  overflow: auto !important;
+/* App container base layout */
+#root > div {
   display: flex;
   flex-direction: column;
-}
-
-/* Global correction for content area to always be scrollable */
-.flex-grow.overflow-hidden {
-  overflow: auto !important;
 }
 
 /* Mobile specific adjustments */

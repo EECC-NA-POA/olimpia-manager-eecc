@@ -61,7 +61,7 @@ export function OrganizerModalityCard({
             {representatives.map((representative, index) => (
               <div key={`${representative.atleta_id}-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="space-y-1">
-                  <h4 className="font-medium text-gray-900 text-sm">
+                  <h4 className="font-medium text-foreground text-sm">
                     {representative.nome_completo}
                   </h4>
                   <div className="flex flex-col gap-1 text-xs text-gray-600">

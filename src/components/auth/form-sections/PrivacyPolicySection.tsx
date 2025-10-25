@@ -34,7 +34,7 @@ export const PrivacyPolicySection = ({ form }: PrivacyPolicySectionProps) => {
               />
             </FormControl>
             <div className="space-y-1 leading-none">
-              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700">
                 Aceito a{' '}
                 <button
                   type="button"

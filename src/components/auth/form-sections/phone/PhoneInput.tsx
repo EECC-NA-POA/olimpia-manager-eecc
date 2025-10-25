@@ -35,16 +35,16 @@ export const PhoneInput = ({ form }: PhoneInputProps) => {
           name="ddi"
           render={({ field }) => (
             <FormItem className="w-28">
-              <FormLabel>País</FormLabel>
+              <FormLabel className="text-gray-700">País</FormLabel>
               <FormControl>
                 <Select 
                   onValueChange={field.onChange} 
                   defaultValue={field.value || '+55'}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white text-gray-900">
                     <SelectValue placeholder="País" />
                   </SelectTrigger>
-                  <SelectContent className="bg-background">
+                  <SelectContent className="bg-white">
                     {countries.map((country) => (
                       <SelectItem 
                         key={country.code} 
@@ -66,8 +66,8 @@ export const PhoneInput = ({ form }: PhoneInputProps) => {
         />
 
         <div className="flex-shrink-0 w-20">
-          <FormLabel className="block mb-2">Código</FormLabel>
-          <div className="text-muted-foreground flex items-center h-10 px-3 border rounded-md">
+          <FormLabel className="block mb-2 text-gray-700">Código</FormLabel>
+          <div className="text-gray-700 flex items-center h-10 px-3 border border-gray-300 rounded-md bg-white">
             {form.watch('ddi') || '+55'}
           </div>
         </div>
@@ -77,7 +77,7 @@ export const PhoneInput = ({ form }: PhoneInputProps) => {
           name="telefone"
           render={({ field }) => (
             <FormItem className="flex-grow">
-              <FormLabel className="text-left w-full">Telefone</FormLabel>
+              <FormLabel className="text-left w-full text-gray-700">Telefone</FormLabel>
               <FormControl>
                 <InputMask
                   mask="(99) 99999-9999"
@@ -90,7 +90,7 @@ export const PhoneInput = ({ form }: PhoneInputProps) => {
                       {...inputProps}
                       type="tel"
                       placeholder="(XX) XXXXX-XXXX"
-                      className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary"
+                      className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary bg-white text-gray-900"
                     />
                   )}
                 </InputMask>

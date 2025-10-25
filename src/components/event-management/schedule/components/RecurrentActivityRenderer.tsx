@@ -26,10 +26,10 @@ export const RecurrentActivityRenderer: React.FC<RecurrentActivityRendererProps>
     return (
       <div className="space-y-2 mt-2">
         <div className="flex items-center gap-1 mb-2">
-          <Calendar className="h-3 w-3 text-blue-600" />
-          <span className="text-xs font-medium text-blue-600">Atividade Recorrente</span>
+          <Calendar className="h-3 w-3 text-info" />
+          <span className="text-xs font-medium text-info-foreground">Atividade Recorrente</span>
         </div>
-        <div className="text-xs text-gray-500 italic">
+        <div className="text-xs text-muted-foreground italic">
           Dados de recorrência não configurados
         </div>
       </div>
@@ -39,8 +39,8 @@ export const RecurrentActivityRenderer: React.FC<RecurrentActivityRendererProps>
   return (
     <div className="space-y-2 mt-2">
       <div className="flex items-center gap-1 mb-2">
-        <Calendar className="h-3 w-3 text-blue-600" />
-        <span className="text-xs font-medium text-blue-600">Atividade Recorrente</span>
+        <Calendar className="h-3 w-3 text-info" />
+        <span className="text-xs font-medium text-info-foreground">Atividade Recorrente</span>
       </div>
       
       {item.dias_semana.map(dia => {
@@ -48,27 +48,27 @@ export const RecurrentActivityRenderer: React.FC<RecurrentActivityRendererProps>
         const local = item.locais_por_dia?.[dia];
         
         return (
-          <div key={dia} className="bg-blue-50 p-2 rounded text-xs border-l-2 border-blue-200">
-            <div className="font-medium text-blue-800 mb-1">
+          <div key={dia} className="bg-info-background p-2 rounded text-xs border-l-2 border-info/20">
+            <div className="font-medium text-info-foreground mb-1">
               {getDiaLabel(dia)}
             </div>
             
             {horario && (
-              <div className="flex items-center gap-1 text-gray-600 mb-1">
+              <div className="flex items-center gap-1 text-muted-foreground mb-1">
                 <Clock className="h-3 w-3" />
                 <span>{horario.inicio} - {horario.fim}</span>
               </div>
             )}
             
             {local && (
-              <div className="flex items-center gap-1 text-gray-600">
+              <div className="flex items-center gap-1 text-muted-foreground">
                 <MapPin className="h-3 w-3" />
                 <span>{local}</span>
               </div>
             )}
             
             {(!horario || !local) && (
-              <div className="text-xs text-gray-500 italic">
+              <div className="text-xs text-muted-foreground italic">
                 {!horario && 'Horário não configurado'} 
                 {!horario && !local && ' - '}
                 {!local && 'Local não configurado'}
@@ -79,7 +79,7 @@ export const RecurrentActivityRenderer: React.FC<RecurrentActivityRendererProps>
       })}
       
       {item.data_fim_recorrencia && (
-        <div className="text-xs text-gray-500 mt-2">
+        <div className="text-xs text-muted-foreground mt-2">
           Até: {formatDate(item.data_fim_recorrencia)}
         </div>
       )}

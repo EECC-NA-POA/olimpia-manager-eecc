@@ -7,7 +7,11 @@ export const useEventData = (currentEventId: string | null) => {
   return useQuery({
     queryKey: ['event', currentEventId],
     queryFn: async () => {
-      if (!currentEventId) return null;
+      if (!currentEventId) {
+        throw new Error('Nenhum evento selecionado');
+      }
+      
+      console.log('🔍 Fetching event data for:', currentEventId);
       
       const { data, error } = await supabase
         .from('eventos')
@@ -16,12 +20,18 @@ export const useEventData = (currentEventId: string | null) => {
         .single();
 
       if (error) {
-        console.error('Error fetching event:', error);
-        return null;
+        console.error('❌ Error fetching event:', error);
+        throw error;
       }
 
+      if (!data) {
+        throw new Error('Evento não encontrado');
+      }
+
+      console.log('✅ Event data loaded successfully');
       return data as Event;
     },
     enabled: !!currentEventId,
+    retry: 2,
   });
 };

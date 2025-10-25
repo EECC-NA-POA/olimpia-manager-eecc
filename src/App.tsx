@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { SessionTimeoutProvider } from "@/components/providers/SessionTimeoutProvider";
@@ -9,6 +9,7 @@ import { GlobalHeader } from "@/components/GlobalHeader";
 import { Footer } from "@/components/Footer";
 import { MainNavigation } from "@/components/MainNavigation";
 import { FloatingNotificationIcon } from "@/components/notifications/FloatingNotificationIcon";
+import { toast } from "sonner";
 
 import Index from "./pages/Index";
 import OlimpiadasNacionais from "./pages/OlimpiadasNacionais";
@@ -36,7 +37,30 @@ import AthleteRegistrations from "@/components/AthleteRegistrations";
 // Import Filosofo Monitor component
 import MonitorDashboard from "@/components/monitor/MonitorDashboard";
 
+// Global error handler for queries and mutations
+const handleQueryError = (error: any) => {
+  console.error('🚨 Global query error:', error);
+  
+  const isAuthError = error?.message?.includes('JWT') || 
+                     error?.message?.includes('refresh_token_not_found') || 
+                     error?.message?.includes('token') ||
+                     error?.message?.includes('invalid session') ||
+                     error?.message?.includes('invalid_grant') ||
+                     error?.message?.includes('CompactDecodeError');
+
+  if (isAuthError) {
+    console.error('🔒 Authentication error detected in query');
+    // Don't show toast here - let the AuthProvider handle it
+  }
+};
+
 const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: handleQueryError,
+  }),
+  mutationCache: new MutationCache({
+    onError: handleQueryError,
+  }),
   defaultOptions: {
     queries: {
       retry: (failureCount, error: any) => {
@@ -44,12 +68,18 @@ const queryClient = new QueryClient({
         if (error?.message?.includes('JWT') || 
             error?.message?.includes('refresh_token_not_found') || 
             error?.message?.includes('token') ||
-            error?.message?.includes('invalid session')) {
+            error?.message?.includes('invalid session') ||
+            error?.message?.includes('invalid_grant') ||
+            error?.message?.includes('CompactDecodeError')) {
+          console.error('🚫 Query failed due to authentication error - will not retry:', error);
           return false;
         }
-        return failureCount < 3;
+        return failureCount < 2; // Reduzido para 2 tentativas
       },
-      staleTime: 5 * 60 * 1000, // 5 minutos
+      staleTime: 3 * 60 * 1000, // 3 minutos - reduzido para evitar dados muito antigos
+      gcTime: 5 * 60 * 1000, // 5 minutos de cache
+      refetchOnWindowFocus: false, // Evita queries desnecessárias
+      refetchOnMount: true, // Sempre busca dados frescos ao montar
     },
   },
 });

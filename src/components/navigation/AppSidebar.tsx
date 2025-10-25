@@ -42,37 +42,37 @@ export function AppSidebar({ isHeaderVisible }: AppSidebarProps) {
 
   return (
     <Sidebar 
-      className="bg-olimpics-green-primary text-white border-none mt-16"
+      className="bg-olimpics-green-primary text-white border-none"
       collapsible="icon"
     >
       {/* Logo section - sempre visível */}
-      <div className="bg-olimpics-green-primary border-b border-olimpics-green-secondary/30 h-16">
+      <div className="bg-olimpics-green-primary border-b border-olimpics-green-secondary/30 h-16 flex-shrink-0">
         <div className="flex items-center justify-center h-full p-2 bg-olimpics-green-primary">
           <img 
             src="/lovable-uploads/EECC_marca_portugues_cores_RGB.png"
             alt="EECC Logo"
-            className="h-10 w-auto object-contain group-data-[collapsible=icon]:h-8"
+            className="h-10 w-auto object-contain group-data-[collapsible=icon]:h-8 transition-all"
           />
-          <span className="ml-2 text-white font-semibold group-data-[collapsible=icon]:hidden">
+          <span className="ml-2 text-white font-semibold group-data-[collapsible=icon]:hidden transition-all">
             Olímpia Manager
           </span>
         </div>
       </div>
 
-      <SidebarHeader className="border-b border-olimpics-green-secondary/30 p-4 bg-olimpics-green-primary">
+      <SidebarHeader className="border-b border-olimpics-green-secondary/30 p-4 bg-olimpics-green-primary flex-shrink-0">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white group-data-[collapsible=icon]:hidden">
             Menu Principal
           </h2>
-          <SidebarTrigger className="text-white hover:bg-olimpics-green-secondary/20" />
+          <SidebarTrigger className="text-white hover:bg-olimpics-green-secondary/20 transition-colors" />
         </div>
       </SidebarHeader>
       
-      <SidebarContent className="bg-olimpics-green-primary">
+      <SidebarContent className="bg-olimpics-green-primary flex-1 overflow-y-auto">
         <MenuItems onLogout={handleLogout} userId={user.id} />
       </SidebarContent>
       
-      <SidebarFooter className="border-t border-olimpics-green-secondary/30 p-4 bg-olimpics-green-primary">
+      <SidebarFooter className="border-t border-olimpics-green-secondary/30 p-4 bg-olimpics-green-primary flex-shrink-0">
         <div className="space-y-2">
           <div className="group-data-[collapsible=icon]:hidden">
             <EventSwitcher userId={user.id} collapsed={false} />

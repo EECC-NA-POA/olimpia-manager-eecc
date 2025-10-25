@@ -32,19 +32,20 @@ export default function Administration() {
   
   // Check if user has admin profile
   const hasAdminProfile = user?.papeis?.some(role => role.codigo === 'ADM');
+  const rolesLoaded = Array.isArray(user?.papeis);
   
-  // Redirect if necessary permissions are not present
+  // Redirect if necessary permissions are not present (only after roles are loaded)
   useEffect(() => {
-    if (!isLoadingPermission && (!canCreateEvents || !hasAdminProfile)) {
+    if (!isLoadingPermission && rolesLoaded && !hasAdminProfile) {
       toast.error('Você não tem permissão para acessar a administração');
       navigate('/');
     }
 
-    if (!currentEventId) {
+    if (rolesLoaded && !currentEventId) {
       toast.error('Nenhum evento selecionado');
       navigate('/event-selection');
     }
-  }, [canCreateEvents, hasAdminProfile, isLoadingPermission, currentEventId, navigate]);
+  }, [rolesLoaded, hasAdminProfile, isLoadingPermission, currentEventId, navigate]);
 
   // Loading state
   if (isLoadingPermission || isLoadingEvent) {
