@@ -83,7 +83,7 @@ export function MobileEventSwitcher({ userId }: MobileEventSwitcherProps) {
         </DialogTrigger>
         <DialogContent className="w-[95vw] max-w-md mx-auto">
           <DialogHeader>
-            <DialogTitle className="text-base sm:text-lg">Selecionar Evento</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg text-foreground">Selecionar Evento</DialogTitle>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh]">
             <div className="space-y-2 pr-2">
@@ -94,20 +94,20 @@ export function MobileEventSwitcher({ userId }: MobileEventSwitcherProps) {
                   className={`
                     flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors
                     ${currentEventId === event.id 
-                      ? 'bg-olimpics-green-primary/10 border-olimpics-green-primary' 
-                      : 'bg-background border-border hover:bg-muted/50'
+                      ? 'bg-primary/10 border-primary' 
+                      : 'bg-card border-border hover:bg-muted/50'
                     }
                   `}
                 >
                   <div className="flex-shrink-0 mt-1">
                     {currentEventId === event.id ? (
-                      <Check className="h-4 w-4 text-olimpics-green-primary" />
+                      <Check className="h-4 w-4 text-primary" />
                     ) : (
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0 space-y-1">
-                    <h4 className="font-medium text-sm line-clamp-2">
+                    <h4 className="font-medium text-sm line-clamp-2 text-foreground">
                       {event.nome}
                     </h4>
                     {event.local && (

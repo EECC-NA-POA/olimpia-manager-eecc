@@ -1,7 +1,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 interface UserRoles {
   isOrganizer: boolean;
@@ -23,8 +23,8 @@ export const useNavigation = () => {
   console.log('User role codes:', userRoleCodes);
   console.log('User papeis:', user?.papeis);
 
-  // Check for each role type
-  const roles: UserRoles = {
+  // Check for each role type - memoized to prevent unnecessary recalculations
+  const roles: UserRoles = useMemo(() => ({
     isOrganizer: userRoleCodes.includes('ORG') || userRoleCodes.includes('ORE'), // Support both codes
     isAthlete: userRoleCodes.includes('ATL'),
     isDelegationRep: userRoleCodes.includes('RDD'),
@@ -32,7 +32,7 @@ export const useNavigation = () => {
     isAdmin: userRoleCodes.includes('ADM'),
     isJudge: userRoleCodes.includes('JUZ'),
     isFilosofoMonitor: userRoleCodes.includes('FMON') || userRoleCodes.includes('FMO') || userRoleCodes.includes('FILOSOFO_MONITOR') || userRoleCodes.includes('filosofo_monitor')
-  };
+  }), [userRoleCodes.join(',')]);
 
   console.log('Detected roles:', roles);
   console.log('Is Filosofo Monitor?', roles.isFilosofoMonitor);
