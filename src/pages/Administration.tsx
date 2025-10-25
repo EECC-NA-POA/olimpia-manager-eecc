@@ -35,7 +35,7 @@ export default function Administration() {
   
   // Redirect if necessary permissions are not present
   useEffect(() => {
-    if (!isLoadingPermission && (!canCreateEvents || !hasAdminProfile)) {
+    if (!isLoadingPermission && !hasAdminProfile) {
       toast.error('Você não tem permissão para acessar a administração');
       navigate('/');
     }
@@ -44,7 +44,7 @@ export default function Administration() {
       toast.error('Nenhum evento selecionado');
       navigate('/event-selection');
     }
-  }, [canCreateEvents, hasAdminProfile, isLoadingPermission, currentEventId, navigate]);
+  }, [hasAdminProfile, isLoadingPermission, currentEventId, navigate]);
 
   // Loading state
   if (isLoadingPermission || isLoadingEvent) {

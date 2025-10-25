@@ -85,9 +85,9 @@ export default function AthleteRegistrations() {
           onOpenChange={setIsEnrollmentsOpen}
           className="w-full space-y-2 sm:space-y-3 lg:space-y-4"
         >
-          <div className="relative overflow-hidden rounded-lg bg-[#FEF7CD] p-1 animate-fade-in">
+          <div className="relative overflow-hidden rounded-lg bg-muted/30 p-1 animate-fade-in">
             <div className="absolute inset-0 bg-gradient-to-r from-olimpics-green-primary/5 to-olimpics-green-secondary/5" />
-            <Card className="transition-all duration-300 hover:shadow-xl border-2 border-olimpics-green-primary/20 bg-white/95 backdrop-blur">
+            <Card className="transition-all duration-300 hover:shadow-xl border-2 border-olimpics-green-primary/20 bg-card backdrop-blur">
               <EnrollmentHeader 
                 isOpen={isEnrollmentsOpen}
                 registeredModalitiesCount={registeredModalities?.length || 0}
