@@ -165,7 +165,7 @@ export const EnrollmentList = ({
               return (
                 <TableRow 
                   key={registration.id}
-                  className="transition-colors hover:bg-muted/50"
+                  className="transition-colors hover:bg-muted/50 text-foreground"
                 >
                   <TableCell className="font-medium">{registration.modalidade?.nome}</TableCell>
                   <TableCell className="capitalize">{registration.modalidade?.tipo_modalidade}</TableCell>

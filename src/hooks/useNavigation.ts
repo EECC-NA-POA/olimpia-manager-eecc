@@ -39,9 +39,10 @@ export const useNavigation = () => {
   console.log('Checking for FMON code:', userRoleCodes.includes('FMON'));
 
   // Redirect authenticated users without an event to event selection
-  // But not during logout process
+  // Skip if a logout flow is in progress (set via sessionStorage)
   useEffect(() => {
-    if (user && !currentEventId && 
+    const loggingOut = typeof window !== 'undefined' && sessionStorage.getItem('logoutPending') === '1';
+    if (user && !currentEventId && !loggingOut &&
         location.pathname !== '/event-selection' && 
         !location.pathname.startsWith('/event') &&
         location.pathname !== '/verificar-email' &&
