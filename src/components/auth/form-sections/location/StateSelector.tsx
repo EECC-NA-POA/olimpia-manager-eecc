@@ -28,7 +28,7 @@ export const StateSelector = ({
       name="state"
       render={({ field }) => (
         <FormItem className="flex flex-col flex-1 min-w-[200px]">
-          <FormLabel>Estado</FormLabel>
+          <FormLabel className="text-gray-700">Estado</FormLabel>
           {isLoading ? (
             <Skeleton className="h-10 w-full rounded-md" />
           ) : hasError ? (
@@ -41,7 +41,7 @@ export const StateSelector = ({
               disabled={true}
             >
               <FormControl>
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-white text-gray-900">
                   <SelectValue placeholder="Erro ao carregar estados" />
                 </SelectTrigger>
               </FormControl>
@@ -61,7 +61,7 @@ export const StateSelector = ({
               disabled={disabled}
             >
               <FormControl>
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-white text-gray-900">
                   <SelectValue placeholder="Selecione um Estado" />
                 </SelectTrigger>
               </FormControl>

@@ -38,11 +38,11 @@ export function EventsHeader() {
           </p>
 
           {/* Login/Cadastro Section */}
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl p-8 max-w-md mx-auto shadow-lg mb-8">
+          <div className="bg-card/95 backdrop-blur-sm rounded-xl p-8 max-w-md mx-auto shadow-lg mb-8 border border-border">
             <h3 className="text-2xl font-bold text-olimpics-green-primary mb-4">
               Acesse o Sistema
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-muted-foreground mb-6">
               Faça login ou cadastre-se para participar dos eventos
             </p>
             <div className="space-y-3">
@@ -50,69 +50,69 @@ export function EventsHeader() {
                 <Users className="h-5 w-5 mr-2" />
                 Entrar / Cadastrar-se
               </Button>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Crie sua conta ou acesse eventos específicos
               </p>
             </div>
           </div>
 
           {/* Philosopher Quotes - Updated grid layout */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl p-8 max-w-6xl mx-auto shadow-lg">
+          <div className="bg-card/90 backdrop-blur-sm rounded-xl p-8 max-w-6xl mx-auto shadow-lg border border-border">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-olimpics-green-primary/5 p-6 rounded-lg border-l-4 border-olimpics-green-primary">
-                <h4 className="font-bold text-olimpics-green-primary mb-3">Platão (428–348 a.C.)</h4>
-                <p className="text-gray-700 italic text-sm leading-relaxed mb-2">
+              <div className="bg-success-background/50 p-6 rounded-lg border-l-4 border-success">
+                <h4 className="font-bold text-success mb-3">Platão (428–348 a.C.)</h4>
+                <p className="text-foreground italic text-sm leading-relaxed mb-2">
                   "O homem pode aprender virtudes e disciplina tanto na música quanto na ginástica, pois ambas moldam a alma e o corpo."
                 </p>
-                <p className="text-xs text-gray-600">— Platão, A República (Livro III)</p>
+                <p className="text-xs text-muted-foreground">— Platão, A República (Livro III)</p>
               </div>
 
-              <div className="bg-olimpics-orange-primary/5 p-6 rounded-lg border-l-4 border-olimpics-orange-primary">
-                <h4 className="font-bold text-olimpics-orange-primary mb-3">Aristóteles (384–322 a.C.)</h4>
-                <p className="text-gray-700 italic text-sm leading-relaxed mb-2">
+              <div className="bg-warning-background/50 p-6 rounded-lg border-l-4 border-warning">
+                <h4 className="font-bold text-warning mb-3">Aristóteles (384–322 a.C.)</h4>
+                <p className="text-foreground italic text-sm leading-relaxed mb-2">
                   "Somos o que repetidamente fazemos. A excelência, portanto, não é um feito, mas um hábito."
                 </p>
-                <p className="text-xs text-gray-600">— Aristóteles, Ética a Nicômaco</p>
+                <p className="text-xs text-muted-foreground">— Aristóteles, Ética a Nicômaco</p>
               </div>
 
-              <div className="bg-olimpics-green-primary/5 p-6 rounded-lg border-l-4 border-olimpics-green-primary">
-                <h4 className="font-bold text-olimpics-green-primary mb-3">Epicteto (50–135 d.C.)</h4>
-                <p className="text-gray-700 italic text-sm leading-relaxed mb-2">
+              <div className="bg-success-background/50 p-6 rounded-lg border-l-4 border-success">
+                <h4 className="font-bold text-success mb-3">Epicteto (50–135 d.C.)</h4>
+                <p className="text-foreground italic text-sm leading-relaxed mb-2">
                   "Se você quer vencer nos Jogos Olímpicos, deve se preparar, exercitar-se, comer moderadamente, suportar a fadiga e obedecer ao treinador."
                 </p>
-                <p className="text-xs text-gray-600">— Enchirídion" (ou "Manual")</p>
+                <p className="text-xs text-muted-foreground">— Enchirídion" (ou "Manual")</p>
               </div>
 
-              <div className="bg-olimpics-orange-primary/5 p-6 rounded-lg border-l-4 border-olimpics-orange-primary">
-                <h4 className="font-bold text-olimpics-orange-primary mb-3">Sêneca (4 a.C.–65 d.C.)</h4>
-                <p className="text-gray-700 italic text-sm leading-relaxed mb-2">
+              <div className="bg-warning-background/50 p-6 rounded-lg border-l-4 border-warning">
+                <h4 className="font-bold text-warning mb-3">Sêneca (4 a.C.–65 d.C.)</h4>
+                <p className="text-foreground italic text-sm leading-relaxed mb-2">
                   "A vida é como um gladiador nos jogos: não se trata apenas de sobreviver, mas de lutar bem."
                 </p>
-                <p className="text-xs text-gray-600">— Sêneca, Cartas a Lucílio</p>
+                <p className="text-xs text-muted-foreground">— Sêneca, Cartas a Lucílio</p>
               </div>
 
-              <div className="bg-olimpics-green-primary/5 p-6 rounded-lg border-l-4 border-olimpics-green-primary">
-                <h4 className="font-bold text-olimpics-green-primary mb-3">Diógenes de Sinope (412–323 a.C.)</h4>
-                <p className="text-gray-700 italic text-sm leading-relaxed mb-2">
+              <div className="bg-success-background/50 p-6 rounded-lg border-l-4 border-success">
+                <h4 className="font-bold text-success mb-3">Diógenes de Sinope (412–323 a.C.)</h4>
+                <p className="text-foreground italic text-sm leading-relaxed mb-2">
                   "Os vencedores dos Jogos Olímpicos recebem apenas uma coroa de louros; mas os que vivem com virtude recebem a verdadeira glória."
                 </p>
-                <p className="text-xs text-gray-600">— Diógenes, citado por Diógenes Laércio</p>
+                <p className="text-xs text-muted-foreground">— Diógenes, citado por Diógenes Laércio</p>
               </div>
 
-              <div className="bg-olimpics-orange-primary/5 p-6 rounded-lg border-l-4 border-olimpics-orange-primary">
-                <h4 className="font-bold text-olimpics-orange-primary mb-3">Cícero (106–43 a.C.)</h4>
-                <p className="text-gray-700 italic text-sm leading-relaxed mb-2">
+              <div className="bg-warning-background/50 p-6 rounded-lg border-l-4 border-warning">
+                <h4 className="font-bold text-warning mb-3">Cícero (106–43 a.C.)</h4>
+                <p className="text-foreground italic text-sm leading-relaxed mb-2">
                   "O esforço e a perseverança sempre superam o talento que não se disciplina."
                 </p>
-                <p className="text-xs text-gray-600">— Cícero, De Officiis</p>
+                <p className="text-xs text-muted-foreground">— Cícero, De Officiis</p>
               </div>
 
-              <div className="bg-olimpics-green-primary/5 p-6 rounded-lg border-l-4 border-olimpics-green-primary lg:col-start-2">
-                <h4 className="font-bold text-olimpics-green-primary mb-3">Píndaro (518–438 a.C.)</h4>
-                <p className="text-gray-700 italic text-sm leading-relaxed mb-2">
+              <div className="bg-success-background/50 p-6 rounded-lg border-l-4 border-success lg:col-start-2">
+                <h4 className="font-bold text-success mb-3">Píndaro (518–438 a.C.)</h4>
+                <p className="text-foreground italic text-sm leading-relaxed mb-2">
                   "Ó minha alma, não aspire à vida imortal, mas esgote o campo do possível."
                 </p>
-                <p className="text-xs text-gray-600">(Não filósofo, mas poeta dos Jogos Olímpicos)</p>
+                <p className="text-xs text-muted-foreground">(Não filósofo, mas poeta dos Jogos Olímpicos)</p>
               </div>
             </div>
           </div>

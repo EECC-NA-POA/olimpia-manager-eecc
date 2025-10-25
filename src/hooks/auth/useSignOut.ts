@@ -1,9 +1,11 @@
 
 import { useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase, handleSupabaseError } from '@/lib/supabase';
 
 export const useSignOut = () => {
   const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   const signOut = useCallback(async (): Promise<void> => {
     try {
@@ -24,6 +26,10 @@ export const useSignOut = () => {
         }
       }
 
+      // Clear all react-query cache to prevent stale data
+      console.log('🗑️ Clearing all query cache');
+      queryClient.clear();
+
       console.log('✅ Signout successful');
       
     } catch (error: any) {
@@ -33,7 +39,7 @@ export const useSignOut = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [queryClient]);
 
   return { signOut, loading };
 };

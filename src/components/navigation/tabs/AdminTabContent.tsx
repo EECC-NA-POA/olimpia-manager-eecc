@@ -3,6 +3,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { Settings2, Calendar as CalendarIcon } from 'lucide-react';
 import { NavLink } from '../NavLink';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AdminTabContentProps {
   isAdmin: boolean;
@@ -11,8 +12,13 @@ interface AdminTabContentProps {
 
 export function AdminTabContent({ isAdmin, canManageEvents }: AdminTabContentProps) {
   const location = useLocation();
+  const { user, currentEventId } = useAuth();
   
-  if (!isAdmin) return null;
+  // Only show admin menu if:
+  // 1. User is admin (has ADM role)
+  // 2. Has an event selected (currentEventId)
+  // 3. User's roles are loaded (papeis array exists)
+  if (!isAdmin || !currentEventId || !user?.papeis) return null;
   
   return (
     <>

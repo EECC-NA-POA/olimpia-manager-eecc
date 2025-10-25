@@ -53,12 +53,14 @@ export function MainNavigation({ children }: MainNavigationProps) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full bg-olimpics-background">
         <AppSidebar isHeaderVisible={isHeaderVisible} />
-        <SidebarInset className="flex-1">
-          <main className="flex-1 overflow-auto bg-olimpics-background p-6 pt-20">
-            {children}
-          </main>
+        <SidebarInset className="flex-1 w-full">
+          <div className="main-navigation-content">
+            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
+              {children}
+            </main>
+          </div>
         </SidebarInset>
       </div>
     </SidebarProvider>

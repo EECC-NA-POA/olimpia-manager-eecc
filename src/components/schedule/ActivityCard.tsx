@@ -20,38 +20,38 @@ export function ActivityCard({ category, activities }: ActivityCardProps) {
   const getActivityStyle = (activities: ActivityCardProps['activities']) => {
     const isGlobal = activities.some(act => act.global);
     if (isGlobal) {
-      return 'border-yellow-400 bg-yellow-50';
+      return 'border-warning bg-warning-background';
     }
     
     const statuses = activities.map(act => act.modalidade_status?.toLowerCase());
     
     // If at least one modality is confirmed, show green border
     if (statuses.includes('confirmado')) {
-      return 'border-green-600 bg-green-50';
+      return 'border-success bg-success-background';
     }
     
     // If ALL modalities are canceled, show red border
     if (statuses.length > 0 && statuses.every(status => status === 'cancelado')) {
-      return 'border-red-400 bg-red-50';
+      return 'border-destructive bg-destructive/5';
     }
     
     // Default style for other cases (pending or mixed statuses)
-    return 'border-gray-200 bg-white';
+    return 'border-border bg-card';
   };
 
   const getStatusColor = (status: string | null, isGlobal: boolean) => {
-    if (isGlobal) return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80';
-    if (!status) return 'bg-gray-100 text-gray-800 hover:bg-gray-100/80';
+    if (isGlobal) return 'bg-warning-background text-warning-foreground hover:bg-warning/10';
+    if (!status) return 'bg-neutral-background text-neutral-foreground hover:bg-neutral/10';
     
     switch (status.toLowerCase()) {
       case 'confirmado':
-        return 'bg-green-100 text-green-800 hover:bg-green-100/80';
+        return 'bg-success-background text-success-foreground hover:bg-success/10';
       case 'pendente':
-        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80';
+        return 'bg-warning-background text-warning-foreground hover:bg-warning/10';
       case 'cancelado':
-        return 'bg-red-100 text-red-800 hover:bg-red-100/80';
+        return 'bg-destructive/10 text-destructive-foreground hover:bg-destructive/20';
       default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-100/80';
+        return 'bg-neutral-background text-neutral-foreground hover:bg-neutral/10';
     }
   };
 
@@ -66,9 +66,9 @@ export function ActivityCard({ category, activities }: ActivityCardProps) {
       )}
     >
       <div className="space-y-2">
-        <h4 className="font-medium text-olimpics-green-primary">{activities[0].atividade}</h4>
+        <h4 className="font-medium text-foreground">{activities[0].atividade}</h4>
         <div className="pl-2 space-y-3">
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-muted-foreground">
             <span>{location}</span>
           </div>
           <div className="flex flex-wrap gap-2">

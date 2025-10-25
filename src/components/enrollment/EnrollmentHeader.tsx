@@ -13,16 +13,16 @@ export const EnrollmentHeader = ({
 }: EnrollmentHeaderProps) => <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
     <div className="flex items-center gap-3">
       <UserPlus className="h-6 w-6 text-olimpics-green-primary animate-pulse" />
-      <CardTitle className="text-2xl font-bold text-olimpics-text flex items-center gap-2">
+      <CardTitle className="text-2xl font-bold text-foreground flex items-center gap-2">
         Área de Inscrições
-        <span className="text-sm font-normal text-gray-500">
+        <span className="text-sm font-normal text-muted-foreground">
           ({registeredModalitiesCount} modalidades)
         </span>
       </CardTitle>
     </div>
     <CollapsibleTrigger asChild>
       <Button variant="ghost" size="sm" className="absolute top-2 right-2 gap-2 bg-olimpics-green-primary text-white hover:bg-olimpics-green-secondary transition-colors font-medium">
-        {isOpen ? <ChevronUp className="h-4 w-4 text-olimpics-text" /> : <ChevronDown className="h-4 w-4 text-olimpics-text" />}
+        {isOpen ? <ChevronUp className="h-4 w-4 text-white" /> : <ChevronDown className="h-4 w-4 text-white" />}
       </Button>
     </CollapsibleTrigger>
   </CardHeader>;

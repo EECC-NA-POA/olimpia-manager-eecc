@@ -72,7 +72,7 @@ export default function AthleteRegistrations() {
     <div className="min-h-screen pb-20 md:pb-6">
       <div className="container mx-auto py-2 sm:py-4 lg:py-6 space-y-3 sm:space-y-4 lg:space-y-6 px-2 sm:px-4 max-w-full">
         {isReadOnly && (
-          <Alert className="bg-yellow-100 border-yellow-300 text-yellow-900">
+          <Alert className="bg-warning-background border-warning text-warning-foreground">
             <Info className="h-4 w-4" />
             <AlertDescription>
               Este evento está encerrado ou suspenso. As ações de inscrição e cancelamento estão desabilitadas. Você ainda pode visualizar seu histórico.
@@ -85,9 +85,9 @@ export default function AthleteRegistrations() {
           onOpenChange={setIsEnrollmentsOpen}
           className="w-full space-y-2 sm:space-y-3 lg:space-y-4"
         >
-          <div className="relative overflow-hidden rounded-lg bg-[#FEF7CD] p-1 animate-fade-in">
+          <div className="relative overflow-hidden rounded-lg bg-muted/30 p-1 animate-fade-in">
             <div className="absolute inset-0 bg-gradient-to-r from-olimpics-green-primary/5 to-olimpics-green-secondary/5" />
-            <Card className="transition-all duration-300 hover:shadow-xl border-2 border-olimpics-green-primary/20 bg-white/95 backdrop-blur">
+            <Card className="transition-all duration-300 hover:shadow-xl border-2 border-olimpics-green-primary/20 bg-card backdrop-blur">
               <EnrollmentHeader 
                 isOpen={isEnrollmentsOpen}
                 registeredModalitiesCount={registeredModalities?.length || 0}
@@ -98,7 +98,7 @@ export default function AthleteRegistrations() {
                     <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-olimpics-green-primary mb-1 sm:mb-2">
                       Inscreva-se Agora nas Modalidades Olímpicas!
                     </h3>
-                    <p className="text-xs sm:text-sm text-gray-600 px-2">
+                    <p className="text-xs sm:text-sm text-muted-foreground px-2">
                       Escolha suas modalidades e faça parte desta celebração do esporte e filosofia
                     </p>
                   </div>

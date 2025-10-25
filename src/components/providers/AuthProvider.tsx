@@ -21,7 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { signIn, signOut, signUp, resendVerificationEmail } = useAuthOperations();
 
-  // Update localStorage when currentEventId changes
+  // Update localStorage and reload user profile when currentEventId changes
   useEffect(() => {
     if (currentEventId) {
       localStorage.setItem('currentEventId', currentEventId);
@@ -29,7 +29,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('currentEventId');
     }
     clearUserProfileCache();
-  }, [currentEventId]);
+    
+    // Reload user profile with new event roles when event changes
+    // Only reload if we have both user.id and currentEventId
+    const userId = user?.id;
+    if (userId && currentEventId) {
+      console.log('🔄 Event changed, reloading user profile with new roles...');
+      fetchUserProfile(userId)
+        .then((profile) => {
+          console.log('✅ Profile reloaded with roles:', profile.papeis);
+          setUser((prevUser) => prevUser ? { ...prevUser, ...profile } : prevUser);
+        })
+        .catch((err) => {
+          console.error('❌ Error reloading profile after event change:', err);
+        });
+    }
+  }, [currentEventId, user?.id]);
 
   // Watch for changes to currentEventId in localStorage
   useEffect(() => {
@@ -99,13 +114,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    console.log('🚀 Setting up authentication state...');
+    console.log('🚀 Initializing auth state listener...');
     console.log('📍 Current location:', location.pathname);
     let mounted = true;
 
-    const setupAuth = async () => {
+    // 1) Set up auth listener FIRST (sync-only to avoid deadlocks)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔄 Auth state changed:', event);
+      if (!mounted) return;
+
+      if (event === 'SIGNED_OUT') {
+        console.log('👋 User signed out, clearing state');
+        setUser(null);
+        setSessionExpired(false);
+        localStorage.removeItem('currentEventId');
+        setCurrentEventId(null);
+        clearUserProfileCache();
+        navigate('/', { replace: true });
+        return;
+      }
+
+      const baseUser = session?.user ?? null;
+      setUser(baseUser as any);
+
+      if (baseUser) {
+        // Defer profile fetch to avoid blocking the auth callback
+        setTimeout(async () => {
+          try {
+            const userProfile = await fetchUserProfile(baseUser.id);
+            if (mounted) {
+              setUser({ ...(baseUser as any), ...userProfile });
+              setSessionExpired(false);
+            }
+          } catch (err) {
+            console.error('❌ Error loading profile after auth change:', err);
+            await handleSessionError(err);
+          }
+        }, 0);
+      }
+    });
+
+    // 2) THEN check for existing session
+    (async () => {
       try {
-        // Get session with enhanced debugging
         console.log('🔍 Getting current session...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
@@ -115,85 +166,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (logoutOccurred) return;
         }
         
-        console.log('📊 Session status:', {
-          hasSession: !!session
-        });
+        console.log('📊 Session status:', { hasSession: !!session });
 
-        // Only redirect if no session and not on public route
-        if (!session?.user && !PUBLIC_ROUTES.includes(location.pathname as PublicRoute) && 
-            location.pathname !== '/reset-password') {
-          console.log('❌ No session and not on public route, redirecting to /');
-          navigate('/', { replace: true });
-          return;
-        }
-
-        if (session?.user) {
-          console.log('✅ User session found, fetching profile...');
+        if (!session?.user) {
+          if (!PUBLIC_ROUTES.includes(location.pathname as PublicRoute) && location.pathname !== '/reset-password') {
+            console.log('❌ No session and not on public route, redirecting to /');
+            navigate('/', { replace: true });
+          }
+        } else {
           const storedEventId = localStorage.getItem('currentEventId');
           if (storedEventId && storedEventId !== currentEventId) {
             setCurrentEventId(storedEventId);
           }
-          
-          try {
-            const userProfile = await fetchUserProfile(session.user.id);
-            if (mounted) {
-              console.log('✅ User profile loaded successfully');
-              setUser({ ...session.user, ...userProfile });
-              setSessionExpired(false);
-            }
-          } catch (profileError) {
-            console.error('❌ Error fetching user profile:', profileError);
-            const logoutOccurred = await handleSessionError(profileError);
-            if (logoutOccurred) return;
-          }
-        }
 
-        // Set up auth state change listener with improved error handling
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            console.log('🔄 Auth state changed:', event);
-
-            if (event === 'SIGNED_OUT') {
+          // Defer profile fetch on init as well
+          setTimeout(async () => {
+            try {
+              const userProfile = await fetchUserProfile(session.user.id);
               if (mounted) {
-                console.log('👋 User signed out, clearing state');
-                setUser(null);
+                setUser({ ...session.user, ...userProfile });
                 setSessionExpired(false);
-                localStorage.removeItem('currentEventId');
-                setCurrentEventId(null);
-                clearUserProfileCache();
-                navigate('/', { replace: true });
               }
-              return;
+            } catch (profileError) {
+              console.error('❌ Error fetching user profile:', profileError);
+              await handleSessionError(profileError);
             }
-
-            if (session?.user) {
-              try {
-                console.log('🔄 User session updated, fetching profile');
-                const userProfile = await fetchUserProfile(session.user.id);
-                if (mounted) {
-                  console.log('✅ Updated user profile loaded');
-                  setUser({ ...session.user, ...userProfile });
-                  setSessionExpired(false);
-                }
-              } catch (error) {
-                console.error('❌ Error in auth state change:', error);
-                await handleSessionError(error);
-              }
-            } else if (!session?.user) {
-              if (mounted) {
-                console.log('❌ No user session after auth state change');
-                setUser(null);
-                if (!PUBLIC_ROUTES.includes(location.pathname as PublicRoute)) {
-                  navigate('/', { replace: true });
-                }
-              }
-            }
-          }
-        );
-
-        return () => {
-          subscription.unsubscribe();
-        };
+          }, 0);
+        }
       } catch (error) {
         console.error('❌ Error in auth setup:', error);
         await handleSessionError(error);
@@ -203,13 +202,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false);
         }
       }
-    };
+    })();
 
-    setupAuth();
     return () => {
       mounted = false;
+      subscription.unsubscribe();
     };
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, currentEventId]);
 
   if (loading) {
     return (

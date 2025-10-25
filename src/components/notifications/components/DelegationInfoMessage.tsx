@@ -11,8 +11,8 @@ export function DelegationInfoMessage({ isRepresentanteDelegacao }: DelegationIn
   }
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-      <p className="text-sm text-blue-700">
+    <div className="bg-info-background border border-info/20 rounded-md p-3">
+      <p className="text-sm text-info-foreground">
         Como representante de delegação, esta notificação será visível para todos os participantes do evento.
       </p>
     </div>

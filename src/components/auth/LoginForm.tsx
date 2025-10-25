@@ -93,12 +93,12 @@ export const LoginForm = () => {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-left w-full">Email</FormLabel>
+              <FormLabel className="text-left w-full text-gray-700">Email</FormLabel>
               <FormControl>
                 <Input
                   type="email"
                   placeholder="seu@email.com"
-                  className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary"
+                  className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary bg-white text-gray-900"
                   {...field}
                 />
               </FormControl>
@@ -111,12 +111,12 @@ export const LoginForm = () => {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-left w-full">Senha</FormLabel>
+              <FormLabel className="text-left w-full text-gray-700">Senha</FormLabel>
               <FormControl>
                 <Input
                   type="password"
                   placeholder="••••••"
-                  className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary"
+                  className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary bg-white text-gray-900"
                   {...field}
                 />
               </FormControl>

@@ -34,13 +34,22 @@ export function TabbedNavigation({ user, roles }: TabbedNavigationProps) {
   const handleLogout = async () => {
     try {
       console.log('TabbedNavigation - Initiating logout process...');
+      // Mark logout to prevent cross-effects (e.g., event-selection redirect)
+      if (typeof window !== 'undefined') sessionStorage.setItem('logoutPending', '1');
+
       await signOut();
       console.log('TabbedNavigation - User signed out successfully');
       toast.success('Logout realizado com sucesso!');
       navigate('/', { replace: true });
+
+      // Clear the flag shortly after navigation
+      setTimeout(() => {
+        try { sessionStorage.removeItem('logoutPending'); } catch {}
+      }, 200);
     } catch (error) {
       console.error('TabbedNavigation - Error during logout:', error);
       toast.error('Erro ao fazer logout');
+      try { sessionStorage.removeItem('logoutPending'); } catch {}
     }
   };
 

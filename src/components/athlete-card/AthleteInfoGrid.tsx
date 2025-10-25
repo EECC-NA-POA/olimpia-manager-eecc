@@ -36,13 +36,13 @@ export const AthleteInfoGrid: React.FC<AthleteInfoGridProps> = ({
       {email && (
         <div className="flex items-center gap-2">
           <Mail className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">{email}</span>
+          <span className="text-sm text-foreground">{email}</span>
         </div>
       )}
       
       <div className="flex items-center gap-2">
         <Phone className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm">
+        <span className="text-sm text-foreground">
           {telefone}
           <Button
             variant="link"
@@ -57,38 +57,38 @@ export const AthleteInfoGrid: React.FC<AthleteInfoGridProps> = ({
       {filialNome && (
         <div className="flex items-center gap-2">
           <Building2 className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">{filialNome}</span>
+          <span className="text-sm text-foreground">{filialNome}</span>
         </div>
       )}
 
       <div className="flex items-center gap-2">
         <CreditCard className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm">
+        <span className="text-sm text-foreground">
           {tipoDocumento}: {numeroDocumento}
         </span>
       </div>
 
       <div className="flex items-center gap-2">
         <User className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm">Gênero: {genero}</span>
+        <span className="text-sm text-foreground">Gênero: {genero}</span>
       </div>
 
       {hasRegistrador && registradorInfo && (
-        <div className="mt-4 pt-4 border-t border-gray-200">
+        <div className="mt-4 pt-4 border-t border-border">
           <div className="text-sm">
             <h4 className="font-medium text-muted-foreground mb-2">Informações do Responsável:</h4>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground" />
-                <span>{registradorInfo.nome_completo}</span>
+                <span className="text-foreground">{registradorInfo.nome_completo}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <span>{registradorInfo.email}</span>
+                <span className="text-foreground">{registradorInfo.email}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-muted-foreground" />
-                <span>
+                <span className="text-foreground">
                   {registradorInfo.telefone}
                   <Button
                     variant="link"

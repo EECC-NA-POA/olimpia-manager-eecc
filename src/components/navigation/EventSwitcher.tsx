@@ -61,26 +61,9 @@ export function EventSwitcher({ userId, collapsed = false }: EventSwitcherProps)
         <MobileEventSwitcher userId={userId} />
       </div>
       
-      {/* Desktop Event Switcher - shown on md screens and larger */}
-      <div className={`${collapsed ? 'hidden' : 'hidden md:flex'} items-center min-w-[180px] text-sm relative`}>
-        <div className="flex items-center gap-1">
-          <span className="text-white font-medium truncate">
-            {selectedEvent?.nome || 'Selecionar Evento'}
-          </span>
-          <ChevronDown className="h-4 w-4 text-white flex-shrink-0" />
-        </div>
-        <select
-          value={currentEventId || ''}
-          onChange={handleEventChange}
-          className="absolute inset-0 opacity-0 cursor-pointer w-full"
-          aria-label="Trocar Evento"
-        >
-          {availableEvents.map(event => (
-            <option key={event.id} value={event.id}>
-              {event.nome}
-            </option>
-          ))}
-        </select>
+      {/* Desktop and Mobile unified: always use dialog-based switcher for better UX and contrast */}
+      <div className={`${collapsed ? 'hidden' : ''} items-center min-w-[180px] text-sm relative`}>
+        <MobileEventSwitcher userId={userId} />
       </div>
     </>
   );

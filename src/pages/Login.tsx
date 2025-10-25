@@ -19,7 +19,7 @@ export default function Login() {
 
   return (
     <div 
-      className="min-h-screen relative"
+      className="min-h-screen relative light"
       style={{
         backgroundImage: 'url(/lovable-uploads/0e072ceb-03f9-4f0f-a6d1-7fbea0938c7a.png)',
         backgroundSize: 'cover',
