@@ -14,7 +14,7 @@ interface UserRoles {
 }
 
 export const useNavigation = () => {
-  const { user, signOut, currentEventId } = useAuth();
+  const { user, signOut, currentEventId, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -42,7 +42,7 @@ export const useNavigation = () => {
   // Skip if a logout flow is in progress (set via sessionStorage)
   useEffect(() => {
     const loggingOut = typeof window !== 'undefined' && sessionStorage.getItem('logoutPending') === '1';
-    if (user && !currentEventId && !loggingOut &&
+    if (!loading && user && !currentEventId && !loggingOut &&
         location.pathname !== '/event-selection' && 
         !location.pathname.startsWith('/event') &&
         location.pathname !== '/verificar-email' &&
@@ -53,7 +53,7 @@ export const useNavigation = () => {
       console.log('User logged in but no event selected, redirecting to event selection');
       navigate('/event-selection', { replace: true });
     }
-  }, [user, currentEventId, location.pathname, navigate]);
+  }, [loading, user, currentEventId, location.pathname, navigate]);
 
   return {
     user,
