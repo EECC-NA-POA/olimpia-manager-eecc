@@ -71,7 +71,7 @@ export function MobileEventSwitcher({ userId }: MobileEventSwitcherProps) {
         <DialogTrigger asChild>
           <Button 
             variant="ghost" 
-            className="text-white hover:bg-white/10 flex items-center gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 max-w-[120px] sm:max-w-none"
+            className="text-foreground hover:bg-muted/40 flex items-center gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 max-w-[120px] sm:max-w-none"
           >
             <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
             <span className="truncate hidden xs:inline">

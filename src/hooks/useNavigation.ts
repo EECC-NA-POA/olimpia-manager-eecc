@@ -1,7 +1,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 interface UserRoles {
   isOrganizer: boolean;
@@ -19,7 +19,14 @@ export const useNavigation = () => {
   const navigate = useNavigate();
 
   // Get all roles codes from the user's roles
-  const userRoleCodes = user?.papeis?.map(role => role.codigo) || [];
+  const currentRoleCodes = user?.papeis?.map(role => role.codigo) || [];
+
+  // Preserve last known roles to avoid flicker while auth reloads
+  const lastRoleCodesRef = useRef<string[]>([]);
+  if (currentRoleCodes.length > 0) {
+    lastRoleCodesRef.current = currentRoleCodes;
+  }
+  const userRoleCodes = currentRoleCodes.length > 0 ? currentRoleCodes : lastRoleCodesRef.current;
   console.log('User role codes:', userRoleCodes);
   console.log('User papeis:', user?.papeis);
 
@@ -58,6 +65,7 @@ export const useNavigation = () => {
   return {
     user,
     roles,
-    signOut
+    signOut,
+    rolesLoaded: Array.isArray(user?.papeis) && user?.papeis !== undefined
   };
 };
