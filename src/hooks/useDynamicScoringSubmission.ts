@@ -138,12 +138,17 @@ export function useDynamicScoringSubmission() {
     onSuccess: (data, variables) => {
       console.log('=== MUTATION SUCCESS ===');
       
-      // Invalidate queries
+      // Invalidate queries - CRITICAL: Must match exact query keys including all parameters
       queryClient.invalidateQueries({ queryKey: ['team-score', variables.equipeId, variables.modalityId, variables.eventId] });
       queryClient.invalidateQueries({ queryKey: ['athlete-scores', variables.athleteId, variables.modalityId] });
       queryClient.invalidateQueries({ 
         queryKey: ['modality-scores', variables.modalityId] 
       });
+      // Invalidate dynamic scores with ALL parameters to ensure UI updates
+      queryClient.invalidateQueries({ 
+        queryKey: ['dynamic-scores', variables.modalityId, variables.eventId, variables.bateriaId, variables.judgeId] 
+      });
+      // Also invalidate without optional parameters to catch all variations
       queryClient.invalidateQueries({ 
         queryKey: ['dynamic-scores', variables.modalityId, variables.eventId] 
       });
