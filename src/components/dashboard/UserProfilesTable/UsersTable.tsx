@@ -61,14 +61,14 @@ export function UsersTable({ data, branches }: UsersTableProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold text-gray-900">Nome</TableHead>
-              <TableHead className="font-semibold text-gray-900">Email</TableHead>
-              <TableHead className="font-semibold text-gray-900">Documento</TableHead>
-              <TableHead className="font-semibold text-gray-900">Filial</TableHead>
-              <TableHead className="font-semibold text-gray-900">Perfis</TableHead>
-              <TableHead className="font-semibold text-gray-900">Status Pagamento</TableHead>
-              <TableHead className="font-semibold text-gray-900">Data Criação</TableHead>
-              <TableHead className="font-semibold text-gray-900">Ações</TableHead>
+              <TableHead className="font-semibold text-foreground">Nome</TableHead>
+              <TableHead className="font-semibold text-foreground">Email</TableHead>
+              <TableHead className="font-semibold text-foreground">Documento</TableHead>
+              <TableHead className="font-semibold text-foreground">Filial</TableHead>
+              <TableHead className="font-semibold text-foreground">Perfis</TableHead>
+              <TableHead className="font-semibold text-foreground">Status Pagamento</TableHead>
+              <TableHead className="font-semibold text-foreground">Data Criação</TableHead>
+              <TableHead className="font-semibold text-foreground">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

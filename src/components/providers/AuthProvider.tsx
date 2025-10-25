@@ -21,7 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { signIn, signOut, signUp, resendVerificationEmail } = useAuthOperations();
 
-  // Update localStorage when currentEventId changes
+  // Update localStorage and reload user profile when currentEventId changes
   useEffect(() => {
     if (currentEventId) {
       localStorage.setItem('currentEventId', currentEventId);
@@ -29,7 +29,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('currentEventId');
     }
     clearUserProfileCache();
-  }, [currentEventId]);
+    
+    // Reload user profile with new event roles when event changes
+    // Only reload if we have both user.id and currentEventId
+    const userId = user?.id;
+    if (userId && currentEventId) {
+      console.log('🔄 Event changed, reloading user profile with new roles...');
+      fetchUserProfile(userId)
+        .then((profile) => {
+          console.log('✅ Profile reloaded with roles:', profile.papeis);
+          setUser((prevUser) => prevUser ? { ...prevUser, ...profile } : prevUser);
+        })
+        .catch((err) => {
+          console.error('❌ Error reloading profile after event change:', err);
+        });
+    }
+  }, [currentEventId, user?.id]);
 
   // Watch for changes to currentEventId in localStorage
   useEffect(() => {
