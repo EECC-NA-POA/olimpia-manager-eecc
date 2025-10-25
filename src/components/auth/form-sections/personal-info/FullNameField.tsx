@@ -15,11 +15,11 @@ export const FullNameField = ({ form }: FullNameFieldProps) => {
       name="nome"
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="text-left w-full">Nome Completo</FormLabel>
+          <FormLabel className="text-left w-full text-gray-700">Nome Completo</FormLabel>
           <FormControl>
             <Input
               placeholder="Seu nome completo"
-              className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary"
+              className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary bg-white text-gray-900"
               {...field}
             />
           </FormControl>

@@ -28,7 +28,7 @@ export const BranchSelector = ({
       name="branchId"
       render={({ field }) => (
         <FormItem className="flex flex-col flex-1 min-w-[200px]">
-          <FormLabel>Sede</FormLabel>
+          <FormLabel className="text-gray-700">Sede</FormLabel>
           {isLoading ? (
             <Skeleton className="h-10 w-full rounded-md" />
           ) : hasError ? (
@@ -37,7 +37,7 @@ export const BranchSelector = ({
               value={field.value}
             >
               <FormControl>
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-white text-gray-900">
                   <SelectValue placeholder="Erro ao carregar sedes" />
                 </SelectTrigger>
               </FormControl>
@@ -54,7 +54,7 @@ export const BranchSelector = ({
               disabled={disabled || !selectedState}
             >
               <FormControl>
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-white text-gray-900">
                   <SelectValue placeholder={selectedState 
                     ? (branches.length > 0 ? "Selecione sua Sede" : "Nenhuma sede encontrada") 
                     : "Selecione um Estado primeiro"} 

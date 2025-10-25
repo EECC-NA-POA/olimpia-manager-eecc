@@ -22,12 +22,12 @@ export const ContactSection = ({
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-left w-full">Email</FormLabel>
+              <FormLabel className="text-left w-full text-gray-700">Email</FormLabel>
               <FormControl>
                 <Input
                   type="email"
                   placeholder="seu@email.com"
-                  className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary"
+                  className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary bg-white text-gray-900"
                   {...field}
                 />
               </FormControl>

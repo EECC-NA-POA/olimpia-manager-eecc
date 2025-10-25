@@ -53,7 +53,7 @@ export const BirthDateField = ({ form }: BirthDateFieldProps) => {
       name="data_nascimento"
       render={({ field }) => (
         <FormItem className="flex flex-col">
-          <FormLabel>Data de Nascimento</FormLabel>
+          <FormLabel className="text-gray-700">Data de Nascimento</FormLabel>
           <div className="flex gap-2">
             <FormControl>
               <InputMask
@@ -70,7 +70,7 @@ export const BirthDateField = ({ form }: BirthDateFieldProps) => {
                   <Input
                     {...inputProps}
                     placeholder="DD/MM/AAAA"
-                    className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary"
+                    className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary bg-white text-gray-900"
                   />
                 )}
               </InputMask>

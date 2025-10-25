@@ -64,13 +64,13 @@ export const PasswordStrengthIndicator = ({ password }: PasswordStrengthIndicato
 
   return (
     <div className="mt-2">
-      <div className="h-1 w-full bg-gray-200 rounded-full">
+      <div className="h-1 w-full bg-gray-300 rounded-full">
         <div
           className={`h-1 rounded-full transition-all duration-300 ${getStrengthColor(strength)}`}
           style={{ width: `${strengthPercentage}%` }}
         />
       </div>
-      <p className="text-xs text-gray-500 mt-1">
+      <p className="text-xs text-gray-600 mt-1">
         Força da senha: <span className="font-medium">{message}</span>
       </p>
     </div>

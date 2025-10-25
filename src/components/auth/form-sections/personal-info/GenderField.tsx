@@ -15,17 +15,17 @@ export const GenderField = ({ form }: GenderFieldProps) => {
       name="genero"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Selecione o Gênero</FormLabel>
+          <FormLabel className="text-gray-700">Selecione o Gênero</FormLabel>
           <Select
             onValueChange={field.onChange}
             defaultValue={field.value || "Masculino"}
           >
             <FormControl>
-              <SelectTrigger>
+              <SelectTrigger className="bg-white text-gray-900">
                 <SelectValue placeholder="Selecione o gênero" />
               </SelectTrigger>
             </FormControl>
-            <SelectContent>
+            <SelectContent className="bg-white">
               <SelectItem value="Masculino">Masculino</SelectItem>
               <SelectItem value="Feminino">Feminino</SelectItem>
             </SelectContent>
