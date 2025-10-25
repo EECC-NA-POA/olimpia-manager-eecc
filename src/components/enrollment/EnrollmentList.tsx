@@ -102,16 +102,16 @@ export const EnrollmentList = ({
 
                 {representatives && representatives.length > 0 && (
                   <div className="space-y-2">
-                    <div className="text-sm font-medium">Representantes:</div>
+                    <div className="text-sm font-medium text-foreground">Representantes:</div>
                     {representatives.map((rep: any, index: number) => (
-                      <div key={index} className="bg-gray-50 p-2 rounded text-sm">
-                        <div className="font-medium">{rep.nome_completo}</div>
+                      <div key={index} className="bg-muted p-2 rounded text-sm">
+                        <div className="font-medium text-foreground">{rep.nome_completo}</div>
                         {rep.telefone && (
                           <a
                             href={`https://wa.me/${formatPhoneForWhatsApp(rep.telefone)}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-green-600 hover:text-green-700 text-xs mt-1"
+                            className="inline-flex items-center gap-1 text-success hover:text-success/80 text-xs mt-1"
                           >
                             <Phone className="h-3 w-3" />
                             {rep.telefone}
@@ -165,7 +165,7 @@ export const EnrollmentList = ({
               return (
                 <TableRow 
                   key={registration.id}
-                  className="transition-colors hover:bg-gray-50"
+                  className="transition-colors hover:bg-muted/50"
                 >
                   <TableCell className="font-medium">{registration.modalidade?.nome}</TableCell>
                   <TableCell className="capitalize">{registration.modalidade?.tipo_modalidade}</TableCell>
@@ -184,7 +184,7 @@ export const EnrollmentList = ({
                       <div className="space-y-2">
                         {representatives.map((rep: any, index: number) => (
                           <div key={index} className="space-y-1">
-                            <div className="font-medium text-sm">
+                            <div className="font-medium text-sm text-foreground">
                               {rep.nome_completo}
                             </div>
                             {rep.telefone && (
@@ -192,7 +192,7 @@ export const EnrollmentList = ({
                                 href={`https://wa.me/${formatPhoneForWhatsApp(rep.telefone)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-green-600 hover:text-green-700 text-sm transition-colors"
+                                className="inline-flex items-center gap-1 text-success hover:text-success/80 text-sm transition-colors"
                               >
                                 <Phone className="h-3 w-3" />
                                 {rep.telefone}
@@ -202,7 +202,7 @@ export const EnrollmentList = ({
                         ))}
                       </div>
                     ) : (
-                      <span className="text-gray-500 text-sm">Não definido</span>
+                      <span className="text-muted-foreground text-sm">Não definido</span>
                     )}
                   </TableCell>
                   <TableCell>
