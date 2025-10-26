@@ -40,21 +40,18 @@ export function useDynamicScoringSubmission() {
         
         console.log('Uses baterias (sempre false para equipes):', usesBaterias);
 
-        // Calcular valor_pontuacao principal
         const valorPontuacao = calculateMainScore(data.formData, campos);
         console.log('Calculated valor_pontuacao:', valorPontuacao);
 
-        const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
         const observacoes = data.formData.notes || data.observacoes || null;
         const numeroBateria = data.numeroBateria || null;
 
-        // Create base data object - NUNCA usar bateria_id
+        // Create base data object - colunas 'raia', 'bateria', 'valor_pontuacao' e 'posicao_final' foram removidas
         const baseDataForDb = {
           eventId: data.eventId,
           modalityId: data.modalityId,
           judgeId: data.judgeId,
           modeloId: data.modeloId,
-          raia,
           observacoes,
           numeroBateria
         };
@@ -94,7 +91,7 @@ export function useDynamicScoringSubmission() {
 
             console.log('Saving score for team member:', member.atleta_id);
 
-            const pontuacao = await upsertPontuacao(teamDataForDb, valorPontuacao, false);
+            const pontuacao = await upsertPontuacao(teamDataForDb, false);
             
             // Insert tentativas for this athlete
             const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
@@ -118,7 +115,7 @@ export function useDynamicScoringSubmission() {
 
         console.log('Individual data for DB:', individualDataForDb);
 
-        const pontuacao = await upsertPontuacao(individualDataForDb, valorPontuacao, usesBaterias);
+        const pontuacao = await upsertPontuacao(individualDataForDb, usesBaterias);
         console.log('=== INDIVIDUAL SCORE SAVED ===');
 
         const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);

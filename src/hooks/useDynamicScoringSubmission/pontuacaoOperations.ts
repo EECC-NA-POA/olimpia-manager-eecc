@@ -8,23 +8,20 @@ interface PontuacaoData {
   equipeId?: number | null;
   judgeId: string;
   modeloId: number;
-  raia?: number | null;
   observacoes?: string | null;
   numeroBateria?: number | null;
 }
 
 export async function upsertPontuacao(
   data: PontuacaoData, 
-  valorPontuacao: number, 
   usesBaterias: boolean
 ) {
   console.log('=== UPSERT PONTUAÇÃO ===');
   console.log('Data for upsert:', data);
-  console.log('Valor pontuacao:', valorPontuacao);
   console.log('Uses baterias:', usesBaterias);
   console.log('Observacoes received:', data.observacoes);
 
-  // Prepare base pontuacao data - SEMPRE usar numero_bateria, NUNCA bateria_id
+  // Prepare base pontuacao data - colunas 'raia', 'bateria', 'valor_pontuacao' e 'posicao_final' foram removidas
   const pontuacaoData: any = {
     evento_id: data.eventId,
     modalidade_id: data.modalityId,
@@ -32,21 +29,9 @@ export async function upsertPontuacao(
     equipe_id: data.equipeId || null,
     juiz_id: data.judgeId,
     modelo_id: data.modeloId,
-    valor_pontuacao: valorPontuacao,
-    unidade: 'pontos',
     observacoes: data.observacoes || null,
     data_registro: new Date().toISOString()
   };
-
-  // Only add raia if it exists and is not null
-  if (data.raia !== null && data.raia !== undefined) {
-    pontuacaoData.raia = data.raia;
-  }
-
-  // Only add numero_bateria if it exists and is not null
-  if (data.numeroBateria !== null && data.numeroBateria !== undefined) {
-    pontuacaoData.numero_bateria = data.numeroBateria;
-  }
 
   console.log('Final pontuacao data for database:', pontuacaoData);
   console.log('Fields included:', Object.keys(pontuacaoData));
