@@ -42,6 +42,30 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
     enabled: !!eventId,
   });
 
+  // Fetch score counts for each modality to show which ones have scores
+  const { data: scoreCounts } = useQuery({
+    queryKey: ['modality-score-counts', eventId],
+    queryFn: async () => {
+      if (!eventId || !modalities) return {};
+      
+      const { data, error } = await supabase
+        .from('pontuacoes')
+        .select('modalidade_id')
+        .eq('evento_id', eventId);
+      
+      if (error) throw error;
+      
+      // Count scores per modality
+      const counts: Record<number, number> = {};
+      data?.forEach(score => {
+        counts[score.modalidade_id] = (counts[score.modalidade_id] || 0) + 1;
+      });
+      
+      return counts;
+    },
+    enabled: !!eventId && !!modalities,
+  });
+
   // Get modality data with modelo configuration
   const { 
     data: modalityData, 
@@ -154,23 +178,38 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
                   </Badge>
                 </div>
                 <div className="space-y-2">
-                  {modalitiesInCategory.map((modality) => (
-                    <button
-                      key={modality.id}
-                      onClick={() => setSelectedModalityId(modality.id)}
-                      className={`w-full p-3 rounded-lg border text-left transition-all duration-200 ${
-                        selectedModalityId === modality.id
-                          ? 'bg-primary text-primary-foreground border-primary shadow-md scale-[1.02]'
-                          : 'bg-card hover:bg-accent border-border hover:border-primary/50 hover:scale-[1.01]'
-                      }`}
-                    >
-                      <div className="font-medium text-sm">{modality.nome}</div>
-                      <div className="text-xs opacity-70 mt-1">
-                        {modality.tipo_pontuacao === 'tempo' ? 'Tempo' : 
-                         modality.tipo_pontuacao === 'distancia' ? 'Distância' : 'Pontos'}
-                      </div>
-                    </button>
-                  ))}
+                  {modalitiesInCategory.map((modality) => {
+                    const hasScores = scoreCounts && scoreCounts[modality.id] > 0;
+                    return (
+                      <button
+                        key={modality.id}
+                        onClick={() => setSelectedModalityId(modality.id)}
+                        className={`w-full p-3 rounded-lg border text-left transition-all duration-200 relative ${
+                          selectedModalityId === modality.id
+                            ? 'bg-primary text-primary-foreground border-primary shadow-md scale-[1.02]'
+                            : 'bg-card hover:bg-accent border-border hover:border-primary/50 hover:scale-[1.01]'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">{modality.nome}</div>
+                            <div className="text-xs opacity-70 mt-1">
+                              {modality.tipo_pontuacao === 'tempo' ? 'Tempo' : 
+                               modality.tipo_pontuacao === 'distancia' ? 'Distância' : 'Pontos'}
+                            </div>
+                          </div>
+                          {hasScores && (
+                            <Badge 
+                              variant={selectedModalityId === modality.id ? "secondary" : "default"}
+                              className="text-xs shrink-0"
+                            >
+                              {scoreCounts[modality.id]} pontuaç{scoreCounts[modality.id] === 1 ? 'ão' : 'ões'}
+                            </Badge>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             ))}
