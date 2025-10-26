@@ -110,8 +110,9 @@ export function DynamicScoringTableContent({
   const totalVisibleAthletes = mainTableAthletes.length + unscoredSectionAthletes.length;
   const hasAnyAthletes = athletes.length > 0;
 
-  // If modality uses baterias but no bateria is selected, show create bateria message
-  if (usesBaterias && !selectedBateriaId) {
+  // If modality uses baterias but no bateria is selected and there are no existing scores, ask to create/select bateria
+  const hasAnyExistingScores = (existingScores?.length ?? 0) > 0;
+  if (usesBaterias && !selectedBateriaId && !hasAnyExistingScores) {
     return <BateriaRequiredMessage />;
   }
 

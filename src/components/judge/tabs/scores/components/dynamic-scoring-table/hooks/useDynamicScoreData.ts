@@ -124,7 +124,16 @@ export function useDynamicScoreData({
         
         return {
           ...pontuacao,
-          tentativas
+          tentativas,
+          numero_bateria: (() => {
+            const nb = tentativas?.numero_bateria;
+            const b = tentativas?.bateria;
+            const raw = typeof nb === 'object' && nb !== null
+              ? (nb.valor ?? nb.valor_formatado)
+              : (typeof b === 'object' && b !== null ? (b.valor ?? b.valor_formatado) : (nb ?? b));
+            const num = raw !== undefined && raw !== null ? Number(raw) : undefined;
+            return Number.isFinite(num as number) ? (num as number) : undefined;
+          })()
         };
       });
       
