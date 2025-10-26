@@ -21,20 +21,13 @@ export function useAthleteScoreDeletion() {
       console.log('Event ID:', eventId);
       console.log('Bateria ID:', bateriaId);
 
-      // Build the delete query
-      let query = supabase
+      // Build the delete query - Note: numero_bateria does not exist in pontuacoes table
+      const { error } = await supabase
         .from('pontuacoes')
         .delete()
         .eq('atleta_id', athleteId)
         .eq('modalidade_id', modalityId)
         .eq('evento_id', eventId);
-
-      // Add bateria filter if specified
-      if (bateriaId) {
-        query = query.eq('numero_bateria', bateriaId);
-      }
-
-      const { error } = await query;
 
       if (error) {
         console.error('Error deleting scores:', error);
