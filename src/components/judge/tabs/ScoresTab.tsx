@@ -22,7 +22,7 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const isMobile = useIsMobile();
 
-  // Fetch available modalities for this event
+  // Fetch available modalities for this event (excluding team modalities)
   const { data: modalities, isLoading: isLoadingModalities } = useQuery({
     queryKey: ['judge-modalities', eventId],
     queryFn: async () => {
@@ -32,6 +32,7 @@ export function ScoresTab({ userId, eventId }: ScoresTabProps) {
         .from('modalidades')
         .select('id, nome, categoria, tipo_pontuacao, tipo_modalidade')
         .eq('evento_id', eventId)
+        .neq('tipo_modalidade', 'coletivo') // Exclude team modalities
         .order('categoria')
         .order('nome');
       
