@@ -2,7 +2,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { calculateMainScore } from './useDynamicScoringSubmission/scoreCalculation';
 import { prepareTentativasData } from './useDynamicScoringSubmission/tentativasPreparation';
 import { upsertPontuacao, insertTentativas } from './useDynamicScoringSubmission/pontuacaoOperations';
 import type { DynamicSubmissionData } from './useDynamicScoringSubmission/types';
@@ -39,9 +38,6 @@ export function useDynamicScoringSubmission() {
         const usesBaterias = data.equipeId ? false : false; // Force false for now
         
         console.log('Uses baterias (sempre false para equipes):', usesBaterias);
-
-        const valorPontuacao = calculateMainScore(data.formData, campos);
-        console.log('Calculated valor_pontuacao:', valorPontuacao);
 
         const observacoes = data.formData.notes || data.observacoes || null;
         const numeroBateria = data.numeroBateria || null;
