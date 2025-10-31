@@ -7,10 +7,10 @@ async function ensureUserExistsInUsuarios(userId: string) {
   console.log('🔐 Checking if user exists in usuarios table...');
   
   try {
-    // Check if user exists in usuarios table
+    // Check if user exists in usuarios table with all required fields
     const { data: existingUser, error: checkError } = await supabase
       .from('usuarios')
-      .select('id, email, cadastra_eventos, confirmado, ativo, master, filial_id')
+      .select('id, email, cadastra_eventos, confirmado, ativo, master, filial_id, nome_completo, telefone, tipo_documento, numero_documento, data_nascimento')
       .eq('id', userId)
       .single();
     
@@ -22,29 +22,71 @@ async function ensureUserExistsInUsuarios(userId: string) {
     if (existingUser) {
       console.log('✅ User exists in usuarios table:', existingUser);
 
+      // Validate that user has all required fields
+      const missingFields: string[] = [];
+      if (!existingUser.nome_completo) missingFields.push('nome_completo');
+      if (!existingUser.telefone) missingFields.push('telefone');
+      if (!existingUser.tipo_documento) missingFields.push('tipo_documento');
+      if (!existingUser.numero_documento) missingFields.push('numero_documento');
+      if (!existingUser.data_nascimento) missingFields.push('data_nascimento');
+      
+      if (missingFields.length > 0) {
+        console.error('❌ User missing required fields:', missingFields);
+        throw new Error(`Usuário incompleto. Campos obrigatórios faltando: ${missingFields.join(', ')}`);
+      }
+
+      // CRITICAL: Ensure filial_id is set (required by table constraint)
+      if (!existingUser.filial_id) {
+        console.log('⚠️ User has no filial_id, attempting to set a default...');
+        
+        // Try to get filial from auth metadata first
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        const metaFilial = authUser?.user_metadata?.filial_id;
+        
+        let filialToUse = metaFilial;
+        
+        // If no filial in metadata, try to get the first available filial
+        if (!filialToUse) {
+          const { data: filiais, error: filiaisError } = await supabase
+            .from('filiais')
+            .select('id')
+            .limit(1)
+            .single();
+          
+          if (filiaisError || !filiais) {
+            console.error('❌ Could not find a filial to assign:', filiaisError);
+            throw new Error('Não foi possível encontrar uma filial para associar ao usuário. Entre em contato com o administrador.');
+          }
+          
+          filialToUse = filiais.id;
+          console.log('📍 Using first available filial:', filialToUse);
+        }
+        
+        // Update user with filial_id
+        const { error: filialUpdateError } = await supabase
+          .from('usuarios')
+          .update({ filial_id: filialToUse })
+          .eq('id', userId);
+        
+        if (filialUpdateError) {
+          console.error('❌ Error setting filial_id:', filialUpdateError);
+          throw new Error('Erro ao associar filial ao usuário. Entre em contato com o administrador.');
+        }
+        
+        console.log('✅ Filial_id set to:', filialToUse);
+      }
+
       // Ensure user has proper permissions and flags to pass RLS
-      const { data: { user: authUser } } = await supabase.auth.getUser();
       const updates: any = {};
 
       if (!existingUser.cadastra_eventos) {
         updates.cadastra_eventos = true;
       }
-      // Ensure account is active and confirmed
       if (existingUser.confirmado !== true) {
         updates.confirmado = true;
       }
       if (existingUser.ativo !== true) {
         updates.ativo = true;
-      }
-      // Ensure filial is set if provided in auth metadata
-      const metaFilial = authUser?.user_metadata?.filial_id;
-      if (!existingUser.filial_id && metaFilial) {
-        updates.filial_id = metaFilial;
-      }
-      // If user is master in metadata and not marked as master in table, align it
-      const isMasterMeta = authUser?.user_metadata?.is_master || authUser?.user_metadata?.master;
-      if (isMasterMeta && existingUser.master !== true) {
-        updates.master = true;
       }
 
       if (Object.keys(updates).length > 0) {
@@ -71,6 +113,26 @@ async function ensureUserExistsInUsuarios(userId: string) {
       throw new Error('Não foi possível obter dados do usuário autenticado');
     }
     
+    // CRITICAL: Ensure filial_id is set (NOT NULL constraint)
+    let filialId = authUser.user_metadata?.filial_id;
+    
+    if (!filialId) {
+      console.log('⚠️ No filial_id in user metadata, fetching default filial...');
+      const { data: filiais, error: filiaisError } = await supabase
+        .from('filiais')
+        .select('id')
+        .limit(1)
+        .single();
+      
+      if (filiaisError || !filiais) {
+        console.error('❌ Could not find a filial to assign:', filiaisError);
+        throw new Error('Não foi possível encontrar uma filial para associar ao usuário. Entre em contato com o administrador.');
+      }
+      
+      filialId = filiais.id;
+      console.log('📍 Using first available filial:', filialId);
+    }
+    
     // Create user record in usuarios table
     const { error: insertError } = await supabase
       .from('usuarios')
@@ -85,7 +147,7 @@ async function ensureUserExistsInUsuarios(userId: string) {
         genero: authUser.user_metadata?.genero || '',
         data_nascimento: authUser.user_metadata?.data_nascimento ? new Date(authUser.user_metadata.data_nascimento) : null,
         estado: authUser.user_metadata?.estado || '',
-        filial_id: authUser.user_metadata?.filial_id || null,
+        filial_id: filialId, // Now guaranteed to be set
         cadastra_eventos: true,
         confirmado: true
       });
