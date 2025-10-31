@@ -82,7 +82,7 @@ async function ensureUserExistsInUsuarios(userId: string) {
 }
 
 // Function to prepare event data by filtering out undefined/null values
-function prepareEventData(data: EventFormValues) {
+function prepareEventData(data: EventFormValues, userId: string) {
   const eventData: any = {
     nome: data.nome,
     descricao: data.descricao,
@@ -91,6 +91,7 @@ function prepareEventData(data: EventFormValues) {
     data_fim_inscricao: data.data_fim_inscricao.toISOString().split('T')[0],
     status_evento: data.status_evento,
     visibilidade_publica: data.visibilidade_publica,
+    criador_id: userId,
   };
 
   // Only add optional fields if they have valid values
@@ -336,7 +337,7 @@ export async function createEventWithProfiles(data: EventFormValues, userId: str
     await ensureUserExistsInUsuarios(userId);
     
     // Prepare and validate event data
-    const eventData = prepareEventData(data);
+    const eventData = prepareEventData(data, userId);
     console.log('📝 Prepared event data:', eventData);
 
     // Create event
