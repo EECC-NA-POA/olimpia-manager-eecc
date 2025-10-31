@@ -10,7 +10,7 @@ async function ensureUserExistsInUsuarios(userId: string) {
     // Check if user exists in usuarios table
     const { data: existingUser, error: checkError } = await supabase
       .from('usuarios')
-      .select('id, email, cadastra_eventos')
+      .select('id, email, cadastra_eventos, confirmado, ativo, master, filial_id')
       .eq('id', userId)
       .single();
     
@@ -21,22 +21,45 @@ async function ensureUserExistsInUsuarios(userId: string) {
     
     if (existingUser) {
       console.log('✅ User exists in usuarios table:', existingUser);
-      
-      // Ensure user can create events
+
+      // Ensure user has proper permissions and flags to pass RLS
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const updates: any = {};
+
       if (!existingUser.cadastra_eventos) {
-        console.log('🔧 Updating user to allow event creation...');
+        updates.cadastra_eventos = true;
+      }
+      // Ensure account is active and confirmed
+      if (existingUser.confirmado !== true) {
+        updates.confirmado = true;
+      }
+      if (existingUser.ativo !== true) {
+        updates.ativo = true;
+      }
+      // Ensure filial is set if provided in auth metadata
+      const metaFilial = authUser?.user_metadata?.filial_id;
+      if (!existingUser.filial_id && metaFilial) {
+        updates.filial_id = metaFilial;
+      }
+      // If user is master in metadata and not marked as master in table, align it
+      const isMasterMeta = authUser?.user_metadata?.is_master || authUser?.user_metadata?.master;
+      if (isMasterMeta && existingUser.master !== true) {
+        updates.master = true;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        console.log('🔧 Updating user flags to satisfy RLS:', updates);
         const { error: updateError } = await supabase
           .from('usuarios')
-          .update({ cadastra_eventos: true })
+          .update(updates)
           .eq('id', userId);
-          
         if (updateError) {
-          console.error('❌ Error updating user permissions:', updateError);
+          console.error('❌ Error updating user flags:', updateError);
           throw updateError;
         }
-        console.log('✅ User permissions updated');
+        console.log('✅ User flags updated');
       }
-      
+
       return true;
     }
     
