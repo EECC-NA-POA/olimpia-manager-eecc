@@ -17,12 +17,19 @@ export function useDynamicScoringFieldValues({
   hasUnsavedChanges
 }: UseDynamicScoringFieldValuesProps) {
   
+  console.log('=== useDynamicScoringFieldValues CALLED ===');
+  console.log('Existing scores received:', existingScores.length);
+  console.log('Existing scores data:', existingScores);
+  
   // Memoize existing scores for better performance
   const existingScoresMap = useMemo(() => {
+    console.log('Building existingScoresMap from scores:', existingScores);
     const map = new Map();
     existingScores.forEach(score => {
+      console.log(`Adding score for athlete ${score.atleta_id}:`, score);
       map.set(score.atleta_id, score);
     });
+    console.log('ExistingScoresMap built with', map.size, 'entries');
     return map;
   }, [existingScores]);
 
@@ -36,13 +43,23 @@ export function useDynamicScoringFieldValues({
       return athleteEditValues[fieldKey];
     }
 
-    // Then check existing scores
+    // Then check existing scores - FIXED: handle both object and direct value formats
     const existingScore = existingScoresMap.get(athleteId);
-    if (existingScore?.tentativas && existingScore.tentativas[fieldKey]) {
+    if (existingScore?.tentativas && existingScore.tentativas[fieldKey] !== undefined) {
       const tentativa = existingScore.tentativas[fieldKey];
-      const value = tentativa.valor_formatado || tentativa.valor || '';
-      console.log(`Found existing score for ${athleteId}.${fieldKey}:`, value);
-      return value;
+      
+      // Handle different data structures
+      let value;
+      if (typeof tentativa === 'object' && tentativa !== null) {
+        // If tentativa is an object with valor_formatado/valor properties
+        value = tentativa.valor_formatado || tentativa.valor;
+      } else {
+        // If tentativa is a direct value
+        value = tentativa;
+      }
+      
+      console.log(`Found existing score for ${athleteId}.${fieldKey}:`, { tentativa, value });
+      return value ?? '';
     }
 
     console.log(`No value found for ${athleteId}.${fieldKey}, returning empty`);

@@ -57,6 +57,40 @@ export function CleanTeamScoringTab({
     enabled: !!eventId,
   });
 
+  // Fetch score counts for team modalities
+  const { data: teamScoreCounts } = useQuery({
+    queryKey: ['team-score-counts', eventId],
+    queryFn: async () => {
+      if (!eventId) return {};
+      
+      const { data, error } = await supabase
+        .from('pontuacoes')
+        .select('modalidade_id, equipe_id')
+        .eq('evento_id', eventId)
+        .not('equipe_id', 'is', null);
+      
+      if (error) throw error;
+      
+      // Count unique teams scored per modality
+      const counts: Record<number, Set<string>> = {};
+      data?.forEach(score => {
+        if (!counts[score.modalidade_id]) {
+          counts[score.modalidade_id] = new Set();
+        }
+        counts[score.modalidade_id].add(score.equipe_id);
+      });
+      
+      // Convert sets to counts
+      const finalCounts: Record<number, number> = {};
+      Object.entries(counts).forEach(([modalityId, teamSet]) => {
+        finalCounts[parseInt(modalityId)] = teamSet.size;
+      });
+      
+      return finalCounts;
+    },
+    enabled: !!eventId,
+  });
+
   if (!eventId) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -190,6 +224,11 @@ export function CleanTeamScoringTab({
                           <Badge variant="outline">
                             {modalityGroup.teams.length} equipe{modalityGroup.teams.length !== 1 ? 's' : ''}
                           </Badge>
+                          {teamScoreCounts && teamScoreCounts[modalityGroup.modalidade_id] > 0 && (
+                            <Badge variant="default" className="bg-green-600">
+                              {teamScoreCounts[modalityGroup.modalidade_id]} pontuad{teamScoreCounts[modalityGroup.modalidade_id] === 1 ? 'a' : 'as'}
+                            </Badge>
+                          )}
                         </div>
                       </CardTitle>
                     </CardHeader>

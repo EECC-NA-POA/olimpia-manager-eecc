@@ -18,12 +18,10 @@ export interface ScoreRecordData {
   modalidade_id: number;
   atleta_id: string;
   equipe_id: number | null;
-  valor_pontuacao: any;
-  unidade: any;
   observacoes: any;
   juiz_id: any;
   data_registro: any;
-  numero_bateria: number;
+  modelo_id?: number;
 }
 
 export interface SaveScoreResult {

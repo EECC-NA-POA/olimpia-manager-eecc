@@ -21,31 +21,40 @@ export default function JudgeDashboard() {
 
   // Check if the user has judge privileges
   const { data: isJudge, isLoading: isCheckingRole } = useQuery({
-    queryKey: ['isJudge', user?.id],
+    queryKey: ['isJudge', user?.id, user?.papeis],
     queryFn: async () => {
       if (!user?.id) return false;
       
-      // Check if user has the judge role (JUZ)
-      const hasJudgeRole = user.papeis?.some(role => role.codigo === 'JUZ') || false;
-      
-      if (!hasJudgeRole) {
-        return false;
+      // Wait for papeis to be loaded (they come asynchronously after auth)
+      if (!user.papeis || !Array.isArray(user.papeis)) {
+        console.log('⏳ Papeis not loaded yet, waiting...');
+        return null; // Return null to indicate loading state
       }
       
-      return true;
+      // Check if user has the judge role (JUZ)
+      const hasJudgeRole = user.papeis.some(role => role.codigo === 'JUZ');
+      console.log('🔍 Checking judge role:', { hasJudgeRole, papeis: user.papeis });
+      
+      return hasJudgeRole;
     },
     enabled: !!user?.id,
+    retry: 3, // Retry a few times to wait for papeis to load
+    retryDelay: 500, // Wait 500ms between retries
   });
 
   // Redirect if not a judge
   React.useEffect(() => {
-    if (!isCheckingRole && !isJudge && user) {
+    // Only redirect if we've finished checking AND user definitely doesn't have judge role
+    // isJudge === null means still loading papeis, so don't redirect yet
+    if (!isCheckingRole && isJudge === false && user) {
+      console.log('❌ No judge permission, redirecting...');
       toast.error('Você não tem permissão para acessar esta página');
       navigate('/');
     }
   }, [isJudge, isCheckingRole, user, navigate]);
 
-  if (isCheckingRole) {
+  // Show loading while checking role OR while papeis are still loading
+  if (isCheckingRole || isJudge === null) {
     return (
       <div className="space-y-4 p-4 sm:p-6">
         <h1 className="text-xl sm:text-2xl font-bold">Painel do Juiz</h1>

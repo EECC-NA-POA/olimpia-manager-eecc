@@ -70,6 +70,11 @@ export function AthletesListTabularContainer({
     athletes: athletes || [],
     enabled: hasModelo && !!modalityData?.modelo?.id
   });
+  
+  console.log('=== CONTAINER - useDynamicScoreData RESULT ===');
+  console.log('Campos received:', campos.length);
+  console.log('Existing scores received:', existingScores.length);
+  console.log('Query enabled?', hasModelo && !!modalityData?.modelo?.id);
 
   console.log('=== DEBUG DO CONTAINER DE ATLETAS ===');
   console.log('Props recebidas:', {

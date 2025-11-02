@@ -23,30 +23,56 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
   const queryClient = useQueryClient();
   const [selectedBateriaId, setSelectedBateriaId] = useState<number | null>(null);
   
+  console.log('=== useDynamicBaterias CALLED ===');
+  console.log('Props:', { modalityId, eventId });
+  
   // Get modelo configuration
   const { data: modeloConfig, isLoading: isLoadingConfig } = useModeloConfiguration(modalityId);
   
+  console.log('Modelo configuration:', modeloConfig);
+  console.log('Is loading config?', isLoadingConfig);
+  
   // Check if this modality uses baterias
   const usesBaterias = modeloConfig?.parametros?.baterias === true;
+  console.log('usesBaterias?', usesBaterias, 'from parametros:', modeloConfig?.parametros);
 
   // Fetch existing baterias from pontuacoes table
   const { data: baterias = [], isLoading } = useQuery({
     queryKey: ['dynamic-baterias', modalityId, eventId],
     queryFn: async () => {
+      console.log('=== BATERIAS QUERY FUNCTION EXECUTING ===');
+      console.log('Checking conditions:', { 
+        hasEventId: !!eventId, 
+        hasModalityId: !!modalityId, 
+        usesBaterias,
+        eventId,
+        modalityId
+      });
+      
       if (!eventId || !modalityId || !usesBaterias) {
-        console.log('useDynamicBaterias: Missing parameters or baterias disabled', { modalityId, eventId, usesBaterias });
+        console.log('❌ QUERY SKIPPED - Missing parameters or baterias disabled', { modalityId, eventId, usesBaterias });
         return [];
       }
       
-      console.log('useDynamicBaterias: Fetching baterias for modality:', modalityId, 'event:', eventId);
+      console.log('✅ Fetching baterias for modality:', modalityId, 'event:', eventId);
       
       const { data, error } = await supabase
-        .from('pontuacoes')
-        .select('numero_bateria, atleta_id')
-        .eq('modalidade_id', modalityId)
-        .eq('evento_id', eventId)
-        .not('numero_bateria', 'is', null)
-        .order('numero_bateria');
+        .from('tentativas_pontuacao')
+        .select(`
+          valor,
+          valor_formatado,
+          chave_campo,
+          pontuacoes!inner (
+            id,
+            evento_id,
+            modalidade_id,
+            atleta_id,
+            modelo_id
+          )
+        `)
+        .in('chave_campo', ['numero_bateria', 'bateria'])
+        .eq('pontuacoes.evento_id', eventId)
+        .eq('pontuacoes.modalidade_id', modalityId);
 
       if (error) {
         console.error('useDynamicBaterias: Error fetching baterias:', error);
@@ -55,26 +81,36 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
       
       console.log('useDynamicBaterias: Raw pontuacoes data:', data);
       
-      // Group by numero_bateria and create bateria objects
-      const bateriasMap = new Map<number, DynamicBateria>();
+      // Group by bateria number from tentativas (numero_bateria/bateria)
+      const bateriasMap = new Map<number, { obj: DynamicBateria; athletes: Set<string> }>();
       
-      data?.forEach(pontuacao => {
-        const numeroBateria = pontuacao.numero_bateria;
+      data?.forEach((row: any) => {
+        const raw = row?.valor_formatado ?? row?.valor;
+        const numeroBateria = raw !== undefined && raw !== null ? Number(raw) : NaN;
+        if (Number.isNaN(numeroBateria)) return;
+        
         if (!bateriasMap.has(numeroBateria)) {
           bateriasMap.set(numeroBateria, {
-            numero: numeroBateria,
-            modalidade_id: modalityId,
-            evento_id: eventId,
-            modelo_id: modeloConfig?.modelo_id,
-            isFinal: numeroBateria === 999,
-            atletasCount: 0
+            obj: {
+              numero: numeroBateria,
+              modalidade_id: modalityId,
+              evento_id: eventId!,
+              modelo_id: modeloConfig?.modelo_id,
+              isFinal: numeroBateria === 999,
+              atletasCount: 0
+            },
+            athletes: new Set<string>()
           });
         }
-        const bateria = bateriasMap.get(numeroBateria)!;
-        bateria.atletasCount = (bateria.atletasCount || 0) + 1;
+        const entry = bateriasMap.get(numeroBateria)!;
+        const atletaId = row?.pontuacoes?.atleta_id as string | undefined;
+        if (atletaId) entry.athletes.add(atletaId);
       });
       
-      const bateriasArray = Array.from(bateriasMap.values()).sort((a, b) => {
+      const bateriasArray = Array.from(bateriasMap.values()).map(({ obj, athletes }) => ({
+        ...obj,
+        atletasCount: athletes.size
+      })).sort((a, b) => {
         // Put final bateria (999) at the end
         if (a.numero === 999) return 1;
         if (b.numero === 999) return -1;
@@ -85,7 +121,15 @@ export function useDynamicBaterias({ modalityId, eventId }: UseDynamicBateriasPr
       return bateriasArray;
     },
     enabled: !!eventId && !!modalityId && usesBaterias,
+    staleTime: 0,
+    refetchOnMount: true
   });
+  
+  console.log('=== BATERIAS QUERY STATE ===');
+  console.log('Query enabled?', !!eventId && !!modalityId && usesBaterias);
+  console.log('Is loading?', isLoading);
+  console.log('Baterias count:', baterias.length);
+  console.log('Baterias data:', baterias);
 
   // Create new bateria mutation
   const createBateriaMutation = useMutation({
