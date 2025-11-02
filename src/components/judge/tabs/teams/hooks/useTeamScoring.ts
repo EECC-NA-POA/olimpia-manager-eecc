@@ -56,9 +56,9 @@ export function useTeamScoring({ eventId, judgeId }: UseTeamScoringProps) {
 
       return await dynamicScoringMutation.mutateAsync(submissionData);
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       console.log('=== TEAM SCORE SUBMISSION SUCCESS ===');
-      toast.success('Pontuação da equipe registrada com sucesso!');
+      toast.success('Pontuação registrada para todos os membros da equipe!');
       
       // Invalidate team scoring queries
       queryClient.invalidateQueries({ 
@@ -69,6 +69,9 @@ export function useTeamScoring({ eventId, judgeId }: UseTeamScoringProps) {
       });
       queryClient.invalidateQueries({ 
         queryKey: ['clean-team-score'] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['dynamic-scores'] 
       });
     },
     onError: (error: any) => {

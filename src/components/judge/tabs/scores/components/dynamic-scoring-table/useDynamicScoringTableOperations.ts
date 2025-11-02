@@ -97,9 +97,11 @@ export function useDynamicScoringTableOperations({
         bateriaId: selectedBateriaId // Isso será convertido para numero_bateria internamente
       });
 
+      // Wait for refetch to complete before stopping edit mode
+      await refetchScores();
+      
       stopEditing(athleteId);
       clearUnsavedChanges(athleteId);
-      await refetchScores();
       toast.success('Pontuação salva com sucesso!');
     } catch (error) {
       console.error('Error saving score:', error);

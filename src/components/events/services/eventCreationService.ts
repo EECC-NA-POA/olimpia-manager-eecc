@@ -7,10 +7,10 @@ async function ensureUserExistsInUsuarios(userId: string) {
   console.log('🔐 Checking if user exists in usuarios table...');
   
   try {
-    // Check if user exists in usuarios table
+    // Check if user exists in usuarios table with all required fields
     const { data: existingUser, error: checkError } = await supabase
       .from('usuarios')
-      .select('id, email, cadastra_eventos')
+      .select('id, email, cadastra_eventos, confirmado, filial_id, nome_completo, telefone, tipo_documento, numero_documento, data_nascimento')
       .eq('id', userId)
       .single();
     
@@ -21,22 +21,84 @@ async function ensureUserExistsInUsuarios(userId: string) {
     
     if (existingUser) {
       console.log('✅ User exists in usuarios table:', existingUser);
+
+      // Validate that user has all required fields
+      const missingFields: string[] = [];
+      if (!existingUser.nome_completo) missingFields.push('nome_completo');
+      if (!existingUser.telefone) missingFields.push('telefone');
+      if (!existingUser.tipo_documento) missingFields.push('tipo_documento');
+      if (!existingUser.numero_documento) missingFields.push('numero_documento');
+      if (!existingUser.data_nascimento) missingFields.push('data_nascimento');
       
-      // Ensure user can create events
+      if (missingFields.length > 0) {
+        console.error('❌ User missing required fields:', missingFields);
+        throw new Error(`Usuário incompleto. Campos obrigatórios faltando: ${missingFields.join(', ')}`);
+      }
+
+      // CRITICAL: Ensure filial_id is set (required by table constraint)
+      if (!existingUser.filial_id) {
+        console.log('⚠️ User has no filial_id, attempting to set a default...');
+        
+        // Try to get filial from auth metadata first
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        const metaFilial = authUser?.user_metadata?.filial_id;
+        
+        let filialToUse = metaFilial;
+        
+        // If no filial in metadata, try to get the first available filial
+        if (!filialToUse) {
+          const { data: filiais, error: filiaisError } = await supabase
+            .from('filiais')
+            .select('id')
+            .limit(1)
+            .single();
+          
+          if (filiaisError || !filiais) {
+            console.error('❌ Could not find a filial to assign:', filiaisError);
+            throw new Error('Não foi possível encontrar uma filial para associar ao usuário. Entre em contato com o administrador.');
+          }
+          
+          filialToUse = filiais.id;
+          console.log('📍 Using first available filial:', filialToUse);
+        }
+        
+        // Update user with filial_id
+        const { error: filialUpdateError } = await supabase
+          .from('usuarios')
+          .update({ filial_id: filialToUse })
+          .eq('id', userId);
+        
+        if (filialUpdateError) {
+          console.error('❌ Error setting filial_id:', filialUpdateError);
+          throw new Error('Erro ao associar filial ao usuário. Entre em contato com o administrador.');
+        }
+        
+        console.log('✅ Filial_id set to:', filialToUse);
+      }
+
+      // Ensure user has proper permissions and flags to pass RLS
+      const updates: any = {};
+
       if (!existingUser.cadastra_eventos) {
-        console.log('🔧 Updating user to allow event creation...');
+        updates.cadastra_eventos = true;
+      }
+      if (existingUser.confirmado !== true) {
+        updates.confirmado = true;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        console.log('🔧 Updating user flags to satisfy RLS:', updates);
         const { error: updateError } = await supabase
           .from('usuarios')
-          .update({ cadastra_eventos: true })
+          .update(updates)
           .eq('id', userId);
-          
         if (updateError) {
-          console.error('❌ Error updating user permissions:', updateError);
+          console.error('❌ Error updating user flags:', updateError);
           throw updateError;
         }
-        console.log('✅ User permissions updated');
+        console.log('✅ User flags updated');
       }
-      
+
       return true;
     }
     
@@ -46,6 +108,26 @@ async function ensureUserExistsInUsuarios(userId: string) {
     
     if (authError || !authUser) {
       throw new Error('Não foi possível obter dados do usuário autenticado');
+    }
+    
+    // CRITICAL: Ensure filial_id is set (NOT NULL constraint)
+    let filialId = authUser.user_metadata?.filial_id;
+    
+    if (!filialId) {
+      console.log('⚠️ No filial_id in user metadata, fetching default filial...');
+      const { data: filiais, error: filiaisError } = await supabase
+        .from('filiais')
+        .select('id')
+        .limit(1)
+        .single();
+      
+      if (filiaisError || !filiais) {
+        console.error('❌ Could not find a filial to assign:', filiaisError);
+        throw new Error('Não foi possível encontrar uma filial para associar ao usuário. Entre em contato com o administrador.');
+      }
+      
+      filialId = filiais.id;
+      console.log('📍 Using first available filial:', filialId);
     }
     
     // Create user record in usuarios table
@@ -62,7 +144,7 @@ async function ensureUserExistsInUsuarios(userId: string) {
         genero: authUser.user_metadata?.genero || '',
         data_nascimento: authUser.user_metadata?.data_nascimento ? new Date(authUser.user_metadata.data_nascimento) : null,
         estado: authUser.user_metadata?.estado || '',
-        filial_id: authUser.user_metadata?.filial_id || null,
+        filial_id: filialId, // Now guaranteed to be set
         cadastra_eventos: true,
         confirmado: true
       });

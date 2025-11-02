@@ -101,6 +101,16 @@ export const EventCard = ({
               src={event.foto_evento}
               alt={event.nome}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                const parent = e.currentTarget.parentElement;
+                if (parent) {
+                  const fallback = document.createElement('div');
+                  fallback.className = 'w-full h-full flex items-center justify-center';
+                  fallback.innerHTML = '<svg class="w-12 h-12 sm:w-16 sm:h-16 text-olimpics-green-primary/50" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5Z"/><path d="M12 12.5V17"/><path d="M17 14.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z"/><path d="M18 9h-.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5Z"/><path d="m21 3-7 7"/><path d="M12 12.5V8.5a2.5 2.5 0 1 0-5 0V17a2.5 2.5 0 1 0 5 0Z"/></svg>';
+                  parent.appendChild(fallback);
+                }
+              }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">

@@ -27,26 +27,20 @@ export async function saveScoreToDatabase(
     
     // Get team ID if needed
     const teamId = await getTeamId(athlete, modalityIdInt, eventId, isTeamModality);
-    
-    // Get numero_bateria FIRST - this will process and remove any _heat field
-    const numeroBateria = await getBateriaId(finalScoreData, modalityIdInt, eventId);
 
-    // Prepare the complete record data with explicit type conversion
-    // Note: _heat field should be removed by getBateriaId at this point
+    // Prepare the complete record data - only base fields
     const recordData: ScoreRecordData = {
       evento_id: eventId,
       modalidade_id: modalityIdInt,
       atleta_id: athlete.atleta_id,
       equipe_id: teamId || null,
-      valor_pontuacao: finalScoreData.valor_pontuacao || null,
-      unidade: finalScoreData.unidade || 'pontos',
       observacoes: finalScoreData.observacoes || null,
       juiz_id: finalScoreData.juiz_id,
       data_registro: finalScoreData.data_registro || new Date().toISOString(),
-      numero_bateria: numeroBateria
+      modelo_id: finalScoreData.modelo_id
     };
 
-    console.log('Record data to save (using numero_bateria):', JSON.stringify(recordData, null, 2));
+    console.log('Record data to save:', JSON.stringify(recordData, null, 2));
     
     // Choose the correct approach based on modality type
     if (isTeamModality) {

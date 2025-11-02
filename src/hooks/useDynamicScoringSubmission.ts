@@ -2,7 +2,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { calculateMainScore } from './useDynamicScoringSubmission/scoreCalculation';
 import { prepareTentativasData } from './useDynamicScoringSubmission/tentativasPreparation';
 import { upsertPontuacao, insertTentativas } from './useDynamicScoringSubmission/pontuacaoOperations';
 import type { DynamicSubmissionData } from './useDynamicScoringSubmission/types';
@@ -40,47 +39,65 @@ export function useDynamicScoringSubmission() {
         
         console.log('Uses baterias (sempre false para equipes):', usesBaterias);
 
-        // Calcular valor_pontuacao principal
-        const valorPontuacao = calculateMainScore(data.formData, campos);
-        console.log('Calculated valor_pontuacao:', valorPontuacao);
-
-        const raia = data.formData.raia || data.formData.numero_raia || data.raia || null;
         const observacoes = data.formData.notes || data.observacoes || null;
         const numeroBateria = data.numeroBateria || null;
 
-        // Create base data object - NUNCA usar bateria_id
+        // Create base data object - colunas 'raia', 'bateria', 'valor_pontuacao' e 'posicao_final' foram removidas
         const baseDataForDb = {
           eventId: data.eventId,
           modalityId: data.modalityId,
           judgeId: data.judgeId,
           modeloId: data.modeloId,
-          raia,
           observacoes,
           numeroBateria
         };
 
         console.log('Base data for DB (usando numero_bateria):', baseDataForDb);
 
-        // Handle team scoring
+        // Handle team scoring - Register score for ALL team members
         if (data.equipeId) {
           console.log('--- Submissão para Equipe ---', { equipeId: data.equipeId });
 
-          const teamDataForDb = {
-            ...baseDataForDb,
-            athleteId: data.athleteId,
-            equipeId: data.equipeId,
-          };
+          // Fetch all team members from atletas_equipes table
+          const { data: teamMembers, error: teamMembersError } = await supabase
+            .from('atletas_equipes')
+            .select('atleta_id')
+            .eq('equipe_id', data.equipeId);
 
-          console.log('Team data for DB:', teamDataForDb);
+          if (teamMembersError) {
+            console.error('Error fetching team members:', teamMembersError);
+            throw new Error('Erro ao buscar membros da equipe');
+          }
 
-          const pontuacao = await upsertPontuacao(teamDataForDb, valorPontuacao, false);
-          console.log('=== TEAM SCORE SAVED ===');
+          if (!teamMembers || teamMembers.length === 0) {
+            console.error('No team members found for team:', data.equipeId);
+            throw new Error('Nenhum membro encontrado para esta equipe');
+          }
 
-          const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
-          await insertTentativas(tentativas, pontuacao.id);
+          console.log(`Found ${teamMembers.length} team members. Registering score for each...`);
 
-          console.log('=== TEAM SUBMISSION COMPLETED ===');
-          return pontuacao;
+          // Register score for each team member
+          const savedScores = [];
+          for (const member of teamMembers) {
+            const teamDataForDb = {
+              ...baseDataForDb,
+              athleteId: member.atleta_id,
+              equipeId: data.equipeId,
+            };
+
+            console.log('Saving score for team member:', member.atleta_id);
+
+            const pontuacao = await upsertPontuacao(teamDataForDb, false);
+            
+            // Insert tentativas for this athlete
+            const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
+            await insertTentativas(tentativas, pontuacao.id);
+
+            savedScores.push(pontuacao);
+          }
+
+          console.log(`=== TEAM SUBMISSION COMPLETED - ${savedScores.length} scores registered ===`);
+          return savedScores[0]; // Return first score as reference
         }
 
         // Handle individual scoring
@@ -94,7 +111,7 @@ export function useDynamicScoringSubmission() {
 
         console.log('Individual data for DB:', individualDataForDb);
 
-        const pontuacao = await upsertPontuacao(individualDataForDb, valorPontuacao, usesBaterias);
+        const pontuacao = await upsertPontuacao(individualDataForDb, usesBaterias);
         console.log('=== INDIVIDUAL SCORE SAVED ===');
 
         const tentativas = prepareTentativasData(data.formData, campos, pontuacao.id);
@@ -112,12 +129,17 @@ export function useDynamicScoringSubmission() {
     onSuccess: (data, variables) => {
       console.log('=== MUTATION SUCCESS ===');
       
-      // Invalidate queries
+      // Invalidate queries - CRITICAL: Must match exact query keys including all parameters
       queryClient.invalidateQueries({ queryKey: ['team-score', variables.equipeId, variables.modalityId, variables.eventId] });
       queryClient.invalidateQueries({ queryKey: ['athlete-scores', variables.athleteId, variables.modalityId] });
       queryClient.invalidateQueries({ 
         queryKey: ['modality-scores', variables.modalityId] 
       });
+      // Invalidate dynamic scores with ALL parameters to ensure UI updates
+      queryClient.invalidateQueries({ 
+        queryKey: ['dynamic-scores', variables.modalityId, variables.eventId, variables.bateriaId, variables.judgeId] 
+      });
+      // Also invalidate without optional parameters to catch all variations
       queryClient.invalidateQueries({ 
         queryKey: ['dynamic-scores', variables.modalityId, variables.eventId] 
       });

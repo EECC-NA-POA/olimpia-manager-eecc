@@ -23,6 +23,17 @@ export function useDynamicScoreData({
   athletes = [],
   enabled = true
 }: UseDynamicScoreDataProps) {
+  console.log('=== useDynamicScoreData HOOK CALLED ===');
+  console.log('Parameters:', {
+    modalityId,
+    eventId,
+    modeloId,
+    selectedBateriaId,
+    judgeId,
+    athletesCount: athletes.length,
+    enabled
+  });
+  
   // Fetch campos from the modelo
   const { data: campos = [], isLoading: isLoadingCampos } = useQuery({
     queryKey: ['modelo-campos', modeloId],
@@ -47,9 +58,25 @@ export function useDynamicScoreData({
 
   // Fetch existing scores
   const { data: existingScores = [], isLoading: isLoadingScores, refetch: refetchScores } = useQuery({
-    queryKey: ['dynamic-scores', modalityId, eventId, selectedBateriaId, judgeId],
+    queryKey: ['dynamic-scores', modalityId, eventId, modeloId, selectedBateriaId, judgeId],
     queryFn: async () => {
-      if (!eventId || !modalityId || !judgeId || athletes.length === 0) return [];
+      console.log('=== QUERY FUNCTION EXECUTING ===');
+      console.log('Check conditions:', {
+        hasEventId: !!eventId,
+        hasModalityId: !!modalityId,
+        hasJudgeId: !!judgeId,
+        hasModeloId: !!modeloId,
+        athletesCount: athletes.length,
+        eventId,
+        modalityId,
+        modeloId,
+        judgeId
+      });
+      
+      if (!eventId || !modalityId || !judgeId) {
+        console.log('⚠️ QUERY SKIPPED - Missing required parameters');
+        return [];
+      }
       
       console.log('=== FETCHING EXISTING SCORES ===');
       console.log('Params:', { modalityId, eventId, selectedBateriaId, judgeId });
@@ -57,16 +84,21 @@ export function useDynamicScoreData({
       let query = supabase
         .from('pontuacoes')
         .select(`
-          *,
+          id,
+          atleta_id,
+          modalidade_id,
+          juiz_id,
+          evento_id,
+          modelo_id,
+          observacoes,
           tentativas_pontuacao(*)
         `)
         .eq('evento_id', eventId)
         .eq('modalidade_id', modalityId)
-        .eq('juiz_id', judgeId)
-        .in('atleta_id', athletes.map(a => a.atleta_id));
+        .eq('juiz_id', judgeId);
 
-      if (selectedBateriaId) {
-        query = query.eq('numero_bateria', selectedBateriaId);
+      if (modeloId) {
+        query = query.eq('modelo_id', modeloId);
       }
       
       const { data, error } = await query;
@@ -92,15 +124,51 @@ export function useDynamicScoreData({
         
         return {
           ...pontuacao,
-          tentativas
+          tentativas,
+          numero_bateria: (() => {
+            const nb = tentativas?.numero_bateria;
+            const b = tentativas?.bateria;
+            const raw = typeof nb === 'object' && nb !== null
+              ? (nb.valor ?? nb.valor_formatado)
+              : (typeof b === 'object' && b !== null ? (b.valor ?? b.valor_formatado) : (nb ?? b));
+            const num = raw !== undefined && raw !== null ? Number(raw) : undefined;
+            return Number.isFinite(num as number) ? (num as number) : undefined;
+          })()
         };
       });
       
       console.log('Transformed scores:', transformedData);
-      return transformedData;
+
+      // Filter by current athletes list (client-side)
+      const athleteIds = new Set((athletes || []).map(a => a.atleta_id));
+      const byAthletes = transformedData.filter((p: any) => athleteIds.size === 0 || athleteIds.has(p.atleta_id));
+
+      // Filter by selected bateria using tentativas values (numero_bateria or bateria)
+      const filteredData = selectedBateriaId
+        ? byAthletes.filter((pontuacao: any) => {
+            const nb = pontuacao.tentativas?.numero_bateria;
+            const b = pontuacao.tentativas?.bateria;
+            const raw = typeof nb === 'object' && nb !== null
+              ? (nb.valor ?? nb.valor_formatado)
+              : (typeof b === 'object' && b !== null ? (b.valor ?? b.valor_formatado) : (nb ?? b));
+            const num = raw !== undefined && raw !== null ? Number(raw) : undefined;
+            return num !== undefined && Number(selectedBateriaId) === num;
+          })
+        : byAthletes;
+
+      console.log('Filtered by selectedBateriaId:', selectedBateriaId, 'Result count:', filteredData.length);
+      return filteredData;
     },
-    enabled: enabled && !!eventId && !!modalityId && !!judgeId && athletes.length > 0,
+    enabled: enabled && !!eventId && !!modalityId && !!judgeId,
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: true
   });
+  
+  console.log('=== useDynamicScoreData QUERY STATE ===');
+  console.log('Query enabled?', enabled && !!eventId && !!modalityId && !!judgeId);
+  console.log('Existing scores count:', existingScores.length);
+  console.log('Existing scores data:', existingScores);
+  console.log('Is loading scores?', isLoadingScores);
 
   return {
     campos,

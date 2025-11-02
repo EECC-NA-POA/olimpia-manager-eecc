@@ -190,7 +190,7 @@ export function CleanTeamScoreCard({ team, eventId, judgeId }: CleanTeamScoreCar
           <div className="space-y-3">
             <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
               <p className="text-sm text-blue-800">
-                <strong>Pontuação de equipe:</strong> A pontuação será aplicada a todos os membros automaticamente.
+                <strong>Pontuação de equipe:</strong> A pontuação será registrada para todos os {team.members.length} membros da equipe automaticamente.
               </p>
             </div>
             
