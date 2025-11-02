@@ -10,7 +10,7 @@ async function ensureUserExistsInUsuarios(userId: string) {
     // Check if user exists in usuarios table with all required fields
     const { data: existingUser, error: checkError } = await supabase
       .from('usuarios')
-      .select('id, email, cadastra_eventos, confirmado, ativo, master, filial_id, nome_completo, telefone, tipo_documento, numero_documento, data_nascimento')
+      .select('id, email, cadastra_eventos, confirmado, filial_id, nome_completo, telefone, tipo_documento, numero_documento, data_nascimento')
       .eq('id', userId)
       .single();
     
@@ -84,9 +84,6 @@ async function ensureUserExistsInUsuarios(userId: string) {
       }
       if (existingUser.confirmado !== true) {
         updates.confirmado = true;
-      }
-      if (existingUser.ativo !== true) {
-        updates.ativo = true;
       }
 
       if (Object.keys(updates).length > 0) {
