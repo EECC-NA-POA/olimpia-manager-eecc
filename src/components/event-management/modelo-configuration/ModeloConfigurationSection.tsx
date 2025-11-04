@@ -103,7 +103,14 @@ export function ModeloConfigurationSection({ eventId }: { eventId: string | null
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Configuração de Modelos de Pontuação</CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+            <div className="space-y-1">
+              <CardTitle>Configuração de Modelos de Pontuação</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Os modelos são criados automaticamente a partir das modalidades do evento. Configure os parâmetros de pontuação para cada modalidade aqui.
+              </p>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <ModeloConfigurationFilters

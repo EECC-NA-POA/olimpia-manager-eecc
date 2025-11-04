@@ -22,8 +22,7 @@ export function useRegulationForm({ eventId, regulation, userId, onComplete }: U
       versao: regulation?.versao || '1.0',
       regulamento_texto: regulation?.regulamento_texto || '',
       regulamento_link: regulation?.regulamento_link || '',
-      is_ativo: regulation?.is_ativo ?? true,
-      is_regulamento_texto: regulation?.is_regulamento_texto ?? true
+      is_ativo: regulation?.is_ativo ?? true
     }
   });
   
@@ -43,7 +42,6 @@ export function useRegulationForm({ eventId, regulation, userId, onComplete }: U
       const processedLink = data.regulamento_link?.trim() === '' ? null : data.regulamento_link?.trim() || null;
       
       console.log('Processed link:', processedLink);
-      console.log('is_regulamento_texto value:', data.is_regulamento_texto);
 
       if (regulation && regulation.id) {
         // Update existing regulation
@@ -53,7 +51,6 @@ export function useRegulationForm({ eventId, regulation, userId, onComplete }: U
           regulamento_texto: data.regulamento_texto,
           regulamento_link: processedLink,
           is_ativo: data.is_ativo,
-          is_regulamento_texto: data.is_regulamento_texto, // Ensure this boolean is explicitly set
           atualizado_por: userId,
           atualizado_em: new Date().toISOString()
         };
@@ -83,7 +80,6 @@ export function useRegulationForm({ eventId, regulation, userId, onComplete }: U
           regulamento_texto: data.regulamento_texto,
           regulamento_link: processedLink,
           is_ativo: data.is_ativo,
-          is_regulamento_texto: data.is_regulamento_texto, // Ensure this boolean is explicitly set
           criado_por: userId
         };
         
