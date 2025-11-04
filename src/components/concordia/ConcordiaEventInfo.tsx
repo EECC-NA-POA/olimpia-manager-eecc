@@ -16,7 +16,8 @@ export const ConcordiaEventInfo = () => {
   };
 
   const handleOpenMaps = () => {
-    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(eventLocation)}`;
+    // Using directions API for better reliability
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(eventLocation)}`;
     window.open(mapsUrl, '_blank');
   };
 
@@ -26,6 +27,7 @@ export const ConcordiaEventInfo = () => {
         <Card 
           className="cursor-pointer hover:shadow-lg transition-all duration-300 border-[#7CB342]/20 hover:border-[#7CB342]"
           onClick={handleAddToCalendar}
+          title="Clique para adicionar à sua agenda"
         >
           <CardContent className="pt-6">
             <div className="flex items-start space-x-4">
@@ -39,6 +41,9 @@ export const ConcordiaEventInfo = () => {
                   <Clock className="w-4 h-4" />
                   <span>8h às 13h</span>
                 </div>
+                <p className="text-sm text-gray-500 mt-3 flex items-center gap-1">
+                  💡 Clique para adicionar à sua agenda
+                </p>
               </div>
             </div>
           </CardContent>
@@ -49,6 +54,7 @@ export const ConcordiaEventInfo = () => {
         <Card
           className="cursor-pointer hover:shadow-lg transition-all duration-300 border-[#7E57C2]/20 hover:border-[#7E57C2]"
           onClick={handleOpenMaps}
+          title="Clique para ver no Google Maps"
         >
           <CardContent className="pt-6">
             <div className="flex items-start space-x-4">
@@ -60,6 +66,9 @@ export const ConcordiaEventInfo = () => {
                 <p className="text-gray-700 font-semibold">Bosque 950</p>
                 <p className="text-gray-600 text-sm mt-1">R. Corrêa Lima, 950</p>
                 <p className="text-gray-600 text-sm">Porto Alegre - RS - Brasil</p>
+                <p className="text-sm text-gray-500 mt-3 flex items-center gap-1">
+                  🔗 Clique para ver no Google Maps
+                </p>
               </div>
             </div>
           </CardContent>
