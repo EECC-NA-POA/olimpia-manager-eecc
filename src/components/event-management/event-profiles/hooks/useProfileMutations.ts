@@ -16,6 +16,8 @@ export type ProfileFormValues = {
   contato_nome?: string;
   contato_telefone?: string;
   link_formulario?: string;
+  qr_code_image?: string;
+  qr_code_codigo?: string;
 };
 
 export function useCreateUpdateProfile(eventId: string | null, editingProfile: Profile | null) {
@@ -41,19 +43,21 @@ export function useCreateUpdateProfile(eventId: string | null, editingProfile: P
         // Update registration fee
         const existingFee = editingProfile.taxas_inscricao?.[0];
         if (existingFee) {
-          const { error: feeError } = await supabase
-            .from('taxas_inscricao')
-            .update({
-              valor: data.valor,
-              isento: data.isento,
-              mostra_card: data.mostra_card,
-              pix_key: data.pix_key || null,
-              data_limite_inscricao: data.data_limite_inscricao || null,
-              contato_nome: data.contato_nome || null,
-              contato_telefone: data.contato_telefone || null,
-              link_formulario: data.link_formulario || null,
-            })
-            .eq('id', existingFee.id);
+        const { error: feeError } = await supabase
+          .from('taxas_inscricao')
+          .update({
+            valor: data.valor,
+            isento: data.isento,
+            mostra_card: data.mostra_card,
+            pix_key: data.pix_key || null,
+            data_limite_inscricao: data.data_limite_inscricao || null,
+            contato_nome: data.contato_nome || null,
+            contato_telefone: data.contato_telefone || null,
+            link_formulario: data.link_formulario || null,
+            qr_code_image: data.qr_code_image || null,
+            qr_code_codigo: data.qr_code_codigo || null,
+          })
+          .eq('id', existingFee.id);
 
           if (feeError) throw feeError;
         }
@@ -86,6 +90,8 @@ export function useCreateUpdateProfile(eventId: string | null, editingProfile: P
             contato_nome: data.contato_nome || null,
             contato_telefone: data.contato_telefone || null,
             link_formulario: data.link_formulario || null,
+            qr_code_image: data.qr_code_image || null,
+            qr_code_codigo: data.qr_code_codigo || null,
           });
 
         if (feeError) throw feeError;
