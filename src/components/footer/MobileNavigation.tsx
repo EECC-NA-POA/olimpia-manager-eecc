@@ -106,8 +106,11 @@ export const MobileNavigationLink = () => {
   const { user } = useAuth();
   const location = useLocation();
   
-  // Don't show mobile navigation on event selection page or when no user
-  if (!user || location.pathname === '/event-selection') {
+  // Public routes that should not show the mobile navigation
+  const publicRoutes = ['/event-selection', '/torneio-concordia', '/'];
+  
+  // Don't show mobile navigation on public pages or when no user
+  if (!user || publicRoutes.includes(location.pathname)) {
     return null;
   }
   
