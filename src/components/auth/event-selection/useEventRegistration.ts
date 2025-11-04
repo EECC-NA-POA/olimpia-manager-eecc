@@ -65,46 +65,10 @@ export const useEventRegistration = (userId: string | undefined) => {
           throw new Error('Could not determine profile and registration fee information');
         }
 
-        // Step 2: Process registration directly (avoiding RPC to prevent column name issues)
+        // Step 2: Process registration - Order is critical for RLS policies
+        // Order: Profile -> Registration -> Payment
         
-        // 2.1: Create or get event registration
-        let registrationId: string;
-        const { data: existingReg, error: checkError } = await supabase
-          .from('inscricoes_eventos')
-          .select('id')
-          .eq('usuario_id', userId)
-          .eq('evento_id', eventId)
-          .maybeSingle();
-
-        if (checkError) {
-          console.error('Error checking existing registration:', checkError);
-          throw new Error('Failed to check registration status');
-        }
-
-        if (existingReg) {
-          registrationId = existingReg.id;
-          console.log('User already registered, using existing registration:', registrationId);
-        } else {
-          const { data: newReg, error: regError } = await supabase
-            .from('inscricoes_eventos')
-            .insert({
-              usuario_id: userId,
-              evento_id: eventId,
-              data_inscricao: new Date().toISOString()
-            })
-            .select('id')
-            .single();
-
-          if (regError || !newReg) {
-            console.error('Error creating registration:', regError);
-            throw new Error('Failed to create event registration');
-          }
-
-          registrationId = newReg.id;
-          console.log('Created new registration:', registrationId);
-        }
-
-        // 2.2: Assign profile to user
+        // 2.1: Assign profile to user FIRST (required for RLS on other tables)
         const { data: existingProfile, error: profileCheckError } = await supabase
           .from('papeis_usuarios')
           .select('id')
@@ -136,7 +100,63 @@ export const useEventRegistration = (userId: string | undefined) => {
           console.log('Profile already assigned');
         }
 
-        // 2.3: Create payment record
+        // 2.2: Create or update event registration with required fields
+        let registrationId: string;
+        const { data: existingReg, error: checkError } = await supabase
+          .from('inscricoes_eventos')
+          .select('id, selected_role, taxa_inscricao_id')
+          .eq('usuario_id', userId)
+          .eq('evento_id', eventId)
+          .maybeSingle();
+
+        if (checkError) {
+          console.error('Error checking existing registration:', checkError);
+          throw new Error('Failed to check registration status');
+        }
+
+        if (existingReg) {
+          registrationId = existingReg.id;
+          console.log('User already registered, registration ID:', registrationId);
+          
+          // Update if missing required fields
+          if (!existingReg.selected_role || !existingReg.taxa_inscricao_id) {
+            console.log('Updating registration with missing fields');
+            const { error: updateError } = await supabase
+              .from('inscricoes_eventos')
+              .update({
+                selected_role: selectedRole,
+                taxa_inscricao_id: registrationInfo.taxaInscricaoId
+              })
+              .eq('id', registrationId);
+
+            if (updateError) {
+              console.error('Error updating registration:', updateError);
+              // Continue anyway as the registration exists
+            }
+          }
+        } else {
+          const { data: newReg, error: regError } = await supabase
+            .from('inscricoes_eventos')
+            .insert({
+              usuario_id: userId,
+              evento_id: eventId,
+              data_inscricao: new Date().toISOString(),
+              selected_role: selectedRole,
+              taxa_inscricao_id: registrationInfo.taxaInscricaoId
+            })
+            .select('id')
+            .single();
+
+          if (regError || !newReg) {
+            console.error('Error creating registration:', regError);
+            throw new Error('Failed to create event registration');
+          }
+
+          registrationId = newReg.id;
+          console.log('Created new registration with all fields:', registrationId);
+        }
+
+        // 2.3: Create payment record with all required fields
         const { error: paymentError } = await supabase
           .from('pagamentos')
           .insert({
@@ -144,13 +164,17 @@ export const useEventRegistration = (userId: string | undefined) => {
             taxa_inscricao_id: registrationInfo.taxaInscricaoId,
             valor: registrationInfo.valor,
             status: registrationInfo.valor === 0 ? 'pago' : 'pendente',
-            data_pagamento: registrationInfo.valor === 0 ? new Date().toISOString() : null
+            data_pagamento: registrationInfo.valor === 0 ? new Date().toISOString() : null,
+            evento_id: eventId,
+            atleta_id: userId
           });
 
         if (paymentError && paymentError.code !== '23505') { // Ignore duplicate key errors
           console.error('Error creating payment record:', paymentError);
           // Don't throw here as the registration is already complete
           console.log('Payment record creation failed but continuing...');
+        } else if (!paymentError) {
+          console.log('Payment record created successfully');
         }
 
         console.log('Registration process completed successfully');

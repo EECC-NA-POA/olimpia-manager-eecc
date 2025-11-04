@@ -33,6 +33,33 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
 
         console.log('Events found:', events.length);
         
+        // Fetch available profiles for each event
+        const eventIds = events.map(e => e.id);
+        const { data: profiles, error: profilesError } = await supabase
+          .from('perfis')
+          .select('id, evento_id, nome, perfis_tipo(codigo)')
+          .in('evento_id', eventIds);
+        
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          // Continue without profiles data
+        }
+        
+        // Build a map of eventId -> roles
+        const eventRolesMap: Record<string, Array<{ nome: string; codigo: string }>> = {};
+        if (profiles) {
+          profiles.forEach((profile: any) => {
+            if (!eventRolesMap[profile.evento_id]) {
+              eventRolesMap[profile.evento_id] = [];
+            }
+            eventRolesMap[profile.evento_id].push({
+              nome: profile.nome,
+              codigo: profile.perfis_tipo?.codigo || ''
+            });
+          });
+          console.log('Event roles map:', eventRolesMap);
+        }
+        
         // First, get user registrations from inscricoes_eventos table
         console.log('Fetching user registrations for userId:', userId, 'Type:', typeof userId);
         
@@ -61,7 +88,8 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
           // Continue with events but mark them as not registered
         const mapped = events.map(event => ({
           ...event,
-          isRegistered: false
+          isRegistered: false,
+          roles: eventRolesMap[event.id] || []
         }));
         return mapped.filter(e => !(e.status_evento === 'encerrado' && !e.isRegistered));
         }
@@ -114,7 +142,8 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
             return {
               ...event,
               isRegistered,
-              hasBranchPermission
+              hasBranchPermission,
+              roles: eventRolesMap[event.id] || []
             };
           });
           return mappedEvents.filter(e => !(e.status_evento === 'encerrado' && !e.isRegistered));
@@ -129,7 +158,8 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
           return {
             ...event,
             isRegistered: false,
-            hasBranchPermission
+            hasBranchPermission,
+            roles: eventRolesMap[event.id] || []
           };
         });
         return mapped.filter(e => !(e.status_evento === 'encerrado' && !e.isRegistered));

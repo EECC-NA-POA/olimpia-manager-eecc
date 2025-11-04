@@ -142,11 +142,15 @@ export const EventCard = ({
               onValueChange={(value) => onRoleChange(value as 'ATL' | 'PGR')}
               className="space-y-2"
             >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="ATL" id={`atleta-${event.id}`} />
-                <Label htmlFor={`atleta-${event.id}`} className="text-sm">Atleta</Label>
-              </div>
-              {!isUnderAge && (
+              {/* Show Atleta option if available */}
+              {(!event.roles || event.roles.length === 0 || event.roles.some(r => r.codigo === 'ATL' || r.nome === 'Atleta')) && (
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="ATL" id={`atleta-${event.id}`} />
+                  <Label htmlFor={`atleta-${event.id}`} className="text-sm">Atleta</Label>
+                </div>
+              )}
+              {/* Show Público Geral option only if user is not underage AND profile exists for this event */}
+              {!isUnderAge && (!event.roles || event.roles.length === 0 || event.roles.some(r => r.codigo === 'PGR' || r.nome === 'Público Geral')) && (
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="PGR" id={`publico-${event.id}`} />
                   <Label htmlFor={`publico-${event.id}`} className="text-sm">Público Geral</Label>
