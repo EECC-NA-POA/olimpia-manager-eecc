@@ -53,7 +53,9 @@ export function useEventProfiles(eventId: string | null) {
             data_limite_inscricao,
             contato_nome,
             contato_telefone,
-            link_formulario
+            link_formulario,
+            qr_code_image,
+            qr_code_codigo
           )
         `)
         .eq('evento_id', eventId)

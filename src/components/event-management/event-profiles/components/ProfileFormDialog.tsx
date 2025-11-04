@@ -326,35 +326,19 @@ export function ProfileFormDialog({
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="qr_code_image"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Link da Imagem do QR Code</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://exemplo.com/qrcode.png" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="qr_code_codigo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Código do QR Code</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Código PIX ou texto do QR" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="qr_code_image"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Link da Imagem do QR Code</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://exemplo.com/qrcode.png" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <DialogFooter>
