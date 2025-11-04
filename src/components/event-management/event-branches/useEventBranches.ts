@@ -117,6 +117,35 @@ export function useEventBranches(eventId: string | null) {
     return selectedCount > 0 && selectedCount < stateBranches.length;
   };
   
+  const createBranch = async (data: { nome: string; cidade: string; estado: string }) => {
+    setIsSaving(true);
+    try {
+      const { data: newBranch, error } = await supabase
+        .from('filiais')
+        .insert([data])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Add the new branch to the local state
+      setBranches(prev => [...prev, { ...newBranch, is_linked: false }]);
+      
+      toast.success('Filial criada com sucesso!');
+      return newBranch;
+    } catch (error: any) {
+      console.error('Error creating branch:', error);
+      if (error.code === '23505') {
+        toast.error('Já existe uma filial com este nome');
+      } else {
+        toast.error('Erro ao criar filial');
+      }
+      throw error;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const saveChanges = async () => {
     if (!eventId) return;
     
@@ -204,6 +233,7 @@ export function useEventBranches(eventId: string | null) {
     handleToggleStateExpansion,
     isStateFullySelected,
     isStatePartiallySelected,
-    saveChanges
+    saveChanges,
+    createBranch
   };
 }
