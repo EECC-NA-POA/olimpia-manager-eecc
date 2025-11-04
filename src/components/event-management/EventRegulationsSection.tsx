@@ -21,18 +21,21 @@ export function EventRegulationsSection({ eventId }: EventRegulationsSectionProp
   const [currentRegulation, setCurrentRegulation] = useState<EventRegulation | null>(null);
   const { user } = useAuth();
 
-  const { data: hasRegulations, isLoading } = useQuery({
-    queryKey: ['hasRegulations', eventId],
+  const { data: regulations, isLoading } = useQuery({
+    queryKey: ['regulations', eventId],
     queryFn: async () => {
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from('eventos_regulamentos')
-        .select('*', { count: 'exact', head: true })
-        .eq('evento_id', eventId);
+        .select('*')
+        .eq('evento_id', eventId)
+        .order('criado_em', { ascending: false });
       
       if (error) throw error;
-      return (count || 0) > 0;
+      return data as EventRegulation[];
     }
   });
+
+  const hasRegulations = regulations && regulations.length > 0;
 
   const handleEdit = (regulation: EventRegulation) => {
     setCurrentRegulation(regulation);

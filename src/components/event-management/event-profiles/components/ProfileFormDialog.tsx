@@ -27,6 +27,8 @@ const profileFormSchema = z.object({
   contato_nome: z.string().optional(),
   contato_telefone: z.string().optional(),
   link_formulario: z.string().optional(),
+  qr_code_image: z.string().optional(),
+  qr_code_codigo: z.string().optional(),
 });
 
 interface ProfileFormDialogProps {
@@ -60,6 +62,8 @@ export function ProfileFormDialog({
       contato_nome: editingProfile?.taxas_inscricao?.[0]?.contato_nome || '',
       contato_telefone: editingProfile?.taxas_inscricao?.[0]?.contato_telefone || '',
       link_formulario: editingProfile?.taxas_inscricao?.[0]?.link_formulario || '',
+      qr_code_image: editingProfile?.taxas_inscricao?.[0]?.qr_code_image || '',
+      qr_code_codigo: editingProfile?.taxas_inscricao?.[0]?.qr_code_codigo || '',
     },
   });
 
@@ -78,6 +82,8 @@ export function ProfileFormDialog({
         contato_nome: fee?.contato_nome || '',
         contato_telefone: fee?.contato_telefone || '',
         link_formulario: fee?.link_formulario || '',
+        qr_code_image: fee?.qr_code_image || '',
+        qr_code_codigo: fee?.qr_code_codigo || '',
       });
     } else {
       form.reset({
@@ -92,6 +98,8 @@ export function ProfileFormDialog({
         contato_nome: '',
         contato_telefone: '',
         link_formulario: '',
+        qr_code_image: '',
+        qr_code_codigo: '',
       });
     }
   }, [editingProfile, form]);
@@ -312,6 +320,20 @@ export function ProfileFormDialog({
                     <FormLabel>Link do Formulário</FormLabel>
                     <FormControl>
                       <Input placeholder="https://..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="qr_code_image"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Link da Imagem do QR Code</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://exemplo.com/qrcode.png" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

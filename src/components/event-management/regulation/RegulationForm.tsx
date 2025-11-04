@@ -6,7 +6,6 @@ import { useRegulationForm } from './useRegulationForm';
 import { RegulationBasicFields } from './RegulationBasicFields';
 import { RegulationTextEditor } from './RegulationTextEditor';
 import { RegulationStatusToggle } from './RegulationStatusToggle';
-import { RegulationVisibilityToggle } from './RegulationVisibilityToggle';
 import { RegulationFormActions } from './RegulationFormActions';
 
 interface RegulationFormProps {
@@ -31,11 +30,7 @@ export function RegulationForm({ eventId, regulation, userId, onComplete, onCanc
         <RegulationBasicFields control={form.control} />
         <RegulationTextEditor control={form.control} />
         
-        {/* Status and Visibility toggles side by side */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <RegulationStatusToggle control={form.control} />
-          <RegulationVisibilityToggle control={form.control} />
-        </div>
+        <RegulationStatusToggle control={form.control} />
         
         <RegulationFormActions 
           regulation={regulation}

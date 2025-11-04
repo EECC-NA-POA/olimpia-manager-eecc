@@ -1,13 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { useEventBranches } from './event-branches/useEventBranches';
 import { BranchesHeader } from './event-branches/BranchesHeader';
 import { StateSection } from './event-branches/StateSection';
 import { EmptyState } from './event-branches/EmptyState';
+import { NewBranchDialog } from './event-branches/NewBranchDialog';
 
 export function EventBranchesSection({ eventId }: { eventId: string | null }) {
+  const [isNewBranchDialogOpen, setIsNewBranchDialogOpen] = useState(false);
+  
   const {
     isLoading,
     isSaving,
@@ -22,8 +25,14 @@ export function EventBranchesSection({ eventId }: { eventId: string | null }) {
     handleToggleStateExpansion,
     isStateFullySelected,
     isStatePartiallySelected,
-    saveChanges
+    saveChanges,
+    createBranch
   } = useEventBranches(eventId);
+  
+  const handleCreateBranch = async (data: { nome: string; cidade: string; estado: string }) => {
+    await createBranch(data);
+    setIsNewBranchDialogOpen(false);
+  };
   
   if (isLoading) {
     return <LoadingState />;
@@ -41,6 +50,7 @@ export function EventBranchesSection({ eventId }: { eventId: string | null }) {
             onSearchChange={setSearchTerm}
             onSave={saveChanges}
             isSaving={isSaving}
+            onNewBranch={() => setIsNewBranchDialogOpen(true)}
           />
           
           <div className="space-y-2">
@@ -72,6 +82,13 @@ export function EventBranchesSection({ eventId }: { eventId: string | null }) {
           </div>
         </div>
       </CardContent>
+      
+      <NewBranchDialog
+        isOpen={isNewBranchDialogOpen}
+        onClose={() => setIsNewBranchDialogOpen(false)}
+        onSave={handleCreateBranch}
+        isSaving={isSaving}
+      />
     </Card>
   );
 }

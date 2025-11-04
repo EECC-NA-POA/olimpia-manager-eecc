@@ -23,9 +23,18 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
   // independentemente de outros papéis que possa ter.
   const isJudge = user?.papeis?.some(role => role.codigo === 'JUZ');
 
+  /**
+   * Controle de Vinculação de Atletas às Equipes:
+   * - ADM (Administrador): Pode vincular atletas de QUALQUER filial (cross-branch)
+   * - ORE (Organizador): Pode vincular atletas de QUALQUER filial (cross-branch)
+   * - RDD (Representante de Delegação): Pode vincular APENAS atletas da MESMA filial
+   */
+  const isAdminOrOrganizer = user?.papeis?.some(role => 
+    role.codigo === 'ADM' || role.codigo === 'ORE'
+  );
+  
   // Define se o usuário é representante de delegação APENAS
-  const isDelegationRepOnly = user?.papeis?.some(role => role.codigo === 'RDD')
-  && !user?.papeis?.some(role => role.codigo === 'ORE');
+  const isDelegationRepOnly = !isAdminOrOrganizer && user?.papeis?.some(role => role.codigo === 'RDD');
 
   // Filtros e estados para visualização dos times
   const [modalityFilter, setModalityFilter] = useState<number | null>(null);
@@ -130,7 +139,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
       setIsDeleteDialogOpen,
       confirmDeleteTeam,
       cancelDeleteTeam
-    } = useTeamManager(eventId, false);
+    } = useTeamManager(eventId, isAdminOrOrganizer);
 
     return (
       <div className="space-y-6">
@@ -187,7 +196,7 @@ export function TeamsTab({ userId, eventId, isOrganizer = false }: TeamsTabProps
     setIsDeleteDialogOpen,
     confirmDeleteTeam,
     cancelDeleteTeam
-  } = useTeamManager(eventId, true);
+  } = useTeamManager(eventId, isAdminOrOrganizer);
 
   return (
     <div className="space-y-6">

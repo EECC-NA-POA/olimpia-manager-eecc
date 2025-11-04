@@ -19,9 +19,15 @@ interface TeamsTabProps {
 export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
   const { user } = useAuth();
 
-  // Define se o usuário é representante de delegação APENAS
-  const isDelegationRepOnly = user?.papeis?.some(role => role.codigo === 'RDD')
-  && !user?.papeis?.some(role => role.codigo === 'ORE');
+  /**
+   * Controle de Vinculação de Atletas às Equipes:
+   * - ADM (Administrador): Pode vincular atletas de QUALQUER filial (cross-branch)
+   * - ORE (Organizador): Pode vincular atletas de QUALQUER filial (cross-branch)
+   * - RDD (Representante de Delegação): Pode vincular APENAS atletas da MESMA filial
+   */
+  const isAdminOrOrganizer = user?.papeis?.some(role => 
+    role.codigo === 'ADM' || role.codigo === 'ORE'
+  );
 
   // Filtros e estados para visualização dos times
   const [modalityFilter, setModalityFilter] = useState<number | null>(null);
@@ -89,11 +95,11 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
     setIsDeleteDialogOpen,
     confirmDeleteTeam,
     cancelDeleteTeam
-  } = useTeamManager(eventId, !isDelegationRepOnly); // Para representantes de delegação, passar false para isOrganizer
+  } = useTeamManager(eventId, isAdminOrOrganizer);
 
   return (
     <div className="space-y-6">
-      <TeamsTabHeader isOrganizer={!isDelegationRepOnly}>
+      <TeamsTabHeader isOrganizer={isAdminOrOrganizer}>
         <Tabs defaultValue="manage" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="manage">
@@ -122,7 +128,7 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
               isAddingAthlete={isAddingAthlete}
               isRemovingAthlete={isRemovingAthlete}
               isUpdatingAthlete={isUpdatingAthlete}
-              isOrganizer={!isDelegationRepOnly}
+              isOrganizer={isAdminOrOrganizer}
               teamToDelete={teamToDelete}
               isDeleteDialogOpen={isDeleteDialogOpen}
               setIsDeleteDialogOpen={setIsDeleteDialogOpen}
@@ -144,7 +150,7 @@ export function TeamsTab({ eventId, branchId }: TeamsTabProps) {
               setModalityFilter={setModalityFilter}
               setBranchFilter={setBranchFilter}
               setSearchTerm={setSearchTerm}
-              isOrganizer={!isDelegationRepOnly}
+              isOrganizer={isAdminOrOrganizer}
               eventId={eventId}
               judgeId={user?.id || ''}
             />

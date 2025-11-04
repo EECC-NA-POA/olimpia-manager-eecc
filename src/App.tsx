@@ -13,6 +13,7 @@ import { toast } from "sonner";
 
 import Index from "./pages/Index";
 import OlimpiadasNacionais from "./pages/OlimpiadasNacionais";
+import TorneioConcordia from "./pages/TorneioConcordia";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import EventSelectionPage from "./pages/EventSelectionPage";
@@ -93,6 +94,7 @@ function AppContent() {
           {/* Public routes without sidebar */}
           <Route path="/" element={<Index />} />
           <Route path="/olimpiadas-nacionais" element={<OlimpiadasNacionais />} />
+          <Route path="/torneio-concordia" element={<TorneioConcordia />} />
           <Route path="/login" element={<Login />} />
           <Route path="/events" element={<EventsLandingPage />} />
           <Route path="/events/:eventId" element={<EventDetailsPage />} />

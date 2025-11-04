@@ -13,6 +13,7 @@ import { AthletesTab } from "./dashboard/tabs/AthletesTab";
 import { EnrollmentsTab } from "./dashboard/tabs/EnrollmentsTab";
 import { StatisticsTab } from "./dashboard/tabs/StatisticsTab";
 import { RepresentativesTab } from "./dashboard/tabs/RepresentativesTab";
+import { TeamsTab } from "./dashboard/tabs/TeamsTab";
 import { NotificationManager } from "./notifications/NotificationManager";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
@@ -130,6 +131,17 @@ export default function DelegationDashboard() {
           />
         );
 
+      case "teams":
+        if (!user?.filial_id) {
+          return <EmptyState title="Filial não identificada" description="Não foi possível identificar sua filial" />;
+        }
+        return (
+          <TeamsTab 
+            eventId={currentEventId} 
+            branchId={user.filial_id} 
+          />
+        );
+
       case "notifications":
         return (
           <DelegationNotificationManager
@@ -181,6 +193,14 @@ export default function DelegationDashboard() {
               <span className="hidden sm:inline">Inscrições por Modalidade</span>
               <span className="sm:hidden">Inscrições</span>
             </TabsTrigger>
+            <TabsTrigger 
+              value="teams"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+            >
+              <Users className="h-3 w-3 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Equipes</span>
+              <span className="sm:hidden">Equipes</span>
+            </TabsTrigger>
             {(isDelegationRep || isOrganizer) && (
               <TabsTrigger 
                 value="representatives"
@@ -191,7 +211,7 @@ export default function DelegationDashboard() {
                 <span className="sm:hidden">Reps</span>
               </TabsTrigger>
             )}
-            <TabsTrigger 
+            <TabsTrigger
               value="notifications"
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
             >
@@ -212,6 +232,10 @@ export default function DelegationDashboard() {
 
         <TabsContent value="enrollments" className="mt-4 sm:mt-6">
           {renderTabContent("enrollments")}
+        </TabsContent>
+
+        <TabsContent value="teams" className="mt-4 sm:mt-6">
+          {renderTabContent("teams")}
         </TabsContent>
 
         {(isDelegationRep || isOrganizer) && (
