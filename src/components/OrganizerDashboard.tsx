@@ -13,6 +13,7 @@ import { AthletesTab } from "./dashboard/tabs/AthletesTab";
 import { EnrollmentsTab } from "./dashboard/tabs/EnrollmentsTab";
 import { StatisticsTab } from "./dashboard/tabs/StatisticsTab";
 import { OrganizerRepresentativesTab } from "./dashboard/tabs/OrganizerRepresentativesTab";
+import { TeamsTab } from "./dashboard/tabs/TeamsTab";
 import { NotificationManager } from "./notifications/NotificationManager";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
@@ -107,6 +108,14 @@ export default function OrganizerDashboard() {
       case "representatives":
         return <OrganizerRepresentativesTab eventId={currentEventId} />;
 
+      case "teams":
+        return (
+          <TeamsTab 
+            eventId={currentEventId} 
+            branchId={null}
+          />
+        );
+
       case "notifications":
         return (
           <NotificationManager
@@ -156,6 +165,15 @@ export default function OrganizerDashboard() {
               <span className="xs:hidden text-[10px]">In</span>
             </TabsTrigger>
             <TabsTrigger 
+              value="teams"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-normal break-words text-center flex-1 basis-1/2 sm:basis-1/3 md:basis-auto min-w-0"
+            >
+              <Users className="h-3 w-3 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="hidden xs:inline sm:hidden">Equipes</span>
+              <span className="hidden sm:inline">Equipes</span>
+              <span className="xs:hidden text-[10px]">Eq</span>
+            </TabsTrigger>
+            <TabsTrigger 
               value="representatives"
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-3 text-xs sm:text-base font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-normal break-words text-center flex-1 basis-1/2 sm:basis-1/3 md:basis-auto min-w-0"
             >
@@ -186,6 +204,10 @@ export default function OrganizerDashboard() {
 
         <TabsContent value="enrollments" className="mt-2 sm:mt-6">
           {renderTabContent("enrollments")}
+        </TabsContent>
+
+        <TabsContent value="teams" className="mt-2 sm:mt-6">
+          {renderTabContent("teams")}
         </TabsContent>
 
         <TabsContent value="representatives" className="mt-2 sm:mt-6">
