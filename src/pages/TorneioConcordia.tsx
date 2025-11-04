@@ -53,7 +53,7 @@ const TorneioConcordia = () => {
           </div>
 
           {/* Right Column - Login/Register */}
-          <div className="lg:sticky lg:top-24 h-fit space-y-8">
+          <div className="lg:sticky lg:top-24 h-fit">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 bg-white/90 backdrop-blur-sm border border-gray-200">
                 <TabsTrigger 
@@ -70,12 +70,14 @@ const TorneioConcordia = () => {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="login" className="mt-4">
+              <TabsContent value="login" className="mt-4 space-y-8">
                 <Card className="bg-white/95 backdrop-blur-sm border border-gray-200 shadow-lg">
                   <CardContent className="pt-6">
                     <LoginForm />
                   </CardContent>
                 </Card>
+                
+                <ConcordiaPhilosopherQuotes />
               </TabsContent>
 
               <TabsContent value="register" className="mt-4">
@@ -86,8 +88,6 @@ const TorneioConcordia = () => {
                 </Card>
               </TabsContent>
             </Tabs>
-            
-            <ConcordiaPhilosopherQuotes />
           </div>
         </div>
       </div>
