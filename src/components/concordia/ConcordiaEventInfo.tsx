@@ -11,7 +11,7 @@ export const ConcordiaEventInfo = () => {
   const handleAddToCalendar = () => {
     const startDateTime = `${eventDate}T${eventTime}:00`;
     const endDateTime = `${eventDate}T${eventEndTime}:00`;
-    const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventTitle)}&dates=${startDateTime.replace(/[-:]/g, '')}/${endDateTime.replace(/[-:]/g, '')}&details=${encodeURIComponent('Torneio Concórdia - Vôlei de Praia e Tiro com Arco')}&location=${encodeURIComponent(eventLocation)}`;
+    const calendarUrl = `https://maps.app.goo.gl/3GykLUC4FFMYmEk8A, '')}/${endDateTime.replace(/[-:]/g, '')}&details=${encodeURIComponent('Torneio Concórdia - Vôlei de Praia e Tiro com Arco')}&location=${encodeURIComponent(eventLocation)}`;
     window.open(calendarUrl, '_blank');
   };
 
