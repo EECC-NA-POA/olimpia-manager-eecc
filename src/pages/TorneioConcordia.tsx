@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { ConcordiaLogos } from '@/components/concordia/ConcordiaLogos';
 import { ConcordiaHeaderTitle } from '@/components/concordia/ConcordiaHeaderTitle';
 import { ConcordiaEventInfo } from '@/components/concordia/ConcordiaEventInfo';
 import { ConcordiaModalities } from '@/components/concordia/ConcordiaModalities';
@@ -34,13 +35,14 @@ const TorneioConcordia = () => {
       <div className="absolute inset-0 bg-white/80 backdrop-blur-sm"></div>
       
       <div className="container relative mx-auto p-6 pt-24 z-10">
+        <ConcordiaLogos />
+        
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
           {/* Left Column - Event Information */}
           <div className="space-y-8">
             <ConcordiaHeaderTitle />
             <ConcordiaEventInfo />
             <ConcordiaModalities />
-            <ConcordiaPhilosopherQuotes />
             
             {/* Call to Action */}
             <div className="text-center p-6 bg-gradient-to-r from-[#7CB342]/10 to-[#7E57C2]/10 rounded-lg border border-[#7CB342]/20">
@@ -51,7 +53,7 @@ const TorneioConcordia = () => {
           </div>
 
           {/* Right Column - Login/Register */}
-          <div className="lg:sticky lg:top-24 h-fit">
+          <div className="lg:sticky lg:top-24 h-fit space-y-8">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 bg-white/90 backdrop-blur-sm border border-gray-200">
                 <TabsTrigger 
@@ -84,6 +86,8 @@ const TorneioConcordia = () => {
                 </Card>
               </TabsContent>
             </Tabs>
+            
+            <ConcordiaPhilosopherQuotes />
           </div>
         </div>
       </div>
