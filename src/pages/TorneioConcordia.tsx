@@ -16,11 +16,6 @@ const TorneioConcordia = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<string>('login');
 
-  // Redirect authenticated users to main page
-  if (user) {
-    return <Navigate to="/" replace />;
-  }
-
   return (
     <div 
       className="min-h-screen relative light"

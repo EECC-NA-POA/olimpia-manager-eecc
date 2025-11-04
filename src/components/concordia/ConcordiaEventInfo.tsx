@@ -16,8 +16,7 @@ export const ConcordiaEventInfo = () => {
   };
 
   const handleOpenMaps = () => {
-    // Using directions API for better reliability
-    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(eventLocation)}`;
+    const mapsUrl = 'https://maps.app.goo.gl/vzSLXaFMytMkhkLP9';
     window.open(mapsUrl, '_blank');
   };
 
