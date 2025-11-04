@@ -78,40 +78,40 @@ export function BatteryAndLanesSection({
         </div>
         
         {config.baterias && (
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="permite_final">Permitir Bateria Final</Label>
+          <>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="permite_final">Permitir Bateria Final</Label>
+                <p className="text-sm text-muted-foreground">
+                  Habilita criação de bateria final para definir vencedores
+                </p>
+              </div>
+              <Switch
+                id="permite_final"
+                checked={config.permite_final}
+                onCheckedChange={onPermiteFinalChange}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="num_raias">Número de Raias</Label>
+              <Input
+                id="num_raias"
+                type="number"
+                min="0"
+                max="20"
+                step="1"
+                value={config.num_raias === 0 ? '0' : config.num_raias}
+                onChange={handleNumRaiasChange}
+                onBlur={handleBlur}
+                placeholder="0"
+              />
               <p className="text-sm text-muted-foreground">
-                Habilita criação de bateria final para definir vencedores
+                Número de raias por bateria. Use 0 se raias não se aplicam.
               </p>
             </div>
-            <Switch
-              id="permite_final"
-              checked={config.permite_final}
-              onCheckedChange={onPermiteFinalChange}
-            />
-          </div>
+          </>
         )}
-        
-        <div className="space-y-2">
-          <Label htmlFor="num_raias">Número de Raias</Label>
-          <Input
-            id="num_raias"
-            type="number"
-            min="0"
-            max="20"
-            step="1"
-            value={config.num_raias === 0 ? '0' : config.num_raias}
-            onChange={handleNumRaiasChange}
-            onBlur={handleBlur}
-            placeholder="0"
-          />
-          <p className="text-sm text-muted-foreground">
-            {config.baterias 
-              ? 'Número de raias por bateria. Use 0 se raias não se aplicam.' 
-              : 'Número total de raias para a modalidade. Use 0 se raias não se aplicam.'}
-          </p>
-        </div>
       </CardContent>
     </Card>
   );
