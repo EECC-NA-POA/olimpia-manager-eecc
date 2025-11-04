@@ -7,6 +7,7 @@ import { ModalitiesTable } from './ModalitiesTable';
 import { AthleteBadges } from './AthleteBadges';
 import { PaymentStatusControls } from './PaymentStatusControls';
 import { AthleteModality } from '@/lib/api';
+import CopyableCode from '@/components/CopyableCode';
 
 interface AthleteDialogContentProps {
   nome: string;
@@ -39,6 +40,17 @@ interface AthleteDialogContentProps {
     onJustificationChange: (modalityId: string, value: string) => void;
     onStatusChange: (modalityId: string, status: string) => void;
   };
+  feeInfo?: {
+    valor: number;
+    isento: boolean;
+    pix_key: string | null;
+    qr_code_image: string | null;
+    qr_code_codigo: string | null;
+    perfil: {
+      id: number;
+      nome: string;
+    } | null;
+  };
   readOnly?: boolean;
 }
 export const AthleteDialogContent: React.FC<AthleteDialogContentProps> = ({
@@ -57,6 +69,7 @@ export const AthleteDialogContent: React.FC<AthleteDialogContentProps> = ({
   onPaymentStatusChange,
   paymentControlProps,
   modalitiesProps,
+  feeInfo,
   readOnly
 }) => {
   const hasModalities = modalitiesProps?.modalidades.length > 0;
@@ -93,6 +106,47 @@ export const AthleteDialogContent: React.FC<AthleteDialogContentProps> = ({
                   readOnly={readOnly}
                   {...paymentControlProps}
                 />
+              </div>
+            )}
+            {feeInfo && (
+              <div className="pt-4 border-t border-gray-200">
+                <h4 className="text-sm font-semibold mb-3">Informações da Taxa de Inscrição</h4>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Perfil:</span>
+                      <p className="font-medium">{feeInfo.perfil?.nome || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Valor:</span>
+                      <p className="font-medium">
+                        {feeInfo.isento ? 'Isento' : `R$ ${feeInfo.valor.toFixed(2)}`}
+                      </p>
+                    </div>
+                  </div>
+                  {feeInfo.pix_key && (
+                    <div>
+                      <p className="text-sm font-medium mb-1">Chave PIX:</p>
+                      <CopyableCode code={feeInfo.pix_key} />
+                    </div>
+                  )}
+                  {feeInfo.qr_code_image && (
+                    <div>
+                      <p className="text-sm font-medium mb-2">QR Code PIX:</p>
+                      <img 
+                        src={feeInfo.qr_code_image} 
+                        alt="QR Code PIX" 
+                        className="max-w-[200px] mx-auto rounded border border-border"
+                      />
+                    </div>
+                  )}
+                  {feeInfo.qr_code_codigo && (
+                    <div>
+                      <p className="text-sm font-medium mb-1">Código PIX Copia e Cola:</p>
+                      <CopyableCode code={feeInfo.qr_code_codigo} />
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

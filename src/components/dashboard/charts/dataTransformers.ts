@@ -162,9 +162,18 @@ export function transformPaymentStatusData(data: any[], colorMap: Record<string,
 
 /**
  * Transforms the analytics data to a format suitable for the branch registrations chart.
+ * Only includes branches that are associated with the event (have filial_id in the data).
  */
 export function transformBranchRegistrationsData(data: BranchAnalytics[]): BranchRegistrationData[] {
-  return data.map(branchData => ({
+  // Filter out any branches without a filial_id (system-wide aggregates)
+  // and only include branches that are part of the specific event
+  const eventBranches = data.filter(branchData => 
+    branchData.filial_id && 
+    branchData.filial && 
+    branchData.total_inscritos_geral > 0
+  );
+  
+  return eventBranches.map(branchData => ({
     name: branchData.filial,
     confirmados: branchData.inscritos_por_status_pagamento.find(status => status.status_pagamento === 'confirmado')?.quantidade || 0,
     pendentes: branchData.inscritos_por_status_pagamento.find(status => status.status_pagamento === 'pendente')?.quantidade || 0,

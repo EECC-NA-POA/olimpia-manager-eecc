@@ -37,7 +37,7 @@ export function useModeloConfigurationData(eventId: string | null) {
           // Build parametros from campos
           const parametros: any = {
             baterias: false,
-            num_raias: 8,
+            num_raias: 0,
             permite_final: false,
             regra_tipo: 'pontos',
             formato_resultado: '',
@@ -56,7 +56,7 @@ export function useModeloConfigurationData(eventId: string | null) {
               // Handle special configuration fields
               if (campo.chave_campo === 'baterias' && campo.metadados) {
                 parametros.baterias = campo.metadados.baterias || false;
-                parametros.num_raias = campo.metadados.num_raias || 8;
+                parametros.num_raias = campo.metadados.num_raias ?? 0; // Use nullish coalescing to preserve 0
                 parametros.permite_final = campo.metadados.permite_final || false;
                 console.log('Found baterias config:', { 
                   baterias: parametros.baterias, 

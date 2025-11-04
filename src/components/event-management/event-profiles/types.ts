@@ -26,6 +26,8 @@ export interface RegistrationFee {
   contato_nome: string | null;
   contato_telefone: string | null;
   link_formulario: string | null;
+  qr_code_image: string | null;
+  qr_code_codigo: string | null;
 }
 
 export interface EventProfilesSectionProps {

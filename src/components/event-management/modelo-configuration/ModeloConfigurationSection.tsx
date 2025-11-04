@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { ModeloConfigurationTable } from './ModeloConfigurationTable';
 import { ModeloConfigurationFilters } from './ModeloConfigurationFilters';
 import { ModeloConfigurationDialog } from './ModeloConfigurationDialog';
 import { ModeloDuplicationDialog } from './ModeloDuplicationDialog';
+import { NewModeloDialog } from './dialogs/NewModeloDialog';
 import { useModeloConfigurationData } from './hooks/useModeloConfigurationData';
 import { useModeloConfigurationMutations } from './hooks/useModeloConfigurationMutations';
 import { useModeloFiltering } from './hooks/useModeloFiltering';
+import { useCreateModelo } from '@/hooks/useDynamicScoring';
 
 export function ModeloConfigurationSection({ eventId }: { eventId: string | null }) {
   console.log('ModeloConfigurationSection - eventId:', eventId);
@@ -18,8 +21,11 @@ export function ModeloConfigurationSection({ eventId }: { eventId: string | null
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDuplicationDialogOpen, setIsDuplicationDialogOpen] = useState(false);
+  const [isNewModeloDialogOpen, setIsNewModeloDialogOpen] = useState(false);
   const [editingModelo, setEditingModelo] = useState<any>(null);
   const [modeloToDuplicate, setModeloToDuplicate] = useState<any>(null);
+  
+  const createModeloMutation = useCreateModelo();
 
   const {
     searchTerm,
@@ -95,6 +101,16 @@ export function ModeloConfigurationSection({ eventId }: { eventId: string | null
     }
   };
 
+  const handleCreateModelo = async (data: { modalidade_id: number; codigo_modelo: string; descricao?: string }) => {
+    await createModeloMutation.mutateAsync({
+      modalidade_id: data.modalidade_id,
+      codigo_modelo: data.codigo_modelo,
+      descricao: data.descricao || null
+    });
+    setIsNewModeloDialogOpen(false);
+    refetch();
+  };
+
   if (isLoading) {
     return <LoadingState />;
   }
@@ -103,7 +119,21 @@ export function ModeloConfigurationSection({ eventId }: { eventId: string | null
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Configuração de Modelos de Pontuação</CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+            <div className="space-y-1">
+              <CardTitle>Configuração de Modelos de Pontuação</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Os modelos são criados automaticamente a partir das modalidades do evento. Configure os parâmetros de pontuação para cada modalidade aqui.
+              </p>
+            </div>
+            <Button 
+              onClick={() => setIsNewModeloDialogOpen(true)}
+              className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary shrink-0"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Modelo
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <ModeloConfigurationFilters
@@ -145,6 +175,14 @@ export function ModeloConfigurationSection({ eventId }: { eventId: string | null
         modelo={modeloToDuplicate}
         modalities={modalities}
         isLoading={isDuplicating}
+      />
+
+      <NewModeloDialog
+        isOpen={isNewModeloDialogOpen}
+        onClose={() => setIsNewModeloDialogOpen(false)}
+        onSave={handleCreateModelo}
+        eventId={eventId}
+        isSaving={createModeloMutation.isPending}
       />
     </>
   );

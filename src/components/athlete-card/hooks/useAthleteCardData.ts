@@ -44,7 +44,21 @@ export const useAthleteCardData = (registration: AthleteManagement) => {
       try {
         const { data, error } = await supabase
           .from('pagamentos')
-          .select('*')  // Select all fields to ensure we get all payment info
+          .select(`
+            *,
+            taxas_inscricao!pagamentos_taxa_inscricao_fk(
+              id,
+              valor,
+              isento,
+              pix_key,
+              qr_code_image,
+              qr_code_codigo,
+              perfil:perfis!fk_taxas_inscricao_perfil(
+                id,
+                nome
+              )
+            )
+          `)
           .eq('atleta_id', registration.id)
           .eq('evento_id', registration.evento_id)
           .maybeSingle();
