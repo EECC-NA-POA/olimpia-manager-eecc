@@ -43,10 +43,18 @@ main {
 
 @media (max-width: 768px) {
   main {
-    padding-bottom: 6rem !important; /* Space for mobile nav */
+    padding-bottom: 120px !important; /* Increased space for mobile nav */
   }
   
   [data-sidebar="sidebar"] {
     display: none !important; /* Hide sidebar on mobile */
+  }
+  
+  /* Ensure all content containers have proper bottom spacing */
+  .container,
+  .page-container,
+  .dashboard-container,
+  .content-wrapper {
+    padding-bottom: 120px !important;
   }
 }
