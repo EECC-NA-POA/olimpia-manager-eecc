@@ -6,6 +6,7 @@ import { ConcordiaHeaderTitle } from '@/components/concordia/ConcordiaHeaderTitl
 import { ConcordiaEventInfo } from '@/components/concordia/ConcordiaEventInfo';
 import { ConcordiaModalities } from '@/components/concordia/ConcordiaModalities';
 import { ConcordiaPhilosopherQuotes } from '@/components/concordia/ConcordiaPhilosopherQuotes';
+import { ConcordiaMap } from '@/components/concordia/ConcordiaMap';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoginForm } from '@/components/auth/LoginForm';
@@ -38,6 +39,9 @@ const TorneioConcordia = () => {
             <ConcordiaHeaderTitle />
             <ConcordiaEventInfo />
             <ConcordiaModalities />
+            
+            {/* Google Maps Embed */}
+            <ConcordiaMap />
             
             {/* Call to Action */}
             <div className="text-center p-6 bg-gradient-to-r from-[#7CB342]/10 to-[#7E57C2]/10 rounded-lg border border-[#7CB342]/20">

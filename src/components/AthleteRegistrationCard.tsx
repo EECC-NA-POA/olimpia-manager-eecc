@@ -154,6 +154,14 @@ export function AthleteRegistrationCard({
               onJustificationChange: handleJustificationChange,
               onStatusChange: handleStatusChange
             } : undefined}
+            feeInfo={paymentData?.taxas_inscricao ? {
+              valor: paymentData.taxas_inscricao.valor,
+              isento: paymentData.taxas_inscricao.isento,
+              pix_key: paymentData.taxas_inscricao.pix_key,
+              qr_code_image: paymentData.taxas_inscricao.qr_code_image,
+              qr_code_codigo: paymentData.taxas_inscricao.qr_code_codigo,
+              perfil: paymentData.taxas_inscricao.perfil
+            } : undefined}
             readOnly={readOnly}
           />
 
