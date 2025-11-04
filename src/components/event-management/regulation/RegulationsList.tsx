@@ -17,7 +17,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { EventRegulation } from '@/lib/types/database';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { EmptyState } from '@/components/dashboard/components/EmptyState';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 
@@ -27,6 +27,7 @@ interface RegulationsListProps {
 }
 
 export function RegulationsList({ eventId, onEdit }: RegulationsListProps) {
+  const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [regulationToDelete, setRegulationToDelete] = useState<string | null>(null);
 
@@ -63,6 +64,7 @@ export function RegulationsList({ eventId, onEdit }: RegulationsListProps) {
 
     toast.success('Regulamento excluído com sucesso');
     refetch();
+    queryClient.invalidateQueries({ queryKey: ['active-regulation', eventId] });
     setDeleteDialogOpen(false);
     setRegulationToDelete(null);
   };
@@ -82,6 +84,7 @@ export function RegulationsList({ eventId, onEdit }: RegulationsListProps) {
       `Regulamento ${regulation.is_ativo ? 'desativado' : 'ativado'} com sucesso`
     );
     refetch();
+    queryClient.invalidateQueries({ queryKey: ['active-regulation', eventId] });
   };
 
   if (isLoading) return <LoadingState />;

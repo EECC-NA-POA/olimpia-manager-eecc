@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { EventRegulation } from '@/lib/types/database';
 import { regulationSchema, RegulationFormValues } from './regulationFormSchema';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface UseRegulationFormProps {
   eventId: string;
@@ -15,6 +16,7 @@ interface UseRegulationFormProps {
 }
 
 export function useRegulationForm({ eventId, regulation, userId, onComplete }: UseRegulationFormProps) {
+  const queryClient = useQueryClient();
   const form = useForm<RegulationFormValues>({
     resolver: zodResolver(regulationSchema),
     defaultValues: {
@@ -71,6 +73,10 @@ export function useRegulationForm({ eventId, regulation, userId, onComplete }: U
         
         console.log('Updated regulation result:', updatedData);
         toast.success('Regulamento atualizado com sucesso!');
+        
+        // Invalidate both queries to refresh the UI
+        queryClient.invalidateQueries({ queryKey: ['regulations', eventId] });
+        queryClient.invalidateQueries({ queryKey: ['active-regulation', eventId] });
       } else {
         // Create new regulation
         const insertData = {
@@ -98,6 +104,10 @@ export function useRegulationForm({ eventId, regulation, userId, onComplete }: U
         
         console.log('Created regulation result:', createdData);
         toast.success('Regulamento criado com sucesso!');
+        
+        // Invalidate both queries to refresh the UI
+        queryClient.invalidateQueries({ queryKey: ['regulations', eventId] });
+        queryClient.invalidateQueries({ queryKey: ['active-regulation', eventId] });
       }
       
       onComplete();
