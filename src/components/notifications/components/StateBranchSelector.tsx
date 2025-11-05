@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useBranches } from '@/hooks/useBranches';
+import { useEventBranches } from '@/hooks/useEventBranches';
 
 interface Branch {
   id: string;
@@ -18,6 +18,7 @@ interface GroupedBranches {
 }
 
 interface StateBranchSelectorProps {
+  eventId: string;
   selectedBranches: string[];
   onBranchChange: (branches: string[]) => void;
   expandedStates: Record<string, boolean>;
@@ -25,12 +26,13 @@ interface StateBranchSelectorProps {
 }
 
 export function StateBranchSelector({ 
+  eventId,
   selectedBranches, 
   onBranchChange,
   expandedStates,
   onToggleState
 }: StateBranchSelectorProps) {
-  const { data: branches, isLoading } = useBranches();
+  const { data: branches, isLoading } = useEventBranches(eventId);
 
   if (isLoading) {
     return <div className="text-sm text-gray-500">Carregando filiais...</div>;

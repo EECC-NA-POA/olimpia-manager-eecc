@@ -6,6 +6,7 @@ import { useStateBranchSelection } from '../hooks/useStateBranchSelection';
 import { useBranches } from '@/hooks/useBranches';
 
 interface BranchSelectorProps {
+  eventId: string;
   selectedBranches: string[];
   onBranchChange: (branches: string[]) => void;
   isOrganizer: boolean;
@@ -13,6 +14,7 @@ interface BranchSelectorProps {
 }
 
 export function BranchSelector({ 
+  eventId,
   selectedBranches, 
   onBranchChange, 
   isOrganizer,
@@ -47,6 +49,7 @@ export function BranchSelector({
   // Se é organizador, usar o novo seletor por estados
   return (
     <StateBranchSelector
+      eventId={eventId}
       selectedBranches={selectedBranches}
       onBranchChange={onBranchChange}
       expandedStates={expandedStates}
