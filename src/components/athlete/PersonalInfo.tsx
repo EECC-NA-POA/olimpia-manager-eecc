@@ -23,7 +23,9 @@ export default function PersonalInfo({
 }: PersonalInfoProps) {
   const formatBirthDate = (date: string) => {
     try {
-      return format(new Date(date), 'dd/MM/yyyy');
+      // Parse the date as UTC to avoid timezone conversion issues
+      const [year, month, day] = date.split('T')[0].split('-');
+      return `${day}/${month}/${year}`;
     } catch (error) {
       console.error('Error formatting birth date:', error);
       return null;
