@@ -68,13 +68,15 @@ export const useMenuItems = (onLogout: () => void) => {
       tooltip: "Notificações"
     });
     
-    // 5. Minhas Inscrições (My Registrations) - for all roles
-    items.push({
-      path: "/minhas-inscricoes",
-      label: "Minhas Inscrições",
-      icon: <ClipboardList className="h-5 w-5" />,
-      tooltip: "Minhas Inscrições"
-    });
+    // 5. Minhas Inscrições (My Registrations) - for all roles except Público Geral
+    if (!roles.isPublicGeral) {
+      items.push({
+        path: "/minhas-inscricoes",
+        label: "Minhas Inscrições",
+        icon: <ClipboardList className="h-5 w-5" />,
+        tooltip: "Minhas Inscrições"
+      });
+    }
     
     // 6. Organizador (Organizer)
     if (isOrganizer) {
