@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 
 export function useAdminAccess() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, currentEventId } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -23,8 +23,21 @@ export function useAdminAccess() {
         return;
       }
 
+      if (!currentEventId) {
+        toast({
+          title: "Nenhum evento selecionado",
+          description: "Selecione um evento para acessar esta página",
+          variant: "destructive"
+        });
+        navigate('/event-selection');
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        // Check if user has admin role
+        console.log('🔍 Checking Admin access for user:', user.id, 'event:', currentEventId);
+        
+        // Check if user has admin role FOR THIS EVENT
         const { data: userRoles, error } = await supabase
           .from('papeis_usuarios')
           .select(`
@@ -36,7 +49,10 @@ export function useAdminAccess() {
               )
             )
           `)
-          .eq('usuario_id', user.id);
+          .eq('usuario_id', user.id)
+          .eq('evento_id', currentEventId);
+
+        console.log('📊 Roles query result:', { userRoles, error });
 
         if (error) throw error;
 
@@ -45,13 +61,17 @@ export function useAdminAccess() {
           // Access the nested data properly
           const perfis = role.perfis as any;
           const perfisType = perfis?.perfis_tipo as any;
-          return perfisType?.codigo === 'ADM';
+          const isAdmin = perfisType?.codigo === 'ADM';
+          console.log('Checking role:', perfisType?.codigo, 'is ADM?', isAdmin);
+          return isAdmin;
         });
+
+        console.log('🎯 Has Admin role for this event?', hasAdminRole);
 
         if (!hasAdminRole) {
           toast({
             title: "Acesso restrito",
-            description: "Acesso restrito a administradores",
+            description: "Acesso restrito a administradores neste evento",
             variant: "destructive"
           });
           navigate('/');
@@ -60,7 +80,7 @@ export function useAdminAccess() {
 
         setIsAdmin(true);
       } catch (error) {
-        console.error('Error checking admin role:', error);
+        console.error('❌ Error checking admin role:', error);
         toast({
           title: "Erro",
           description: "Erro ao verificar permissões de acesso",
@@ -73,7 +93,7 @@ export function useAdminAccess() {
     };
 
     checkAdminRole();
-  }, [user, navigate]);
+  }, [user, currentEventId, navigate]);
 
   return { isAdmin, isLoading };
 }

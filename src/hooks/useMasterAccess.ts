@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 
 export function useMasterAccess() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, currentEventId } = useAuth();
   const [isMaster, setIsMaster] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -22,15 +22,29 @@ export function useMasterAccess() {
         return;
       }
 
+      if (!currentEventId) {
+        toast({
+          title: "Nenhum evento selecionado",
+          description: "Selecione um evento para acessar esta página",
+          variant: "destructive"
+        });
+        navigate('/event-selection');
+        setIsLoading(false);
+        return;
+      }
+
       try {
+        console.log('🔍 Checking Master access for user:', user.id, 'event:', currentEventId);
+        
         // Check if user has master role via is_master flag or MST profile
         if (user.is_master) {
+          console.log('✅ User has is_master flag');
           setIsMaster(true);
           setIsLoading(false);
           return;
         }
 
-        // Check if user has master role via profile
+        // Check if user has master role via profile FOR THIS EVENT
         const { data: userRoles, error } = await supabase
           .from('papeis_usuarios')
           .select(`
@@ -42,7 +56,10 @@ export function useMasterAccess() {
               )
             )
           `)
-          .eq('usuario_id', user.id);
+          .eq('usuario_id', user.id)
+          .eq('evento_id', currentEventId);
+
+        console.log('📊 Roles query result:', { userRoles, error });
 
         if (error) throw error;
 
@@ -50,13 +67,17 @@ export function useMasterAccess() {
         const hasMasterRole = userRoles?.some(role => {
           const perfis = role.perfis as any;
           const perfisType = perfis?.perfis_tipo as any;
-          return perfisType?.codigo === 'MST';
+          const isMaster = perfisType?.codigo === 'MST';
+          console.log('Checking role:', perfisType?.codigo, 'is MST?', isMaster);
+          return isMaster;
         });
+
+        console.log('🎯 Has Master role for this event?', hasMasterRole);
 
         if (!hasMasterRole) {
           toast({
             title: "Acesso restrito",
-            description: "Acesso restrito a usuários Master",
+            description: "Acesso restrito a usuários Master neste evento",
             variant: "destructive"
           });
           navigate('/');
@@ -65,7 +86,7 @@ export function useMasterAccess() {
 
         setIsMaster(true);
       } catch (error) {
-        console.error('Error checking master role:', error);
+        console.error('❌ Error checking master role:', error);
         toast({
           title: "Erro",
           description: "Erro ao verificar permissões de acesso",
@@ -78,7 +99,7 @@ export function useMasterAccess() {
     };
 
     checkMasterRole();
-  }, [user, navigate]);
+  }, [user, currentEventId, navigate]);
 
   return { isMaster, isLoading };
 }

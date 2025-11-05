@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Shield, UserPlus, Crown } from 'lucide-react';
@@ -12,11 +13,18 @@ import { UserManagementSection } from '@/components/administration/user-manageme
 import { Button } from '@/components/ui/button';
 
 export default function Master() {
+  const navigate = useNavigate();
   const { currentEventId } = useAuth();
   const { isMaster, isLoading: isLoadingPermission } = useMasterAccess();
   const [activeTab, setActiveTab] = useState('user-profiles');
   const { data: eventData, isLoading: isLoadingEvent, refetch } = useEventData(currentEventId);
   const isMobile = useIsMobile();
+
+  // Redirect if no event is selected
+  if (!currentEventId && !isLoadingPermission) {
+    navigate('/event-selection');
+    return null;
+  }
 
   // Loading state
   if (isLoadingPermission || isLoadingEvent) {
