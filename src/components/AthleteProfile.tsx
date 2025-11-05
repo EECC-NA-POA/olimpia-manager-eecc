@@ -149,7 +149,7 @@ export default function AthleteProfile({ profile, isPublicUser, eventData }: Ath
         <DependentsTable userId={profile.id} eventId={currentEventId} />
       )}
 
-      {!isPublicUser && !profile.papeis?.some(papel => papel.codigo === 'PGR') && <RegistrationCallToAction />}
+      {!profile.papeis?.some(papel => papel.codigo === 'PGR') && <RegistrationCallToAction />}
 
       {hasUserFee && (
         <div className="mt-6">
