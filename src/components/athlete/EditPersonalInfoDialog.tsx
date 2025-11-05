@@ -147,7 +147,6 @@ export const EditPersonalInfoDialog = ({
                           <Input
                             {...inputProps}
                             placeholder="DD/MM/AAAA"
-                            readOnly={false}
                             className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary bg-white text-gray-900"
                           />
                         )}
