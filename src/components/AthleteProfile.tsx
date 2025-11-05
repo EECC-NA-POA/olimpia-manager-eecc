@@ -2,8 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Info } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import ProfileImage from './athlete/ProfileImage';
 import PersonalInfo from './athlete/PersonalInfo';
 import PaymentAndBranchInfo from './athlete/PaymentAndBranchInfo';
@@ -11,6 +10,7 @@ import AccessProfile from './athlete/AccessProfile';
 import RegistrationFees from './athlete/RegistrationFees';
 import { useRegistrationFees } from './athlete/registration-fees/useRegistrationFees';
 import { DependentsTable } from './athlete/DependentsTable';
+import { RegistrationCallToAction } from './athlete/RegistrationCallToAction';
 
 interface AthleteProfileProps {
   profile: {
@@ -31,9 +31,14 @@ interface AthleteProfileProps {
     data_nascimento?: string | null;
   };
   isPublicUser: boolean;
+  eventData?: {
+    id: string;
+    nome: string;
+    status_evento: string;
+  } | null;
 }
 
-export default function AthleteProfile({ profile, isPublicUser }: AthleteProfileProps) {
+export default function AthleteProfile({ profile, isPublicUser, eventData }: AthleteProfileProps) {
   const navigate = useNavigate();
   const currentEventId = localStorage.getItem('currentEventId');
   const { data: registrationFees } = useRegistrationFees(currentEventId);
@@ -66,16 +71,29 @@ export default function AthleteProfile({ profile, isPublicUser }: AthleteProfile
   console.log('AthleteProfile - profile:', profile);
   console.log('AthleteProfile - isPublicUser:', isPublicUser);
 
+  const getStatusBadgeVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
+    switch (status.toLowerCase()) {
+      case 'ativo':
+        return 'default';
+      case 'encerrado':
+      case 'suspenso':
+        return 'destructive';
+      default:
+        return 'secondary';
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {!isPublicUser && (
-        <Alert className="bg-olimpics-orange-primary/10 border-olimpics-orange-primary text-olimpics-text">
-          <Info className="h-5 w-5 text-olimpics-orange-primary" />
-          <AlertDescription className="text-sm font-medium">
-            As inscrições nas modalidades devem ser feitas no menu 'Minhas Inscrições'.
-          </AlertDescription>
-        </Alert>
+      {eventData && (
+        <div className="flex items-center gap-2">
+          <Badge variant={getStatusBadgeVariant(eventData.status_evento)} className="text-xs">
+            {eventData.nome} • {eventData.status_evento}
+          </Badge>
+        </div>
       )}
+
+      {!isPublicUser && <RegistrationCallToAction />}
 
       <Card className="border border-olimpics-green-primary/10 shadow-sm">
         <CardHeader className="pb-2">
