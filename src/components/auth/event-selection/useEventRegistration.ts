@@ -91,7 +91,6 @@ export const useEventRegistration = (userId: string | undefined) => {
               usuario_id: userId,
               evento_id: eventId,
               perfil_id: registrationInfo.perfilId,
-              data_atribuicao: new Date().toISOString(),
             });
 
           if (roleError) {
