@@ -131,7 +131,13 @@ export const EventCard = ({
           )}
         </div>
         {!event.isRegistered && !isDisabled && (
-          <div className="mb-3 sm:mb-4">
+          <div className="mb-3 sm:mb-4 space-y-3">
+            <Alert className="bg-blue-50 border-blue-200">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-xs text-blue-800">
+                <strong>Atenção:</strong> Selecione <strong>"Atleta"</strong> se pretende participar de qualquer modalidade. Selecione <strong>"Público Geral"</strong> apenas se pretende ir para assistir.
+              </AlertDescription>
+            </Alert>
             <RadioGroup
               name={`role-${event.id}`}
               value={selectedRole}
