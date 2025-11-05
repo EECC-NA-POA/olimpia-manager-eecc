@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Calendar, FileText, Users, BookOpen, Settings, UserCheck, Shield, CalendarIcon, UserPlus } from 'lucide-react';
+import { Calendar, FileText, Users, BookOpen, Settings, UserCheck, CalendarIcon } from 'lucide-react';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { useEventData } from '@/hooks/useEventData';
 import { EventBasicInfo } from '@/components/event-management/EventBasicInfo';
@@ -19,8 +19,6 @@ import { EventRegulationsSection } from '@/components/event-management/EventRegu
 import { ModeloConfigurationSection } from '@/components/event-management/modelo-configuration/ModeloConfigurationSection';
 import { EventProfilesSection } from '@/components/event-management/EventProfilesSection';
 import { EventAdministrationSection } from '@/components/event-management/EventAdministrationSection';
-import { UserProfilesManagementSection } from '@/components/event-management/user-profiles/UserProfilesManagementSection';
-import { UserManagementSection } from '@/components/administration/user-management/UserManagementSection';
 
 export default function Administration() {
   const navigate = useNavigate();
@@ -105,13 +103,6 @@ export default function Administration() {
                     <span>{isMobile ? "Perfis" : "Perfis e Taxas"}</span>
                   </TabsTrigger>
                   <TabsTrigger 
-                    value="administration"
-                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
-                  >
-                    <Shield className="h-4 w-4 flex-shrink-0" />
-                    <span>{isMobile ? "Gerenciar" : "Gerenciar Perfis de Usuários"}</span>
-                  </TabsTrigger>
-                  <TabsTrigger 
                     value="branches"
                     className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
                   >
@@ -146,15 +137,6 @@ export default function Administration() {
                     <Settings className="h-4 w-4 flex-shrink-0" />
                     <span>{isMobile ? "Config" : "Configuração de Modelos"}</span>
                   </TabsTrigger>
-                  {canCreateEvents && (
-                    <TabsTrigger 
-                      value="user-management"
-                      className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
-                    >
-                      <UserPlus className="h-4 w-4 flex-shrink-0" />
-                      <span>{isMobile ? "Usuários" : "Gestão de Usuários"}</span>
-                    </TabsTrigger>
-                  )}
                 </TabsList>
               </div>
 
@@ -165,10 +147,6 @@ export default function Administration() {
 
                 <TabsContent value="profiles" className="mt-2 sm:mt-6">
                   <EventProfilesSection eventId={currentEventId} />
-                </TabsContent>
-
-                <TabsContent value="administration" className="mt-2 sm:mt-6">
-                  <UserProfilesManagementSection eventId={currentEventId} />
                 </TabsContent>
 
                 <TabsContent value="branches" className="mt-2 sm:mt-6">
@@ -190,12 +168,6 @@ export default function Administration() {
                 <TabsContent value="modelo-configuration" className="mt-2 sm:mt-6">
                   <ModeloConfigurationSection eventId={currentEventId} />
                 </TabsContent>
-
-                {canCreateEvents && (
-                  <TabsContent value="user-management" className="mt-2 sm:mt-6">
-                    <UserManagementSection eventId={currentEventId} />
-                  </TabsContent>
-                )}
               </div>
             </Tabs>
           </CardContent>
