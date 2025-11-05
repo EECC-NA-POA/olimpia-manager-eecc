@@ -33,31 +33,40 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
 
         console.log('Events found:', events.length);
         
-        // Fetch available profiles for each event
+        // Fetch user's specific profiles for each event (not all available profiles)
         const eventIds = events.map(e => e.id);
-        const { data: profiles, error: profilesError } = await supabase
-          .from('perfis')
-          .select('id, evento_id, nome, perfis_tipo(codigo)')
+        const { data: userProfiles, error: userProfilesError } = await supabase
+          .from('papeis_usuarios')
+          .select(`
+            evento_id,
+            perfis!inner(
+              nome,
+              perfis_tipo!inner(codigo)
+            )
+          `)
+          .eq('usuario_id', userId)
           .in('evento_id', eventIds);
         
-        if (profilesError) {
-          console.error('Error fetching profiles:', profilesError);
+        if (userProfilesError) {
+          console.error('Error fetching user profiles:', userProfilesError);
           // Continue without profiles data
         }
         
-        // Build a map of eventId -> roles
+        // Build a map of eventId -> user's roles for that event
         const eventRolesMap: Record<string, Array<{ nome: string; codigo: string }>> = {};
-        if (profiles) {
-          profiles.forEach((profile: any) => {
-            if (!eventRolesMap[profile.evento_id]) {
-              eventRolesMap[profile.evento_id] = [];
+        if (userProfiles) {
+          userProfiles.forEach((userProfile: any) => {
+            if (!eventRolesMap[userProfile.evento_id]) {
+              eventRolesMap[userProfile.evento_id] = [];
             }
-            eventRolesMap[profile.evento_id].push({
-              nome: profile.nome,
-              codigo: profile.perfis_tipo?.codigo || ''
+            const perfil = userProfile.perfis;
+            const perfilTipo = perfil?.perfis_tipo;
+            eventRolesMap[userProfile.evento_id].push({
+              nome: perfil?.nome || '',
+              codigo: perfilTipo?.codigo || ''
             });
           });
-          console.log('Event roles map:', eventRolesMap);
+          console.log('User event roles map:', eventRolesMap);
         }
         
         // First, get user registrations from inscricoes_eventos table
