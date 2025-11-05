@@ -87,8 +87,11 @@ export default function AthleteProfile({ profile, isPublicUser, eventData }: Ath
     <div className="space-y-6">
       {eventData && (
         <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-olimpics-green-primary">
+            {eventData.nome}
+          </h2>
           <Badge variant={getStatusBadgeVariant(eventData.status_evento)} className="text-xs">
-            {eventData.nome} • {eventData.status_evento}
+            {eventData.status_evento}
           </Badge>
         </div>
       )}

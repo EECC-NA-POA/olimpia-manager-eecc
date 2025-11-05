@@ -16,7 +16,7 @@ export function RegistrationCallToAction() {
           Inscreva-se nas modalidades que deseja participar
         </p>
         <Button 
-          onClick={() => navigate('/athlete-registrations')}
+          onClick={() => navigate('/minhas-inscricoes')}
           size="lg"
           className="w-full sm:w-auto font-semibold"
         >
