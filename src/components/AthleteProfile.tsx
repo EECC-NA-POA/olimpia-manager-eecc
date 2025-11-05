@@ -117,6 +117,9 @@ export default function AthleteProfile({ profile, isPublicUser }: AthleteProfile
               <AccessProfile 
                 papeis={profile.papeis}
                 onPasswordChange={handlePasswordChange}
+                userId={profile.id}
+                telefone={profile.telefone}
+                dataNascimento={profile.data_nascimento}
               />
             </div>
           </div>
