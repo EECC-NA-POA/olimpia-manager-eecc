@@ -34,15 +34,13 @@ export const useMenuItems = (onLogout: () => void) => {
     
     // Add items in the same order as the mobile menu
     
-    // 1. Perfil (Athlete Profile) - only for athletes
-    if (isAthlete) {
-      items.push({
-        path: "/athlete-profile",
-        label: "Perfil",
-        icon: <User className="h-5 w-5" />,
-        tooltip: "Perfil do Atleta"
-      });
-    }
+    // 1. Perfil (Athlete Profile) - for all authenticated users
+    items.push({
+      path: "/athlete-profile",
+      label: "Perfil",
+      icon: <User className="h-5 w-5" />,
+      tooltip: "Perfil do Usuário"
+    });
     
     // 2. Cronograma (Schedule) - for all roles
     items.push({
