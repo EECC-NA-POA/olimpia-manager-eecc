@@ -160,35 +160,7 @@ export const useEventRegistration = (userId: string | undefined) => {
           console.log('✓ Nova inscrição criada com sucesso');
         }
 
-        // Step 4: Create payment record
-        console.log('Etapa 4: Criando registro de pagamento...');
-        const numeroIdentificador = String(registrationInfo.taxaInscricaoId % 1000).padStart(3, '0');
-        
-        const { error: paymentError } = await supabase
-          .from('pagamentos')
-          .insert({
-            evento_id: eventId,
-            atleta_id: userId,
-            taxa_inscricao_id: registrationInfo.taxaInscricaoId,
-            valor: registrationInfo.valor,
-            status: 'pendente',
-            numero_identificador: numeroIdentificador,
-            data_criacao: new Date().toISOString(),
-          });
-
-        // If payment insertion fails due to duplicate, that's okay (23505 is duplicate key)
-        if (paymentError) {
-          if (paymentError.code === '23505') {
-            console.log('✓ Registro de pagamento já existe (ignorado)');
-          } else {
-            console.error('Erro ao criar pagamento:', paymentError);
-            // Don't throw here - registration was successful even if payment record failed
-            console.log('⚠ Aviso: Registro de pagamento falhou, mas inscrição foi criada');
-          }
-        } else {
-          console.log('✓ Registro de pagamento criado com sucesso');
-        }
-
+        console.log('✓ Pagamento será criado automaticamente pela trigger do banco');
         console.log('=== INSCRIÇÃO CONCLUÍDA COM SUCESSO ===');
         return { isExisting };
 
