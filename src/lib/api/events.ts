@@ -6,24 +6,39 @@ export const getAvailableEvents = async (userId: string): Promise<Event[]> => {
   try {
     console.log('Fetching available events for user:', userId);
     
-    // Query the eventos table to get available events for this user
-    const { data, error } = await supabase
-      .from('eventos')
-      .select('*')
-      .order('data_inicio_inscricao', { ascending: false });
+    // 1. Get event IDs where user is registered
+    const { data: userRegistrations, error: regError } = await supabase
+      .from('inscricoes_eventos')
+      .select('evento_id')
+      .eq('usuario_id', userId);
     
-    if (error) {
-      console.error('Error fetching events:', error);
-      throw error;
+    if (regError) {
+      console.error('Error fetching user registrations:', regError);
+      throw regError;
     }
 
-    if (!data || data.length === 0) {
-      console.log('No events found for user:', userId);
+    if (!userRegistrations || userRegistrations.length === 0) {
+      console.log('User is not registered in any events');
       return [];
     }
 
-    console.log('Available events:', data);
-    return data as Event[];
+    const registeredEventIds = userRegistrations.map(reg => reg.evento_id);
+    console.log('User is registered in', registeredEventIds.length, 'events:', registeredEventIds);
+
+    // 2. Fetch full event details for registered events
+    const { data: events, error: eventsError } = await supabase
+      .from('eventos')
+      .select('*')
+      .in('id', registeredEventIds)
+      .order('data_inicio_inscricao', { ascending: false });
+    
+    if (eventsError) {
+      console.error('Error fetching event details:', eventsError);
+      throw eventsError;
+    }
+
+    console.log('Available events (registered only):', events?.length || 0);
+    return events as Event[];
   } catch (error) {
     console.error('Error in getAvailableEvents:', error);
     return [];
