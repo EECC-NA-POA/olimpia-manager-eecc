@@ -1,6 +1,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Trophy, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { Event } from "@/lib/types/database";
@@ -63,9 +64,9 @@ export const EventCard = ({
     >
       <div
         className={cn(
-          "absolute -right-8 sm:-right-12 top-6 sm:top-8 w-32 sm:w-48 -rotate-45 transform text-center",
+          "absolute -right-8 sm:-right-10 top-6 sm:top-8 w-28 sm:w-40 -rotate-45 transform text-center",
           getStatusStripeColor(event.status_evento),
-          "text-white font-medium py-1 shadow-md text-xs sm:text-sm"
+          "text-white font-medium py-0.5 shadow-md text-xs sm:text-sm"
         )}
         style={{
           zIndex: 10,
@@ -125,9 +126,24 @@ export const EventCard = ({
           <p>Término: {format(new Date(event.data_fim_inscricao), 'dd/MM/yyyy')}</p>
           <p className="text-xs uppercase font-medium mt-2">{event.tipo}</p>
           {event.isRegistered && (
-            <p className="text-xs font-medium text-green-600 mt-1">
-              Você já está inscrito neste evento
-            </p>
+            <div className="mt-2 space-y-1">
+              <p className="text-xs font-medium text-green-600">
+                Você já está inscrito neste evento
+              </p>
+              {event.roles && event.roles.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {event.roles.map((role, index) => (
+                    <Badge 
+                      key={index} 
+                      variant="secondary" 
+                      className="text-xs px-2 py-0.5"
+                    >
+                      {role.nome}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
         {!event.isRegistered && !isDisabled && (
