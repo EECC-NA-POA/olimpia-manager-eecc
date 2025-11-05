@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 
 export function useAdminAccess() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, currentEventId } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -23,44 +23,107 @@ export function useAdminAccess() {
         return;
       }
 
-      try {
-        // Check if user has admin role
-        const { data: userRoles, error } = await supabase
-          .from('papeis_usuarios')
-          .select(`
-            perfil_id,
-            perfis!inner(
-              perfil_tipo_id,
-              perfis_tipo!inner(
-                codigo
-              )
-            )
-          `)
-          .eq('usuario_id', user.id);
-
-        if (error) throw error;
-
-        // Check if any of the user's roles has the type code "ADM"
-        const hasAdminRole = userRoles?.some(role => {
-          // Access the nested data properly
-          const perfis = role.perfis as any;
-          const perfisType = perfis?.perfis_tipo as any;
-          return perfisType?.codigo === 'ADM';
+      if (!currentEventId) {
+        toast({
+          title: "Nenhum evento selecionado",
+          description: "Selecione um evento para acessar esta página",
+          variant: "destructive"
         });
+        navigate('/event-selection');
+        setIsLoading(false);
+        return;
+      }
 
-        if (!hasAdminRole) {
+      try {
+        console.log('🔍 Checking Admin access for user:', user.id, 'event:', currentEventId);
+        console.log('📋 User context:', { 
+          papeis: user.papeis?.map(r => r.codigo) 
+        });
+        
+        // Strategy 1: Check user.papeis (already event-filtered by AuthProvider)
+        const hasAdmInPapeis = user.papeis?.some(r => r.codigo === 'ADM');
+        if (hasAdmInPapeis) {
+          console.log('✅ Access granted via user.papeis (ADM found)');
+          setIsAdmin(true);
+          setIsLoading(false);
+          return;
+        }
+
+        console.log('⚠️ ADM not found in user context, trying fallback query...');
+
+        // Strategy 2: Fallback with explicit 2-step query
+        // Step 2a: Get perfis_tipo ID for 'ADM'
+        const { data: admType, error: admTypeError } = await supabase
+          .from('perfis_tipo')
+          .select('id')
+          .eq('codigo', 'ADM')
+          .maybeSingle();
+
+        console.log('📊 Step 2a - perfis_tipo query:', { admType, admTypeError });
+
+        if (admTypeError) throw admTypeError;
+
+        if (!admType) {
+          console.log('❌ ADM perfis_tipo not found in database');
           toast({
             title: "Acesso restrito",
-            description: "Acesso restrito a administradores",
+            description: "Acesso restrito a administradores neste evento",
             variant: "destructive"
           });
           navigate('/');
           return;
         }
 
+        // Step 2b: Get perfis for this event with ADM type
+        const { data: admPerfis, error: admPerfisError } = await supabase
+          .from('perfis')
+          .select('id')
+          .eq('evento_id', currentEventId)
+          .eq('perfil_tipo_id', admType.id);
+
+        console.log('📊 Step 2b - perfis query:', { admPerfis, admPerfisError });
+
+        if (admPerfisError) throw admPerfisError;
+
+        if (!admPerfis || admPerfis.length === 0) {
+          console.log('❌ No ADM perfis found for this event');
+          toast({
+            title: "Acesso restrito",
+            description: "Acesso restrito a administradores neste evento",
+            variant: "destructive"
+          });
+          navigate('/');
+          return;
+        }
+
+        // Step 2c: Check papeis_usuarios for user with these perfis
+        const perfilIds = admPerfis.map(p => p.id);
+        const { data: userRoles, error: userRolesError } = await supabase
+          .from('papeis_usuarios')
+          .select('id')
+          .eq('usuario_id', user.id)
+          .eq('evento_id', currentEventId)
+          .in('perfil_id', perfilIds);
+
+        console.log('📊 Step 2c - papeis_usuarios query:', { userRoles, userRolesError });
+
+        if (userRolesError) throw userRolesError;
+
+        if (!userRoles || userRoles.length === 0) {
+          console.log('❌ No ADM role assignment found for user in this event');
+          toast({
+            title: "Acesso restrito",
+            description: "Acesso restrito a administradores neste evento",
+            variant: "destructive"
+          });
+          navigate('/');
+          return;
+        }
+
+        console.log('✅ Access granted via fallback query');
         setIsAdmin(true);
       } catch (error) {
-        console.error('Error checking admin role:', error);
+        console.error('❌ Error checking admin role:', error);
         toast({
           title: "Erro",
           description: "Erro ao verificar permissões de acesso",
@@ -73,7 +136,7 @@ export function useAdminAccess() {
     };
 
     checkAdminRole();
-  }, [user, navigate]);
+  }, [user, currentEventId, navigate]);
 
   return { isAdmin, isLoading };
 }

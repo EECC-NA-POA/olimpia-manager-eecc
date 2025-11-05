@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -20,8 +21,17 @@ import { useReadOnlyEvent } from "@/hooks/useReadOnlyEvent";
 
 export default function AthleteRegistrations() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isEnrollmentsOpen, setIsEnrollmentsOpen] = React.useState(true);
   const currentEventId = localStorage.getItem('currentEventId');
+  
+  // Check if user has "Público Geral" role and redirect
+  useEffect(() => {
+    const isPublicUser = user?.papeis?.some(papel => papel.codigo === 'PGR');
+    if (isPublicUser) {
+      navigate('/athlete-profile', { replace: true });
+    }
+  }, [user, navigate]);
   const { data: readOnlyData } = useReadOnlyEvent(user?.id, currentEventId);
   const isReadOnly = !!readOnlyData?.isReadOnly;
 
