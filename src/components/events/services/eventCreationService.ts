@@ -347,7 +347,26 @@ async function assignRolesToCreatorAndRegister(eventId: string, userId: string, 
     throw new Error('Perfis de administração ou atleta não encontrados');
   }
 
-  // Step 1: Assign both Administrator and Athlete profiles to the creator
+  // Get Master profile if it exists
+  const { data: masterProfileType } = await supabase
+    .from('perfis_tipo')
+    .select('id')
+    .eq('codigo', 'MST')
+    .single();
+
+  let masterProfile = null;
+  if (masterProfileType) {
+    const { data } = await supabase
+      .from('perfis')
+      .select('id, nome')
+      .eq('evento_id', eventId)
+      .eq('perfil_tipo_id', masterProfileType.id)
+      .single();
+    
+    masterProfile = data;
+  }
+
+  // Step 1: Assign Administrator, Master (if exists), and Athlete profiles to the creator
   const rolesToAssign = [
     {
       usuario_id: userId,
@@ -361,6 +380,18 @@ async function assignRolesToCreatorAndRegister(eventId: string, userId: string, 
     }
   ];
 
+  // Add Master profile if it exists
+  if (masterProfile) {
+    rolesToAssign.push({
+      usuario_id: userId,
+      perfil_id: masterProfile.id,
+      evento_id: eventId
+    });
+    console.log('✅ Master profile found and will be assigned:', masterProfile);
+  } else {
+    console.log('⚠️ Master profile not found for this event');
+  }
+
   const { error: assignRoleError } = await supabase
     .from('papeis_usuarios')
     .insert(rolesToAssign);
@@ -370,7 +401,7 @@ async function assignRolesToCreatorAndRegister(eventId: string, userId: string, 
     throw new Error('Erro ao atribuir papéis ao usuário');
   }
 
-  console.log('✅ Roles assigned successfully');
+  console.log('✅ Roles assigned successfully (ADM, ATL' + (masterProfile ? ', MST' : '') + ')');
   
   // Step 2: Get the athlete profile's registration fee
   const { data: registrationFee, error: feeError } = await supabase

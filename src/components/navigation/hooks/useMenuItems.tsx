@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Users, Calendar, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut, UserCheck, Bell } from 'lucide-react';
+import { User, Users, Calendar, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut, UserCheck, Bell, Crown } from 'lucide-react';
 import { MenuItem } from '../types';
 
 export const useMenuItems = (onLogout: () => void) => {
@@ -20,6 +20,7 @@ export const useMenuItems = (onLogout: () => void) => {
   const isDelegationRep = roles.isDelegationRep;
   const isAthlete = roles.isAthlete;
   const isFilosofoMonitor = roles.isFilosofoMonitor;
+  const isMaster = roles.isMaster;
 
   const handleEventSwitch = () => {
     // Clear current event and redirect to event selection
@@ -34,15 +35,13 @@ export const useMenuItems = (onLogout: () => void) => {
     
     // Add items in the same order as the mobile menu
     
-    // 1. Perfil (Athlete Profile) - only for athletes
-    if (isAthlete) {
-      items.push({
-        path: "/athlete-profile",
-        label: "Perfil",
-        icon: <User className="h-5 w-5" />,
-        tooltip: "Perfil do Atleta"
-      });
-    }
+    // 1. Perfil (Athlete Profile) - for all authenticated users
+    items.push({
+      path: "/athlete-profile",
+      label: "Perfil",
+      icon: <User className="h-5 w-5" />,
+      tooltip: "Perfil do Usuário"
+    });
     
     // 2. Cronograma (Schedule) - for all roles
     items.push({
@@ -68,13 +67,15 @@ export const useMenuItems = (onLogout: () => void) => {
       tooltip: "Notificações"
     });
     
-    // 5. Minhas Inscrições (My Registrations) - for all roles
-    items.push({
-      path: "/minhas-inscricoes",
-      label: "Minhas Inscrições",
-      icon: <ClipboardList className="h-5 w-5" />,
-      tooltip: "Minhas Inscrições"
-    });
+    // 5. Minhas Inscrições (My Registrations) - for all roles except Público Geral
+    if (!roles.isPublicGeral) {
+      items.push({
+        path: "/minhas-inscricoes",
+        label: "Minhas Inscrições",
+        icon: <ClipboardList className="h-5 w-5" />,
+        tooltip: "Minhas Inscrições"
+      });
+    }
     
     // 6. Organizador (Organizer)
     if (isOrganizer) {
@@ -126,7 +127,17 @@ export const useMenuItems = (onLogout: () => void) => {
       });
     }
 
-    // 11. Trocar Evento
+    // 11. Master - for master users only
+    if (isMaster) {
+      items.push({
+        path: "/master",
+        label: "Master",
+        icon: <Crown className="h-5 w-5" />,
+        tooltip: "Gestão Master"
+      });
+    }
+
+    // 12. Trocar Evento
     items.push({
       path: "#",
       label: "Trocar Evento",
@@ -136,7 +147,7 @@ export const useMenuItems = (onLogout: () => void) => {
       action: handleEventSwitch
     });
 
-    // 12. Sair (Logout)
+    // 13. Sair (Logout)
     items.push({
       path: "#",
       label: "Sair",
@@ -148,7 +159,7 @@ export const useMenuItems = (onLogout: () => void) => {
     });
 
     return items;
-  }, [isAthlete, isOrganizer, isDelegationRep, isFilosofoMonitor, isJudge, isAdmin, onLogout]);
+  }, [isAthlete, isOrganizer, isDelegationRep, isFilosofoMonitor, isJudge, isAdmin, isMaster, onLogout]);
 
   return menuItems;
 };

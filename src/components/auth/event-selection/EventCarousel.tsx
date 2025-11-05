@@ -6,6 +6,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import { Event } from "@/lib/types/database";
 import { EventCard } from "./EventCard";
 
@@ -19,15 +21,15 @@ interface EventWithStatus extends Event {
 
 interface EventCarouselProps {
   events: EventWithStatus[];
-  selectedRole: 'ATL' | 'PGR';
-  onRoleChange: (value: 'ATL' | 'PGR') => void;
+  selectedRoleMap: Record<string, 'ATL' | 'PGR'>;
+  onRoleChange: (eventId: string, value: 'ATL' | 'PGR') => void;
   onEventAction: (eventId: string) => void;
   isUnderAge?: boolean;
 }
 
 export const EventCarousel = ({
   events,
-  selectedRole,
+  selectedRoleMap,
   onRoleChange,
   onEventAction,
   isUnderAge = false,
@@ -42,8 +44,22 @@ export const EventCarousel = ({
     );
   }
   
+  const hasUnregisteredEvents = events.some(e => !e.isRegistered);
+  
   return (
-    <div className="relative w-full">
+    <div className="relative w-full space-y-4">
+      {hasUnregisteredEvents && (
+        <Alert className="bg-blue-50 border-blue-200 max-w-3xl mx-auto py-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <AlertDescription className="text-sm text-blue-800 text-center flex-1 space-y-1">
+              <div><strong>Atenção:</strong></div>
+              <div>Selecione <strong>"Atleta"</strong> se pretende participar de qualquer modalidade.</div>
+              <div>Selecione <strong>"Público Geral"</strong> apenas se pretende ir para assistir.</div>
+            </AlertDescription>
+          </div>
+        </Alert>
+      )}
       <Carousel
         opts={{
           align: "start",
@@ -62,8 +78,8 @@ export const EventCarousel = ({
                   isAdmin: event.isAdmin || false,
                   hasBranchPermission: event.hasBranchPermission
                 }}
-                selectedRole={selectedRole}
-                onRoleChange={onRoleChange}
+                selectedRole={selectedRoleMap[event.id] ?? 'ATL'}
+                onRoleChange={(value) => onRoleChange(event.id, value)}
                 onEventAction={() => onEventAction(event.id)}
                 isUnderAge={isUnderAge}
               />

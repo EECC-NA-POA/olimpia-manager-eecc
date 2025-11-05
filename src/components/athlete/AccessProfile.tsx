@@ -1,17 +1,28 @@
 
 import React from 'react';
-import { Lock, User, UserPlus } from "lucide-react";
+import { Lock, User, UserPlus, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DependentRegistrationForm } from '../auth/DependentRegistrationForm';
+import { EditPersonalInfoDialog } from './EditPersonalInfoDialog';
 
 interface AccessProfileProps {
   papeis?: { nome: string; codigo: string; id?: number; }[];
   onPasswordChange?: () => void;
+  userId?: string;
+  telefone?: string;
+  dataNascimento?: string | null;
 }
 
-export default function AccessProfile({ papeis, onPasswordChange }: AccessProfileProps) {
+export default function AccessProfile({ 
+  papeis, 
+  onPasswordChange,
+  userId,
+  telefone,
+  dataNascimento,
+}: AccessProfileProps) {
   const [showDependentForm, setShowDependentForm] = React.useState(false);
+  const [showEditDialog, setShowEditDialog] = React.useState(false);
 
   return (
     <div className="space-y-4">
@@ -38,6 +49,26 @@ export default function AccessProfile({ papeis, onPasswordChange }: AccessProfil
               <Lock className="h-4 w-4" />
               Alterar Senha
             </Button>
+          )}
+
+          {userId && telefone && (
+            <>
+              <Button
+                onClick={() => setShowEditDialog(true)}
+                variant="outline"
+                className="w-full flex items-center gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Editar Dados Pessoais
+              </Button>
+              
+              <EditPersonalInfoDialog
+                userId={userId}
+                currentPhone={telefone}
+                open={showEditDialog}
+                onOpenChange={setShowEditDialog}
+              />
+            </>
           )}
 
           <Dialog open={showDependentForm} onOpenChange={setShowDependentForm}>

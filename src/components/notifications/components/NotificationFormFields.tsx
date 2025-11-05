@@ -7,6 +7,7 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { BranchSelector } from './BranchSelector';
 
 interface NotificationFormFieldsProps {
+  eventId: string;
   titulo: string;
   setTitulo: (value: string) => void;
   mensagem: string;
@@ -19,6 +20,7 @@ interface NotificationFormFieldsProps {
 }
 
 export function NotificationFormFields({
+  eventId,
   titulo,
   setTitulo,
   mensagem,
@@ -32,6 +34,7 @@ export function NotificationFormFields({
   return (
     <>
       <BranchSelector
+        eventId={eventId}
         selectedBranches={selectedBranches}
         onBranchChange={setSelectedBranches}
         isOrganizer={isOrganizer}

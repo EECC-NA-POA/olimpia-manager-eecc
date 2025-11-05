@@ -11,6 +11,7 @@ interface UserRoles {
   isAdmin: boolean;
   isJudge: boolean;
   isFilosofoMonitor: boolean;
+  isMaster: boolean;
 }
 
 export const useNavigation = () => {
@@ -38,8 +39,9 @@ export const useNavigation = () => {
     isPublicGeral: userRoleCodes.includes('PGR'),
     isAdmin: userRoleCodes.includes('ADM'),
     isJudge: userRoleCodes.includes('JUZ'),
-    isFilosofoMonitor: userRoleCodes.includes('FMON') || userRoleCodes.includes('FMO') || userRoleCodes.includes('FILOSOFO_MONITOR') || userRoleCodes.includes('filosofo_monitor')
-  }), [userRoleCodes.join(',')]);
+    isFilosofoMonitor: userRoleCodes.includes('FMON') || userRoleCodes.includes('FMO') || userRoleCodes.includes('FILOSOFO_MONITOR') || userRoleCodes.includes('filosofo_monitor'),
+    isMaster: userRoleCodes.includes('MST') || user?.is_master === true
+  }), [userRoleCodes.join(','), user?.is_master]);
 
   console.log('Detected roles:', roles);
   console.log('Is Filosofo Monitor?', roles.isFilosofoMonitor);

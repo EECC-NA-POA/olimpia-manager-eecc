@@ -9,7 +9,7 @@ interface SessionTimeoutProviderProps {
 export const SessionTimeoutProvider = ({ children }: SessionTimeoutProviderProps) => {
   useSessionTimeout({
     timeoutMinutes: 30, // 30 minutos de inatividade
-    checkIntervalMinutes: 1 // Verifica a cada 1 minuto
+    checkIntervalMinutes: 5 // Verifica a cada 5 minutos
   });
 
   return <>{children}</>;

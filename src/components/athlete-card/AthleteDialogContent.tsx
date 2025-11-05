@@ -30,6 +30,7 @@ interface AthleteDialogContentProps {
     onInputChange: (value: string) => void;
     onSave: () => void;
     onBlur: () => void;
+    currentStatus?: string;
   };
   modalitiesProps?: {
     modalidades: AthleteModality[];
@@ -124,28 +125,6 @@ export const AthleteDialogContent: React.FC<AthleteDialogContentProps> = ({
                       </p>
                     </div>
                   </div>
-                  {feeInfo.pix_key && (
-                    <div>
-                      <p className="text-sm font-medium mb-1">Chave PIX:</p>
-                      <CopyableCode code={feeInfo.pix_key} />
-                    </div>
-                  )}
-                  {feeInfo.qr_code_image && (
-                    <div>
-                      <p className="text-sm font-medium mb-2">QR Code PIX:</p>
-                      <img 
-                        src={feeInfo.qr_code_image} 
-                        alt="QR Code PIX" 
-                        className="max-w-[200px] mx-auto rounded border border-border"
-                      />
-                    </div>
-                  )}
-                  {feeInfo.qr_code_codigo && (
-                    <div>
-                      <p className="text-sm font-medium mb-1">Código PIX Copia e Cola:</p>
-                      <CopyableCode code={feeInfo.qr_code_codigo} />
-                    </div>
-                  )}
                 </div>
               </div>
             )}
