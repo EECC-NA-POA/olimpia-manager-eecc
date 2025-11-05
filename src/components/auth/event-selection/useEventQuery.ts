@@ -33,8 +33,9 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
 
         console.log('Events found:', events.length);
         
-        // Fetch user's specific profiles for each event (not all available profiles)
         const eventIds = events.map(e => e.id);
+        
+        // Fetch user's specific profiles for each event (roles the user possesses)
         const { data: userProfiles, error: userProfilesError } = await supabase
           .from('papeis_usuarios')
           .select(`
@@ -49,24 +50,48 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
         
         if (userProfilesError) {
           console.error('Error fetching user profiles:', userProfilesError);
-          // Continue without profiles data
         }
         
-        // Build a map of eventId -> user's roles for that event
-        const eventRolesMap: Record<string, Array<{ nome: string; codigo: string }>> = {};
+        // Fetch available profiles for each event (all profiles available in those events)
+        const { data: availableProfiles, error: availableProfilesError } = await supabase
+          .from('perfis')
+          .select('id, evento_id, nome, perfis_tipo(codigo)')
+          .in('evento_id', eventIds);
+        
+        if (availableProfilesError) {
+          console.error('Error fetching available profiles:', availableProfilesError);
+        }
+        
+        // Build a map of eventId -> user's roles for that event (for badges)
+        const eventUserRolesMap: Record<string, Array<{ nome: string; codigo: string }>> = {};
         if (userProfiles) {
           userProfiles.forEach((userProfile: any) => {
-            if (!eventRolesMap[userProfile.evento_id]) {
-              eventRolesMap[userProfile.evento_id] = [];
+            if (!eventUserRolesMap[userProfile.evento_id]) {
+              eventUserRolesMap[userProfile.evento_id] = [];
             }
             const perfil = userProfile.perfis;
             const perfilTipo = perfil?.perfis_tipo;
-            eventRolesMap[userProfile.evento_id].push({
+            eventUserRolesMap[userProfile.evento_id].push({
               nome: perfil?.nome || '',
               codigo: perfilTipo?.codigo || ''
             });
           });
-          console.log('User event roles map:', eventRolesMap);
+          console.log('User event roles map:', eventUserRolesMap);
+        }
+        
+        // Build a map of eventId -> available roles for that event (for selection)
+        const eventAvailableRolesMap: Record<string, Array<{ nome: string; codigo: string }>> = {};
+        if (availableProfiles) {
+          availableProfiles.forEach((profile: any) => {
+            if (!eventAvailableRolesMap[profile.evento_id]) {
+              eventAvailableRolesMap[profile.evento_id] = [];
+            }
+            eventAvailableRolesMap[profile.evento_id].push({
+              nome: profile.nome,
+              codigo: profile.perfis_tipo?.codigo || ''
+            });
+          });
+          console.log('Event available roles map:', eventAvailableRolesMap);
         }
         
         // First, get user registrations from inscricoes_eventos table
@@ -91,10 +116,11 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
           console.error('Error fetching user registrations from inscricoes_eventos table:', regError);
           console.error('RLS Error details:', regError.message, regError.details, regError.hint);
           // Continue with events but mark them as not registered
-        const mapped = events.map(event => ({
+          const mapped = events.map(event => ({
           ...event,
           isRegistered: false,
-          roles: eventRolesMap[event.id] || []
+          roles: eventUserRolesMap[event.id] || [],
+          availableRoles: eventAvailableRolesMap[event.id] || []
         }));
         return mapped.filter(e => !(e.status_evento === 'encerrado' && !e.isRegistered));
         }
@@ -148,7 +174,8 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
               ...event,
               isRegistered,
               hasBranchPermission,
-              roles: eventRolesMap[event.id] || []
+              roles: eventUserRolesMap[event.id] || [],
+              availableRoles: eventAvailableRolesMap[event.id] || []
             };
           });
           return mappedEvents.filter(e => !(e.status_evento === 'encerrado' && !e.isRegistered));
@@ -164,7 +191,8 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
             ...event,
             isRegistered: false,
             hasBranchPermission,
-            roles: eventRolesMap[event.id] || []
+            roles: eventUserRolesMap[event.id] || [],
+            availableRoles: eventAvailableRolesMap[event.id] || []
           };
         });
         return mapped.filter(e => !(e.status_evento === 'encerrado' && !e.isRegistered));
