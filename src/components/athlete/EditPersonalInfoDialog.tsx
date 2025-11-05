@@ -142,16 +142,12 @@ export const EditPersonalInfoDialog = ({
                         mask="99/99/9999"
                         value={dateInputValue}
                         onChange={(e) => handleDateInput(e, field)}
-                        onFocus={() => {
-                          if (field.value) {
-                            setDateInputValue(format(field.value, 'dd/MM/yyyy'));
-                          }
-                        }}
                       >
                         {(inputProps: any) => (
                           <Input
                             {...inputProps}
                             placeholder="DD/MM/AAAA"
+                            readOnly={false}
                             className="border-olimpics-green-primary/20 focus-visible:ring-olimpics-green-primary bg-white text-gray-900"
                           />
                         )}
