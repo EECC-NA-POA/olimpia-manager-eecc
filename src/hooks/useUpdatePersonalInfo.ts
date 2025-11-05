@@ -6,25 +6,20 @@ import { format } from "date-fns";
 interface UpdatePersonalInfoData {
   userId: string;
   telefone: string;
-  data_nascimento: Date;
 }
 
 export const useUpdatePersonalInfo = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, telefone, data_nascimento }: UpdatePersonalInfoData) => {
+    mutationFn: async ({ userId, telefone }: UpdatePersonalInfoData) => {
       console.log('Updating personal info for user:', userId);
-      console.log('New data:', { telefone, data_nascimento });
-
-      // Format date to YYYY-MM-DD for PostgreSQL
-      const formattedDate = format(data_nascimento, 'yyyy-MM-dd');
+      console.log('New data:', { telefone });
 
       const { data, error } = await supabase
         .from('usuarios')
         .update({
           telefone,
-          data_nascimento: formattedDate,
         })
         .eq('id', userId)
         .select()

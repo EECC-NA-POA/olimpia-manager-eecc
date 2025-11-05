@@ -65,7 +65,6 @@ export default function AccessProfile({
               <EditPersonalInfoDialog
                 userId={userId}
                 currentPhone={telefone}
-                currentBirthDate={dataNascimento}
                 open={showEditDialog}
                 onOpenChange={setShowEditDialog}
               />
