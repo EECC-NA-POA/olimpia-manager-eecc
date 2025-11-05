@@ -52,26 +52,8 @@ export const fetchUserProfilesAlternative = async (eventId: string | null): Prom
 
     console.log('✅ Permissão administrativa confirmada');
 
-    // Estratégia 1: Usar função RPC personalizada
-    console.log('Tentando buscar usuários via RPC...');
-    
-    const { data: rpcUsers, error: rpcError } = await supabase
-      .rpc('get_event_users_admin', { 
-        p_event_id: eventId 
-      });
-
-    if (rpcError) {
-      console.error('❌ Erro no RPC:', rpcError);
-    } else if (rpcUsers && rpcUsers.length > 0) {
-      console.log('✅ RPC funcionou! Usuários encontrados:', rpcUsers.length);
-      return formatRpcUsers(rpcUsers);
-    } else {
-      console.log('⚠️ RPC retornou array vazio');
-    }
-
-    // Estratégia 2: Buscar através de inscricoes_eventos (mais confiável)
+    // Estratégia 1: Buscar através de inscricoes_eventos (mais confiável e com RLS simples)
     console.log('Tentando busca via inscricoes_eventos...');
-    
     const { data: inscricoes, error: inscricoesError } = await supabase
       .from('inscricoes_eventos')
       .select(`
@@ -87,9 +69,10 @@ export const fetchUserProfilesAlternative = async (eventId: string | null): Prom
 
     if (inscricoesError) {
       console.error('❌ Erro na busca de inscrições:', inscricoesError);
-    } else if (inscricoes && inscricoes.length > 0) {
+    }
+
+    if (inscricoes && inscricoes.length > 0) {
       console.log('✅ Busca por inscrições funcionou! Usuários encontrados:', inscricoes.length);
-      
       // Get profiles for each user
       const userIds = inscricoes.map(i => i.usuario_id);
       const { data: profiles, error: profilesError } = await supabase
@@ -117,11 +100,27 @@ export const fetchUserProfilesAlternative = async (eventId: string | null): Prom
       }
 
       return formatInscricoesUsers(inscricoes, profiles || [], payments || []);
-    } else {
-      console.log('⚠️ Busca de inscrições retornou array vazio');
     }
 
-    console.error('❌ Todas as estratégias falharam ou retornaram vazio');
+    console.log('⚠️ Busca de inscrições retornou array vazio, tentando RPC como fallback...');
+
+    // Estratégia 2: Usar função RPC personalizada como fallback
+    const { data: rpcUsers, error: rpcError } = await supabase
+      .rpc('get_event_users_admin', { 
+        p_event_id: eventId 
+      });
+
+    if (rpcError) {
+      console.warn('⚠️ RPC falhou, retornando array vazio como fallback:', rpcError);
+      return [];
+    }
+
+    if (rpcUsers && rpcUsers.length > 0) {
+      console.log('✅ RPC funcionou! Usuários encontrados:', rpcUsers.length);
+      return formatRpcUsers(rpcUsers);
+    }
+
+    console.log('⚠️ RPC retornou array vazio');
     return [];
 
   } catch (error) {

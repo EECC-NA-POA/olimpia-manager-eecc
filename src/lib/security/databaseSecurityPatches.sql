@@ -150,7 +150,7 @@ BEGIN
         'criado_em', pg.criado_em
       )::jsonb
       FROM public.pagamentos pg
-      WHERE pg.usuario_id = u.id 
+      WHERE pg.atleta_id = u.id 
         AND pg.evento_id = p_event_id
       ORDER BY pg.criado_em DESC
       LIMIT 1
