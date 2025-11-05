@@ -96,8 +96,6 @@ export default function AthleteProfile({ profile, isPublicUser, eventData }: Ath
         </div>
       )}
 
-      {!isPublicUser && <RegistrationCallToAction />}
-
       <Card className="border border-olimpics-green-primary/10 shadow-sm">
         <CardHeader className="pb-2">
           <CardTitle className="text-olimpics-text">Seu Perfil</CardTitle>
@@ -150,6 +148,8 @@ export default function AthleteProfile({ profile, isPublicUser, eventData }: Ath
       {currentEventId && !isPublicUser && (
         <DependentsTable userId={profile.id} eventId={currentEventId} />
       )}
+
+      {!isPublicUser && <RegistrationCallToAction />}
 
       {hasUserFee && (
         <div className="mt-6">
