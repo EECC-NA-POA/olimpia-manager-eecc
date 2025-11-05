@@ -49,7 +49,7 @@ export function useMasterAccess() {
         }
 
         // Strategy 2: Check user.papeis (already event-filtered by AuthProvider)
-        const hasMstInPapeis = user.papeis?.some(r => r.codigo === 'MST');
+        const hasMstInPapeis = user.papeis?.some(r => r.codigo === 'MST' || r.codigo === 'MSTR');
         if (hasMstInPapeis) {
           console.log('✅ Access granted via user.papeis (MST found)');
           setIsMaster(true);
@@ -60,18 +60,19 @@ export function useMasterAccess() {
         console.log('⚠️ MST not found in user context, trying fallback query...');
 
         // Strategy 3: Fallback with explicit 2-step query
-        // Step 3a: Get perfis_tipo ID for 'MST'
-        const { data: mstType, error: mstTypeError } = await supabase
+        // Step 3a: Get perfis_tipo ID for 'MST' or 'MSTR'
+        const { data: mstTypes, error: mstTypeError } = await supabase
           .from('perfis_tipo')
-          .select('id')
-          .eq('codigo', 'MST')
-          .maybeSingle();
+          .select('id,codigo')
+          .in('codigo', ['MST','MSTR']);
 
-        console.log('📊 Step 3a - perfis_tipo query:', { mstType, mstTypeError });
+        console.log('📊 Step 3a - perfis_tipo query:', { mstTypes, mstTypeError });
 
         if (mstTypeError) throw mstTypeError;
 
-        if (!mstType) {
+        const mstTypeId = Array.isArray(mstTypes) && mstTypes.length > 0 ? mstTypes[0].id : null;
+
+        if (!mstTypeId) {
           console.log('❌ MST perfis_tipo not found in database');
           toast({
             title: "Acesso restrito",
@@ -87,7 +88,7 @@ export function useMasterAccess() {
           .from('perfis')
           .select('id')
           .eq('evento_id', currentEventId)
-          .eq('perfil_tipo_id', mstType.id);
+          .eq('perfil_tipo_id', mstTypeId);
 
         console.log('📊 Step 3b - perfis query:', { mstPerfis, mstPerfisError });
 
