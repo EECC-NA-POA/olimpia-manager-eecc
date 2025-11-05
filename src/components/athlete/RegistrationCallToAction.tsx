@@ -9,9 +9,6 @@ export function RegistrationCallToAction() {
   return (
     <div className="rounded-lg bg-gradient-to-r from-olimpics-orange-primary/10 to-olimpics-green-primary/10 p-6 border border-olimpics-orange-primary/20">
       <div className="text-center space-y-3">
-        <h3 className="text-lg font-semibold text-olimpics-text">
-          Pronto para competir?
-        </h3>
         <p className="text-sm text-muted-foreground">
           Inscreva-se nas modalidades que deseja participar
         </p>
