@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { formatToCurrency } from '@/utils/formatters';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { PaymentAmountField } from './PaymentAmountField';
+import { Check } from 'lucide-react';
 
 interface PaymentStatusControlsProps {
   onPaymentStatusChange: (status: string) => void;
@@ -13,6 +14,7 @@ interface PaymentStatusControlsProps {
   onSave: () => void;
   onBlur: () => void;
   readOnly?: boolean;
+  currentStatus?: string;
 }
 
 export const PaymentStatusControls: React.FC<PaymentStatusControlsProps> = ({
@@ -23,22 +25,65 @@ export const PaymentStatusControls: React.FC<PaymentStatusControlsProps> = ({
   onInputChange,
   onSave,
   onBlur,
-  readOnly
+  readOnly,
+  currentStatus
 }) => {
+  const [selectedStatus, setSelectedStatus] = useState<string>(currentStatus || '');
+
+  const handleStatusClick = (status: string) => {
+    if (disabled || readOnly) return;
+    setSelectedStatus(status);
+    onPaymentStatusChange(status);
+  };
+
+  const statusButtons = [
+    { 
+      value: 'pendente', 
+      label: 'Pendente', 
+      bgColor: 'bg-yellow-500 hover:bg-yellow-600',
+      textColor: 'text-white'
+    },
+    { 
+      value: 'confirmado', 
+      label: 'Confirmado', 
+      bgColor: 'bg-green-500 hover:bg-green-600',
+      textColor: 'text-white'
+    },
+    { 
+      value: 'cancelado', 
+      label: 'Cancelado', 
+      bgColor: 'bg-red-500 hover:bg-red-600',
+      textColor: 'text-white'
+    }
+  ];
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="space-y-2">
         <label className="text-sm text-muted-foreground">Status do pagamento:</label>
-        <Select onValueChange={onPaymentStatusChange} disabled={disabled || !!readOnly}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Alterar status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pendente">Pendente</SelectItem>
-            <SelectItem value="confirmado">Confirmado</SelectItem>
-            <SelectItem value="cancelado">Cancelado</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          {statusButtons.map((status) => {
+            const isSelected = selectedStatus === status.value;
+            return (
+              <Button
+                key={status.value}
+                onClick={() => handleStatusClick(status.value)}
+                disabled={disabled || !!readOnly}
+                className={`
+                  flex-1 relative
+                  ${status.bgColor} 
+                  ${status.textColor}
+                  ${isSelected ? 'ring-2 ring-offset-2 ring-primary' : ''}
+                  ${disabled || readOnly ? 'opacity-50 cursor-not-allowed' : ''}
+                `}
+                variant="default"
+              >
+                {isSelected && <Check className="h-4 w-4 mr-1" />}
+                {status.label}
+              </Button>
+            );
+          })}
+        </div>
       </div>
       <PaymentAmountField
         value={value}
