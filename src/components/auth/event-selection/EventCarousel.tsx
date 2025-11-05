@@ -6,6 +6,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import { Event } from "@/lib/types/database";
 import { EventCard } from "./EventCard";
 
@@ -42,8 +44,18 @@ export const EventCarousel = ({
     );
   }
   
+  const hasUnregisteredEvents = events.some(e => !e.isRegistered);
+  
   return (
-    <div className="relative w-full">
+    <div className="relative w-full space-y-4">
+      {hasUnregisteredEvents && (
+        <Alert className="bg-blue-50 border-blue-200">
+          <AlertCircle className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-sm text-blue-800">
+            <strong>Atenção:</strong> Selecione <strong>"Atleta"</strong> se pretende participar de qualquer modalidade. Selecione <strong>"Público Geral"</strong> apenas se pretende ir para assistir.
+          </AlertDescription>
+        </Alert>
+      )}
       <Carousel
         opts={{
           align: "start",
