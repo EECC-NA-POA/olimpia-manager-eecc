@@ -14,14 +14,14 @@ interface RegistrationResult {
 }
 
 interface ProfileAndFeeInfo {
-  taxaInscricaoId: string;
-  perfilId: string;
+  taxaInscricaoId: number;
+  perfilId: number;
   valor: number;
   profileName: string;
 }
 
 interface ProfileData {
-  id: string;
+  id: number;
   nome: string;
 }
 
@@ -128,7 +128,7 @@ export const useEventRegistration = (userId: string | undefined) => {
           const { error: updateError } = await supabase
             .from('inscricoes_eventos')
             .update({
-              selected_role: selectedRole,
+              selected_role: registrationInfo.perfilId,
               taxa_inscricao_id: registrationInfo.taxaInscricaoId,
             })
             .eq('id', existingRegistration.id);
@@ -147,10 +147,9 @@ export const useEventRegistration = (userId: string | undefined) => {
             .insert({
               evento_id: eventId,
               usuario_id: userId,
-              selected_role: selectedRole,
+              selected_role: registrationInfo.perfilId,
               taxa_inscricao_id: registrationInfo.taxaInscricaoId,
               data_inscricao: new Date().toISOString(),
-              status: 'confirmado',
             });
 
           if (insertError) {
@@ -163,14 +162,18 @@ export const useEventRegistration = (userId: string | undefined) => {
 
         // Step 4: Create payment record
         console.log('Etapa 4: Criando registro de pagamento...');
+        const numeroIdentificador = String(registrationInfo.taxaInscricaoId % 1000).padStart(3, '0');
+        
         const { error: paymentError } = await supabase
           .from('pagamentos')
           .insert({
             evento_id: eventId,
             atleta_id: userId,
             taxa_inscricao_id: registrationInfo.taxaInscricaoId,
+            valor: registrationInfo.valor,
             status: 'pendente',
-            data_pagamento: new Date().toISOString(),
+            numero_identificador: numeroIdentificador,
+            data_criacao: new Date().toISOString(),
           });
 
         // If payment insertion fails due to duplicate, that's okay (23505 is duplicate key)

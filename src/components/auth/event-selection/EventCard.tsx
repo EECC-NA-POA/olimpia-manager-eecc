@@ -138,6 +138,7 @@ export const EventCard = ({
         {!event.isRegistered && !isDisabled && (
           <div className="mb-3 sm:mb-4">
             <RadioGroup
+              name={`role-${event.id}`}
               value={selectedRole}
               onValueChange={(value) => onRoleChange(value as 'ATL' | 'PGR')}
               className="space-y-2"
