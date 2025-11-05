@@ -35,46 +35,44 @@ export function useMasterAccess() {
 
       try {
         console.log('🔍 Checking Master access for user:', user.id, 'event:', currentEventId);
+        console.log('📋 User context:', { 
+          is_master: user.is_master, 
+          papeis: user.papeis?.map(r => r.codigo) 
+        });
         
-        // Check if user has master role via is_master flag or MST profile
+        // Strategy 1: Check if user has is_master flag
         if (user.is_master) {
-          console.log('✅ User has is_master flag');
+          console.log('✅ Access granted via is_master flag');
           setIsMaster(true);
           setIsLoading(false);
           return;
         }
 
-        // Check if user has master role via profile FOR THIS EVENT
-        const { data: userRoles, error } = await supabase
-          .from('papeis_usuarios')
-          .select(`
-            perfil_id,
-            perfis!inner(
-              perfil_tipo_id,
-              perfis_tipo!inner(
-                codigo
-              )
-            )
-          `)
-          .eq('usuario_id', user.id)
-          .eq('evento_id', currentEventId);
+        // Strategy 2: Check user.papeis (already event-filtered by AuthProvider)
+        const hasMstInPapeis = user.papeis?.some(r => r.codigo === 'MST');
+        if (hasMstInPapeis) {
+          console.log('✅ Access granted via user.papeis (MST found)');
+          setIsMaster(true);
+          setIsLoading(false);
+          return;
+        }
 
-        console.log('📊 Roles query result:', { userRoles, error });
+        console.log('⚠️ MST not found in user context, trying fallback query...');
 
-        if (error) throw error;
+        // Strategy 3: Fallback with explicit 2-step query
+        // Step 3a: Get perfis_tipo ID for 'MST'
+        const { data: mstType, error: mstTypeError } = await supabase
+          .from('perfis_tipo')
+          .select('id')
+          .eq('codigo', 'MST')
+          .maybeSingle();
 
-        // Check if any of the user's roles has the type code "MST"
-        const hasMasterRole = userRoles?.some(role => {
-          const perfis = role.perfis as any;
-          const perfisType = perfis?.perfis_tipo as any;
-          const isMaster = perfisType?.codigo === 'MST';
-          console.log('Checking role:', perfisType?.codigo, 'is MST?', isMaster);
-          return isMaster;
-        });
+        console.log('📊 Step 3a - perfis_tipo query:', { mstType, mstTypeError });
 
-        console.log('🎯 Has Master role for this event?', hasMasterRole);
+        if (mstTypeError) throw mstTypeError;
 
-        if (!hasMasterRole) {
+        if (!mstType) {
+          console.log('❌ MST perfis_tipo not found in database');
           toast({
             title: "Acesso restrito",
             description: "Acesso restrito a usuários Master neste evento",
@@ -84,6 +82,53 @@ export function useMasterAccess() {
           return;
         }
 
+        // Step 3b: Get perfis for this event with MST type
+        const { data: mstPerfis, error: mstPerfisError } = await supabase
+          .from('perfis')
+          .select('id')
+          .eq('evento_id', currentEventId)
+          .eq('perfil_tipo_id', mstType.id);
+
+        console.log('📊 Step 3b - perfis query:', { mstPerfis, mstPerfisError });
+
+        if (mstPerfisError) throw mstPerfisError;
+
+        if (!mstPerfis || mstPerfis.length === 0) {
+          console.log('❌ No MST perfis found for this event');
+          toast({
+            title: "Acesso restrito",
+            description: "Acesso restrito a usuários Master neste evento",
+            variant: "destructive"
+          });
+          navigate('/');
+          return;
+        }
+
+        // Step 3c: Check papeis_usuarios for user with these perfis
+        const perfilIds = mstPerfis.map(p => p.id);
+        const { data: userRoles, error: userRolesError } = await supabase
+          .from('papeis_usuarios')
+          .select('id')
+          .eq('usuario_id', user.id)
+          .eq('evento_id', currentEventId)
+          .in('perfil_id', perfilIds);
+
+        console.log('📊 Step 3c - papeis_usuarios query:', { userRoles, userRolesError });
+
+        if (userRolesError) throw userRolesError;
+
+        if (!userRoles || userRoles.length === 0) {
+          console.log('❌ No MST role assignment found for user in this event');
+          toast({
+            title: "Acesso restrito",
+            description: "Acesso restrito a usuários Master neste evento",
+            variant: "destructive"
+          });
+          navigate('/');
+          return;
+        }
+
+        console.log('✅ Access granted via fallback query');
         setIsMaster(true);
       } catch (error) {
         console.error('❌ Error checking master role:', error);
