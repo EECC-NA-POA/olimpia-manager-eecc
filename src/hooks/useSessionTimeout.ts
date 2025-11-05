@@ -39,23 +39,13 @@ export const useSessionTimeout = ({
         return false;
       }
 
-      // Verifica se o token está próximo do vencimento
+      // Log periódico da sessão (sem forçar logout prematuro)
       const expiresAt = session.expires_at;
-      if (expiresAt) {
+      if (expiresAt && Date.now() - lastCheckRef.current > 5 * 60 * 1000) {
         const now = Math.floor(Date.now() / 1000);
         const timeUntilExpiry = expiresAt - now;
-        
-        // Se faltam menos de 5 minutos para expirar
-        if (timeUntilExpiry < 300) {
-          console.log('⚠️ Token próximo do vencimento:', timeUntilExpiry, 'segundos');
-          return false;
-        }
-        
-        // Log a cada 5 minutos
-        if (Date.now() - lastCheckRef.current > 5 * 60 * 1000) {
-          console.log('✅ Sessão válida - expira em:', Math.floor(timeUntilExpiry / 60), 'minutos');
-          lastCheckRef.current = Date.now();
-        }
+        console.log('✅ Sessão válida - expira em:', Math.floor(timeUntilExpiry / 60), 'minutos');
+        lastCheckRef.current = Date.now();
       }
 
       return true;
@@ -67,10 +57,9 @@ export const useSessionTimeout = ({
 
   // Manipula expiração da sessão
   const handleSessionExpiry = async () => {
-    console.log('🔒 Iniciando processo de logout por expiração de sessão');
+    console.log('🔒 Sessão expirada, fazendo logout...');
     try {
-      // Clear all query cache before signing out
-      console.log('🗑️ Clearing all query cache due to session expiry');
+      console.log('🗑️ Limpando cache de queries');
       queryClient.clear();
       
       await signOut();
@@ -78,15 +67,13 @@ export const useSessionTimeout = ({
         'Sua sessão expirou. Por favor, faça login novamente.',
         { duration: 5000 }
       );
-      navigate('/login', { replace: true });
+      // AuthProvider vai gerenciar a navegação após o logout
     } catch (error) {
-      console.error('❌ Erro ao fazer logout:', error);
-      // Forçar navegação mesmo se o logout falhar
+      console.error('❌ Erro crítico ao fazer logout:', error);
       localStorage.removeItem('olimpics_auth_token');
       localStorage.removeItem('currentEventId');
       queryClient.clear();
-      navigate('/login', { replace: true });
-      // Recarregar a página para limpar todo o estado
+      // Força reload apenas em caso de erro crítico
       setTimeout(() => window.location.reload(), 100);
     }
   };
@@ -99,11 +86,15 @@ export const useSessionTimeout = ({
 
     console.log('🔒 useSessionTimeout: configurando monitoramento para usuário:', user.id);
 
-    // Eventos que indicam atividade do usuário
-    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    // Eventos que indicam atividade do usuário (incluindo eventos de formulário)
+    const activityEvents = [
+      'mousedown', 'mousemove', 'keypress', 'keydown',
+      'scroll', 'touchstart', 'click', 'focus',
+      'input', 'change'
+    ];
     
     activityEvents.forEach(event => {
-      document.addEventListener(event, updateActivity, true);
+      document.addEventListener(event, updateActivity, { capture: true });
     });
 
     // Verifica periodicamente se a sessão ainda é válida
@@ -116,11 +107,18 @@ export const useSessionTimeout = ({
       const isInactive = timeSinceLastActivity > timeoutMs;
       const isSessionValid = await checkSessionValidity();
 
+      // Log detalhado para diagnóstico
+      console.log('⏰ Verificação de sessão:', {
+        minutosInativos: Math.floor(timeSinceLastActivity / 60000),
+        limiteMinutos: timeoutMinutes,
+        sessaoValida: isSessionValid
+      });
+
       if (isInactive) {
         console.log('⚠️ Sessão expirada por inatividade:', Math.floor(timeSinceLastActivity / 60000), 'minutos');
         handleSessionExpiry();
       } else if (!isSessionValid) {
-        console.log('⚠️ Sessão inválida ou token expirado');
+        console.log('⚠️ Sessão inválida detectada');
         handleSessionExpiry();
       }
     }, checkIntervalMinutes * 60 * 1000);
