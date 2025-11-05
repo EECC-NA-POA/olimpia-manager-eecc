@@ -27,7 +27,7 @@ export const EventSelection = ({
 }: EventSelectionProps) => {
   const navigate = useNavigate();
   const { user, signOut, setCurrentEventId } = useAuth();
-  const [selectedRole, setSelectedRole] = useState<PerfilTipo>('ATL');
+  const [selectedRoleByEvent, setSelectedRoleByEvent] = useState<Record<string, PerfilTipo>>({});
   
   const { data: events, isLoading, refetch } = useEventQuery(user?.id, true);
   const registerEventMutation = useEventRegistration(user?.id);
@@ -41,9 +41,10 @@ export const EventSelection = ({
   
   const handleEventRegistration = async (eventId: string) => {
     try {
+      const role = selectedRoleByEvent[eventId] ?? 'ATL';
       const result = await registerEventMutation.mutateAsync({ 
         eventId, 
-        selectedRole 
+        selectedRole: role 
       });
 
       // Store the current event ID
@@ -143,8 +144,8 @@ export const EventSelection = ({
     <div className="space-y-6">
       <EventCarousel
         events={events}
-        selectedRole={selectedRole}
-        onRoleChange={setSelectedRole}
+        selectedRoleMap={selectedRoleByEvent}
+        onRoleChange={(eventId, role) => setSelectedRoleByEvent(prev => ({ ...prev, [eventId]: role }))}
         onEventAction={(eventId) => {
           const event = events.find(e => e.id === eventId);
           if (event) {

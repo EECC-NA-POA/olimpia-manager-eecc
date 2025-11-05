@@ -19,15 +19,15 @@ interface EventWithStatus extends Event {
 
 interface EventCarouselProps {
   events: EventWithStatus[];
-  selectedRole: 'ATL' | 'PGR';
-  onRoleChange: (value: 'ATL' | 'PGR') => void;
+  selectedRoleMap: Record<string, 'ATL' | 'PGR'>;
+  onRoleChange: (eventId: string, value: 'ATL' | 'PGR') => void;
   onEventAction: (eventId: string) => void;
   isUnderAge?: boolean;
 }
 
 export const EventCarousel = ({
   events,
-  selectedRole,
+  selectedRoleMap,
   onRoleChange,
   onEventAction,
   isUnderAge = false,
@@ -62,8 +62,8 @@ export const EventCarousel = ({
                   isAdmin: event.isAdmin || false,
                   hasBranchPermission: event.hasBranchPermission
                 }}
-                selectedRole={selectedRole}
-                onRoleChange={onRoleChange}
+                selectedRole={selectedRoleMap[event.id] ?? 'ATL'}
+                onRoleChange={(value) => onRoleChange(event.id, value)}
                 onEventAction={() => onEventAction(event.id)}
                 isUnderAge={isUnderAge}
               />

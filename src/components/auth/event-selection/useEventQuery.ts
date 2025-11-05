@@ -63,11 +63,7 @@ export const useEventQuery = (userId: string | undefined, enabled: boolean = tru
         // First, get user registrations from inscricoes_eventos table
         console.log('Fetching user registrations for userId:', userId, 'Type:', typeof userId);
         
-        // Test direct query without RLS first
-        const { data: testRegistrations, error: testError } = await supabase
-          .rpc('get_user_registrations_debug', { user_id: userId });
-        
-        console.log('Test RPC query result:', { testRegistrations, testError });
+        // Skip RPC call as it's causing errors - we'll use direct query instead
         
         const { data: registrations, error: regError } = await supabase
           .from('inscricoes_eventos')
