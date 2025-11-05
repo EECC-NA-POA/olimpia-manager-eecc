@@ -43,37 +43,40 @@ export const EditPersonalInfoDialog = ({
     },
   });
 
-  // Set initial date input value
+  // Reset state when dialog opens
   React.useEffect(() => {
-    if (parsedBirthDate && isValid(parsedBirthDate)) {
-      setDateInputValue(format(parsedBirthDate, 'dd/MM/yyyy'));
+    if (open) {
+      if (parsedBirthDate && isValid(parsedBirthDate)) {
+        setDateInputValue(format(parsedBirthDate, 'dd/MM/yyyy'));
+      } else {
+        setDateInputValue("");
+      }
+      setDateError(null);
     }
-  }, [parsedBirthDate]);
+  }, [open, parsedBirthDate]);
 
   const handleDateInput = (event: React.ChangeEvent<HTMLInputElement>, field: any) => {
     const value = event.target.value;
     setDateInputValue(value);
     
+    // Clear error when user is typing
+    if (dateError) {
+      setDateError(null);
+    }
+    
+    // Only try to parse when we have 10 characters
     if (value.length === 10) {
       const parsedDate = parse(value, 'dd/MM/yyyy', new Date());
       
-      if (!isValid(parsedDate)) {
+      if (isValid(parsedDate)) {
+        // Let Zod schema handle date range validation
+        field.onChange(parsedDate);
+      } else {
         setDateError("Data inválida");
-        return;
       }
-
-      if (parsedDate > new Date()) {
-        setDateError("A data não pode ser no futuro");
-        return;
-      }
-
-      if (parsedDate < new Date('1900-01-01')) {
-        setDateError("A data não pode ser anterior a 01/01/1900");
-        return;
-      }
-
-      setDateError(null);
-      field.onChange(parsedDate);
+    } else if (value.length < 10) {
+      // Clear field value if input is incomplete
+      field.onChange(undefined);
     }
   };
 
@@ -183,6 +186,7 @@ export const EditPersonalInfoDialog = ({
                             date > new Date() || date < new Date("1900-01-01")
                           }
                           initialFocus
+                          className="pointer-events-auto"
                         />
                       </PopoverContent>
                     </Popover>
