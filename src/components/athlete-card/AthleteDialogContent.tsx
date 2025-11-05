@@ -30,6 +30,7 @@ interface AthleteDialogContentProps {
     onInputChange: (value: string) => void;
     onSave: () => void;
     onBlur: () => void;
+    currentStatus?: string;
   };
   modalitiesProps?: {
     modalidades: AthleteModality[];

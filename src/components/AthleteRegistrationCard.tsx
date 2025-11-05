@@ -143,7 +143,8 @@ export function AthleteRegistrationCard({
               isUpdating: isUpdatingAmount,
               onInputChange: handleAmountInputChange,
               onSave: handleSaveAmount,
-              onBlur: handleAmountBlur
+              onBlur: handleAmountBlur,
+              currentStatus: registration.status_pagamento
             }}
             modalitiesProps={registration.modalidades.length > 0 ? {
               modalidades: registration.modalidades,
