@@ -129,11 +129,6 @@ export const EventCard = ({
               Você já está inscrito neste evento
             </p>
           )}
-          {event.isRegistered && event.roles?.length > 0 && (
-            <p className="text-xs font-medium text-olimpics-green-primary mt-1">
-              Papéis: {event.roles.map(role => role.nome).join(', ')}
-            </p>
-          )}
         </div>
         {!event.isRegistered && !isDisabled && (
           <div className="mb-3 sm:mb-4">
