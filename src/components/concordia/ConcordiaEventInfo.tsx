@@ -38,7 +38,7 @@ export const ConcordiaEventInfo = () => {
                 <p className="text-gray-700 font-medium">Domingo, 30 de Novembro de 2025</p>
                 <div className="flex items-center gap-2 mt-2 text-gray-600">
                   <Clock className="w-4 h-4" />
-                  <span>8h às 13h</span>
+                  <span>14h às 20h</span>
                 </div>
                 <p className="text-sm text-gray-500 mt-3 flex items-center gap-1">
                   💡 Clique para adicionar à sua agenda
