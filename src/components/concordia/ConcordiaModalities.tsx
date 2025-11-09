@@ -5,13 +5,13 @@ export const ConcordiaModalities = () => {
     {
       name: 'Vôlei de Praia',
       emoji: '🏐',
-      description: 'Competição de vôlei de praia em duplas',
+      description: 'Competição de vôlei de praia em trios',
       gradient: 'from-[#7CB342] to-[#7CB342]/80'
     },
     {
       name: 'Tiro com Arco',
       emoji: '🎯',
-      description: 'Competição individual de tiro com arco',
+      description: 'Competição de tiro com arco',
       gradient: 'from-[#7E57C2] to-[#7E57C2]/80'
     }
   ];
