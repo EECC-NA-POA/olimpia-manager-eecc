@@ -5,11 +5,11 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { supabase } from '@/lib/supabase';
-import { AlertCircle, ArrowLeft, Lock } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const resetPasswordSchema = z.object({
@@ -28,6 +28,7 @@ export default function ResetPassword() {
   const { user } = useAuth();
   const [error, setError] = React.useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isProcessingToken, setIsProcessingToken] = React.useState(false);
 
   const fromProfile = location.state?.fromProfile;
 
@@ -41,13 +42,53 @@ export default function ResetPassword() {
 
   React.useEffect(() => {
     let mounted = true;
+    let authSubscription: any = null;
 
     const checkSession = async () => {
       try {
+        // Check if there are recovery parameters in the URL
+        const params = new URLSearchParams(location.search);
+        const recoveryType = params.get('type');
+        const hasToken = params.has('token');
+
+        console.log('🔐 ResetPassword: Checking session...', { recoveryType, hasToken, fromProfile });
+
+        // If this is a recovery link, wait for Supabase to process the token
+        if (recoveryType === 'recovery' && hasToken) {
+          console.log('🔗 Recovery token detected, waiting for Supabase to process...');
+          setIsProcessingToken(true);
+
+          // Set up auth state listener to detect when session is established
+          authSubscription = supabase.auth.onAuthStateChange((event, session) => {
+            console.log('🔐 Auth state changed:', event, 'Session:', !!session);
+            
+            if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+              console.log('✅ Recovery session established');
+              if (mounted) {
+                setIsProcessingToken(false);
+              }
+            } else if (event === 'TOKEN_REFRESHED') {
+              console.log('🔄 Token refreshed');
+            }
+          });
+
+          // Also check current session after a short delay to allow Supabase to process
+          setTimeout(async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            console.log('⏰ Delayed session check:', !!session);
+            if (mounted && session) {
+              setIsProcessingToken(false);
+            }
+          }, 1000);
+
+          return; // Don't check session yet, let Supabase process the token
+        }
+
+        // Normal session check (not a recovery link)
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
-          console.error('Session check error:', sessionError);
+          console.error('❌ Session check error:', sessionError);
           if (mounted) {
             setError('Erro ao verificar sessão');
             navigate('/');
@@ -55,25 +96,32 @@ export default function ResetPassword() {
           return;
         }
 
-        if (!session && !fromProfile) {
-          console.log('No session found, redirecting to index');
+        // Only redirect if: no session, not from profile, and not a recovery link
+        if (!session && !fromProfile && recoveryType !== 'recovery') {
+          console.log('⚠️ No session found and not a recovery link, redirecting to index');
           if (mounted) {
             navigate('/');
           }
+        } else {
+          console.log('✅ Valid session or recovery link, staying on page');
         }
       } catch (err) {
-        console.error('Session check failed:', err);
-        if (mounted) {
+        console.error('❌ Session check failed:', err);
+        if (mounted && !location.search.includes('type=recovery')) {
           navigate('/');
         }
       }
     };
 
     checkSession();
+    
     return () => {
       mounted = false;
+      if (authSubscription?.subscription) {
+        authSubscription.subscription.unsubscribe();
+      }
     };
-  }, [navigate, fromProfile]);
+  }, [navigate, fromProfile, location.search]);
 
   const handleBack = () => {
     if (fromProfile) {
@@ -144,6 +192,23 @@ export default function ResetPassword() {
     }
   };
 
+  // Show loading state while processing recovery token
+  if (isProcessingToken) {
+    return (
+      <div className="container mx-auto flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="w-full max-w-md space-y-8 text-center">
+          <div className="flex flex-col items-center space-y-4">
+            <Loader2 className="h-12 w-12 text-olimpics-green-primary animate-spin" />
+            <h1 className="text-2xl font-bold">Processando link de recuperação...</h1>
+            <p className="text-sm text-muted-foreground">
+              Aguarde enquanto validamos seu link de recuperação de senha.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto flex flex-col items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-md space-y-8">
@@ -174,8 +239,7 @@ export default function ResetPassword() {
                   <FormItem>
                     <FormLabel>Nova Senha</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
+                      <PasswordInput
                         placeholder="••••••"
                         {...field}
                       />
@@ -192,8 +256,7 @@ export default function ResetPassword() {
                   <FormItem>
                     <FormLabel>Confirmar Nova Senha</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
+                      <PasswordInput
                         placeholder="••••••"
                         {...field}
                       />
