@@ -1,11 +1,34 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PublicEventsSections } from '@/components/home/PublicEventsSections';
 import { FeaturesSection } from '@/components/home/FeaturesSection';
 import { AboutSection } from '@/components/home/AboutSection';
 import { HeroSection } from '@/components/home/HeroSection';
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Interceptar parâmetros de recuperação de senha e redirecionar para /reset-password
+  useEffect(() => {
+    const code = searchParams.get('code');
+    const token = searchParams.get('token');
+    const type = searchParams.get('type');
+    
+    console.log('🏠 Index: Verificando parâmetros de recuperação', { 
+      code: code ? 'presente' : 'ausente',
+      token: token ? 'presente' : 'ausente',
+      type 
+    });
+    
+    // Se houver code ou token (parâmetros de recovery), redirecionar para reset-password
+    if (code || token) {
+      console.log('🔄 Redirecionando para /reset-password com parâmetros de recuperação');
+      const params = new URLSearchParams(searchParams);
+      navigate(`/reset-password?${params.toString()}`, { replace: true });
+    }
+  }, [searchParams, navigate]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-olimpics-green-primary to-olimpics-green-secondary relative overflow-hidden">
       {/* Background image with overlay */}
