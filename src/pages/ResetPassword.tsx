@@ -50,11 +50,52 @@ export default function ResetPassword() {
         const params = new URLSearchParams(location.search);
         const recoveryType = params.get('type');
         const hasToken = params.has('token');
+        const hasCode = params.has('code');
+        const code = params.get('code');
 
-        console.log('🔐 ResetPassword: Checking session...', { recoveryType, hasToken, fromProfile });
+        console.log('🔐 ResetPassword: Checking session...', { 
+          recoveryType, 
+          hasToken, 
+          hasCode,
+          fromProfile 
+        });
 
-        // If this is a recovery link, wait for Supabase to process the token
-        if (recoveryType === 'recovery' && hasToken) {
+        // Se houver CODE (PKCE flow), processar de forma diferente
+        if (hasCode && code) {
+          console.log('🔐 PKCE code detected, exchanging for session...');
+          setIsProcessingToken(true);
+
+          try {
+            // Trocar o code por uma sessão
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+            
+            if (error) {
+              console.error('❌ Erro ao trocar code por sessão:', error);
+              if (mounted) {
+                setError('Link de recuperação inválido ou expirado. Por favor, solicite um novo link.');
+                setIsProcessingToken(false);
+              }
+              return;
+            }
+            
+            if (data.session) {
+              console.log('✅ Sessão estabelecida com sucesso via PKCE');
+              if (mounted) {
+                setIsProcessingToken(false);
+              }
+            }
+          } catch (err) {
+            console.error('❌ Erro ao processar code:', err);
+            if (mounted) {
+              setError('Erro ao processar link de recuperação. Por favor, tente novamente.');
+              setIsProcessingToken(false);
+            }
+          }
+          return; // Não continuar com a verificação normal
+        }
+
+        // If this is a recovery link with TOKEN (legacy), wait for Supabase to process the token
+        if (recoveryType === 'recovery' && hasToken && !hasCode) {
           console.log('🔗 Recovery token detected, waiting for Supabase to process...');
           setIsProcessingToken(true);
 
@@ -201,7 +242,10 @@ export default function ResetPassword() {
             <Loader2 className="h-12 w-12 text-olimpics-green-primary animate-spin" />
             <h1 className="text-2xl font-bold">Processando link de recuperação...</h1>
             <p className="text-sm text-muted-foreground">
-              Aguarde enquanto validamos seu link de recuperação de senha.
+              Aguarde enquanto validamos seu link de recuperação de senha...
+            </p>
+            <p className="text-xs text-muted-foreground/70 mt-2">
+              Processando código de segurança
             </p>
           </div>
         </div>
@@ -223,10 +267,21 @@ export default function ResetPassword() {
         </div>
 
         {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <div className="space-y-4">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            {error.includes('inválido ou expirado') && (
+              <Button
+                variant="outline"
+                onClick={() => navigate('/forgot-password')}
+                className="w-full"
+              >
+                Solicitar novo link de recuperação
+              </Button>
+            )}
+          </div>
         )}
 
         <Form {...form}>
