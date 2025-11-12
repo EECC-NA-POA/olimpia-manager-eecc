@@ -25,7 +25,7 @@ const resetPasswordSchema = z.object({
 export default function ResetPassword() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [error, setError] = React.useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isProcessingToken, setIsProcessingToken] = React.useState(false);
@@ -217,13 +217,18 @@ export default function ResetPassword() {
       }
 
       console.log('Password updated successfully');
-      
-      toast.success('Senha alterada com sucesso!', {
-        duration: 2000,
-        onDismiss: () => {
-          navigate('/athlete-profile', { replace: true });
-        }
+
+      toast.success('Senha alterada com sucesso! Faça login novamente.', {
+        duration: 3000,
       });
+
+      // Fazer logout e redirecionar para login
+      await signOut();
+
+      // Pequeno delay para garantir que o logout complete
+      setTimeout(() => {
+        navigate('/login', { replace: true });
+      }, 500);
       
     } catch (error: any) {
       console.error('Password update failed:', error);
