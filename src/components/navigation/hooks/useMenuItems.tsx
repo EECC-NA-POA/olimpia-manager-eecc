@@ -45,14 +45,6 @@ export const useMenuItems = (onLogout: () => void) => {
       });
     }
     
-    // 2. Perfil (Athlete Profile) - for all authenticated users
-    items.push({
-      path: "/athlete-profile",
-      label: "Perfil",
-      icon: <User className="h-5 w-5" />,
-      tooltip: "Perfil do Usuário"
-    });
-    
     // 2. Cronograma (Schedule) - for all roles
     items.push({
       path: "/cronograma",
@@ -77,17 +69,7 @@ export const useMenuItems = (onLogout: () => void) => {
       tooltip: "Notificações"
     });
     
-    // 5. Representantes - for all roles except Público Geral
-    if (!roles.isPublicGeral) {
-      items.push({
-        path: "/minhas-inscricoes",
-        label: "Representantes",
-        icon: <Users className="h-5 w-5" />,
-        tooltip: "Representantes das Modalidades"
-      });
-    }
-    
-    // 6. Organizador (Organizer)
+    // 5. Organizador (Organizer)
     if (isOrganizer) {
       items.push({
         path: "/organizador",
@@ -97,7 +79,7 @@ export const useMenuItems = (onLogout: () => void) => {
       });
     }
     
-    // 7. Delegação (Delegation)
+    // 6. Delegação (Delegation)
     if (isDelegationRep) {
       items.push({
         path: "/delegacao",
@@ -107,7 +89,7 @@ export const useMenuItems = (onLogout: () => void) => {
       });
     }
 
-    // 8. Filósofo Monitor - ÚNICA ENTRADA NO MENU
+    // 7. Filósofo Monitor - ÚNICA ENTRADA NO MENU
     if (isFilosofoMonitor) {
       items.push({
         path: "/monitor",
@@ -117,7 +99,7 @@ export const useMenuItems = (onLogout: () => void) => {
       });
     }
     
-    // 9. Juiz (Judge)
+    // 8. Juiz (Judge)
     if (isJudge) {
       items.push({
         path: "/judge-dashboard",
@@ -127,7 +109,7 @@ export const useMenuItems = (onLogout: () => void) => {
       });
     }
     
-    // 10. Administração (Administration) - for admins only
+    // 9. Administração (Administration) - for admins only
     if (isAdmin) {
       items.push({
         path: "/administration",
@@ -137,7 +119,7 @@ export const useMenuItems = (onLogout: () => void) => {
       });
     }
 
-    // 11. Master - for master users only
+    // 10. Master - for master users only
     if (isMaster) {
       items.push({
         path: "/master",
@@ -146,6 +128,14 @@ export const useMenuItems = (onLogout: () => void) => {
         tooltip: "Gestão Master"
       });
     }
+
+    // 11. Perfil (Athlete Profile) - BEFORE action items
+    items.push({
+      path: "/athlete-profile",
+      label: "Perfil",
+      icon: <User className="h-5 w-5" />,
+      tooltip: "Perfil do Usuário"
+    });
 
     // 12. Trocar Evento
     items.push({
