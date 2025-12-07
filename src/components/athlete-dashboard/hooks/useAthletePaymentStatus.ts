@@ -5,6 +5,8 @@ export interface AthletePaymentStatus {
   status_pagamento: string | null;
   valor_taxa: number | null;
   isento: boolean;
+  taxa_inscricao_id: number | null;
+  comprovante_url: string | null;
 }
 
 export function useAthletePaymentStatus(userId: string | undefined, eventId: string | null) {
@@ -44,7 +46,7 @@ export function useAthletePaymentStatus(userId: string | undefined, eventId: str
       // Get payment status from pagamentos table
       const { data: payment, error: payError } = await supabase
         .from('pagamentos')
-        .select('status, valor, isento')
+        .select('status, valor, isento, comprovante_url')
         .eq('atleta_id', userId)
         .eq('evento_id', eventId)
         .maybeSingle();
@@ -60,7 +62,9 @@ export function useAthletePaymentStatus(userId: string | undefined, eventId: str
       const result: AthletePaymentStatus = {
         status_pagamento: isento ? 'isento' : (payment?.status || 'pendente'),
         valor_taxa: taxaInfo?.valor || null,
-        isento
+        isento,
+        taxa_inscricao_id: registration.taxa_inscricao_id,
+        comprovante_url: payment?.comprovante_url || null
       };
 
       console.log('Payment status:', result);
