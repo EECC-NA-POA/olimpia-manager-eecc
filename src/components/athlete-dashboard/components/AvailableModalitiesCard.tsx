@@ -33,11 +33,11 @@ export function AvailableModalitiesCard({
 
   // Day of week order for sorting (Monday = 0, Sunday = 6)
   const dayOrder: Record<string, number> = {
-    'Segunda': 0,
-    'Terça': 1,
-    'Quarta': 2,
-    'Quinta': 3,
-    'Sexta': 4,
+    'Segunda-feira': 0,
+    'Terça-feira': 1,
+    'Quarta-feira': 2,
+    'Quinta-feira': 3,
+    'Sexta-feira': 4,
     'Sábado': 5,
     'Domingo': 6
   };

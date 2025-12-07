@@ -54,8 +54,18 @@ export const useModalitySchedules = (eventId: string | null) => {
           if (activity.recorrente && activity.dias_semana && activity.dias_semana.length > 0) {
             // For recurring activities, use the first day of the week
             const primeiroDia = activity.dias_semana[0];
-            // Capitalize first letter for display
-            diaSemana = primeiroDia.charAt(0).toUpperCase() + primeiroDia.slice(1);
+            // Map to full day name with "-feira" suffix
+            const dayNameMap: Record<string, string> = {
+              'segunda': 'Segunda-feira',
+              'terça': 'Terça-feira',
+              'quarta': 'Quarta-feira',
+              'quinta': 'Quinta-feira',
+              'sexta': 'Sexta-feira',
+              'sábado': 'Sábado',
+              'sabado': 'Sábado',
+              'domingo': 'Domingo'
+            };
+            diaSemana = dayNameMap[primeiroDia.toLowerCase()] || primeiroDia;
             
             // Extract times from horarios_por_dia JSONB field
             if (activity.horarios_por_dia && activity.horarios_por_dia[primeiroDia]) {
@@ -65,8 +75,9 @@ export const useModalitySchedules = (eventId: string | null) => {
             }
           } else if (dia) {
             // For non-recurring activities, use direct times
-            const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+            const dayNames = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
             const date = new Date(dia + 'T00:00:00');
+            diaSemana = dayNames[date.getDay()];
             diaSemana = dayNames[date.getDay()];
             horarioInicio = activity.horario_inicio;
             horarioFim = activity.horario_fim;
