@@ -64,12 +64,12 @@ export function PaymentStatusBarChart({
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow w-full">
+    <Card className="hover:shadow-lg transition-shadow w-full overflow-hidden">
       <CardHeader className="p-3 sm:p-6">
         <CardTitle className="text-sm sm:text-lg">{title}</CardTitle>
         <CardDescription className="text-xs sm:text-sm">{description}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4 sm:space-y-6 p-3 sm:p-6">
+      <CardContent className="space-y-4 sm:space-y-6 p-3 sm:p-6 overflow-x-auto">
         <div className="space-y-6">
           {/* Battery-style visualization */}
           <div className="space-y-2">
@@ -121,8 +121,9 @@ export function PaymentStatusBarChart({
           </div>
 
           {/* Additional detailed breakdown using horizontal bars */}
-          <div className="h-[180px] sm:h-[220px] pt-2 sm:pt-4">
-            <ChartContainer config={chartConfig} className="w-full h-full">
+          <div className="overflow-x-auto">
+            <div className="h-[180px] sm:h-[220px] pt-2 sm:pt-4 min-w-[280px]">
+              <ChartContainer config={chartConfig} className="w-full h-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={[
@@ -165,6 +166,7 @@ export function PaymentStatusBarChart({
                 </BarChart>
               </ResponsiveContainer>
             </ChartContainer>
+            </div>
           </div>
         </div>
       </CardContent>
