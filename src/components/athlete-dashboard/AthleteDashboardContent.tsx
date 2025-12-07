@@ -6,12 +6,13 @@ import { useAthletePaymentStatus } from './hooks/useAthletePaymentStatus';
 import { useAvailableModalitiesForAthlete } from './hooks/useAvailableModalitiesForAthlete';
 import { useModalitiesWithRepresentatives } from '@/hooks/useModalityRepresentatives';
 import { useAthleteProfile } from '@/hooks/useAthleteProfile';
+import { useModalitySchedules } from './hooks/useModalitySchedules';
 import { EventInfoCard } from './components/EventInfoCard';
 import { MyEnrollmentsCard } from './components/MyEnrollmentsCard';
 import { AvailableModalitiesCard } from './components/AvailableModalitiesCard';
 import { QuickSummaryCard } from './components/QuickSummaryCard';
 import { PaymentUploadCard } from './components/PaymentUploadCard';
-import { Loader2, Calendar, Bell } from 'lucide-react';
+import { Loader2, Calendar, Bell, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface AthleteDashboardContentProps {
@@ -31,6 +32,9 @@ export function AthleteDashboardContent({ userId, eventId }: AthleteDashboardCon
     athleteProfile?.filial_id,
     eventId
   );
+  
+  // Fetch modality schedules
+  const { data: modalitySchedules } = useModalitySchedules(eventId);
 
   const isLoading = eventLoading || modalitiesLoading || paymentLoading || availableLoading || profileLoading;
 
@@ -103,16 +107,22 @@ export function AthleteDashboardContent({ userId, eventId }: AthleteDashboardCon
           
           {/* Quick Navigation Links */}
           <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-            <Button asChild variant="outline" size="sm" className="gap-2">
+            <Button asChild size="sm" className="gap-2 bg-olimpics-green-primary hover:bg-olimpics-green-primary/90 text-white">
               <Link to="/cronograma">
                 <Calendar className="h-4 w-4" />
                 Cronograma
               </Link>
             </Button>
-            <Button asChild variant="outline" size="sm" className="gap-2">
+            <Button asChild size="sm" className="gap-2 bg-olimpics-orange-primary hover:bg-olimpics-orange-primary/90 text-white">
               <Link to="/notifications">
                 <Bell className="h-4 w-4" />
                 Notificações
+              </Link>
+            </Button>
+            <Button asChild size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+              <Link to="/regulamento">
+                <FileText className="h-4 w-4" />
+                Regulamento
               </Link>
             </Button>
           </div>
@@ -145,6 +155,7 @@ export function AthleteDashboardContent({ userId, eventId }: AthleteDashboardCon
         userId={userId}
         eventId={eventId}
         modalitiesWithRepresentatives={modalitiesWithRepresentatives || []}
+        modalitySchedules={modalitySchedules || []}
       />
 
       {/* Available Modalities */}
@@ -153,6 +164,7 @@ export function AthleteDashboardContent({ userId, eventId }: AthleteDashboardCon
         userId={userId}
         eventId={eventId}
         registeredModalityIds={registeredModalities?.map(m => m.modalidade.id) || []}
+        modalitySchedules={modalitySchedules || []}
       />
     </div>
   );

@@ -3,50 +3,39 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Trophy, Search, AlertCircle, Loader2 } from 'lucide-react';
+import { Trophy, Search, AlertCircle, Loader2, Clock } from 'lucide-react';
 import { AvailableModality } from '../hooks/useAvailableModalitiesForAthlete';
 import { useModalityMutations } from '@/hooks/useModalityMutations';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { ModalitySchedule, formatScheduleTime } from '../hooks/useModalitySchedules';
 
 interface AvailableModalitiesCardProps {
   modalities: AvailableModality[];
   userId: string;
   eventId: string;
   registeredModalityIds: number[];
+  modalitySchedules?: ModalitySchedule[];
 }
 
 export function AvailableModalitiesCard({ 
   modalities, 
   userId, 
   eventId,
-  registeredModalityIds 
+  registeredModalityIds,
+  modalitySchedules = []
 }: AvailableModalitiesCardProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const { registerMutation } = useModalityMutations(userId, eventId);
   const [registeringId, setRegisteringId] = useState<number | null>(null);
+  
+  const getScheduleForModality = (modalityId: number): ModalitySchedule | undefined => {
+    return modalitySchedules.find(s => s.modalidade_id === modalityId);
+  };
 
   const filteredModalities = modalities.filter(m => 
     m.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (m.categoria && m.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return null;
-    try {
-      return format(new Date(dateString), 'dd/MM/yyyy', { locale: ptBR });
-    } catch {
-      return null;
-    }
-  };
-
-  const formatCurrency = (value: number | null) => {
-    if (value === null || value === 0) return 'Gratuito';
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
 
   const handleRegister = async (modalityId: number) => {
     setRegisteringId(modalityId);
@@ -104,6 +93,7 @@ export function AvailableModalitiesCard({
             {filteredModalities.map((modality) => {
               const vacancyAvailable = isVacancyAvailable(modality);
               const isRegistering = registeringId === modality.id;
+              const schedule = getScheduleForModality(modality.id);
 
               return (
                 <div
@@ -122,6 +112,17 @@ export function AvailableModalitiesCard({
                       <p className="text-xs text-muted-foreground mt-1">
                         {modality.categoria}
                       </p>
+                    )}
+                    
+                    {schedule && (schedule.dia_semana || schedule.horario_inicio) && (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
+                        <Clock className="h-3 w-3" />
+                        <span>
+                          {schedule.dia_semana && <span className="font-medium">{schedule.dia_semana}</span>}
+                          {schedule.dia_semana && schedule.horario_inicio && ' • '}
+                          {schedule.horario_inicio && formatScheduleTime(schedule.horario_inicio, schedule.horario_fim)}
+                        </span>
+                      </div>
                     )}
                   </div>
 
