@@ -11,7 +11,7 @@ export const useAnalyticsData = (eventId: string | null, filterByBranch: boolean
     error,
     refetch 
   } = useQuery({
-    queryKey: ['branch-analytics', eventId, filterByBranch],
+    queryKey: ['branch-analytics', eventId, filterByBranch ? 'delegation' : 'organizer'],
     queryFn: async () => {
       try {
         console.log('Fetching branch analytics with eventId:', eventId, 'filterByBranch:', filterByBranch);
@@ -55,6 +55,10 @@ export const useAnalyticsData = (eventId: string | null, filterByBranch: boolean
       }
     },
     enabled: !!eventId,
+    // Prevent showing stale data from other dashboard types
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
   });
 
   return {

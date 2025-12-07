@@ -10,7 +10,7 @@ export const useEnrollmentData = (eventId: string | null, filterByBranch: boolea
     error,
     refetch
   } = useQuery({
-    queryKey: ['confirmed-enrollments', eventId, filterByBranch],
+    queryKey: ['confirmed-enrollments', eventId, filterByBranch ? 'delegation' : 'organizer'],
     queryFn: async () => {
       if (!eventId) return [];
 
@@ -133,6 +133,9 @@ export const useEnrollmentData = (eventId: string | null, filterByBranch: boolea
     },
     enabled: !!eventId,
     retry: 1,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
     meta: {
       onError: (error: any) => {
         console.error('Error fetching enrollments:', error);
