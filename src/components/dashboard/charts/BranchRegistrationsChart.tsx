@@ -48,15 +48,16 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
   }
 
   return (
-    <Card className="hover:shadow-lg transition-shadow w-full">
+    <Card className="hover:shadow-lg transition-shadow w-full overflow-hidden">
       <CardHeader className="p-3 sm:p-6">
         <CardTitle className="text-sm sm:text-lg">Inscrições por Filial</CardTitle>
         <CardDescription className="text-xs sm:text-sm">
           Filiais com maior número de inscrições por status
         </CardDescription>
       </CardHeader>
-      <CardContent className="p-1 sm:p-6">
-        <ChartContainer config={chartConfig} className="h-[350px] sm:h-[500px] lg:h-[600px] w-full">
+      <CardContent className="p-1 sm:p-6 overflow-x-auto">
+        <div className="min-w-[400px]">
+          <ChartContainer config={chartConfig} className="h-[350px] sm:h-[500px] lg:h-[600px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
               data={data}
@@ -148,6 +149,7 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
             </ComposedChart>
           </ResponsiveContainer>
         </ChartContainer>
+        </div>
       </CardContent>
     </Card>
   );
