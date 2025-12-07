@@ -61,7 +61,7 @@ export const EventSelection = ({
       
       // Redirect after a short delay to ensure toast is seen and localStorage is updated
       setTimeout(() => {
-        navigate('/athlete-profile');
+        navigate('/dashboard');
       }, 300);
     } catch (error) {
       console.error('Error in handleEventRegistration:', error);
@@ -81,7 +81,7 @@ export const EventSelection = ({
       
       // Short delay to ensure toast is visible
       setTimeout(() => {
-        navigate('/athlete-profile');
+        navigate('/dashboard');
       }, 300);
     } else {
       // If not registered, proceed with registration
