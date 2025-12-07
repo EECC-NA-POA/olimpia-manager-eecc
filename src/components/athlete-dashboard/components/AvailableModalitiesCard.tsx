@@ -31,15 +31,15 @@ export function AvailableModalitiesCard({
     return modalitySchedules.find(s => s.modalidade_id === modalityId);
   };
 
-  // Day of week order for sorting (Sunday = 0, Saturday = 6)
+  // Day of week order for sorting (Monday = 0, Sunday = 6)
   const dayOrder: Record<string, number> = {
-    'Domingo': 0,
-    'Segunda': 1,
-    'Terça': 2,
-    'Quarta': 3,
-    'Quinta': 4,
-    'Sexta': 5,
-    'Sábado': 6
+    'Segunda': 0,
+    'Terça': 1,
+    'Quarta': 2,
+    'Quinta': 3,
+    'Sexta': 4,
+    'Sábado': 5,
+    'Domingo': 6
   };
 
   const filteredAndSortedModalities = modalities
