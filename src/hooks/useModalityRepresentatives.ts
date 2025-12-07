@@ -225,44 +225,12 @@ export const useAllModalitiesWithRepresentatives = (eventId: string | null) => {
   });
 };
 
-export const useOrganizerRegisteredAthletes = (modalityId: number | null, eventId: string) => {
-  console.log('useOrganizerRegisteredAthletes called with:', { modalityId, eventId });
-  
-  return useQuery({
-    queryKey: ['organizer-registered-athletes', modalityId, eventId],
-    queryFn: async () => {
-      if (!modalityId) return [];
-      
-      // Get the modality details to find the filial
-      const allModalities = await fetchAllModalitiesWithRepresentatives(eventId);
-      const modality = allModalities.find(m => m.id === modalityId);
-      
-      if (!modality || !modality.filial_id) {
-        throw new Error('Modalidade ou filial não encontrada');
-      }
-      
-      return fetchRegisteredAthletesForModality(modality.filial_id, modalityId, eventId);
-    },
-    enabled: !!modalityId && !!eventId,
-    refetchOnWindowFocus: false,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-  });
-};
-
 export const useOrganizerRepresentativeMutations = (eventId: string) => {
   const queryClient = useQueryClient();
 
   const setRepresentative = useMutation({
-    mutationFn: async ({ modalityId, atletaId }: { modalityId: number; atletaId: string }) => {
-      console.log('Setting representative via organizer:', { modalityId, atletaId, eventId });
-      
-      // Get the modality details to find the filial
-      const allModalities = await fetchAllModalitiesWithRepresentatives(eventId);
-      const modality = allModalities.find(m => m.id === modalityId);
-      
-      if (!modality || !modality.filial_id) {
-        throw new Error('Modalidade ou filial não encontrada');
-      }
+    mutationFn: async ({ modalityId, filialId, atletaId }: { modalityId: number; filialId: string; atletaId: string }) => {
+      console.log('Setting representative via organizer:', { modalityId, filialId, atletaId, eventId });
 
       // Validate organizer permission
       const validation = await validateRepresentativePermission(eventId);
@@ -274,7 +242,7 @@ export const useOrganizerRepresentativeMutations = (eventId: string) => {
         throw new Error('Apenas administradores podem gerenciar representantes de outras filiais');
       }
 
-      return setModalityRepresentative(modality.filial_id, modalityId, atletaId);
+      return setModalityRepresentative(filialId, modalityId, atletaId);
     },
     onSuccess: () => {
       toast.success('Representante adicionado com sucesso!');
@@ -288,16 +256,8 @@ export const useOrganizerRepresentativeMutations = (eventId: string) => {
   });
 
   const removeRepresentative = useMutation({
-    mutationFn: async ({ modalityId, atletaId }: { modalityId: number; atletaId: string }) => {
-      console.log('Removing representative via organizer:', { modalityId, atletaId, eventId });
-      
-      // Get the modality details to find the filial
-      const allModalities = await fetchAllModalitiesWithRepresentatives(eventId);
-      const modality = allModalities.find(m => m.id === modalityId);
-      
-      if (!modality || !modality.filial_id) {
-        throw new Error('Modalidade ou filial não encontrada');
-      }
+    mutationFn: async ({ modalityId, filialId, atletaId }: { modalityId: number; filialId: string; atletaId: string }) => {
+      console.log('Removing representative via organizer:', { modalityId, filialId, atletaId, eventId });
 
       // Validate organizer permission
       const validation = await validateRepresentativePermission(eventId);
@@ -309,7 +269,7 @@ export const useOrganizerRepresentativeMutations = (eventId: string) => {
         throw new Error('Apenas administradores podem gerenciar representantes de outras filiais');
       }
 
-      return removeModalityRepresentative(modality.filial_id, modalityId, atletaId);
+      return removeModalityRepresentative(filialId, modalityId, atletaId);
     },
     onSuccess: () => {
       toast.success('Representante removido com sucesso!');

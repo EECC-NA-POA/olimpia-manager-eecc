@@ -39,9 +39,9 @@ export const useMenuItems = (onLogout: () => void) => {
     if (isAthlete) {
       items.push({
         path: "/athlete-dashboard",
-        label: "Meu Dashboard",
+        label: "Dashboard",
         icon: <LayoutDashboard className="h-5 w-5" />,
-        tooltip: "Meu Dashboard"
+        tooltip: "Dashboard"
       });
     }
     

@@ -4,17 +4,20 @@ import { ErrorState } from "../components/ErrorState";
 import { EmptyState } from "../components/EmptyState";
 import {
   useAllModalitiesWithRepresentatives,
-  useOrganizerRegisteredAthletes,
   useOrganizerRepresentativeMutations
 } from "@/hooks/useModalityRepresentatives";
 import { OrganizerModalitiesByCategory } from './representatives/OrganizerModalitiesByCategory';
+import { fetchRegisteredAthletesForModality } from '@/lib/api/representatives';
+import { useQuery } from '@tanstack/react-query';
 
 interface OrganizerRepresentativesTabProps {
   eventId: string;
 }
 
 export function OrganizerRepresentativesTab({ eventId }: OrganizerRepresentativesTabProps) {
-  const [selectedModalityForChange, setSelectedModalityForChange] = useState<number | null>(null);
+  const [selectedModalityKey, setSelectedModalityKey] = useState<string | null>(null);
+  const [selectedModalityId, setSelectedModalityId] = useState<number | null>(null);
+  const [selectedFilialId, setSelectedFilialId] = useState<string | null>(null);
   
   console.log('OrganizerRepresentativesTab props:', { eventId });
 
@@ -25,26 +28,54 @@ export function OrganizerRepresentativesTab({ eventId }: OrganizerRepresentative
     refetch
   } = useAllModalitiesWithRepresentatives(eventId);
 
+  // Fetch registered athletes for selected modality and filial
   const {
     data: availableAthletes,
     isLoading: athletesLoading
-  } = useOrganizerRegisteredAthletes(selectedModalityForChange, eventId);
+  } = useQuery({
+    queryKey: ['organizer-registered-athletes', selectedModalityId, selectedFilialId, eventId],
+    queryFn: async () => {
+      if (!selectedModalityId || !selectedFilialId) return [];
+      return fetchRegisteredAthletesForModality(selectedFilialId, selectedModalityId, eventId);
+    },
+    enabled: !!selectedModalityId && !!selectedFilialId && !!eventId,
+    refetchOnWindowFocus: false,
+    staleTime: 2 * 60 * 1000,
+  });
 
   const { setRepresentative, removeRepresentative } = useOrganizerRepresentativeMutations(eventId);
 
   console.log('Modalities data:', modalities);
   console.log('Loading state:', isLoading);
   console.log('Error state:', error);
+  console.log('Selected modality key:', selectedModalityKey);
+  console.log('Available athletes:', availableAthletes);
 
-  const handleAddRepresentative = (modalityId: number, atletaId: string) => {
-    console.log('Adding representative:', { modalityId, atletaId });
-    setRepresentative.mutate({ modalityId, atletaId });
-    setSelectedModalityForChange(null);
+  const handleSetSelectedModality = (modalityId: number, filialId: string) => {
+    const key = `${modalityId}-${filialId}`;
+    console.log('Setting selected modality:', { modalityId, filialId, key });
+    setSelectedModalityKey(key);
+    setSelectedModalityId(modalityId);
+    setSelectedFilialId(filialId);
   };
 
-  const handleRemoveRepresentative = (modalityId: number, atletaId: string) => {
-    console.log('Removing representative:', { modalityId, atletaId });
-    removeRepresentative.mutate({ modalityId, atletaId });
+  const handleAddRepresentative = (modalityId: number, filialId: string, atletaId: string) => {
+    console.log('Adding representative:', { modalityId, filialId, atletaId });
+    setRepresentative.mutate({ modalityId, filialId, atletaId });
+    setSelectedModalityKey(null);
+    setSelectedModalityId(null);
+    setSelectedFilialId(null);
+  };
+
+  const handleRemoveRepresentative = (modalityId: number, filialId: string, atletaId: string) => {
+    console.log('Removing representative:', { modalityId, filialId, atletaId });
+    removeRepresentative.mutate({ modalityId, filialId, atletaId });
+  };
+
+  const handleCancelSelection = () => {
+    setSelectedModalityKey(null);
+    setSelectedModalityId(null);
+    setSelectedFilialId(null);
   };
 
   // Validate required props
@@ -97,11 +128,11 @@ export function OrganizerRepresentativesTab({ eventId }: OrganizerRepresentative
         modalities={modalities}
         availableAthletes={availableAthletes}
         athletesLoading={athletesLoading}
-        selectedModalityForChange={selectedModalityForChange}
-        onSetSelectedModality={setSelectedModalityForChange}
+        selectedModalityKey={selectedModalityKey}
+        onSetSelectedModality={handleSetSelectedModality}
         onAddRepresentative={handleAddRepresentative}
         onRemoveRepresentative={handleRemoveRepresentative}
-        onCancelSelection={() => setSelectedModalityForChange(null)}
+        onCancelSelection={handleCancelSelection}
       />
     </div>
   );
