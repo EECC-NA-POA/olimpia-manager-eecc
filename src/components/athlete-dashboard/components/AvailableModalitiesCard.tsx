@@ -117,63 +117,78 @@ export function AvailableModalitiesCard({
             <p className="text-sm text-muted-foreground">Nenhuma encontrada para "{searchTerm}".</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {filteredAndSortedModalities.map((modality) => {
-              const vacancyAvailable = isVacancyAvailable(modality);
-              const isRegistering = registeringId === modality.id;
-              const schedule = getScheduleForModality(modality.id);
+          <div className="space-y-4">
+            {/* Group modalities by day of week */}
+            {Object.entries(
+              filteredAndSortedModalities.reduce((groups, modality) => {
+                const schedule = getScheduleForModality(modality.id);
+                const day = schedule?.dia_semana || 'Sem dia definido';
+                if (!groups[day]) groups[day] = [];
+                groups[day].push(modality);
+                return groups;
+              }, {} as Record<string, typeof filteredAndSortedModalities>)
+            ).map(([dayName, dayModalities]) => (
+              <div key={dayName}>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  {dayName}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {dayModalities.map((modality) => {
+                    const vacancyAvailable = isVacancyAvailable(modality);
+                    const isRegistering = registeringId === modality.id;
+                    const schedule = getScheduleForModality(modality.id);
 
-              return (
-                <div
-                  key={modality.id}
-                  className="flex flex-col p-3 rounded-lg bg-muted/30 border border-border/50"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-medium text-foreground text-sm">{modality.nome}</h4>
-                      <Badge variant="outline" className="shrink-0 text-xs">
-                        {modality.tipo_modalidade}
-                      </Badge>
-                    </div>
-                    
-                    {modality.categoria && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {modality.categoria}
-                      </p>
-                    )}
-                    
-                    {schedule && (schedule.dia_semana || schedule.horario_inicio) && (
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
-                        <Clock className="h-3 w-3" />
-                        <span>
-                          {schedule.dia_semana && <span className="font-medium">{schedule.dia_semana}</span>}
-                          {schedule.dia_semana && schedule.horario_inicio && ' • '}
-                          {schedule.horario_inicio && formatScheduleTime(schedule.horario_inicio, schedule.horario_fim)}
-                        </span>
+                    return (
+                      <div
+                        key={modality.id}
+                        className="flex flex-col p-3 rounded-lg bg-muted/30 border border-border/50"
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <h4 className="font-medium text-foreground text-sm">{modality.nome}</h4>
+                            <Badge variant="outline" className="shrink-0 text-xs">
+                              {modality.tipo_modalidade}
+                            </Badge>
+                          </div>
+                          
+                          {modality.categoria && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {modality.categoria}
+                            </p>
+                          )}
+                          
+                          {schedule?.horario_inicio && (
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
+                              <Clock className="h-3 w-3" />
+                              <span>{formatScheduleTime(schedule.horario_inicio, schedule.horario_fim)}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <Button
+                          size="sm"
+                          className="w-full mt-3 h-8 text-xs"
+                          onClick={() => handleRegister(modality.id)}
+                          disabled={!vacancyAvailable || isRegistering || registerMutation.isPending}
+                        >
+                          {isRegistering ? (
+                            <>
+                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                              Inscrevendo...
+                            </>
+                          ) : !vacancyAvailable ? (
+                            'Sem Vagas'
+                          ) : (
+                            'Inscrever-se'
+                          )}
+                        </Button>
                       </div>
-                    )}
-                  </div>
-
-                  <Button
-                    size="sm"
-                    className="w-full mt-3 h-8 text-xs"
-                    onClick={() => handleRegister(modality.id)}
-                    disabled={!vacancyAvailable || isRegistering || registerMutation.isPending}
-                  >
-                    {isRegistering ? (
-                      <>
-                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                        Inscrevendo...
-                      </>
-                    ) : !vacancyAvailable ? (
-                      'Sem Vagas'
-                    ) : (
-                      'Inscrever-se'
-                    )}
-                  </Button>
+                    );
+                  })}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         )}
       </CardContent>
