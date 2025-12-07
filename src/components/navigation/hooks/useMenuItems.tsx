@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Users, Calendar, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut, UserCheck, Bell, Crown } from 'lucide-react';
+import { User, Users, Calendar, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut, UserCheck, Bell, Crown, LayoutDashboard } from 'lucide-react';
 import { MenuItem } from '../types';
 
 export const useMenuItems = (onLogout: () => void) => {
@@ -35,7 +35,17 @@ export const useMenuItems = (onLogout: () => void) => {
     
     // Add items in the same order as the mobile menu
     
-    // 1. Perfil (Athlete Profile) - for all authenticated users
+    // 1. Meu Dashboard - for athletes (not admin/organizer/delegation)
+    if (isAthlete && !isAdmin && !isOrganizer && !isDelegationRep) {
+      items.push({
+        path: "/athlete-dashboard",
+        label: "Meu Dashboard",
+        icon: <LayoutDashboard className="h-5 w-5" />,
+        tooltip: "Meu Dashboard"
+      });
+    }
+    
+    // 2. Perfil (Athlete Profile) - for all authenticated users
     items.push({
       path: "/athlete-profile",
       label: "Perfil",
