@@ -3,7 +3,6 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import ProfileImage from './athlete/ProfileImage';
 import PersonalInfo from './athlete/PersonalInfo';
 import PaymentAndBranchInfo from './athlete/PaymentAndBranchInfo';
 import AccessProfile from './athlete/AccessProfile';
@@ -84,17 +83,9 @@ export default function AthleteProfile({ profile, isPublicUser, eventData }: Ath
           <CardDescription>Informações pessoais, pagamento e acesso</CardDescription>
         </CardHeader>
         <CardContent className="p-6 pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
-              <ProfileImage 
-                gender={profile.genero}
-                identificador={profile.numero_identificador}
-                isPublicUser={isPublicUser}
-              />
-            </div>
-
-            <div>
-              <PersonalInfo 
+              <PersonalInfo
                 nome_completo={profile.nome_completo}
                 tipo_documento={profile.tipo_documento}
                 numero_documento={profile.numero_documento}

@@ -131,7 +131,7 @@ export default function OrganizerDashboard() {
   };
 
   return (
-    <div className="container mx-auto py-2 sm:py-6 space-y-2 sm:space-y-6 px-2 sm:px-4 max-w-full overflow-x-hidden">
+    <div className="w-full py-2 sm:py-6 space-y-2 sm:space-y-6 px-2 sm:px-4 overflow-x-hidden">
       <DashboardHeader onRefresh={handleRefresh} isRefreshing={isRefreshing} />
 
       <Tabs defaultValue="statistics" className="w-full" onValueChange={setActiveTab} value={activeTab}>
