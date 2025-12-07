@@ -7,6 +7,11 @@ export interface AthletePaymentStatus {
   isento: boolean;
   taxa_inscricao_id: number | null;
   comprovante_url: string | null;
+  link_formulario: string | null;
+  pix_key: string | null;
+  qr_code_image: string | null;
+  contato_nome: string | null;
+  contato_telefone: string | null;
 }
 
 export function useAthletePaymentStatus(userId: string | undefined, eventId: string | null) {
@@ -26,7 +31,12 @@ export function useAthletePaymentStatus(userId: string | undefined, eventId: str
           taxas_inscricao:taxas_inscricao!fk_inscricoes_eventos_taxa_inscricao (
             id,
             valor,
-            isento
+            isento,
+            link_formulario,
+            pix_key,
+            qr_code_image,
+            contato_nome,
+            contato_telefone
           )
         `)
         .eq('usuario_id', userId)
@@ -64,7 +74,12 @@ export function useAthletePaymentStatus(userId: string | undefined, eventId: str
         valor_taxa: taxaInfo?.valor || null,
         isento,
         taxa_inscricao_id: registration.taxa_inscricao_id,
-        comprovante_url: payment?.comprovante_url || null
+        comprovante_url: payment?.comprovante_url || null,
+        link_formulario: taxaInfo?.link_formulario || null,
+        pix_key: taxaInfo?.pix_key || null,
+        qr_code_image: taxaInfo?.qr_code_image || null,
+        contato_nome: taxaInfo?.contato_nome || null,
+        contato_telefone: taxaInfo?.contato_telefone || null
       };
 
       console.log('Payment status:', result);
