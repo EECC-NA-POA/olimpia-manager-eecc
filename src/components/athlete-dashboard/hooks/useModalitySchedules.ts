@@ -26,6 +26,7 @@ export const useModalitySchedules = (eventId: string | null) => {
             horario_inicio,
             horario_fim,
             recorrente,
+            horarios_por_dia,
             evento_id
           )
         `)
@@ -47,23 +48,36 @@ export const useModalitySchedules = (eventId: string | null) => {
         if (!scheduleMap.has(modalidadeId)) {
           let diaSemana: string | null = null;
           let dia: string | null = activity.dia;
+          let horarioInicio: string | null = null;
+          let horarioFim: string | null = null;
           
           if (activity.recorrente && activity.dias_semana && activity.dias_semana.length > 0) {
             // For recurring activities, use the first day of the week
-            diaSemana = activity.dias_semana[0];
+            const primeiroDia = activity.dias_semana[0];
+            // Capitalize first letter for display
+            diaSemana = primeiroDia.charAt(0).toUpperCase() + primeiroDia.slice(1);
+            
+            // Extract times from horarios_por_dia JSONB field
+            if (activity.horarios_por_dia && activity.horarios_por_dia[primeiroDia]) {
+              const horariosDoDia = activity.horarios_por_dia[primeiroDia];
+              horarioInicio = horariosDoDia.inicio || null;
+              horarioFim = horariosDoDia.fim || null;
+            }
           } else if (dia) {
-            // Convert date to day of week
+            // For non-recurring activities, use direct times
             const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
             const date = new Date(dia + 'T00:00:00');
             diaSemana = dayNames[date.getDay()];
+            horarioInicio = activity.horario_inicio;
+            horarioFim = activity.horario_fim;
           }
           
           scheduleMap.set(modalidadeId, {
             modalidade_id: modalidadeId,
             dia,
             dia_semana: diaSemana,
-            horario_inicio: activity.horario_inicio,
-            horario_fim: activity.horario_fim
+            horario_inicio: horarioInicio,
+            horario_fim: horarioFim
           });
         }
       });
