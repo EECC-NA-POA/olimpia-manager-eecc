@@ -21,11 +21,13 @@ export function useMetricsData(data: BranchAnalytics[]) {
         acc.confirmed += Number(status.quantidade) || 0;
       } else if (status.status_pagamento === 'pendente') {
         acc.pending += Number(status.quantidade) || 0;
+      } else if (status.status_pagamento === 'cancelado') {
+        acc.cancelled += Number(status.quantidade) || 0;
       }
     });
     
     return acc;
-  }, { confirmed: 0, pending: 0 });
+  }, { confirmed: 0, pending: 0, cancelled: 0 });
 
   // Calculate revenue totals
   const totalRevenuePaid = data.reduce((acc, branch) => {
@@ -43,6 +45,7 @@ export function useMetricsData(data: BranchAnalytics[]) {
     totalAthletes,
     totalRevenuePaid,
     totalRevenuePending: 0, // Since this isn't in the view currently
-    totalAthletesPendingPayment: paymentTotals.pending
+    totalAthletesPendingPayment: paymentTotals.pending,
+    totalAthletesCancelledPayment: paymentTotals.cancelled
   };
 }

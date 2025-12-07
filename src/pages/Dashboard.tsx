@@ -108,8 +108,8 @@ const Dashboard = () => {
       console.log('Redirecting to Monitor Dashboard');
       navigate('/monitor', { replace: true });
     } else {
-      console.log('Redirecting to Athlete Profile (default)');
-      navigate('/athlete-profile', { replace: true });
+      console.log('Redirecting to Athlete Dashboard (default)');
+      navigate('/athlete-dashboard', { replace: true });
     }
     console.log('====================================');
   }, [user, currentEventId, isLoading, needsBranchSelection, roles, navigate]);
@@ -172,8 +172,9 @@ const Dashboard = () => {
       console.log('Rendering MonitorDashboard');
       return <MonitorDashboard />;
     } else {
-      console.log('Rendering AthleteProfilePage (default)');
-      return <AthleteProfilePage />;
+      console.log('Rendering AthleteDashboardContent (default)');
+      navigate('/athlete-dashboard', { replace: true });
+      return null;
     }
   };
 

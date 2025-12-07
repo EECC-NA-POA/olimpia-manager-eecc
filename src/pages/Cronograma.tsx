@@ -3,7 +3,6 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
 import { Loader2 } from "lucide-react";
-import { VideoSection } from "@/components/cronograma/VideoSection";
 import { GeneralScheduleTable } from "@/components/cronograma/GeneralScheduleTable";
 import { useCronogramaData } from "@/components/cronograma/useCronogramaData";
 
@@ -21,8 +20,6 @@ export default function Cronograma() {
   return (
     <div className="min-h-screen pb-20 md:pb-6">
       <div className="space-y-4 sm:space-y-6 px-2 sm:px-4 max-w-full overflow-x-hidden">
-        <VideoSection />
-
         <Card className="w-full">
           <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
             <CardTitle className="text-olimpics-green-primary flex items-center gap-2 text-lg sm:text-xl">
