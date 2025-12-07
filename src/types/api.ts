@@ -4,6 +4,9 @@ export interface AthleteModality {
   modalidade: string;
   status: string;
   justificativa_status: string;
+  inscrito_por?: string | null;
+  tipo_inscricao?: 'organizador' | 'delegacao' | null;
+  inscrito_por_nome?: string | null;
 }
 
 export interface AthleteManagement {

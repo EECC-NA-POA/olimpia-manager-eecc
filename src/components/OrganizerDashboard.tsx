@@ -87,6 +87,7 @@ export default function OrganizerDashboard() {
               setBranchFilter,
               setPaymentStatusFilter
             }}
+            enrollmentType="organizador"
           />
         );
       

@@ -105,6 +105,7 @@ export default function DelegationDashboard() {
               setBranchFilter,
               setPaymentStatusFilter
             }}
+            enrollmentType="delegacao"
           />
         );
       
