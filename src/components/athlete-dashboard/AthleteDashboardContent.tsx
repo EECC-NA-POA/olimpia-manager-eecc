@@ -35,11 +35,11 @@ export function AthleteDashboardContent({ userId, eventId }: AthleteDashboardCon
   const pendingPayment = registeredModalities?.filter(m => m.status === 'pendente').length || 0;
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
-      {/* Page Header */}
-      <div className="mb-2">
-        <h1 className="text-2xl font-bold text-foreground">Meu Dashboard</h1>
-        <p className="text-muted-foreground">Acompanhe suas inscrições e informações do evento</p>
+    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-5xl">
+      {/* Page Header - Mobile optimized */}
+      <div className="mb-1">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Meu Dashboard</h1>
+        <p className="text-sm text-muted-foreground">Acompanhe suas inscrições e informações do evento</p>
       </div>
 
       {/* Quick Summary */}

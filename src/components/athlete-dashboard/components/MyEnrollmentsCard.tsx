@@ -50,52 +50,53 @@ export function MyEnrollmentsCard({ enrollments, userId, eventId }: MyEnrollment
 
   return (
     <Card className="border-border/50 shadow-sm">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <ClipboardList className="h-5 w-5 text-primary" />
-          Minhas Inscrições
+      <CardHeader className="pb-2 px-3 sm:px-6">
+        <CardTitle className="text-base sm:text-lg font-semibold flex items-center gap-2">
+          <ClipboardList className="h-5 w-5 text-primary shrink-0" />
+          <span className="truncate">Minhas Inscrições</span>
           {enrollments.length > 0 && (
-            <Badge variant="secondary" className="ml-2">{enrollments.length}</Badge>
+            <Badge variant="secondary" className="ml-auto shrink-0">{enrollments.length}</Badge>
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 sm:px-6 pb-4">
         {enrollments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <AlertCircle className="h-10 w-10 text-muted-foreground mb-3" />
-            <p className="text-muted-foreground">Você ainda não está inscrito em nenhuma modalidade.</p>
-            <p className="text-sm text-muted-foreground mt-1">Confira as modalidades disponíveis abaixo.</p>
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground">Você ainda não está inscrito em nenhuma modalidade.</p>
+            <p className="text-xs text-muted-foreground mt-1">Confira as modalidades disponíveis abaixo.</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {enrollments.map((enrollment) => (
               <div
                 key={enrollment.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50 gap-3"
+                className="flex flex-col p-3 rounded-lg bg-muted/30 border border-border/50 gap-2"
               >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="font-medium text-foreground truncate">
-                      {enrollment.modalidade.nome}
-                    </h4>
-                    {getStatusBadge(enrollment.status)}
-                  </div>
-                  <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-                    {enrollment.modalidade.categoria && (
-                      <span>Categoria: {enrollment.modalidade.categoria}</span>
-                    )}
-                    <span>•</span>
-                    <span>{enrollment.modalidade.tipo_modalidade}</span>
-                    <span>•</span>
-                    <span>Inscrito em: {formatDate(enrollment.data_inscricao)}</span>
-                  </div>
+                <div className="flex items-start justify-between gap-2">
+                  <h4 className="font-medium text-foreground text-sm sm:text-base">
+                    {enrollment.modalidade.nome}
+                  </h4>
+                  {getStatusBadge(enrollment.status)}
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                  {enrollment.modalidade.categoria && (
+                    <>
+                      <span>{enrollment.modalidade.categoria}</span>
+                      <span className="text-border">•</span>
+                    </>
+                  )}
+                  <span>{enrollment.modalidade.tipo_modalidade}</span>
+                  <span className="text-border">•</span>
+                  <span>{formatDate(enrollment.data_inscricao)}</span>
                 </div>
 
                 {canWithdraw(enrollment.status) && (
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="w-full sm:w-auto mt-1 text-xs h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                     onClick={() => withdrawMutation.mutate(enrollment.id)}
                     disabled={withdrawMutation.isPending}
                   >
