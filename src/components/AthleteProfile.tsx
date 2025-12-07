@@ -2,7 +2,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import PersonalInfo from './athlete/PersonalInfo';
 import PaymentAndBranchInfo from './athlete/PaymentAndBranchInfo';
 import AccessProfile from './athlete/AccessProfile';
@@ -52,31 +51,9 @@ export default function AthleteProfile({ profile, isPublicUser, eventData }: Ath
     });
   };
 
-  const getStatusBadgeVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
-    switch (status.toLowerCase()) {
-      case 'ativo':
-        return 'default';
-      case 'encerrado':
-      case 'suspenso':
-        return 'destructive';
-      default:
-        return 'secondary';
-    }
-  };
 
   return (
     <div className="space-y-6">
-      {eventData && (
-        <div className="flex items-center gap-2">
-          <h2 className="text-2xl font-bold text-olimpics-green-primary">
-            {eventData.nome}
-          </h2>
-          <Badge variant={getStatusBadgeVariant(eventData.status_evento)} className="text-xs">
-            {eventData.status_evento}
-          </Badge>
-        </div>
-      )}
-
       <Card className="border border-olimpics-green-primary/10 shadow-sm">
         <CardHeader className="pb-2">
           <CardTitle className="text-olimpics-text">Seu Perfil</CardTitle>

@@ -100,7 +100,7 @@ export function AvailableModalitiesCard({
             <p className="text-sm text-muted-foreground">Nenhuma encontrada para "{searchTerm}".</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredModalities.map((modality) => {
               const vacancyAvailable = isVacancyAvailable(modality);
               const isRegistering = registeringId === modality.id;
@@ -122,14 +122,6 @@ export function AvailableModalitiesCard({
                       <p className="text-xs text-muted-foreground mt-1">
                         {modality.categoria}
                       </p>
-                    )}
-
-                    {modality.limite_vagas && (
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs">
-                        <span className={`font-medium ${vacancyAvailable ? 'text-muted-foreground' : 'text-destructive'}`}>
-                          {modality.vagas_ocupadas}/{modality.limite_vagas} vagas
-                        </span>
-                      </div>
                     )}
                   </div>
 
