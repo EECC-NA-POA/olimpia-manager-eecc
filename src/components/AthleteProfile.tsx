@@ -7,10 +7,7 @@ import ProfileImage from './athlete/ProfileImage';
 import PersonalInfo from './athlete/PersonalInfo';
 import PaymentAndBranchInfo from './athlete/PaymentAndBranchInfo';
 import AccessProfile from './athlete/AccessProfile';
-import RegistrationFees from './athlete/RegistrationFees';
-import { useRegistrationFees } from './athlete/registration-fees/useRegistrationFees';
 import { DependentsTable } from './athlete/DependentsTable';
-import { RegistrationCallToAction } from './athlete/RegistrationCallToAction';
 
 interface AthleteProfileProps {
   profile: {
@@ -41,18 +38,6 @@ interface AthleteProfileProps {
 export default function AthleteProfile({ profile, isPublicUser, eventData }: AthleteProfileProps) {
   const navigate = useNavigate();
   const currentEventId = localStorage.getItem('currentEventId');
-  const { data: registrationFees } = useRegistrationFees(currentEventId);
-  const userProfileId = profile.papeis?.[0]?.id;
-  const hasUserFee = React.useMemo(() => {
-    if (!registrationFees) return false;
-    const visible = registrationFees.filter(f => f.mostra_card);
-    return visible.some((f: any) => {
-      const perfil = f.perfil;
-      const perfilId = perfil?.id;
-      const perfilNome = perfil?.nome;
-      return (userProfileId ? perfilId === userProfileId : false) || perfilNome === 'Público Geral';
-    });
-  }, [registrationFees, userProfileId]);
 
   if (!profile) {
     return null;
@@ -67,9 +52,6 @@ export default function AthleteProfile({ profile, isPublicUser, eventData }: Ath
       replace: false
     });
   };
-
-  console.log('AthleteProfile - profile:', profile);
-  console.log('AthleteProfile - isPublicUser:', isPublicUser);
 
   const getStatusBadgeVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (status.toLowerCase()) {
@@ -147,17 +129,6 @@ export default function AthleteProfile({ profile, isPublicUser, eventData }: Ath
 
       {currentEventId && !isPublicUser && (
         <DependentsTable userId={profile.id} eventId={currentEventId} />
-      )}
-
-      {!profile.papeis?.some(papel => papel.codigo === 'PGR') && <RegistrationCallToAction />}
-
-      {hasUserFee && (
-        <div className="mt-6">
-          <RegistrationFees 
-            eventId={currentEventId}
-            userProfileId={userProfileId}
-          />
-        </div>
       )}
     </div>
   );

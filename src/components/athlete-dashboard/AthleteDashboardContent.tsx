@@ -9,6 +9,7 @@ import { EventInfoCard } from './components/EventInfoCard';
 import { MyEnrollmentsCard } from './components/MyEnrollmentsCard';
 import { AvailableModalitiesCard } from './components/AvailableModalitiesCard';
 import { QuickSummaryCard } from './components/QuickSummaryCard';
+import { PaymentUploadCard } from './components/PaymentUploadCard';
 import { Loader2 } from 'lucide-react';
 
 interface AthleteDashboardContentProps {
@@ -43,6 +44,13 @@ export function AthleteDashboardContent({ userId, eventId }: AthleteDashboardCon
   const totalEnrolled = registeredModalities?.length || 0;
   const pendingPayment = registeredModalities?.filter(m => m.status === 'pendente').length || 0;
 
+  // Check if payment is pending and needs upload
+  const needsPaymentUpload = paymentStatus && 
+    paymentStatus.status_pagamento === 'pendente' && 
+    !paymentStatus.isento &&
+    paymentStatus.valor_taxa && 
+    paymentStatus.valor_taxa > 0;
+
   return (
     <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-5xl">
       {/* Page Header - Mobile optimized */}
@@ -57,6 +65,16 @@ export function AthleteDashboardContent({ userId, eventId }: AthleteDashboardCon
         pendingPayment={pendingPayment}
         paymentStatus={paymentStatus}
       />
+
+      {/* Payment Upload - Show if payment is pending */}
+      {needsPaymentUpload && (
+        <PaymentUploadCard
+          userId={userId}
+          eventId={eventId}
+          paymentStatus={paymentStatus}
+          taxaInscricaoId={paymentStatus.taxa_inscricao_id || undefined}
+        />
+      )}
 
       {/* Event Info */}
       {eventData && <EventInfoCard event={eventData} />}
