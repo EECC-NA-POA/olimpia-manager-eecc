@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Users, Calendar, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut, UserCheck, Bell, Crown } from 'lucide-react';
+import { User, Users, Calendar, Gavel, Settings2, Calendar as CalendarIcon, BookOpen, LogOut, UserCheck, Bell, Crown, LayoutDashboard } from 'lucide-react';
 import { MenuItem } from '../types';
 
 export const useMenuItems = (onLogout: () => void) => {
@@ -33,17 +33,23 @@ export const useMenuItems = (onLogout: () => void) => {
   const menuItems: MenuItem[] = useMemo(() => {
     const items: MenuItem[] = [];
     
-    // Add items in the same order as the mobile menu
-    
-    // 1. Perfil (Athlete Profile) - for all authenticated users
+    // 1. Dashboard (NEW - first item for all users)
     items.push({
-      path: "/athlete-profile",
-      label: "Perfil",
-      icon: <User className="h-5 w-5" />,
-      tooltip: "Perfil do Usuário"
+      path: "/dashboard",
+      label: "Dashboard",
+      icon: <LayoutDashboard className="h-5 w-5" />,
+      tooltip: "Dashboard do Evento"
     });
     
-    // 2. Cronograma (Schedule) - for all roles
+    // 2. Perfil (Profile) - for all authenticated users
+    items.push({
+      path: "/athlete-profile",
+      label: "Meu Perfil",
+      icon: <User className="h-5 w-5" />,
+      tooltip: "Dados Pessoais"
+    });
+    
+    // 3. Cronograma (Schedule) - for all roles
     items.push({
       path: "/cronograma",
       label: "Cronograma",
@@ -51,7 +57,7 @@ export const useMenuItems = (onLogout: () => void) => {
       tooltip: "Cronograma"
     });
     
-    // 3. Regulamento (Regulations) - for all roles
+    // 4. Regulamento (Regulations) - for all roles
     items.push({
       path: "/regulamento",
       label: "Regulamento",
@@ -59,7 +65,7 @@ export const useMenuItems = (onLogout: () => void) => {
       tooltip: "Regulamento"
     });
     
-    // 4. Notificações (Notifications) - for all roles
+    // 5. Notificações (Notifications) - for all roles
     items.push({
       path: "/notifications",
       label: "Notificações",
@@ -67,15 +73,7 @@ export const useMenuItems = (onLogout: () => void) => {
       tooltip: "Notificações"
     });
     
-    // 5. Minhas Inscrições (My Registrations) - for all roles except Público Geral
-    if (!roles.isPublicGeral) {
-      items.push({
-        path: "/minhas-inscricoes",
-        label: "Minhas Inscrições",
-        icon: <ClipboardList className="h-5 w-5" />,
-        tooltip: "Minhas Inscrições"
-      });
-    }
+    // Removed "Minhas Inscrições" - now integrated into Dashboard
     
     // 6. Organizador (Organizer)
     if (isOrganizer) {
