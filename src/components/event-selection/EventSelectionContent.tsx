@@ -18,7 +18,7 @@ export function EventSelectionContent() {
     localStorage.setItem('currentEventId', eventId);
     setCurrentEventId(eventId); // Add this line to update context state
     toast.success("Evento selecionado com sucesso!");
-    navigate('/athlete-profile');
+    navigate('/dashboard');
   };
 
   const handleEventsRefresh = (refetchFn: () => void) => {
