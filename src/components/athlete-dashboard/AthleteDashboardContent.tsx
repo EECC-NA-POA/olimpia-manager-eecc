@@ -94,7 +94,7 @@ export function AthleteDashboardContent({ userId, eventId }: AthleteDashboardCon
 
         {/* Header Text and Quick Links */}
         <div className="flex-1 text-center sm:text-left">
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Meu Dashboard</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Dashboard</h1>
           <p className="text-sm text-muted-foreground mb-3">Acompanhe suas inscrições e informações do evento</p>
           
           {/* Quick Navigation Links */}
