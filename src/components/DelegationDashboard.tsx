@@ -45,8 +45,8 @@ export default function DelegationDashboard() {
     return <NoEventSelected />;
   }
 
-  // Only show global loading state before the initial data fetch
-  if (isLoading.any && (!athletes && !branchAnalytics && !confirmedEnrollments)) {
+  // Always show loading state when any data is loading to prevent showing stale/wrong data
+  if (isLoading.any) {
     return <LoadingState />;
   }
 
