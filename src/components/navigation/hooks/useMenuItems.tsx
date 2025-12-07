@@ -35,8 +35,8 @@ export const useMenuItems = (onLogout: () => void) => {
     
     // Add items in the same order as the mobile menu
     
-    // 1. Meu Dashboard - for athletes (not admin/organizer/delegation)
-    if (isAthlete && !isAdmin && !isOrganizer && !isDelegationRep) {
+    // 1. Meu Dashboard - for all athletes (regardless of other roles)
+    if (isAthlete) {
       items.push({
         path: "/athlete-dashboard",
         label: "Meu Dashboard",
