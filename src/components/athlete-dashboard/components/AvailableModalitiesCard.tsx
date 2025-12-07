@@ -64,43 +64,43 @@ export function AvailableModalitiesCard({
 
   return (
     <Card className="border-border/50 shadow-sm">
-      <CardHeader className="pb-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-primary" />
-            Modalidades Disponíveis
+      <CardHeader className="pb-2 px-3 sm:px-6">
+        <div className="flex flex-col gap-3">
+          <CardTitle className="text-base sm:text-lg font-semibold flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-primary shrink-0" />
+            <span className="truncate">Modalidades Disponíveis</span>
             {modalities.length > 0 && (
-              <Badge variant="secondary" className="ml-2">{modalities.length}</Badge>
+              <Badge variant="secondary" className="ml-auto shrink-0">{modalities.length}</Badge>
             )}
           </CardTitle>
           
           {modalities.length > 0 && (
-            <div className="relative w-full sm:w-64">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar modalidade..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
+                className="pl-9 h-9 text-sm"
               />
             </div>
           )}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 sm:px-6 pb-4">
         {modalities.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <AlertCircle className="h-10 w-10 text-muted-foreground mb-3" />
-            <p className="text-muted-foreground">Não há modalidades disponíveis para inscrição.</p>
-            <p className="text-sm text-muted-foreground mt-1">Você já está inscrito em todas as modalidades ou não há modalidades cadastradas.</p>
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground">Não há modalidades disponíveis.</p>
+            <p className="text-xs text-muted-foreground mt-1">Você já está inscrito em todas ou não há modalidades cadastradas.</p>
           </div>
         ) : filteredModalities.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Search className="h-10 w-10 text-muted-foreground mb-3" />
-            <p className="text-muted-foreground">Nenhuma modalidade encontrada para "{searchTerm}".</p>
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <Search className="h-8 w-8 text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground">Nenhuma encontrada para "{searchTerm}".</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {filteredModalities.map((modality) => {
               const vacancyAvailable = isVacancyAvailable(modality);
               const deadlineDate = formatDate(modality.data_limite_inscricao);
@@ -109,68 +109,64 @@ export function AvailableModalitiesCard({
               return (
                 <div
                   key={modality.id}
-                  className="flex flex-col p-4 rounded-lg bg-muted/30 border border-border/50"
+                  className="flex flex-col p-3 rounded-lg bg-muted/30 border border-border/50"
                 >
                   <div className="flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-medium text-foreground">{modality.nome}</h4>
-                      <Badge variant="outline" className="shrink-0">
+                      <h4 className="font-medium text-foreground text-sm">{modality.nome}</h4>
+                      <Badge variant="outline" className="shrink-0 text-xs">
                         {modality.tipo_modalidade}
                       </Badge>
                     </div>
                     
                     {modality.categoria && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Categoria: {modality.categoria}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {modality.categoria}
                       </p>
                     )}
 
                     {modality.descricao && (
-                      <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                         {modality.descricao}
                       </p>
                     )}
 
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-sm">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs">
                       <span className="text-muted-foreground">
-                        Taxa: <span className="font-medium text-foreground">{formatCurrency(modality.valor_inscricao)}</span>
+                        <span className="font-medium text-foreground">{formatCurrency(modality.valor_inscricao)}</span>
                       </span>
                       
                       {modality.limite_vagas && (
-                        <span className="text-muted-foreground">
-                          Vagas: <span className={`font-medium ${vacancyAvailable ? 'text-foreground' : 'text-destructive'}`}>
-                            {modality.vagas_ocupadas}/{modality.limite_vagas}
-                          </span>
+                        <span className={`font-medium ${vacancyAvailable ? 'text-muted-foreground' : 'text-destructive'}`}>
+                          {modality.vagas_ocupadas}/{modality.limite_vagas} vagas
                         </span>
                       )}
 
                       {deadlineDate && (
                         <span className="text-muted-foreground">
-                          Até: <span className="font-medium text-foreground">{deadlineDate}</span>
+                          até {deadlineDate}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="mt-4">
-                    <Button
-                      size="sm"
-                      className="w-full"
-                      onClick={() => handleRegister(modality.id)}
-                      disabled={!vacancyAvailable || isRegistering || registerMutation.isPending}
-                    >
-                      {isRegistering ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Inscrevendo...
-                        </>
-                      ) : !vacancyAvailable ? (
-                        'Sem Vagas'
-                      ) : (
-                        'Inscrever-se'
-                      )}
-                    </Button>
-                  </div>
+                  <Button
+                    size="sm"
+                    className="w-full mt-3 h-8 text-xs"
+                    onClick={() => handleRegister(modality.id)}
+                    disabled={!vacancyAvailable || isRegistering || registerMutation.isPending}
+                  >
+                    {isRegistering ? (
+                      <>
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        Inscrevendo...
+                      </>
+                    ) : !vacancyAvailable ? (
+                      'Sem Vagas'
+                    ) : (
+                      'Inscrever-se'
+                    )}
+                  </Button>
                 </div>
               );
             })}

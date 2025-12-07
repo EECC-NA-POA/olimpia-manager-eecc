@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 export interface AthletePaymentStatus {
   status_pagamento: string | null;
   valor_taxa: number | null;
+  isento: boolean;
 }
 
 export function useAthletePaymentStatus(userId: string | undefined, eventId: string | null) {
@@ -14,20 +15,56 @@ export function useAthletePaymentStatus(userId: string | undefined, eventId: str
 
       console.log('Fetching payment status for athlete:', userId, 'event:', eventId);
 
-      const { data, error } = await supabase
+      // First, get the user's registration to find their taxa_inscricao_id
+      const { data: registration, error: regError } = await supabase
         .from('inscricoes_eventos')
-        .select('status_pagamento, valor_taxa')
+        .select(`
+          id,
+          taxa_inscricao_id,
+          taxas_inscricao:taxas_inscricao!fk_inscricoes_eventos_taxa_inscricao (
+            id,
+            valor,
+            isento
+          )
+        `)
         .eq('usuario_id', userId)
         .eq('evento_id', eventId)
         .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching payment status:', error);
-        throw error;
+      if (regError) {
+        console.error('Error fetching registration:', regError);
+        throw regError;
       }
 
-      console.log('Payment status:', data);
-      return data;
+      if (!registration) {
+        console.log('No registration found');
+        return null;
+      }
+
+      // Get payment status from pagamentos table
+      const { data: payment, error: payError } = await supabase
+        .from('pagamentos')
+        .select('status, valor, isento')
+        .eq('atleta_id', userId)
+        .eq('evento_id', eventId)
+        .maybeSingle();
+
+      if (payError) {
+        console.error('Error fetching payment:', payError);
+        // Don't throw - payment record might not exist yet
+      }
+
+      const taxaInfo = registration.taxas_inscricao as any;
+      const isento = payment?.isento || taxaInfo?.isento || false;
+      
+      const result: AthletePaymentStatus = {
+        status_pagamento: isento ? 'isento' : (payment?.status || 'pendente'),
+        valor_taxa: taxaInfo?.valor || null,
+        isento
+      };
+
+      console.log('Payment status:', result);
+      return result;
     },
     enabled: !!userId && !!eventId,
   });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, FileText, ExternalLink } from 'lucide-react';
 import { Event } from '@/lib/types/database';
@@ -17,7 +17,10 @@ export function EventInfoCard({ event }: EventInfoCardProps) {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'A definir';
     try {
-      return format(new Date(dateString), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+      // Parse as UTC to avoid timezone issues
+      const [year, month, day] = dateString.split('T')[0].split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      return format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
     } catch {
       return 'Data inválida';
     }
@@ -29,65 +32,65 @@ export function EventInfoCard({ event }: EventInfoCardProps) {
   };
 
   const getEventDates = () => {
-    if (event.data_inicio_evento && event.data_fim_evento) {
-      const start = formatDate(event.data_inicio_evento);
-      const end = formatDate(event.data_fim_evento);
+    // Priority: data_inicio and data_fim (main event dates)
+    // Fallback: data_inicio_evento and data_fim_evento
+    const startDate = event.data_inicio || event.data_inicio_evento;
+    const endDate = event.data_fim || event.data_fim_evento;
+    
+    if (startDate && endDate) {
+      const start = formatDate(startDate);
+      const end = formatDate(endDate);
       return start === end ? start : `${start} até ${end}`;
     }
-    if (event.data_inicio_evento) {
-      return formatDate(event.data_inicio_evento);
+    if (startDate) {
+      return formatDate(startDate);
     }
     return 'Datas a definir';
   };
 
   return (
-    <Card className="border-border/50 shadow-sm">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-primary" />
-          Informações do Evento
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Event Name */}
-        <div>
-          <h3 className="text-xl font-bold text-foreground">{event.nome}</h3>
-          {event.descricao && (
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-              {event.descricao}
-            </p>
-          )}
-        </div>
-
-        {/* Event Details */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="flex items-start gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground mt-0.5" />
-            <div>
+    <Card className="border-border/50 shadow-sm overflow-hidden">
+      {/* Header with gradient */}
+      <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-4 py-3 border-b border-border/30">
+        <h3 className="text-lg font-semibold text-foreground">{event.nome}</h3>
+        {event.descricao && (
+          <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">
+            {event.descricao}
+          </p>
+        )}
+      </div>
+      
+      <CardContent className="p-4">
+        {/* Event Details - Mobile optimized */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+              <Calendar className="h-4 w-4 text-primary" />
+            </div>
+            <div className="min-w-0">
               <p className="text-xs text-muted-foreground">Data do Evento</p>
-              <p className="text-sm font-medium">{getEventDates()}</p>
+              <p className="text-sm font-medium text-foreground truncate">{getEventDates()}</p>
             </div>
           </div>
 
-          <div className="flex items-start gap-2">
-            <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-            <div>
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+              <MapPin className="h-4 w-4 text-primary" />
+            </div>
+            <div className="min-w-0">
               <p className="text-xs text-muted-foreground">Local</p>
-              <p className="text-sm font-medium">{getLocation()}</p>
+              <p className="text-sm font-medium text-foreground truncate">{getLocation()}</p>
             </div>
           </div>
-        </div>
 
-        {/* Regulation Link */}
-        <div className="pt-2">
           <Button
             variant="outline"
             size="sm"
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto shrink-0"
             onClick={() => navigate('/regulamento')}
           >
             <FileText className="h-4 w-4 mr-2" />
-            Ver Regulamento
+            Regulamento
             <ExternalLink className="h-3 w-3 ml-2" />
           </Button>
         </div>
