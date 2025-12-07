@@ -6,6 +6,7 @@ import { updateModalityStatus } from "@/lib/api/modalities";
 import { updatePaymentStatus } from "@/lib/api/payments";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { EnrollmentType } from "@/hooks/useEnrollAthleteInModality";
 
 interface AthletesTabProps {
   athletes: AthleteManagement[];
@@ -22,6 +23,7 @@ interface AthletesTabProps {
     setBranchFilter: (value: string) => void;
     setPaymentStatusFilter: (value: string) => void;
   };
+  enrollmentType?: EnrollmentType;
 }
 
 export function AthletesTab({
@@ -30,7 +32,8 @@ export function AthletesTab({
   currentUserId,
   currentEventId,
   filters,
-  onFilterChange
+  onFilterChange,
+  enrollmentType
 }: AthletesTabProps) {
   const queryClient = useQueryClient();
   const filteredAthletes = athletes?.filter(athlete => {
@@ -92,6 +95,8 @@ export function AthletesTab({
             }
           }}
           currentUserId={currentUserId}
+          eventId={currentEventId}
+          enrollmentType={enrollmentType}
         />
       </div>
     </div>
