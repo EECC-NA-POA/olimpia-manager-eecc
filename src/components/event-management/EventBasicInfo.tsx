@@ -40,8 +40,8 @@ export function EventBasicInfo({ eventId, eventData, onUpdate }: EventBasicInfoP
               errors={errors}
               handleTipoChange={handleTipoChange}
               handleStatusChange={handleStatusChange}
-              defaultTipo={eventData.tipo || 'estadual'}
-              defaultStatus={eventData.status_evento || 'ativo'}
+              statusValue={watch('status_evento') || 'ativo'}
+              tipoValue={watch('tipo') || 'estadual'}
             />
             
             <EventLocationFields register={register} />
