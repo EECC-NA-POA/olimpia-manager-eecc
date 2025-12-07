@@ -18,6 +18,8 @@ export function useAvailableModalitiesForAthlete(userId: string | undefined, eve
 
       console.log('Fetching available modalities for athlete:', userId, 'event:', eventId);
 
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
       // First, get the modalities the athlete is already registered for
       const { data: registeredData, error: registeredError } = await supabase
         .from('inscricoes_modalidades')
@@ -31,6 +33,29 @@ export function useAvailableModalitiesForAthlete(userId: string | undefined, eve
       }
 
       const registeredIds = registeredData?.map(r => r.modalidade_id) || [];
+
+      // Get modalities linked to non-recurring activities with past dates
+      const { data: pastActivities, error: pastError } = await supabase
+        .from('cronograma_atividade_modalidades')
+        .select(`
+          modalidade_id,
+          cronograma_atividades!inner (
+            dia,
+            recorrente,
+            evento_id
+          )
+        `)
+        .eq('cronograma_atividades.evento_id', eventId)
+        .eq('cronograma_atividades.recorrente', false)
+        .lt('cronograma_atividades.dia', today);
+
+      if (pastError) {
+        console.error('Error fetching past activities:', pastError);
+        // Don't throw, just continue without this filter
+      }
+
+      const expiredModalityIds = pastActivities?.map(a => a.modalidade_id) || [];
+      console.log('Expired modality IDs (past non-recurring activities):', expiredModalityIds);
 
       // Then fetch all modalities for the event
       const { data: modalitiesData, error: modalitiesError } = await supabase
@@ -51,12 +76,12 @@ export function useAvailableModalitiesForAthlete(userId: string | undefined, eve
         throw modalitiesError;
       }
 
-      // Filter out modalities the athlete is already registered for
+      // Filter out modalities already registered AND modalities with past activities
       const availableModalities = (modalitiesData || []).filter(
-        m => !registeredIds.includes(m.id)
+        m => !registeredIds.includes(m.id) && !expiredModalityIds.includes(m.id)
       );
 
-      console.log('Available modalities:', availableModalities.length);
+      console.log('Available modalities after filtering:', availableModalities.length);
       return availableModalities;
     },
     enabled: !!userId && !!eventId,
