@@ -1,18 +1,16 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, FileText, ExternalLink } from 'lucide-react';
+import { Calendar, MapPin } from 'lucide-react';
 import { Event } from '@/lib/types/database';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useNavigate } from 'react-router-dom';
+
 
 interface EventInfoCardProps {
   event: Event;
 }
 
 export function EventInfoCard({ event }: EventInfoCardProps) {
-  const navigate = useNavigate();
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'A definir';
@@ -83,16 +81,6 @@ export function EventInfoCard({ event }: EventInfoCardProps) {
             </div>
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full sm:w-auto shrink-0"
-            onClick={() => navigate('/regulamento')}
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            Regulamento
-            <ExternalLink className="h-3 w-3 ml-2" />
-          </Button>
         </div>
       </CardContent>
     </Card>
