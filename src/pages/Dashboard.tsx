@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import AthleteDashboard from '@/components/athlete/dashboard/AthleteDashboard';
+import AthleteProfilePage from '@/components/AthleteProfilePage';
 import { WelcomePolicyBranchModal } from '@/components/auth/WelcomePolicyBranchModal';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { supabase } from '@/lib/supabase';
@@ -68,7 +68,7 @@ const Dashboard = () => {
     setIsLoading(false);
   }, [user, currentEventId, navigate]);
 
-  // Role-based routing effect - only for non-athlete roles
+  // Role-based routing effect
   useEffect(() => {
     if (!user || !currentEventId || isLoading || needsBranchSelection) return;
 
@@ -77,20 +77,21 @@ const Dashboard = () => {
     console.log('User papeis:', user.papeis);
     console.log('Current path:', window.location.pathname);
     
+    // Determine primary role and redirect appropriately
     const currentPath = window.location.pathname;
     
-    // Don't redirect if already on the correct dashboard or on the main dashboard
-    if (currentPath === '/dashboard' ||
-        currentPath.includes('/organizador') || 
+    // Don't redirect if already on the correct dashboard
+    if (currentPath.includes('/organizador') || 
         currentPath.includes('/administration') || 
         currentPath.includes('/judge-dashboard') ||
         currentPath.includes('/delegacao') ||
-        currentPath.includes('/monitor')) {
+        currentPath.includes('/monitor') ||
+        currentPath.includes('/athlete-profile')) {
       console.log('Already on appropriate dashboard, skipping redirect');
       return;
     }
 
-    // Role priority order: Admin > Organizer > Judge > Delegation > Monitor > Athlete (stays on dashboard)
+    // Role priority order: Admin > Organizer > Judge > Delegation > Monitor > Athlete
     if (roles.isAdmin) {
       console.log('Redirecting to Administration (Admin role)');
       navigate('/administration', { replace: true });
@@ -106,8 +107,10 @@ const Dashboard = () => {
     } else if (roles.isFilosofoMonitor) {
       console.log('Redirecting to Monitor Dashboard');
       navigate('/monitor', { replace: true });
+    } else {
+      console.log('Redirecting to Athlete Profile (default)');
+      navigate('/athlete-profile', { replace: true });
     }
-    // Athletes stay on /dashboard - no redirect needed
     console.log('====================================');
   }, [user, currentEventId, isLoading, needsBranchSelection, roles, navigate]);
 
@@ -169,9 +172,8 @@ const Dashboard = () => {
       console.log('Rendering MonitorDashboard');
       return <MonitorDashboard />;
     } else {
-      // Default: Render the new Athlete Dashboard
-      console.log('Rendering AthleteDashboard (default)');
-      return <AthleteDashboard />;
+      console.log('Rendering AthleteProfilePage (default)');
+      return <AthleteProfilePage />;
     }
   };
 
