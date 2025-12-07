@@ -20,6 +20,7 @@ export interface BranchRegistrationData {
   name: string;
   confirmados: number;
   pendentes: number;
+  cancelados?: number;
   isentos?: number;
   total: number;
 }
@@ -141,6 +142,20 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
                 activeDot={{ r: 5 }}
                 strokeDasharray="5 5"
               />
+              {/* Add line for cancelled athletes if data exists */}
+              {data.some(item => item.cancelados && item.cancelados > 0) && (
+                <Line 
+                  yAxisId="left"
+                  type="monotone" 
+                  dataKey="cancelados" 
+                  name="Cancelados" 
+                  stroke="#EF4444" 
+                  strokeWidth={1.5} 
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
+                  strokeDasharray="3 3"
+                />
+              )}
               {/* Add line for exempt athletes if data exists */}
               {data.some(item => item.isentos && item.isentos > 0) && (
                 <Line 
@@ -148,7 +163,7 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
                   type="monotone" 
                   dataKey="isentos" 
                   name="Isentos" 
-                  stroke={chartColors.blue} 
+                  stroke="#6366F1" 
                   strokeWidth={1.5} 
                   dot={{ r: 3 }}
                   activeDot={{ r: 5 }}

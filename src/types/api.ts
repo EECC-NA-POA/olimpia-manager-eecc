@@ -101,5 +101,7 @@ export interface BranchRegistrationData {
   name: string;
   confirmados: number;
   pendentes: number;
+  cancelados?: number;
+  isentos?: number;
   total: number;
 }

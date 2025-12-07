@@ -21,10 +21,12 @@ interface PaymentStatusData {
   confirmado: number;
   pendente: number;
   cancelado: number;
+  isento: number;
   total: number;
   confirmadoPct: number;
   pendentePct: number;
   canceladoPct: number;
+  isentoPct: number;
 }
 
 interface PaymentStatusBarChartProps {
@@ -56,7 +58,7 @@ export function PaymentStatusBarChart({
   }
 
   // Extract percentages from the first data item
-  const { confirmadoPct = 0, pendentePct = 0, canceladoPct = 0 } = data[0];
+  const { confirmadoPct = 0, pendentePct = 0, canceladoPct = 0, isentoPct = 0 } = data[0];
   
   // Format numbers for display
   const formatNumber = (num: number) => {
@@ -73,7 +75,7 @@ export function PaymentStatusBarChart({
         <div className="space-y-6">
           {/* Battery-style visualization */}
           <div className="space-y-2">
-            <div className="flex flex-col sm:flex-row sm:justify-between gap-2 text-xs sm:text-sm font-medium">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs sm:text-sm font-medium">
               <div className="flex items-center">
                 <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span>
                 Confirmado: {formatNumber(data[0].confirmado)} ({confirmadoPct.toFixed(1)}%)
@@ -85,6 +87,10 @@ export function PaymentStatusBarChart({
               <div className="flex items-center">
                 <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span>
                 Cancelado: {formatNumber(data[0].cancelado)} ({canceladoPct.toFixed(1)}%)
+              </div>
+              <div className="flex items-center">
+                <span className="inline-block w-3 h-3 rounded-full bg-indigo-500 mr-1"></span>
+                Isento: {formatNumber(data[0].isento)} ({isentoPct.toFixed(1)}%)
               </div>
             </div>
             
@@ -113,6 +119,15 @@ export function PaymentStatusBarChart({
                   width: `${canceladoPct}%` 
                 }}
               ></div>
+              
+              {/* Exempt segment */}
+              <div 
+                className="absolute top-0 h-full bg-indigo-500" 
+                style={{ 
+                  left: `${confirmadoPct + pendentePct + canceladoPct}%`, 
+                  width: `${isentoPct}%` 
+                }}
+              ></div>
             </div>
             
             <div className="text-center text-xs sm:text-sm text-muted-foreground">
@@ -129,7 +144,8 @@ export function PaymentStatusBarChart({
                   data={[
                     { name: 'Confirmado', value: data[0].confirmado, color: '#10B981' },
                     { name: 'Pendente', value: data[0].pendente, color: '#F59E0B' },
-                    { name: 'Cancelado', value: data[0].cancelado, color: '#EF4444' }
+                    { name: 'Cancelado', value: data[0].cancelado, color: '#EF4444' },
+                    { name: 'Isento', value: data[0].isento, color: '#6366F1' }
                   ]}
                   layout="vertical"
                   margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
@@ -152,13 +168,14 @@ export function PaymentStatusBarChart({
                   <Bar 
                     dataKey="value" 
                     name="Quantidade" 
-                    barSize={25}
+                    barSize={20}
                     radius={[0, 4, 4, 0]}
                   >
                     {[
                       { name: 'Confirmado', value: data[0].confirmado, color: '#10B981' },
                       { name: 'Pendente', value: data[0].pendente, color: '#F59E0B' },
-                      { name: 'Cancelado', value: data[0].cancelado, color: '#EF4444' }
+                      { name: 'Cancelado', value: data[0].cancelado, color: '#EF4444' },
+                      { name: 'Isento', value: data[0].isento, color: '#6366F1' }
                     ].map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}

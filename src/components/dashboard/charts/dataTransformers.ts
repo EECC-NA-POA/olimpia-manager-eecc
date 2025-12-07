@@ -177,6 +177,7 @@ export function transformBranchRegistrationsData(data: BranchAnalytics[]): Branc
     name: branchData.filial,
     confirmados: branchData.inscritos_por_status_pagamento.find(status => status.status_pagamento === 'confirmado')?.quantidade || 0,
     pendentes: branchData.inscritos_por_status_pagamento.find(status => status.status_pagamento === 'pendente')?.quantidade || 0,
+    cancelados: branchData.inscritos_por_status_pagamento.find(status => status.status_pagamento === 'cancelado')?.quantidade || 0,
     isentos: branchData.inscritos_por_status_pagamento.find(status => status.status_pagamento === 'isento')?.quantidade || 0,
     total: branchData.total_inscritos_geral
   }));
