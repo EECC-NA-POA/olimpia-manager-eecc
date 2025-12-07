@@ -6,7 +6,6 @@ export interface AvailableModality {
   nome: string;
   categoria: string | null;
   tipo_modalidade: string;
-  descricao: string | null;
   limite_vagas: number | null;
   vagas_ocupadas: number;
   valor_inscricao: number | null;
@@ -43,7 +42,6 @@ export function useAvailableModalitiesForAthlete(userId: string | undefined, eve
           nome,
           categoria,
           tipo_modalidade,
-          descricao,
           limite_vagas,
           vagas_ocupadas,
           valor_inscricao,
