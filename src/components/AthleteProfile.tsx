@@ -2,15 +2,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import ProfileImage from './athlete/ProfileImage';
 import PersonalInfo from './athlete/PersonalInfo';
 import PaymentAndBranchInfo from './athlete/PaymentAndBranchInfo';
 import AccessProfile from './athlete/AccessProfile';
-import RegistrationFees from './athlete/RegistrationFees';
-import { useRegistrationFees } from './athlete/registration-fees/useRegistrationFees';
 import { DependentsTable } from './athlete/DependentsTable';
-import { RegistrationCallToAction } from './athlete/RegistrationCallToAction';
 
 interface AthleteProfileProps {
   profile: {
@@ -41,18 +37,6 @@ interface AthleteProfileProps {
 export default function AthleteProfile({ profile, isPublicUser, eventData }: AthleteProfileProps) {
   const navigate = useNavigate();
   const currentEventId = localStorage.getItem('currentEventId');
-  const { data: registrationFees } = useRegistrationFees(currentEventId);
-  const userProfileId = profile.papeis?.[0]?.id;
-  const hasUserFee = React.useMemo(() => {
-    if (!registrationFees) return false;
-    const visible = registrationFees.filter(f => f.mostra_card);
-    return visible.some((f: any) => {
-      const perfil = f.perfil;
-      const perfilId = perfil?.id;
-      const perfilNome = perfil?.nome;
-      return (userProfileId ? perfilId === userProfileId : false) || perfilNome === 'Público Geral';
-    });
-  }, [registrationFees, userProfileId]);
 
   if (!profile) {
     return null;
@@ -68,38 +52,12 @@ export default function AthleteProfile({ profile, isPublicUser, eventData }: Ath
     });
   };
 
-  console.log('AthleteProfile - profile:', profile);
-  console.log('AthleteProfile - isPublicUser:', isPublicUser);
-
-  const getStatusBadgeVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
-    switch (status.toLowerCase()) {
-      case 'ativo':
-        return 'default';
-      case 'encerrado':
-      case 'suspenso':
-        return 'destructive';
-      default:
-        return 'secondary';
-    }
-  };
-
   return (
     <div className="space-y-6">
-      {eventData && (
-        <div className="flex items-center gap-2">
-          <h2 className="text-2xl font-bold text-olimpics-green-primary">
-            {eventData.nome}
-          </h2>
-          <Badge variant={getStatusBadgeVariant(eventData.status_evento)} className="text-xs">
-            {eventData.status_evento}
-          </Badge>
-        </div>
-      )}
-
       <Card className="border border-olimpics-green-primary/10 shadow-sm">
         <CardHeader className="pb-2">
-          <CardTitle className="text-olimpics-text">Seu Perfil</CardTitle>
-          <CardDescription>Informações pessoais, pagamento e acesso</CardDescription>
+          <CardTitle className="text-olimpics-text">Meu Perfil</CardTitle>
+          <CardDescription>Seus dados pessoais e informações de acesso</CardDescription>
         </CardHeader>
         <CardContent className="p-6 pt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -147,17 +105,6 @@ export default function AthleteProfile({ profile, isPublicUser, eventData }: Ath
 
       {currentEventId && !isPublicUser && (
         <DependentsTable userId={profile.id} eventId={currentEventId} />
-      )}
-
-      {!profile.papeis?.some(papel => papel.codigo === 'PGR') && <RegistrationCallToAction />}
-
-      {hasUserFee && (
-        <div className="mt-6">
-          <RegistrationFees 
-            eventId={currentEventId}
-            userProfileId={userProfileId}
-          />
-        </div>
       )}
     </div>
   );
