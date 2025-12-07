@@ -31,10 +31,38 @@ export function AvailableModalitiesCard({
     return modalitySchedules.find(s => s.modalidade_id === modalityId);
   };
 
-  const filteredModalities = modalities.filter(m => 
-    m.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (m.categoria && m.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Day of week order for sorting (Sunday = 0, Saturday = 6)
+  const dayOrder: Record<string, number> = {
+    'Domingo': 0,
+    'Segunda': 1,
+    'Terça': 2,
+    'Quarta': 3,
+    'Quinta': 4,
+    'Sexta': 5,
+    'Sábado': 6
+  };
+
+  const filteredAndSortedModalities = modalities
+    .filter(m => 
+      m.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (m.categoria && m.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+    .sort((a, b) => {
+      const scheduleA = getScheduleForModality(a.id);
+      const scheduleB = getScheduleForModality(b.id);
+      
+      // Get day order (put modalities without schedule at the end)
+      const dayA = scheduleA?.dia_semana ? (dayOrder[scheduleA.dia_semana] ?? 99) : 99;
+      const dayB = scheduleB?.dia_semana ? (dayOrder[scheduleB.dia_semana] ?? 99) : 99;
+      
+      if (dayA !== dayB) return dayA - dayB;
+      
+      // If same day, sort by time
+      const timeA = scheduleA?.horario_inicio || '99:99';
+      const timeB = scheduleB?.horario_inicio || '99:99';
+      
+      return timeA.localeCompare(timeB);
+    });
 
 
   const handleRegister = async (modalityId: number) => {
@@ -83,14 +111,14 @@ export function AvailableModalitiesCard({
             <p className="text-sm text-muted-foreground">Não há modalidades disponíveis.</p>
             <p className="text-xs text-muted-foreground mt-1">Você já está inscrito em todas ou não há modalidades cadastradas.</p>
           </div>
-        ) : filteredModalities.length === 0 ? (
+        ) : filteredAndSortedModalities.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-6 text-center">
             <Search className="h-8 w-8 text-muted-foreground mb-2" />
             <p className="text-sm text-muted-foreground">Nenhuma encontrada para "{searchTerm}".</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {filteredModalities.map((modality) => {
+            {filteredAndSortedModalities.map((modality) => {
               const vacancyAvailable = isVacancyAvailable(modality);
               const isRegistering = registeringId === modality.id;
               const schedule = getScheduleForModality(modality.id);
