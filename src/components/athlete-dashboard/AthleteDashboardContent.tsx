@@ -3,6 +3,8 @@ import { useEventData } from '@/hooks/useEventData';
 import { useRegisteredModalities } from '@/hooks/useRegisteredModalities';
 import { useAthletePaymentStatus } from './hooks/useAthletePaymentStatus';
 import { useAvailableModalitiesForAthlete } from './hooks/useAvailableModalitiesForAthlete';
+import { useModalitiesWithRepresentatives } from '@/hooks/useModalityRepresentatives';
+import { useAthleteProfile } from '@/hooks/useAthleteProfile';
 import { EventInfoCard } from './components/EventInfoCard';
 import { MyEnrollmentsCard } from './components/MyEnrollmentsCard';
 import { AvailableModalitiesCard } from './components/AvailableModalitiesCard';
@@ -19,8 +21,15 @@ export function AthleteDashboardContent({ userId, eventId }: AthleteDashboardCon
   const { data: registeredModalities, isLoading: modalitiesLoading } = useRegisteredModalities(userId, eventId);
   const { data: paymentStatus, isLoading: paymentLoading } = useAthletePaymentStatus(userId, eventId);
   const { data: availableModalities, isLoading: availableLoading } = useAvailableModalitiesForAthlete(userId, eventId);
+  const { data: athleteProfile, isLoading: profileLoading } = useAthleteProfile(userId, eventId);
+  
+  // Fetch representatives data
+  const { data: modalitiesWithRepresentatives, isLoading: representativesLoading } = useModalitiesWithRepresentatives(
+    athleteProfile?.filial_id,
+    eventId
+  );
 
-  const isLoading = eventLoading || modalitiesLoading || paymentLoading || availableLoading;
+  const isLoading = eventLoading || modalitiesLoading || paymentLoading || availableLoading || profileLoading;
 
   if (isLoading) {
     return (
@@ -57,6 +66,7 @@ export function AthleteDashboardContent({ userId, eventId }: AthleteDashboardCon
         enrollments={registeredModalities || []}
         userId={userId}
         eventId={eventId}
+        modalitiesWithRepresentatives={modalitiesWithRepresentatives || []}
       />
 
       {/* Available Modalities */}
