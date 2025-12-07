@@ -125,11 +125,6 @@ export function AvailableModalitiesCard({
                       </p>
                     )}
 
-                    {modality.descricao && (
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                        {modality.descricao}
-                      </p>
-                    )}
 
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs">
                       <span className="text-muted-foreground">
