@@ -8,8 +8,6 @@ export interface AvailableModality {
   tipo_modalidade: string;
   limite_vagas: number | null;
   vagas_ocupadas: number;
-  valor_inscricao: number | null;
-  data_limite_inscricao: string | null;
 }
 
 export function useAvailableModalitiesForAthlete(userId: string | undefined, eventId: string | null) {
@@ -43,9 +41,7 @@ export function useAvailableModalitiesForAthlete(userId: string | undefined, eve
           categoria,
           tipo_modalidade,
           limite_vagas,
-          vagas_ocupadas,
-          valor_inscricao,
-          data_limite_inscricao
+          vagas_ocupadas
         `)
         .eq('evento_id', eventId)
         .order('nome');

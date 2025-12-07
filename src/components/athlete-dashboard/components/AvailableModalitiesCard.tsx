@@ -103,7 +103,6 @@ export function AvailableModalitiesCard({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {filteredModalities.map((modality) => {
               const vacancyAvailable = isVacancyAvailable(modality);
-              const deadlineDate = formatDate(modality.data_limite_inscricao);
               const isRegistering = registeringId === modality.id;
 
               return (
@@ -125,24 +124,13 @@ export function AvailableModalitiesCard({
                       </p>
                     )}
 
-
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs">
-                      <span className="text-muted-foreground">
-                        <span className="font-medium text-foreground">{formatCurrency(modality.valor_inscricao)}</span>
-                      </span>
-                      
-                      {modality.limite_vagas && (
+                    {modality.limite_vagas && (
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs">
                         <span className={`font-medium ${vacancyAvailable ? 'text-muted-foreground' : 'text-destructive'}`}>
                           {modality.vagas_ocupadas}/{modality.limite_vagas} vagas
                         </span>
-                      )}
-
-                      {deadlineDate && (
-                        <span className="text-muted-foreground">
-                          até {deadlineDate}
-                        </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
 
                   <Button
