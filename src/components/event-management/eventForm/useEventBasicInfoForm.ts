@@ -37,15 +37,24 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
   });
   
   const handleStatusChange = (value: string) => {
-    form.setValue('status_evento', value as 'ativo' | 'encerrado' | 'suspenso' | 'em_teste' | 'encerrado_oculto');
+    form.setValue('status_evento', value as 'ativo' | 'encerrado' | 'suspenso' | 'em_teste' | 'encerrado_oculto', { 
+      shouldDirty: true,
+      shouldTouch: true 
+    });
   };
 
   const handleTipoChange = (value: string) => {
-    form.setValue('tipo', value as 'estadual' | 'nacional' | 'internacional' | 'regional');
+    form.setValue('tipo', value as 'estadual' | 'nacional' | 'internacional' | 'regional', { 
+      shouldDirty: true,
+      shouldTouch: true 
+    });
   };
 
   const handleVisibilidadeChange = (checked: boolean) => {
-    form.setValue('visibilidade_publica', checked);
+    form.setValue('visibilidade_publica', checked, { 
+      shouldDirty: true,
+      shouldTouch: true 
+    });
   };
 
   const onSubmit = async (data: EventBasicInfoFormValues) => {
