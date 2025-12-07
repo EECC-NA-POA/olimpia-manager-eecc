@@ -1,15 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Upload, FileImage, AlertCircle, CheckCircle2, Loader2, CreditCard } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import { AlertCircle, CreditCard, ExternalLink, MessageCircle, Copy, CheckCircle2 } from 'lucide-react';
 import { AthletePaymentStatus } from '../hooks/useAthletePaymentStatus';
-import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 interface PaymentUploadCardProps {
   userId: string;
@@ -18,128 +14,13 @@ interface PaymentUploadCardProps {
   taxaInscricaoId?: number;
 }
 
-export function PaymentUploadCard({ userId, eventId, paymentStatus, taxaInscricaoId }: PaymentUploadCardProps) {
-  const [isUploading, setIsUploading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const queryClient = useQueryClient();
+export function PaymentUploadCard({ paymentStatus }: PaymentUploadCardProps) {
+  const [copied, setCopied] = React.useState(false);
 
   // Don't show if already confirmed or exempt
   if (paymentStatus?.status_pagamento === 'confirmado' || paymentStatus?.isento) {
     return null;
   }
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-      if (!allowedTypes.includes(file.type)) {
-        toast.error('Formato inválido. Use JPG, PNG, WebP ou PDF.');
-        return;
-      }
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Arquivo muito grande. Máximo 5MB.');
-        return;
-      }
-      setSelectedFile(file);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      toast.error('Selecione um arquivo primeiro.');
-      return;
-    }
-
-    setIsUploading(true);
-
-    try {
-      // Generate unique filename
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${userId}_${eventId}_${Date.now()}.${fileExt}`;
-      const filePath = `comprovantes/${fileName}`;
-
-      // Upload to storage
-      const { error: uploadError } = await supabase.storage
-        .from('pagamentos')
-        .upload(filePath, selectedFile);
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw new Error('Erro ao fazer upload do arquivo.');
-      }
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('pagamentos')
-        .getPublicUrl(filePath);
-
-      // Update or create payment record
-      const { data: existingPayment, error: checkError } = await supabase
-        .from('pagamentos')
-        .select('id')
-        .eq('atleta_id', userId)
-        .eq('evento_id', eventId)
-        .maybeSingle();
-
-      if (checkError) {
-        console.error('Check error:', checkError);
-      }
-
-      if (existingPayment) {
-        // Update existing payment
-        const { error: updateError } = await supabase
-          .from('pagamentos')
-          .update({ 
-            comprovante_url: urlData.publicUrl,
-            status: 'pendente'
-          })
-          .eq('id', existingPayment.id);
-
-        if (updateError) {
-          console.error('Update error:', updateError);
-          throw new Error('Erro ao atualizar pagamento.');
-        }
-      } else if (taxaInscricaoId) {
-        // Create new payment record
-        const { error: insertError } = await supabase
-          .from('pagamentos')
-          .insert({
-            atleta_id: userId,
-            evento_id: eventId,
-            taxa_inscricao_id: taxaInscricaoId,
-            comprovante_url: urlData.publicUrl,
-            status: 'pendente',
-            valor: paymentStatus?.valor_taxa || 0,
-            isento: false,
-            numero_identificador: `PAG-${Date.now()}`,
-            data_criacao: new Date().toISOString()
-          });
-
-        if (insertError) {
-          console.error('Insert error:', insertError);
-          throw new Error('Erro ao registrar pagamento.');
-        }
-      }
-
-      toast.success('Comprovante enviado com sucesso! Aguarde a validação.');
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      
-      // Refresh payment status
-      queryClient.invalidateQueries({ queryKey: ['athlete-payment-status', userId, eventId] });
-
-    } catch (error: any) {
-      console.error('Payment upload error:', error);
-      toast.error(error.message || 'Erro ao enviar comprovante.');
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   const formatCurrency = (value: number | null | undefined) => {
     if (!value) return 'R$ 0,00';
@@ -148,6 +29,34 @@ export function PaymentUploadCard({ userId, eventId, paymentStatus, taxaInscrica
       currency: 'BRL'
     }).format(value);
   };
+
+  const formatPhoneForWhatsApp = (phone: string | null | undefined): string => {
+    if (!phone) return '';
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.startsWith('55')) return cleaned;
+    return `55${cleaned}`;
+  };
+
+  const handleCopyPix = async () => {
+    if (paymentStatus?.pix_key) {
+      try {
+        await navigator.clipboard.writeText(paymentStatus.pix_key);
+        setCopied(true);
+        toast.success('Chave PIX copiada!');
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        toast.error('Erro ao copiar');
+      }
+    }
+  };
+
+  const handleOpenForm = () => {
+    if (paymentStatus?.link_formulario) {
+      window.open(paymentStatus.link_formulario, '_blank');
+    }
+  };
+
+  const hasFormLink = !!paymentStatus?.link_formulario;
 
   return (
     <Card className="border-yellow-500/50 bg-yellow-50/50 dark:bg-yellow-900/10 shadow-sm">
@@ -161,7 +70,7 @@ export function PaymentUploadCard({ userId, eventId, paymentStatus, taxaInscrica
         <Alert className="bg-yellow-100/50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700">
           <AlertCircle className="h-4 w-4 text-yellow-700 dark:text-yellow-500" />
           <AlertDescription className="text-sm text-yellow-800 dark:text-yellow-400">
-            Para se inscrever nas modalidades, é necessário <strong>enviar o comprovante de pagamento</strong> da taxa de inscrição.
+            Para se inscrever nas modalidades, é necessário <strong>enviar o comprovante de pagamento</strong> da taxa de inscrição através do formulário.
           </AlertDescription>
         </Alert>
 
@@ -174,58 +83,68 @@ export function PaymentUploadCard({ userId, eventId, paymentStatus, taxaInscrica
             </p>
           </div>
           <Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
-            {paymentStatus?.status_pagamento === 'pendente' ? 'Aguardando Comprovante' : 'Pendente'}
+            Aguardando Comprovante
           </Badge>
         </div>
 
-        {/* Upload Section */}
-        <div className="space-y-3">
-          <Label htmlFor="comprovante" className="text-sm font-medium">
-            Enviar Comprovante de Pagamento
-          </Label>
-          
-          <div className="flex flex-col sm:flex-row gap-2">
-            <div className="relative flex-1">
-              <Input
-                ref={fileInputRef}
-                id="comprovante"
-                type="file"
-                accept="image/jpeg,image/png,image/webp,application/pdf"
-                onChange={handleFileSelect}
-                className="cursor-pointer file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-              />
+        {/* PIX Info */}
+        {paymentStatus?.pix_key && (
+          <div className="p-3 rounded-lg bg-background border border-border/50 space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">Chave PIX</p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 text-sm bg-muted px-2 py-1 rounded truncate">
+                {paymentStatus.pix_key}
+              </code>
+              <Button variant="outline" size="sm" onClick={handleCopyPix}>
+                {copied ? <CheckCircle2 className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+              </Button>
             </div>
-            <Button
-              onClick={handleUpload}
-              disabled={!selectedFile || isUploading}
-              className="shrink-0"
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Enviando...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Enviar
-                </>
-              )}
-            </Button>
           </div>
+        )}
 
-          {selectedFile && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <FileImage className="h-4 w-4" />
-              <span className="truncate">{selectedFile.name}</span>
-              <span className="text-xs">({(selectedFile.size / 1024).toFixed(1)} KB)</span>
-            </div>
-          )}
+        {/* QR Code */}
+        {paymentStatus?.qr_code_image && (
+          <div className="flex justify-center p-3 rounded-lg bg-background border border-border/50">
+            <img 
+              src={paymentStatus.qr_code_image} 
+              alt="QR Code PIX" 
+              className="max-w-[180px] rounded"
+            />
+          </div>
+        )}
 
-          <p className="text-xs text-muted-foreground">
-            Formatos aceitos: JPG, PNG, WebP ou PDF (máx. 5MB)
-          </p>
-        </div>
+        {/* Submit Button */}
+        {hasFormLink ? (
+          <Button 
+            onClick={handleOpenForm}
+            className="w-full bg-olimpics-orange-primary hover:bg-olimpics-orange-secondary"
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Enviar Comprovante de Pagamento
+          </Button>
+        ) : (
+          <Alert className="bg-muted border-border">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-sm">
+              O link para envio do comprovante ainda não está disponível. Entre em contato com a organização.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Contact Info */}
+        {paymentStatus?.contato_telefone && (
+          <div className="pt-2 border-t border-border/50">
+            <a
+              href={`https://wa.me/${formatPhoneForWhatsApp(paymentStatus.contato_telefone)}?text=Olá! Tenho uma dúvida sobre o pagamento da taxa de inscrição.`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <MessageCircle className="h-4 w-4 text-green-600" />
+              <span>Dúvidas? Fale com {paymentStatus.contato_nome || 'a organização'}</span>
+            </a>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
