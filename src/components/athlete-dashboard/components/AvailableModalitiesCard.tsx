@@ -42,30 +42,62 @@ export function AvailableModalitiesCard({
     'Domingo': 6
   };
 
-  const filteredAndSortedModalities = modalities
-    .filter(m => 
-      m.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (m.categoria && m.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
-    .sort((a, b) => {
-      const schedulesA = getSchedulesForMod(a.id);
-      const schedulesB = getSchedulesForMod(b.id);
-      
-      // Get first day order (put modalities without schedule at the end)
-      const firstScheduleA = schedulesA[0];
-      const firstScheduleB = schedulesB[0];
-      
-      const dayA = firstScheduleA?.dia_semana ? (dayOrder[firstScheduleA.dia_semana] ?? 99) : 99;
-      const dayB = firstScheduleB?.dia_semana ? (dayOrder[firstScheduleB.dia_semana] ?? 99) : 99;
-      
-      if (dayA !== dayB) return dayA - dayB;
-      
-      // If same day, sort by time
-      const timeA = firstScheduleA?.horario_inicio || '99:99';
-      const timeB = firstScheduleB?.horario_inicio || '99:99';
-      
-      return timeA.localeCompare(timeB);
-    });
+  // Filter modalities by search term
+  const filteredModalities = modalities.filter(m => 
+    m.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (m.categoria && m.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  // Create flattened entries: one entry per modality per day
+  interface ModalityDayEntry {
+    modality: AvailableModality;
+    schedule: ModalityScheduleItem | null;
+    dayName: string;
+  }
+
+  const modalityDayEntries: ModalityDayEntry[] = [];
+  
+  filteredModalities.forEach(modality => {
+    const schedules = getSchedulesForMod(modality.id);
+    
+    if (schedules.length === 0) {
+      // No schedule - add to "Sem dia definido"
+      modalityDayEntries.push({
+        modality,
+        schedule: null,
+        dayName: 'Sem dia definido'
+      });
+    } else {
+      // Add one entry per day
+      schedules.forEach(schedule => {
+        modalityDayEntries.push({
+          modality,
+          schedule,
+          dayName: schedule.dia_semana
+        });
+      });
+    }
+  });
+
+  // Sort entries by day order, then by time
+  modalityDayEntries.sort((a, b) => {
+    const dayA = dayOrder[a.dayName] ?? 99;
+    const dayB = dayOrder[b.dayName] ?? 99;
+    
+    if (dayA !== dayB) return dayA - dayB;
+    
+    const timeA = a.schedule?.horario_inicio || '99:99';
+    const timeB = b.schedule?.horario_inicio || '99:99';
+    
+    return timeA.localeCompare(timeB);
+  });
+
+  // Group entries by day
+  const entriesByDay = modalityDayEntries.reduce((groups, entry) => {
+    if (!groups[entry.dayName]) groups[entry.dayName] = [];
+    groups[entry.dayName].push(entry);
+    return groups;
+  }, {} as Record<string, ModalityDayEntry[]>);
 
 
   const handleRegister = async (modalityId: number) => {
@@ -114,37 +146,29 @@ export function AvailableModalitiesCard({
             <p className="text-sm text-muted-foreground">Não há modalidades disponíveis.</p>
             <p className="text-xs text-muted-foreground mt-1">Você já está inscrito em todas ou não há modalidades cadastradas.</p>
           </div>
-        ) : filteredAndSortedModalities.length === 0 ? (
+        ) : filteredModalities.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-6 text-center">
             <Search className="h-8 w-8 text-muted-foreground mb-2" />
             <p className="text-sm text-muted-foreground">Nenhuma encontrada para "{searchTerm}".</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Group modalities by first day of week */}
-            {Object.entries(
-              filteredAndSortedModalities.reduce((groups, modality) => {
-                const schedules = getSchedulesForMod(modality.id);
-                const day = schedules[0]?.dia_semana || 'Sem dia definido';
-                if (!groups[day]) groups[day] = [];
-                groups[day].push(modality);
-                return groups;
-              }, {} as Record<string, typeof filteredAndSortedModalities>)
-            ).map(([dayName, dayModalities]) => (
+            {/* Group modalities by day - each modality appears in each day it has schedule */}
+            {Object.entries(entriesByDay).map(([dayName, entries]) => (
               <div key={dayName}>
                 <h3 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
                   <Clock className="h-4 w-4" />
                   {dayName}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {dayModalities.map((modality) => {
+                  {entries.map((entry, entryIdx) => {
+                    const { modality, schedule } = entry;
                     const vacancyAvailable = isVacancyAvailable(modality);
                     const isRegistering = registeringId === modality.id;
-                    const schedules = getSchedulesForMod(modality.id);
 
                     return (
                       <div
-                        key={modality.id}
+                        key={`${modality.id}-${entryIdx}`}
                         className="flex flex-col p-3 rounded-lg bg-muted/30 border border-border/50"
                       >
                         <div className="flex-1">
@@ -161,28 +185,21 @@ export function AvailableModalitiesCard({
                             </p>
                           )}
                           
-                          {/* Display all schedules */}
-                          {schedules.length > 0 && (
-                            <div className="mt-2 space-y-1">
-                              {schedules.map((schedule, idx) => (
-                                <div key={idx} className="flex flex-col gap-0.5">
-                                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                    <Clock className="h-3 w-3 shrink-0" />
-                                    <span>
-                                      <span className="font-medium">{schedule.dia_semana}</span>
-                                      {schedule.horario_inicio && (
-                                        <> • {formatScheduleTime(schedule.horario_inicio, schedule.horario_fim)}</>
-                                      )}
-                                    </span>
-                                  </div>
-                                  {schedule.local && (
-                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-[18px]">
-                                      <MapPin className="h-3 w-3 shrink-0" />
-                                      <span>{schedule.local}</span>
-                                    </div>
-                                  )}
+                          {/* Display only this day's schedule */}
+                          {schedule && (
+                            <div className="mt-2">
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <Clock className="h-3 w-3 shrink-0" />
+                                <span>
+                                  {schedule.horario_inicio && formatScheduleTime(schedule.horario_inicio, schedule.horario_fim)}
+                                </span>
+                              </div>
+                              {schedule.local && (
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                                  <MapPin className="h-3 w-3 shrink-0" />
+                                  <span>{schedule.local}</span>
                                 </div>
-                              ))}
+                              )}
                             </div>
                           )}
                         </div>
