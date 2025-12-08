@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Trophy, Search, AlertCircle, Loader2, Clock, MapPin } from 'lucide-react';
+import { Trophy, Search, AlertCircle, Loader2, Clock, MapPin, CalendarDays } from 'lucide-react';
 import { AvailableModality } from '../hooks/useAvailableModalitiesForAthlete';
 import { useModalityMutations } from '@/hooks/useModalityMutations';
 import { ModalityScheduleItem, getSchedulesForModality, formatScheduleTime } from '../hooks/useModalitySchedules';
@@ -48,57 +48,23 @@ export function AvailableModalitiesCard({
     (m.categoria && m.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  // Create flattened entries: one entry per modality per day
-  interface ModalityDayEntry {
-    modality: AvailableModality;
-    schedule: ModalityScheduleItem | null;
-    dayName: string;
-  }
+  // Sort modalities alphabetically by name
+  const sortedModalities = [...filteredModalities].sort((a, b) => 
+    a.nome.localeCompare(b.nome, 'pt-BR')
+  );
 
-  const modalityDayEntries: ModalityDayEntry[] = [];
-  
-  filteredModalities.forEach(modality => {
-    const schedules = getSchedulesForMod(modality.id);
-    
-    if (schedules.length === 0) {
-      // No schedule - add to "Sem dia definido"
-      modalityDayEntries.push({
-        modality,
-        schedule: null,
-        dayName: 'Sem dia definido'
-      });
-    } else {
-      // Add one entry per day
-      schedules.forEach(schedule => {
-        modalityDayEntries.push({
-          modality,
-          schedule,
-          dayName: schedule.dia_semana
-        });
-      });
-    }
-  });
-
-  // Sort entries by day order, then by time
-  modalityDayEntries.sort((a, b) => {
-    const dayA = dayOrder[a.dayName] ?? 99;
-    const dayB = dayOrder[b.dayName] ?? 99;
-    
-    if (dayA !== dayB) return dayA - dayB;
-    
-    const timeA = a.schedule?.horario_inicio || '99:99';
-    const timeB = b.schedule?.horario_inicio || '99:99';
-    
-    return timeA.localeCompare(timeB);
-  });
-
-  // Group entries by day
-  const entriesByDay = modalityDayEntries.reduce((groups, entry) => {
-    if (!groups[entry.dayName]) groups[entry.dayName] = [];
-    groups[entry.dayName].push(entry);
-    return groups;
-  }, {} as Record<string, ModalityDayEntry[]>);
-
+  // Get sorted schedules for a modality (by day order, then by time)
+  const getSortedSchedules = (modalityId: number): ModalityScheduleItem[] => {
+    const schedules = getSchedulesForMod(modalityId);
+    return schedules.sort((a, b) => {
+      const dayA = dayOrder[a.dia_semana] ?? 99;
+      const dayB = dayOrder[b.dia_semana] ?? 99;
+      if (dayA !== dayB) return dayA - dayB;
+      const timeA = a.horario_inicio || '99:99';
+      const timeB = b.horario_inicio || '99:99';
+      return timeA.localeCompare(timeB);
+    });
+  };
 
   const handleRegister = async (modalityId: number) => {
     setRegisteringId(modalityId);
@@ -152,81 +118,84 @@ export function AvailableModalitiesCard({
             <p className="text-sm text-muted-foreground">Nenhuma encontrada para "{searchTerm}".</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {/* Group modalities by day - each modality appears in each day it has schedule */}
-            {Object.entries(entriesByDay).map(([dayName, entries]) => (
-              <div key={dayName}>
-                <h3 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  {dayName}
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {entries.map((entry, entryIdx) => {
-                    const { modality, schedule } = entry;
-                    const vacancyAvailable = isVacancyAvailable(modality);
-                    const isRegistering = registeringId === modality.id;
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {sortedModalities.map((modality) => {
+              const schedules = getSortedSchedules(modality.id);
+              const vacancyAvailable = isVacancyAvailable(modality);
+              const isRegistering = registeringId === modality.id;
 
-                    return (
-                      <div
-                        key={`${modality.id}-${entryIdx}`}
-                        className="flex flex-col p-3 rounded-lg bg-muted/30 border border-border/50"
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between gap-2">
-                            <h4 className="font-medium text-foreground text-sm">{modality.nome}</h4>
-                            <Badge variant="outline" className="shrink-0 text-xs">
-                              {modality.tipo_modalidade}
-                            </Badge>
-                          </div>
-                          
-                          {modality.categoria && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {modality.categoria}
-                            </p>
-                          )}
-                          
-                          {/* Display only this day's schedule */}
-                          {schedule && (
-                            <div className="mt-2">
-                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              return (
+                <div
+                  key={modality.id}
+                  className="flex flex-col p-3 rounded-lg bg-muted/30 border border-border/50"
+                >
+                  <div className="flex-1">
+                    {/* Header: Name and Type */}
+                    <div className="flex items-start justify-between gap-2">
+                      <h4 className="font-medium text-foreground text-sm">{modality.nome}</h4>
+                      <Badge variant="outline" className="shrink-0 text-xs">
+                        {modality.tipo_modalidade}
+                      </Badge>
+                    </div>
+                    
+                    {/* Category */}
+                    {modality.categoria && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {modality.categoria}
+                      </p>
+                    )}
+                    
+                    {/* Schedules Section */}
+                    {schedules.length > 0 && (
+                      <div className="mt-3 pt-2 border-t border-border/30">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1.5">
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          <span>Horários:</span>
+                        </div>
+                        <div className="space-y-1.5">
+                          {schedules.map((schedule, idx) => (
+                            <div key={idx} className="text-xs text-muted-foreground pl-1">
+                              <div className="flex items-center gap-1.5">
                                 <Clock className="h-3 w-3 shrink-0" />
+                                <span className="font-medium">{schedule.dia_semana}:</span>
                                 <span>
                                   {schedule.horario_inicio && formatScheduleTime(schedule.horario_inicio, schedule.horario_fim)}
                                 </span>
                               </div>
                               {schedule.local && (
-                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                                <div className="flex items-center gap-1.5 mt-0.5 ml-4">
                                   <MapPin className="h-3 w-3 shrink-0" />
                                   <span>{schedule.local}</span>
                                 </div>
                               )}
                             </div>
-                          )}
+                          ))}
                         </div>
-
-                        <Button
-                          size="sm"
-                          className="w-full mt-3 h-8 text-xs"
-                          onClick={() => handleRegister(modality.id)}
-                          disabled={!vacancyAvailable || isRegistering || registerMutation.isPending}
-                        >
-                          {isRegistering ? (
-                            <>
-                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                              Inscrevendo...
-                            </>
-                          ) : !vacancyAvailable ? (
-                            'Sem Vagas'
-                          ) : (
-                            'Inscrever-se'
-                          )}
-                        </Button>
                       </div>
-                    );
-                  })}
+                    )}
+                  </div>
+
+                  {/* Single Enrollment Button */}
+                  <Button
+                    size="sm"
+                    className="w-full mt-3 h-8 text-xs"
+                    onClick={() => handleRegister(modality.id)}
+                    disabled={!vacancyAvailable || isRegistering || registerMutation.isPending}
+                  >
+                    {isRegistering ? (
+                      <>
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        Inscrevendo...
+                      </>
+                    ) : !vacancyAvailable ? (
+                      'Sem Vagas'
+                    ) : (
+                      'Inscrever-se'
+                    )}
+                  </Button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </CardContent>
