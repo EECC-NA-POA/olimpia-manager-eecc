@@ -64,24 +64,28 @@ export const useModalitySchedules = (eventId: string | null) => {
         
         if (activity.recorrente && activity.dias_semana && activity.dias_semana.length > 0) {
           // For recurring activities, create one schedule per day in dias_semana
-          activity.dias_semana.forEach((dia: string) => {
-            const diaLower = dia.toLowerCase();
-            const diaSemana = dayNameMap[diaLower] || dia;
+          activity.dias_semana.forEach((diaOriginal: string) => {
+            const diaLower = diaOriginal.toLowerCase();
+            const diaSemana = dayNameMap[diaLower] || diaOriginal;
             
             let horarioInicio: string | null = null;
             let horarioFim: string | null = null;
             let local: string | null = activity.local || null;
             
             // Extract times from horarios_por_dia JSONB field
-            if (activity.horarios_por_dia && activity.horarios_por_dia[dia]) {
-              const horariosDoDia = activity.horarios_por_dia[dia];
-              horarioInicio = horariosDoDia.inicio || null;
-              horarioFim = horariosDoDia.fim || null;
+            // Try both original key and lowercase key for robustness
+            if (activity.horarios_por_dia) {
+              const horariosDoDia = activity.horarios_por_dia[diaOriginal] || activity.horarios_por_dia[diaLower];
+              if (horariosDoDia) {
+                horarioInicio = horariosDoDia.inicio || null;
+                horarioFim = horariosDoDia.fim || null;
+              }
             }
             
             // Extract location from locais_por_dia JSONB field
-            if (activity.locais_por_dia && activity.locais_por_dia[dia]) {
-              local = activity.locais_por_dia[dia];
+            // Try both original key and lowercase key for robustness
+            if (activity.locais_por_dia) {
+              local = activity.locais_por_dia[diaOriginal] || activity.locais_por_dia[diaLower] || local;
             }
             
             schedules.push({
