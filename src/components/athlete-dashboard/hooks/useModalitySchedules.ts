@@ -1,13 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
-export interface ModalitySchedule {
+export interface ModalityScheduleItem {
   modalidade_id: number;
   dia: string | null;
-  dia_semana: string | null;
+  dia_semana: string;
   horario_inicio: string | null;
   horario_fim: string | null;
+  local: string | null;
 }
+
+// Return type: array of schedule items (multiple per modality possible)
+export type ModalitySchedule = ModalityScheduleItem;
 
 export const useModalitySchedules = (eventId: string | null) => {
   return useQuery({
@@ -27,6 +31,8 @@ export const useModalitySchedules = (eventId: string | null) => {
             horario_fim,
             recorrente,
             horarios_por_dia,
+            local,
+            locais_por_dia,
             evento_id
           )
         `)
@@ -37,66 +43,83 @@ export const useModalitySchedules = (eventId: string | null) => {
         throw error;
       }
 
-      // Transform and group by modalidade_id
-      const scheduleMap = new Map<number, ModalitySchedule>();
+      const schedules: ModalityScheduleItem[] = [];
+      const dayNameMap: Record<string, string> = {
+        'segunda': 'Segunda-feira',
+        'terça': 'Terça-feira',
+        'terca': 'Terça-feira',
+        'quarta': 'Quarta-feira',
+        'quinta': 'Quinta-feira',
+        'sexta': 'Sexta-feira',
+        'sábado': 'Sábado',
+        'sabado': 'Sábado',
+        'domingo': 'Domingo'
+      };
+
+      const dayNames = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
       
       (data || []).forEach((item: any) => {
         const activity = item.cronograma_atividades;
         const modalidadeId = item.modalidade_id;
         
-        // Only use the first schedule found for each modality
-        if (!scheduleMap.has(modalidadeId)) {
-          let diaSemana: string | null = null;
-          let dia: string | null = activity.dia;
-          let horarioInicio: string | null = null;
-          let horarioFim: string | null = null;
-          
-          if (activity.recorrente && activity.dias_semana && activity.dias_semana.length > 0) {
-            // For recurring activities, use the first day of the week
-            const primeiroDia = activity.dias_semana[0];
-            // Map to full day name with "-feira" suffix
-            const dayNameMap: Record<string, string> = {
-              'segunda': 'Segunda-feira',
-              'terça': 'Terça-feira',
-              'quarta': 'Quarta-feira',
-              'quinta': 'Quinta-feira',
-              'sexta': 'Sexta-feira',
-              'sábado': 'Sábado',
-              'sabado': 'Sábado',
-              'domingo': 'Domingo'
-            };
-            diaSemana = dayNameMap[primeiroDia.toLowerCase()] || primeiroDia;
+        if (activity.recorrente && activity.dias_semana && activity.dias_semana.length > 0) {
+          // For recurring activities, create one schedule per day in dias_semana
+          activity.dias_semana.forEach((dia: string) => {
+            const diaLower = dia.toLowerCase();
+            const diaSemana = dayNameMap[diaLower] || dia;
+            
+            let horarioInicio: string | null = null;
+            let horarioFim: string | null = null;
+            let local: string | null = activity.local || null;
             
             // Extract times from horarios_por_dia JSONB field
-            if (activity.horarios_por_dia && activity.horarios_por_dia[primeiroDia]) {
-              const horariosDoDia = activity.horarios_por_dia[primeiroDia];
+            if (activity.horarios_por_dia && activity.horarios_por_dia[dia]) {
+              const horariosDoDia = activity.horarios_por_dia[dia];
               horarioInicio = horariosDoDia.inicio || null;
               horarioFim = horariosDoDia.fim || null;
             }
-          } else if (dia) {
-            // For non-recurring activities, use direct times
-            const dayNames = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-            const date = new Date(dia + 'T00:00:00');
-            diaSemana = dayNames[date.getDay()];
-            diaSemana = dayNames[date.getDay()];
-            horarioInicio = activity.horario_inicio;
-            horarioFim = activity.horario_fim;
-          }
+            
+            // Extract location from locais_por_dia JSONB field
+            if (activity.locais_por_dia && activity.locais_por_dia[dia]) {
+              local = activity.locais_por_dia[dia];
+            }
+            
+            schedules.push({
+              modalidade_id: modalidadeId,
+              dia: null,
+              dia_semana: diaSemana,
+              horario_inicio: horarioInicio,
+              horario_fim: horarioFim,
+              local
+            });
+          });
+        } else if (activity.dia) {
+          // For non-recurring activities, use direct date and times
+          const date = new Date(activity.dia + 'T00:00:00');
+          const diaSemana = dayNames[date.getDay()];
           
-          scheduleMap.set(modalidadeId, {
+          schedules.push({
             modalidade_id: modalidadeId,
-            dia,
+            dia: activity.dia,
             dia_semana: diaSemana,
-            horario_inicio: horarioInicio,
-            horario_fim: horarioFim
+            horario_inicio: activity.horario_inicio,
+            horario_fim: activity.horario_fim,
+            local: activity.local || null
           });
         }
       });
 
-      return Array.from(scheduleMap.values());
+      return schedules;
     },
     enabled: !!eventId,
   });
+};
+
+export const getSchedulesForModality = (
+  modalityId: number, 
+  schedules: ModalityScheduleItem[]
+): ModalityScheduleItem[] => {
+  return schedules.filter(s => s.modalidade_id === modalityId);
 };
 
 export const formatScheduleTime = (horarioInicio: string | null, horarioFim: string | null): string => {
