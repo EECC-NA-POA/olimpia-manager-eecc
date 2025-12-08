@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 export const ConcordiaEventInfo = () => {
   const eventDate = '2025-11-30';
-  const eventTime = '15:00';
+  const eventTime = '14:00';
   const eventEndTime = '20:00';
   const eventTitle = 'Torneio Concórdia 2025 (Vôlei & Arco e Flecha + Convivência (Comida)';
   const eventLocation = 'Bosque 950, R. Corrêa Lima, 950 - Porto Alegre - RS - Brasil';
@@ -38,7 +38,7 @@ export const ConcordiaEventInfo = () => {
                 <p className="text-gray-700 font-medium">Domingo, 30 de Novembro de 2025</p>
                 <div className="flex items-center gap-2 mt-2 text-gray-600">
                   <Clock className="w-4 h-4" />
-                  <span>15h às 20h</span>
+                  <span>14h às 20h</span>
                 </div>
                 <p className="text-sm text-gray-500 mt-3 flex items-center gap-1">
                   💡 Clique para adicionar à sua agenda

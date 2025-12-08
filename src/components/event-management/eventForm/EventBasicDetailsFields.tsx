@@ -11,8 +11,8 @@ interface EventBasicDetailsFieldsProps {
   errors: FieldErrors<EventBasicInfoFormValues>;
   handleTipoChange: (value: string) => void;
   handleStatusChange: (value: string) => void;
-  defaultTipo: string;
-  defaultStatus: string;
+  statusValue: string;
+  tipoValue: string;
 }
 
 export function EventBasicDetailsFields({ 
@@ -20,8 +20,8 @@ export function EventBasicDetailsFields({
   errors, 
   handleTipoChange,
   handleStatusChange,
-  defaultTipo,
-  defaultStatus
+  statusValue,
+  tipoValue
 }: EventBasicDetailsFieldsProps) {
   return (
     <>
@@ -38,7 +38,7 @@ export function EventBasicDetailsFields({
       
       <div className="space-y-2">
         <Label htmlFor="status_evento">Status do Evento</Label>
-        <Select defaultValue={defaultStatus} onValueChange={handleStatusChange}>
+        <Select value={statusValue} onValueChange={handleStatusChange}>
           <SelectTrigger>
             <SelectValue placeholder="Selecione o status" />
           </SelectTrigger>
@@ -54,7 +54,7 @@ export function EventBasicDetailsFields({
       
       <div className="space-y-2">
         <Label htmlFor="tipo">Tipo de Evento</Label>
-        <Select defaultValue={defaultTipo} onValueChange={handleTipoChange}>
+        <Select value={tipoValue} onValueChange={handleTipoChange}>
           <SelectTrigger>
             <SelectValue placeholder="Selecione o tipo" />
           </SelectTrigger>

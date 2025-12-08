@@ -13,6 +13,10 @@ import { useAthleteCardData } from './athlete-card/hooks/useAthleteCardData';
 import { useExemptionStatus } from './athlete-card/hooks/useExemptionStatus';
 import { useModalityHandlers } from './athlete-card/hooks/useModalityHandlers';
 import { usePaymentHandlers } from './athlete-card/hooks/usePaymentHandlers';
+import { EnrollAthleteDialog } from './athlete-card/EnrollAthleteDialog';
+import { EnrollmentType } from '@/hooks/useEnrollAthleteInModality';
+import { useAuth } from '@/contexts/AuthContext';
+import { UserPlus } from 'lucide-react';
 
 interface AthleteRegistrationCardProps {
   registration: AthleteManagement;
@@ -20,6 +24,8 @@ interface AthleteRegistrationCardProps {
   onPaymentStatusChange?: (athleteId: string, status: string) => Promise<void>;
   isCurrentUser: boolean;
   readOnly?: boolean;
+  eventId?: string;
+  enrollmentType?: EnrollmentType;
 }
 
 export function AthleteRegistrationCard({
@@ -27,9 +33,15 @@ export function AthleteRegistrationCard({
   onStatusChange,
   onPaymentStatusChange,
   isCurrentUser,
-  readOnly = false
+  readOnly = false,
+  eventId,
+  enrollmentType
 }: AthleteRegistrationCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEnrollDialogOpen, setIsEnrollDialogOpen] = useState(false);
+  const { user, currentEventId } = useAuth();
+
+  const effectiveEventId = eventId || currentEventId;
 
   const {
     paymentData,
@@ -109,6 +121,8 @@ export function AthleteRegistrationCard({
     window.open(whatsappUrl, '_blank');
   };
 
+  const canEnroll = !!enrollmentType && !!user?.id && !!effectiveEventId;
+
   return (
     <>
       <div onClick={() => setIsDialogOpen(true)} className="cursor-pointer">
@@ -166,6 +180,22 @@ export function AthleteRegistrationCard({
             readOnly={readOnly}
           />
 
+          {canEnroll && (
+            <div className="pt-4 border-t border-border">
+              <Button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEnrollDialogOpen(true);
+                }}
+                variant="outline"
+                className="w-full"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Inscrever em Modalidade
+              </Button>
+            </div>
+          )}
+
           <ExemptionCheckbox
             isCurrentUser={isCurrentUser}
             isExempt={isExempt}
@@ -175,6 +205,18 @@ export function AthleteRegistrationCard({
           />
         </DialogContent>
       </Dialog>
+
+      {canEnroll && (
+        <EnrollAthleteDialog
+          open={isEnrollDialogOpen}
+          onOpenChange={setIsEnrollDialogOpen}
+          athleteId={registration.id}
+          athleteName={registration.nome_atleta || ''}
+          eventId={effectiveEventId!}
+          enrolledBy={user.id}
+          enrollmentType={enrollmentType}
+        />
+      )}
     </>
   );
 }

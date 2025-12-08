@@ -21,6 +21,7 @@ export const useModalityMutations = (userId: string | undefined, eventId: string
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['athlete-modalities'] });
       queryClient.invalidateQueries({ queryKey: ['modalities'] });
+      queryClient.invalidateQueries({ queryKey: ['available-modalities-athlete'] });
       queryClient.invalidateQueries({ queryKey: ['personal-schedule-activities'] });
       toast({
         title: "Desistência confirmada",
@@ -58,6 +59,7 @@ export const useModalityMutations = (userId: string | undefined, eventId: string
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['athlete-modalities'] });
       queryClient.invalidateQueries({ queryKey: ['modalities'] });
+      queryClient.invalidateQueries({ queryKey: ['available-modalities-athlete'] });
       queryClient.invalidateQueries({ queryKey: ['personal-schedule-activities'] });
       toast({
         title: "Inscrição realizada",

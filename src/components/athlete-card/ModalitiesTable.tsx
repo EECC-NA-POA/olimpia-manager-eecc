@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { AthleteModality } from "@/lib/api";
+import { UserCheck } from "lucide-react";
 
 interface ModalitiesTableProps {
   modalidades: AthleteModality[];
@@ -17,6 +18,18 @@ interface ModalitiesTableProps {
   onStatusChange: (modalityId: string, status: string) => void;
   readOnly?: boolean;
 }
+
+const getTipoInscricaoLabel = (tipo: string | null | undefined): string => {
+  if (!tipo) return '';
+  switch (tipo) {
+    case 'organizador':
+      return 'Organizador';
+    case 'delegacao':
+      return 'Delegação';
+    default:
+      return tipo;
+  }
+};
 
 export const ModalitiesTable: React.FC<ModalitiesTableProps> = ({
   modalidades,
@@ -34,6 +47,7 @@ export const ModalitiesTable: React.FC<ModalitiesTableProps> = ({
         <TableRow>
           <TableHead>Modalidade</TableHead>
           <TableHead>Status</TableHead>
+          <TableHead>Inscrito por</TableHead>
           <TableHead>Justificativa</TableHead>
           <TableHead>Ações</TableHead>
         </TableRow>
@@ -46,6 +60,21 @@ export const ModalitiesTable: React.FC<ModalitiesTableProps> = ({
               <Badge className={cn("capitalize", getStatusBadgeStyle(modalityStatuses[modalidade.id] || modalidade.status))}>
                 {modalityStatuses[modalidade.id] || modalidade.status}
               </Badge>
+            </TableCell>
+            <TableCell>
+              {modalidade.tipo_inscricao ? (
+                <div className="flex items-center gap-1.5">
+                  <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm">
+                    {modalidade.inscrito_por_nome || 'Usuário'} 
+                    <Badge variant="outline" className="ml-1.5 text-xs">
+                      {getTipoInscricaoLabel(modalidade.tipo_inscricao)}
+                    </Badge>
+                  </span>
+                </div>
+              ) : (
+                <span className="text-muted-foreground text-sm">Próprio atleta</span>
+              )}
             </TableCell>
             <TableCell>
             <Input
@@ -81,3 +110,4 @@ export const ModalitiesTable: React.FC<ModalitiesTableProps> = ({
     </Table>
   );
 };
+
