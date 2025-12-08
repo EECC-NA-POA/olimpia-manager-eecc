@@ -21,10 +21,12 @@ interface PaymentStatusData {
   confirmado: number;
   pendente: number;
   cancelado: number;
+  isento: number;
   total: number;
   confirmadoPct: number;
   pendentePct: number;
   canceladoPct: number;
+  isentoPct: number;
 }
 
 interface PaymentStatusBarChartProps {
@@ -55,37 +57,64 @@ export function PaymentStatusBarChart({
     );
   }
 
-  // Extract percentages from the first data item
-  const { confirmadoPct = 0, pendentePct = 0, canceladoPct = 0 } = data[0];
+  // Extract values from the first data item
+  const { confirmado = 0, pendente = 0, cancelado = 0, isento = 0 } = data[0];
+  const { confirmadoPct = 0, pendentePct = 0, canceladoPct = 0, isentoPct = 0 } = data[0];
+  
+  // Check which statuses have data (only show statuses with count > 0)
+  const hasConfirmado = confirmado > 0;
+  const hasPendente = pendente > 0;
+  const hasCancelado = cancelado > 0;
+  const hasIsento = isento > 0;
   
   // Format numbers for display
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('pt-BR').format(num);
   };
+  
+  // Build bar chart data only with statuses that have values
+  const barChartData = [
+    ...(hasConfirmado ? [{ name: 'Confirmado', value: confirmado, color: '#10B981' }] : []),
+    ...(hasPendente ? [{ name: 'Pendente', value: pendente, color: '#F59E0B' }] : []),
+    ...(hasCancelado ? [{ name: 'Cancelado', value: cancelado, color: '#EF4444' }] : []),
+    ...(hasIsento ? [{ name: 'Isento', value: isento, color: '#6366F1' }] : [])
+  ];
 
   return (
-    <Card className="hover:shadow-lg transition-shadow w-full">
+    <Card className="hover:shadow-lg transition-shadow w-full overflow-hidden">
       <CardHeader className="p-3 sm:p-6">
         <CardTitle className="text-sm sm:text-lg">{title}</CardTitle>
         <CardDescription className="text-xs sm:text-sm">{description}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4 sm:space-y-6 p-3 sm:p-6">
+      <CardContent className="space-y-4 sm:space-y-6 p-3 sm:p-6 overflow-x-auto">
         <div className="space-y-6">
           {/* Battery-style visualization */}
           <div className="space-y-2">
-            <div className="flex flex-col sm:flex-row sm:justify-between gap-2 text-xs sm:text-sm font-medium">
-              <div className="flex items-center">
-                <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span>
-                Confirmado: {formatNumber(data[0].confirmado)} ({confirmadoPct.toFixed(1)}%)
-              </div>
-              <div className="flex items-center">
-                <span className="inline-block w-3 h-3 rounded-full bg-yellow-500 mr-1"></span>
-                Pendente: {formatNumber(data[0].pendente)} ({pendentePct.toFixed(1)}%)
-              </div>
-              <div className="flex items-center">
-                <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span>
-                Cancelado: {formatNumber(data[0].cancelado)} ({canceladoPct.toFixed(1)}%)
-              </div>
+            <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm font-medium">
+              {hasConfirmado && (
+                <div className="flex items-center">
+                  <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span>
+                  Confirmado: {formatNumber(confirmado)} ({confirmadoPct.toFixed(1)}%)
+                </div>
+              )}
+              {hasPendente && (
+                <div className="flex items-center">
+                  <span className="inline-block w-3 h-3 rounded-full bg-yellow-500 mr-1"></span>
+                  Pendente: {formatNumber(pendente)} ({pendentePct.toFixed(1)}%)
+                </div>
+              )}
+              {hasCancelado && (
+                <div className="flex items-center">
+                  <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span>
+                  Cancelado: {formatNumber(cancelado)} ({canceladoPct.toFixed(1)}%)
+                </div>
+              )}
+              {hasIsento && (
+                <div className="flex items-center">
+                  <span className="inline-block w-3 h-3 rounded-full bg-indigo-500 mr-1"></span>
+                  Isento: {formatNumber(isento)} ({isentoPct.toFixed(1)}%)
+                </div>
+              )}
             </div>
             
             {/* The battery visualization */}
@@ -113,6 +142,17 @@ export function PaymentStatusBarChart({
                   width: `${canceladoPct}%` 
                 }}
               ></div>
+              
+              {/* Exempt segment - only show if there are exempt */}
+              {hasIsento && (
+                <div 
+                  className="absolute top-0 h-full bg-indigo-500" 
+                  style={{ 
+                    left: `${confirmadoPct + pendentePct + canceladoPct}%`, 
+                    width: `${isentoPct}%` 
+                  }}
+                ></div>
+              )}
             </div>
             
             <div className="text-center text-xs sm:text-sm text-muted-foreground">
@@ -120,52 +160,48 @@ export function PaymentStatusBarChart({
             </div>
           </div>
 
-          {/* Additional detailed breakdown using horizontal bars */}
-          <div className="h-[180px] sm:h-[220px] pt-2 sm:pt-4">
-            <ChartContainer config={chartConfig} className="w-full h-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={[
-                    { name: 'Confirmado', value: data[0].confirmado, color: '#10B981' },
-                    { name: 'Pendente', value: data[0].pendente, color: '#F59E0B' },
-                    { name: 'Cancelado', value: data[0].cancelado, color: '#EF4444' }
-                  ]}
-                  layout="vertical"
-                  margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} className="opacity-30" />
-                  <XAxis 
-                    type="number" 
-                    label={{ value: 'Inscrições', position: 'insideBottom', offset: -2, className: 'text-[8px] sm:text-xs' }} 
-                    tick={{ fontSize: 8 }}
-                    className="text-[8px] sm:text-xs"
-                  />
-                  <YAxis 
-                    type="category" 
-                    dataKey="name" 
-                    tick={{ fontSize: 9 }}
-                    width={55}
-                    className="text-[9px] sm:text-xs"
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar 
-                    dataKey="value" 
-                    name="Quantidade" 
-                    barSize={25}
-                    radius={[0, 4, 4, 0]}
+          {/* Additional detailed breakdown using horizontal bars - only show statuses with data */}
+          {barChartData.length > 0 && (
+            <div className="overflow-x-auto">
+              <div className="h-[180px] sm:h-[220px] pt-2 sm:pt-4 min-w-[280px]">
+                <ChartContainer config={chartConfig} className="w-full h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={barChartData}
+                    layout="vertical"
+                    margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
                   >
-                    {[
-                      { name: 'Confirmado', value: data[0].confirmado, color: '#10B981' },
-                      { name: 'Pendente', value: data[0].pendente, color: '#F59E0B' },
-                      { name: 'Cancelado', value: data[0].cancelado, color: '#EF4444' }
-                    ].map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </div>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} className="opacity-30" />
+                    <XAxis 
+                      type="number" 
+                      label={{ value: 'Inscrições', position: 'insideBottom', offset: -2, className: 'text-[8px] sm:text-xs' }} 
+                      tick={{ fontSize: 8 }}
+                      className="text-[8px] sm:text-xs"
+                    />
+                    <YAxis 
+                      type="category" 
+                      dataKey="name" 
+                      tick={{ fontSize: 9 }}
+                      width={55}
+                      className="text-[9px] sm:text-xs"
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar 
+                      dataKey="value" 
+                      name="Quantidade" 
+                      barSize={20}
+                      radius={[0, 4, 4, 0]}
+                    >
+                      {barChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

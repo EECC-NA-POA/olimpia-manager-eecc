@@ -40,9 +40,25 @@ export function useMasterAccess() {
           papeis: user.papeis?.map(r => r.codigo) 
         });
         
-        // Strategy 1: Check if user has is_master flag
+        // Strategy 1: Check if user has is_master flag in context
         if (user.is_master) {
-          console.log('✅ Access granted via is_master flag');
+          console.log('✅ Access granted via is_master flag in context');
+          setIsMaster(true);
+          setIsLoading(false);
+          return;
+        }
+
+        // Strategy 2: Direct query to usuarios table to check master field
+        const { data: userData, error: userError } = await supabase
+          .from('usuarios')
+          .select('master')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        console.log('📊 Direct usuarios query result:', { userData, userError });
+
+        if (!userError && userData?.master === true) {
+          console.log('✅ Access granted via direct usuarios.master query');
           setIsMaster(true);
           setIsLoading(false);
           return;

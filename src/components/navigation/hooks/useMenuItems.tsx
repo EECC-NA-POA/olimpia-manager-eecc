@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Users, Calendar, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut, UserCheck, Bell, Crown } from 'lucide-react';
+import { User, Users, Calendar, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut, UserCheck, Bell, Crown, LayoutDashboard } from 'lucide-react';
 import { MenuItem } from '../types';
 
 export const useMenuItems = (onLogout: () => void) => {
@@ -35,13 +35,15 @@ export const useMenuItems = (onLogout: () => void) => {
     
     // Add items in the same order as the mobile menu
     
-    // 1. Perfil (Athlete Profile) - for all authenticated users
-    items.push({
-      path: "/athlete-profile",
-      label: "Perfil",
-      icon: <User className="h-5 w-5" />,
-      tooltip: "Perfil do Usuário"
-    });
+    // 1. Meu Dashboard - for all athletes (regardless of other roles)
+    if (isAthlete) {
+      items.push({
+        path: "/athlete-dashboard",
+        label: "Dashboard",
+        icon: <LayoutDashboard className="h-5 w-5" />,
+        tooltip: "Dashboard"
+      });
+    }
     
     // 2. Cronograma (Schedule) - for all roles
     items.push({
@@ -67,17 +69,7 @@ export const useMenuItems = (onLogout: () => void) => {
       tooltip: "Notificações"
     });
     
-    // 5. Minhas Inscrições (My Registrations) - for all roles except Público Geral
-    if (!roles.isPublicGeral) {
-      items.push({
-        path: "/minhas-inscricoes",
-        label: "Minhas Inscrições",
-        icon: <ClipboardList className="h-5 w-5" />,
-        tooltip: "Minhas Inscrições"
-      });
-    }
-    
-    // 6. Organizador (Organizer)
+    // 5. Organizador (Organizer)
     if (isOrganizer) {
       items.push({
         path: "/organizador",
@@ -87,7 +79,7 @@ export const useMenuItems = (onLogout: () => void) => {
       });
     }
     
-    // 7. Delegação (Delegation)
+    // 6. Delegação (Delegation)
     if (isDelegationRep) {
       items.push({
         path: "/delegacao",
@@ -97,7 +89,7 @@ export const useMenuItems = (onLogout: () => void) => {
       });
     }
 
-    // 8. Filósofo Monitor - ÚNICA ENTRADA NO MENU
+    // 7. Filósofo Monitor - ÚNICA ENTRADA NO MENU
     if (isFilosofoMonitor) {
       items.push({
         path: "/monitor",
@@ -107,7 +99,7 @@ export const useMenuItems = (onLogout: () => void) => {
       });
     }
     
-    // 9. Juiz (Judge)
+    // 8. Juiz (Judge)
     if (isJudge) {
       items.push({
         path: "/judge-dashboard",
@@ -117,7 +109,7 @@ export const useMenuItems = (onLogout: () => void) => {
       });
     }
     
-    // 10. Administração (Administration) - for admins only
+    // 9. Administração (Administration) - for admins only
     if (isAdmin) {
       items.push({
         path: "/administration",
@@ -127,7 +119,7 @@ export const useMenuItems = (onLogout: () => void) => {
       });
     }
 
-    // 11. Master - for master users only
+    // 10. Master - for master users only
     if (isMaster) {
       items.push({
         path: "/master",
@@ -136,6 +128,14 @@ export const useMenuItems = (onLogout: () => void) => {
         tooltip: "Gestão Master"
       });
     }
+
+    // 11. Perfil (Athlete Profile) - BEFORE action items
+    items.push({
+      path: "/athlete-profile",
+      label: "Perfil",
+      icon: <User className="h-5 w-5" />,
+      tooltip: "Perfil do Usuário"
+    });
 
     // 12. Trocar Evento
     items.push({

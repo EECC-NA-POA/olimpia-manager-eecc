@@ -132,7 +132,7 @@ export const fetchRegisteredAthletesForModality = async (filialId: string, modal
       .from('inscricoes_modalidades')
       .select(`
         atleta_id,
-        usuarios!inner(
+        usuarios!inscricoes_modalidades_atleta_id_fkey!inner(
           id,
           nome_completo,
           email,

@@ -16,6 +16,7 @@ import OlimpiadasNacionais from "./pages/OlimpiadasNacionais";
 import TorneioConcordia from "./pages/TorneioConcordia";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import AthleteDashboard from "./pages/AthleteDashboard";
 import EventSelectionPage from "./pages/EventSelectionPage";
 import EventDetailsPage from "./pages/EventDetailsPage";
 import PublicEventPage from "./pages/PublicEventPage";
@@ -116,6 +117,7 @@ function AppContent() {
             <MainNavigation>
               <Routes>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/athlete-dashboard" element={<AthleteDashboard />} />
                 <Route path="/athlete-profile" element={<AthleteProfile />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/judge-dashboard" element={<JudgeDashboard />} />

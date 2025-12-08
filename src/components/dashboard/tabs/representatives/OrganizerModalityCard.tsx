@@ -10,10 +10,10 @@ interface OrganizerModalityCardProps {
   modality: OrganizerModalityWithRepresentatives;
   availableAthletes: any[] | undefined;
   athletesLoading: boolean;
-  selectedModalityForChange: number | null;
-  onSetSelectedModality: (modalityId: number) => void;
-  onAddRepresentative: (modalityId: number, atletaId: string) => void;
-  onRemoveRepresentative: (modalityId: number, atletaId: string) => void;
+  isSelected: boolean;
+  onSetSelectedModality: () => void;
+  onAddRepresentative: (atletaId: string) => void;
+  onRemoveRepresentative: (atletaId: string) => void;
   onCancelSelection: () => void;
 }
 
@@ -21,7 +21,7 @@ export function OrganizerModalityCard({
   modality,
   availableAthletes,
   athletesLoading,
-  selectedModalityForChange,
+  isSelected,
   onSetSelectedModality,
   onAddRepresentative,
   onRemoveRepresentative,
@@ -80,7 +80,7 @@ export function OrganizerModalityCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onRemoveRepresentative(modality.id, representative.atleta_id)}
+                  onClick={() => onRemoveRepresentative(representative.atleta_id)}
                   className="text-red-600 hover:text-red-700"
                 >
                   <UserX className="h-4 w-4" />
@@ -90,7 +90,7 @@ export function OrganizerModalityCard({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onSetSelectedModality(modality.id)}
+              onClick={onSetSelectedModality}
               className="w-full"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -103,14 +103,14 @@ export function OrganizerModalityCard({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onSetSelectedModality(modality.id)}
+              onClick={onSetSelectedModality}
             >
               Definir Rep
             </Button>
           </div>
         )}
 
-        {selectedModalityForChange === modality.id && (
+        {isSelected && (
           <div className="mt-4 p-4 border border-olimpics-green-primary/20 rounded-lg bg-olimpics-green-primary/5">
             <h5 className="font-medium mb-3">Selecionar Representante:</h5>
             {athletesLoading ? (
@@ -120,7 +120,7 @@ export function OrganizerModalityCard({
             ) : availableAthletes && availableAthletes.length > 0 ? (
               <div className="space-y-2">
                 <Select
-                  onValueChange={(atletaId) => onAddRepresentative(modality.id, atletaId)}
+                  onValueChange={(atletaId) => onAddRepresentative(atletaId)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Escolha um atleta inscrito nesta modalidade" />

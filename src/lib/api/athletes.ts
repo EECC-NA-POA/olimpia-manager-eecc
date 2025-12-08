@@ -91,7 +91,10 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
               id: record.inscricao_id.toString(),
               modalidade: record.modalidade_nome,
               status: modalityStatus,
-              justificativa_status: record.justificativa_status || ''
+              justificativa_status: record.justificativa_status || '',
+              inscrito_por: record.inscrito_por || null,
+              tipo_inscricao: record.tipo_inscricao || null,
+              inscrito_por_nome: record.inscrito_por_nome || null
             });
           }
         }

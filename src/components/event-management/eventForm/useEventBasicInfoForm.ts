@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
@@ -16,36 +16,52 @@ interface UseEventBasicInfoFormProps {
 export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEventBasicInfoFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   
+  const getFormValues = (data: Event): EventBasicInfoFormValues => ({
+    nome: data.nome || '',
+    descricao: data.descricao || '',
+    pais: data.pais || '',
+    estado: data.estado || '',
+    cidade: data.cidade || '',
+    tipo: data.tipo || 'estadual',
+    data_inicio_evento: data.data_inicio_evento ? new Date(data.data_inicio_evento).toISOString().split('T')[0] : '',
+    data_fim_evento: data.data_fim_evento ? new Date(data.data_fim_evento).toISOString().split('T')[0] : '',
+    data_inicio_inscricao: data.data_inicio_inscricao ? new Date(data.data_inicio_inscricao).toISOString().split('T')[0] : '',
+    data_fim_inscricao: data.data_fim_inscricao ? new Date(data.data_fim_inscricao).toISOString().split('T')[0] : '',
+    status_evento: data.status_evento || 'ativo',
+    foto_evento: data.foto_evento || '',
+    visibilidade_publica: data.visibilidade_publica === undefined ? true : data.visibilidade_publica,
+  });
+  
   // Initialize form with event data
   const form = useForm<EventBasicInfoFormValues>({
     resolver: zodResolver(eventBasicInfoSchema),
-    defaultValues: {
-      nome: eventData.nome || '',
-      descricao: eventData.descricao || '',
-      pais: eventData.pais || '',
-      estado: eventData.estado || '',
-      cidade: eventData.cidade || '',
-      tipo: eventData.tipo || 'estadual',
-      data_inicio_evento: eventData.data_inicio_evento ? new Date(eventData.data_inicio_evento).toISOString().split('T')[0] : '',
-      data_fim_evento: eventData.data_fim_evento ? new Date(eventData.data_fim_evento).toISOString().split('T')[0] : '',
-      data_inicio_inscricao: eventData.data_inicio_inscricao ? new Date(eventData.data_inicio_inscricao).toISOString().split('T')[0] : '',
-      data_fim_inscricao: eventData.data_fim_inscricao ? new Date(eventData.data_fim_inscricao).toISOString().split('T')[0] : '',
-      status_evento: eventData.status_evento || 'ativo',
-      foto_evento: eventData.foto_evento || '',
-      visibilidade_publica: eventData.visibilidade_publica === undefined ? true : eventData.visibilidade_publica,
-    }
+    defaultValues: getFormValues(eventData)
   });
   
+  // Reset form when eventData changes (e.g., after successful update)
+  useEffect(() => {
+    form.reset(getFormValues(eventData));
+  }, [eventData, form]);
+
   const handleStatusChange = (value: string) => {
-    form.setValue('status_evento', value as 'ativo' | 'encerrado' | 'suspenso' | 'em_teste' | 'encerrado_oculto');
+    form.setValue('status_evento', value as 'ativo' | 'encerrado' | 'suspenso' | 'em_teste' | 'encerrado_oculto', { 
+      shouldDirty: true,
+      shouldTouch: true 
+    });
   };
 
   const handleTipoChange = (value: string) => {
-    form.setValue('tipo', value as 'estadual' | 'nacional' | 'internacional' | 'regional');
+    form.setValue('tipo', value as 'estadual' | 'nacional' | 'internacional' | 'regional', { 
+      shouldDirty: true,
+      shouldTouch: true 
+    });
   };
 
   const handleVisibilidadeChange = (checked: boolean) => {
-    form.setValue('visibilidade_publica', checked);
+    form.setValue('visibilidade_publica', checked, { 
+      shouldDirty: true,
+      shouldTouch: true 
+    });
   };
 
   const onSubmit = async (data: EventBasicInfoFormValues) => {

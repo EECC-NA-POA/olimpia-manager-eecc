@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   BarChart,
@@ -15,11 +14,13 @@ import {
 import { ChartContainer } from "@/components/ui/chart";
 import { EmptyChartMessage } from "./EmptyChartMessage";
 import { CustomTooltip } from "./CustomTooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface BranchRegistrationData {
   name: string;
   confirmados: number;
   pendentes: number;
+  cancelados?: number;
   isentos?: number;
   total: number;
 }
@@ -31,6 +32,12 @@ interface BranchRegistrationsChartProps {
 }
 
 export function BranchRegistrationsChart({ data, chartColors, chartConfig }: BranchRegistrationsChartProps) {
+  const isMobile = useIsMobile();
+  
+  // Limit data on mobile for better readability
+  const displayData = isMobile ? data.slice(0, 5) : data;
+  const hasMoreData = isMobile && data.length > 5;
+
   if (!data || data.length === 0) {
     return (
       <Card className="hover:shadow-lg transition-shadow w-full">
@@ -48,19 +55,23 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
   }
 
   return (
-    <Card className="hover:shadow-lg transition-shadow w-full">
+    <Card className="hover:shadow-lg transition-shadow w-full overflow-hidden">
       <CardHeader className="p-3 sm:p-6">
         <CardTitle className="text-sm sm:text-lg">Inscrições por Filial</CardTitle>
         <CardDescription className="text-xs sm:text-sm">
-          Filiais com maior número de inscrições por status
+          {hasMoreData 
+            ? `Top 5 filiais (de ${data.length} total) - role para ver gráfico completo`
+            : "Filiais com maior número de inscrições por status"
+          }
         </CardDescription>
       </CardHeader>
-      <CardContent className="p-1 sm:p-6">
-        <ChartContainer config={chartConfig} className="h-[350px] sm:h-[500px] lg:h-[600px] w-full">
+      <CardContent className="p-1 sm:p-6 overflow-x-auto">
+        <div className="min-w-[300px] sm:min-w-[400px]">
+          <ChartContainer config={chartConfig} className="h-[300px] sm:h-[500px] lg:h-[600px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
-              data={data}
-              margin={{ top: 15, right: 2, left: -5, bottom: 70 }}
+              data={displayData}
+              margin={{ top: 15, right: 2, left: -5, bottom: isMobile ? 50 : 70 }}
             >
               <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
               <XAxis 
@@ -131,6 +142,20 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
                 activeDot={{ r: 5 }}
                 strokeDasharray="5 5"
               />
+              {/* Add line for cancelled athletes if data exists */}
+              {data.some(item => item.cancelados && item.cancelados > 0) && (
+                <Line 
+                  yAxisId="left"
+                  type="monotone" 
+                  dataKey="cancelados" 
+                  name="Cancelados" 
+                  stroke="#EF4444" 
+                  strokeWidth={1.5} 
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
+                  strokeDasharray="3 3"
+                />
+              )}
               {/* Add line for exempt athletes if data exists */}
               {data.some(item => item.isentos && item.isentos > 0) && (
                 <Line 
@@ -138,7 +163,7 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
                   type="monotone" 
                   dataKey="isentos" 
                   name="Isentos" 
-                  stroke={chartColors.blue} 
+                  stroke="#6366F1" 
                   strokeWidth={1.5} 
                   dot={{ r: 3 }}
                   activeDot={{ r: 5 }}
@@ -148,6 +173,7 @@ export function BranchRegistrationsChart({ data, chartColors, chartConfig }: Bra
             </ComposedChart>
           </ResponsiveContainer>
         </ChartContainer>
+        </div>
       </CardContent>
     </Card>
   );
