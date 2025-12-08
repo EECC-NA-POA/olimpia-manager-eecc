@@ -3,17 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Trophy, Search, AlertCircle, Loader2, Clock } from 'lucide-react';
+import { Trophy, Search, AlertCircle, Loader2, Clock, MapPin } from 'lucide-react';
 import { AvailableModality } from '../hooks/useAvailableModalitiesForAthlete';
 import { useModalityMutations } from '@/hooks/useModalityMutations';
-import { ModalitySchedule, formatScheduleTime } from '../hooks/useModalitySchedules';
+import { ModalityScheduleItem, getSchedulesForModality, formatScheduleTime } from '../hooks/useModalitySchedules';
 
 interface AvailableModalitiesCardProps {
   modalities: AvailableModality[];
   userId: string;
   eventId: string;
   registeredModalityIds: number[];
-  modalitySchedules?: ModalitySchedule[];
+  modalitySchedules?: ModalityScheduleItem[];
 }
 
 export function AvailableModalitiesCard({ 
@@ -27,8 +27,8 @@ export function AvailableModalitiesCard({
   const { registerMutation } = useModalityMutations(userId, eventId);
   const [registeringId, setRegisteringId] = useState<number | null>(null);
   
-  const getScheduleForModality = (modalityId: number): ModalitySchedule | undefined => {
-    return modalitySchedules.find(s => s.modalidade_id === modalityId);
+  const getSchedulesForMod = (modalityId: number): ModalityScheduleItem[] => {
+    return getSchedulesForModality(modalityId, modalitySchedules);
   };
 
   // Day of week order for sorting (Monday = 0, Sunday = 6)
@@ -48,18 +48,21 @@ export function AvailableModalitiesCard({
       (m.categoria && m.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     .sort((a, b) => {
-      const scheduleA = getScheduleForModality(a.id);
-      const scheduleB = getScheduleForModality(b.id);
+      const schedulesA = getSchedulesForMod(a.id);
+      const schedulesB = getSchedulesForMod(b.id);
       
-      // Get day order (put modalities without schedule at the end)
-      const dayA = scheduleA?.dia_semana ? (dayOrder[scheduleA.dia_semana] ?? 99) : 99;
-      const dayB = scheduleB?.dia_semana ? (dayOrder[scheduleB.dia_semana] ?? 99) : 99;
+      // Get first day order (put modalities without schedule at the end)
+      const firstScheduleA = schedulesA[0];
+      const firstScheduleB = schedulesB[0];
+      
+      const dayA = firstScheduleA?.dia_semana ? (dayOrder[firstScheduleA.dia_semana] ?? 99) : 99;
+      const dayB = firstScheduleB?.dia_semana ? (dayOrder[firstScheduleB.dia_semana] ?? 99) : 99;
       
       if (dayA !== dayB) return dayA - dayB;
       
       // If same day, sort by time
-      const timeA = scheduleA?.horario_inicio || '99:99';
-      const timeB = scheduleB?.horario_inicio || '99:99';
+      const timeA = firstScheduleA?.horario_inicio || '99:99';
+      const timeB = firstScheduleB?.horario_inicio || '99:99';
       
       return timeA.localeCompare(timeB);
     });
@@ -118,11 +121,11 @@ export function AvailableModalitiesCard({
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Group modalities by day of week */}
+            {/* Group modalities by first day of week */}
             {Object.entries(
               filteredAndSortedModalities.reduce((groups, modality) => {
-                const schedule = getScheduleForModality(modality.id);
-                const day = schedule?.dia_semana || 'Sem dia definido';
+                const schedules = getSchedulesForMod(modality.id);
+                const day = schedules[0]?.dia_semana || 'Sem dia definido';
                 if (!groups[day]) groups[day] = [];
                 groups[day].push(modality);
                 return groups;
@@ -137,7 +140,7 @@ export function AvailableModalitiesCard({
                   {dayModalities.map((modality) => {
                     const vacancyAvailable = isVacancyAvailable(modality);
                     const isRegistering = registeringId === modality.id;
-                    const schedule = getScheduleForModality(modality.id);
+                    const schedules = getSchedulesForMod(modality.id);
 
                     return (
                       <div
@@ -158,10 +161,28 @@ export function AvailableModalitiesCard({
                             </p>
                           )}
                           
-                          {schedule?.horario_inicio && (
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
-                              <Clock className="h-3 w-3" />
-                              <span>{formatScheduleTime(schedule.horario_inicio, schedule.horario_fim)}</span>
+                          {/* Display all schedules */}
+                          {schedules.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              {schedules.map((schedule, idx) => (
+                                <div key={idx} className="flex flex-col gap-0.5">
+                                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                    <Clock className="h-3 w-3 shrink-0" />
+                                    <span>
+                                      <span className="font-medium">{schedule.dia_semana}</span>
+                                      {schedule.horario_inicio && (
+                                        <> • {formatScheduleTime(schedule.horario_inicio, schedule.horario_fim)}</>
+                                      )}
+                                    </span>
+                                  </div>
+                                  {schedule.local && (
+                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-[18px]">
+                                      <MapPin className="h-3 w-3 shrink-0" />
+                                      <span>{schedule.local}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
                             </div>
                           )}
                         </div>

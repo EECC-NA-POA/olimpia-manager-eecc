@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ClipboardList, AlertCircle, Phone, User, ChevronDown, ChevronUp, MessageCircle, Clock } from 'lucide-react';
+import { ClipboardList, AlertCircle, Phone, User, ChevronDown, ChevronUp, MessageCircle, Clock, MapPin } from 'lucide-react';
 import { RegisteredModality } from '@/types/modality';
 import { useModalityMutations } from '@/hooks/useModalityMutations';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ModalitySchedule, formatScheduleTime } from '../hooks/useModalitySchedules';
+import { ModalityScheduleItem, getSchedulesForModality, formatScheduleTime } from '../hooks/useModalitySchedules';
 
 interface Representative {
   nome_completo: string;
@@ -23,7 +23,7 @@ interface MyEnrollmentsCardProps {
     id: number;
     representatives: Representative[];
   }>;
-  modalitySchedules?: ModalitySchedule[];
+  modalitySchedules?: ModalityScheduleItem[];
 }
 
 const formatPhoneForWhatsApp = (phone: string) => {
@@ -64,8 +64,8 @@ export function MyEnrollmentsCard({
     return modality?.representatives || [];
   };
   
-  const getScheduleForModality = (modalityId: number): ModalitySchedule | undefined => {
-    return modalitySchedules.find(s => s.modalidade_id === modalityId);
+  const getSchedulesForMod = (modalityId: number): ModalityScheduleItem[] => {
+    return getSchedulesForModality(modalityId, modalitySchedules);
   };
 
   const getStatusBadge = (status: string) => {
@@ -123,7 +123,7 @@ export function MyEnrollmentsCard({
               const representatives = getRepresentativesForModality(enrollment.modalidade.id);
               const hasRepresentatives = representatives.length > 0;
               const isExpanded = expandedModalities.has(enrollment.id);
-              const schedule = getScheduleForModality(enrollment.modalidade.id);
+              const schedules = getSchedulesForMod(enrollment.modalidade.id);
 
               return (
                 <Collapsible 
@@ -153,14 +153,28 @@ export function MyEnrollmentsCard({
                         <span>{formatDate(enrollment.data_inscricao)}</span>
                       </div>
                       
-                      {schedule && (schedule.dia_semana || schedule.horario_inicio) && (
-                        <div className="flex items-center gap-1.5 text-xs text-primary mt-2">
-                          <Clock className="h-3 w-3" />
-                          <span>
-                            {schedule.dia_semana && <span className="font-medium">{schedule.dia_semana}</span>}
-                            {schedule.dia_semana && schedule.horario_inicio && ' • '}
-                            {schedule.horario_inicio && formatScheduleTime(schedule.horario_inicio, schedule.horario_fim)}
-                          </span>
+                      {/* Display all schedules */}
+                      {schedules.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {schedules.map((schedule, idx) => (
+                            <div key={idx} className="flex flex-col gap-0.5">
+                              <div className="flex items-center gap-1.5 text-xs text-primary">
+                                <Clock className="h-3 w-3 shrink-0" />
+                                <span>
+                                  <span className="font-medium">{schedule.dia_semana}</span>
+                                  {schedule.horario_inicio && (
+                                    <> • {formatScheduleTime(schedule.horario_inicio, schedule.horario_fim)}</>
+                                  )}
+                                </span>
+                              </div>
+                              {schedule.local && (
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-[18px]">
+                                  <MapPin className="h-3 w-3 shrink-0" />
+                                  <span>{schedule.local}</span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       )}
 
