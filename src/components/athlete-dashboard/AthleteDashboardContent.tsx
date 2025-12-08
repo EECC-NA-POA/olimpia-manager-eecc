@@ -12,8 +12,9 @@ import { MyEnrollmentsCard } from './components/MyEnrollmentsCard';
 import { AvailableModalitiesCard } from './components/AvailableModalitiesCard';
 import { QuickSummaryCard } from './components/QuickSummaryCard';
 import { PaymentUploadCard } from './components/PaymentUploadCard';
-import { Loader2, Calendar, Bell, FileText } from 'lucide-react';
+import { Loader2, Calendar, Bell, FileText, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface AthleteDashboardContentProps {
   userId: string;
@@ -61,6 +62,7 @@ export function AthleteDashboardContent({ userId, eventId }: AthleteDashboardCon
   const athleteGender = athleteProfile?.genero || '';
   const athleteIdentifier = athleteProfile?.numero_identificador || '';
   const isPublicUser = athleteProfile?.papeis?.some(p => p.codigo === 'PGR') || false;
+  const hasNoEnrollments = totalEnrolled === 0 && !isPublicUser;
 
   const getProfileImage = (gender: string | undefined) => {
     switch (gender?.toLowerCase()) {
@@ -128,6 +130,19 @@ export function AthleteDashboardContent({ userId, eventId }: AthleteDashboardCon
           </div>
         </div>
       </div>
+
+      {/* Alert for athletes with no enrollments */}
+      {hasNoEnrollments && (
+        <Alert className="border-olimpics-orange-primary bg-olimpics-orange-primary/10">
+          <AlertTriangle className="h-5 w-5 text-olimpics-orange-primary" />
+          <AlertTitle className="text-olimpics-orange-primary font-semibold">
+            Você ainda não está inscrito em nenhuma modalidade!
+          </AlertTitle>
+          <AlertDescription className="text-foreground">
+            Para participar do evento, inscreva-se em pelo menos uma modalidade na seção "Modalidades Disponíveis" abaixo.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Quick Summary */}
       <QuickSummaryCard
