@@ -10,14 +10,18 @@ import { ContactSection } from './form-sections/ContactSection';
 import { AuthSection } from './form-sections/AuthSection';
 import { LocationSelector } from './form-sections/location/LocationSelector';
 import { PrivacyPolicySection } from './form-sections/PrivacyPolicySection';
-import { registerSchema, RegisterFormData } from './types/form-types';
+import { useTranslation } from 'react-i18next';
+import { createRegisterSchema, RegisterFormData } from './types/form-types';
 import { useRegisterForm } from './hooks/useRegisterForm';
 
 export const SignUpForm = () => {
+  const { t } = useTranslation();
   const { isSubmitting, handleSubmit: onSubmit } = useRegisterForm();
 
+  const schema = createRegisterSchema(t);
+
   const form = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       nome: '',
       email: '',
@@ -29,9 +33,10 @@ export const SignUpForm = () => {
       numero_documento: '',
       genero: 'Masculino',
       data_nascimento: undefined,
+      country: 'Brasil',
       state: '',
       branchId: '',
-      acceptPrivacyPolicy: false,
+      acceptPrivacyPolicy: false as any,
     },
   });
 

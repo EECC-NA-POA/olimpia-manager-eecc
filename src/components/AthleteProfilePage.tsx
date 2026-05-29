@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { useAuth } from "@/contexts/AuthContext";
 import AthleteProfile from './AthleteProfile';
-import { Loader2 } from "lucide-react";
+import { LoadingImage } from "@/components/ui/loading-image";
 import { useEventData } from "@/hooks/useEventData";
 import { useAthleteProfileData } from "@/hooks/useAthleteProfileData";
 import { useUserRoleCheck } from "@/hooks/useUserRoleCheck";
@@ -38,8 +38,8 @@ export default function AthleteProfilePage() {
   if (profileLoading) {
     return (
       <div className="space-y-8">
-        <div className="flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-olimpics-green-primary" />
+        <div className="flex items-center justify-center py-8">
+          <LoadingImage size="sm" />
         </div>
       </div>
     );

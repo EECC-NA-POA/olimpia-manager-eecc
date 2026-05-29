@@ -3,7 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, ListChecks, BarChart, Bell, UserCheck } from "lucide-react";
+import { Users, ListChecks, BarChart, Bell, UserCheck, Globe, ClipboardCheck } from "lucide-react";
 import { EmptyState } from "./dashboard/components/EmptyState";
 import { LoadingState } from "./dashboard/components/LoadingState";
 import { ErrorState } from "./dashboard/components/ErrorState";
@@ -15,12 +15,14 @@ import { StatisticsTab } from "./dashboard/tabs/StatisticsTab";
 import { OrganizerRepresentativesTab } from "./dashboard/tabs/OrganizerRepresentativesTab";
 import { TeamsTab } from "./dashboard/tabs/TeamsTab";
 import { NotificationManager } from "./notifications/NotificationManager";
+import { DelegationsManager } from "./event-management/DelegationsManager";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { AttendanceReportTab } from "./dashboard/tabs/AttendanceReportTab";
 
 export default function OrganizerDashboard() {
   const { user, currentEventId } = useAuth();
   const [activeTab, setActiveTab] = useState("statistics");
-  
+
   // Filter states
   const [nameFilter, setNameFilter] = useState("");
   const [branchFilter, setBranchFilter] = useState("all");
@@ -51,13 +53,13 @@ export default function OrganizerDashboard() {
           return <ErrorState onRetry={handleRefresh} />;
         }
         if (!branchAnalytics || branchAnalytics.length === 0) {
-          return <EmptyState 
-                    title="Não há dados estatísticos disponíveis" 
-                    description="Não encontramos dados de análise para exibir neste momento" 
-                 />;
+          return <EmptyState
+            title="Não há dados estatísticos disponíveis"
+            description="Não encontramos dados de análise para exibir neste momento"
+          />;
         }
         return <StatisticsTab data={branchAnalytics} />;
-      
+
       case "athletes":
         if (isLoading.athletes || isLoading.branches) {
           return <LoadingState />;
@@ -66,10 +68,10 @@ export default function OrganizerDashboard() {
           return <ErrorState onRetry={handleRefresh} />;
         }
         if (!athletes || athletes.length === 0) {
-          return <EmptyState 
-                    title="Nenhum atleta encontrado"
-                    description="Não há atletas cadastrados para este evento" 
-                 />;
+          return <EmptyState
+            title="Nenhum atleta encontrado"
+            description="Não há atletas cadastrados para este evento"
+          />;
         }
         return (
           <AthletesTab
@@ -90,7 +92,7 @@ export default function OrganizerDashboard() {
             enrollmentType="organizador"
           />
         );
-      
+
       case "enrollments":
         if (isLoading.enrollments) {
           return <LoadingState />;
@@ -99,10 +101,10 @@ export default function OrganizerDashboard() {
           return <ErrorState onRetry={handleRefresh} />;
         }
         if (!confirmedEnrollments || confirmedEnrollments.length === 0) {
-          return <EmptyState 
-                    title="Nenhuma inscrição confirmada"
-                    description="Não há inscrições confirmadas para este evento" 
-                 />;
+          return <EmptyState
+            title="Nenhuma inscrição confirmada"
+            description="Não há inscrições confirmadas para este evento"
+          />;
         }
         return <EnrollmentsTab enrollments={confirmedEnrollments} />;
 
@@ -111,11 +113,14 @@ export default function OrganizerDashboard() {
 
       case "teams":
         return (
-          <TeamsTab 
-            eventId={currentEventId} 
+          <TeamsTab
+            eventId={currentEventId}
             branchId={null}
           />
         );
+
+      case "delegations":
+        return <DelegationsManager eventId={currentEventId} />;
 
       case "notifications":
         return (
@@ -138,7 +143,7 @@ export default function OrganizerDashboard() {
       <Tabs defaultValue="statistics" className="w-full max-w-full" onValueChange={setActiveTab} value={activeTab}>
         <div className="w-full overflow-x-auto">
           <TabsList className="inline-flex w-auto min-w-full bg-background p-0.5 sm:p-1 h-auto gap-0.5 sm:gap-1 border-b mb-3 sm:mb-8">
-            <TabsTrigger 
+            <TabsTrigger
               value="statistics"
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
             >
@@ -146,7 +151,7 @@ export default function OrganizerDashboard() {
               <span className="hidden sm:inline">Estatísticas</span>
               <span className="sm:hidden">Stats</span>
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="athletes"
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
             >
@@ -154,7 +159,7 @@ export default function OrganizerDashboard() {
               <span className="hidden sm:inline">Atletas</span>
               <span className="sm:hidden">Atl</span>
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="enrollments"
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
             >
@@ -162,14 +167,14 @@ export default function OrganizerDashboard() {
               <span className="hidden sm:inline">Inscrições</span>
               <span className="sm:hidden">Insc</span>
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="teams"
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
             >
               <Users className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               <span>Equipes</span>
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="representatives"
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
             >
@@ -177,7 +182,23 @@ export default function OrganizerDashboard() {
               <span className="hidden sm:inline">Representantes</span>
               <span className="sm:hidden">Repr</span>
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
+              value="delegations"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+            >
+              <Globe className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Delegações</span>
+              <span className="sm:hidden">Deleg</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="attendance-report"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+            >
+              <ClipboardCheck className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Frequência</span>
+              <span className="sm:hidden">Freq</span>
+            </TabsTrigger>
+            <TabsTrigger
               value="notifications"
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
             >
@@ -206,6 +227,14 @@ export default function OrganizerDashboard() {
 
         <TabsContent value="representatives" className="mt-2 sm:mt-6">
           {renderTabContent("representatives")}
+        </TabsContent>
+
+        <TabsContent value="delegations" className="mt-2 sm:mt-6">
+          {renderTabContent("delegations")}
+        </TabsContent>
+
+        <TabsContent value="attendance-report" className="mt-2 sm:mt-6">
+          <AttendanceReportTab />
         </TabsContent>
 
         <TabsContent value="notifications" className="mt-2 sm:mt-6">

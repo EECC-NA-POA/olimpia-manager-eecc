@@ -35,9 +35,19 @@ export function useNotifications({ eventId, userId, includeAuthoredHidden = fals
 
         console.log('User data:', userData);
 
-        // Consulta 1: Notificações destinadas à filial do usuário (APENAS VISÍVEIS)
+        // Buscar modalidades em que o usuário está inscrito no evento
+        const { data: userModalities } = await supabase
+          .from('inscricoes_modalidades')
+          .select('modalidade_id')
+          .eq('atleta_id', userId)
+          .eq('evento_id', eventId);
+
+        const userModIds = userModalities?.map(m => m.modalidade_id) || [];
+        console.log('User modalities:', userModIds);
+
+        // Consulta 1: Notificações destinadas à filial do usuário (APENAS VISÍVEIS) ou a todas as filiais (is null)
         console.log('Executing destined notifications query...');
-        const { data: destinedNotifications, error: destinedError } = await supabase
+        const { data: rawDestinedNotifications, error: destinedError } = await supabase
           .from('notificacoes')
           .select(`
             id,
@@ -50,12 +60,29 @@ export function useNotifications({ eventId, userId, includeAuthoredHidden = fals
             visivel,
             criado_em,
             atualizado_em,
-            notificacao_destinatarios!inner(filial_id)
+            notificacao_destinatarios(filial_id, modalidade_id)
           `)
           .eq('evento_id', eventId)
           .eq('visivel', true) // FILTRO IMPORTANTE: apenas notificações visíveis
-          .eq('notificacao_destinatarios.filial_id', userData.filial_id)
           .order('criado_em', { ascending: false });
+
+        let destinedNotifications: any[] = [];
+        if (rawDestinedNotifications) {
+          destinedNotifications = rawDestinedNotifications.filter(notification => {
+            // Verifica se a notificação possui destinatários
+            if (!notification.notificacao_destinatarios || notification.notificacao_destinatarios.length === 0) {
+              return false;
+            }
+            // Retorna verdadeiro se tiver um destinatário com filial_id NULO (Todos),
+            // ou filial igual a do usuário, ou modalidade na qual o usuário está inscrito
+            return notification.notificacao_destinatarios.some(
+              (dest: any) =>
+                dest.filial_id === null ||
+                dest.filial_id === userData.filial_id ||
+                (dest.modalidade_id && userModIds.includes(dest.modalidade_id))
+            );
+          });
+        }
 
         console.log('Destined notifications result:', { destinedNotifications, destinedError });
 
@@ -100,42 +127,65 @@ export function useNotifications({ eventId, userId, includeAuthoredHidden = fals
 
         // Combinar notificações destinadas (apenas visíveis) + notificações do autor (conforme parâmetro)
         let allNotifications: any[] = [];
-        
+
         // Incluir notificações destinadas (sempre apenas visíveis)
         if (destinedNotifications) {
           allNotifications = [...destinedNotifications];
         }
-        
+
         // Incluir notificações criadas pelo próprio usuário (visíveis ou todas, conforme parâmetro)
         if (authoredNotifications) {
           allNotifications = [...allNotifications, ...authoredNotifications];
         }
 
         console.log('All notifications before deduplication:', allNotifications);
-        
-        const uniqueNotifications = allNotifications.filter((notification, index, self) => 
+
+        const uniqueNotifications = allNotifications.filter((notification, index, self) =>
           index === self.findIndex(n => n.id === notification.id)
         );
-
-        console.log('Notifications from database - destined:', destinedNotifications?.length || 0);
-        console.log('Notifications from database - authored:', authoredNotifications?.length || 0);
-        console.log('Unique notifications after merge:', uniqueNotifications.length);
 
         if (uniqueNotifications.length === 0) {
           console.log('No notifications found, returning empty array');
           return [];
         }
 
-        // Buscar leituras do usuário para essas notificações
+        // Buscar exclusões do usuário para essas notificações
         const notificationIds = uniqueNotifications.map(n => n.id);
-        
+        let excludedIds: string[] = [];
+
+        const { data: excluded, error: excludedError } = await supabase
+          .from('notificacoes_excluidas')
+          .select('notificacao_id')
+          .eq('usuario_id', userId)
+          .in('notificacao_id', notificationIds);
+
+        if (!excludedError && excluded) {
+          excludedIds = excluded.map(e => e.notificacao_id);
+        }
+
+        // Remove as que foram excluídas (apagadas via swipe)
+        const visibleUniqueNotifications = uniqueNotifications.filter(n => !excludedIds.includes(n.id));
+
+        console.log('Notifications from database - destined:', destinedNotifications?.length || 0);
+        console.log('Notifications from database - authored:', authoredNotifications?.length || 0);
+        console.log('Unique notifications after merge:', visibleUniqueNotifications.length);
+
+        if (visibleUniqueNotifications.length === 0) {
+          return [];
+        }
+
+
+
+        // Buscar leituras do usuário para essas notificações
+        const visibleNotificationIds = visibleUniqueNotifications.map(n => n.id);
+
         let readNotifications: string[] = [];
-        if (notificationIds.length > 0) {
+        if (visibleNotificationIds.length > 0) {
           const { data: reads, error: readsError } = await supabase
             .from('notificacao_leituras')
             .select('notificacao_id')
             .eq('usuario_id', userId)
-            .in('notificacao_id', notificationIds);
+            .in('notificacao_id', visibleNotificationIds);
 
           if (!readsError && reads) {
             readNotifications = reads.map(r => r.notificacao_id);
@@ -143,7 +193,7 @@ export function useNotifications({ eventId, userId, includeAuthoredHidden = fals
         }
 
         // Transformar dados para incluir campo 'lida'
-        const notifications: Notification[] = uniqueNotifications.map((item: any) => ({
+        const notifications: Notification[] = visibleUniqueNotifications.map((item: any) => ({
           id: item.id,
           evento_id: item.evento_id,
           autor_id: item.autor_id,

@@ -1,20 +1,5 @@
-
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  ResponsiveContainer, 
-  Legend, 
-  CartesianGrid,
-  Cell
-} from "recharts";
-import { ChartContainer } from "@/components/ui/chart";
-import { EmptyChartMessage } from "./EmptyChartMessage";
-import { CustomTooltip } from "./CustomTooltip";
-import { Progress } from "@/components/ui/progress";
+import { CheckCircle2, Clock, XCircle, Shield } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface PaymentStatusData {
   name: string;
@@ -31,179 +16,69 @@ interface PaymentStatusData {
 
 interface PaymentStatusBarChartProps {
   data: PaymentStatusData[];
-  chartConfig: any;
+  chartConfig?: any;
   title?: string;
   description?: string;
 }
 
-export function PaymentStatusBarChart({ 
-  data, 
-  chartConfig,
-  title = "Status de Pagamento",
-  description = "Distribuição dos pagamentos por status"
-}: PaymentStatusBarChartProps) {
-  // If no data, show empty state
-  if (!data || data.length === 0) {
-    return (
-      <Card className="hover:shadow-lg transition-shadow w-full">
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <EmptyChartMessage message="Sem dados de status de pagamento disponíveis" />
-        </CardContent>
-      </Card>
-    );
-  }
+const STATUS = [
+  { key: 'confirmado' as const, pctKey: 'confirmadoPct' as const, label: 'Confirmado', color: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', Icon: CheckCircle2 },
+  { key: 'pendente'   as const, pctKey: 'pendentePct'   as const, label: 'Pendente',   color: 'bg-amber-400',  text: 'text-amber-700',  bg: 'bg-amber-50',  border: 'border-amber-200',  Icon: Clock },
+  { key: 'isento'     as const, pctKey: 'isentoPct'     as const, label: 'Isento',     color: 'bg-sky-500',    text: 'text-sky-700',    bg: 'bg-sky-50',    border: 'border-sky-200',    Icon: Shield },
+  { key: 'cancelado'  as const, pctKey: 'canceladoPct'  as const, label: 'Cancelado',  color: 'bg-red-400',    text: 'text-red-700',    bg: 'bg-red-50',    border: 'border-red-200',    Icon: XCircle },
+] as const;
 
-  // Extract values from the first data item
-  const { confirmado = 0, pendente = 0, cancelado = 0, isento = 0 } = data[0];
-  const { confirmadoPct = 0, pendentePct = 0, canceladoPct = 0, isentoPct = 0 } = data[0];
-  
-  // Check which statuses have data (only show statuses with count > 0)
-  const hasConfirmado = confirmado > 0;
-  const hasPendente = pendente > 0;
-  const hasCancelado = cancelado > 0;
-  const hasIsento = isento > 0;
-  
-  // Format numbers for display
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('pt-BR').format(num);
-  };
-  
-  // Build bar chart data only with statuses that have values
-  const barChartData = [
-    ...(hasConfirmado ? [{ name: 'Confirmado', value: confirmado, color: '#10B981' }] : []),
-    ...(hasPendente ? [{ name: 'Pendente', value: pendente, color: '#F59E0B' }] : []),
-    ...(hasCancelado ? [{ name: 'Cancelado', value: cancelado, color: '#EF4444' }] : []),
-    ...(hasIsento ? [{ name: 'Isento', value: isento, color: '#6366F1' }] : [])
-  ];
+export function PaymentStatusBarChart({ data }: PaymentStatusBarChartProps) {
+  if (!data || data.length === 0) return null;
+
+  const d = data[0];
+  const visible = STATUS.filter(s => d[s.key] > 0);
+  if (visible.length === 0) return null;
 
   return (
-    <Card className="hover:shadow-lg transition-shadow w-full overflow-hidden">
-      <CardHeader className="p-3 sm:p-6">
-        <CardTitle className="text-sm sm:text-lg">{title}</CardTitle>
-        <CardDescription className="text-xs sm:text-sm">{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4 sm:space-y-6 p-3 sm:p-6 overflow-x-auto">
-        <div className="space-y-6">
-          {/* Battery-style visualization */}
-          <div className="space-y-2">
-            <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm font-medium">
-              {hasConfirmado && (
-                <div className="flex items-center">
-                  <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span>
-                  Confirmado: {formatNumber(confirmado)} ({confirmadoPct.toFixed(1)}%)
-                </div>
-              )}
-              {hasPendente && (
-                <div className="flex items-center">
-                  <span className="inline-block w-3 h-3 rounded-full bg-yellow-500 mr-1"></span>
-                  Pendente: {formatNumber(pendente)} ({pendentePct.toFixed(1)}%)
-                </div>
-              )}
-              {hasCancelado && (
-                <div className="flex items-center">
-                  <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span>
-                  Cancelado: {formatNumber(cancelado)} ({canceladoPct.toFixed(1)}%)
-                </div>
-              )}
-              {hasIsento && (
-                <div className="flex items-center">
-                  <span className="inline-block w-3 h-3 rounded-full bg-indigo-500 mr-1"></span>
-                  Isento: {formatNumber(isento)} ({isentoPct.toFixed(1)}%)
-                </div>
-              )}
-            </div>
-            
-            {/* The battery visualization */}
-            <div className="relative h-8 sm:h-10 w-full rounded-full bg-gray-200 overflow-hidden">
-              {/* Confirmed segment */}
-              <div 
-                className="absolute left-0 top-0 h-full bg-green-500" 
-                style={{ width: `${confirmadoPct}%` }}
-              ></div>
-              
-              {/* Pending segment */}
-              <div 
-                className="absolute top-0 h-full bg-yellow-500" 
-                style={{ 
-                  left: `${confirmadoPct}%`, 
-                  width: `${pendentePct}%` 
-                }}
-              ></div>
-              
-              {/* Canceled segment */}
-              <div 
-                className="absolute top-0 h-full bg-red-500" 
-                style={{ 
-                  left: `${confirmadoPct + pendentePct}%`, 
-                  width: `${canceladoPct}%` 
-                }}
-              ></div>
-              
-              {/* Exempt segment - only show if there are exempt */}
-              {hasIsento && (
-                <div 
-                  className="absolute top-0 h-full bg-indigo-500" 
-                  style={{ 
-                    left: `${confirmadoPct + pendentePct + canceladoPct}%`, 
-                    width: `${isentoPct}%` 
-                  }}
-                ></div>
-              )}
-            </div>
-            
-            <div className="text-center text-xs sm:text-sm text-muted-foreground">
-              Total de Inscrições: {formatNumber(data[0].total)}
+    <div className="space-y-4">
+      {/* Mini-cards por status */}
+      <div className={cn(
+        "grid gap-3",
+        visible.length === 1 ? "grid-cols-1" :
+        visible.length === 2 ? "grid-cols-2" :
+        visible.length === 3 ? "grid-cols-3" : "grid-cols-2 sm:grid-cols-4"
+      )}>
+        {visible.map(s => (
+          <div key={s.key} className={cn("rounded-xl border p-3 flex items-center gap-3", s.bg, s.border)}>
+            <s.Icon className={cn("h-5 w-5 flex-shrink-0", s.text)} />
+            <div className="min-w-0">
+              <p className={cn("text-xl font-bold leading-none", s.text)}>{d[s.key]}</p>
+              <p className={cn("text-xs mt-0.5 font-medium", s.text)}>{s.label}</p>
+              <p className="text-[11px] text-muted-foreground">{d[s.pctKey].toFixed(0)}%</p>
             </div>
           </div>
+        ))}
+      </div>
 
-          {/* Additional detailed breakdown using horizontal bars - only show statuses with data */}
-          {barChartData.length > 0 && (
-            <div className="overflow-x-auto">
-              <div className="h-[180px] sm:h-[220px] pt-2 sm:pt-4 min-w-[280px]">
-                <ChartContainer config={chartConfig} className="w-full h-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={barChartData}
-                    layout="vertical"
-                    margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} className="opacity-30" />
-                    <XAxis 
-                      type="number" 
-                      label={{ value: 'Inscrições', position: 'insideBottom', offset: -2, className: 'text-[8px] sm:text-xs' }} 
-                      tick={{ fontSize: 8 }}
-                      className="text-[8px] sm:text-xs"
-                    />
-                    <YAxis 
-                      type="category" 
-                      dataKey="name" 
-                      tick={{ fontSize: 9 }}
-                      width={55}
-                      className="text-[9px] sm:text-xs"
-                    />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Bar 
-                      dataKey="value" 
-                      name="Quantidade" 
-                      barSize={20}
-                      radius={[0, 4, 4, 0]}
-                    >
-                      {barChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-              </div>
-            </div>
-          )}
+      {/* Barra segmentada */}
+      <div>
+        <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
+          {visible.map(s => (
+            <div
+              key={s.key}
+              className={cn("h-full transition-all", s.color)}
+              style={{ width: `${d[s.pctKey]}%` }}
+            />
+          ))}
         </div>
-      </CardContent>
-    </Card>
+        <div className="flex justify-between mt-1.5 text-[11px] text-muted-foreground">
+          <span className="flex gap-2">
+            {visible.map(s => (
+              <span key={s.key} className="flex items-center gap-1">
+                <span className={cn("inline-block h-2 w-2 rounded-full", s.color)} />
+                {s.label}
+              </span>
+            ))}
+          </span>
+          <span className="font-medium">{d.total} total</span>
+        </div>
+      </div>
+    </div>
   );
 }

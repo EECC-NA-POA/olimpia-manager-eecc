@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { LoadingImage } from '@/components/ui/loading-image';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bell, ChevronDown, ChevronUp } from "lucide-react";
@@ -38,8 +39,8 @@ export default function Notifications({ eventId, userId }: NotificationsProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-olimpics-orange-primary" />
+      <div className="flex items-center justify-center p-8">
+        <LoadingImage size="sm" />
       </div>
     );
   }

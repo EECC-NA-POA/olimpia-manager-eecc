@@ -1,6 +1,7 @@
 
 import { useNavigation } from '@/hooks/useNavigation';
 import { useState, useEffect } from 'react';
+import { LoadingImage } from '@/components/ui/loading-image';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from './navigation/AppSidebar';
 
@@ -46,7 +47,7 @@ export function MainNavigation({ children }: MainNavigationProps) {
   if (!user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-olimpics-green-primary" />
+        <LoadingImage />
       </div>
     );
   }
@@ -57,7 +58,7 @@ export function MainNavigation({ children }: MainNavigationProps) {
         <AppSidebar isHeaderVisible={isHeaderVisible} />
         <SidebarInset className="flex-1 w-full">
           <div className="main-navigation-content">
-            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
+            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20 pb-24 md:pb-6">
               {children}
             </main>
           </div>

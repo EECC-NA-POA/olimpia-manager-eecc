@@ -22,28 +22,28 @@ export interface PaymentStatus {
   quantidade: number;
 }
 
-export const fetchBranchAnalytics = async (eventId: string | null, filialId?: string) => {
+export const fetchBranchAnalytics = async (eventId: string | null, filialIds?: string[]) => {
   if (!eventId) return [];
-  
+
   try {
-    console.log('fetchBranchAnalytics called with eventId:', eventId, 'filialId:', filialId);
-    
+    console.log('fetchBranchAnalytics called with eventId:', eventId, 'filialIds:', filialIds);
+
     // Query the analytics view - make sure we always filter by event_id
     let query = supabase
       .from('vw_analytics_inscricoes')
       .select('*');
-    
+
     // Apply event filter - this is now essential since our view has evento_id
     query = query.eq('evento_id', eventId);
-    
+
     // Apply filial filter only if provided (for delegation view)
-    if (filialId) {
-      console.log('Applying filial filter with ID:', filialId);
-      query = query.eq('filial_id', filialId);
+    if (filialIds && filialIds.length > 0) {
+      console.log('Applying filial filter with IDs:', filialIds);
+      query = query.in('filial_id', filialIds);
     }
 
     const { data, error } = await query;
-    
+
     if (error) {
       console.error('Error fetching analytics:', error);
       throw error;
@@ -53,12 +53,12 @@ export const fetchBranchAnalytics = async (eventId: string | null, filialId?: st
 
     if (!data || data.length === 0) {
       console.warn('No analytics data found with filters - creating mock data for development');
-      
+
       // If no data is found, let's create mock data for development/testing
       const mockData = [{
-        filial_id: filialId || 'mock-filial-id',
+        filial_id: filialIds?.[0] || 'mock-filial-id',
         filial: 'Filial Exemplo',
-        evento_id: eventId, 
+        evento_id: eventId,
         total_inscritos_geral: 15,
         total_inscritos_modalidades: 25,
         valor_total_pago: 1500,
@@ -91,7 +91,7 @@ export const fetchBranchAnalytics = async (eventId: string | null, filialId?: st
           { filial_nome: 'Filial B', status_pagamento: 'pendente', quantidade: 2 }
         ]
       }];
-      
+
       return mockData;
     }
 

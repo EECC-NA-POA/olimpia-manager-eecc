@@ -1,20 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  ComposedChart,
-  Line
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, Legend
 } from "recharts";
-import { ChartContainer } from "@/components/ui/chart";
-import { EmptyChartMessage } from "./EmptyChartMessage";
-import { CustomTooltip } from "./CustomTooltip";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface BranchRegistrationData {
   name: string;
@@ -25,156 +12,67 @@ export interface BranchRegistrationData {
   total: number;
 }
 
-interface BranchRegistrationsChartProps {
+interface Props {
   data: BranchRegistrationData[];
-  chartColors: Record<string, string>;
-  chartConfig: any;
 }
 
-export function BranchRegistrationsChart({ data, chartColors, chartConfig }: BranchRegistrationsChartProps) {
-  const isMobile = useIsMobile();
-  
-  // Limit data on mobile for better readability
-  const displayData = isMobile ? data.slice(0, 5) : data;
-  const hasMoreData = isMobile && data.length > 5;
+function CustomTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-lg border bg-card px-3 py-2 shadow-md text-sm space-y-1">
+      <p className="font-semibold text-foreground">{label}</p>
+      {payload.map((p: any) => (
+        <p key={p.name} style={{ color: p.fill }} className="text-xs">
+          {p.name}: <span className="font-semibold">{p.value}</span>
+        </p>
+      ))}
+    </div>
+  );
+}
 
-  if (!data || data.length === 0) {
-    return (
-      <Card className="hover:shadow-lg transition-shadow w-full">
-        <CardHeader>
-          <CardTitle>Inscrições por Filial</CardTitle>
-          <CardDescription>
-            Distribuição de inscrições por filial e status de pagamento
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <EmptyChartMessage message="Sem dados de inscrições por filial disponíveis" />
-        </CardContent>
-      </Card>
-    );
-  }
+export function BranchRegistrationsChart({ data }: Props) {
+  if (!data || data.length === 0) return null;
+
+  const hasCancelados = data.some(d => (d.cancelados ?? 0) > 0);
+  const hasIsentos    = data.some(d => (d.isentos    ?? 0) > 0);
+
+  // Shorten branch names for the axis
+  const display = data.map(d => ({
+    ...d,
+    name: d.name.length > 14 ? d.name.slice(0, 13) + '…' : d.name,
+  }));
+
+  const chartH = Math.max(200, data.length * 60);
 
   return (
-    <Card className="hover:shadow-lg transition-shadow w-full overflow-hidden">
-      <CardHeader className="p-3 sm:p-6">
-        <CardTitle className="text-sm sm:text-lg">Inscrições por Filial</CardTitle>
-        <CardDescription className="text-xs sm:text-sm">
-          {hasMoreData 
-            ? `Top 5 filiais (de ${data.length} total) - role para ver gráfico completo`
-            : "Filiais com maior número de inscrições por status"
-          }
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="p-1 sm:p-6 overflow-x-auto">
-        <div className="min-w-[300px] sm:min-w-[400px]">
-          <ChartContainer config={chartConfig} className="h-[300px] sm:h-[500px] lg:h-[600px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart
-              data={displayData}
-              margin={{ top: 15, right: 2, left: -5, bottom: isMobile ? 50 : 70 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-              <XAxis 
-                dataKey="name" 
-                angle={-45} 
-                textAnchor="end" 
-                height={70}
-                interval={0}
-                tick={{ fontSize: 8 }}
-                className="text-[8px] sm:text-xs"
-              />
-              <YAxis 
-                yAxisId="left"
-                label={{ 
-                  value: 'Inscrições', 
-                  angle: -90, 
-                  position: 'insideLeft',
-                  style: { textAnchor: 'middle', fontSize: '9px' },
-                  offset: 10
-                }}
-                tick={{ fontSize: 8 }}
-                width={35}
-                className="text-[8px] sm:text-xs"
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend 
-                verticalAlign="top" 
-                wrapperStyle={{ 
-                  paddingBottom: 8,
-                  fontSize: '9px',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  width: '100%'
-                }}
-                layout="horizontal"
-                iconSize={8}
-              />
-              
-              {/* Total bar showing combined value */}
-              <Bar 
-                yAxisId="left"
-                dataKey="total" 
-                name="Total" 
-                fill={chartColors.blue} 
-                barSize={15}
-                radius={[4, 4, 0, 0]}
-              />
-              
-              {/* Lines for detailed breakdown */}
-              <Line 
-                yAxisId="left"
-                type="monotone" 
-                dataKey="confirmados" 
-                name="Confirmados" 
-                stroke={chartColors.green} 
-                strokeWidth={1.5} 
-                dot={{ r: 3 }}
-                activeDot={{ r: 5 }}
-              />
-              <Line 
-                yAxisId="left"
-                type="monotone" 
-                dataKey="pendentes" 
-                name="Pendentes" 
-                stroke={chartColors.yellow} 
-                strokeWidth={1.5} 
-                dot={{ r: 3 }}
-                activeDot={{ r: 5 }}
-                strokeDasharray="5 5"
-              />
-              {/* Add line for cancelled athletes if data exists */}
-              {data.some(item => item.cancelados && item.cancelados > 0) && (
-                <Line 
-                  yAxisId="left"
-                  type="monotone" 
-                  dataKey="cancelados" 
-                  name="Cancelados" 
-                  stroke="#EF4444" 
-                  strokeWidth={1.5} 
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
-                  strokeDasharray="3 3"
-                />
-              )}
-              {/* Add line for exempt athletes if data exists */}
-              {data.some(item => item.isentos && item.isentos > 0) && (
-                <Line 
-                  yAxisId="left"
-                  type="monotone" 
-                  dataKey="isentos" 
-                  name="Isentos" 
-                  stroke="#6366F1" 
-                  strokeWidth={1.5} 
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
-                  strokeDasharray="10 5"
-                />
-              )}
-            </ComposedChart>
-          </ResponsiveContainer>
-        </ChartContainer>
-        </div>
-      </CardContent>
-    </Card>
+    <ResponsiveContainer width="100%" height={chartH}>
+      <BarChart
+        data={display}
+        layout="vertical"
+        margin={{ top: 4, right: 16, left: 4, bottom: 0 }}
+        barCategoryGap="30%"
+      >
+        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+        <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+        <YAxis
+          type="category"
+          dataKey="name"
+          width={120}
+          tick={{ fontSize: 12, fill: '#555' }}
+          tickLine={false}
+          axisLine={false}
+        />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f5f5f5' }} />
+        <Legend
+          iconType="circle"
+          iconSize={8}
+          wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+        />
+        <Bar dataKey="confirmados" name="Confirmados" fill="#10b981" radius={[0, 4, 4, 0]} barSize={12} />
+        <Bar dataKey="pendentes"   name="Pendentes"   fill="#f59e0b" radius={[0, 4, 4, 0]} barSize={12} />
+        {hasIsentos    && <Bar dataKey="isentos"    name="Isentos"    fill="#38bdf8" radius={[0, 4, 4, 0]} barSize={12} />}
+        {hasCancelados && <Bar dataKey="cancelados" name="Cancelados" fill="#f87171" radius={[0, 4, 4, 0]} barSize={12} />}
+      </BarChart>
+    </ResponsiveContainer>
   );
 }

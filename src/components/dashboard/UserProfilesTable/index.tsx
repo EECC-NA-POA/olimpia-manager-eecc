@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { UserProfilesTableProps } from "./types";
+import { LoadingImage } from '@/components/ui/loading-image';
 import { UserSearchAndFilters } from "./UserSearchAndFilters";
 import { UsersTable } from "./UsersTable";
 import { TablePagination } from "./TablePagination";
@@ -45,7 +46,7 @@ export const UserProfilesTable = ({ data, branches, isLoading }: UserProfilesTab
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-olimpics-green-primary" />
+        <LoadingImage />
       </div>
     );
   }

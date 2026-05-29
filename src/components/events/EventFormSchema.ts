@@ -23,6 +23,8 @@ export const eventSchema = z.object({
   visibilidade_publica: z.boolean().default(false),
   foto_evento: z.string().optional(),
   selectedBranches: z.array(z.string().uuid()).optional(),
+  has_scores: z.boolean().default(true),
+  has_attendance: z.boolean().default(true),
   // Campos para taxas de inscrição - Atleta
   taxa_atleta: z.number().min(0, 'Taxa do atleta deve ser maior ou igual a zero').default(0),
   pix_key_atleta: z.string().optional(),

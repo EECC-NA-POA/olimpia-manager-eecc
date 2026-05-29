@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { CapacitorStorageAdapter } from './storageAdapter';
 
 // Use environment variables with fallback values
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://sb.nova-acropole.org.br';
@@ -16,7 +17,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     storageKey: 'olimpics_auth_token',
-    storage: localStorage,
+    storage: new CapacitorStorageAdapter(),
     autoRefreshToken: true,
     detectSessionInUrl: false, // Disable to prevent conflicts
     flowType: 'pkce'
@@ -49,32 +50,32 @@ const debugSession = async () => {
 // Enhanced error handling
 export const handleSupabaseError = (error: any) => {
   console.error('🚨 Supabase error:', error);
-  
+
   // Check for session-related errors
-  const isSessionError = error.message?.includes('JWT') || 
-                        error.message?.includes('refresh_token_not_found') || 
-                        error.message?.includes('token') ||
-                        error.message?.includes('CompactDecodeError') ||
-                        error.message?.includes('invalid session') ||
-                        error.message?.includes('invalid_grant');
+  const isSessionError = error.message?.includes('JWT') ||
+    error.message?.includes('refresh_token_not_found') ||
+    error.message?.includes('token') ||
+    error.message?.includes('CompactDecodeError') ||
+    error.message?.includes('invalid session') ||
+    error.message?.includes('invalid_grant');
 
   if (isSessionError) {
     console.log('⚠️ Session error detected, but NOT clearing session automatically');
     return 'Erro de sessão detectado. Tente fazer login novamente.';
   }
-  
+
   if (error.message?.includes('Invalid login credentials')) {
     return 'Email ou senha incorretos.';
   }
-  
+
   if (error.message?.includes('Email not confirmed')) {
     return 'Por favor, confirme seu email antes de fazer login.';
   }
-  
+
   if (error.message?.includes('network')) {
     return 'Erro de conexão. Verifique sua internet.';
   }
-  
+
   return error.message || 'Ocorreu um erro inesperado.';
 };
 
@@ -84,12 +85,12 @@ export const recoverSession = async (maxRetries = 3) => {
     try {
       console.log(`🔄 Session recovery attempt ${attempt}/${maxRetries}`);
       const session = await debugSession();
-      
+
       if (session) {
         console.log('✅ Session recovered successfully');
         return session;
       }
-      
+
       if (attempt < maxRetries) {
         await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
       }
@@ -97,7 +98,7 @@ export const recoverSession = async (maxRetries = 3) => {
       console.error(`❌ Recovery attempt ${attempt} failed:`, error);
     }
   }
-  
+
   console.log('❌ Session recovery failed after all attempts');
   return null;
 };

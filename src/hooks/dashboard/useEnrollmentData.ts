@@ -3,43 +3,18 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { EnrolledUser } from '@/components/dashboard/types/enrollmentTypes';
 
-export const useEnrollmentData = (eventId: string | null, filterByBranch: boolean = false) => {
+export const useEnrollmentData = (eventId: string | null, filialIds?: string[]) => {
   const {
     data: confirmedEnrollments,
     isLoading,
     error,
     refetch
   } = useQuery({
-    queryKey: ['confirmed-enrollments', eventId, filterByBranch ? 'delegation' : 'organizer'],
+    queryKey: ['confirmed-enrollments', eventId, filialIds?.join(',') || 'all'],
     queryFn: async () => {
       if (!eventId) return [];
 
       try {
-        // First get the user's filial_id if we're in delegation mode
-        let userFilialId: string | undefined;
-        
-        if (filterByBranch) {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            const { data: userProfile } = await supabase
-              .from('usuarios')
-              .select('filial_id')
-              .eq('id', user.id)
-              .single();
-              
-            userFilialId = userProfile?.filial_id;
-            console.log('Filtering enrollments by filial_id:', userFilialId);
-            
-            if (!userFilialId) {
-              console.warn('User has no branch assigned, returning empty enrollments list');
-              return [];
-            }
-          } else {
-            console.warn('No authenticated user found for branch filtering, returning empty enrollments list');
-            return [];
-          }
-        }
-
         // Check if the view exists
         const { error: viewCheckError } = await supabase
           .from('information_schema.views')
@@ -49,7 +24,7 @@ export const useEnrollmentData = (eventId: string | null, filterByBranch: boolea
 
         if (viewCheckError) {
           console.warn('View vw_inscricoes_com_confirmacao does not exist, using alternative data source');
-          
+
           // Alternative approach: Get basic enrollment data from inscricoes_modalidades
           let query = supabase
             .from('inscricoes_modalidades')
@@ -64,30 +39,33 @@ export const useEnrollmentData = (eventId: string | null, filterByBranch: boolea
             .eq('evento_id', eventId)
             .eq('status', 'confirmado');
 
-          // For delegation representatives, only show their branch
-          if (filterByBranch && userFilialId) {
-            query = query.eq('usuarios.filial_id', userFilialId);
-          }
-
           const { data, error } = await query;
 
           if (error) throw error;
-          
+
           // Get all filial names to use in the transformation
           const { data: filiais } = await supabase
             .from('filiais')
             .select('id, nome');
-          
+
           const filiaisMap = new Map();
           if (filiais) {
             filiais.forEach((filial: any) => {
               filiaisMap.set(filial.id, filial.nome);
             });
           }
-          
+
           // Filter out records where usuarios is null
-          const validData = (data || []).filter(item => item.usuarios !== null);
-          
+          let validData = (data || []).filter(item => item.usuarios !== null);
+
+          // Apply filialIds filter on the client side (since we can't filter by nested field with .in())
+          if (filialIds && filialIds.length > 0) {
+            validData = validData.filter(item => {
+              const user = item.usuarios as any;
+              return user?.filial_id && filialIds.includes(user.filial_id);
+            });
+          }
+
           // Transform to match EnrolledUser interface
           const transformedData: EnrolledUser[] = validData.map((item: any) => ({
             id: item.id,
@@ -116,9 +94,9 @@ export const useEnrollmentData = (eventId: string | null, filterByBranch: boolea
           .eq('evento_id', eventId)
           .eq('status_inscricao', 'confirmado');
 
-        // For delegation representatives, only show their branch
-        if (filterByBranch && userFilialId) {
-          query = query.eq('filial_id', userFilialId);
+        // For delegation representatives, filter by multiple branches
+        if (filialIds && filialIds.length > 0) {
+          query = query.in('filial_id', filialIds);
         }
 
         const { data, error } = await query;

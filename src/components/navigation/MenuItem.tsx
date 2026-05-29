@@ -18,7 +18,7 @@ export const MenuItem = ({ item, index }: MenuItemProps) => {
         asChild={!item.isAction}
         isActive={!item.isAction && location.pathname === item.path}
         tooltip={item.tooltip}
-        className={`text-white hover:bg-olimpics-green-secondary/20 data-[active=true]:bg-olimpics-green-secondary data-[active=true]:text-white group-data-[collapsible=icon]:justify-center ${item.className || ''}`}
+        className={`text-white/75 hover:text-white hover:bg-white/10 data-[active=true]:bg-white data-[active=true]:text-[hsl(142,72%,22%)] data-[active=true]:font-semibold data-[active=true]:shadow-sm rounded-lg transition-all duration-150 group-data-[collapsible=icon]:justify-center ${item.className || ''}`}
         onClick={item.isAction ? item.action : undefined}
       >
         {item.isAction ? (

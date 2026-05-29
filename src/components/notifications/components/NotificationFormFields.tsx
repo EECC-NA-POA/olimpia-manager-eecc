@@ -16,7 +16,7 @@ interface NotificationFormFieldsProps {
   setSelectedBranches: (branches: string[]) => void;
   isSubmitting: boolean;
   isOrganizer: boolean;
-  userBranchId?: string;
+  userBranchIds?: string[];
 }
 
 export function NotificationFormFields({
@@ -29,7 +29,7 @@ export function NotificationFormFields({
   setSelectedBranches,
   isSubmitting,
   isOrganizer,
-  userBranchId
+  userBranchIds
 }: NotificationFormFieldsProps) {
   return (
     <>
@@ -38,7 +38,7 @@ export function NotificationFormFields({
         selectedBranches={selectedBranches}
         onBranchChange={setSelectedBranches}
         isOrganizer={isOrganizer}
-        userBranchId={userBranchId}
+        userBranchIds={userBranchIds}
       />
 
       <div>

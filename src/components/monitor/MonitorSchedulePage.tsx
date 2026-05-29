@@ -120,29 +120,27 @@ const confirmDelete = async () => {
       {/* Filters and Actions */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Filter className="h-5 w-5 text-muted-foreground" />
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Filtrar por modalidade:</span>
-                <Select value={selectedModalidade} onValueChange={setSelectedModalidade}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Selecione uma modalidade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as modalidades</SelectItem>
-                    {validModalidades.map((modalidade) => (
-                      <SelectItem key={modalidade.modalidade_id} value={modalidade.modalidade_id.toString()}>
-                        {modalidade.modalidades.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <span className="text-sm font-medium whitespace-nowrap">Filtrar por modalidade:</span>
+              <Select value={selectedModalidade} onValueChange={setSelectedModalidade}>
+                <SelectTrigger className="flex-1 min-w-0">
+                  <SelectValue placeholder="Selecione uma modalidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as modalidades</SelectItem>
+                  {validModalidades.map((modalidade) => (
+                    <SelectItem key={modalidade.modalidade_id} value={modalidade.modalidade_id.toString()}>
+                      {modalidade.modalidades.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <Button 
+            <Button
               onClick={openAddDialog}
-              className="bg-primary hover:bg-primary/90"
+              className="bg-primary hover:bg-primary/90 w-full sm:w-auto flex-shrink-0"
               disabled={validModalidades.length === 0}
               title={validModalidades.length === 0 ? 'Você não possui modalidades vinculadas' : undefined}
             >

@@ -5,7 +5,8 @@ import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Info, Loader2, Phone, Users, User } from "lucide-react";
+import { Info, Phone, Users, User } from "lucide-react";
+import { LoadingImage } from "@/components/ui/loading-image";
 import { useAthleteProfile } from "@/hooks/useAthleteProfile";
 import { useRegisteredModalities } from "@/hooks/useRegisteredModalities";
 import { useModalitiesWithRepresentatives } from "@/hooks/useModalityRepresentatives";
@@ -50,7 +51,7 @@ export default function AthleteRegistrations() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <LoadingImage />
       </div>
     );
   }

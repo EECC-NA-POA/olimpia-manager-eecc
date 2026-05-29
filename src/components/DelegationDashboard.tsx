@@ -16,10 +16,11 @@ import { RepresentativesTab } from "./dashboard/tabs/RepresentativesTab";
 import { TeamsTab } from "./dashboard/tabs/TeamsTab";
 import { NotificationManager } from "./notifications/NotificationManager";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useDelegacaoFiliais } from "@/hooks/useDelegacoes";
 
 export default function DelegationDashboard() {
   const { user, currentEventId } = useAuth();
-  
+
   // Filter states
   const [nameFilter, setNameFilter] = useState("");
   const [branchFilter, setBranchFilter] = useState("all");
@@ -30,6 +31,11 @@ export default function DelegationDashboard() {
   const isDelegationRep = user?.papeis?.some(role => role.codigo === 'RDD') || false;
   const isOrganizer = user?.papeis?.some(role => role.codigo === 'ORG') || false;
 
+  // Get the filial IDs from the delegation scope (or fallback to user.filial_id)
+  const { data: delegacaoFiliais } = useDelegacaoFiliais(user?.id, currentEventId || undefined);
+  // Primary filial ID for backward-compatible components
+  const primaryFilialId = delegacaoFiliais?.[0] || user?.filial_id;
+
   const {
     isRefreshing,
     branches,
@@ -39,7 +45,7 @@ export default function DelegationDashboard() {
     isLoading,
     error,
     handleRefresh
-  } = useDashboardData(currentEventId, isDelegationRep);
+  } = useDashboardData(currentEventId, delegacaoFiliais);
 
   if (!currentEventId) {
     return <NoEventSelected />;
@@ -67,18 +73,18 @@ export default function DelegationDashboard() {
           return <ErrorState onRetry={handleRefresh} />;
         }
         if (!branchAnalytics || branchAnalytics.length === 0) {
-          return <EmptyState 
-                    title="Não há dados estatísticos disponíveis" 
-                    description="Não encontramos dados de análise para exibir neste momento" 
-                 />;
+          return <EmptyState
+            title="Não há dados estatísticos disponíveis"
+            description="Não encontramos dados de análise para exibir neste momento"
+          />;
         }
         return (
-          <StatisticsTab 
-            data={branchAnalytics} 
-            currentBranchId={user?.filial_id}
+          <StatisticsTab
+            data={branchAnalytics}
+            currentBranchId={primaryFilialId}
           />
         );
-      
+
       case "athletes":
         if (isLoading.athletes || isLoading.branches) {
           return <LoadingState />;
@@ -108,7 +114,7 @@ export default function DelegationDashboard() {
             enrollmentType="delegacao"
           />
         );
-      
+
       case "enrollments":
         if (isLoading.enrollments) {
           return <LoadingState />;
@@ -122,24 +128,24 @@ export default function DelegationDashboard() {
         return <EnrollmentsTab enrollments={confirmedEnrollments} />;
 
       case "representatives":
-        if (!user?.filial_id) {
+        if (!primaryFilialId) {
           return <EmptyState title="Filial não identificada" description="Não foi possível identificar sua filial" />;
         }
         return (
-          <RepresentativesTab 
-            filialId={user.filial_id} 
-            eventId={currentEventId} 
+          <RepresentativesTab
+            filialId={primaryFilialId}
+            eventId={currentEventId}
           />
         );
 
       case "teams":
-        if (!user?.filial_id) {
+        if (!primaryFilialId) {
           return <EmptyState title="Filial não identificada" description="Não foi possível identificar sua filial" />;
         }
         return (
-          <TeamsTab 
-            eventId={currentEventId} 
-            branchId={user.filial_id} 
+          <TeamsTab
+            eventId={currentEventId}
+            branchId={primaryFilialId}
           />
         );
 
@@ -148,7 +154,7 @@ export default function DelegationDashboard() {
           <DelegationNotificationManager
             eventId={currentEventId}
             userId={user?.id || ''}
-            userBranchId={user?.filial_id}
+            userBranchIds={delegacaoFiliais || (user?.filial_id ? [user.filial_id] : [])}
             isRepresentanteDelegacao={isDelegationRep}
             isOrganizer={false}
           />
@@ -161,16 +167,16 @@ export default function DelegationDashboard() {
 
   return (
     <div className="w-full py-2 sm:py-6 space-y-2 sm:space-y-6 px-2 sm:px-4 overflow-x-hidden">
-      <DashboardHeader 
-        onRefresh={handleRefresh} 
-        isRefreshing={isRefreshing} 
+      <DashboardHeader
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
         title="Dashboard da Delegação"
       />
 
       <Tabs defaultValue="statistics" className="w-full max-w-full" onValueChange={setActiveTab} value={activeTab}>
         <div className="w-full overflow-x-auto">
           <TabsList className="inline-flex w-auto min-w-full bg-background p-0.5 sm:p-1 h-auto gap-0.5 sm:gap-1 border-b mb-3 sm:mb-8">
-            <TabsTrigger 
+            <TabsTrigger
               value="statistics"
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
             >
@@ -178,7 +184,7 @@ export default function DelegationDashboard() {
               <span className="hidden sm:inline">Estatísticas</span>
               <span className="sm:hidden">Stats</span>
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="athletes"
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
             >
@@ -186,7 +192,7 @@ export default function DelegationDashboard() {
               <span className="hidden sm:inline">Atletas</span>
               <span className="sm:hidden">Atl</span>
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="enrollments"
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
             >
@@ -194,7 +200,7 @@ export default function DelegationDashboard() {
               <span className="hidden sm:inline">Inscrições</span>
               <span className="sm:hidden">Insc</span>
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="teams"
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
             >
@@ -202,7 +208,7 @@ export default function DelegationDashboard() {
               <span>Equipes</span>
             </TabsTrigger>
             {(isDelegationRep || isOrganizer) && (
-              <TabsTrigger 
+              <TabsTrigger
                 value="representatives"
                 className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
               >
@@ -253,16 +259,16 @@ export default function DelegationDashboard() {
 }
 
 // Componente específico para notificações da delegação que filtra apenas por tipo de autor
-function DelegationNotificationManager({ 
-  eventId, 
-  userId, 
-  userBranchId,
+function DelegationNotificationManager({
+  eventId,
+  userId,
+  userBranchIds,
   isRepresentanteDelegacao = false,
   isOrganizer = false
 }: {
   eventId: string;
   userId: string;
-  userBranchId?: string;
+  userBranchIds: string[];
   isRepresentanteDelegacao?: boolean;
   isOrganizer?: boolean;
 }) {
@@ -270,7 +276,7 @@ function DelegationNotificationManager({
     <NotificationManager
       eventId={eventId}
       userId={userId}
-      userBranchId={userBranchId}
+      userBranchIds={userBranchIds}
       isRepresentanteDelegacao={isRepresentanteDelegacao}
       isOrganizer={isOrganizer}
       isDelegationDashboard={true}

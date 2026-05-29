@@ -36,7 +36,7 @@ export default function VerifyEmail() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-olimpics-background">
-      <Card className="w-[400px] shadow-lg">
+      <Card className="w-full max-w-md shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-olimpics-green-primary text-center">
             Verifique seu Email

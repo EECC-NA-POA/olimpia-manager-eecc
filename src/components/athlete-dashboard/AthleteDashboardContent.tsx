@@ -12,7 +12,8 @@ import { MyEnrollmentsCard } from './components/MyEnrollmentsCard';
 import { AvailableModalitiesCard } from './components/AvailableModalitiesCard';
 import { QuickSummaryCard } from './components/QuickSummaryCard';
 import { PaymentUploadCard } from './components/PaymentUploadCard';
-import { Loader2, Calendar, Bell, FileText, AlertTriangle } from 'lucide-react';
+import { Calendar, Bell, FileText, AlertTriangle, User } from 'lucide-react';
+import { LoadingImage } from '@/components/ui/loading-image';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -42,7 +43,7 @@ export function AthleteDashboardContent({ userId, eventId }: AthleteDashboardCon
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <LoadingImage />
       </div>
     );
   }
@@ -64,66 +65,66 @@ export function AthleteDashboardContent({ userId, eventId }: AthleteDashboardCon
   const isPublicUser = athleteProfile?.papeis?.some(p => p.codigo === 'PGR') || false;
   const hasNoEnrollments = totalEnrolled === 0 && !isPublicUser;
 
-  const getProfileImage = (gender: string | undefined) => {
-    switch (gender?.toLowerCase()) {
-      case 'masculino':
-        return "/lovable-uploads/EECC_marca_portugues_cores_RGB.png";
-      case 'feminino':
-        return "/lovable-uploads/EECC_marca_portugues_cores_RGB.png";
-      default:
-        return "/lovable-uploads/EECC_marca_portugues_cores_RGB.png";
-    }
+  // Get initials from user name for avatar
+  const getInitials = (): string | null => {
+    const name = (athleteProfile as any)?.nome_completo || '';
+    const parts = name.split(' ').filter(Boolean);
+    if (parts.length === 0) return null;
+    return parts.slice(0, 2).map((n: string) => n[0].toUpperCase()).join('');
   };
+
+  const initials = getInitials();
 
   return (
     <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-5xl">
-      {/* Page Header with Photo and ID */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-        {/* Athlete Photo and ID */}
-        <div className="flex flex-col items-center space-y-2">
-          <div className="relative w-24 h-24 sm:w-32 sm:h-32">
-            <img
-              src={getProfileImage(athleteGender)}
-              alt="Foto do perfil do usuário"
-              className="w-full h-full rounded-full object-cover border-4 border-olimpics-green-primary"
-            />
+      {/* Page Header */}
+      <div className="rounded-xl border bg-card p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-4">
+        {/* Avatar with initials */}
+        <div className="flex flex-col items-center gap-2 flex-shrink-0">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-olimpics-green-primary flex items-center justify-center border-4 border-olimpics-green-primary/20">
+            {initials
+              ? <span className="text-xl sm:text-2xl font-bold text-white">{initials}</span>
+              : <User className="h-8 w-8 text-white" />
+            }
           </div>
-          <div className="bg-olimpics-green-primary text-white px-3 py-1.5 rounded-lg shadow-lg text-center">
-            <p className="text-xs font-medium">
-              {isPublicUser ? 'PERFIL' : 'ID DO ATLETA'}
-            </p>
-            <p className="text-lg font-bold">
-              {isPublicUser ? 'Público Geral' : (athleteIdentifier || 'N/A')}
-            </p>
-          </div>
+          {!isPublicUser && athleteIdentifier && (
+            <span className="rounded-full bg-olimpics-green-primary/10 border border-olimpics-green-primary/30 px-3 py-0.5 text-xs font-semibold text-olimpics-green-primary">
+              #{athleteIdentifier}
+            </span>
+          )}
+          {isPublicUser && (
+            <span className="rounded-full bg-muted px-3 py-0.5 text-xs font-medium text-muted-foreground">
+              Público
+            </span>
+          )}
         </div>
 
-        {/* Header Text and Quick Links */}
-        <div className="flex-1 text-center sm:text-left">
-          {eventData && (
-            <h1 className="text-xl sm:text-2xl font-bold text-olimpics-green-primary mb-1">
-              {eventData.nome}
+        {/* Info + Quick Links */}
+        <div className="flex-1 text-center sm:text-left min-w-0">
+          {(athleteProfile as any)?.nome_completo && (
+            <h1 className="text-lg sm:text-xl font-bold text-foreground leading-tight truncate">
+              {(athleteProfile as any).nome_completo}
             </h1>
           )}
-          <p className="text-sm text-muted-foreground mb-3">Acompanhe suas inscrições e informações do evento</p>
-          
-          {/* Quick Navigation Links */}
-          <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-            <Button asChild size="sm" className="gap-2 bg-olimpics-green-primary hover:bg-olimpics-green-primary/90 text-white">
+          {eventData && (
+            <p className="text-sm text-muted-foreground mt-0.5 truncate">{eventData.nome}</p>
+          )}
+          <div className="flex flex-wrap gap-2 justify-center sm:justify-start mt-3">
+            <Button asChild size="sm" variant="outline" className="gap-1.5 h-8 text-xs">
               <Link to="/cronograma">
-                <Calendar className="h-4 w-4" />
+                <Calendar className="h-3.5 w-3.5" />
                 Cronograma
               </Link>
             </Button>
-            <Button asChild size="sm" className="gap-2 bg-olimpics-orange-primary hover:bg-olimpics-orange-primary/90 text-white">
+            <Button asChild size="sm" variant="outline" className="gap-1.5 h-8 text-xs">
               <Link to="/notifications">
-                <Bell className="h-4 w-4" />
+                <Bell className="h-3.5 w-3.5" />
                 Notificações
               </Link>
             </Button>
-            <Button asChild size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+            <Button asChild size="sm" variant="outline" className="gap-1.5 h-8 text-xs">
               <Link to="/regulamento">
-                <FileText className="h-4 w-4" />
+                <FileText className="h-3.5 w-3.5" />
                 Regulamento
               </Link>
             </Button>

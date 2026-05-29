@@ -16,7 +16,7 @@ export function EventSelectionContent() {
 
   const handleEventSelect = (eventId: string) => {
     localStorage.setItem('currentEventId', eventId);
-    setCurrentEventId(eventId); // Add this line to update context state
+    setCurrentEventId(eventId);
     toast.success("Evento selecionado com sucesso!");
     navigate('/dashboard');
   };
@@ -25,15 +25,8 @@ export function EventSelectionContent() {
     eventsRefreshRef.current = refetchFn;
   };
 
-  // Function to trigger events refresh (can be called from parent components)  
-  const refreshEvents = () => {
-    if (eventsRefreshRef.current) {
-      eventsRefreshRef.current();
-    }
-  };
-
   const isUnder13 = userAge !== null && userAge < 13;
-  
+
   if (isAgeLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -41,10 +34,10 @@ export function EventSelectionContent() {
       </div>
     );
   }
-  
+
   if (ageError) {
     return (
-      <ErrorState 
+      <ErrorState
         onRetry={() => window.location.reload()}
         message="Erro ao carregar dados do usuário"
         error={ageError}
@@ -53,14 +46,12 @@ export function EventSelectionContent() {
   }
 
   return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6">
-      <EventSelection
-        selectedEvents={[]}
-        onEventSelect={handleEventSelect}
-        mode="login"
-        isUnderAge={isUnder13}
-        onEventsRefresh={handleEventsRefresh}
-      />
-    </div>
+    <EventSelection
+      selectedEvents={[]}
+      onEventSelect={handleEventSelect}
+      mode="login"
+      isUnderAge={isUnder13}
+      onEventsRefresh={handleEventsRefresh}
+    />
   );
 }

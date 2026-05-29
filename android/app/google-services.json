@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "522884135479",
+    "project_id": "olimpia-manager-b049d",
+    "storage_bucket": "olimpia-manager-b049d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:522884135479:android:8c6a7162b5aca4ab9addb2",
+        "android_client_info": {
+          "package_name": "com.olimpia.atleta"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBSI9bd1ULwhxWxe6Fj6NQ2pUAxsI1cKI8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

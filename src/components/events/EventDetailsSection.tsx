@@ -77,6 +77,52 @@ export function EventDetailsSection({ form }: EventDetailsSectionProps) {
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="has_scores"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 md:col-span-2">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">
+                  Módulo de Pontuações (Competição)
+                </FormLabel>
+                <FormDescription>
+                  Habilita os rankings, chaves e pontuações para este evento.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="has_attendance"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 md:col-span-2">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">
+                  Módulo de Chamadas (Presença)
+                </FormLabel>
+                <FormDescription>
+                  Habilita o controle de presença (chamadas) para os participantes do evento.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
       </div>
     </div>
   );

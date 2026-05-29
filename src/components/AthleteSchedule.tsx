@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Loader2 } from "lucide-react";
+import { Calendar } from "lucide-react";
+import { LoadingImage } from "@/components/ui/loading-image";
 import { ScheduleTable } from './schedule/ScheduleTable';
 import { useAuth } from "@/contexts/AuthContext";
 import { expandRecurrentActivity, getDayLabel } from '@/components/cronograma/utils';
@@ -141,8 +142,8 @@ export default function AthleteSchedule() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-4">
-        <Loader2 className="h-8 w-8 animate-spin text-olimpics-green-primary" />
+      <div className="flex items-center justify-center p-8">
+        <LoadingImage size="sm" />
       </div>
     );
   }

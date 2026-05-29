@@ -1,11 +1,12 @@
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { formRow } from '@/lib/utils/form-layout';
+import { CountrySelector } from './CountrySelector';
 import { StateSelector } from './StateSelector';
 import { BranchSelector } from './BranchSelector';
 import { BranchSelectionError } from './BranchSelectionError';
-import { useBranchSelection } from './useBranchSelection';
+import { useLocationSelection } from '@/hooks/useLocationSelection';
 
 interface LocationSelectorProps {
   form: UseFormReturn<any>;
@@ -15,45 +16,88 @@ interface LocationSelectorProps {
 
 export const LocationSelector = ({ form, disabled = false, context = 'default' }: LocationSelectorProps) => {
   const {
-    statesList,
-    branchesForSelectedState,
+    countries,
+    states,
+    branches,
+    selectedCountry,
     selectedState,
-    handleStateChange,
+    setSelectedCountry,
+    setSelectedState,
     isLoading,
-    error,
-    refetch
-  } = useBranchSelection(context);
+    error
+  } = useLocationSelection('Brasil');
 
-  const handleStateSelectorChange = useCallback((state: string) => {
-    handleStateChange(state);
-    form.setValue('branchId', undefined);
-  }, [form, handleStateChange]);
+  // Sync form values with hook state
+  useEffect(() => {
+    if (selectedCountry) {
+      form.setValue('country', selectedCountry);
+    }
+  }, [selectedCountry, form]);
+
+  useEffect(() => {
+    if (selectedState) {
+      form.setValue('state', selectedState);
+    }
+  }, [selectedState, form]);
+
+  const handleCountryChange = useCallback((country: string) => {
+    setSelectedCountry(country);
+    form.setValue('state', '');
+    form.setValue('branchId', '');
+  }, [form, setSelectedCountry]);
+
+  const handleStateChange = useCallback((state: string) => {
+    setSelectedState(state);
+    form.setValue('branchId', '');
+  }, [form, setSelectedState]);
 
   // Handle retry when error occurs
   const handleRetry = useCallback(() => {
     console.log('Manually retrying branch fetch...');
-    refetch();
-  }, [refetch]);
+    // The useQuery will handle retry automatically
+    window.location.reload();
+  }, []);
+
+  // Map branches to the format expected by BranchSelector
+  const branchesForSelector = branches.map(b => ({
+    id: b.id,
+    nome: b.nome,
+    cidade: b.cidade,
+    estado: b.estado
+  }));
 
   return (
     <>
+      {/* Country Selector - Full width on its own row */}
       <div className={formRow}>
-        <StateSelector 
+        <CountrySelector
           form={form}
-          statesList={statesList}
+          countriesList={countries}
           isLoading={isLoading}
           hasError={!!error}
-          onStateChange={handleStateSelectorChange}
+          onCountryChange={handleCountryChange}
           disabled={disabled}
+        />
+      </div>
+
+      {/* State and Branch Selectors */}
+      <div className={formRow}>
+        <StateSelector
+          form={form}
+          statesList={states}
+          isLoading={isLoading}
+          hasError={!!error}
+          onStateChange={handleStateChange}
+          disabled={disabled || !selectedCountry}
         />
 
         <BranchSelector
           form={form}
-          branches={branchesForSelectedState}
+          branches={branchesForSelector}
           isLoading={isLoading}
           hasError={!!error}
           selectedState={selectedState}
-          disabled={disabled}
+          disabled={disabled || !selectedState}
         />
       </div>
 

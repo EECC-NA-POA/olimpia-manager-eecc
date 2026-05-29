@@ -10,15 +10,15 @@ interface BranchSelectorProps {
   selectedBranches: string[];
   onBranchChange: (branches: string[]) => void;
   isOrganizer: boolean;
-  userBranchId?: string;
+  userBranchIds?: string[];
 }
 
-export function BranchSelector({ 
+export function BranchSelector({
   eventId,
-  selectedBranches, 
-  onBranchChange, 
+  selectedBranches,
+  onBranchChange,
   isOrganizer,
-  userBranchId 
+  userBranchIds
 }: BranchSelectorProps) {
   const { data: branches, isLoading } = useBranches();
   const { expandedStates, handleToggleState } = useStateBranchSelection();
@@ -31,15 +31,24 @@ export function BranchSelector({
     return <div className="text-sm text-red-500">Erro ao carregar filiais</div>;
   }
 
-  // Se é representante de delegação, só mostrar sua filial
-  if (!isOrganizer && userBranchId) {
-    const userBranch = branches.find(b => b.id === userBranchId);
+  // Se é representante de delegação, mostrar todas as filiais da delegação
+  if (!isOrganizer && userBranchIds && userBranchIds.length > 0) {
+    const userBranches = branches.filter(b => userBranchIds.includes(b.id));
     return (
       <div>
         <Label className="text-sm font-medium">Destinatário</Label>
         <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
           <p className="text-sm text-blue-700">
-            Esta notificação será enviada para sua filial: <strong>{userBranch?.nome}</strong>
+            {userBranches.length === 1 ? (
+              <>Esta notificação será enviada para sua filial: <strong>{userBranches[0]?.nome}</strong></>
+            ) : (
+              <>
+                Esta notificação será enviada para as filiais da delegação:
+                <strong className="block mt-1">
+                  {userBranches.map(b => b.nome).join(', ')}
+                </strong>
+              </>
+            )}
           </p>
         </div>
       </div>

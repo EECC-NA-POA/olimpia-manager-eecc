@@ -9,11 +9,13 @@ import { supabase } from '@/lib/supabase';
 interface UseSessionTimeoutProps {
   timeoutMinutes?: number;
   checkIntervalMinutes?: number;
+  enabled?: boolean;
 }
 
-export const useSessionTimeout = ({ 
-  timeoutMinutes = 30, 
-  checkIntervalMinutes = 1 
+export const useSessionTimeout = ({
+  timeoutMinutes = 30,
+  checkIntervalMinutes = 1,
+  enabled = true
 }: UseSessionTimeoutProps = {}) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -33,7 +35,7 @@ export const useSessionTimeout = ({
 
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
-      
+
       if (error || !session) {
         console.log('⚠️ Sessão inválida detectada:', error?.message || 'no session');
         return false;
@@ -61,7 +63,7 @@ export const useSessionTimeout = ({
     try {
       console.log('🗑️ Limpando cache de queries');
       queryClient.clear();
-      
+
       await signOut();
       toast.error(
         'Sua sessão expirou. Por favor, faça login novamente.',
@@ -79,6 +81,10 @@ export const useSessionTimeout = ({
   };
 
   useEffect(() => {
+    if (!enabled) {
+      console.log('⏭️ useSessionTimeout: disabled (native mobile)');
+      return;
+    }
     if (!user) {
       console.log('⏭️ useSessionTimeout: sem usuário, pulando configuração');
       return;
@@ -92,7 +98,7 @@ export const useSessionTimeout = ({
       'scroll', 'touchstart', 'click', 'focus',
       'input', 'change'
     ];
-    
+
     activityEvents.forEach(event => {
       document.addEventListener(event, updateActivity, { capture: true });
     });
@@ -127,12 +133,12 @@ export const useSessionTimeout = ({
       activityEvents.forEach(event => {
         document.removeEventListener(event, updateActivity, true);
       });
-      
+
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [user, timeoutMinutes, checkIntervalMinutes]);
+  }, [user, timeoutMinutes, checkIntervalMinutes, enabled]);
 
   return { updateActivity };
 };
