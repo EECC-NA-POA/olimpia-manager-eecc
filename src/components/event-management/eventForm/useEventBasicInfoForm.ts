@@ -15,7 +15,7 @@ interface UseEventBasicInfoFormProps {
 
 export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEventBasicInfoFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const getFormValues = (data: Event): EventBasicInfoFormValues => ({
     nome: data.nome || '',
     descricao: data.descricao || '',
@@ -30,37 +30,53 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
     status_evento: data.status_evento || 'ativo',
     foto_evento: data.foto_evento || '',
     visibilidade_publica: data.visibilidade_publica === undefined ? true : data.visibilidade_publica,
+    has_scores: (data as any).has_scores === undefined ? true : (data as any).has_scores,
+    has_attendance: (data as any).has_attendance === undefined ? true : (data as any).has_attendance,
   });
-  
+
   // Initialize form with event data
   const form = useForm<EventBasicInfoFormValues>({
     resolver: zodResolver(eventBasicInfoSchema),
     defaultValues: getFormValues(eventData)
   });
-  
+
   // Reset form when eventData changes (e.g., after successful update)
   useEffect(() => {
     form.reset(getFormValues(eventData));
   }, [eventData, form]);
 
   const handleStatusChange = (value: string) => {
-    form.setValue('status_evento', value as 'ativo' | 'encerrado' | 'suspenso' | 'em_teste' | 'encerrado_oculto', { 
+    form.setValue('status_evento', value as 'ativo' | 'encerrado' | 'suspenso' | 'em_teste' | 'encerrado_oculto', {
       shouldDirty: true,
-      shouldTouch: true 
+      shouldTouch: true
     });
   };
 
   const handleTipoChange = (value: string) => {
-    form.setValue('tipo', value as 'estadual' | 'nacional' | 'internacional' | 'regional', { 
+    form.setValue('tipo', value as 'estadual' | 'nacional' | 'internacional' | 'regional', {
       shouldDirty: true,
-      shouldTouch: true 
+      shouldTouch: true
     });
   };
 
   const handleVisibilidadeChange = (checked: boolean) => {
-    form.setValue('visibilidade_publica', checked, { 
+    form.setValue('visibilidade_publica', checked, {
       shouldDirty: true,
-      shouldTouch: true 
+      shouldTouch: true
+    });
+  };
+
+  const handleHasScoresChange = (checked: boolean) => {
+    form.setValue('has_scores', checked, {
+      shouldDirty: true,
+      shouldTouch: true
+    });
+  };
+
+  const handleHasAttendanceChange = (checked: boolean) => {
+    form.setValue('has_attendance', checked, {
+      shouldDirty: true,
+      shouldTouch: true
     });
   };
 
@@ -70,11 +86,11 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
       toast.error('ID do evento não encontrado');
       return;
     }
-    
+
     console.log('Form data before submission:', data);
     console.log('Event ID:', eventId);
     console.log('Current event data for comparison:', eventData);
-    
+
     setIsLoading(true);
     try {
       // Prepare the update data - handle empty strings properly
@@ -84,6 +100,8 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
         tipo: data.tipo,
         status_evento: data.status_evento,
         visibilidade_publica: data.visibilidade_publica,
+        has_scores: data.has_scores,
+        has_attendance: data.has_attendance,
         pais: data.pais && data.pais.trim() !== '' ? data.pais.trim() : null,
         estado: data.estado && data.estado.trim() !== '' ? data.estado.trim() : null,
         cidade: data.cidade && data.cidade.trim() !== '' ? data.cidade.trim() : null,
@@ -102,10 +120,10 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
         .from('eventos')
         .update(updateData)
         .eq('id', eventId);
-      
+
       console.log('Supabase update error:', error);
       console.log('Supabase update count:', count);
-      
+
       if (error) {
         console.error('Database error details:', error);
         console.error('Error message:', error.message);
@@ -113,7 +131,7 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
         console.error('Error hint:', error.hint);
         throw error;
       }
-      
+
       // Check count to see if rows were affected
       if (count !== null && count > 0) {
         console.log('Event updated successfully, rows affected:', count);
@@ -126,7 +144,7 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
           .select('*')
           .eq('id', eventId)
           .single();
-        
+
         if (!verifyError && verifyData) {
           console.log('Update appears to have worked, verification data:', verifyData);
           toast.success('Informações do evento atualizadas com sucesso!');
@@ -150,6 +168,8 @@ export const useEventBasicInfoForm = ({ eventId, eventData, onUpdate }: UseEvent
     handleStatusChange,
     handleTipoChange,
     handleVisibilidadeChange,
+    handleHasScoresChange,
+    handleHasAttendanceChange,
     onSubmit,
     watch: form.watch,
     register: form.register,

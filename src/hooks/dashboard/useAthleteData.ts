@@ -2,17 +2,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchAthleteManagement } from '@/lib/api';
 
-export const useAthleteData = (eventId: string | null, filterByBranch: boolean = false) => {
-  const { 
-    data: athletes, 
+export const useAthleteData = (eventId: string | null, filialIds?: string[]) => {
+  const {
+    data: athletes,
     isLoading,
     error,
     refetch
   } = useQuery({
-    queryKey: ['athlete-management', eventId, filterByBranch ? 'delegation' : 'organizer'],
+    queryKey: ['athlete-management', eventId, filialIds?.join(',') || 'all'],
     queryFn: () => {
-      console.log('useAthleteData query executing with:', { eventId, filterByBranch });
-      return fetchAthleteManagement(filterByBranch, eventId);
+      console.log('useAthleteData query executing with:', { eventId, filialIds });
+      return fetchAthleteManagement(filialIds, eventId);
     },
     enabled: !!eventId,
     retry: 1,
@@ -26,10 +26,10 @@ export const useAthleteData = (eventId: string | null, filterByBranch: boolean =
     }
   });
 
-  console.log('useAthleteData result:', { 
-    athletesCount: athletes?.length, 
-    isLoading, 
-    error: error?.message 
+  console.log('useAthleteData result:', {
+    athletesCount: athletes?.length,
+    isLoading,
+    error: error?.message
   });
 
   return {

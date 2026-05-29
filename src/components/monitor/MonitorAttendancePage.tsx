@@ -1,190 +1,234 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, Calendar } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Calendar, Clock, ChevronRight, AlertTriangle } from "lucide-react";
 import { useMonitorModalities } from "@/hooks/useMonitorModalities";
-import { useMonitorSessions, MonitorSession } from "@/hooks/useMonitorSessions";
+import { useAllMonitorSessions } from "@/hooks/useAllMonitorSessions";
+import { MonitorSession } from "@/hooks/useMonitorSessions";
 import { LoadingImage } from "@/components/ui/loading-image";
-import { useAuth } from "@/contexts/AuthContext";
 import AttendanceCreationDialog from './AttendanceCreationDialog';
 import EditAttendanceDialog from './EditAttendanceDialog';
 import AttendanceSessionDetail from './AttendanceSessionDetail';
-import SessionsListCard from './SessionsListCard';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
+
+/* ── helpers ─────────────────────────────────────────────── */
+
+function SessionRow({
+  session,
+  onView,
+  onEdit,
+}: {
+  session: MonitorSession;
+  onView: (id: string) => void;
+  onEdit: (s: MonitorSession) => void;
+}) {
+  const hasObs = !!(session as any).observacoes?.trim();
+  const dateStr = format(new Date(session.data_hora_inicio), "dd MMM yyyy", { locale: ptBR });
+  const timeStr = format(new Date(session.data_hora_inicio), "HH:mm", { locale: ptBR });
+  const endTime = session.data_hora_fim
+    ? format(new Date(session.data_hora_fim), "HH:mm", { locale: ptBR })
+    : null;
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-3 rounded-xl border px-4 py-3 transition-colors cursor-pointer hover:bg-muted/40 group",
+        hasObs && "border-amber-200 bg-amber-50/40"
+      )}
+      onClick={() => onView(session.id)}
+    >
+      {/* Date pill */}
+      <div className="flex-shrink-0 text-center w-14 rounded-lg bg-olimpics-green-primary/10 border border-olimpics-green-primary/20 py-1.5 px-1">
+        <p className="text-[10px] font-semibold text-olimpics-green-primary uppercase leading-none">
+          {format(new Date(session.data_hora_inicio), "MMM", { locale: ptBR })}
+        </p>
+        <p className="text-lg font-bold text-olimpics-green-primary leading-none mt-0.5">
+          {format(new Date(session.data_hora_inicio), "dd")}
+        </p>
+      </div>
+
+      {/* Main info */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-foreground truncate">
+          {session.descricao || "Chamada"}
+        </p>
+        <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground flex-wrap">
+          <span className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {timeStr}{endTime && ` – ${endTime}`}
+          </span>
+          <span className="text-border">•</span>
+          <span className="truncate max-w-[140px]">
+            {session.modalidade_representantes.modalidades.nome}
+          </span>
+        </div>
+        {hasObs && (
+          <p className="text-[11px] text-amber-600 mt-0.5 flex items-center gap-1">
+            <AlertTriangle className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">{(session as any).observacoes}</span>
+          </p>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-1.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+          onClick={() => onEdit(session)}
+        >
+          Editar
+        </Button>
+        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+      </div>
+    </div>
+  );
+}
+
+/* ── main component ──────────────────────────────────────── */
 
 export default function MonitorAttendancePage() {
-  const [selectedModalidadeRepId, setSelectedModalidadeRepId] = useState<string | null>(null);
-  const [selectedModalityName, setSelectedModalityName] = useState<string>('');
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [selectedSessionForEdit, setSelectedSessionForEdit] = useState<MonitorSession | null>(null);
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [modFiltro, setModFiltro] = useState<string>("all");
+  const [showCreate, setShowCreate] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [sessionToEdit, setSessionToEdit] = useState<MonitorSession | null>(null);
+  const [detailSessionId, setDetailSessionId] = useState<string | null>(null);
 
-  const { currentEventId, user } = useAuth();
   const { data: modalities, isLoading: modalitiesLoading } = useMonitorModalities();
-  const { data: sessions, isLoading: sessionsLoading } = useMonitorSessions(selectedModalidadeRepId || undefined);
+  const { data: allSessions, isLoading: sessionsLoading } = useAllMonitorSessions();
 
-  const handleModalitySelect = (modalidadeRepId: string, modalityName: string) => {
-    setSelectedModalidadeRepId(modalidadeRepId);
-    setSelectedModalityName(modalityName);
-    setSelectedSessionId(null); // Reset session detail view
-  };
-
-  const handleCreateNewSession = () => {
-    setShowCreateDialog(true);
-  };
-
-  const handleEditSession = (session: MonitorSession) => {
-    setSelectedSessionForEdit(session);
-    setShowEditDialog(true);
-  };
-
-  const handleViewSessionDetails = (sessionId: string) => {
-    setSelectedSessionId(sessionId);
-  };
-
-  const handleBackToSessions = () => {
-    setSelectedSessionId(null);
-  };
-
-  if (modalitiesLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <LoadingImage text="Carregando modalidades..." />
-      </div>
-    );
-  }
-
-  // Filter out modalities with null modalidades data
-  const validModalities = modalities?.filter(modality => modality.modalidades && modality.modalidades.nome) || [];
-
-  if (validModalities.length === 0) {
-    return (
-      <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
-        <div className="text-center py-6 sm:py-8">
-          <Calendar className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">Nenhuma modalidade encontrada</h3>
-          <p className="text-sm sm:text-base text-gray-500 px-4">
-            Você não está registrado como monitor de nenhuma modalidade.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Se uma sessão específica foi selecionada, mostrar detalhes
-  if (selectedSessionId) {
+  /* ── detail view ── */
+  if (detailSessionId) {
     return (
       <AttendanceSessionDetail
-        sessionId={selectedSessionId}
-        onBack={handleBackToSessions}
+        sessionId={detailSessionId}
+        onBack={() => setDetailSessionId(null)}
       />
     );
   }
 
+  /* ── loading ── */
+  if (modalitiesLoading || sessionsLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <LoadingImage text="Carregando chamadas..." />
+      </div>
+    );
+  }
+
+  /* ── no modalities ── */
+  const validModalities = (modalities ?? []).filter(m => m.modalidades?.nome);
+  if (validModalities.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <Calendar className="h-12 w-12 text-muted-foreground/40 mb-4" />
+        <p className="text-sm font-medium text-foreground">Nenhuma modalidade atribuída</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Você ainda não está registrado como monitor de nenhuma modalidade neste evento.
+        </p>
+      </div>
+    );
+  }
+
+  /* ── selected modality for dialog ── */
+  const selectedMod = modFiltro !== "all"
+    ? validModalities.find(m => m.id === modFiltro)
+    : validModalities[0];
+
+  /* ── filter sessions ── */
+  const sessions = (allSessions ?? []).filter(s => {
+    if (modFiltro === "all") return true;
+    // match by modality name
+    return validModalities.find(
+      m => m.id === modFiltro &&
+        m.modalidades.nome === s.modalidade_representantes.modalidades.nome
+    );
+  });
+
   return (
-    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4 max-w-full">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h1 className="text-lg sm:text-2xl font-bold text-olimpics-text">Controle de Presenças</h1>
-        {selectedModalidadeRepId && (
+    <div className="space-y-4 max-w-full">
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        {/* Modality filter */}
+        {validModalities.length > 1 && (
+          <Select value={modFiltro} onValueChange={setModFiltro}>
+            <SelectTrigger className="w-56 text-sm">
+              <SelectValue placeholder="Todas as modalidades" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as modalidades</SelectItem>
+              {validModalities.map(m => (
+                <SelectItem key={m.id} value={m.id}>{m.modalidades.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        <div className="sm:ml-auto">
           <Button
-            onClick={handleCreateNewSession}
-            className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:w-auto text-sm"
+            onClick={() => setShowCreate(true)}
+            className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:w-auto"
             size="sm"
           >
             <Plus className="h-4 w-4 mr-2" />
             Nova Chamada
           </Button>
-        )}
+        </div>
       </div>
 
-      {/* Seleção de Modalidade */}
-      <Card>
-        <CardHeader className="pb-3 sm:pb-6">
-          <CardTitle className="text-base sm:text-lg">Suas Modalidades como Monitor</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {validModalities.map((modality) => (
-              <Card
-                key={modality.id}
-                className={`cursor-pointer transition-colors hover:bg-gray-50 ${
-                  selectedModalidadeRepId === modality.id ? 'ring-2 ring-olimpics-green-primary bg-green-50' : ''
-                }`}
-                onClick={() => handleModalitySelect(modality.id, modality.modalidades.nome)}
-              >
-                <CardContent className="p-3 sm:p-4">
-                  <h3 className="font-semibold text-sm sm:text-base text-olimpics-text line-clamp-2">{modality.modalidades.nome}</h3>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1 line-clamp-1">{modality.filiais.nome}</p>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-gray-400 line-clamp-1">
-                      {modality.modalidades.categoria} • {modality.modalidades.tipo_modalidade}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Lista de Chamadas */}
-      {selectedModalidadeRepId && (
-        <Card>
-          <CardHeader className="pb-3 sm:pb-6">
-            <CardTitle className="text-base sm:text-lg line-clamp-2">Chamadas - {selectedModalityName}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {sessionsLoading ? (
-              <div className="flex items-center justify-center py-6 sm:py-8">
-                <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin mr-2" />
-                <span className="text-sm sm:text-base">Carregando chamadas...</span>
-              </div>
-            ) : sessions && sessions.length > 0 ? (
-              <div className="space-y-3 sm:space-y-4">
-                {sessions.map((session) => (
-                  <SessionsListCard
-                    key={session.id}
-                    session={session}
-                    onViewDetails={handleViewSessionDetails}
-                    onEditSession={handleEditSession}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6 sm:py-8">
-                <Calendar className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">Nenhuma chamada encontrada</h3>
-                <p className="text-sm sm:text-base text-gray-500 mb-4 px-4">
-                  Ainda não há chamadas registradas para esta modalidade.
-                </p>
-                <Button
-                  onClick={handleCreateNewSession}
-                  className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary text-sm"
-                  size="sm"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Criar Primeira Chamada
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* Session list */}
+      {sessions.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-14 text-center">
+          <Calendar className="h-10 w-10 text-muted-foreground/40 mb-3" />
+          <p className="text-sm font-medium text-foreground">Nenhuma chamada ainda</p>
+          <p className="text-xs text-muted-foreground mt-1 mb-4">
+            {modFiltro === "all"
+              ? "Crie a primeira chamada para começar a registrar presenças."
+              : "Não há chamadas para esta modalidade."}
+          </p>
+          <Button
+            size="sm"
+            onClick={() => setShowCreate(true)}
+            className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary"
+          >
+            <Plus className="h-4 w-4 mr-1.5" />
+            Criar Chamada
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground px-1">
+            {sessions.length} chamada{sessions.length !== 1 ? "s" : ""} encontrada{sessions.length !== 1 ? "s" : ""}
+          </p>
+          {sessions.map(s => (
+            <SessionRow
+              key={s.id}
+              session={s}
+              onView={setDetailSessionId}
+              onEdit={s => { setSessionToEdit(s); setShowEdit(true); }}
+            />
+          ))}
+        </div>
       )}
 
-      {/* Diálogos */}
+      {/* Dialogs */}
       <AttendanceCreationDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-        modalidadeRepId={selectedModalidadeRepId}
-        modalityName={selectedModalityName}
+        open={showCreate}
+        onOpenChange={setShowCreate}
+        modalidadeRepId={selectedMod?.id ?? null}
+        modalityName={selectedMod?.modalidades.nome ?? ""}
       />
 
-      {selectedSessionForEdit && (
+      {sessionToEdit && (
         <EditAttendanceDialog
-          open={showEditDialog}
-          onOpenChange={setShowEditDialog}
-          session={selectedSessionForEdit}
+          open={showEdit}
+          onOpenChange={setShowEdit}
+          session={sessionToEdit}
         />
       )}
     </div>

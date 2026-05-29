@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
@@ -12,6 +13,8 @@ export const useRegisterForm = () => {
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
+  const { t } = useTranslation();
+
   const handleSubmit = async (values: RegisterFormData) => {
     try {
       console.log('🎯 Starting registration process');
@@ -19,13 +22,13 @@ export const useRegisterForm = () => {
 
       // Validate required fields
       if (!values.state || !values.branchId) {
-        toast.error('Por favor, selecione seu estado e sede');
+        toast.error(t('register.errors.missingBranch'));
         return;
       }
 
       // Validate privacy policy acceptance
       if (!values.acceptPrivacyPolicy) {
-        toast.error('É necessário aceitar a política de privacidade para continuar');
+        toast.error(t('register.errors.acceptPrivacy'));
         return;
       }
 
@@ -42,13 +45,12 @@ export const useRegisterForm = () => {
         genero: values.genero || 'Masculino',
         data_nascimento: formattedBirthDate || '1990-01-01',
         estado: values.state || '',
+        pais: values.country || 'Brasil', // Default to Brasil if not set (e.g. for Brasileiros)
         filial_id: values.branchId || ''
       };
 
       // Attempt to sign up user
       const result = await signUp(values.email, values.password, userMetadata);
-
-      
 
       // Check if we have a proper result
       if (result && result.user) {
@@ -61,33 +63,33 @@ export const useRegisterForm = () => {
           console.error('❌ Failed to register privacy policy acceptance:', privacyError);
           // Don't fail the registration for this, just log the error
         }
-        
+
         // Always show success message and redirect to login
-        toast.success('Cadastro realizado com sucesso! Faça login para continuar.');
+        toast.success(t('register.success'));
         setTimeout(() => {
           console.log('🔄 Redirecting to login after successful signup');
           navigate('/login?tab=login', { replace: true });
         }, 1500);
       } else {
         console.error('❌ Registration failed - no valid result returned');
-        throw new Error('Falha no cadastro - resultado inválido');
+        throw new Error(t('register.errors.invalidResult'));
       }
 
     } catch (error: any) {
       console.error('❌ Registration process error:', error);
-      
+
       // Handle specific error cases
       if (error.message === 'USER_EXISTS') {
-        toast.error('Este email já está cadastrado! Tente fazer login na aba "Login" ao lado.', { 
-          duration: 6000 
+        toast.error(t('register.errors.userExists'), {
+          duration: 6000
         });
         // Redirect to login after showing error
         setTimeout(() => {
           navigate('/login?tab=login', { replace: true });
         }, 2000);
       } else if (error.message === 'MAILER_ERROR') {
-        toast.success('Cadastro realizado! Problema no envio do email de confirmação. Faça login para continuar.', { 
-          duration: 8000 
+        toast.success(t('register.successEmailError'), {
+          duration: 8000
         });
         // Always redirect to login for email errors since user might be created
         setTimeout(() => {
@@ -95,23 +97,24 @@ export const useRegisterForm = () => {
           navigate('/login?tab=login', { replace: true });
         }, 2000);
       } else if (error.message?.includes('Invalid email')) {
-        toast.error('Email inválido. Por favor, verifique o formato.');
+        toast.error(t('register.errors.invalidEmail'));
       } else if (error.message?.includes('Password') || error.message?.includes('password')) {
-        toast.error('Senha deve ter pelo menos 6 caracteres.');
+        toast.error(t('register.errors.passwordLength'));
       } else if (error.message?.includes('JWT') || error.message?.includes('connection')) {
-        toast.error('Erro de conexão com o servidor. Verifique sua internet e tente novamente.');
+        toast.error(t('register.errors.connection'));
       } else {
-        toast.error(`Erro no cadastro: ${error.message}`);
+        toast.error(`${t('register.errors.generic')}: ${error.message}`);
       }
     } finally {
       setIsSubmitting(false);
     }
+
   };
 
   const registerPrivacyPolicyAcceptance = async (userId: string) => {
     try {
       console.log('Registering privacy policy acceptance');
-      
+
       // Get the latest privacy policy
       const { data: latestPolicy, error: policyError } = await supabase
         .from('termos_privacidade')
@@ -120,12 +123,12 @@ export const useRegisterForm = () => {
         .order('data_criacao', { ascending: false })
         .limit(1)
         .single();
-        
+
       if (policyError || !latestPolicy) {
         console.error('Error fetching latest policy:', policyError);
         throw new Error('Não foi possível obter a versão do termo de privacidade');
       }
-      
+
       // Register acceptance
       const acceptanceData = {
         usuario_id: userId,
@@ -133,16 +136,16 @@ export const useRegisterForm = () => {
         termo_texto: latestPolicy.termo_texto,
         termo_privacidade_id: latestPolicy.id
       };
-      
+
       const { error: insertError } = await supabase
         .from('logs_aceite_privacidade')
         .insert(acceptanceData);
-      
+
       if (insertError) {
         console.error('Error inserting acceptance record:', insertError);
         throw new Error('Não foi possível registrar o aceite do termo de privacidade');
       }
-      
+
       console.log('Privacy policy acceptance registered successfully');
     } catch (error) {
       console.error('Failed to register privacy policy acceptance:', error);

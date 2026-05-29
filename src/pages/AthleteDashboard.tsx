@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { LoadingImage } from '@/components/ui/loading-image';
 import { AthleteDashboardContent } from '@/components/athlete-dashboard/AthleteDashboardContent';
 
 export default function AthleteDashboard() {
@@ -18,7 +18,7 @@ export default function AthleteDashboard() {
   if (!user || !currentEventId) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <LoadingImage />
       </div>
     );
   }

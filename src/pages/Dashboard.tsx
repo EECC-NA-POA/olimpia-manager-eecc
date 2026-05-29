@@ -15,8 +15,8 @@ import DelegationDashboard from '@/components/DelegationDashboard';
 import MonitorDashboard from '@/components/monitor/MonitorDashboard';
 
 const Dashboard = () => {
-  const { user, currentEventId, signOut } = useAuth();
-  const { roles } = useNavigation();
+  const { user, currentEventId, signOut, isProfileLoading } = useAuth();
+  const { roles, rolesLoaded } = useNavigation();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [needsBranchSelection, setNeedsBranchSelection] = useState(false);
@@ -129,7 +129,7 @@ const Dashboard = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isProfileLoading || !rolesLoaded) {
     return <LoadingState />;
   }
   

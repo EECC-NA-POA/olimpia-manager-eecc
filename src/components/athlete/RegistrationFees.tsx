@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { LoadingImage } from '@/components/ui/loading-image';
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CreditCard, ChevronDown, ChevronUp } from 'lucide-react';
@@ -19,8 +20,8 @@ export default function RegistrationFees({ eventId, userProfileId }: Registratio
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-olimpics-orange-primary" />
+      <div className="flex items-center justify-center p-8">
+        <LoadingImage size="sm" />
       </div>
     );
   }

@@ -9,7 +9,8 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { supabase } from '@/lib/supabase';
-import { AlertCircle, ArrowLeft, Lock, Loader2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Lock } from 'lucide-react';
+import { LoadingImage } from '@/components/ui/loading-image';
 import { useAuth } from '@/contexts/AuthContext';
 
 const resetPasswordSchema = z.object({
@@ -244,8 +245,8 @@ export default function ResetPassword() {
       <div className="container mx-auto flex flex-col items-center justify-center min-h-screen p-4">
         <div className="w-full max-w-md space-y-8 text-center">
           <div className="flex flex-col items-center space-y-4">
-            <Loader2 className="h-12 w-12 text-olimpics-green-primary animate-spin" />
-            <h1 className="text-2xl font-bold">Processando link de recuperação...</h1>
+            <LoadingImage text="Processando link de recuperação..." size="lg" />
+            <h1 className="text-2xl font-bold">Aguarde</h1>
             <p className="text-sm text-muted-foreground">
               Aguarde enquanto validamos seu link de recuperação de senha...
             </p>

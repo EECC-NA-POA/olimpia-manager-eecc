@@ -45,32 +45,32 @@ const MobileNavigation = ({ menuItems, currentPath }: MobileNavigationProps) => 
   const dropdownItems = prioritizedItems.slice(4);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-lg md:hidden">
-      <div className="grid grid-cols-5 gap-1 px-2 py-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-border shadow-[0_-2px_16px_rgba(0,0,0,0.06)] md:hidden safe-area-inset-bottom">
+      <div className="grid grid-cols-5 gap-0.5 px-1 py-1.5">
         {fixedItems.map((item) => (
           <button
             key={item.path}
             onClick={() => item.isAction ? item.action?.() : navigate(item.path)}
             className={cn(
-              "flex flex-col items-center justify-center p-2 text-xs rounded-lg transition-colors min-h-[60px]",
+              "flex flex-col items-center justify-center py-2 px-1 text-[10px] rounded-xl transition-all duration-150 min-h-[56px] gap-1",
               currentPath === item.path
-                ? "text-olimpics-green-primary bg-olimpics-green-primary/10"
-                : "text-gray-500 hover:text-olimpics-green-primary hover:bg-olimpics-green-primary/5"
+                ? "text-[hsl(142,100%,30%)] bg-[hsl(142,40%,93%)] font-medium"
+                : "text-muted-foreground hover:text-[hsl(142,100%,30%)] hover:bg-[hsl(142,40%,96%)]"
             )}
           >
             {item.icon}
             <span className="text-center leading-tight">{item.label}</span>
           </button>
         ))}
-        
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex flex-col items-center justify-center p-2 text-xs text-gray-500 rounded-lg hover:text-olimpics-green-primary hover:bg-olimpics-green-primary/5 min-h-[60px]">
-              <MoreHorizontal className="w-5 h-5 mb-1" />
+            <button className="flex flex-col items-center justify-center py-2 px-1 text-[10px] text-muted-foreground rounded-xl hover:text-[hsl(142,100%,30%)] hover:bg-[hsl(142,40%,96%)] min-h-[56px] gap-1 transition-all duration-150">
+              <MoreHorizontal className="w-5 h-5" />
               <span className="text-center leading-tight">Mais</span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 mb-2 bg-white shadow-lg border" sideOffset={40}>
+          <DropdownMenuContent align="end" className="w-56 mb-2 shadow-lg rounded-xl border" sideOffset={40}>
             {/* Extra regular menu items that didn't fit */}
             {dropdownItems.map((item) => (
               <DropdownMenuItem

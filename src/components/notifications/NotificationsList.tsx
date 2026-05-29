@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LoadingImage } from '@/components/ui/loading-image';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -55,8 +56,8 @@ export function NotificationsList({ eventId, userId, isDelegationDashboard = fal
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-olimpics-orange-primary" />
+      <div className="flex items-center justify-center p-8">
+        <LoadingImage size="sm" text="Carregando..." />
       </div>
     );
   }

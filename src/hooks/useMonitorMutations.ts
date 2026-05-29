@@ -57,6 +57,7 @@ export const useMonitorMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['monitor-sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['organizer-attendance-report'] });
       toast.success('Chamada criada com sucesso! Agora você pode marcar as presenças.');
     },
     onError: (error: any) => {
@@ -124,6 +125,7 @@ export const useMonitorMutations = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['monitor-sessions'] });
       queryClient.invalidateQueries({ queryKey: ['session-attendance'] });
+      queryClient.invalidateQueries({ queryKey: ['organizer-attendance-report'] });
       toast.success('Chamada criada e presenças registradas com sucesso!');
     },
     onError: (error: any) => {
@@ -187,6 +189,8 @@ export const useMonitorMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['monitor-sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['all-monitor-sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['monitor-reports'] });
       toast.success('Chamada excluída com sucesso!');
     },
     onError: (error: any) => {
@@ -238,6 +242,7 @@ export const useMonitorMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['session-attendance'] });
+      queryClient.invalidateQueries({ queryKey: ['organizer-attendance-report'] });
       toast.success('Presenças salvas com sucesso!');
     },
     onError: (error: any) => {

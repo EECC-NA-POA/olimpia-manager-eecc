@@ -24,7 +24,7 @@ export interface MonitorModality {
 
 export const useMonitorModalities = () => {
   const { user, currentEventId } = useAuth();
-  
+
   return useQuery({
     queryKey: ['monitor-modalities', user?.id, currentEventId],
     queryFn: async () => {
@@ -43,7 +43,7 @@ export const useMonitorModalities = () => {
           filial_id,
           atleta_id,
           criado_em,
-          modalidades!modalidade_representantes_modalidade_id_fkey (
+          modalidades!modalidade_representantes_modalidade_id_fkey!inner (
             nome,
             categoria,
             tipo_modalidade,
@@ -64,12 +64,12 @@ export const useMonitorModalities = () => {
       }
 
       console.log('Raw monitor modalities data:', data);
-      
+
       if (!data || data.length === 0) {
         console.log('No modalities found for this user and event');
         return [];
       }
-      
+
       // Transform the data to match our interface
       const transformedData = data.map(item => ({
         ...item,

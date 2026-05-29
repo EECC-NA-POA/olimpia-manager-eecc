@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Bell, CheckCheck, Filter } from 'lucide-react';
+import { LoadingImage } from '@/components/ui/loading-image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -66,10 +67,7 @@ export function NotificationsPage({ eventId, userId }: NotificationsPageProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-olimpics-green-primary mx-auto" />
-          <p className="text-olimpics-text-secondary">Carregando notificações...</p>
-        </div>
+        <LoadingImage text="Carregando notificações..." />
       </div>
     );
   }

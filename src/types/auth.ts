@@ -22,6 +22,7 @@ export interface AuthUser extends User {
 export interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
+  isProfileLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   signUp: (email: string, password: string, userData: any) => Promise<any>;

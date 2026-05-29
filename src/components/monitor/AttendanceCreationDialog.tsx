@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Save, Users } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Loader2, Save, ChevronDown, Settings2, UserCheck, UserX, Clock } from "lucide-react";
 import { useModalityAthletes } from "@/hooks/useModalityAthletes";
 import { useMonitorMutations } from "@/hooks/useMonitorMutations";
-import AttendanceStatusSummary from './attendance-creation/AttendanceStatusSummary';
 import AthleteAttendanceCard from './attendance-creation/AthleteAttendanceCard';
 
 interface AttendanceCreationDialogProps {
@@ -26,11 +26,16 @@ interface AthleteAttendance {
   status: 'presente' | 'ausente' | 'atrasado';
 }
 
-export default function AttendanceCreationDialog({ 
-  open, 
-  onOpenChange, 
+function toLocalDatetimeValue(date: Date): string {
+  const offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+}
+
+export default function AttendanceCreationDialog({
+  open,
+  onOpenChange,
   modalidadeRepId,
-  modalityName 
+  modalityName
 }: AttendanceCreationDialogProps) {
   const [sessionForm, setSessionForm] = useState({
     data_hora_inicio: '',
@@ -39,51 +44,54 @@ export default function AttendanceCreationDialog({
     observacoes: ''
   });
   const [athletesAttendance, setAthletesAttendance] = useState<AthleteAttendance[]>([]);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const { data: athletes, isLoading: athletesLoading } = useModalityAthletes(modalidadeRepId || undefined);
   const { createSessionWithAttendance } = useMonitorMutations();
 
+  // Pré-preenche data/hora atual ao abrir
+  useEffect(() => {
+    if (open) {
+      setSessionForm({
+        data_hora_inicio: toLocalDatetimeValue(new Date()),
+        data_hora_fim: '',
+        descricao: '',
+        observacoes: ''
+      });
+      setDetailsOpen(false);
+    }
+  }, [open]);
+
+  // Inicializa todos como presentes
   useEffect(() => {
     if (athletes && open) {
-      // Inicializar todos os atletas como presentes
-      const initialAttendance = athletes.map(athlete => ({
+      setAthletesAttendance(athletes.map(athlete => ({
         id: athlete.id,
         nome_completo: athlete.nome_completo,
         email: athlete.email,
         numero_identificador: athlete.numero_identificador,
         status: 'presente' as const
-      }));
-      setAthletesAttendance(initialAttendance);
+      })));
     }
   }, [athletes, open]);
 
   const handleStatusChange = (athleteId: string, status: 'presente' | 'ausente' | 'atrasado') => {
-    setAthletesAttendance(prev => 
-      prev.map(athlete => 
-        athlete.id === athleteId ? { ...athlete, status } : athlete
-      )
+    setAthletesAttendance(prev =>
+      prev.map(a => a.id === athleteId ? { ...a, status } : a)
     );
   };
 
   const handleCreateSession = async () => {
     if (!modalidadeRepId) return;
-
     try {
-      const attendances = athletesAttendance.map(athlete => ({
-        atleta_id: athlete.id,
-        status: athlete.status
-      }));
-
       await createSessionWithAttendance.mutateAsync({
         modalidade_rep_id: modalidadeRepId,
         data_hora_inicio: sessionForm.data_hora_inicio,
         data_hora_fim: sessionForm.data_hora_fim || undefined,
         descricao: sessionForm.descricao || 'Chamada de presença',
         observacoes: sessionForm.observacoes,
-        attendances
+        attendances: athletesAttendance.map(a => ({ atleta_id: a.id, status: a.status }))
       });
-
-      // Reset form and close dialog
       setSessionForm({ data_hora_inicio: '', data_hora_fim: '', descricao: '', observacoes: '' });
       onOpenChange(false);
     } catch (error) {
@@ -91,133 +99,144 @@ export default function AttendanceCreationDialog({
     }
   };
 
-  if (athletesLoading) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[95vw] max-w-6xl mx-auto max-h-[90vh] overflow-hidden">
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin mr-2" />
-            <span>Carregando atletas...</span>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  const canCreateSession = sessionForm.data_hora_inicio && athletes && athletes.length > 0;
+  const presentes = athletesAttendance.filter(a => a.status === 'presente').length;
+  const atrasados = athletesAttendance.filter(a => a.status === 'atrasado').length;
+  const ausentes  = athletesAttendance.filter(a => a.status === 'ausente').length;
+  const total     = athletesAttendance.length;
+  const canCreate = !!sessionForm.data_hora_inicio && total > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-6xl mx-auto max-h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle>Nova Chamada - {modalityName}</DialogTitle>
+      <DialogContent className="w-[95vw] max-w-2xl mx-auto max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+        {/* Header */}
+        <DialogHeader className="px-5 pt-5 pb-3 border-b flex-shrink-0">
+          <DialogTitle className="text-base font-semibold">
+            Chamada — {modalityName}
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 py-2 max-h-[75vh] overflow-auto">
-          {/* Formulário de configuração */}
-          <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-semibold text-lg">Configuração da Chamada</h3>
-            
-            {/* Datas lado a lado */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="data_hora_inicio">Data e Hora de Início *</Label>
-                <Input
-                  id="data_hora_inicio"
-                  type="datetime-local"
-                  value={sessionForm.data_hora_inicio}
-                  onChange={(e) => setSessionForm({ ...sessionForm, data_hora_inicio: e.target.value })}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="data_hora_fim">Data e Hora de Fim</Label>
-                <Input
-                  id="data_hora_fim"
-                  type="datetime-local"
-                  value={sessionForm.data_hora_fim}
-                  onChange={(e) => setSessionForm({ ...sessionForm, data_hora_fim: e.target.value })}
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="descricao">Descrição (opcional)</Label>
-              <Textarea
-                id="descricao"
-                value={sessionForm.descricao}
-                onChange={(e) => setSessionForm({ ...sessionForm, descricao: e.target.value })}
-                placeholder="Descreva o objetivo desta chamada..."
-                className="min-h-[80px] resize-none"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="observacoes">Observações</Label>
-              <Textarea
-                id="observacoes"
-                value={sessionForm.observacoes}
-                onChange={(e) => setSessionForm({ ...sessionForm, observacoes: e.target.value })}
-                placeholder="Registre aqui nomes de atletas que compareceram mas ainda não têm cadastro no sistema, ou outras observações importantes..."
-                className="min-h-[100px] resize-none"
-              />
-              <p className="text-xs text-gray-500">
-                Use este campo para registrar atletas presentes que ainda não possuem cadastro no sistema
-              </p>
-            </div>
+        {athletesLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-5 w-5 animate-spin mr-2 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Carregando atletas...</span>
           </div>
-
-          {/* Informação de atletas inscritos */}
-          {athletes && athletes.length > 0 && (
-            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <Users className="h-4 w-4 text-green-600" />
-              <span className="text-sm text-green-700 font-medium">
-                {athletes.length} atleta{athletes.length !== 1 ? 's' : ''} inscrito{athletes.length !== 1 ? 's' : ''} nesta modalidade
-              </span>
-            </div>
-          )}
-
-          {/* Seção de marcação de presenças */}
-          {athletesAttendance.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-lg">Marcar Presenças</h3>
-                <AttendanceStatusSummary athletesAttendance={athletesAttendance} />
+        ) : (
+          <div className="flex-1 overflow-y-auto">
+            {/* Contador de status */}
+            {total > 0 && (
+              <div className="grid grid-cols-4 gap-px bg-border mx-5 mt-4 rounded-xl overflow-hidden border">
+                <div className="bg-card text-center py-2.5 px-1">
+                  <div className="text-xl font-bold text-foreground">{total}</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Total</div>
+                </div>
+                <div className="bg-card text-center py-2.5 px-1">
+                  <div className="text-xl font-bold text-green-600">{presentes}</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Presentes</div>
+                </div>
+                <div className="bg-card text-center py-2.5 px-1">
+                  <div className="text-xl font-bold text-amber-500">{atrasados}</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Atrasados</div>
+                </div>
+                <div className="bg-card text-center py-2.5 px-1">
+                  <div className="text-xl font-bold text-red-500">{ausentes}</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Ausentes</div>
+                </div>
               </div>
+            )}
 
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {athletesAttendance.map((athlete) => (
-                  <AthleteAttendanceCard
-                    key={athlete.id}
-                    athlete={athlete}
-                    onStatusChange={handleStatusChange}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Botões de ação */}
-          <div className="flex gap-2 pt-4 border-t sticky bottom-0 bg-white">
-            <Button 
-              onClick={handleCreateSession}
-              disabled={!canCreateSession || createSessionWithAttendance.isPending}
-              className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary flex-1"
-            >
-              {createSessionWithAttendance.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
+            {/* Lista de atletas */}
+            <div className="px-5 mt-4 space-y-2">
+              {athletesAttendance.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-6">
+                  Nenhum atleta inscrito nesta modalidade.
+                </p>
               )}
-              Criar Chamada
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-            >
-              Cancelar
-            </Button>
+              {athletesAttendance.map(athlete => (
+                <AthleteAttendanceCard
+                  key={athlete.id}
+                  athlete={athlete}
+                  onStatusChange={handleStatusChange}
+                />
+              ))}
+            </div>
+
+            {/* Detalhes opcionais — colapsado */}
+            <div className="px-5 mt-4 mb-2">
+              <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
+                <CollapsibleTrigger asChild>
+                  <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground w-full py-2 transition-colors">
+                    <Settings2 className="h-4 w-4" />
+                    <span>Detalhes opcionais</span>
+                    <ChevronDown className={`h-4 w-4 ml-auto transition-transform ${detailsOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-3 pt-2 pb-1">
+                  {/* Data/hora num grid compacto */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="data_hora_inicio" className="text-xs">Início *</Label>
+                      <Input
+                        id="data_hora_inicio"
+                        type="datetime-local"
+                        value={sessionForm.data_hora_inicio}
+                        onChange={e => setSessionForm({ ...sessionForm, data_hora_inicio: e.target.value })}
+                        className="text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="data_hora_fim" className="text-xs">Fim (opcional)</Label>
+                      <Input
+                        id="data_hora_fim"
+                        type="datetime-local"
+                        value={sessionForm.data_hora_fim}
+                        onChange={e => setSessionForm({ ...sessionForm, data_hora_fim: e.target.value })}
+                        className="text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="descricao" className="text-xs">Descrição</Label>
+                    <Textarea
+                      id="descricao"
+                      value={sessionForm.descricao}
+                      onChange={e => setSessionForm({ ...sessionForm, descricao: e.target.value })}
+                      placeholder="Descreva o objetivo desta chamada..."
+                      className="min-h-[60px] resize-none text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="observacoes" className="text-xs">Observações</Label>
+                    <Textarea
+                      id="observacoes"
+                      value={sessionForm.observacoes}
+                      onChange={e => setSessionForm({ ...sessionForm, observacoes: e.target.value })}
+                      placeholder="Atletas presentes sem cadastro, outras observações..."
+                      className="min-h-[60px] resize-none text-sm"
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
           </div>
+        )}
+
+        {/* Botões — fixos no rodapé */}
+        <div className="flex gap-2 px-5 py-4 border-t bg-card flex-shrink-0">
+          <Button
+            onClick={handleCreateSession}
+            disabled={!canCreate || createSessionWithAttendance.isPending}
+            className="flex-1"
+          >
+            {createSessionWithAttendance.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
+            Criar Chamada
+          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

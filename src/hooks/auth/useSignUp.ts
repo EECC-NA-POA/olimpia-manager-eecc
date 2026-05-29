@@ -12,15 +12,22 @@ export const useSignUp = () => {
       console.log('📝 User data received (sanitized)');
 
       // Ensure we have properly formatted user metadata with all required fields
+      // Clean CPF formatting if needed
+      let numeroDocumento = String(userData?.numero_documento || '').trim();
+      if (userData?.tipo_documento === 'CPF') {
+        numeroDocumento = numeroDocumento.replace(/\D/g, ''); // Remove non-digits
+      }
+
       const userMetadata = {
         nome_completo: String(userData?.nome_completo || userData?.nome || '').trim(),
-        telefone: String(userData?.telefone || '').trim(),
+        telefone: String(userData?.telefone || '').replace(/\D/g, '').trim(), // Clean phone too
         ddi: String(userData?.ddi || '+55').trim(),
         tipo_documento: String(userData?.tipo_documento || 'CPF').trim(),
-        numero_documento: String(userData?.numero_documento || '').trim(),
+        numero_documento: numeroDocumento,
         genero: String(userData?.genero || 'Masculino').trim(),
         data_nascimento: userData?.data_nascimento || '1990-01-01',
         estado: String(userData?.estado || userData?.state || '').trim(),
+        pais: String(userData?.pais || userData?.country || 'Brasil').trim(),
         filial_id: String(userData?.filial_id || userData?.branchId || '').trim()
       };
 
@@ -104,11 +111,11 @@ export const useSignUp = () => {
                 genero: userMetadata.genero,
                 data_nascimento: userMetadata.data_nascimento,
                 estado: userMetadata.estado,
+                pais: userMetadata.pais || 'Brasil',
                 filial_id: userMetadata.filial_id || null,
                 confirmado: false,
                 ativo: true,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
+                data_criacao: new Date().toISOString()
               };
 
               console.log('📝 Inserting user data (sanitized)');

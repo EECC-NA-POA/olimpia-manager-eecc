@@ -10,6 +10,8 @@ import { Footer } from "@/components/Footer";
 import { MainNavigation } from "@/components/MainNavigation";
 import { FloatingNotificationIcon } from "@/components/notifications/FloatingNotificationIcon";
 import { toast } from "sonner";
+import { isNativePlatform } from "@/utils/platform";
+import MobileApp from "@/mobile/MobileApp";
 
 import Index from "./pages/Index";
 import OlimpiadasNacionais from "./pages/OlimpiadasNacionais";
@@ -43,13 +45,13 @@ import MonitorDashboard from "@/components/monitor/MonitorDashboard";
 // Global error handler for queries and mutations
 const handleQueryError = (error: any) => {
   console.error('🚨 Global query error:', error);
-  
-  const isAuthError = error?.message?.includes('JWT') || 
-                     error?.message?.includes('refresh_token_not_found') || 
-                     error?.message?.includes('token') ||
-                     error?.message?.includes('invalid session') ||
-                     error?.message?.includes('invalid_grant') ||
-                     error?.message?.includes('CompactDecodeError');
+
+  const isAuthError = error?.message?.includes('JWT') ||
+    error?.message?.includes('refresh_token_not_found') ||
+    error?.message?.includes('token') ||
+    error?.message?.includes('invalid session') ||
+    error?.message?.includes('invalid_grant') ||
+    error?.message?.includes('CompactDecodeError');
 
   if (isAuthError) {
     console.error('🔒 Authentication error detected in query');
@@ -68,21 +70,21 @@ const queryClient = new QueryClient({
     queries: {
       retry: (failureCount, error: any) => {
         // Não tentar novamente em erros de autenticação
-        if (error?.message?.includes('JWT') || 
-            error?.message?.includes('refresh_token_not_found') || 
-            error?.message?.includes('token') ||
-            error?.message?.includes('invalid session') ||
-            error?.message?.includes('invalid_grant') ||
-            error?.message?.includes('CompactDecodeError')) {
+        if (error?.message?.includes('JWT') ||
+          error?.message?.includes('refresh_token_not_found') ||
+          error?.message?.includes('token') ||
+          error?.message?.includes('invalid session') ||
+          error?.message?.includes('invalid_grant') ||
+          error?.message?.includes('CompactDecodeError')) {
           console.error('🚫 Query failed due to authentication error - will not retry:', error);
           return false;
         }
         return failureCount < 2; // Reduzido para 2 tentativas
       },
-      staleTime: 3 * 60 * 1000, // 3 minutos - reduzido para evitar dados muito antigos
-      gcTime: 5 * 60 * 1000, // 5 minutos de cache
-      refetchOnWindowFocus: false, // Evita queries desnecessárias
-      refetchOnMount: true, // Sempre busca dados frescos ao montar
+      staleTime: 0, // sempre considera dados desatualizados — garante que refetch() e invalidateQueries funcionem
+      gcTime: 5 * 60 * 1000, // 5 minutos de cache em memória
+      refetchOnWindowFocus: false,
+      refetchOnMount: true,
     },
   },
 });
@@ -108,10 +110,10 @@ function AppContent() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/verificar-email" element={<VerifyEmail />} />
           <Route path="/acesso-negado" element={<RejectedAccess />} />
-          
+
           {/* Event selection without sidebar */}
           <Route path="/event-selection" element={<EventSelectionPage />} />
-          
+
           {/* Protected routes with sidebar */}
           <Route path="/*" element={
             <MainNavigation>
@@ -129,7 +131,7 @@ function AppContent() {
                 <Route path="/minhas-inscricoes" element={<AthleteRegistrations />} />
                 <Route path="/organizador" element={<OrganizerDashboard />} />
                 <Route path="/delegacao" element={<DelegationDashboard />} />
-                
+
                 {/* Filosofo Monitor consolidated route */}
                 <Route path="/monitor" element={<MonitorDashboard />} />
               </Routes>
@@ -138,7 +140,7 @@ function AppContent() {
         </Routes>
       </main>
       <Footer />
-      
+
       {/* Floating notification icon - only shows when there are unread notifications */}
       <FloatingNotificationIcon />
     </div>
@@ -146,6 +148,22 @@ function AppContent() {
 }
 
 function App() {
+  console.log('🚀 App component rendering...');
+
+  let isMobile = false;
+  try {
+    isMobile = isNativePlatform();
+    console.log('📱 Platform detection:', {
+      isMobile,
+      platform: typeof window !== 'undefined' ? window.navigator.userAgent : 'unknown'
+    });
+  } catch (error) {
+    console.error('❌ Error detecting platform:', error);
+    isMobile = false;
+  }
+
+  console.log('🎯 Rendering', isMobile ? 'MobileApp' : 'WebApp');
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -154,7 +172,7 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <SessionTimeoutProvider>
-              <AppContent />
+              {isMobile ? <MobileApp /> : <AppContent />}
             </SessionTimeoutProvider>
           </AuthProvider>
         </BrowserRouter>

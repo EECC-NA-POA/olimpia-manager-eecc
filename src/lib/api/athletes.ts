@@ -2,14 +2,14 @@
 import { supabase } from '../supabase';
 import type { AthleteManagement } from '../../types/api';
 
-export const fetchAthleteManagement = async (filterByBranch: boolean = false, eventId: string | null): Promise<AthleteManagement[]> => {
-  console.log('Starting fetchAthleteManagement with filterByBranch:', filterByBranch, 'eventId:', eventId);
-  
+export const fetchAthleteManagement = async (filialIds: string[] | undefined, eventId: string | null): Promise<AthleteManagement[]> => {
+  console.log('Starting fetchAthleteManagement with filialIds:', filialIds, 'eventId:', eventId);
+
   try {
     if (!eventId) return [];
 
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       console.error('No authenticated user found');
       throw new Error('No authenticated user found');
@@ -17,26 +17,15 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
 
     console.log('Current user ID:', user.id);
 
-    let userBranchId: string | null = null;
-    if (filterByBranch) {
-      const { data: userProfile } = await supabase
-        .from('usuarios')
-        .select('filial_id')
-        .eq('id', user.id)
-        .single();
-      
-      userBranchId = userProfile?.filial_id;
-      console.log('User branch ID:', userBranchId);
-    }
-
     // Get main athletes data from view
     let query = supabase
       .from('vw_athletes_management')
       .select('*')
       .eq('evento_id', eventId);
 
-    if (filterByBranch && userBranchId) {
-      query = query.eq('filial_id', userBranchId);
+    if (filialIds && filialIds.length > 0) {
+      query = query.in('filial_id', filialIds);
+      console.log('Filtering athletes by filialIds:', filialIds);
     }
 
     const { data, error } = await query;
@@ -48,16 +37,16 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
 
     console.log('Raw athletes data:', data);
     console.log('Number of raw athletes:', data?.length);
-    
+
     // Process the data
     const athletesMap = new Map<string, AthleteManagement>();
-    
+
     // Process data from view
     if (data) {
       data.forEach(record => {
         if (!athletesMap.has(record.atleta_id)) {
           const paymentStatus = record.isento ? 'confirmado' : (record.status_pagamento || 'pendente');
-          
+
           athletesMap.set(record.atleta_id, {
             id: record.atleta_id,
             nome_atleta: record.nome_atleta,
@@ -83,10 +72,10 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
         if (record.modalidade_nome) {
           const athlete = athletesMap.get(record.atleta_id)!;
           const modalityExists = athlete.modalidades.some(m => m.id === record.inscricao_id);
-          
+
           if (!modalityExists && record.inscricao_id) {
             const modalityStatus = record.isento ? 'confirmado' : (record.status_inscricao || 'pendente');
-            
+
             athlete.modalidades.push({
               id: record.inscricao_id.toString(),
               modalidade: record.modalidade_nome,
@@ -103,7 +92,7 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
 
     // Get ALL athletes registered for this event (not just from view)
     console.log('Fetching ALL athletes registered for event...');
-    
+
     const { data: allEventAthletes, error: allAthletesError } = await supabase
       .from('inscricoes_eventos')
       .select(`
@@ -114,32 +103,32 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
         usuario_registrador_id
       `)
       .eq('evento_id', eventId);
-    
+
     if (allAthletesError) {
       console.error('Error fetching all event athletes:', allAthletesError);
     } else {
       console.log('All event athletes count:', allEventAthletes?.length);
-      
+
       // Process each athlete that's not already in the map
       for (const eventReg of allEventAthletes || []) {
         if (!athletesMap.has(eventReg.usuario_id)) {
           console.log('Adding missing athlete:', eventReg.usuario_id);
-          
+
           // Apply branch filter if needed
-          if (filterByBranch && userBranchId) {
+          if (filialIds && filialIds.length > 0) {
             const { data: athleteProfile } = await supabase
               .from('usuarios')
               .select('filial_id')
               .eq('id', eventReg.usuario_id)
               .single();
-            
-            // Skip if athlete is not from the same branch
-            if (athleteProfile?.filial_id !== userBranchId) {
+
+            // Skip if athlete is not from the delegation's branches
+            if (!athleteProfile?.filial_id || !filialIds.includes(athleteProfile.filial_id)) {
               console.log('Skipping athlete due to branch filter:', eventReg.usuario_id);
               continue;
             }
           }
-          
+
           // Get athlete's complete profile data
           const { data: athleteData, error: athleteDataError } = await supabase
             .from('usuarios')
@@ -156,14 +145,14 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
             `)
             .eq('id', eventReg.usuario_id)
             .single();
-          
+
           if (athleteDataError) {
             console.error('Error fetching athlete data:', athleteDataError);
             continue;
           }
-          
+
           if (!athleteData) continue;
-          
+
           // Get filial data
           let filialData = null;
           if (athleteData.filial_id) {
@@ -174,7 +163,7 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
               .single();
             filialData = filial;
           }
-          
+
           // Get athlete's modalities for this event
           const { data: athleteModalities } = await supabase
             .from('inscricoes_modalidades')
@@ -186,7 +175,7 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
             `)
             .eq('atleta_id', eventReg.usuario_id)
             .eq('evento_id', eventId);
-          
+
           // Get registrador info if exists
           let registradorInfo = null;
           if (eventReg.usuario_registrador_id && eventReg.usuario_registrador_id !== eventReg.usuario_id) {
@@ -195,12 +184,12 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
               .select('nome_completo, email')
               .eq('id', eventReg.usuario_registrador_id)
               .single();
-            
+
             registradorInfo = registrador;
           }
-          
+
           const paymentStatus = eventReg.isento ? 'confirmado' : (eventReg.status_pagamento || 'pendente');
-          
+
           athletesMap.set(eventReg.usuario_id, {
             id: athleteData.id,
             nome_atleta: athleteData.nome_completo,
@@ -225,7 +214,7 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
             })) || [],
             evento_id: eventId
           });
-          
+
           console.log('Successfully added athlete to map:', athleteData.nome_completo);
         }
       }
@@ -235,7 +224,7 @@ export const fetchAthleteManagement = async (filterByBranch: boolean = false, ev
     console.log('Final athletes count:', athletes.length);
     console.log('Athletes list:', athletes.map(a => ({ id: a.id, name: a.nome_atleta })));
     console.log('Current user in final list:', athletes.find(a => a.id === user.id));
-    
+
     return athletes;
   } catch (error) {
     console.error('Error in fetchAthleteManagement:', error);

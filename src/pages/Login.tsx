@@ -37,10 +37,10 @@ export default function Login() {
           <div className="flex flex-col items-center mb-8">
             <div className="flex items-center justify-center gap-4 mb-4 w-full">
               <div className="relative w-24 h-24 md:w-32 md:h-32">
-                <img 
+                <img
                   src="/lovable-uploads/EECC_marca_portugues_cores_RGB.png"
                   alt="EECC Logo"
-                  className="w-full h-full object-contain animate-pulse"
+                  className="w-full h-full object-contain drop-shadow-xl"
                 />
               </div>
               <div className="relative w-24 h-24 md:w-32 md:h-32">

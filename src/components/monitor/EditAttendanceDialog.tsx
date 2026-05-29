@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Save, Users, AlertTriangle } from "lucide-react";
+import { Loader2, Save, Users, AlertTriangle, Trash2 } from "lucide-react";
 import { useModalityAthletes } from "@/hooks/useModalityAthletes";
 import { useMonitorMutations } from "@/hooks/useMonitorMutations";
 import { useSessionAttendance, useAthletesForAttendance } from "@/hooks/useSessionAttendance";
@@ -45,7 +45,12 @@ export default function EditAttendanceDialog({
 
   const { data: existingAttendances } = useSessionAttendance(session.id);
   const { data: athletes, isLoading: athletesLoading } = useAthletesForAttendance(session.modalidade_rep_id);
-  const { updateSession, saveAttendances } = useMonitorMutations();
+  const { updateSession, saveAttendances, deleteSession } = useMonitorMutations();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => {
+    if (!open) setConfirmDelete(false);
+  }, [open]);
 
   useEffect(() => {
     if (session && open) {
@@ -235,25 +240,65 @@ export default function EditAttendanceDialog({
           )}
           
           {/* Botões de ação */}
-          <div className="flex gap-2 pt-4 border-t sticky bottom-0 bg-white">
-            <Button 
-              onClick={handleUpdateSession}
-              disabled={!canUpdateSession || updateSession.isPending || saveAttendances.isPending}
-              className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary flex-1"
-            >
-              {(updateSession.isPending || saveAttendances.isPending) ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              Salvar Alterações
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-            >
-              Cancelar
-            </Button>
+          <div className="flex flex-col gap-2 pt-4 border-t sticky bottom-0 bg-white">
+            <div className="flex gap-2">
+              <Button
+                onClick={handleUpdateSession}
+                disabled={!canUpdateSession || updateSession.isPending || saveAttendances.isPending}
+                className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary flex-1"
+              >
+                {(updateSession.isPending || saveAttendances.isPending) ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                Salvar Alterações
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancelar
+              </Button>
+            </div>
+
+            {/* Delete */}
+            {!confirmDelete ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10 w-full"
+                onClick={() => setConfirmDelete(true)}
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                Excluir chamada
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">
+                <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
+                <p className="text-xs text-destructive flex-1">Excluir permanentemente esta chamada e todas as presenças?</p>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="h-7 px-2 text-xs"
+                  disabled={deleteSession.isPending}
+                  onClick={async () => {
+                    await deleteSession.mutateAsync(session.id);
+                    onOpenChange(false);
+                  }}
+                >
+                  {deleteSession.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Confirmar'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setConfirmDelete(false)}
+                >
+                  Não
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>
