@@ -37,6 +37,8 @@ export interface Event {
   data_fim?: string;
   local?: string;
   status?: string;
+  has_scores?: boolean;
+  has_attendance?: boolean;
 }
 
 export interface Branch {

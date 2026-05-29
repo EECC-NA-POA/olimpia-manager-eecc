@@ -11,7 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, AlertCircle, Loader2 } from "lucide-react";
+import { Trophy, AlertCircle } from "lucide-react";
+import { LoadingImage } from "@/components/ui/loading-image";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface AthleteScore {
@@ -68,7 +69,7 @@ export default function AthleteScoresSection({ athleteId, eventId }: AthleteScor
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-olimpics-green-primary" />
+        <LoadingImage size="sm" />
       </div>
     );
   }

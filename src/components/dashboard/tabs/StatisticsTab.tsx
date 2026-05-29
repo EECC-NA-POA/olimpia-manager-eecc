@@ -3,156 +3,128 @@ import { BranchAnalytics } from "@/types/api";
 import { SummaryCards } from "../charts/SummaryCards";
 import { PaymentStatusBarChart } from "../charts/PaymentStatusBarChart";
 import { BranchRegistrationsChart } from "../charts/BranchRegistrationsChart";
-import { 
-  calculateTotals, 
-  transformPaymentStatusData, 
-  transformBranchRegistrationsData 
-} from "../charts/dataTransformers";
-import { ChartConfig } from "@/components/ui/chart/types";
-
-// Define a consistent color palette
-const CHART_COLORS = {
-  green: '#10B981',
-  yellow: '#F59E0B',
-  red: '#EF4444',
-  blue: '#6366F1',
-  purple: '#8B5CF6',
-  pink: '#EC4899'
-};
-
-const PAYMENT_STATUS_COLORS = {
-  'confirmado': CHART_COLORS.green,
-  'pendente': CHART_COLORS.yellow,
-  'cancelado': CHART_COLORS.red,
-  'isento': CHART_COLORS.blue
-};
-
-// Chart config that matches the ChartConfig type
-const CHART_CONFIG: ChartConfig = {
-  modalities: {
-    color: CHART_COLORS.blue,
-    label: 'Modalidades'
-  },
-  confirmado: {
-    color: CHART_COLORS.green,
-    label: 'Confirmado'
-  },
-  pendente: {
-    color: CHART_COLORS.yellow,
-    label: 'Pendente'
-  },
-  cancelado: {
-    color: CHART_COLORS.red,
-    label: 'Cancelado'
-  },
-  isento: {
-    color: CHART_COLORS.blue,
-    label: 'Isento'
-  },
-  categories: {
-    color: CHART_COLORS.purple,
-    label: 'Categorias'
-  },
-  total: {
-    color: CHART_COLORS.blue,
-    label: 'Total'
-  }
-};
+import { ModalitiesChart } from "../charts/ModalitiesChart";
+import { transformPaymentStatusData, transformBranchRegistrationsData } from "../charts/dataTransformers";
 
 interface StatisticsTabProps {
   data: BranchAnalytics[];
   currentBranchId?: string;
 }
 
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border bg-card p-4 sm:p-5 space-y-3">
+      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
 export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
-  console.log("StatisticsTab data:", data);
-  console.log("currentBranchId:", currentBranchId);
-  
-  // Check if data is valid and properly structured 
-  if (!data || !Array.isArray(data) || data.length === 0) {
+  if (!data || data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-32 sm:h-64 px-2 sm:px-4">
-        <p className="text-sm sm:text-base lg:text-lg text-muted-foreground text-center">Não há dados estatísticos disponíveis</p>
-        <p className="text-xs sm:text-sm text-muted-foreground text-center mt-1">Verifique se existem inscrições registradas para este evento</p>
-      </div>
+      <p className="text-center py-16 text-sm text-muted-foreground">
+        Não há dados estatísticos disponíveis para este evento.
+      </p>
     );
   }
 
-  // Filter data by branch if we're in delegation view
-  const filteredData = currentBranchId 
+  const filteredData = currentBranchId
     ? data.filter(item => item.filial_id === currentBranchId)
     : data;
-    
-  console.log("Filtered data for statistics:", filteredData);
 
-  // If no data after filtering, show no data message
-  if (!filteredData || filteredData.length === 0) {
+  if (filteredData.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-32 sm:h-64 px-2 sm:px-4">
-        <p className="text-sm sm:text-base lg:text-lg text-muted-foreground text-center">Não há dados estatísticos disponíveis para esta filial</p>
-        <p className="text-xs sm:text-sm text-muted-foreground text-center mt-1">Verifique se existem inscrições confirmadas para esta filial</p>
-      </div>
+      <p className="text-center py-16 text-sm text-muted-foreground">
+        Não há dados disponíveis para esta filial.
+      </p>
     );
   }
 
-  // Calculate totals
-  const calculatedTotals = calculateTotals(filteredData);
-  console.log("Calculated totals:", calculatedTotals);
+  // ── Totals ──────────────────────────────────────────────────
+  const totals = filteredData.reduce(
+    (acc, b) => {
+      acc.inscricoes += b.total_inscritos_geral;
+      acc.pago       += Number(b.valor_total_pago) || 0;
+      acc.pendente   += Number(b.valor_total_pendente) || 0;
+      b.inscritos_por_status_pagamento.forEach(s => {
+        if (s.status_pagamento === 'isento') acc.isento += s.quantidade;
+      });
+      return acc;
+    },
+    { inscricoes: 0, pago: 0, pendente: 0, isento: 0 }
+  );
 
-  // For delegation view, use the single branch record to avoid duplicate aggregation
-  const branchRecord = currentBranchId ? (filteredData.find(item => item.filial_id === currentBranchId) ?? filteredData[0]) : undefined;
+  // For delegation single-branch view, use raw branch values to avoid double-counting
+  const branchRecord = currentBranchId ? filteredData[0] : undefined;
+  if (branchRecord) {
+    totals.inscricoes = Number(branchRecord.total_inscritos_geral) || 0;
+    totals.pago       = Number(branchRecord.valor_total_pago)      || 0;
+    totals.pendente   = Number(branchRecord.valor_total_pendente)  || 0;
+  }
 
-  // Map the calculated totals to the format expected by SummaryCards
-  const summaryCardsTotals = currentBranchId && branchRecord
-    ? {
-        inscricoes: Number(branchRecord.total_inscritos_geral) || 0,
-        pago: Number(branchRecord.valor_total_pago) || 0,
-        pendente: Number(branchRecord.valor_total_pendente) || 0,
-        isento: branchRecord.inscritos_por_status_pagamento?.find(s => s.status_pagamento === 'isento')?.quantidade || 0
-      }
-    : {
-        inscricoes: calculatedTotals.totalGeral,
-        pago: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pago) || 0), 0),
-        pendente: filteredData.reduce((sum, branch) => sum + (Number(branch.valor_total_pendente) || 0), 0),
-        isento: calculatedTotals.totalIsentos
-      };
-  console.log("Summary cards totals:", summaryCardsTotals);
+  const paymentData       = transformPaymentStatusData(filteredData, {});
+  const branchData        = transformBranchRegistrationsData(filteredData);
+  const showBranchChart   = branchData.length > 1;
 
-  // Transform data for charts
-  const paymentStatusData = transformPaymentStatusData(filteredData, PAYMENT_STATUS_COLORS);
-  console.log("Payment status chart data:", paymentStatusData);
+  // Check if modalities data exists
+  const hasModalities = filteredData.some(b => (b.modalidades_populares?.length ?? 0) > 0);
 
-  const branchRegistrationsData = transformBranchRegistrationsData(filteredData);
-  console.log("Branch registrations chart data:", branchRegistrationsData);
+  // Categories — event-wide totals repeated per branch row, read only from first record
+  const categoryMap = new Map<string, number>();
+  (filteredData[0]?.atletas_por_categoria || []).forEach(c => {
+    categoryMap.set(c.categoria, c.quantidade);
+  });
+  const hasCategories = categoryMap.size > 0;
 
   return (
-    <div className="space-y-3 sm:space-y-6 lg:space-y-8 max-w-full overflow-x-hidden">
-      {/* Summary Cards Section */}
-      <div className="w-full">
-        <SummaryCards totals={summaryCardsTotals} />
-      </div>
+    <div className="space-y-4">
+      {/* KPI cards */}
+      <SummaryCards totals={totals} />
 
-      {/* Charts Section - Mobile optimized layout */}
-      <div className="space-y-3 sm:space-y-6 lg:space-y-8 max-w-full">
-        {/* Payment Status Bar Chart - Full width */}
-        <div className="w-full max-w-full overflow-x-hidden">
-          <PaymentStatusBarChart 
-            data={paymentStatusData} 
-            chartConfig={CHART_CONFIG} 
-            title="Status de Pagamento"
-            description="Distribuição dos pagamentos por status"
-          />
-        </div>
+      {/* Payment status */}
+      <Section title="Status de Inscrições">
+        <PaymentStatusBarChart data={paymentData} />
+      </Section>
 
-        {/* Branch Registrations Chart - Full width */}
-        <div className="w-full max-w-full overflow-x-hidden">
-          <BranchRegistrationsChart 
-            data={branchRegistrationsData} 
-            chartColors={CHART_COLORS} 
-            chartConfig={CHART_CONFIG} 
-          />
-        </div>
-      </div>
+      {/* Modalities */}
+      {hasModalities && (
+        <Section title="Inscrições por Modalidade">
+          <ModalitiesChart data={filteredData} />
+        </Section>
+      )}
+
+      {/* Categories */}
+      {hasCategories && (
+        <Section title="Atletas por Categoria">
+          <div className="space-y-1.5">
+            {Array.from(categoryMap.entries())
+              .sort((a, b) => b[1] - a[1])
+              .map(([cat, qty]) => {
+                const max = Math.max(...categoryMap.values());
+                return (
+                  <div key={cat} className="flex items-center gap-3 text-sm">
+                    <span className="w-28 flex-shrink-0 text-xs text-muted-foreground truncate">{cat}</span>
+                    <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
+                      <div
+                        className="h-full bg-olimpics-green-primary rounded-full"
+                        style={{ width: `${(qty / max) * 100}%` }}
+                      />
+                    </div>
+                    <span className="w-6 text-right text-xs font-semibold text-foreground">{qty}</span>
+                  </div>
+                );
+              })}
+          </div>
+        </Section>
+      )}
+
+      {/* Branch breakdown — only if multiple branches */}
+      {showBranchChart && (
+        <Section title="Inscrições por Filial">
+          <BranchRegistrationsChart data={branchData} />
+        </Section>
+      )}
     </div>
   );
 }

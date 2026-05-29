@@ -16,6 +16,8 @@ export const eventBasicInfoSchema = z.object({
   status_evento: z.enum(['ativo', 'encerrado', 'suspenso', 'em_teste', 'encerrado_oculto']),
   foto_evento: z.string().optional().nullable(),
   visibilidade_publica: z.boolean().default(true),
+  has_scores: z.boolean().default(true),
+  has_attendance: z.boolean().default(true),
 });
 
 export type EventBasicInfoFormValues = z.infer<typeof eventBasicInfoSchema>;

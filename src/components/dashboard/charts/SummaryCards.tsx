@@ -1,7 +1,7 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Coins, Users, Shield } from "lucide-react";
+import { Users, Coins, Clock, Gift } from "lucide-react";
 import { formatToCurrency } from "@/utils/formatters";
+import { cn } from "@/lib/utils";
 
 interface SummaryCardsProps {
   totals: {
@@ -12,83 +12,66 @@ interface SummaryCardsProps {
   };
 }
 
-export function SummaryCards({ totals }: SummaryCardsProps) {
+interface KpiCardProps {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  sub?: string;
+  accent: string;
+}
+
+function KpiCard({ icon: Icon, label, value, sub, accent }: KpiCardProps) {
   return (
-    <div className="grid gap-3 sm:gap-6 grid-cols-2 lg:grid-cols-4 w-full max-w-full">
-      <Card className="hover:shadow-lg transition-shadow min-w-0">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6 sm:pb-2">
-          <div className="space-y-1 min-w-0 flex-1">
-            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
-              Total de Inscritos
-            </CardTitle>
-          </div>
-          <Users className="h-4 w-4 text-olimpics-green-primary flex-shrink-0" />
-        </CardHeader>
-        <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
-          <div className="text-lg sm:text-2xl font-bold">{totals.inscricoes.toLocaleString()}</div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 hidden sm:block">
-            Inscrições confirmadas e pendentes
-          </p>
-        </CardContent>
-      </Card>
-      
-      <Card className="hover:shadow-lg transition-shadow min-w-0">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6 sm:pb-2">
-          <div className="space-y-1 min-w-0 flex-1">
-            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
-              Total Pago
-            </CardTitle>
-          </div>
-          <Coins className="h-4 w-4 text-green-600 flex-shrink-0" />
-        </CardHeader>
-        <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
-          <div className="text-lg sm:text-2xl font-bold text-green-600 truncate">
-            {formatToCurrency(totals.pago)}
-          </div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 hidden sm:block">
-            Pagamentos já confirmados
-          </p>
-        </CardContent>
-      </Card>
+    <div className={cn("rounded-xl border bg-card p-3 sm:p-4 flex flex-col gap-2", accent)}>
+      <div className="flex items-center gap-2">
+        <div className="rounded-lg bg-background/70 p-1.5 flex-shrink-0">
+          <Icon className="h-3.5 w-3.5 text-foreground/70" />
+        </div>
+        <p className="text-[11px] sm:text-xs text-muted-foreground font-medium leading-tight">{label}</p>
+      </div>
+      <div>
+        <p className="text-base sm:text-xl font-bold text-foreground leading-tight break-all">{value}</p>
+        {sub && <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5">{sub}</p>}
+      </div>
+    </div>
+  );
+}
 
-      <Card className="hover:shadow-lg transition-shadow min-w-0">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6 sm:pb-2">
-          <div className="space-y-1 min-w-0 flex-1">
-            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
-              Total Pendente
-            </CardTitle>
-          </div>
-          <Activity className="h-4 w-4 text-yellow-600 flex-shrink-0" />
-        </CardHeader>
-        <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
-          <div className="text-lg sm:text-2xl font-bold text-yellow-600 truncate">
-            {formatToCurrency(totals.pendente)}
-          </div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 hidden sm:block">
-            Pagamentos aguardando confirmação
-          </p>
-        </CardContent>
-      </Card>
+export function SummaryCards({ totals }: SummaryCardsProps) {
+  const showIsento = (totals.isento ?? 0) > 0;
 
-      {totals.isento !== undefined && totals.isento > 0 && (
-        <Card className="hover:shadow-lg transition-shadow min-w-0">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6 sm:pb-2">
-            <div className="space-y-1 min-w-0 flex-1">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
-                Total Isentos
-              </CardTitle>
-            </div>
-            <Shield className="h-4 w-4 text-blue-600 flex-shrink-0" />
-          </CardHeader>
-          <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
-            <div className="text-lg sm:text-2xl font-bold text-blue-600">
-              {totals.isento.toLocaleString()}
-            </div>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 hidden sm:block">
-              Atletas isentos de pagamento
-            </p>
-          </CardContent>
-        </Card>
+  return (
+    <div className={cn(
+      "grid gap-3",
+      showIsento ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-3"
+    )}>
+      <KpiCard
+        icon={Users}
+        label="Total de Inscritos"
+        value={totals.inscricoes.toLocaleString('pt-BR')}
+        sub="confirmados + pendentes"
+        accent=""
+      />
+      <KpiCard
+        icon={Coins}
+        label="Total Pago"
+        value={formatToCurrency(totals.pago)}
+        accent="border-emerald-200"
+      />
+      <KpiCard
+        icon={Clock}
+        label="Total Pendente"
+        value={formatToCurrency(totals.pendente)}
+        accent="border-amber-200"
+      />
+      {showIsento && (
+        <KpiCard
+          icon={Gift}
+          label="Isentos"
+          value={String(totals.isento)}
+          sub="sem cobrança"
+          accent="border-sky-200"
+        />
       )}
     </div>
   );

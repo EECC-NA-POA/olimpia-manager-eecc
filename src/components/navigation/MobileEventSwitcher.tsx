@@ -69,16 +69,15 @@ export function MobileEventSwitcher({ userId }: MobileEventSwitcherProps) {
     <div className="flex items-center">
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
-          <Button 
-            variant="ghost" 
-            className="text-foreground hover:bg-muted/40 flex items-center gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 max-w-[120px] sm:max-w-none"
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10 flex items-center gap-2 text-xs px-2 py-1.5 h-auto rounded-lg"
           >
-            <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-            <span className="truncate hidden xs:inline">
-              {selectedEvent?.nome || 'Evento'}
+            <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+            <span className="truncate text-left flex-1">
+              {selectedEvent?.nome || 'Selecionar evento'}
             </span>
-            <span className="xs:hidden">Evento</span>
-            <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+            <ChevronDown className="h-3 w-3 flex-shrink-0 opacity-60" />
           </Button>
         </DialogTrigger>
         <DialogContent className="w-[95vw] max-w-md mx-auto">

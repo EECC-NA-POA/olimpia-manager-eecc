@@ -39,16 +39,22 @@ export const submitNotification = async (
       .single();
 
     if (error) {
-      console.error('Error inserting notification:', error);
-      throw error;
+      console.error('Error inserting notification (detailed):', JSON.stringify(error, null, 2));
+      throw new Error(`Erro ao inserir notificação: ${error.message} - ${error.details || ''}`);
     }
 
     console.log('Notification inserted successfully:', result);
 
     // 2. Preparar os destinatários - SEMPRE criar registros em notificacao_destinatarios
-    let destinatariosData: { notificacao_id: string; filial_id: string | null }[] = [];
+    let destinatariosData: any[] = [];
 
-    if (destinatarios.includes('all')) {
+    if (data.modalidades && data.modalidades.length > 0) {
+      console.log('Using specific modalities:', data.modalidades);
+      destinatariosData = data.modalidades.map(modId => ({
+        notificacao_id: result.id,
+        modalidade_id: modId
+      }));
+    } else if (destinatarios.includes('all')) {
       console.log('Creating destination record for all branches (filial_id = null)');
       // Para "todas as filiais", criar um registro com filial_id = null
       destinatariosData = [{
@@ -71,16 +77,16 @@ export const submitNotification = async (
       .insert(destinatariosData);
 
     if (destError) {
-      console.error('Error inserting destinations:', destError);
+      console.error('Error inserting destinations (detailed):', JSON.stringify(destError, null, 2));
       // Tentar limpar a notificação criada
       await supabase.from('notificacoes').delete().eq('id', result.id);
-      throw destError;
+      throw new Error(`Erro ao inserir destinatários: ${destError.message} - ${destError.details || ''}`);
     }
 
     console.log('Destinations inserted successfully');
     console.log('Notification created successfully:', result);
     toast.success('Notificação criada com sucesso!');
-    
+
   } catch (error) {
     console.error('Full error in submitNotification:', error);
     throw error;

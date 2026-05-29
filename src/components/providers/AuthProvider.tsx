@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase, handleSupabaseError, recoverSession } from '@/lib/supabase';
+import i18n from '@/i18n';
+import { updateLastActivity, setFirstLoginIfNeeded, clearSessionTimestamps, isSessionExpiredByInactivity } from '@/lib/storageAdapter';
 import { AuthContextType, AuthUser } from '@/types/auth';
 import { PUBLIC_ROUTES, PublicRoute } from '@/constants/routes';
 import { fetchUserProfile, handleAuthRedirect, clearUserProfileCache } from '@/services/authService';
@@ -13,6 +15,7 @@ import { LoadingImage } from '@/components/ui/loading-image';
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileEventId, setProfileEventId] = useState<string | null>(null);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [currentEventId, setCurrentEventId] = useState<string | null>(() => {
     return localStorage.getItem('currentEventId');
@@ -29,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('currentEventId');
     }
     clearUserProfileCache();
-    
+
     // Reload user profile with new event roles when event changes
     // Only reload if we have both user.id and currentEventId
     const userId = user?.id;
@@ -39,12 +42,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .then((profile) => {
           console.log('✅ Profile reloaded with roles:', profile.papeis);
           setUser((prevUser) => prevUser ? { ...prevUser, ...profile } : prevUser);
+          setProfileEventId(currentEventId);
         })
         .catch((err) => {
           console.error('❌ Error reloading profile after event change:', err);
-          // Don't call handleSessionError here - event switching errors shouldn't cause logout
-          // Just log the error and keep the user logged in with their existing profile
-          toast.error('Erro ao carregar perfil do evento. Tente novamente.');
+          toast.error(i18n.t('errors.eventProfileError'));
+          setProfileEventId(currentEventId); // unblock even on error
         });
     }
   }, [currentEventId, user?.id]);
@@ -60,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    
+
     const intervalId = setInterval(() => {
       const storedEventId = localStorage.getItem('currentEventId');
       if (storedEventId !== currentEventId) {
@@ -77,25 +80,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Improved session error handling - don't logout immediately
   const handleSessionError = async (error: any) => {
     console.error('🚨 Session error detected:', error);
-    
-    const isSessionError = error.message?.includes('JWT') || 
-                          error.message?.includes('refresh_token_not_found') || 
-                          error.message?.includes('token') ||
-                          error.message?.includes('CompactDecodeError') ||
-                          error.message?.includes('invalid session') ||
-                          error.message?.includes('invalid_grant');
+
+    const isSessionError = error.message?.includes('JWT') ||
+      error.message?.includes('refresh_token_not_found') ||
+      error.message?.includes('token') ||
+      error.message?.includes('CompactDecodeError') ||
+      error.message?.includes('invalid session') ||
+      error.message?.includes('invalid_grant');
 
     if (isSessionError && !sessionExpired) {
       console.log('🔄 Attempting session recovery before logout...');
-      
+
       // Try to recover session first
       const recoveredSession = await recoverSession();
-      
+
       if (recoveredSession) {
         console.log('✅ Session recovered, continuing...');
         return false; // Don't logout
       }
-      
+
       // Only logout if recovery failed
       console.log('❌ Session recovery failed, logging out...');
       setSessionExpired(true);
@@ -103,16 +106,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('currentEventId');
       setCurrentEventId(null);
       clearUserProfileCache();
-      
+
       toast.error(
-        'Sua sessão expirou. Por favor, faça login novamente.',
+        i18n.t('errors.sessionExpired'),
         { duration: 5000 }
       );
-      
+
       navigate('/login', { replace: true });
       return true; // Logout occurred
     }
-    
+
     return false; // No logout needed
   };
 
@@ -133,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('currentEventId');
         setCurrentEventId(null);
         clearUserProfileCache();
+        clearSessionTimestamps();
         navigate('/', { replace: true });
         return;
       }
@@ -142,28 +146,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (baseUser) {
         // Defer profile fetch to avoid blocking the auth callback
-          setTimeout(async () => {
-            try {
-              const userProfile = await fetchUserProfile(baseUser.id);
-              if (mounted) {
-                setUser({ ...(baseUser as any), ...userProfile });
-                setSessionExpired(false);
-              }
-            } catch (err) {
-              console.error('❌ Error loading profile after auth change:', err);
-              // Only handle session errors, not profile loading errors
-              const error = err as any;
-              const isRealSessionError = error.message?.includes('JWT') || 
-                                        error.message?.includes('refresh_token_not_found') || 
-                                        error.message?.includes('invalid session');
-              if (isRealSessionError) {
-                await handleSessionError(err);
-              } else {
-                console.log('Profile loading error, but keeping user logged in');
-                toast.error('Erro ao carregar perfil. Algumas funcionalidades podem estar limitadas.');
-              }
+        setTimeout(async () => {
+          const eventId = localStorage.getItem('currentEventId');
+          try {
+            const userProfile = await fetchUserProfile(baseUser.id);
+            if (mounted) {
+              setUser({ ...(baseUser as any), ...userProfile });
+              setSessionExpired(false);
+              setProfileEventId(eventId);
+              updateLastActivity();
+              setFirstLoginIfNeeded();
             }
-          }, 0);
+          } catch (err) {
+            console.error('❌ Error loading profile after auth change:', err);
+            const error = err as any;
+            const isRealSessionError = error.message?.includes('JWT') ||
+              error.message?.includes('refresh_token_not_found') ||
+              error.message?.includes('invalid session');
+            if (isRealSessionError) {
+              await handleSessionError(err);
+            } else {
+              console.log('Profile loading error, but keeping user logged in');
+              toast.error(i18n.t('errors.profileLoadError'));
+            }
+            if (mounted) setProfileEventId(eventId);
+          }
+        }, 0);
       }
     });
 
@@ -172,13 +180,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         console.log('🔍 Getting current session...');
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+
         if (error) {
           console.error('❌ Error getting session:', error);
           const logoutOccurred = await handleSessionError(error);
           if (logoutOccurred) return;
         }
-        
+
         console.log('📊 Session status:', { hasSession: !!session });
 
         if (!session?.user) {
@@ -187,34 +195,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             navigate('/', { replace: true });
           }
         } else {
+          // Check for session inactivity/age expiration
+          const expired = await isSessionExpiredByInactivity();
+          if (expired) {
+            console.log('⏰ Session expired by inactivity/age, logging out...');
+            setUser(null);
+            setSessionExpired(true);
+            localStorage.removeItem('currentEventId');
+            setCurrentEventId(null);
+            clearUserProfileCache();
+            await clearSessionTimestamps();
+            await supabase.auth.signOut();
+            toast.error(i18n.t('errors.sessionExpired'), { duration: 5000 });
+            navigate('/', { replace: true });
+            return;
+          }
+
           const storedEventId = localStorage.getItem('currentEventId');
           if (storedEventId && storedEventId !== currentEventId) {
             setCurrentEventId(storedEventId);
           }
 
+          // Set base user immediately so protected routes don't kick to /login
+          if (mounted) {
+            setUser(session.user as any);
+          }
+
           // Defer profile fetch on init as well
           setTimeout(async () => {
+            const eventId = localStorage.getItem('currentEventId');
             try {
               const userProfile = await fetchUserProfile(session.user.id);
               if (mounted) {
                 setUser({ ...session.user, ...userProfile });
                 setSessionExpired(false);
+                setProfileEventId(eventId);
+                updateLastActivity();
+                setFirstLoginIfNeeded();
               }
             } catch (profileError) {
               console.error('❌ Error fetching user profile:', profileError);
-              // Only handle real session errors, not profile loading errors
               const error = profileError as any;
-              const isRealSessionError = error.message?.includes('JWT') || 
-                                        error.message?.includes('refresh_token_not_found') || 
-                                        error.message?.includes('invalid session');
+              const isRealSessionError = error.message?.includes('JWT') ||
+                error.message?.includes('refresh_token_not_found') ||
+                error.message?.includes('invalid session');
               if (isRealSessionError) {
                 await handleSessionError(profileError);
               } else {
                 console.log('Profile loading error on init, but keeping user logged in');
-                if (mounted) {
-                  setUser(session.user as any);
-                }
+                if (mounted) setUser(session.user as any);
               }
+              if (mounted) setProfileEventId(eventId);
             }
           }, 0);
         }
@@ -238,17 +269,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <LoadingImage text="Carregando autenticação..." />
+        <LoadingImage text={i18n.t('errors.loadingAuth')} />
       </div>
     );
   }
-  
+
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
-      signIn, 
-      signOut, 
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      isProfileLoading: !!currentEventId && profileEventId !== currentEventId,
+      signIn,
+      signOut,
       signUp,
       resendVerificationEmail,
       currentEventId,

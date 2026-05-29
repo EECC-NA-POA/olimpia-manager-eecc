@@ -1,6 +1,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import './i18n'; // Initialize i18n before App
 import App from './App';
 import './index.css';
 import './styles/rich-text-editor.css';  // Import the rich text editor styles

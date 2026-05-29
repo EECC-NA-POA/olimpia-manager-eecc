@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, AlertCircle, Loader2 } from 'lucide-react';
+import { Users, AlertCircle } from 'lucide-react';
+import { LoadingImage } from '@/components/ui/loading-image';
 import { useUserProfilesAlternative } from '@/hooks/useUserProfilesAlternative';
 import { UserProfilesTable } from './UserProfilesTable';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -50,8 +51,7 @@ export function UserProfilesManagementSection({ eventId }: UserProfilesManagemen
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin text-olimpics-green-primary" />
-              <span className="ml-2 text-muted-foreground">Carregando usuários...</span>
+              <LoadingImage text="Carregando usuários..." />
             </div>
           ) : error ? (
             <Alert variant="destructive">

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useCanCreateEvents } from '@/hooks/useCanCreateEvents';
 import { useAuth } from '@/contexts/AuthContext';
+import { useActiveEvent } from '@/hooks/useActiveEvent';
 import { User, Users, Calendar, Gavel, Settings2, ClipboardList, Calendar as CalendarIcon, BookOpen, LogOut, UserCheck, Bell, Crown, LayoutDashboard } from 'lucide-react';
 import { MenuItem } from '../types';
 
@@ -12,6 +13,7 @@ export const useMenuItems = (onLogout: () => void) => {
   const { roles, user } = useNavigation();
   const { canCreateEvents } = useCanCreateEvents();
   const { setCurrentEventId } = useAuth();
+  const { activeEvent } = useActiveEvent();
 
   // Check for specific roles
   const isJudge = user?.papeis?.some(role => role.codigo === 'JUZ') || false;
@@ -32,9 +34,9 @@ export const useMenuItems = (onLogout: () => void) => {
   // Memoize menu items to prevent recalculation on every render
   const menuItems: MenuItem[] = useMemo(() => {
     const items: MenuItem[] = [];
-    
+
     // Add items in the same order as the mobile menu
-    
+
     // 1. Meu Dashboard - for all athletes (regardless of other roles)
     if (isAthlete) {
       items.push({
@@ -44,7 +46,7 @@ export const useMenuItems = (onLogout: () => void) => {
         tooltip: "Dashboard"
       });
     }
-    
+
     // 2. Cronograma (Schedule) - for all roles
     items.push({
       path: "/cronograma",
@@ -52,7 +54,7 @@ export const useMenuItems = (onLogout: () => void) => {
       icon: <Calendar className="h-5 w-5" />,
       tooltip: "Cronograma"
     });
-    
+
     // 3. Regulamento (Regulations) - for all roles
     items.push({
       path: "/regulamento",
@@ -60,7 +62,7 @@ export const useMenuItems = (onLogout: () => void) => {
       icon: <BookOpen className="h-5 w-5" />,
       tooltip: "Regulamento"
     });
-    
+
     // 4. Notificações (Notifications) - for all roles
     items.push({
       path: "/notifications",
@@ -68,7 +70,7 @@ export const useMenuItems = (onLogout: () => void) => {
       icon: <Bell className="h-5 w-5" />,
       tooltip: "Notificações"
     });
-    
+
     // 5. Organizador (Organizer)
     if (isOrganizer) {
       items.push({
@@ -78,7 +80,7 @@ export const useMenuItems = (onLogout: () => void) => {
         tooltip: "Organizador"
       });
     }
-    
+
     // 6. Delegação (Delegation)
     if (isDelegationRep) {
       items.push({
@@ -89,8 +91,8 @@ export const useMenuItems = (onLogout: () => void) => {
       });
     }
 
-    // 7. Filósofo Monitor - ÚNICA ENTRADA NO MENU
-    if (isFilosofoMonitor) {
+    // 7. Filósofo Monitor - ÚNICA ENTRADA NO MENU (Depende do módulo de Chamadas)
+    if (isFilosofoMonitor && (activeEvent?.has_attendance !== false)) {
       items.push({
         path: "/monitor",
         label: "Filósofo Monitor",
@@ -98,9 +100,9 @@ export const useMenuItems = (onLogout: () => void) => {
         tooltip: "Filósofo Monitor"
       });
     }
-    
-    // 8. Juiz (Judge)
-    if (isJudge) {
+
+    // 8. Juiz (Judge) (Depende do módulo de Pontuação)
+    if (isJudge && (activeEvent?.has_scores !== false)) {
       items.push({
         path: "/judge-dashboard",
         label: "Juiz",
@@ -108,7 +110,7 @@ export const useMenuItems = (onLogout: () => void) => {
         tooltip: "Juiz"
       });
     }
-    
+
     // 9. Administração (Administration) - for admins only
     if (isAdmin) {
       items.push({
@@ -159,7 +161,7 @@ export const useMenuItems = (onLogout: () => void) => {
     });
 
     return items;
-  }, [isAthlete, isOrganizer, isDelegationRep, isFilosofoMonitor, isJudge, isAdmin, isMaster, onLogout]);
+  }, [isAthlete, isOrganizer, isDelegationRep, isFilosofoMonitor, isJudge, isAdmin, isMaster, onLogout, activeEvent]);
 
   return menuItems;
 };

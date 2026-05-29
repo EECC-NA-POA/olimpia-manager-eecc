@@ -25,11 +25,12 @@ export interface NotificationReading {
   lido_em: string;
 }
 
-export type NotificationAuthorType = 'organizador' | 'representante_delegacao';
+export type NotificationAuthorType = 'organizador' | 'representante_delegacao' | 'filosofo_monitor';
 
 export interface CreateNotificationData {
   titulo: string;
   mensagem: string;
   eventId: string;
   destinatarios: string[]; // Array de filial_ids, ou ['all'] para todas
+  modalidades?: (string | number)[]; // Array de modalidade_ids para Monitores
 }

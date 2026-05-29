@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Users } from 'lucide-react';
+import { LoadingImage } from '@/components/ui/loading-image';
 import { useProfileTypes, useEventProfiles } from './hooks/useProfilesData';
 import { useCreateUpdateProfile, useDeleteProfile, ProfileFormValues } from './hooks/useProfileMutations';
 import { ProfilesTable } from './components/ProfilesTable';
@@ -82,7 +83,7 @@ export function EventProfilesSection({ eventId }: EventProfilesSectionProps) {
         <CardContent>
           {isLoading ? (
             <div className="flex justify-center p-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-olimpics-green-primary"></div>
+              <LoadingImage size="sm" />
             </div>
           ) : profiles.length === 0 ? (
             <EmptyProfilesState onCreateProfile={handleNewProfile} />
