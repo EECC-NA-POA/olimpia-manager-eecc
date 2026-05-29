@@ -1,7 +1,7 @@
 
-import React, { useEffect, useState } from 'react';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import React, { useEffect, useRef } from 'react';
+import Quill from 'quill';
+import 'quill/dist/quill.snow.css';
 
 interface RichTextEditorProps {
   value: string;
@@ -10,52 +10,75 @@ interface RichTextEditorProps {
   className?: string;
 }
 
+const MODULES = {
+  toolbar: [
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ align: [] }],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    [{ header: [1, 2, 3, 4, 5, 6, false] }],
+    [{ color: [] }, { background: [] }],
+    ['link'],
+    ['blockquote', 'code-block'],
+    ['clean'],
+  ],
+};
+
+const FORMATS = [
+  'bold', 'italic', 'underline', 'strike',
+  'align', 'list',
+  'header',
+  'color', 'background',
+  'link',
+  'blockquote', 'code-block',
+];
+
 export function RichTextEditor({ value, onChange, placeholder, className }: RichTextEditorProps) {
-  const [editorValue, setEditorValue] = useState(value || '');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const quillRef = useRef<Quill | null>(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
-  // Sync internal state with external value
   useEffect(() => {
-    setEditorValue(value || '');
+    if (!containerRef.current || quillRef.current) return;
+
+    const quill = new Quill(containerRef.current, {
+      theme: 'snow',
+      placeholder,
+      modules: MODULES,
+      formats: FORMATS,
+    });
+
+    quillRef.current = quill;
+
+    if (value) {
+      const delta = quill.clipboard.convert({ html: value });
+      quill.setContents(delta, 'silent');
+    }
+
+    quill.on('text-change', () => {
+      onChangeRef.current(quill.getSemanticHTML());
+    });
+
+    return () => {
+      quill.off('text-change');
+      quillRef.current = null;
+    };
+  }, []);
+
+  // Sync external value changes (e.g. form reset)
+  useEffect(() => {
+    const quill = quillRef.current;
+    if (!quill) return;
+    const current = quill.getSemanticHTML();
+    if (current !== value) {
+      const delta = quill.clipboard.convert({ html: value || '' });
+      quill.setContents(delta, 'silent');
+    }
   }, [value]);
-
-  const handleChange = (content: string) => {
-    setEditorValue(content);
-    onChange(content);
-  };
-
-  const modules = {
-    toolbar: [
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'align': [] }],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-      [{ 'color': [] }, { 'background': [] }],
-      ['link'],
-      ['blockquote', 'code-block'],
-      ['clean']
-    ],
-  };
-
-  const formats = [
-    'bold', 'italic', 'underline', 'strike',
-    'align',
-    'list', 'bullet',
-    'header',
-    'color', 'background',
-    'link',
-    'blockquote', 'code-block',
-  ];
 
   return (
     <div className={`${className || ''} rich-text-editor`}>
-      <ReactQuill
-        theme="snow"
-        value={editorValue}
-        onChange={handleChange}
-        modules={modules}
-        formats={formats}
-        placeholder={placeholder}
-      />
+      <div ref={containerRef} />
     </div>
   );
 }
