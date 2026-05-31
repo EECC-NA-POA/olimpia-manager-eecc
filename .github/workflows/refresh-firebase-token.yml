@@ -1,0 +1,92 @@
+name: Refresh Firebase Token
+
+on:
+  schedule:
+    # Roda a cada 45 minutos (token FCM expira em 60min)
+    - cron: '*/45 * * * *'
+  workflow_dispatch: # Permite disparo manual pelo GitHub UI
+
+jobs:
+  refresh-token:
+    name: Gerar e atualizar token Firebase no Supabase
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Gerar token OAuth2 e atualizar Supabase
+        uses: actions/github-script@v7
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        with:
+          script: |
+            const crypto = require('crypto');
+
+            // ── 1. Parse da Service Account ──────────────────────────────────
+            const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+
+            // ── 2. Montar JWT para trocar por access_token ───────────────────
+            const now = Math.floor(Date.now() / 1000);
+            const expiry = now + 3600;
+
+            const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+            const payload = Buffer.from(JSON.stringify({
+              iss: sa.client_email,
+              sub: sa.client_email,
+              aud: 'https://oauth2.googleapis.com/token',
+              iat: now,
+              exp: expiry,
+              scope: 'https://www.googleapis.com/auth/firebase.messaging',
+            })).toString('base64url');
+
+            const signingInput = `${header}.${payload}`;
+            const privateKey = sa.private_key;
+
+            const sign = crypto.createSign('RSA-SHA256');
+            sign.update(signingInput);
+            const signature = sign.sign(privateKey, 'base64url');
+
+            const jwt = `${signingInput}.${signature}`;
+
+            // ── 3. Trocar JWT por access_token no Google ─────────────────────
+            const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: new URLSearchParams({
+                grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                assertion: jwt,
+              }),
+            });
+
+            if (!tokenRes.ok) {
+              const err = await tokenRes.text();
+              throw new Error(`Falha ao obter token Google: ${tokenRes.status} - ${err}`);
+            }
+
+            const { access_token, expires_in } = await tokenRes.json();
+            console.log(`✅ Token OAuth2 gerado. Expira em ${expires_in}s`);
+
+            // ── 4. Atualizar firebase_config no Supabase ─────────────────────
+            const supabaseUrl = process.env.SUPABASE_URL.replace(/\/$/, '');
+            const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+            const rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/update_firebase_token`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${supabaseKey}`,
+              },
+              body: JSON.stringify({
+                p_access_token: access_token,
+                p_expires_in_seconds: expires_in ?? 3600,
+              }),
+            });
+
+            if (!rpcRes.ok) {
+              const err = await rpcRes.text();
+              throw new Error(`Falha ao atualizar Supabase: ${rpcRes.status} - ${err}`);
+            }
+
+            console.log('✅ firebase_config atualizado com sucesso no Supabase!');
+            console.log(`🕐 Próxima renovação em ~45 minutos`);
