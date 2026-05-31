@@ -17,7 +17,8 @@ jobs:
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_API_KEY: ${{ secrets.SUPABASE_API_KEY }}
+          SUPABASE_JWT: ${{ secrets.SUPABASE_JWT }}
         with:
           script: |
             const crypto = require('crypto');
@@ -68,14 +69,15 @@ jobs:
 
             // ── 4. Atualizar firebase_config no Supabase ─────────────────────
             const supabaseUrl = process.env.SUPABASE_URL.replace(/\/$/, '');
-            const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+            const supabaseApiKey = process.env.SUPABASE_API_KEY;
+            const supabaseJwt = process.env.SUPABASE_JWT;
 
             const rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/update_firebase_token`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'apikey': supabaseKey,
-                'Authorization': `Bearer ${supabaseKey}`,
+                'apikey': supabaseApiKey,
+                'Authorization': `Bearer ${supabaseJwt}`,
               },
               body: JSON.stringify({
                 p_access_token: access_token,
