@@ -25,7 +25,7 @@ export function useEnrollAthleteInModality() {
           atleta_id: athleteId,
           modalidade_id: modalityId,
           evento_id: eventId,
-          status: 'pendente',
+          status: 'confirmado',
           data_inscricao: new Date().toISOString(),
           inscrito_por: enrolledBy,
           tipo_inscricao: enrollmentType

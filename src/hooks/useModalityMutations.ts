@@ -7,16 +7,53 @@ export const useModalityMutations = (userId: string | undefined, eventId: string
   const queryClient = useQueryClient();
 
   const withdrawMutation = useMutation({
-    mutationFn: async (inscricaoId: number) => {
-      if (!userId) throw new Error('User not authenticated');
-      console.log('Withdrawing from modality inscription:', inscricaoId);
-      
+    mutationFn: async ({
+      inscricaoId,
+      justificativa,
+      modalityName,
+      athleteName,
+    }: {
+      inscricaoId: number;
+      justificativa: string;
+      modalityName: string;
+      athleteName: string;
+    }) => {
+      if (!userId || !eventId) throw new Error('User not authenticated');
+
+      // 1. Cancela a inscrição
       const { error } = await supabase
         .from('inscricoes_modalidades')
-        .delete()
+        .update({ status: 'cancelado', justificativa_status: justificativa })
         .eq('id', inscricaoId);
-      
       if (error) throw error;
+
+      // 2. Cria notificação automática para organizador e delegação
+      const titulo = `Desistência: ${athleteName} — ${modalityName}`;
+      const mensagem = `<p>O atleta <strong>${athleteName}</strong> desistiu da modalidade <strong>${modalityName}</strong>.</p><p><strong>Justificativa:</strong></p><p>${justificativa}</p>`;
+
+      const { data: notif, error: notifError } = await supabase
+        .from('notificacoes')
+        .insert({
+          evento_id: eventId,
+          autor_id: userId,
+          tipo_autor: 'atleta',
+          titulo,
+          mensagem,
+          visivel: true,
+        })
+        .select('id')
+        .single();
+
+      if (notifError) {
+        console.error('Error creating withdrawal notification:', notifError);
+        // Não lança erro — a desistência já foi gravada com sucesso
+        return;
+      }
+
+      // Destinatário: filial_id = null → visível a todos os gestores (org + delegação)
+      await supabase
+        .from('notificacao_destinatarios')
+        .insert({ notificacao_id: notif.id, filial_id: null });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['athlete-modalities'] });

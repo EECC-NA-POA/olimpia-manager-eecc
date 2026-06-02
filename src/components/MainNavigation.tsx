@@ -2,7 +2,7 @@
 import { useNavigation } from '@/hooks/useNavigation';
 import { useState, useEffect } from 'react';
 import { LoadingImage } from '@/components/ui/loading-image';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './navigation/AppSidebar';
 
 interface MainNavigationProps {
@@ -57,8 +57,12 @@ export function MainNavigation({ children }: MainNavigationProps) {
       <div className="flex min-h-screen w-full bg-olimpics-background">
         <AppSidebar isHeaderVisible={isHeaderVisible} />
         <SidebarInset className="flex-1 w-full">
+          {/* Botão de colapsar/expandir sidebar — visível apenas no desktop */}
+          <div className="hidden md:flex items-center h-12 px-4 border-b border-border/40 sticky top-0 bg-background/95 backdrop-blur z-10">
+            <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+          </div>
           <div className="main-navigation-content">
-            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20 pb-24 md:pb-6">
+            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-6">
               {children}
             </main>
           </div>

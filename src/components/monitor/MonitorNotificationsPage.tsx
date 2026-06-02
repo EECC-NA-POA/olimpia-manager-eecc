@@ -1,4 +1,4 @@
-﻿import { LoadingImage } from '@/components/ui/loading-image';
+import { LoadingImage } from '@/components/ui/loading-image';
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Send, BellPlus } from 'lucide-react';
@@ -27,7 +27,7 @@ export default function MonitorNotificationsPage() {
     // Buscar modalidades gerenciadas por este monitor
     const { data: rawMonitorModalities, isLoading } = useMonitorModalities();
 
-    // Filtrar e construir opÃ§Ãµes consistentes
+    // Filtrar e construir opções consistentes
     const monitorModalities = (rawMonitorModalities || []).map(m => ({
         modalidade_id: m.modalidade_id,
         nome: m.modalidades?.nome || `Modalidade ${m.modalidade_id}`
@@ -35,7 +35,7 @@ export default function MonitorNotificationsPage() {
 
     const [selectedModalities, setSelectedModalities] = useState<any[]>([]);
 
-    // Auto-selecionar todas as modalidades por padrÃ£o
+    // Auto-selecionar todas as modalidades por padrão
     useEffect(() => {
         if (monitorModalities && monitorModalities.length > 0 && selectedModalities.length === 0) {
             setSelectedModalities(monitorModalities.map(m => m.modalidade_id));
@@ -46,12 +46,12 @@ export default function MonitorNotificationsPage() {
         e.preventDefault();
 
         if (!titulo.trim()) {
-            toast.error(t('notifications.titleRequired', 'O tÃ­tulo Ã© obrigatÃ³rio'));
+            toast.error(t('notifications.titleRequired', 'O título é obrigatório'));
             return;
         }
 
         if (!mensagem.trim()) {
-            toast.error(t('notifications.messageRequired', 'A mensagem Ã© obrigatÃ³ria'));
+            toast.error(t('notifications.messageRequired', 'A mensagem é obrigatória'));
             return;
         }
 
@@ -61,7 +61,7 @@ export default function MonitorNotificationsPage() {
         }
 
         if (!activeEvent?.id || !user?.id) {
-            toast.error('UsuÃ¡rio ou Evento ativo nÃ£o encontrado.');
+            toast.error('Usuário ou Evento ativo não encontrado.');
             return;
         }
 
@@ -73,19 +73,19 @@ export default function MonitorNotificationsPage() {
                     titulo,
                     mensagem,
                     eventId: activeEvent.id,
-                    destinatarios: [], // Monitor nÃ£o usa `filiais`, usa o array de `modalidades` custom
+                    destinatarios: [],
                     modalidades: selectedModalities
                 },
                 user.id,
                 'filosofo_monitor'
             );
 
-            toast.success(t('notifications.createdSuccessfully', 'NotificaÃ§Ã£o enviada com sucesso!'));
+            toast.success(t('notifications.createdSuccessfully', 'Notificação enviada com sucesso!'));
             setTitulo('');
             setMensagem('');
         } catch (error) {
             console.error('Error creating web notification by monitor:', error);
-            toast.error(t('notifications.sendError', 'Erro ao enviar notificaÃ§Ã£o.'));
+            toast.error(t('notifications.sendError', 'Erro ao enviar notificação.'));
         } finally {
             setIsSubmitting(false);
         }
@@ -107,9 +107,9 @@ export default function MonitorNotificationsPage() {
                         <BellPlus className="h-5 w-5 text-olimpics-green-primary" />
                     </div>
                     <div>
-                        <CardTitle className="text-xl">NotificaÃ§Ãµes para Modalidades</CardTitle>
+                        <CardTitle className="text-xl">Notificações para Modalidades</CardTitle>
                         <CardDescription>
-                            Envie comunicados ou convocaÃ§Ãµes para todos os atletas inscritos nas suas modalidades.
+                            Envie comunicados ou convocações para todos os atletas inscritos nas suas modalidades.
                         </CardDescription>
                     </div>
                 </div>
@@ -118,10 +118,10 @@ export default function MonitorNotificationsPage() {
                 <form id="monitor-notification-form" onSubmit={handleSubmit} className="space-y-6">
                     <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
                         <div className="space-y-3">
-                            <Label className="text-foreground font-semibold">Notificar Modalidades (MÃºltipla Escolha)</Label>
+                            <Label className="text-foreground font-semibold">Notificar Modalidades (Múltipla Escolha)</Label>
                             {monitorModalities?.length === 0 ? (
                                 <p className="text-sm text-muted-foreground p-2 border border-dashed rounded-md bg-muted/20">
-                                    VocÃª nÃ£o tem modalidades associadas para notificar.
+                                    Você não tem modalidades associadas para notificar.
                                 </p>
                             ) : (
                                 <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
@@ -199,4 +199,3 @@ export default function MonitorNotificationsPage() {
         </Card>
     );
 }
-

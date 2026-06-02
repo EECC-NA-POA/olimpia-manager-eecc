@@ -80,7 +80,7 @@ export function TeamCard({
           <div className="text-center py-8 text-muted-foreground">
             <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p>Nenhum atleta adicionado ainda</p>
-            {/* NÃO mostra dica para juiz */}
+            {/* NÍO mostra dica para juiz */}
             {!isViewAll && !isJudgeOnly && (
               <p className="text-xs mt-1">Use a lista de atletas disponíveis acima para adicionar</p>
             )}

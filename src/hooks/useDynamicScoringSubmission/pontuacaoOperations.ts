@@ -16,7 +16,7 @@ export async function upsertPontuacao(
   data: PontuacaoData, 
   usesBaterias: boolean
 ) {
-  console.log('=== UPSERT PONTUAÇÃO ===');
+  console.log('=== UPSERT PONTUAÇÍO ===');
   console.log('Data for upsert:', data);
   console.log('Uses baterias:', usesBaterias);
   console.log('Observacoes received:', data.observacoes);
@@ -92,7 +92,7 @@ export async function upsertPontuacao(
         throw updateError;
       }
 
-      console.log('=== PONTUAÇÃO UPDATED SUCCESSFULLY ===');
+      console.log('=== PONTUAÇÍO UPDATED SUCCESSFULLY ===');
       return updated;
     } else {
       console.log('Inserting new record');
@@ -108,11 +108,11 @@ export async function upsertPontuacao(
         throw insertError;
       }
 
-      console.log('=== PONTUAÇÃO INSERTED SUCCESSFULLY ===');
+      console.log('=== PONTUAÇÍO INSERTED SUCCESSFULLY ===');
       return inserted;
     }
   } catch (error) {
-    console.error('=== ERROR IN UPSERT PONTUAÇÃO ===');
+    console.error('=== ERROR IN UPSERT PONTUAÇÍO ===');
     console.error('Error details:', error);
     throw error;
   }

@@ -37,11 +37,12 @@ export function CreateNotificationDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Criar Nova Notificação</DialogTitle>
         </DialogHeader>
 
+        <div className="overflow-y-auto flex-1 min-h-0">
         <NotificationForm
           eventId={eventId}
           userId={userId}
@@ -50,6 +51,7 @@ export function CreateNotificationDialog({
           isRepresentanteDelegacao={isRepresentanteDelegacao}
           isOrganizer={isOrganizer}
         />
+        </div>
       </DialogContent>
     </Dialog>
   );

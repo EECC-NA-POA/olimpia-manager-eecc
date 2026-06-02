@@ -107,7 +107,7 @@ function MobileEventSelector({ isOpen, onClose }: MobileEventSelectorProps) {
 
             if (error) throw error;
 
-            // Filtrar apenas ativos e onde usuário NÃO está inscrito
+            // Filtrar apenas ativos e onde usuário NÍO está inscrito
             const enrolledIds = enrolledEvents.map((e: any) => e.id);
             return data
                 ?.map((item: any) => item.eventos)

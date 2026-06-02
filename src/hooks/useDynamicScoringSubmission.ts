@@ -16,7 +16,7 @@ export function useDynamicScoringSubmission() {
 
   return useMutation({
     mutationFn: async (data: ExtendedDynamicSubmissionData) => {
-      console.log('=== INICIANDO SUBMISSÃO DE PONTUAÇÃO DINÂMICA (CORRIGIDA) ===');
+      console.log('=== INICIANDO SUBMISSÍO DE PONTUAÇÍO DINÂMICA (CORRIGIDA) ===');
       console.log('Dynamic scoring submission data:', data);
 
       try {

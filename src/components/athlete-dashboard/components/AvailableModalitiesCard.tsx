@@ -3,10 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Trophy, Search, AlertCircle, Loader2, Clock, MapPin, CalendarDays } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Trophy, Search, AlertCircle, Loader2, Clock, MapPin, CalendarDays, User, Phone, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { AvailableModality } from '../hooks/useAvailableModalitiesForAthlete';
 import { useModalityMutations } from '@/hooks/useModalityMutations';
 import { ModalityScheduleItem, getSchedulesForModality, formatScheduleTime } from '../hooks/useModalitySchedules';
+
+interface Representative {
+  nome_completo: string;
+  telefone?: string;
+}
 
 interface AvailableModalitiesCardProps {
   modalities: AvailableModality[];
@@ -14,18 +20,37 @@ interface AvailableModalitiesCardProps {
   eventId: string;
   registeredModalityIds: number[];
   modalitySchedules?: ModalityScheduleItem[];
+  modalitiesWithRepresentatives?: Array<{ id: number; representatives: Representative[] }>;
 }
 
-export function AvailableModalitiesCard({ 
-  modalities, 
-  userId, 
+const formatPhoneForWhatsApp = (phone: string) => {
+  const clean = phone.replace(/\D/g, '');
+  return clean.startsWith('55') ? clean : `55${clean}`;
+};
+
+export function AvailableModalitiesCard({
+  modalities,
+  userId,
   eventId,
   registeredModalityIds,
-  modalitySchedules = []
+  modalitySchedules = [],
+  modalitiesWithRepresentatives = []
 }: AvailableModalitiesCardProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const { registerMutation } = useModalityMutations(userId, eventId);
   const [registeringId, setRegisteringId] = useState<number | null>(null);
+  const [expandedReps, setExpandedReps] = useState<Set<number>>(new Set());
+
+  const toggleReps = (id: number) => {
+    setExpandedReps(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const getRepresentatives = (id: number): Representative[] =>
+    modalitiesWithRepresentatives.find(m => m.id === id)?.representatives || [];
   
   const getSchedulesForMod = (modalityId: number): ModalityScheduleItem[] => {
     return getSchedulesForModality(modalityId, modalitySchedules);
@@ -124,76 +149,116 @@ export function AvailableModalitiesCard({
               const vacancyAvailable = isVacancyAvailable(modality);
               const isRegistering = registeringId === modality.id;
 
+              const representatives = getRepresentatives(modality.id);
+              const hasReps = representatives.length > 0;
+              const repsExpanded = expandedReps.has(modality.id);
+
               return (
-                <div
+                <Collapsible
                   key={modality.id}
-                  className="flex flex-col p-3 rounded-lg bg-muted/30 border border-border/50"
+                  open={repsExpanded}
+                  onOpenChange={() => toggleReps(modality.id)}
                 >
-                  <div className="flex-1">
-                    {/* Header: Name and Type */}
-                    <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-medium text-foreground text-sm">{modality.nome}</h4>
-                      <Badge variant="outline" className="shrink-0 text-xs">
-                        {modality.tipo_modalidade}
-                      </Badge>
-                    </div>
-                    
-                    {/* Category */}
-                    {modality.categoria && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {modality.categoria}
-                      </p>
-                    )}
-                    
-                    {/* Schedules Section */}
-                    {schedules.length > 0 && (
-                      <div className="mt-3 pt-2 border-t border-border/30">
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1.5">
-                          <CalendarDays className="h-3.5 w-3.5" />
-                          <span>Horários:</span>
-                        </div>
-                        <div className="space-y-1.5">
-                          {schedules.map((schedule, idx) => (
-                            <div key={idx} className="text-xs text-muted-foreground pl-1">
-                              <div className="flex items-center gap-1.5">
-                                <Clock className="h-3 w-3 shrink-0" />
-                                <span className="font-medium">{schedule.dia_semana}:</span>
-                                <span>
-                                  {schedule.horario_inicio && formatScheduleTime(schedule.horario_inicio, schedule.horario_fim)}
-                                </span>
-                              </div>
-                              {schedule.local && (
-                                <div className="flex items-center gap-1.5 mt-0.5 ml-4">
-                                  <MapPin className="h-3 w-3 shrink-0" />
-                                  <span>{schedule.local}</span>
+                  <div className="flex flex-col rounded-lg bg-muted/30 border border-border/50 overflow-hidden">
+                    {/* Card body */}
+                    <div className="p-3 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="font-medium text-foreground text-sm">{modality.nome}</h4>
+                        <Badge variant="outline" className="shrink-0 text-xs">
+                          {modality.tipo_modalidade}
+                        </Badge>
+                      </div>
+
+                      {modality.categoria && (
+                        <p className="text-xs text-muted-foreground mt-1">{modality.categoria}</p>
+                      )}
+
+                      {schedules.length > 0 && (
+                        <div className="mt-3 pt-2 border-t border-border/30">
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1.5">
+                            <CalendarDays className="h-3.5 w-3.5" />
+                            <span>Horários:</span>
+                          </div>
+                          <div className="space-y-1.5">
+                            {schedules.map((schedule, idx) => (
+                              <div key={idx} className="text-xs text-muted-foreground pl-1">
+                                <div className="flex items-center gap-1.5">
+                                  <Clock className="h-3 w-3 shrink-0" />
+                                  <span className="font-medium">{schedule.dia_semana}:</span>
+                                  <span>
+                                    {schedule.horario_inicio && formatScheduleTime(schedule.horario_inicio, schedule.horario_fim)}
+                                  </span>
                                 </div>
-                              )}
+                                {schedule.local && (
+                                  <div className="flex items-center gap-1.5 mt-0.5 ml-4">
+                                    <MapPin className="h-3 w-3 shrink-0" />
+                                    <span>{schedule.local}</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Buttons row */}
+                      <div className="flex items-center gap-2 mt-3">
+                        {hasReps && (
+                          <CollapsibleTrigger asChild>
+                            <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5 shrink-0">
+                              <MessageCircle className="h-3.5 w-3.5" />
+                              Representantes
+                              {repsExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                            </Button>
+                          </CollapsibleTrigger>
+                        )}
+                        <Button
+                          size="sm"
+                          className="flex-1 h-8 text-xs"
+                          onClick={() => handleRegister(modality.id)}
+                          disabled={!vacancyAvailable || isRegistering || registerMutation.isPending}
+                        >
+                          {isRegistering ? (
+                            <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Inscrevendo...</>
+                          ) : !vacancyAvailable ? 'Sem Vagas' : 'Inscrever-se'}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Representatives (collapsible, inside card) */}
+                    <CollapsibleContent>
+                      <div className="px-3 pb-3 pt-2 border-t border-border/30 bg-muted/20">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-2">
+                          <User className="h-3.5 w-3.5" />
+                          <span>Representantes da Modalidade</span>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          {representatives.map((rep, idx) => (
+                            <div key={idx} className="flex items-start gap-2.5 p-2.5 rounded-md bg-background border border-border/50">
+                              <div className="p-1.5 rounded-full bg-green-500/10 shrink-0 mt-0.5">
+                                <User className="h-3.5 w-3.5 text-green-600" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-medium text-foreground text-xs leading-snug">{rep.nome_completo}</p>
+                                {rep.telefone && (
+                                  <a
+                                    href={`https://wa.me/${formatPhoneForWhatsApp(rep.telefone)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-green-600 hover:text-green-700 text-xs mt-0.5 transition-colors"
+                                  >
+                                    <Phone className="h-3 w-3 shrink-0" />
+                                    <span>{rep.telefone}</span>
+                                  </a>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
                       </div>
-                    )}
+                    </CollapsibleContent>
                   </div>
-
-                  {/* Single Enrollment Button */}
-                  <Button
-                    size="sm"
-                    className="w-full mt-3 h-8 text-xs"
-                    onClick={() => handleRegister(modality.id)}
-                    disabled={!vacancyAvailable || isRegistering || registerMutation.isPending}
-                  >
-                    {isRegistering ? (
-                      <>
-                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                        Inscrevendo...
-                      </>
-                    ) : !vacancyAvailable ? (
-                      'Sem Vagas'
-                    ) : (
-                      'Inscrever-se'
-                    )}
-                  </Button>
-                </div>
+                </Collapsible>
               );
             })}
           </div>

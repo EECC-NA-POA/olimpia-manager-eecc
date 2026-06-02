@@ -119,11 +119,11 @@ export function AthletesListTabularContainer({
   }
 
   const safeAthletes = athletes || [];
-  console.log('=== VERIFICAÇÃO SEGURA DE ATLETAS ===');
+  console.log('=== VERIFICAÇÍO SEGURA DE ATLETAS ===');
   console.log('Array de atletas:', safeAthletes);
   console.log('Quantidade de atletas:', safeAthletes.length);
   console.log('Primeiro atleta:', safeAthletes[0]);
-  console.log('=== FIM DA VERIFICAÇÃO ===');
+  console.log('=== FIM DA VERIFICAÇÍO ===');
 
   if (safeAthletes.length === 0) {
     console.log('Nenhum atleta encontrado - mostrando card vazio');

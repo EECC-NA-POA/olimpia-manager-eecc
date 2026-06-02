@@ -98,7 +98,7 @@ export function UserDeletionDialog({ user, open, onOpenChange }: UserDeletionDia
             <Alert className="border-red-200 bg-red-50">
               <AlertTriangle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-800">
-                <strong>ATENÇÃO:</strong> Este usuário não possui email válido e não pode ser excluído.
+                <strong>ATENÇÍO:</strong> Este usuário não possui email válido e não pode ser excluído.
               </AlertDescription>
             </Alert>
           )}
@@ -125,7 +125,7 @@ export function UserDeletionDialog({ user, open, onOpenChange }: UserDeletionDia
             <Alert className="border-red-200 bg-red-50">
               <AlertTriangle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-800">
-                <strong>ATENÇÃO:</strong> A exclusão completa removerá todos os registros deste usuário 
+                <strong>ATENÇÍO:</strong> A exclusão completa removerá todos os registros deste usuário 
                 em todos os eventos, incluindo inscrições, pagamentos e pontuações. Esta ação é irreversível.
               </AlertDescription>
             </Alert>

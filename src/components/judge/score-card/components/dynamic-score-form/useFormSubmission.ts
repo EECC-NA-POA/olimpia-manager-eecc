@@ -27,7 +27,7 @@ export function useFormSubmission({
   const mutation = useDynamicScoringSubmission();
 
   const handleSubmit = async (formData: any) => {
-    console.log('=== SUBMISSÃO DO FORMULÁRIO (DynamicScoreForm - EQUIPES SEM BATERIAS) ===');
+    console.log('=== SUBMISSÍO DO FORMULÁRIO (DynamicScoreForm - EQUIPES SEM BATERIAS) ===');
     console.log('Form data:', formData);
     console.log('Equipe ID:', equipeId);
     console.log('Numero Bateria:', numeroBateria);
@@ -55,10 +55,10 @@ export function useFormSubmission({
 
       await mutation.mutateAsync(submissionData);
 
-      console.log('=== SUBMISSÃO CONCLUÍDA COM SUCESSO (SEM BATERIAS) ===');
+      console.log('=== SUBMISSÍO CONCLUÍDA COM SUCESSO (SEM BATERIAS) ===');
       onSuccess?.();
     } catch (error) {
-      console.error('=== ERRO NA SUBMISSÃO DO FORMULÁRIO ===');
+      console.error('=== ERRO NA SUBMISSÍO DO FORMULÁRIO ===');
       console.error('Error submitting score:', error);
       throw error;
     }

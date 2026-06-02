@@ -45,7 +45,7 @@ export const useEventRegistration = (userId: string | undefined) => {
       }
 
       try {
-        console.log('=== INICIANDO INSCRIÇÃO ===');
+        console.log('=== INICIANDO INSCRIÇÍO ===');
         console.log('EventId:', eventId);
         console.log('SelectedRole:', selectedRole);
         console.log('UserId:', userId);
@@ -160,11 +160,11 @@ export const useEventRegistration = (userId: string | undefined) => {
         }
 
         console.log('✓ Pagamento será criado automaticamente pela trigger do banco');
-        console.log('=== INSCRIÇÃO CONCLUÍDA COM SUCESSO ===');
+        console.log('=== INSCRIÇÍO CONCLUÍDA COM SUCESSO ===');
         return { isExisting };
 
       } catch (error: any) {
-        console.error('=== ERRO NA INSCRIÇÃO ===');
+        console.error('=== ERRO NA INSCRIÇÍO ===');
         console.error('Detalhes do erro:', error);
         throw error;
       }

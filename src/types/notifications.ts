@@ -25,7 +25,7 @@ export interface NotificationReading {
   lido_em: string;
 }
 
-export type NotificationAuthorType = 'organizador' | 'representante_delegacao' | 'filosofo_monitor';
+export type NotificationAuthorType = 'organizador' | 'representante_delegacao' | 'filosofo_monitor' | 'atleta';
 
 export interface CreateNotificationData {
   titulo: string;

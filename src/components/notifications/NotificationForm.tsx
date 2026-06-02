@@ -71,7 +71,7 @@ export function NotificationForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 overflow-y-auto flex-1 pr-1">
       <NotificationFormFields
         eventId={eventId}
         titulo={titulo}

@@ -30,15 +30,22 @@ export function RichTextEditor({
   placeholder = 'Digite o conteúdo...',
   className = '',
 }: RichTextEditorProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  // wrapperRef é o elemento que vai conter TUDO que o Quill criar
+  // (toolbar + container). Limpando innerHTML dele, eliminamos tudo de uma vez.
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const quillRef = useRef<Quill | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
   useEffect(() => {
-    if (!containerRef.current || quillRef.current) return;
+    if (!wrapperRef.current || quillRef.current) return;
 
-    const quill = new Quill(containerRef.current, {
+    // Cria um div filho limpo para o Quill montar. Assim o Quill insere
+    // a toolbar antes desse div, mas ainda dentro de wrapperRef.
+    const mountTarget = document.createElement('div');
+    wrapperRef.current.appendChild(mountTarget);
+
+    const quill = new Quill(mountTarget, {
       theme: 'snow',
       placeholder,
       modules: MODULES,
@@ -59,10 +66,14 @@ export function RichTextEditor({
     return () => {
       quill.off('text-change');
       quillRef.current = null;
+      // Limpa toolbar + container de uma vez
+      if (wrapperRef.current) {
+        wrapperRef.current.innerHTML = '';
+      }
     };
   }, []);
 
-  // Sync external value changes (e.g. form reset)
+  // Sincroniza valor externo (ex: reset do form)
   useEffect(() => {
     const quill = quillRef.current;
     if (!quill) return;
@@ -75,7 +86,7 @@ export function RichTextEditor({
 
   return (
     <div className={`rich-text-editor ${className}`}>
-      <div ref={containerRef} />
+      <div ref={wrapperRef} />
     </div>
   );
 }

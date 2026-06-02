@@ -2,13 +2,27 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ClipboardList, AlertCircle, Phone, User, ChevronDown, ChevronUp, MessageCircle, Clock, MapPin } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { ClipboardList, AlertCircle, Phone, User, ChevronDown, ChevronUp, MessageCircle, Clock, MapPin, ExternalLink } from 'lucide-react';
 import { RegisteredModality } from '@/types/modality';
+import { WhatsAppGroup, findGroupLinkForModality } from '@/hooks/useModalityGroups';
 import { useModalityMutations } from '@/hooks/useModalityMutations';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ModalityScheduleItem, getSchedulesForModality, formatScheduleTime } from '../hooks/useModalitySchedules';
+
+const MIN_JUSTIFICATION = 100;
 
 interface Representative {
   nome_completo: string;
@@ -19,11 +33,13 @@ interface MyEnrollmentsCardProps {
   enrollments: RegisteredModality[];
   userId: string;
   eventId: string;
+  athleteName?: string;
   modalitiesWithRepresentatives?: Array<{
     id: number;
     representatives: Representative[];
   }>;
   modalitySchedules?: ModalityScheduleItem[];
+  modalityGroups?: WhatsAppGroup[];
 }
 
 const formatPhoneForWhatsApp = (phone: string) => {
@@ -37,15 +53,37 @@ const formatPhoneForWhatsApp = (phone: string) => {
   return cleanPhone;
 };
 
-export function MyEnrollmentsCard({ 
-  enrollments, 
-  userId, 
+export function MyEnrollmentsCard({
+  enrollments,
+  userId,
   eventId,
+  athleteName = 'Atleta',
   modalitiesWithRepresentatives = [],
-  modalitySchedules = []
+  modalitySchedules = [],
+  modalityGroups = [],
 }: MyEnrollmentsCardProps) {
   const { withdrawMutation } = useModalityMutations(userId, eventId);
   const [expandedModalities, setExpandedModalities] = useState<Set<number>>(new Set());
+  const [withdrawDialog, setWithdrawDialog] = useState<{ id: number; nome: string } | null>(null);
+  const [justificativa, setJustificativa] = useState('');
+
+  const openWithdrawDialog = (id: number, nome: string) => {
+    setJustificativa('');
+    setWithdrawDialog({ id, nome });
+  };
+
+  const confirmWithdraw = () => {
+    if (!withdrawDialog) return;
+    withdrawMutation.mutate(
+      {
+        inscricaoId: withdrawDialog.id,
+        justificativa,
+        modalityName: withdrawDialog.nome,
+        athleteName,
+      },
+      { onSuccess: () => setWithdrawDialog(null) }
+    );
+  };
 
   const toggleModality = (id: number) => {
     setExpandedModalities(prev => {
@@ -58,6 +96,9 @@ export function MyEnrollmentsCard({
       return newSet;
     });
   };
+
+  const getWhatsAppGroup = (modalityId: number) =>
+    findGroupLinkForModality(modalityGroups, modalityId);
 
   const getRepresentativesForModality = (modalityId: number): Representative[] => {
     const modality = modalitiesWithRepresentatives.find(m => m.id === modalityId);
@@ -96,7 +137,7 @@ export function MyEnrollmentsCard({
   };
 
   const canWithdraw = (status: string) => {
-    return status === 'pendente';
+    return status !== 'cancelado' && status !== 'cancelada' && status !== 'rejeitado' && status !== 'rejeitada';
   };
 
   return (
@@ -118,12 +159,14 @@ export function MyEnrollmentsCard({
             <p className="text-xs text-muted-foreground mt-1">Confira as modalidades disponíveis abaixo.</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
             {enrollments.map((enrollment) => {
               const representatives = getRepresentativesForModality(enrollment.modalidade.id);
               const hasRepresentatives = representatives.length > 0;
               const isExpanded = expandedModalities.has(enrollment.id);
               const schedules = getSchedulesForMod(enrollment.modalidade.id);
+              const whatsappGroup = getWhatsAppGroup(enrollment.modalidade.id);
+              const isConfirmed = enrollment.status === 'confirmado' || enrollment.status === 'confirmada';
 
               return (
                 <Collapsible 
@@ -199,12 +242,26 @@ export function MyEnrollmentsCard({
                           </CollapsibleTrigger>
                         )}
 
+                        {isConfirmed && whatsappGroup && (
+                          <a
+                            href={whatsappGroup.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`Grupo: ${whatsappGroup.nome}`}
+                            className="inline-flex items-center gap-1.5 rounded-md border border-green-300 bg-green-50 px-2.5 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100 transition-colors h-8"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                            {whatsappGroup.nome}
+                            <ExternalLink className="h-3 w-3 opacity-60" />
+                          </a>
+                        )}
+
                         {canWithdraw(enrollment.status) && (
                           <Button
                             variant="outline"
                             size="sm"
                             className="text-xs h-8 text-destructive hover:text-destructive hover:bg-destructive/10 ml-auto"
-                            onClick={() => withdrawMutation.mutate(enrollment.id)}
+                            onClick={() => openWithdrawDialog(enrollment.id, enrollment.modalidade.nome)}
                             disabled={withdrawMutation.isPending}
                           >
                             Desistir
@@ -221,17 +278,17 @@ export function MyEnrollmentsCard({
                             <User className="h-3.5 w-3.5" />
                             <span>Representantes da Modalidade</span>
                           </div>
-                          <div className="grid gap-2 sm:grid-cols-2">
+                          <div className="flex flex-col gap-2">
                             {representatives.map((rep, index) => (
-                              <div 
+                              <div
                                 key={index}
-                                className="flex items-center gap-2.5 p-2.5 rounded-md bg-background border border-border/50"
+                                className="flex items-start gap-2.5 p-2.5 rounded-md bg-background border border-border/50"
                               >
-                                <div className="p-1.5 rounded-full bg-green-500/10 shrink-0">
+                                <div className="p-1.5 rounded-full bg-green-500/10 shrink-0 mt-0.5">
                                   <User className="h-3.5 w-3.5 text-green-600" />
                                 </div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="font-medium text-foreground text-xs truncate">
+                                <div className="flex-1">
+                                  <p className="font-medium text-foreground text-xs leading-snug">
                                     {rep.nome_completo}
                                   </p>
                                   {rep.telefone && (
@@ -241,7 +298,7 @@ export function MyEnrollmentsCard({
                                       rel="noopener noreferrer"
                                       className="inline-flex items-center gap-1 text-green-600 hover:text-green-700 dark:text-green-500 dark:hover:text-green-400 text-xs mt-0.5 transition-colors"
                                     >
-                                      <Phone className="h-3 w-3" />
+                                      <Phone className="h-3 w-3 shrink-0" />
                                       <span>{rep.telefone}</span>
                                     </a>
                                   )}
@@ -259,6 +316,43 @@ export function MyEnrollmentsCard({
           </div>
         )}
       </CardContent>
+
+      {/* Dialog de desistência com justificativa */}
+      <AlertDialog open={!!withdrawDialog} onOpenChange={open => { if (!open) setWithdrawDialog(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desistir da modalidade</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está desistindo de <strong>{withdrawDialog?.nome}</strong>. Informe o motivo
+              (mínimo {MIN_JUSTIFICATION} caracteres).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-2">
+            <Textarea
+              placeholder="Descreva o motivo da desistência..."
+              value={justificativa}
+              onChange={e => setJustificativa(e.target.value)}
+              rows={4}
+              className="resize-none"
+            />
+            <div className={`text-xs text-right ${justificativa.length >= MIN_JUSTIFICATION ? 'text-green-600' : 'text-muted-foreground'}`}>
+              {justificativa.length}/{MIN_JUSTIFICATION} caracteres mínimos
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmWithdraw}
+              disabled={justificativa.length < MIN_JUSTIFICATION || withdrawMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {withdrawMutation.isPending ? 'Processando...' : 'Confirmar desistência'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
