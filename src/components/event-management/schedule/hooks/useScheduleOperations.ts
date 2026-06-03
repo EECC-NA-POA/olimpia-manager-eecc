@@ -77,7 +77,7 @@ export const useScheduleOperations = (
       console.log('Base data preparada:', baseData);
 
       if (editingId) {
-        console.log('=== MODO EDIÇÃO ===');
+        console.log('=== MODO EDIÇÍO ===');
         // Update existing activity
         const { error } = await supabase
           .from('cronograma_atividades')
@@ -127,7 +127,7 @@ export const useScheduleOperations = (
         
         toast.success('Atividade do cronograma atualizada com sucesso!');
       } else {
-        console.log('=== MODO CRIAÇÃO ===');
+        console.log('=== MODO CRIAÇÍO ===');
         // Create new activity
         let cronogramaId = currentItem.cronograma_id;
         

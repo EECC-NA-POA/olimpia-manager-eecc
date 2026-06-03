@@ -3,7 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, ListChecks, BarChart, Bell, UserCheck, Globe, ClipboardCheck } from "lucide-react";
+import { Users, ListChecks, BarChart, Bell, UserCheck, Globe, ClipboardCheck, UserPlus, MessageCircle } from "lucide-react";
 import { EmptyState } from "./dashboard/components/EmptyState";
 import { LoadingState } from "./dashboard/components/LoadingState";
 import { ErrorState } from "./dashboard/components/ErrorState";
@@ -18,6 +18,8 @@ import { NotificationManager } from "./notifications/NotificationManager";
 import { DelegationsManager } from "./event-management/DelegationsManager";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { AttendanceReportTab } from "./dashboard/tabs/AttendanceReportTab";
+import { BulkEnrollTab } from "./dashboard/tabs/BulkEnrollTab";
+import { WhatsAppGroupsTab } from "./dashboard/tabs/WhatsAppGroupsTab";
 
 export default function OrganizerDashboard() {
   const { user, currentEventId } = useAuth();
@@ -106,7 +108,24 @@ export default function OrganizerDashboard() {
             description="Não há inscrições confirmadas para este evento"
           />;
         }
-        return <EnrollmentsTab enrollments={confirmedEnrollments} />;
+        return <EnrollmentsTab enrollments={confirmedEnrollments} eventId={currentEventId} />;
+
+      case "bulk-enroll":
+        return (
+          <BulkEnrollTab
+            eventId={currentEventId}
+            athletes={athletes}
+            enrollmentType="organizador"
+          />
+        );
+
+      case "whatsapp-groups":
+        return (
+          <WhatsAppGroupsTab
+            eventId={currentEventId}
+            enrollmentType="organizador"
+          />
+        );
 
       case "representatives":
         return <OrganizerRepresentativesTab eventId={currentEventId} />;
@@ -168,6 +187,22 @@ export default function OrganizerDashboard() {
               <span className="sm:hidden">Insc</span>
             </TabsTrigger>
             <TabsTrigger
+              value="bulk-enroll"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+            >
+              <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Inscrição em Lote</span>
+              <span className="sm:hidden">Lote</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="whatsapp-groups"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+            >
+              <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Grupos WhatsApp</span>
+              <span className="sm:hidden">WA</span>
+            </TabsTrigger>
+            <TabsTrigger
               value="teams"
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
             >
@@ -219,6 +254,14 @@ export default function OrganizerDashboard() {
 
         <TabsContent value="enrollments" className="mt-2 sm:mt-6">
           {renderTabContent("enrollments")}
+        </TabsContent>
+
+        <TabsContent value="bulk-enroll" className="mt-2 sm:mt-6">
+          {renderTabContent("bulk-enroll")}
+        </TabsContent>
+
+        <TabsContent value="whatsapp-groups" className="mt-2 sm:mt-6">
+          {renderTabContent("whatsapp-groups")}
         </TabsContent>
 
         <TabsContent value="teams" className="mt-2 sm:mt-6">

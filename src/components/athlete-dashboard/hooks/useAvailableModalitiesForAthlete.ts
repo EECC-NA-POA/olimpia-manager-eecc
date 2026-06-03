@@ -25,7 +25,8 @@ export function useAvailableModalitiesForAthlete(userId: string | undefined, eve
         .from('inscricoes_modalidades')
         .select('modalidade_id')
         .eq('atleta_id', userId)
-        .eq('evento_id', eventId);
+        .eq('evento_id', eventId)
+        .neq('status', 'cancelado');
 
       if (registeredError) {
         console.error('Error fetching registered modalities:', registeredError);

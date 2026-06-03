@@ -14,8 +14,8 @@ import enUS from './locales/en-US.json';
 export const SUPPORTED_LANGUAGES = ['pt-BR', 'es-ES', 'en-US'] as const;
 export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
 
-// Default/fallback language (English for non-PT/ES/EN devices)
-export const DEFAULT_LANGUAGE: SupportedLanguage = 'en-US';
+// Default/fallback language
+export const DEFAULT_LANGUAGE: SupportedLanguage = 'pt-BR';
 
 // Storage key for language preference
 const LANGUAGE_STORAGE_KEY = 'olimpia-language';
@@ -98,25 +98,33 @@ i18n
     .use(initReactI18next)
     .init({
         resources,
+        lng: DEFAULT_LANGUAGE,           // força pt-BR como idioma inicial
         fallbackLng: DEFAULT_LANGUAGE,
         supportedLngs: SUPPORTED_LANGUAGES as unknown as string[],
 
-        // Language detection options
+        // Detecção: apenas localStorage (preferência explícita do usuário), nunca navigator
         detection: {
-            order: ['localStorage', 'navigator', 'htmlTag'],
+            order: ['localStorage'],
             lookupLocalStorage: LANGUAGE_STORAGE_KEY,
             caches: ['localStorage']
         },
 
         interpolation: {
-            escapeValue: false // React already escapes by default
+            escapeValue: false
         },
 
-        // React-specific options
         react: {
             useSuspense: false
         }
     });
+
+// Se o idioma armazenado era en-US (padrão antigo), limpa para usar pt-BR
+if (typeof localStorage !== 'undefined') {
+    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (stored === 'en-US') {
+        localStorage.removeItem(LANGUAGE_STORAGE_KEY);
+    }
+}
 
 // Listen for language changes and persist them
 i18n.on('languageChanged', (lng: string) => {

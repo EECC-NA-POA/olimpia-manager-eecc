@@ -5,6 +5,7 @@ import { useRegisteredModalities } from '@/hooks/useRegisteredModalities';
 import { useAthletePaymentStatus } from './hooks/useAthletePaymentStatus';
 import { useAvailableModalitiesForAthlete } from './hooks/useAvailableModalitiesForAthlete';
 import { useModalitiesWithRepresentatives } from '@/hooks/useModalityRepresentatives';
+import { useWhatsAppGroupsByFilial } from '@/hooks/useModalityGroups';
 import { useAthleteProfile } from '@/hooks/useAthleteProfile';
 import { useModalitySchedules } from './hooks/useModalitySchedules';
 import { EventInfoCard } from './components/EventInfoCard';
@@ -37,6 +38,9 @@ export function AthleteDashboardContent({ userId, eventId }: AthleteDashboardCon
   
   // Fetch modality schedules
   const { data: modalitySchedules } = useModalitySchedules(eventId);
+
+  // Fetch WhatsApp group links for this athlete's filial
+  const { data: modalityGroups = [] } = useWhatsAppGroupsByFilial(eventId, athleteProfile?.filial_id);
 
   const isLoading = eventLoading || modalitiesLoading || paymentLoading || availableLoading || profileLoading;
 
@@ -170,8 +174,10 @@ export function AthleteDashboardContent({ userId, eventId }: AthleteDashboardCon
         enrollments={registeredModalities || []}
         userId={userId}
         eventId={eventId}
+        athleteName={(athleteProfile as any)?.nome_completo || ''}
         modalitiesWithRepresentatives={modalitiesWithRepresentatives || []}
         modalitySchedules={modalitySchedules || []}
+        modalityGroups={modalityGroups}
       />
 
       {/* Available Modalities */}
@@ -181,6 +187,7 @@ export function AthleteDashboardContent({ userId, eventId }: AthleteDashboardCon
         eventId={eventId}
         registeredModalityIds={registeredModalities?.map(m => m.modalidade.id) || []}
         modalitySchedules={modalitySchedules || []}
+        modalitiesWithRepresentatives={modalitiesWithRepresentatives || []}
       />
     </div>
   );

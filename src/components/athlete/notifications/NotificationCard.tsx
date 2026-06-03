@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR, enUS, es } from 'date-fns/locale';
+import { ChevronRight } from 'lucide-react';
 import { sanitizeFirstLine } from '@/lib/security/htmlSanitizer';
 import type { Notification } from '@/types/notifications';
 
@@ -52,38 +53,48 @@ export function NotificationCard({ notification, onClick }: NotificationCardProp
       onClick={onClick}
     >
       <CardContent className="p-4">
-        <div className="space-y-2">
-          <div className="flex items-start justify-between gap-2">
-            <h4 className={`font-semibold text-lg leading-tight ${isUnread ? 'text-foreground' : 'text-foreground/70'}`}>
-              {notification.titulo}
-              {isUnread && (
-                <Badge variant="destructive" className="text-xs ml-2">
-                  {t('notifications.new')}
+        <div className="flex items-start gap-3">
+          <div className="flex-1 space-y-2 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <h4 className={`font-semibold text-base leading-tight ${isUnread ? 'text-foreground' : 'text-foreground/70'}`}>
+                {notification.titulo}
+                {isUnread && (
+                  <Badge variant="destructive" className="text-xs ml-2">
+                    {t('notifications.new')}
+                  </Badge>
+                )}
+              </h4>
+            </div>
+
+            <div
+              className="text-muted-foreground text-sm leading-relaxed ql-editor line-clamp-2"
+              dangerouslySetInnerHTML={{
+                __html: sanitizeFirstLine(notification.mensagem)
+              }}
+            />
+
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                <span>{relativeTime}</span>
+                <span>·</span>
+                <span>{t('notifications.postedBy', 'Postada por')}: {notification.autor_nome}</span>
+                <Badge
+                  variant={notification.tipo_autor === 'organizador' ? 'default' : 'secondary'}
+                  className="text-xs"
+                >
+                  {notification.tipo_autor === 'organizador' ? t('notifications.authorOrganizer') : t('notifications.authorDelegation')}
                 </Badge>
+              </div>
+
+              {isUnread && (
+                <span className="text-xs text-olimpics-orange-primary font-medium whitespace-nowrap shrink-0">
+                  Toque para ler
+                </span>
               )}
-            </h4>
+            </div>
           </div>
 
-          <div
-            className="text-muted-foreground text-sm leading-relaxed ql-editor"
-            dangerouslySetInnerHTML={{
-              __html: sanitizeFirstLine(notification.mensagem)
-            }}
-          />
-
-          <div className="text-xs text-muted-foreground pt-1">
-            <span>{relativeTime}</span>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{t('notifications.postedBy', 'Postada por')}: {notification.autor_nome}</span>
-            <Badge
-              variant={notification.tipo_autor === 'organizador' ? 'default' : 'secondary'}
-              className="text-xs"
-            >
-              {notification.tipo_autor === 'organizador' ? t('notifications.authorOrganizer') : t('notifications.authorDelegation')}
-            </Badge>
-          </div>
+          <ChevronRight className={`h-5 w-5 shrink-0 mt-1 ${isUnread ? 'text-olimpics-orange-primary' : 'text-muted-foreground'}`} />
         </div>
       </CardContent>
     </Card>
