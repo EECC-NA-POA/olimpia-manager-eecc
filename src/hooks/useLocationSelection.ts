@@ -6,7 +6,6 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
 
 interface Branch {
     id: string;
@@ -35,57 +34,29 @@ interface UseLocationSelectionReturn {
     error: Error | null;
 }
 
-// Fallback fetch function - same approach as web
-const fetchBranchesWithFallback = async (): Promise<Branch[]> => {
-    console.log('🏢 Fetching all branches for location selection...');
+// A chave anon do servidor não é um JWT padrão — o cliente Supabase envia
+// Authorization: Bearer <chave>, mas o PostgREST exige um JWT válido (3 partes).
+// Usamos fetch direto com o header 'apikey', que o servidor aceita corretamente.
+const fetchBranches = async (): Promise<Branch[]> => {
+    const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || 'https://sb.nova-acropole.org.br').replace(/\/$/, '');
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-    // Try Supabase client first
-    const { data, error } = await supabase
-        .from('filiais')
-        .select('id, nome, cidade, estado, pais')
-        .order('nome', { ascending: true });
+    const url = `${supabaseUrl}/rest/v1/filiais?select=id,nome,cidade,estado,pais&order=nome.asc`;
 
-    if (!error && data) {
-        console.log('✅ Branches fetched via Supabase client:', data.length, 'records');
-        return data as Branch[];
-    }
-
-    console.error('❌ Supabase client error:', error);
-    console.log('🔄 Attempting fallback with direct fetch...');
-
-    // Fallback with direct fetch (same as web does)
-    try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://sb.nova-acropole.org.br';
-        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-        const fallbackUrl = `${supabaseUrl}/rest/v1/filiais?select=id,nome,cidade,estado,pais&order=nome.asc`;
-        console.log('🌐 Fallback URL:', fallbackUrl);
-
-        const response = await fetch(fallbackUrl, {
-            headers: {
-                'apikey': supabaseAnonKey,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        });
-
-        console.log('📡 Fallback response status:', response.status);
-
-        if (response.ok) {
-            const fallbackData = await response.json() as Branch[];
-            console.log('✅ Fallback data retrieved:', fallbackData.length, 'records');
-            return fallbackData;
+    const response = await fetch(url, {
+        headers: {
+            'apikey': supabaseAnonKey,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         }
+    });
 
-        // If status is not ok, try to get error message
+    if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Fallback response error:', errorText);
-    } catch (fallbackError) {
-        console.error('❌ Fallback fetch also failed:', fallbackError);
+        throw new Error(`Erro ao buscar filiais: ${response.status} ${errorText}`);
     }
 
-    // If all else fails, throw original error
-    throw error || new Error('Failed to fetch branches');
+    return response.json() as Promise<Branch[]>;
 };
 
 export const useLocationSelection = (defaultCountry: string = 'Brasil'): UseLocationSelectionReturn => {
@@ -95,7 +66,7 @@ export const useLocationSelection = (defaultCountry: string = 'Brasil'): UseLoca
     // Fetch all branches with fallback
     const { data: allBranches = [], isLoading, error } = useQuery({
         queryKey: ['all-branches-for-location'],
-        queryFn: fetchBranchesWithFallback,
+        queryFn: fetchBranches,
         staleTime: 60000, // Cache for 1 minute
         retry: 3,
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
