@@ -17,6 +17,15 @@ const getBuildTime = () => {
   return new Date().toISOString();
 };
 
+// Avisar em tempo de build se variáveis críticas não estiverem configuradas
+if (!process.env.VITE_SUPABASE_URL || !process.env.VITE_SUPABASE_ANON_KEY) {
+  console.warn(
+    '\n⚠️  ATENÇÃO: VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY não estão definidas no ambiente de build.\n' +
+    '   Chamadas públicas ao Supabase (filiais, eventos) vão falhar em produção.\n' +
+    '   Verifique o arquivo .env ou as variáveis de ambiente do servidor de deploy.\n'
+  );
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {

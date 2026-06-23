@@ -1,11 +1,13 @@
 /**
- * Hook para seleção de localização (País → Estado → Filial)
- * Usa fetch direto com header apikey (sem Authorization: Bearer)
- * pois a anon key do servidor não é um JWT padrão.
+ * Hook para seleção de localização (País → Estado → Filial) na tela de cadastro.
+ * Usa publicFetch (sem Authorization header) pois a anon key do servidor
+ * não é um JWT padrão e o cliente Supabase JS seria rejeitado pelo PostgREST.
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { publicFetch } from '@/lib/api/publicFetch';
 
 interface Branch {
     id: string;
@@ -16,110 +18,80 @@ interface Branch {
 }
 
 interface UseLocationSelectionReturn {
-    // Data
     countries: string[];
     states: string[];
     branches: Branch[];
-
-    // Selected values
     selectedCountry: string;
     selectedState: string;
-
-    // Handlers
     setSelectedCountry: (country: string) => void;
     setSelectedState: (state: string) => void;
-
-    // Loading states
     isLoading: boolean;
+    isFetching: boolean;
     error: Error | null;
     refetch: () => void;
 }
 
-// A chave anon do servidor não é um JWT padrão — o cliente Supabase envia
-// Authorization: Bearer <chave>, mas o PostgREST exige um JWT válido (3 partes).
-// Usamos fetch direto com o header 'apikey', que o servidor aceita corretamente.
-const fetchBranches = async (): Promise<Branch[]> => {
-    const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || 'https://sb.nova-acropole.org.br').replace(/\/$/, '');
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    const url = `${supabaseUrl}/rest/v1/filiais?select=id,nome,cidade,estado,pais&order=nome.asc`;
-
-    const response = await fetch(url, {
-        headers: {
-            'apikey': supabaseAnonKey,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
+const fetchBranches = (): Promise<Branch[]> =>
+    publicFetch<Branch>('filiais', {
+        select: 'id,nome,cidade,estado,pais',
+        order: 'nome.asc',
     });
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Erro ao buscar filiais: ${response.status} ${errorText}`);
-    }
-
-    return response.json() as Promise<Branch[]>;
-};
 
 export const useLocationSelection = (defaultCountry: string = 'Brasil'): UseLocationSelectionReturn => {
     const [selectedCountry, setSelectedCountryState] = useState<string>(defaultCountry);
     const [selectedState, setSelectedStateState] = useState<string>('');
+    const [toastShown, setToastShown] = useState(false);
 
-    // Fetch all branches
-    const { data: allBranches = [], isLoading, error, refetch } = useQuery({
+    const { data: allBranches = [], isLoading, isFetching, error, refetch } = useQuery({
         queryKey: ['all-branches-for-location'],
         queryFn: fetchBranches,
-        staleTime: 60000, // Cache for 1 minute
-        retry: 3,
-        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+        staleTime: 5 * 60_000,
+        retry: 6,
+        retryDelay: (attempt) => Math.min(2_000 * 2 ** attempt, 30_000),
+        refetchOnReconnect: true,
+        refetchOnWindowFocus: true,
     });
 
-    // Extract unique countries, ensuring Brasil is first
-    const countries = useMemo(() => {
-        const uniqueCountries = [...new Set(allBranches.map(b => b.pais || 'Brasil'))].sort();
-
-        // Put Brasil first if it exists
-        const brasilIndex = uniqueCountries.indexOf('Brasil');
-        if (brasilIndex > 0) {
-            uniqueCountries.splice(brasilIndex, 1);
-            uniqueCountries.unshift('Brasil');
+    // Toast informativo (não bloqueante) somente após esgotar todas as tentativas
+    useEffect(() => {
+        if (error && !toastShown) {
+            setToastShown(true);
+            toast.warning('Problema ao conectar com o servidor. Tentando novamente...', {
+                duration: 8_000,
+            });
         }
+        if (!error && toastShown) {
+            setToastShown(false);
+        }
+    }, [error, toastShown]);
 
-        console.log('🌍 Countries available:', uniqueCountries);
-        return uniqueCountries;
+    const countries = useMemo(() => {
+        const unique = [...new Set(allBranches.map(b => b.pais || 'Brasil'))].sort();
+        const idx = unique.indexOf('Brasil');
+        if (idx > 0) { unique.splice(idx, 1); unique.unshift('Brasil'); }
+        return unique;
     }, [allBranches]);
 
-    // Get states for selected country
     const states = useMemo(() => {
         if (!selectedCountry) return [];
-
-        const countryBranches = allBranches.filter(b => (b.pais || 'Brasil') === selectedCountry);
-        const uniqueStates = [...new Set(countryBranches.map(b => b.estado))].filter(Boolean).sort();
-
-        console.log(`📍 States for ${selectedCountry}:`, uniqueStates);
-        return uniqueStates;
+        return [...new Set(
+            allBranches.filter(b => (b.pais || 'Brasil') === selectedCountry).map(b => b.estado)
+        )].filter(Boolean).sort() as string[];
     }, [allBranches, selectedCountry]);
 
-    // Get branches for selected state
     const branches = useMemo(() => {
         if (!selectedState) return [];
-
-        const stateBranches = allBranches.filter(
+        return allBranches.filter(
             b => (b.pais || 'Brasil') === selectedCountry && b.estado === selectedState
         );
-
-        console.log(`🏢 Branches for ${selectedState}:`, stateBranches.length);
-        return stateBranches;
     }, [allBranches, selectedCountry, selectedState]);
 
-    // Handlers with state reset
     const setSelectedCountry = useCallback((country: string) => {
-        console.log('🌍 Country selected:', country);
         setSelectedCountryState(country);
-        setSelectedStateState(''); // Reset state when country changes
+        setSelectedStateState('');
     }, []);
 
     const setSelectedState = useCallback((state: string) => {
-        console.log('📍 State selected:', state);
         setSelectedStateState(state);
     }, []);
 
@@ -132,6 +104,7 @@ export const useLocationSelection = (defaultCountry: string = 'Brasil'): UseLoca
         setSelectedCountry,
         setSelectedState,
         isLoading,
+        isFetching,
         error: error as Error | null,
         refetch,
     };
