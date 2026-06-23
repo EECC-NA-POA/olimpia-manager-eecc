@@ -5,7 +5,6 @@ import { formRow } from '@/lib/utils/form-layout';
 import { CountrySelector } from './CountrySelector';
 import { StateSelector } from './StateSelector';
 import { BranchSelector } from './BranchSelector';
-import { BranchSelectionError } from './BranchSelectionError';
 import { useLocationSelection } from '@/hooks/useLocationSelection';
 
 interface LocationSelectorProps {
@@ -24,11 +23,12 @@ export const LocationSelector = ({ form, disabled = false, context = 'default' }
     setSelectedCountry,
     setSelectedState,
     isLoading,
-    error,
-    refetch
+    isFetching,
   } = useLocationSelection('Brasil');
 
-  // Sync form values with hook state
+  // Considera loading enquanto a query inicial ou qualquer retry estiver em andamento
+  const loading = isLoading || isFetching;
+
   useEffect(() => {
     if (selectedCountry) {
       form.setValue('country', selectedCountry);
@@ -52,39 +52,32 @@ export const LocationSelector = ({ form, disabled = false, context = 'default' }
     form.setValue('branchId', '');
   }, [form, setSelectedState]);
 
-  const handleRetry = useCallback(() => {
-    refetch();
-  }, [refetch]);
-
-  // Map branches to the format expected by BranchSelector
   const branchesForSelector = branches.map(b => ({
     id: b.id,
     nome: b.nome,
     cidade: b.cidade,
-    estado: b.estado
+    estado: b.estado,
   }));
 
   return (
     <>
-      {/* Country Selector - Full width on its own row */}
       <div className={formRow}>
         <CountrySelector
           form={form}
           countriesList={countries}
-          isLoading={isLoading}
-          hasError={!!error}
+          isLoading={loading}
+          hasError={false}
           onCountryChange={handleCountryChange}
           disabled={disabled}
         />
       </div>
 
-      {/* State and Branch Selectors */}
       <div className={formRow}>
         <StateSelector
           form={form}
           statesList={states}
-          isLoading={isLoading}
-          hasError={!!error}
+          isLoading={loading}
+          hasError={false}
           onStateChange={handleStateChange}
           disabled={disabled || !selectedCountry}
         />
@@ -92,14 +85,14 @@ export const LocationSelector = ({ form, disabled = false, context = 'default' }
         <BranchSelector
           form={form}
           branches={branchesForSelector}
-          isLoading={isLoading}
-          hasError={!!error}
+          isLoading={loading}
+          hasError={false}
           selectedState={selectedState}
           disabled={disabled || !selectedState}
         />
       </div>
-
-      {error && <BranchSelectionError onRetry={handleRetry} />}
+      {/* BranchSelectionError removido — erros de rede são tratados via toast
+          e retry automático; o formulário nunca bloqueia o usuário */}
     </>
   );
 };
