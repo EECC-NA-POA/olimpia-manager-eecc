@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase, handleSupabaseError, recoverSession } from '@/lib/supabase';
@@ -119,9 +119,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return false; // No logout needed
   };
 
+  // Captura o pathname no momento da montagem — não deve ficar nas dependências
+  // para evitar que o efeito de auth reinicialize a cada navegação.
+  const initialPathnameRef = useRef(location.pathname);
+
   useEffect(() => {
+    // Pathname capturado uma vez na montagem (não re-executa a cada rota)
+    const initialPathname = initialPathnameRef.current;
     console.log('🚀 Initializing auth state listener...');
-    console.log('📍 Current location:', location.pathname);
+    console.log('📍 Current location:', initialPathname);
     let mounted = true;
 
     // 1) Set up auth listener FIRST (sync-only to avoid deadlocks)
@@ -179,7 +185,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         console.log('🔍 Getting current session...');
-        const { data: { session }, error } = await supabase.auth.getSession();
+
+        // Timeout de 8s: se o servidor não responder, não travamos a tela de loading.
+        // Isso protege contra servidor inacessível (timeout TCP pode levar 30-90s sem isso).
+        const getSessionSafe = (): Promise<{ data: { session: any }; error: any }> =>
+          Promise.race([
+            supabase.auth.getSession(),
+            new Promise<{ data: { session: null }; error: Error }>((resolve) =>
+              setTimeout(() => {
+                console.warn('⚠️ getSession() timeout — servidor não respondeu em 8s, prosseguindo sem sessão');
+                resolve({ data: { session: null }, error: null });
+              }, 8_000)
+            ),
+          ]);
+
+        const { data: { session }, error } = await getSessionSafe();
 
         if (error) {
           console.error('❌ Error getting session:', error);
@@ -190,7 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('📊 Session status:', { hasSession: !!session });
 
         if (!session?.user) {
-          if (!PUBLIC_ROUTES.includes(location.pathname as PublicRoute) && location.pathname !== '/reset-password') {
+          if (!PUBLIC_ROUTES.includes(initialPathname as PublicRoute) && initialPathname !== '/reset-password') {
             console.log('❌ No session and not on public route, redirecting to /');
             navigate('/', { replace: true });
           }
@@ -212,7 +232,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
 
           const storedEventId = localStorage.getItem('currentEventId');
-          if (storedEventId && storedEventId !== currentEventId) {
+          if (storedEventId) {
             setCurrentEventId(storedEventId);
           }
 
@@ -264,7 +284,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate, location.pathname, currentEventId]);
+  // Dependências: apenas navigate (estável). Remover location.pathname e currentEventId
+  // previne que o efeito de auth re-inicialize a cada navegação — o que causava
+  // mounted=false antes de setLoading(false), deixando o app travado na tela de loading.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate]);
 
   if (loading) {
     return (

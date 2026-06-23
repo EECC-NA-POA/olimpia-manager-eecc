@@ -3,7 +3,10 @@ import { CapacitorStorageAdapter } from './storageAdapter';
 
 // Use environment variables with fallback values
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://sb.nova-acropole.org.br';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiLm5vdmEtYWNyb3BvbGUub3JnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTc0NzY4MDAsImV4cCI6MjAxMzA1MjgwMH0.xyz123';
+// Fallback propositalmente inválido (sem formato JWT) para que o servidor
+// rejeite imediatamente em vez de tentar verificar assinatura JWT — o que
+// poderia causar timeout de rede e travar a inicialização do app.
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'VITE_SUPABASE_ANON_KEY_NAO_CONFIGURADA';
 
 console.log('🔧 Supabase Configuration:', {
   url: supabaseUrl,
