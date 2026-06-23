@@ -122,23 +122,23 @@ export function useEventBranches(eventId: string | null) {
     try {
       const { data: newBranch, error } = await supabase
         .from('filiais')
-        .insert([data])
+        .insert([{ ...data, pais: 'Brasil' }])
         .select()
         .single();
-      
+
       if (error) throw error;
-      
-      // Add the new branch to the local state
+
       setBranches(prev => [...prev, { ...newBranch, is_linked: false }]);
-      
       toast.success('Filial criada com sucesso!');
       return newBranch;
     } catch (error: any) {
-      console.error('Error creating branch:', error);
+      console.error('Error creating branch:', error?.message, '| code:', error?.code, '| details:', error?.details);
       if (error.code === '23505') {
         toast.error('Já existe uma filial com este nome');
+      } else if (error.code === '42501' || error?.message?.includes('row-level security')) {
+        toast.error('Sem permissão para criar filial. Contate o administrador do sistema.');
       } else {
-        toast.error('Erro ao criar filial');
+        toast.error(`Erro ao criar filial: ${error?.message || 'erro desconhecido'}`);
       }
       throw error;
     } finally {
