@@ -1,7 +1,7 @@
 /**
  * Hook para seleção de localização (País → Estado → Filial)
- * Usa a mesma abordagem da web - busca direta da tabela filiais
- * Inclui fallback com fetch direto quando o Supabase client falha
+ * Usa fetch direto com header apikey (sem Authorization: Bearer)
+ * pois a anon key do servidor não é um JWT padrão.
  */
 
 import { useState, useMemo, useCallback } from 'react';
@@ -32,6 +32,7 @@ interface UseLocationSelectionReturn {
     // Loading states
     isLoading: boolean;
     error: Error | null;
+    refetch: () => void;
 }
 
 // A chave anon do servidor não é um JWT padrão — o cliente Supabase envia
@@ -63,8 +64,8 @@ export const useLocationSelection = (defaultCountry: string = 'Brasil'): UseLoca
     const [selectedCountry, setSelectedCountryState] = useState<string>(defaultCountry);
     const [selectedState, setSelectedStateState] = useState<string>('');
 
-    // Fetch all branches with fallback
-    const { data: allBranches = [], isLoading, error } = useQuery({
+    // Fetch all branches
+    const { data: allBranches = [], isLoading, error, refetch } = useQuery({
         queryKey: ['all-branches-for-location'],
         queryFn: fetchBranches,
         staleTime: 60000, // Cache for 1 minute
@@ -132,5 +133,6 @@ export const useLocationSelection = (defaultCountry: string = 'Brasil'): UseLoca
         setSelectedState,
         isLoading,
         error: error as Error | null,
+        refetch,
     };
 };
