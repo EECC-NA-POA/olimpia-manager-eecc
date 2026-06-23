@@ -26,8 +26,9 @@ export const LocationSelector = ({ form, disabled = false, context = 'default' }
     isFetching,
   } = useLocationSelection('Brasil');
 
-  // Considera loading enquanto a query inicial ou qualquer retry estiver em andamento
-  const loading = isLoading || isFetching;
+  // Mantém skeleton enquanto carregando, retentando, OU em erro (servidor fora do ar).
+  // Campos em branco sem opções confundem o usuário — skeleton + toast é mais claro.
+  const loading = isLoading || isFetching || !!error;
 
   useEffect(() => {
     if (selectedCountry) {
