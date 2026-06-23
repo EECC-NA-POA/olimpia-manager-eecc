@@ -24,7 +24,8 @@ export const LocationSelector = ({ form, disabled = false, context = 'default' }
     setSelectedCountry,
     setSelectedState,
     isLoading,
-    error
+    error,
+    refetch
   } = useLocationSelection('Brasil');
 
   // Sync form values with hook state
@@ -51,12 +52,9 @@ export const LocationSelector = ({ form, disabled = false, context = 'default' }
     form.setValue('branchId', '');
   }, [form, setSelectedState]);
 
-  // Handle retry when error occurs
   const handleRetry = useCallback(() => {
-    console.log('Manually retrying branch fetch...');
-    // The useQuery will handle retry automatically
-    window.location.reload();
-  }, []);
+    refetch();
+  }, [refetch]);
 
   // Map branches to the format expected by BranchSelector
   const branchesForSelector = branches.map(b => ({
