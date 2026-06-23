@@ -50,6 +50,10 @@ export const useLocationSelection = (defaultCountry: string = 'Brasil'): UseLoca
         retryDelay: (attempt) => Math.min(2_000 * 2 ** attempt, 30_000),
         refetchOnReconnect: true,
         refetchOnWindowFocus: true,
+        // Quando em erro (servidor fora do ar), retenta a cada 30s automaticamente.
+        // Quando o servidor voltar, os campos carregam sem precisar de atualização manual.
+        refetchInterval: (query) => (query.state.status === 'error' ? 30_000 : false),
+        refetchIntervalInBackground: false,
     });
 
     // Toast informativo (não bloqueante) somente após esgotar todas as tentativas
