@@ -12,14 +12,14 @@ export const useAttendanceLogic = (
     if (existingAttendances && athletes) {
       const newAttendanceData = new Map();
       
-      // Primeiro, inicializar todos os atletas com status 'presente' (padrão)
+      // Primeiro, inicializar todos os atletas com status 'ausente' (padrão)
       athletes.forEach(athlete => {
         newAttendanceData.set(athlete.id, {
-          status: 'presente',
+          status: 'ausente',
           attendance_id: undefined
         });
       });
-      
+
       // Depois, atualizar com os dados existentes se houver
       existingAttendances.forEach(attendance => {
         newAttendanceData.set(attendance.atleta_id, {
@@ -27,14 +27,14 @@ export const useAttendanceLogic = (
           attendance_id: attendance.id
         });
       });
-      
+
       setAttendanceData(newAttendanceData);
     } else if (athletes && !existingAttendances) {
-      // Se não há dados existentes, inicializar todos como presente
+      // Se não há dados existentes, inicializar todos como ausente
       const newAttendanceData = new Map();
       athletes.forEach(athlete => {
         newAttendanceData.set(athlete.id, {
-          status: 'presente',
+          status: 'ausente',
           attendance_id: undefined
         });
       });
@@ -43,15 +43,15 @@ export const useAttendanceLogic = (
   }, [existingAttendances, athletes]);
 
   const handleStatusChange = (athleteId: string, status: string) => {
-    const current = attendanceData.get(athleteId) || { status: 'presente' };
+    const current = attendanceData.get(athleteId) || { status: 'ausente' };
     setAttendanceData(new Map(attendanceData.set(athleteId, { ...current, status })));
   };
 
   const getStatusCounts = () => {
     if (!athletes) return { presente: 0, ausente: 0, atrasado: 0, total: 0 };
-    
+
     let presente = 0, ausente = 0, atrasado = 0;
-    
+
     athletes.forEach(athlete => {
       const data = attendanceData.get(athlete.id);
       if (data) {
@@ -59,10 +59,10 @@ export const useAttendanceLogic = (
           case 'presente': presente++; break;
           case 'atrasado': atrasado++; break;
           case 'ausente': ausente++; break;
-          default: presente++; break;
+          default: ausente++; break;
         }
       } else {
-        presente++;
+        ausente++;
       }
     });
     

@@ -88,11 +88,11 @@ export const ModalitiesTable: React.FC<ModalitiesTableProps> = ({
               <Select
                 value={modalityStatuses[modalidade.id] || modalidade.status}
                 onValueChange={(value) => onStatusChange(modalidade.id, value)}
-                disabled={!!readOnly || !justifications[modalidade.id] || isUpdating[modalidade.id]}
+                disabled={!!readOnly || isUpdating[modalidade.id]}
               >
                 <SelectTrigger className={cn(
                   "w-[180px]",
-                  ((!!readOnly) || !justifications[modalidade.id] || isUpdating[modalidade.id]) && "opacity-50 cursor-not-allowed"
+                  (!!readOnly || isUpdating[modalidade.id]) && "opacity-50 cursor-not-allowed"
                 )}>
                   <SelectValue placeholder="Selecione o status" />
                 </SelectTrigger>

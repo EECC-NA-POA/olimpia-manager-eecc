@@ -89,11 +89,9 @@ function dedup(activities: ScheduleActivity[]): ScheduleActivity[] {
 function ActivityCard({
   activity,
   colorMap,
-  compact = false,
 }: {
   activity: ScheduleActivity;
   colorMap: Map<string, typeof PALETTE[0]>;
-  compact?: boolean;
 }) {
   const color = activity.global
     ? GLOBAL_COLOR
@@ -112,41 +110,37 @@ function ActivityCard({
         <p className={cn('text-xs font-semibold leading-snug', color.text)}>{activity.atividade}</p>
       </div>
 
-      {!compact && (
-        <>
-          {activity.local && (
-            <div className="flex items-center gap-1 mt-1.5 pl-4">
-              <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-              <span className="text-[11px] text-muted-foreground leading-tight">{activity.local}</span>
-            </div>
-          )}
-          {activity.horario_inicio && (
-            <div className="flex items-center gap-1 mt-1 pl-4">
-              <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-              <span className="text-[11px] text-muted-foreground">
-                {fmtTime(activity.horario_inicio)}
-                {activity.horario_fim ? ` – ${fmtTime(activity.horario_fim)}` : ''}
-              </span>
-            </div>
-          )}
-          {activity.modalidade_nome && (
-            <div className="mt-1.5 pl-4">
-              <span className={cn(
-                'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium border',
-                color.bg, color.border, color.text,
-              )}>
-                {activity.modalidade_nome}
-              </span>
-            </div>
-          )}
-          {activity.global && (
-            <div className="mt-1.5 pl-4">
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-200 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
-                <Globe className="h-2.5 w-2.5" /> Todos
-              </span>
-            </div>
-          )}
-        </>
+      {activity.local && (
+        <div className="flex items-center gap-1 mt-1.5 pl-4">
+          <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+          <span className="text-[11px] text-muted-foreground leading-tight">{activity.local}</span>
+        </div>
+      )}
+      {activity.horario_inicio && (
+        <div className="flex items-center gap-1 mt-1 pl-4">
+          <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+          <span className="text-[11px] text-muted-foreground">
+            {fmtTime(activity.horario_inicio)}
+            {activity.horario_fim ? ` – ${fmtTime(activity.horario_fim)}` : ''}
+          </span>
+        </div>
+      )}
+      {activity.modalidade_nome && (
+        <div className="mt-1.5 pl-4">
+          <span className={cn(
+            'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium border',
+            color.bg, color.border, color.text,
+          )}>
+            {activity.modalidade_nome}
+          </span>
+        </div>
+      )}
+      {activity.global && (
+        <div className="mt-1.5 pl-4">
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-200 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+            <Globe className="h-2.5 w-2.5" /> Todos
+          </span>
+        </div>
       )}
     </div>
   );
@@ -227,7 +221,7 @@ function WeekGrid({
                       {activities.length > 0 ? (
                         <div className="space-y-1.5">
                           {activities.map((act, i) => (
-                            <ActivityCard key={i} activity={act} colorMap={colorMap} compact />
+                            <ActivityCard key={i} activity={act} colorMap={colorMap} />
                           ))}
                         </div>
                       ) : (
