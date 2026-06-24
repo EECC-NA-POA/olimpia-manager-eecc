@@ -85,7 +85,7 @@ export function useOrganizerAttendanceReport(eventId: string | null) {
         .select(`
           atleta_id,
           modalidade_id,
-          created_at,
+          data_inscricao,
           usuarios!inner (
             id,
             nome_completo,
@@ -126,7 +126,7 @@ export function useOrganizerAttendanceReport(eventId: string | null) {
       });
 
       // atleta_id → lista de inscrições
-      const atletaInscMap = new Map<string, { modalidade_id: string; created_at: string; nome: string; numero: string | null }[]>();
+      const atletaInscMap = new Map<string, { modalidade_id: string; data_inscricao: string; nome: string; numero: string | null }[]>();
       inscricoes.forEach(i => {
         const u = i.usuarios as any;
         const nome = u?.nome_completo || 'Sem nome';
@@ -134,7 +134,7 @@ export function useOrganizerAttendanceReport(eventId: string | null) {
         if (!atletaInscMap.has(i.atleta_id)) atletaInscMap.set(i.atleta_id, []);
         atletaInscMap.get(i.atleta_id)!.push({
           modalidade_id: i.modalidade_id,
-          created_at: i.created_at,
+          data_inscricao: (i as any).data_inscricao,
           nome,
           numero
         });
@@ -151,7 +151,7 @@ export function useOrganizerAttendanceReport(eventId: string | null) {
           const mod = mods.find(m => m.id === insc.modalidade_id);
           if (!mod) return null;
 
-          const enrolledAt = new Date(insc.created_at).getTime();
+          const enrolledAt = new Date(insc.data_inscricao).getTime();
           const chamsMod = modChamadas.get(insc.modalidade_id) || [];
 
           // Só chamadas ocorridas APÓS a inscrição do atleta
