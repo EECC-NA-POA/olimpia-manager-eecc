@@ -3,11 +3,22 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Calendar, Clock, ChevronRight, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Plus, Calendar, Clock, ChevronRight, AlertTriangle, Trash2, User } from "lucide-react";
 import { useMonitorModalities } from "@/hooks/useMonitorModalities";
 import { useAllMonitorSessions } from "@/hooks/useAllMonitorSessions";
 import { useEventSessions } from "@/hooks/useEventSessions";
 import { useUserRoleCheck } from "@/hooks/useUserRoleCheck";
+import { useMonitorMutations } from "@/hooks/useMonitorMutations";
 import { useAuth } from "@/contexts/AuthContext";
 import { MonitorSession } from "@/hooks/useMonitorSessions";
 import { LoadingImage } from "@/components/ui/loading-image";
@@ -22,15 +33,18 @@ import { cn } from '@/lib/utils';
 
 function SessionRow({
   session,
+  isOrganizer,
   onView,
   onEdit,
+  onDelete,
 }: {
   session: MonitorSession;
+  isOrganizer: boolean;
   onView: (id: string) => void;
   onEdit: (s: MonitorSession) => void;
+  onDelete: (s: MonitorSession) => void;
 }) {
-  const hasObs = !!(session as any).observacoes?.trim();
-  const dateStr = format(new Date(session.data_hora_inicio), "dd MMM yyyy", { locale: ptBR });
+  const hasObs = !!session.observacoes?.trim();
   const timeStr = format(new Date(session.data_hora_inicio), "HH:mm", { locale: ptBR });
   const endTime = session.data_hora_fim
     ? format(new Date(session.data_hora_fim), "HH:mm", { locale: ptBR })
@@ -69,10 +83,16 @@ function SessionRow({
             {session.modalidade_representantes.modalidades.nome}
           </span>
         </div>
+        {session.criador_nome && (
+          <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+            <User className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">{session.criador_nome}</span>
+          </p>
+        )}
         {hasObs && (
           <p className="text-[11px] text-amber-600 mt-0.5 flex items-center gap-1">
             <AlertTriangle className="h-3 w-3 flex-shrink-0" />
-            <span className="truncate">{(session as any).observacoes}</span>
+            <span className="truncate">{session.observacoes}</span>
           </p>
         )}
       </div>
@@ -87,6 +107,16 @@ function SessionRow({
         >
           Editar
         </Button>
+        {isOrganizer && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+            onClick={() => onDelete(session)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
         <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
       </div>
     </div>
@@ -101,10 +131,13 @@ export default function MonitorAttendancePage() {
   const [showEdit, setShowEdit] = useState(false);
   const [sessionToEdit, setSessionToEdit] = useState<MonitorSession | null>(null);
   const [detailSessionId, setDetailSessionId] = useState<string | null>(null);
+  const [sessionToDelete, setSessionToDelete] = useState<MonitorSession | null>(null);
 
   const { user, currentEventId } = useAuth();
   const { data: roleData } = useUserRoleCheck(user?.id ?? '', currentEventId ?? '');
   const isOrganizer = roleData?.isOrganizer ?? false;
+
+  const { deleteSession } = useMonitorMutations();
 
   const { data: modalities, isLoading: modalitiesLoading } = useMonitorModalities();
   const { data: monitorSessions, isLoading: monitorSessionsLoading } = useAllMonitorSessions();
@@ -160,6 +193,12 @@ export default function MonitorAttendancePage() {
         m.modalidades.nome === s.modalidade_representantes.modalidades.nome
     );
   });
+
+  const handleDeleteConfirm = async () => {
+    if (!sessionToDelete) return;
+    await deleteSession.mutateAsync(sessionToDelete.id);
+    setSessionToDelete(null);
+  };
 
   return (
     <div className="space-y-4 max-w-full">
@@ -224,8 +263,10 @@ export default function MonitorAttendancePage() {
             <SessionRow
               key={s.id}
               session={s}
+              isOrganizer={isOrganizer}
               onView={setDetailSessionId}
               onEdit={s => { setSessionToEdit(s); setShowEdit(true); }}
+              onDelete={setSessionToDelete}
             />
           ))}
         </div>
@@ -246,6 +287,29 @@ export default function MonitorAttendancePage() {
           session={sessionToEdit}
         />
       )}
+
+      {/* Confirmação de exclusão */}
+      <AlertDialog open={!!sessionToDelete} onOpenChange={open => !open && setSessionToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir chamada?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A chamada <strong>{sessionToDelete?.descricao || "selecionada"}</strong> e todas as
+              presenças registradas nela serão excluídas permanentemente. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDeleteConfirm}
+              disabled={deleteSession.isPending}
+            >
+              {deleteSession.isPending ? "Excluindo…" : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

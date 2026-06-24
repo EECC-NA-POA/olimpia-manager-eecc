@@ -8,8 +8,12 @@ export interface MonitorSession {
   data_hora_inicio: string;
   data_hora_fim: string | null;
   descricao: string;
+  observacoes: string | null;
   criado_em: string;
   criado_por: string;
+  atualizado_em: string | null;
+  atualizado_por: string | null;
+  criador_nome?: string;
   modalidade_representantes: {
     modalidades: {
       nome: string;
