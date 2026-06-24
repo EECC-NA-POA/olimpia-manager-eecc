@@ -48,24 +48,27 @@ export function useOrganizerAttendanceReport(eventId: string | null) {
 
       const modIds = mods.map(m => m.id);
 
-      // 2. Chamadas via modalidade_representantes
+      // 2a. Representantes das modalidades do evento
+      const { data: reps, error: repsErr } = await supabase
+        .from('modalidade_representantes')
+        .select('id, modalidade_id')
+        .in('modalidade_id', modIds);
+      if (repsErr) throw repsErr;
+      if (!reps?.length) return { modalidades: mods, atletas: [] };
+
+      const repIds = reps.map(r => r.id);
+      // rep_id → modalidade_id
+      const repModMap = new Map<string, any>(reps.map(r => [r.id as string, r.modalidade_id]));
+
+      // 2b. Chamadas para essas reps (sem join — evita filtro em tabela relacionada)
       const { data: chamadas, error: chamErr } = await supabase
         .from('chamadas')
-        .select(`
-          id,
-          data_hora_inicio,
-          modalidade_rep_id,
-          modalidade_representantes!inner (
-            modalidade_id
-          )
-        `)
-        .in('modalidade_representantes.modalidade_id', modIds)
+        .select('id, data_hora_inicio, modalidade_rep_id')
+        .in('modalidade_rep_id', repIds)
         .order('data_hora_inicio', { ascending: true });
       if (chamErr) throw chamErr;
 
-      if (!chamadas || chamadas.length === 0) {
-        return { modalidades: mods, atletas: [] };
-      }
+      if (!chamadas?.length) return { modalidades: mods, atletas: [] };
 
       const chamadaIds = chamadas.map(c => c.id);
 
@@ -99,11 +102,11 @@ export function useOrganizerAttendanceReport(eventId: string | null) {
 
       // --- Montar mapa de dados ---
 
-      // chamada → modalidade_id
-      const chamadaModMap = new Map<string, string>();
+      // chamada_id → modalidade_id (via rep)
+      const chamadaModMap = new Map<string, any>();
       chamadas.forEach(c => {
-        const modId = (c.modalidade_representantes as any)?.modalidade_id;
-        if (modId) chamadaModMap.set(c.id, modId);
+        const modId = repModMap.get(c.modalidade_rep_id);
+        if (modId !== undefined) chamadaModMap.set(c.id, modId);
       });
 
       // chamada_id → { atleta_id → status }
@@ -114,10 +117,10 @@ export function useOrganizerAttendanceReport(eventId: string | null) {
       });
 
       // modalidade_id → chamadas ordenadas
-      const modChamadas = new Map<string, typeof chamadas>();
+      const modChamadas = new Map<any, typeof chamadas>();
       chamadas.forEach(c => {
         const modId = chamadaModMap.get(c.id);
-        if (!modId) return;
+        if (modId === undefined) return;
         if (!modChamadas.has(modId)) modChamadas.set(modId, []);
         modChamadas.get(modId)!.push(c);
       });
