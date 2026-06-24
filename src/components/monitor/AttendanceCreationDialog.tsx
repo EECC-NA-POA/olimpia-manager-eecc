@@ -62,7 +62,7 @@ export default function AttendanceCreationDialog({
     }
   }, [open]);
 
-  // Inicializa todos como presentes
+  // Inicializa todos como ausentes — monitor marca apenas quem veio
   useEffect(() => {
     if (athletes && open) {
       setAthletesAttendance(athletes.map(athlete => ({
@@ -70,7 +70,7 @@ export default function AttendanceCreationDialog({
         nome_completo: athlete.nome_completo,
         email: athlete.email,
         numero_identificador: athlete.numero_identificador,
-        status: 'presente' as const
+        status: 'ausente' as const
       })));
     }
   }, [athletes, open]);

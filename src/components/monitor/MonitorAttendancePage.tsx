@@ -6,6 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Calendar, Clock, ChevronRight, AlertTriangle } from "lucide-react";
 import { useMonitorModalities } from "@/hooks/useMonitorModalities";
 import { useAllMonitorSessions } from "@/hooks/useAllMonitorSessions";
+import { useEventSessions } from "@/hooks/useEventSessions";
+import { useUserRoleCheck } from "@/hooks/useUserRoleCheck";
+import { useAuth } from "@/contexts/AuthContext";
 import { MonitorSession } from "@/hooks/useMonitorSessions";
 import { LoadingImage } from "@/components/ui/loading-image";
 import AttendanceCreationDialog from './AttendanceCreationDialog';
@@ -99,8 +102,15 @@ export default function MonitorAttendancePage() {
   const [sessionToEdit, setSessionToEdit] = useState<MonitorSession | null>(null);
   const [detailSessionId, setDetailSessionId] = useState<string | null>(null);
 
+  const { user, currentEventId } = useAuth();
+  const { isOrganizer } = useUserRoleCheck(user?.id ?? '', currentEventId ?? '');
+
   const { data: modalities, isLoading: modalitiesLoading } = useMonitorModalities();
-  const { data: allSessions, isLoading: sessionsLoading } = useAllMonitorSessions();
+  const { data: monitorSessions, isLoading: monitorSessionsLoading } = useAllMonitorSessions();
+  const { data: eventSessions, isLoading: eventSessionsLoading } = useEventSessions();
+
+  const sessionsLoading = isOrganizer ? eventSessionsLoading : monitorSessionsLoading;
+  const rawSessions = isOrganizer ? (eventSessions ?? []) : (monitorSessions ?? []);
 
   /* ── detail view ── */
   if (detailSessionId) {
@@ -121,9 +131,10 @@ export default function MonitorAttendancePage() {
     );
   }
 
-  /* ── no modalities ── */
   const validModalities = (modalities ?? []).filter(m => m.modalidades?.nome);
-  if (validModalities.length === 0) {
+
+  /* ── no modalities (only block for non-organizers) ── */
+  if (!isOrganizer && validModalities.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <Calendar className="h-12 w-12 text-muted-foreground/40 mb-4" />
@@ -135,15 +146,14 @@ export default function MonitorAttendancePage() {
     );
   }
 
-  /* ── selected modality for dialog ── */
+  /* ── selected modality for dialog (only relevant if user is also a monitor) ── */
   const selectedMod = modFiltro !== "all"
     ? validModalities.find(m => m.id === modFiltro)
     : validModalities[0];
 
   /* ── filter sessions ── */
-  const sessions = (allSessions ?? []).filter(s => {
+  const sessions = rawSessions.filter(s => {
     if (modFiltro === "all") return true;
-    // match by modality name
     return validModalities.find(
       m => m.id === modFiltro &&
         m.modalidades.nome === s.modalidade_representantes.modalidades.nome
@@ -169,16 +179,18 @@ export default function MonitorAttendancePage() {
           </Select>
         )}
 
-        <div className="sm:ml-auto">
-          <Button
-            onClick={() => setShowCreate(true)}
-            className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:w-auto"
-            size="sm"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Chamada
-          </Button>
-        </div>
+        {validModalities.length > 0 && (
+          <div className="sm:ml-auto">
+            <Button
+              onClick={() => setShowCreate(true)}
+              className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary w-full sm:w-auto"
+              size="sm"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Chamada
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Session list */}
@@ -188,17 +200,19 @@ export default function MonitorAttendancePage() {
           <p className="text-sm font-medium text-foreground">Nenhuma chamada ainda</p>
           <p className="text-xs text-muted-foreground mt-1 mb-4">
             {modFiltro === "all"
-              ? "Crie a primeira chamada para começar a registrar presenças."
+              ? "Nenhuma chamada registrada neste evento ainda."
               : "Não há chamadas para esta modalidade."}
           </p>
-          <Button
-            size="sm"
-            onClick={() => setShowCreate(true)}
-            className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary"
-          >
-            <Plus className="h-4 w-4 mr-1.5" />
-            Criar Chamada
-          </Button>
+          {validModalities.length > 0 && (
+            <Button
+              size="sm"
+              onClick={() => setShowCreate(true)}
+              className="bg-olimpics-green-primary hover:bg-olimpics-green-secondary"
+            >
+              <Plus className="h-4 w-4 mr-1.5" />
+              Criar Chamada
+            </Button>
+          )}
         </div>
       ) : (
         <div className="space-y-2">

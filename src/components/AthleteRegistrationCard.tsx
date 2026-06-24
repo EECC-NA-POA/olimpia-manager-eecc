@@ -26,6 +26,8 @@ interface AthleteRegistrationCardProps {
   readOnly?: boolean;
   eventId?: string;
   enrollmentType?: EnrollmentType;
+  dialogOpen?: boolean;
+  onDialogOpenChange?: (open: boolean) => void;
 }
 
 export function AthleteRegistrationCard({
@@ -35,9 +37,13 @@ export function AthleteRegistrationCard({
   isCurrentUser,
   readOnly = false,
   eventId,
-  enrollmentType
+  enrollmentType,
+  dialogOpen,
+  onDialogOpenChange,
 }: AthleteRegistrationCardProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [_internalOpen, _setInternalOpen] = useState(false);
+  const isDialogOpen = dialogOpen !== undefined ? dialogOpen : _internalOpen;
+  const setIsDialogOpen = onDialogOpenChange ?? _setInternalOpen;
   const [isEnrollDialogOpen, setIsEnrollDialogOpen] = useState(false);
   const { user, currentEventId } = useAuth();
 
