@@ -24,6 +24,7 @@ export const LocationSelector = ({ form, disabled = false, context = 'default' }
     setSelectedState,
     isLoading,
     isFetching,
+    error,
   } = useLocationSelection('Brasil');
 
   // Mantém skeleton enquanto carregando, retentando, OU em erro (servidor fora do ar).
