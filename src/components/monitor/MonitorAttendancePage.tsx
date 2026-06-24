@@ -103,7 +103,8 @@ export default function MonitorAttendancePage() {
   const [detailSessionId, setDetailSessionId] = useState<string | null>(null);
 
   const { user, currentEventId } = useAuth();
-  const { isOrganizer } = useUserRoleCheck(user?.id ?? '', currentEventId ?? '');
+  const { data: roleData } = useUserRoleCheck(user?.id ?? '', currentEventId ?? '');
+  const isOrganizer = roleData?.isOrganizer ?? false;
 
   const { data: modalities, isLoading: modalitiesLoading } = useMonitorModalities();
   const { data: monitorSessions, isLoading: monitorSessionsLoading } = useAllMonitorSessions();
