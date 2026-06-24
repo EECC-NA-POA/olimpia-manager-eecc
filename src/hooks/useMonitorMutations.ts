@@ -138,11 +138,13 @@ export const useMonitorMutations = () => {
     mutationFn: async ({ id, data }: { id: string; data: Partial<CreateSessionData> }) => {
       console.log('Updating session:', id, data);
 
+      if (!user?.id) throw new Error('Usuário não autenticado');
       const { error } = await supabase
         .from('chamadas')
         .update({
           ...data,
-          atualizado_em: new Date().toISOString()
+          atualizado_em: new Date().toISOString(),
+          atualizado_por: user.id,
         })
         .eq('id', id);
 
@@ -190,7 +192,9 @@ export const useMonitorMutations = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['monitor-sessions'] });
       queryClient.invalidateQueries({ queryKey: ['all-monitor-sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['event-sessions'] });
       queryClient.invalidateQueries({ queryKey: ['monitor-reports'] });
+      queryClient.invalidateQueries({ queryKey: ['organizer-attendance-report'] });
       toast.success('Chamada excluída com sucesso!');
     },
     onError: (error: any) => {
@@ -205,40 +209,22 @@ export const useMonitorMutations = () => {
         throw new Error('Usuário não autenticado');
       }
 
-      console.log('Saving attendances:', attendances);
-
-      // Primeiro, deletar presenças existentes para esta chamada
-      const chamadaId = attendances[0]?.chamada_id;
-      if (chamadaId) {
-        const { error: deleteError } = await supabase
-          .from('chamada_presencas')
-          .delete()
-          .eq('chamada_id', chamadaId);
-
-        if (deleteError) {
-          console.error('Error deleting existing attendances:', deleteError);
-          throw new Error(`Erro ao remover presenças existentes: ${deleteError.message}`);
-        }
-      }
-
-      // Depois inserir as novas presenças
-      const attendancesToInsert = attendances.map(attendance => ({
-        chamada_id: attendance.chamada_id,
-        atleta_id: attendance.atleta_id,
-        status: attendance.status,
-        registrado_por: user.id
+      const records = attendances.map(a => ({
+        chamada_id: a.chamada_id,
+        atleta_id: a.atleta_id,
+        status: a.status,
+        registrado_por: user.id,
       }));
 
-      const { error: insertError } = await supabase
+      // Upsert por (chamada_id, atleta_id) — gera UPDATE apenas se status mudou (trigger otimizado)
+      // Requer UNIQUE(chamada_id, atleta_id) em chamada_presencas (migração 20260624_chamadas_audit_log.sql)
+      const { error } = await supabase
         .from('chamada_presencas')
-        .insert(attendancesToInsert);
+        .upsert(records, { onConflict: 'chamada_id,atleta_id' });
 
-      if (insertError) {
-        console.error('Error inserting new attendances:', insertError);
-        throw new Error(`Erro ao salvar presenças: ${insertError.message}`);
+      if (error) {
+        throw new Error(`Erro ao salvar presenças: ${error.message}`);
       }
-
-      console.log('Attendances saved successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['session-attendance'] });

@@ -43,7 +43,17 @@ export const useAllMonitorSessions = () => {
         .order('data_hora_inicio', { ascending: false });
 
       if (error) throw error;
-      return (sessions ?? []) as MonitorSession[];
+      const list = (sessions ?? []) as MonitorSession[];
+      if (!list.length) return list;
+
+      // Resolve names for criado_por
+      const userIds = [...new Set(list.map(s => s.criado_por).filter(Boolean))];
+      const { data: users } = await supabase
+        .from('usuarios')
+        .select('id, nome_completo')
+        .in('id', userIds);
+      const nameMap = new Map((users ?? []).map(u => [u.id, u.nome_completo]));
+      return list.map(s => ({ ...s, criador_nome: nameMap.get(s.criado_por) ?? undefined }));
     },
     enabled: modalidadeIds.length > 0,
     staleTime: 0,
