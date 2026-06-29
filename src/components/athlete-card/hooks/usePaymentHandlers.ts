@@ -5,11 +5,12 @@ import { toast } from 'sonner';
 
 interface UsePaymentHandlersProps {
   athleteId: string;
+  eventId: string;
   paymentData: any;
   refetchPayment: () => Promise<any>;
 }
 
-export const usePaymentHandlers = ({ athleteId, paymentData, refetchPayment }: UsePaymentHandlersProps) => {
+export const usePaymentHandlers = ({ athleteId, eventId, paymentData, refetchPayment }: UsePaymentHandlersProps) => {
   const [isUpdatingAmount, setIsUpdatingAmount] = useState(false);
   const [localInputAmount, setLocalInputAmount] = useState<string>('');
 
@@ -20,7 +21,7 @@ export const usePaymentHandlers = ({ athleteId, paymentData, refetchPayment }: U
 
   const handleSaveAmount = async () => {
     if (!localInputAmount || isUpdatingAmount) return;
-    
+
     setIsUpdatingAmount(true);
     try {
       const numericValue = parseFloat(localInputAmount.replace(',', '.'));
@@ -29,7 +30,7 @@ export const usePaymentHandlers = ({ athleteId, paymentData, refetchPayment }: U
         return;
       }
 
-      await updatePaymentAmount(athleteId, numericValue);
+      await updatePaymentAmount(athleteId, numericValue, eventId);
       await refetchPayment();
       toast.success('Valor atualizado com sucesso!');
     } catch (error) {

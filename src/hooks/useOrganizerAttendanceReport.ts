@@ -86,7 +86,7 @@ export function useOrganizerAttendanceReport(eventId: string | null) {
           atleta_id,
           modalidade_id,
           data_inscricao,
-          usuarios!inner (
+          usuarios!inscricoes_modalidades_atleta_id_fkey (
             id,
             nome_completo,
             numero_documento

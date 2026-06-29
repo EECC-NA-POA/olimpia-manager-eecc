@@ -81,7 +81,7 @@ export function AthletesTab({
           }}
           onPaymentStatusChange={async (athleteId, status) => {
             try {
-              await updatePaymentStatus(athleteId, status);
+              await updatePaymentStatus(athleteId, status, currentEventId);
               toast.success("Status de pagamento atualizado com sucesso!");
               await queryClient.invalidateQueries({ 
                 queryKey: ['branch-analytics', currentEventId]

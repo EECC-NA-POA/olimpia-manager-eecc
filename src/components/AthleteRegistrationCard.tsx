@@ -84,6 +84,7 @@ export function AthleteRegistrationCard({
     handleAmountBlur
   } = usePaymentHandlers({
     athleteId: registration.id,
+    eventId: effectiveEventId ?? '',
     paymentData,
     refetchPayment
   });

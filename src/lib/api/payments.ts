@@ -3,49 +3,35 @@ import { supabase } from '../supabase';
 
 export const updatePaymentAmount = async (
   athleteId: string,
-  amount: number
+  amount: number,
+  eventId: string
 ): Promise<void> => {
-  console.log('Updating payment amount:', { athleteId, amount });
-  
-  try {
-    const { error } = await supabase
-      .from('pagamentos')
-      .update({ valor: amount })
-      .eq('atleta_id', athleteId);
+  const { error } = await supabase
+    .from('pagamentos')
+    .update({ valor: amount })
+    .eq('atleta_id', athleteId)
+    .eq('evento_id', eventId);
 
-    if (error) {
-      console.error('Error updating payment amount:', error);
-      throw new Error(error.message);
-    }
-
-    return Promise.resolve();
-  } catch (error) {
-    console.error('Error in updatePaymentAmount:', error);
-    throw error;
+  if (error) {
+    console.error('Error updating payment amount:', error);
+    throw new Error(error.message);
   }
 };
 
 export const updatePaymentStatus = async (
   athleteId: string,
-  status: string
+  status: string,
+  eventId: string
 ): Promise<void> => {
-  console.log('Updating payment status:', { athleteId, status });
-  
-  try {
-    const { error } = await supabase
-      .rpc('atualizar_status_pagamento', {
-        p_atleta_id: athleteId,
-        p_novo_status: status
-      });
+  const { error } = await supabase
+    .rpc('atualizar_status_pagamento', {
+      p_atleta_id: athleteId,
+      p_novo_status: status,
+      p_evento_id: eventId,
+    });
 
-    if (error) {
-      console.error('Error updating payment status:', error);
-      throw new Error(error.message);
-    }
-
-    return Promise.resolve();
-  } catch (error) {
-    console.error('Error in updatePaymentStatus:', error);
-    throw error;
+  if (error) {
+    console.error('Error updating payment status:', error);
+    throw new Error(error.message);
   }
 };
