@@ -6,10 +6,8 @@ export type NationalityType = 'BRASILEIRO' | 'ESTRANGEIRO';
 
 export const createRegisterSchema = (t: (key: string) => string) => z.object({
   nome: z.string().refine((val) => {
-    // At least 2 words, each 3+ letters.
     const parts = val.trim().split(/\s+/);
-    if (parts.length < 2) return false;
-    return parts.every(p => p.length >= 3);
+    return parts.filter(p => p.length >= 3).length >= 2;
   }, t('validation.nameMin')),
   email: z.string().email(t('validation.emailInvalid')),
   ddi: z.string().min(1, t('validation.required')),
