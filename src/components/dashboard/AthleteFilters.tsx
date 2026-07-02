@@ -81,6 +81,7 @@ export function AthleteFilters({
               <SelectItem value="all">Todos os status</SelectItem>
               <SelectItem value="confirmado">Confirmado</SelectItem>
               <SelectItem value="pendente">Pendente</SelectItem>
+              <SelectItem value="isento">Isento</SelectItem>
               <SelectItem value="cancelado">Cancelado</SelectItem>
             </SelectContent>
           </Select>
