@@ -69,7 +69,7 @@ export const useExemptionStatus = ({
       // First, check if payment record exists
       const { data: existingPayment, error: checkError } = await supabase
         .from('pagamentos')
-        .select('id, isento, valor, status')
+        .select('id, isento, valor, status, taxas_inscricao ( valor )')
         .eq('atleta_id', userId)
         .eq('evento_id', eventId)
         .single();
@@ -87,11 +87,14 @@ export const useExemptionStatus = ({
         throw new Error('Registro de pagamento não encontrado. O pagamento deve ser criado primeiro.');
       }
 
+      // Ao desmarcar, o valor atual já foi zerado pela isenção — restaurar da taxa vinculada
+      const taxaValor = (existingPayment.taxas_inscricao as any)?.valor ?? existingPayment.valor;
+
       // Update exemption status in pagamentos table
-      const updateData: any = { 
+      const updateData: any = {
         isento: checked,
         status: checked ? 'isento' : 'pendente', // Set status to "isento" when exempt, "pendente" when not
-        valor: checked ? 0 : existingPayment.valor // Set value to 0 when exempt, restore original when not
+        valor: checked ? 0 : taxaValor
       };
 
       console.log('Updating payment with data:', updateData);

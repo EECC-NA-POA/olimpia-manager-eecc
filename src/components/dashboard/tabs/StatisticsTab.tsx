@@ -1,7 +1,7 @@
 
 import { BranchAnalytics } from "@/types/api";
 import { SummaryCards } from "../charts/SummaryCards";
-import { PaymentStatusBarChart } from "../charts/PaymentStatusBarChart";
+import { PaymentStatusBarChart, PaymentStatusKey } from "../charts/PaymentStatusBarChart";
 import { BranchRegistrationsChart } from "../charts/BranchRegistrationsChart";
 import { ModalitiesChart } from "../charts/ModalitiesChart";
 import { transformPaymentStatusData, transformBranchRegistrationsData } from "../charts/dataTransformers";
@@ -9,6 +9,7 @@ import { transformPaymentStatusData, transformBranchRegistrationsData } from "..
 interface StatisticsTabProps {
   data: BranchAnalytics[];
   currentBranchId?: string;
+  onStatusClick?: (status: PaymentStatusKey) => void;
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -20,7 +21,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
+export function StatisticsTab({ data, currentBranchId, onStatusClick }: StatisticsTabProps) {
   if (!data || data.length === 0) {
     return (
       <p className="text-center py-16 text-sm text-muted-foreground">
@@ -84,7 +85,7 @@ export function StatisticsTab({ data, currentBranchId }: StatisticsTabProps) {
 
       {/* Payment status */}
       <Section title="Status de Inscrições">
-        <PaymentStatusBarChart data={paymentData} />
+        <PaymentStatusBarChart data={paymentData} onStatusClick={onStatusClick} />
       </Section>
 
       {/* Modalities */}

@@ -30,6 +30,12 @@ export default function OrganizerDashboard() {
   const [branchFilter, setBranchFilter] = useState("all");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
 
+  // Clicar num card de status nas Estatísticas abre a aba Atletas já filtrada
+  const handleStatusCardClick = (status: string) => {
+    setPaymentStatusFilter(status);
+    setActiveTab("athletes");
+  };
+
   const {
     isRefreshing,
     branches,
@@ -60,7 +66,7 @@ export default function OrganizerDashboard() {
             description="Não encontramos dados de análise para exibir neste momento"
           />;
         }
-        return <StatisticsTab data={branchAnalytics} />;
+        return <StatisticsTab data={branchAnalytics} onStatusClick={handleStatusCardClick} />;
 
       case "athletes":
         if (isLoading.athletes || isLoading.branches) {

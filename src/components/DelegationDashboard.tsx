@@ -29,6 +29,12 @@ export default function DelegationDashboard() {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("statistics");
 
+  // Clicar num card de status nas Estatísticas abre a aba Atletas já filtrada
+  const handleStatusCardClick = (status: string) => {
+    setPaymentStatusFilter(status);
+    setActiveTab("athletes");
+  };
+
   // Check if the user is a delegation representative
   const isDelegationRep = user?.papeis?.some(role => role.codigo === 'RDD') || false;
   const isOrganizer = user?.papeis?.some(role => role.codigo === 'ORG') || false;
@@ -84,6 +90,7 @@ export default function DelegationDashboard() {
           <StatisticsTab
             data={branchAnalytics}
             currentBranchId={primaryFilialId}
+            onStatusClick={handleStatusCardClick}
           />
         );
 

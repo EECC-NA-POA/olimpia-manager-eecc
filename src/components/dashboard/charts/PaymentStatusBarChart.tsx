@@ -14,11 +14,14 @@ interface PaymentStatusData {
   isentoPct: number;
 }
 
+export type PaymentStatusKey = 'confirmado' | 'pendente' | 'isento' | 'cancelado';
+
 interface PaymentStatusBarChartProps {
   data: PaymentStatusData[];
   chartConfig?: any;
   title?: string;
   description?: string;
+  onStatusClick?: (status: PaymentStatusKey) => void;
 }
 
 const STATUS = [
@@ -28,7 +31,7 @@ const STATUS = [
   { key: 'cancelado'  as const, pctKey: 'canceladoPct'  as const, label: 'Cancelado',  color: 'bg-red-400',    text: 'text-red-700',    bg: 'bg-red-50',    border: 'border-red-200',    Icon: XCircle },
 ] as const;
 
-export function PaymentStatusBarChart({ data }: PaymentStatusBarChartProps) {
+export function PaymentStatusBarChart({ data, onStatusClick }: PaymentStatusBarChartProps) {
   if (!data || data.length === 0) return null;
 
   const d = data[0];
@@ -44,16 +47,38 @@ export function PaymentStatusBarChart({ data }: PaymentStatusBarChartProps) {
         visible.length === 2 ? "grid-cols-2" :
         visible.length === 3 ? "grid-cols-3" : "grid-cols-2 sm:grid-cols-4"
       )}>
-        {visible.map(s => (
-          <div key={s.key} className={cn("rounded-xl border p-3 flex items-center gap-3", s.bg, s.border)}>
-            <s.Icon className={cn("h-5 w-5 flex-shrink-0", s.text)} />
-            <div className="min-w-0">
-              <p className={cn("text-xl font-bold leading-none", s.text)}>{d[s.key]}</p>
-              <p className={cn("text-xs mt-0.5 font-medium", s.text)}>{s.label}</p>
-              <p className="text-[11px] text-muted-foreground">{d[s.pctKey].toFixed(0)}%</p>
+        {visible.map(s => {
+          const content = (
+            <>
+              <s.Icon className={cn("h-5 w-5 flex-shrink-0", s.text)} />
+              <div className="min-w-0 text-left">
+                <p className={cn("text-xl font-bold leading-none", s.text)}>{d[s.key]}</p>
+                <p className={cn("text-xs mt-0.5 font-medium", s.text)}>{s.label}</p>
+                <p className="text-[11px] text-muted-foreground">{d[s.pctKey].toFixed(0)}%</p>
+              </div>
+            </>
+          );
+
+          return onStatusClick ? (
+            <button
+              key={s.key}
+              type="button"
+              onClick={() => onStatusClick(s.key)}
+              title={`Ver atletas com pagamento ${s.label.toLowerCase()}`}
+              className={cn(
+                "rounded-xl border p-3 flex items-center gap-3 cursor-pointer transition-shadow",
+                "hover:shadow-md hover:ring-2 hover:ring-offset-1 hover:ring-current focus-visible:ring-2",
+                s.bg, s.border
+              )}
+            >
+              {content}
+            </button>
+          ) : (
+            <div key={s.key} className={cn("rounded-xl border p-3 flex items-center gap-3", s.bg, s.border)}>
+              {content}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Barra segmentada */}

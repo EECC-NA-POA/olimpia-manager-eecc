@@ -45,7 +45,7 @@ export const fetchAthleteManagement = async (filialIds: string[] | undefined, ev
     if (data) {
       data.forEach(record => {
         if (!athletesMap.has(record.atleta_id)) {
-          const paymentStatus = record.isento ? 'confirmado' : (record.status_pagamento || 'pendente');
+          const paymentStatus = record.status_pagamento || 'pendente';
 
           athletesMap.set(record.atleta_id, {
             id: record.atleta_id,
@@ -59,7 +59,7 @@ export const fetchAthleteManagement = async (filialIds: string[] | undefined, ev
             status_confirmacao: record.status_confirmacao,
             filial_id: record.filial_id,
             filial_nome: record.filial_nome,
-            status_pagamento: paymentStatus as 'pendente' | 'confirmado' | 'cancelado',
+            status_pagamento: paymentStatus as 'pendente' | 'confirmado' | 'cancelado' | 'isento',
             usuario_registrador_id: record.usuario_registrador_id,
             registrador_nome: record.registrador_nome,
             registrador_email: record.registrador_email,
@@ -74,7 +74,7 @@ export const fetchAthleteManagement = async (filialIds: string[] | undefined, ev
           const modalityExists = athlete.modalidades.some(m => m.id === record.inscricao_id);
 
           if (!modalityExists && record.inscricao_id) {
-            const modalityStatus = record.isento ? 'confirmado' : (record.status_inscricao || 'pendente');
+            const modalityStatus = record.status_inscricao || 'pendente';
 
             athlete.modalidades.push({
               id: record.inscricao_id.toString(),
@@ -188,7 +188,7 @@ export const fetchAthleteManagement = async (filialIds: string[] | undefined, ev
             registradorInfo = registrador;
           }
 
-          const paymentStatus = eventReg.isento ? 'confirmado' : (eventReg.status_pagamento || 'pendente');
+          const paymentStatus = eventReg.status_pagamento || 'pendente';
 
           athletesMap.set(eventReg.usuario_id, {
             id: athleteData.id,
@@ -202,7 +202,7 @@ export const fetchAthleteManagement = async (filialIds: string[] | undefined, ev
             status_confirmacao: eventReg.status_confirmacao || false,
             filial_id: athleteData.filial_id,
             filial_nome: filialData?.nome || null,
-            status_pagamento: paymentStatus as 'pendente' | 'confirmado' | 'cancelado',
+            status_pagamento: paymentStatus as 'pendente' | 'confirmado' | 'cancelado' | 'isento',
             usuario_registrador_id: eventReg.usuario_registrador_id,
             registrador_nome: registradorInfo?.nome_completo || null,
             registrador_email: registradorInfo?.email || null,
