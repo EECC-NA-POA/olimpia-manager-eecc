@@ -16,6 +16,7 @@ import { usePaymentHandlers } from './athlete-card/hooks/usePaymentHandlers';
 import { EnrollAthleteDialog } from './athlete-card/EnrollAthleteDialog';
 import { EnrollmentType } from '@/hooks/useEnrollAthleteInModality';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDelegacaoFiliais } from '@/hooks/useDelegacoes';
 import { UserPlus } from 'lucide-react';
 
 interface AthleteRegistrationCardProps {
@@ -49,6 +50,19 @@ export function AthleteRegistrationCard({
 
   const effectiveEventId = eventId || currentEventId;
 
+  // Quem pode conceder isenção: ADM/ORG (qualquer atleta) ou RDD (só da própria delegação).
+  // A RPC valida de novo no servidor; aqui é só UX.
+  const isAdminOrg = user?.papeis?.some(r => ['ADM', 'ORG', 'ORE'].includes(r.codigo)) ?? false;
+  const isDelegationRep = user?.papeis?.some(r => r.codigo === 'RDD') ?? false;
+  const { data: delegacaoFiliais } = useDelegacaoFiliais(
+    isDelegationRep ? user?.id : undefined,
+    isDelegationRep ? (effectiveEventId || undefined) : undefined
+  );
+  const canManageExemption =
+    !readOnly &&
+    (isAdminOrg || (isDelegationRep && !!registration.filial_id &&
+      (delegacaoFiliais ?? []).includes(registration.filial_id)));
+
   const {
     paymentData,
     refetchPayment,
@@ -56,10 +70,10 @@ export function AthleteRegistrationCard({
     isDependent
   } = useAthleteCardData(registration);
 
-  const { isExempt, isUpdatingExemption, handleExemptionChange } = useExemptionStatus({
+  const { isExempt, isUpdatingExemption, exemptionInfo, handleExemptionChange } = useExemptionStatus({
     userId: registration.id,
     eventId: registration.evento_id,
-    isCurrentUser,
+    canManage: canManageExemption,
     refetchPayment
   });
 
@@ -208,10 +222,11 @@ export function AthleteRegistrationCard({
           )}
 
           <ExemptionCheckbox
-            isCurrentUser={isCurrentUser}
+            canManage={canManageExemption}
             isExempt={isExempt}
             isUpdatingExemption={isUpdatingExemption}
             onExemptionChange={handleExemptionChange}
+            exemptionInfo={exemptionInfo}
             disabled={readOnly}
           />
         </DialogContent>
