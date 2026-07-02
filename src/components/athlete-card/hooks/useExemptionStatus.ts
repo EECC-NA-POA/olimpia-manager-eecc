@@ -4,129 +4,105 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
+interface ExemptionInfo {
+  isento_por: string | null;
+  isento_em: string | null;
+  isento_justificativa: string | null;
+  isento_por_nome: string | null;
+}
+
 interface UseExemptionStatusProps {
   userId: string;
   eventId: string;
-  isCurrentUser: boolean;
+  canManage: boolean;
   refetchPayment: () => Promise<any>;
 }
 
-export const useExemptionStatus = ({ 
-  userId, 
-  eventId, 
-  isCurrentUser, 
-  refetchPayment 
+export const useExemptionStatus = ({
+  userId,
+  eventId,
+  canManage,
+  refetchPayment
 }: UseExemptionStatusProps) => {
   const [isExempt, setIsExempt] = useState(false);
   const [isUpdatingExemption, setIsUpdatingExemption] = useState(false);
+  const [exemptionInfo, setExemptionInfo] = useState<ExemptionInfo | null>(null);
   const queryClient = useQueryClient();
 
-  // Check if user is exempt using pagamentos table
+  // Lê o estado de isenção (só para quem gerencia)
   useEffect(() => {
     const checkExemptionStatus = async () => {
-      if (!isCurrentUser) return;
-      
+      if (!canManage) return;
+
       try {
-        console.log('Checking exemption status for user:', userId, 'event:', eventId);
-        
         const { data, error } = await supabase
           .from('pagamentos')
-          .select('isento, status')
+          .select('isento, status, isento_por, isento_em, isento_justificativa')
           .eq('atleta_id', userId)
           .eq('evento_id', eventId)
           .single();
-        
+
         if (error) {
-          console.error('Error checking exemption status:', error);
-          // If no payment record exists, assume not exempt
           setIsExempt(false);
+          setExemptionInfo(null);
           return;
         }
-        
-        console.log('Exemption data:', data);
-        // Consider exempt if either isento flag is true OR status is "isento"
-        setIsExempt(data?.isento || data?.status === 'isento');
+
+        const exempt = !!data?.isento || data?.status === 'isento';
+        setIsExempt(exempt);
+
+        if (exempt && data?.isento_por) {
+          const { data: grantor } = await supabase
+            .from('usuarios')
+            .select('nome_completo')
+            .eq('id', data.isento_por)
+            .single();
+          setExemptionInfo({
+            isento_por: data.isento_por,
+            isento_em: data.isento_em,
+            isento_justificativa: data.isento_justificativa,
+            isento_por_nome: grantor?.nome_completo ?? null,
+          });
+        } else {
+          setExemptionInfo(null);
+        }
       } catch (error) {
         console.error('Error in checkExemptionStatus:', error);
         setIsExempt(false);
+        setExemptionInfo(null);
       }
     };
 
     checkExemptionStatus();
-  }, [isCurrentUser, userId, eventId]);
+  }, [canManage, userId, eventId]);
 
-  const handleExemptionChange = async (checked: boolean) => {
-    if (!isCurrentUser) return;
-    
+  const handleExemptionChange = async (checked: boolean, justificativa?: string) => {
+    if (!canManage) return;
+
     setIsUpdatingExemption(true);
-    console.log('Updating exemption status:', { 
-      userId, 
-      eventId, 
-      checked 
-    });
-    
     try {
-      // First, check if payment record exists
-      const { data: existingPayment, error: checkError } = await supabase
-        .from('pagamentos')
-        .select('id, isento, valor, status, taxas_inscricao ( valor )')
-        .eq('atleta_id', userId)
-        .eq('evento_id', eventId)
-        .single();
+      const { error } = await supabase.rpc('conceder_isencao', {
+        p_atleta_id: userId,
+        p_evento_id: eventId,
+        p_isento: checked,
+        p_justificativa: justificativa ?? null,
+      });
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Error checking existing payment record:', checkError);
-        throw new Error('Erro ao verificar registro de pagamento');
+      if (error) {
+        console.error('Error updating exemption via RPC:', error);
+        throw new Error(error.message);
       }
-
-      console.log('Existing payment record:', existingPayment);
-
-      // If payment record doesn't exist, we need to create one first
-      if (!existingPayment) {
-        console.log('Payment record not found, cannot update exemption status');
-        throw new Error('Registro de pagamento não encontrado. O pagamento deve ser criado primeiro.');
-      }
-
-      // Ao desmarcar, o valor atual já foi zerado pela isenção — restaurar da taxa vinculada
-      const taxaValor = (existingPayment.taxas_inscricao as any)?.valor ?? existingPayment.valor;
-
-      // Update exemption status in pagamentos table
-      const updateData: any = {
-        isento: checked,
-        status: checked ? 'isento' : 'pendente', // Set status to "isento" when exempt, "pendente" when not
-        valor: checked ? 0 : taxaValor
-      };
-
-      console.log('Updating payment with data:', updateData);
-
-      const { error: updateError } = await supabase
-        .from('pagamentos')
-        .update(updateData)
-        .eq('atleta_id', userId)
-        .eq('evento_id', eventId);
-
-      if (updateError) {
-        console.error('Error updating exemption in payments:', updateError);
-        throw updateError;
-      }
-
-      console.log('Exemption updated successfully');
 
       setIsExempt(checked);
       await refetchPayment();
-      
-      // Invalidate queries to refresh the data
-      await queryClient.invalidateQueries({ 
-        queryKey: ['athlete-management', eventId]
-      });
-      await queryClient.invalidateQueries({ 
-        queryKey: ['branch-analytics', eventId]
-      });
 
-      toast.success(checked ? 'Marcado como isento com sucesso!' : 'Isenção removida com sucesso!');
+      await queryClient.invalidateQueries({ queryKey: ['athlete-management', eventId] });
+      await queryClient.invalidateQueries({ queryKey: ['branch-analytics', eventId] });
+
+      toast.success(checked ? 'Atleta marcado como isento!' : 'Isenção removida com sucesso!');
     } catch (error: any) {
       console.error('Error updating exemption:', error);
-      toast.error('Erro ao atualizar status de isenção: ' + (error.message || 'Erro desconhecido'));
+      toast.error('Erro ao atualizar isenção: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setIsUpdatingExemption(false);
     }
@@ -135,6 +111,7 @@ export const useExemptionStatus = ({
   return {
     isExempt,
     isUpdatingExemption,
+    exemptionInfo,
     handleExemptionChange
   };
 };
