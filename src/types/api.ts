@@ -51,6 +51,7 @@ export interface Branch {
 export interface ModalidadePopular {
   modalidade: string;
   total_inscritos: number;
+  status_inscricao?: string;
   status_pagamento?: string;
   filial?: string;
 }
