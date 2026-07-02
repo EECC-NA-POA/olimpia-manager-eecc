@@ -5,6 +5,7 @@
 // O conteúdo é embutido no build (import ?raw do Vite) — sem fetch em runtime.
 
 import papeisPermissoes from '../../../docs/PAPEIS_E_PERMISSOES.md?raw';
+import modeloPagamento from '../../../docs/MODELO_DE_PAGAMENTO.md?raw';
 
 export type DocCategory = 'Referência' | 'Atualização' | 'Melhoria' | 'Correção';
 
@@ -18,6 +19,14 @@ export interface DocEntry {
 }
 
 export const DOCS: DocEntry[] = [
+  {
+    slug: 'modelo-de-pagamento',
+    title: 'Modelo de Pagamento',
+    description: 'Taxa por perfil, ciclo de vida do valor, isenção e como o Total Pago é calculado.',
+    category: 'Referência',
+    updatedAt: '2026-07-02',
+    content: modeloPagamento,
+  },
   {
     slug: 'papeis-e-permissoes',
     title: 'Papéis e Permissões',
