@@ -37,8 +37,8 @@ export default function PaymentAndBranchInfo({
             <CreditCard className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm">
               Status do Pagamento: {' '}
-              <span className={`font-medium ${pagamento_status === 'confirmado' ? 'text-green-600' : 'text-orange-500'}`}>
-                {pagamento_status === 'confirmado' ? 'Confirmado' : 'Pendente'}
+              <span className={`font-medium ${pagamento_status === 'confirmado' ? 'text-green-600' : pagamento_status === 'isento' ? 'text-blue-600' : 'text-orange-500'}`}>
+                {pagamento_status === 'confirmado' ? 'Confirmado' : pagamento_status === 'isento' ? 'Isento' : 'Pendente'}
               </span>
             </span>
           </p>
@@ -46,8 +46,8 @@ export default function PaymentAndBranchInfo({
             <CreditCard className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm">
               Valor do Pagamento: {' '}
-              <span className={`font-medium ${pagamento_status === 'confirmado' ? 'text-green-600' : 'text-orange-500'}`}>
-                {formatCurrency(pagamento_valor)}
+              <span className={`font-medium ${pagamento_status === 'confirmado' ? 'text-green-600' : pagamento_status === 'isento' ? 'text-blue-600' : 'text-orange-500'}`}>
+                {pagamento_status === 'isento' ? 'Isento' : formatCurrency(pagamento_valor)}
               </span>
             </span>
           </p>
