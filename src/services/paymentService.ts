@@ -78,9 +78,11 @@ export async function submitEventPayment(
         const valor = Array.isArray(taxaInfo) ? taxaInfo[0]?.valor : taxaInfo?.valor || 0;
         const identifier = `PAY-${userId.slice(0, 4)}-${Date.now().toString().slice(-6)}`;
 
+        // upsert por (atleta_id, evento_id): garante 1 pagamento por atleta/evento
+        // e evita corrida do check-then-insert (constraint pagamentos_atleta_evento_unico)
         const { data, error } = await supabase
             .from('pagamentos')
-            .insert({
+            .upsert({
                 atleta_id: userId,
                 evento_id: eventId,
                 taxa_inscricao_id: taxaId,
@@ -90,7 +92,7 @@ export async function submitEventPayment(
                 numero_identificador: identifier,
                 data_criacao: new Date().toISOString(),
                 isento: false
-            })
+            }, { onConflict: 'atleta_id,evento_id' })
             .select()
             .single();
 
