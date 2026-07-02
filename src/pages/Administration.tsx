@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Calendar, FileText, Users, BookOpen, Settings, UserCheck, CalendarIcon } from 'lucide-react';
+import { Calendar, FileText, Users, BookOpen, Settings, UserCheck, CalendarIcon, Library } from 'lucide-react';
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { useEventData } from '@/hooks/useEventData';
 import { EventBasicInfo } from '@/components/event-management/EventBasicInfo';
@@ -19,6 +19,7 @@ import { EventRegulationsSection } from '@/components/event-management/EventRegu
 import { ModeloConfigurationSection } from '@/components/event-management/modelo-configuration/ModeloConfigurationSection';
 import { EventProfilesSection } from '@/components/event-management/EventProfilesSection';
 import { EventAdministrationSection } from '@/components/event-management/EventAdministrationSection';
+import { EventDocumentationsSection } from '@/components/event-management/EventDocumentationsSection';
 
 export default function Administration() {
   const navigate = useNavigate();
@@ -130,12 +131,19 @@ export default function Administration() {
                     <Calendar className="h-4 w-4 flex-shrink-0" />
                     <span>{isMobile ? "Modalidades" : "Regras de Modalidades"}</span>
                   </TabsTrigger>
-                  <TabsTrigger 
+                  <TabsTrigger
                     value="modelo-configuration"
                     className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
                   >
                     <Settings className="h-4 w-4 flex-shrink-0" />
                     <span>{isMobile ? "Config" : "Configuração de Modelos"}</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="documentations"
+                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-olimpics-green-primary rounded-none whitespace-nowrap"
+                  >
+                    <Library className="h-4 w-4 flex-shrink-0" />
+                    <span>{isMobile ? "Docs" : "Documentações"}</span>
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -167,6 +175,10 @@ export default function Administration() {
 
                 <TabsContent value="modelo-configuration" className="mt-2 sm:mt-6">
                   <ModeloConfigurationSection eventId={currentEventId} />
+                </TabsContent>
+
+                <TabsContent value="documentations" className="mt-2 sm:mt-6">
+                  <EventDocumentationsSection />
                 </TabsContent>
               </div>
             </Tabs>
