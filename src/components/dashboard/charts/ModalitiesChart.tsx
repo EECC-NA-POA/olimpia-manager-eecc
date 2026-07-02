@@ -21,18 +21,22 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 export function ModalitiesChart({ data }: Props) {
-  // modalidades_populares in the analytics view contains event-wide totals
-  // repeated in every branch row — so we only read from the first record.
+  // modalidades_populares is event-wide and repeated identically in every branch
+  // row, with one entry per (modalidade × filial × status_pagamento) — so read
+  // one row, keep only the branches being displayed, and SUM the slices.
+  const selectedBranches = new Set(data.map(b => b.filial));
   const source = data[0]?.modalidades_populares || [];
   const map = new Map<string, number>();
-  source.forEach(m => map.set(m.modalidade, m.total_inscritos));
+  source.forEach(m => {
+    if (m.filial && !selectedBranches.has(m.filial)) return;
+    map.set(m.modalidade, (map.get(m.modalidade) ?? 0) + m.total_inscritos);
+  });
 
   if (map.size === 0) return null;
 
   const sorted = Array.from(map.entries())
     .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 12);
+    .sort((a, b) => b.value - a.value);
 
   const chartHeight = sorted.length * 36 + 20;
 
