@@ -108,7 +108,7 @@ export function EventDocumentationsSection() {
 
       {/* Conteúdo do documento selecionado */}
       {selected && (
-        <Card>
+        <Card className="min-w-0">
           <CardContent className="pt-6">
             <div className="flex flex-wrap items-center gap-2 mb-4 pb-3 border-b border-border">
               <h2 className="text-lg font-bold text-foreground">{selected.title}</h2>
