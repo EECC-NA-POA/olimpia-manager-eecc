@@ -6,6 +6,7 @@
 
 import papeisPermissoes from '../../../docs/PAPEIS_E_PERMISSOES.md?raw';
 import modeloPagamento from '../../../docs/MODELO_DE_PAGAMENTO.md?raw';
+import guiaDeTestes from '../../../docs/GUIA_DE_TESTES.md?raw';
 
 export type DocCategory = 'Referência' | 'Atualização' | 'Melhoria' | 'Correção';
 
@@ -19,6 +20,14 @@ export interface DocEntry {
 }
 
 export const DOCS: DocEntry[] = [
+  {
+    slug: 'guia-de-testes',
+    title: 'Guia de Teste de Fluxo',
+    description: 'Roteiro da reunião de validação: papéis, setup, rodadas de teste e como registrar bugs.',
+    category: 'Referência',
+    updatedAt: '2026-07-02',
+    content: guiaDeTestes,
+  },
   {
     slug: 'modelo-de-pagamento',
     title: 'Modelo de Pagamento',
