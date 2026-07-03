@@ -52,11 +52,13 @@ export function AppSidebar({ isHeaderVisible }: AppSidebarProps) {
       {/* Logo */}
       <SidebarHeader className="border-b p-0 flex-shrink-0" style={{ borderColor: 'hsl(var(--sidebar-border))' }}>
         <div className="flex items-center gap-3 px-4 h-16">
-          <img
-            src="/lovable-uploads/EECC_marca_portugues_cores_RGB.png"
-            alt="EECC Logo"
-            className="h-9 w-9 object-contain flex-shrink-0 brightness-0 invert"
-          />
+          <div className="h-9 w-9 rounded-lg bg-white flex items-center justify-center flex-shrink-0 p-1">
+            <img
+              src="/lovable-uploads/EECC_marca_portugues_cores_RGB.png"
+              alt="EECC Logo"
+              className="h-full w-full object-contain"
+            />
+          </div>
           <div className="group-data-[collapsible=icon]:hidden min-w-0 flex-1">
             <p className="text-white font-semibold text-sm leading-tight truncate">Olímpia Manager</p>
             <p className="text-white/50 text-xs leading-tight">Gestão Esportiva</p>

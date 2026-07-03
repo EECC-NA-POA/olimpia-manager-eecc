@@ -56,7 +56,7 @@ export function MainNavigation({ children }: MainNavigationProps) {
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-olimpics-background">
         <AppSidebar isHeaderVisible={isHeaderVisible} />
-        <SidebarInset className="flex-1 w-full">
+        <SidebarInset className="flex-1 w-full min-w-0">
           {/* Botão de colapsar/expandir sidebar — visível apenas no desktop */}
           <div className="hidden md:flex items-center h-12 px-4 border-b border-border/40 sticky top-0 bg-background/95 backdrop-blur z-10">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
