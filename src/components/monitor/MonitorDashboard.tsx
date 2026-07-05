@@ -1,5 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClipboardList, CalendarDays, Bell, TrendingUp, LayoutGrid } from "lucide-react";
 import MonitorModalitiesPage from './MonitorModalitiesPage';
@@ -10,6 +13,10 @@ import { MonitorSchedulePage } from './MonitorSchedulePage';
 import { useMonitorModalities } from '@/hooks/useMonitorModalities';
 import { useAllMonitorSessions } from '@/hooks/useAllMonitorSessions';
 
+// Papéis com acesso: Filósofo Monitor (dono das próprias modalidades) e
+// ADM/ORG/ORE/MST (visão geral, tratada dentro de MonitorAttendancePage).
+const ALLOWED_CODES = ['FMON', 'FMO', 'ADM', 'ORG', 'ORE', 'MST'];
+
 const TABS = [
   { id: "chamadas",    label: "Chamadas",      Icon: ClipboardList },
   { id: "modalidades", label: "Modalidades",   Icon: LayoutGrid    },
@@ -19,9 +26,21 @@ const TABS = [
 ];
 
 export default function MonitorDashboard() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("chamadas");
   const { data: modalities } = useMonitorModalities();
   const { data: sessions } = useAllMonitorSessions();
+
+  const rolesLoaded = Array.isArray(user?.papeis);
+  const hasAccess = !!user?.is_master || (user?.papeis?.some(role => ALLOWED_CODES.includes(role.codigo)) ?? false);
+
+  useEffect(() => {
+    if (rolesLoaded && !hasAccess) {
+      toast.error('Você não tem permissão para acessar esta página');
+      navigate('/');
+    }
+  }, [rolesLoaded, hasAccess, navigate]);
 
   const totalSessions   = sessions?.length ?? 0;
   const totalModalities = modalities?.length ?? 0;
