@@ -1,5 +1,6 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +23,7 @@ import { WhatsAppGroupsTab } from "./dashboard/tabs/WhatsAppGroupsTab";
 
 export default function DelegationDashboard() {
   const { user, currentEventId } = useAuth();
+  const navigate = useNavigate();
 
   // Filter states
   const [nameFilter, setNameFilter] = useState("");
@@ -38,6 +40,16 @@ export default function DelegationDashboard() {
   // Check if the user is a delegation representative
   const isDelegationRep = user?.papeis?.some(role => role.codigo === 'RDD') || false;
   const isOrganizer = user?.papeis?.some(role => role.codigo === 'ORG') || false;
+  const isAdminOrMaster = !!user?.is_master || (user?.papeis?.some(role => ['ADM', 'MST'].includes(role.codigo)) ?? false);
+  const rolesLoaded = Array.isArray(user?.papeis);
+
+  // Sem o papel certo, redireciona (rota não tinha nenhuma guarda antes)
+  useEffect(() => {
+    if (rolesLoaded && !isDelegationRep && !isOrganizer && !isAdminOrMaster) {
+      toast.error('Você não tem permissão para acessar esta página');
+      navigate('/');
+    }
+  }, [rolesLoaded, isDelegationRep, isOrganizer, isAdminOrMaster, navigate]);
 
   // Get the filial IDs from the delegation scope (or fallback to user.filial_id)
   const { data: delegacaoFiliais } = useDelegacaoFiliais(user?.id, currentEventId || undefined);
