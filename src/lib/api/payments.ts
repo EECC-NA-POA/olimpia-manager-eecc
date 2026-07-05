@@ -7,10 +7,11 @@ export const updatePaymentAmount = async (
   eventId: string
 ): Promise<void> => {
   const { error } = await supabase
-    .from('pagamentos')
-    .update({ valor: amount })
-    .eq('atleta_id', athleteId)
-    .eq('evento_id', eventId);
+    .rpc('atualizar_valor_pagamento', {
+      p_atleta_id: athleteId,
+      p_novo_valor: amount,
+      p_evento_id: eventId,
+    });
 
   if (error) {
     console.error('Error updating payment amount:', error);
