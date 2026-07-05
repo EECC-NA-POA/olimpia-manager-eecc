@@ -95,7 +95,10 @@ else {
 Write-Host ""
 Write-Host "Próximos passos:" -ForegroundColor Cyan
 Write-Host "1. Verifique o arquivo .env na raiz do projeto para confirmar que está correto" -ForegroundColor White
-Write-Host "2. NÃO commite o arquivo .env no Git (já está protegido pelo .gitignore)" -ForegroundColor Yellow
+Write-Host "2. ATENÇÃO: este .env agora contém SEGREDOS DE SERVIDOR (service_role e private key" -ForegroundColor Red
+Write-Host "   do Firebase). NUNCA faça commit deste arquivo. Rode 'git status' e confirme que .env" -ForegroundColor Red
+Write-Host "   NÃO aparece como rastreado. Prefira manter esses segredos em cofre/variáveis do host," -ForegroundColor Red
+Write-Host "   não em arquivo no repositório." -ForegroundColor Red
 Write-Host "3. Reinicie o Supabase se estiver usando Docker Compose" -ForegroundColor White
 Write-Host "4. Teste o envio de notificações" -ForegroundColor White
 Write-Host ""
