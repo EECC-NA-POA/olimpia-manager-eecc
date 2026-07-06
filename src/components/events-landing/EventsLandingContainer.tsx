@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { createClient } from '@supabase/supabase-js';
+import { supabasePublic } from '@/lib/supabase-public';
 import { EventsHeader } from './EventsHeader';
 import { EventsFilters } from './EventsFilters';
 import { EventsGrid } from './EventsGrid';
@@ -13,17 +13,6 @@ import { Calendar } from 'lucide-react';
 type FilterStatus = 'all' | 'open' | 'closed' | 'upcoming';
 type SortBy = 'date' | 'name';
 
-// Create a public-only Supabase client for anonymous access
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://sb.nova-acropole.org.br/';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiLm5vdmEtYWNyb3BvbGUub3JnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTc0NzY4MDAsImV4cCI6MjAxMzA1MjgwMH0.xyz123';
-
-const publicSupabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  }
-});
-
 export function EventsLandingContainer() {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [sortBy, setSortBy] = useState<SortBy>('date');
@@ -33,7 +22,7 @@ export function EventsLandingContainer() {
     queryFn: async () => {
       console.log('Fetching public events from view with anonymous client...');
       
-      const { data, error } = await publicSupabase
+      const { data, error } = await supabasePublic
         .from('vw_eventos_publicos_abertos')
         .select('*')
         .order('data_inicio_inscricao', { ascending: false });
