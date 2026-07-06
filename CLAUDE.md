@@ -8,7 +8,7 @@ Sistema de gestão de olimpíadas/eventos esportivos da Nova Acrópole Brasil (p
 
 ## Fluxo de trabalho (OBRIGATÓRIO)
 
-- **Produção builda automaticamente da branch `main`** — merge em `main` = deploy.
+- **Produção builda automaticamente da branch `main`** — merge em `main` = deploy. **Há também um pipeline de build/deploy gerenciado por um terceiro, separado do build nativo da Lovable** (o usuário não tem acesso a ele neste projeto). Esse pipeline aparentemente roda `npm ci` (editar `package-lock.json` quebra a atualização automática dele — se isso acontecer, é preciso avisar o operador para ajustar manualmente do lado dele). **Suas próprias variáveis de ambiente** (`VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY`) precisam estar configuradas nele — não basta configurar só na Lovable. Já aconteceu de um build de produção subir sem essas env vars (ver "Falha alta e visível..." abaixo) — se voltar a acontecer, é sinal de que esse pipeline terceiro está com a configuração incompleta.
 - Toda mudança vai por **feature branch → PR → merge em `main`**. Nunca commitar direto na `main`.
 - Mensagens de commit/PR: pode usar ASCII simples (o ambiente às vezes quebra acentos no shell).
 - Após o deploy, mudanças podem exigir **Ctrl+Shift+R** (cache de bundle na Lovable).
@@ -64,6 +64,12 @@ Auditoria completa (13 eixos: segredos, authz, RLS, deps, LGPD etc.) rodada em 2
 - Edge Functions `process-event-registration` e `send-payment-proof` foram **removidas** (usavam `service_role` sem checar JWT/vínculo, e eram órfãs — nada no app as invocava). Antes de criar uma Edge Function nova, confirmar que algo realmente a chama (`supabase.functions.invoke`) e que ela valida o JWT do chamador se não for `SECURITY DEFINER`-equivalente.
 - **Follow-up conhecido, não corrigido (baixa prioridade):** `inscricoes_eventos_select_policy` permite SELECT amplo (`qual=true`) a qualquer autenticado — não corrigido para evitar quebrar dashboards que dependem dessa leitura ampla sem auditoria prévia de todos os consumidores. Revisar se for mexer nessa tabela.
 - **Bug funcional conhecido, não é segurança:** `storageService.ts` usa `getPublicUrl` no bucket `payment-proofs`, que é **privado** (`public=false`, confirmado) — a URL gerada não abre. Devia usar `createSignedUrl` (já existe `getSignedPaymentProofUrl` no código, subutilizado).
+
+## Falha alta e visível quando faltam env vars do Supabase (2026-07-06)
+
+Login e busca de `filiais` (campos País/Estado/Sede no cadastro) falhavam intermitentemente com **401 `{"message":"Invalid authentication credentials"}`**. Causa raiz confirmada por teste direto no servidor (comparando `apikey` correta vs. ausente vs. inválida — só a inválida reproduz essa mensagem exata): `src/lib/supabase.ts`, `src/lib/supabase-public.ts` e uma 3ª instância duplicada em `EventsLandingContainer.tsx` tinham, cada um, um **fallback local diferente** para quando `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` não estavam definidas no ambiente de build — o app subia normalmente com uma chave falsa embutida, e só falhava depois, de forma intermitente (dependendo de qual build/deploy estava no ar) e sem relação óbvia com a causa real.
+
+**Corrigido:** `src/lib/requireSupabaseEnv.ts` centraliza a checagem — se as env vars faltarem, renderiza uma tela de erro clara e interrompe o boot, em vez de seguir com uma chave falsa; `vite.config.ts` agora aborta o build de produção (`process.exit(1)`) se essas env vars não estiverem no ambiente do build. **Lição:** nunca usar fallback silencioso para credencial de serviço externo — se cada arquivo inventa seu próprio fallback, uma env var faltando vira um bug "fantasma" difícil de diagnosticar; prefira falhar alto e cedo, no boot ou no build.
 
 ## Papéis de usuário
 
