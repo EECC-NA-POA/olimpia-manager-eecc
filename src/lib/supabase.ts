@@ -1,12 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import { CapacitorStorageAdapter } from './storageAdapter';
+import { requireSupabaseEnv } from './requireSupabaseEnv';
 
-// Use environment variables with fallback values
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://sb.nova-acropole.org.br';
-// Fallback propositalmente inválido (sem formato JWT) para que o servidor
-// rejeite imediatamente em vez de tentar verificar assinatura JWT — o que
-// poderia causar timeout de rede e travar a inicialização do app.
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'VITE_SUPABASE_ANON_KEY_NAO_CONFIGURADA';
+const { url: supabaseUrl, anonKey: supabaseAnonKey } = requireSupabaseEnv(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 console.log('🔧 Supabase Configuration:', {
   url: supabaseUrl,
