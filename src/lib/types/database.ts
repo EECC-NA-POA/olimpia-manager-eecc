@@ -19,6 +19,11 @@ export interface Event {
   visibilidade_publica: boolean;
   slug_pagina: string | null;
   pagina_evento: string | null;
+  // Página pública de divulgação (migração 20261028_pagina_publica_evento.sql).
+  // undefined = migração ainda não aplicada no banco.
+  pagina_publica_ativa?: boolean;
+  pagina_publica_slug?: string | null;
+  pagina_publica_texto?: string | null;
 }
 
 export interface EventBranch {

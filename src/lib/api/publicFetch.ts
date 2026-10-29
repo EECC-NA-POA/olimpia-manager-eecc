@@ -48,3 +48,38 @@ export async function publicFetch<T>(
 
   return response.json() as Promise<T[]>;
 }
+
+/**
+ * Chama uma RPC pública (função SQL com GRANT para anon) via REST.
+ * Mesmo esquema de headers de publicFetch: só apikey, sem Authorization.
+ */
+export async function publicRpc<T>(
+  fn: string,
+  args: Record<string, unknown> = {}
+): Promise<T> {
+  if (!SUPABASE_URL) {
+    throw new Error('VITE_SUPABASE_URL não está configurada no ambiente de build.');
+  }
+
+  const headers: HeadersInit = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  };
+
+  if (SUPABASE_ANON_KEY) {
+    headers['apikey'] = SUPABASE_ANON_KEY;
+  }
+
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(args),
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`Erro ao chamar ${fn}: HTTP ${response.status} ${body}`);
+  }
+
+  return response.json() as Promise<T>;
+}

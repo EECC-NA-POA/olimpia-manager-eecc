@@ -6,7 +6,7 @@ import { supabase, handleSupabaseError, recoverSession } from '@/lib/supabase';
 import i18n from '@/i18n';
 import { updateLastActivity, setFirstLoginIfNeeded, clearSessionTimestamps, isSessionExpiredByInactivity } from '@/lib/storageAdapter';
 import { AuthContextType, AuthUser } from '@/types/auth';
-import { PUBLIC_ROUTES, PublicRoute } from '@/constants/routes';
+import { isPublicRoute } from '@/constants/routes';
 import { fetchUserProfile, handleAuthRedirect, clearUserProfileCache } from '@/services/authService';
 import { AuthContext } from '@/contexts/AuthContext';
 import { useAuthOperations } from '@/hooks/useAuthOperations';
@@ -210,7 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('📊 Session status:', { hasSession: !!session });
 
         if (!session?.user) {
-          if (!PUBLIC_ROUTES.includes(initialPathname as PublicRoute) && initialPathname !== '/reset-password') {
+          if (!isPublicRoute(initialPathname) && initialPathname !== '/reset-password') {
             console.log('❌ No session and not on public route, redirecting to /');
             navigate('/', { replace: true });
           }
