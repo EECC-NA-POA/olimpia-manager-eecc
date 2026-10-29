@@ -7,6 +7,7 @@
 import papeisPermissoes from '../../../docs/PAPEIS_E_PERMISSOES.md?raw';
 import modeloPagamento from '../../../docs/MODELO_DE_PAGAMENTO.md?raw';
 import guiaDeTestes from '../../../docs/GUIA_DE_TESTES.md?raw';
+import paginaPublicaEvento from '../../../docs/PAGINA_PUBLICA_EVENTO.md?raw';
 
 export type DocCategory = 'Referência' | 'Atualização' | 'Melhoria' | 'Correção';
 
@@ -20,6 +21,14 @@ export interface DocEntry {
 }
 
 export const DOCS: DocEntry[] = [
+  {
+    slug: 'pagina-publica-evento',
+    title: 'Página Pública de Divulgação',
+    description: 'Página aberta do evento com oficinas, horários, filósofos monitores e inscrição: como ligar e endereços.',
+    category: 'Melhoria',
+    updatedAt: '2026-10-28',
+    content: paginaPublicaEvento,
+  },
   {
     slug: 'guia-de-testes',
     title: 'Guia de Teste de Fluxo',

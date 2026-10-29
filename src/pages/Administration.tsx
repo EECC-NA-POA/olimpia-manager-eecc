@@ -12,6 +12,7 @@ import { Calendar, FileText, Users, BookOpen, Settings, UserCheck, CalendarIcon,
 import { LoadingState } from '@/components/dashboard/components/LoadingState';
 import { useEventData } from '@/hooks/useEventData';
 import { EventBasicInfo } from '@/components/event-management/EventBasicInfo';
+import { EventPublicPageSettings } from '@/components/event-management/EventPublicPageSettings';
 import { EventBranchesSection } from '@/components/event-management/EventBranchesSection';
 import { EventScheduleSection } from '@/components/event-management/EventScheduleSection';
 import { EventModalitiesSection } from '@/components/event-management/EventModalitiesSection';
@@ -151,6 +152,7 @@ export default function Administration() {
               <div className="space-y-4 sm:space-y-6">
                 <TabsContent value="basic-info" className="mt-2 sm:mt-6">
                   <EventBasicInfo eventId={currentEventId} eventData={eventData} onUpdate={refetch} />
+                  <EventPublicPageSettings eventId={currentEventId} eventData={eventData} onUpdate={refetch} />
                 </TabsContent>
 
                 <TabsContent value="profiles" className="mt-2 sm:mt-6">

@@ -12,6 +12,8 @@ import { FloatingNotificationIcon } from "@/components/notifications/FloatingNot
 import { toast } from "sonner";
 import { isNativePlatform } from "@/utils/platform";
 import MobileApp from "@/mobile/MobileApp";
+import { getPublicPageSlugFromHost, MAIN_APP_ORIGIN } from "@/lib/publicPages";
+import { PublicEventPageView } from "@/components/public-event/PublicEventPageView";
 
 import Index from "./pages/Index";
 import OlimpiadasNacionais from "./pages/OlimpiadasNacionais";
@@ -163,6 +165,22 @@ function App() {
   }
 
   console.log('🎯 Rendering', isMobile ? 'MobileApp' : 'WebApp');
+
+  // Subdomínio de divulgação (<slug>.nova-acropole.org.br): só a página pública,
+  // sem AuthProvider/rotas do app — cadastro e login apontam para o app principal.
+  const publicPageSlug = !isMobile && typeof window !== 'undefined'
+    ? getPublicPageSlugFromHost(window.location.hostname)
+    : null;
+
+  if (publicPageSlug) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <PublicEventPageView slug={publicPageSlug} appOrigin={MAIN_APP_ORIGIN} />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
